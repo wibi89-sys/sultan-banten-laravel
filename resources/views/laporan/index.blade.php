@@ -115,22 +115,112 @@
             </div>
         </div>
         
-        @if(in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian']))
-        <div class="row g-3 mt-1">
-            <div class="col-md-4">
-                <label class="form-label fw-semibold small">Tempat TTD</label>
-                <input type="text" name="tempat_ttd" id="tempat_ttd" class="form-control" placeholder="Contoh: Serang" value="Serang">
+        <!-- Pengaturan Format Dokumen & Penandatangan (PDF) -->
+        <div class="card border-0 shadow-sm mt-4" style="background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
+            <div class="card-header bg-transparent py-3 border-bottom">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h6 class="mb-0 fw-bold text-primary">
+                            <i class="fas fa-sliders-h me-2"></i>Pengaturan Dokumen Laporan (PDF)
+                        </h6>
+                        <small class="text-muted">Atur keberadaan Tanda Tangan, QR Code, dan Stempel resmi pada cetakan laporan</small>
+                    </div>
+                    <span class="badge bg-light text-dark border">
+                        <i class="fas fa-file-pdf text-danger me-1"></i> Opsi Cetak PDF
+                    </span>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold small">Jabatan Penanda Tangan</label>
-                <input type="text" name="jabatan_ttd" id="jabatan_ttd" class="form-control" placeholder="Contoh: Kepala Bidang Pelayanan dan Pembinaan">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold small">Nama Penanda Tangan</label>
-                <input type="text" name="nama_ttd" id="nama_ttd" class="form-control" placeholder="Contoh: Surya Dharma">
+            <div class="card-body">
+                <!-- 3 Toggle Switches Utama -->
+                <div class="row g-3 p-3 rounded mb-3" style="background-color: var(--bs-tertiary-bg, #f8fafc); border: 1px dashed var(--border-color, #cbd5e1); border-radius: 10px;">
+                    <!-- 1. Tanda Tangan -->
+                    <div class="col-md-4">
+                        <div class="p-2 h-100">
+                            <div class="form-check form-switch mb-1">
+                                <input type="hidden" name="show_ttd" value="0">
+                                <input class="form-check-input" type="checkbox" name="show_ttd" id="show_ttd" value="1" checked onchange="toggleSignatureOptions()">
+                                <label class="form-check-label fw-semibold small" for="show_ttd">
+                                    <i class="fas fa-signature text-primary me-1"></i> Sertakan Tanda Tangan
+                                </label>
+                            </div>
+                            <small class="text-muted d-block ms-4" style="font-size: 11px;">
+                                Tampilkan blok tanda tangan di bagian kanan bawah laporan
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 2. Stempel Laporan -->
+                    <div class="col-md-4">
+                        <div class="p-2 h-100">
+                            <div class="form-check form-switch mb-1">
+                                <input type="hidden" name="show_stempel" value="0">
+                                <input class="form-check-input" type="checkbox" name="show_stempel" id="show_stempel" value="1" checked>
+                                <label class="form-check-label fw-semibold small" for="show_stempel">
+                                    <i class="fas fa-stamp text-danger me-1"></i> Sertakan Stempel Laporan
+                                </label>
+                            </div>
+                            <div class="ms-4">
+                                <small class="text-muted d-block" style="font-size: 11px;">
+                                    Tempelkan cap dinas resmi instansi pada area tanda tangan
+                                </small>
+                                @if(!empty($instansi?->stempel_image) && file_exists(public_path($instansi->stempel_image)))
+                                    <span class="badge bg-success-subtle text-success mt-1" style="font-size: 10px;"><i class="fas fa-check-circle me-1"></i>Aset stempel aktif</span>
+                                @else
+                                    <span class="badge bg-warning-subtle text-warning mt-1" style="font-size: 10px;"><i class="fas fa-info-circle me-1"></i>Belum ada file stempel</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. QR Code Validasi -->
+                    <div class="col-md-4">
+                        <div class="p-2 h-100">
+                            <div class="form-check form-switch mb-1">
+                                <input type="hidden" name="show_qrcode" value="0">
+                                <input class="form-check-input" type="checkbox" name="show_qrcode" id="show_qrcode" value="1" checked>
+                                <label class="form-check-label fw-semibold small" for="show_qrcode">
+                                    <i class="fas fa-qrcode text-dark me-1"></i> Sertakan QR Code
+                                </label>
+                            </div>
+                            <small class="text-muted d-block ms-4" style="font-size: 11px;">
+                                Cetak barcode validasi dokumen pada footer bawah laporan
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Penanda Tangan -->
+                <div id="signatureDetailsContainer" class="p-3 border rounded" style="background: var(--card-bg, #fff);">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">Tempat Penandatanganan</label>
+                            <input type="text" name="tempat_ttd" id="tempat_ttd" class="form-control form-control-sm" placeholder="Contoh: Serang" value="Serang">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Jabatan Penanda Tangan</label>
+                            <input type="text" name="jabatan_ttd" id="jabatan_ttd" class="form-control form-control-sm" placeholder="Contoh: Kepala Bidang Pelayanan dan Pembinaan" value="Kepala Bidang Pelayanan dan Pembinaan">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">Nama Penanda Tangan</label>
+                            <input type="text" name="nama_ttd" id="nama_ttd" class="form-control form-control-sm" placeholder="Contoh: Surya Dharma" value="Surya Dharma">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold small d-block">Gambar TTD Digital</label>
+                            <div class="form-check form-switch pt-1">
+                                <input type="hidden" name="show_ttd_image" value="0">
+                                <input class="form-check-input" type="checkbox" name="show_ttd_image" id="show_ttd_image" value="1" checked>
+                                <label class="form-check-label small" for="show_ttd_image" title="Jika dinonaktifkan, sediakan ruang tanda tangan basah">Aktif</label>
+                            </div>
+                            @if(!empty($instansi?->ttd_image) && file_exists(public_path($instansi->ttd_image)))
+                                <span class="badge bg-success-subtle text-success" style="font-size: 10px;"><i class="fas fa-check-circle me-1"></i>Aset TTD aktif</span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning" style="font-size: 10px;"><i class="fas fa-info-circle me-1"></i>Belum ada file TTD</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        @endif
         
         <hr class="my-4">
         
@@ -138,11 +228,9 @@
             <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
                 <i class="fas fa-redo me-1"></i> Reset Filter
             </button>
-            @if(in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian']))
             <button type="button" class="btn btn-danger px-4" onclick="submitPdf()">
                 <i class="fas fa-file-pdf me-1"></i> Cetak PDF
             </button>
-            @endif
             <button type="submit" class="btn btn-success px-4" onclick="document.getElementById('formLaporan').action='{{ route('laporan.excel') }}';">
                 <i class="fas fa-file-excel me-1"></i> Download Excel
             </button>
@@ -153,6 +241,19 @@
 
 @push('scripts')
 <script>
+    function toggleSignatureOptions() {
+        const isTtdChecked = document.getElementById('show_ttd').checked;
+        const container = document.getElementById('signatureDetailsContainer');
+        if (container) {
+            container.style.opacity = isTtdChecked ? '1' : '0.4';
+            container.style.pointerEvents = isTtdChecked ? 'auto' : 'none';
+            const inputs = container.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.disabled = !isTtdChecked;
+            });
+        }
+    }
+
     function submitPdf() {
         const form = document.getElementById('formLaporan');
         form.action = "{{ route('laporan.pdf') }}";
@@ -169,11 +270,21 @@
         const uptSelect = document.getElementById('upt_id');
         if (uptSelect) uptSelect.value = '';
         
+        document.getElementById('show_ttd').checked = true;
+        document.getElementById('show_stempel').checked = true;
+        document.getElementById('show_qrcode').checked = true;
+        document.getElementById('show_ttd_image').checked = true;
+        toggleSignatureOptions();
+
         if (document.getElementById('jabatan_ttd')) {
             document.getElementById('tempat_ttd').value = 'Serang';
-            document.getElementById('jabatan_ttd').value = '';
-            document.getElementById('nama_ttd').value = '';
+            document.getElementById('jabatan_ttd').value = 'Kepala Bidang Pelayanan dan Pembinaan';
+            document.getElementById('nama_ttd').value = 'Surya Dharma';
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleSignatureOptions();
+    });
 </script>
 @endpush

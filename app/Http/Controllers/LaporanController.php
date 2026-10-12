@@ -6,6 +6,7 @@ use App\Models\DataBebasHarian;
 use App\Models\DataIntegrasi;
 use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
+use App\Models\Instansi;
 use App\Models\Upt;
 use App\Services\PdfReportService;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class LaporanController extends Controller
         $userUptFilter = $user->getUserUptFilter();
         $defaultStartDate = date('Y-m-01');
         $defaultEndDate = date('Y-m-t');
+        $instansi = Instansi::getFirst();
 
         return view('laporan.index', [
             'reportType' => $reportType,
@@ -45,6 +47,7 @@ class LaporanController extends Controller
             'userUptFilter' => $userUptFilter,
             'defaultStartDate' => $defaultStartDate,
             'defaultEndDate' => $defaultEndDate,
+            'instansi' => $instansi,
         ]);
     }
 
@@ -65,6 +68,10 @@ class LaporanController extends Controller
             'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
             'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
             'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
+            'show_ttd' => $request->query('show_ttd', '1') === '1',
+            'show_ttd_image' => $request->query('show_ttd_image', '1') === '1',
+            'show_stempel' => $request->query('show_stempel', '1') === '1',
+            'show_qrcode' => $request->query('show_qrcode', '1') === '1',
         ];
 
         return PdfReportService::generate($reportType, $uptId, $tanggalMulai, $tanggalAkhir, $signData);

@@ -37,15 +37,18 @@ class PdfReportService
         $pdf = new class($orientation, 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF {
             public $instansiModel = null;
             public $reportType = 'penghuni';
+            public $showQrCode = true;
 
             public function Header() {}
 
             public function Footer() {
-                $this->SetY(-20);
-                $y = $this->GetY();
-                $qrText = "✅ Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
-                $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0,0,0], 'bgcolor' => false];
-                $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                if ($this->showQrCode) {
+                    $this->SetY(-20);
+                    $y = $this->GetY();
+                    $qrText = "✅ Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
+                    $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0,0,0], 'bgcolor' => false];
+                    $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                }
 
                 $this->SetY(-15);
                 $this->SetFont('helvetica', 'I', 7);
@@ -57,6 +60,7 @@ class PdfReportService
 
         $pdf->instansiModel = $instansi;
         $pdf->reportType = $reportType;
+        $pdf->showQrCode = !empty($signData['show_qrcode']);
         $pdf->SetCreator('Sultan Banten');
         $pdf->SetAuthor($user->nama_lengkap ?? 'Admin');
         $pdf->SetTitle($reportTitles[$reportType] ?? 'Laporan');
@@ -466,12 +470,91 @@ class PdfReportService
                 $pdf->Cell($widths[6], 7, $totPersen . '%', 1, 0, 'C', true);
                 $pdf->Cell($widths[7], 7, number_format($gOvs), 1, 0, 'C', true);
                 $pdf->Cell($widths[8], 7, number_format($gInt), 1, 1, 'C', true);
+
+                self::renderSignature($pdf, $instansi, $signData, 'L');
+
+            } elseif ($reportType === 'integrasi') {
+                $widths = [8, 65, 18, 13, 13, 13, 13, 14, 13, 13, 13, 13, 14, 15];
+
+                // Header row 1
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->SetFillColor(52, 73, 94);
+                $pdf->SetTextColor(255, 255, 255);
+
+                $pdf->Cell($widths[0], 12, 'No', 1, 0, 'C', true);
+                $pdf->Cell($widths[1], 12, 'UPT', 1, 0, 'C', true);
+                $pdf->Cell($widths[2], 12, 'Tanggal', 1, 0, 'C', true);
+                $pdf->Cell(66, 6, 'Usulan', 1, 0, 'C', true);
+                $pdf->Cell(66, 6, 'SK Terbit', 1, 0, 'C', true);
+                $pdf->Cell($widths[13], 12, 'Total', 1, 1, 'C', true);
+
+                // Header row 2
+                $pdf->Cell(array_sum(array_slice($widths, 0, 3)), 0, '', 0, 0);
+                $pdf->SetFillColor(66, 87, 108);
+                $pdf->Cell($widths[3], 6, 'PB', 1, 0, 'C', true);
+                $pdf->Cell($widths[4], 6, 'CB', 1, 0, 'C', true);
+                $pdf->Cell($widths[5], 6, 'CMB', 1, 0, 'C', true);
+                $pdf->Cell($widths[6], 6, 'CMK', 1, 0, 'C', true);
+                $pdf->Cell($widths[7], 6, 'Asim', 1, 0, 'C', true);
+                $pdf->Cell($widths[8], 6, 'PB', 1, 0, 'C', true);
+                $pdf->Cell($widths[9], 6, 'CB', 1, 0, 'C', true);
+                $pdf->Cell($widths[10], 6, 'CMB', 1, 0, 'C', true);
+                $pdf->Cell($widths[11], 6, 'CMK', 1, 0, 'C', true);
+                $pdf->Cell($widths[12], 6, 'Asim', 1, 0, 'C', true);
+                $pdf->Cell($widths[13], 0, '', 0, 1);
+
+                $q = DataIntegrasi::with('upt')->orderBy('tanggal', 'desc');
+                if ($uptId) $q->where('upt_id', $uptId);
+                if ($tanggalMulai && $tanggalAkhir) $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]);
+                $data = $q->get();
+
+                $pdf->SetFont('helvetica', '', 7);
+                $pdf->SetTextColor(0, 0, 0);
+                $no = 1;
+                $grandTotal = 0;
+
+                foreach ($data as $r) {
+                    $totRow = (int)$r->usulan_pb + (int)$r->usulan_cb + (int)$r->usulan_cmb + (int)$r->usulan_cmk + (int)$r->usulan_asimilasi
+                            + (int)$r->sk_terbit_pb + (int)$r->sk_terbit_cb + (int)$r->sk_terbit_cmb + (int)$r->sk_terbit_cmk + (int)$r->sk_terbit_asimilasi;
+                    $grandTotal += $totRow;
+
+                    $pdf->Cell($widths[0], 5.5, $no++, 1, 0, 'C');
+                    $pdf->Cell($widths[1], 5.5, $r->upt?->nama_upt ?? '-', 1, 0, 'L');
+                    $pdf->Cell($widths[2], 5.5, $r->tanggal ? date('d/m/Y', strtotime($r->tanggal)) : '-', 1, 0, 'C');
+                    $pdf->Cell($widths[3], 5.5, (int)$r->usulan_pb, 1, 0, 'C');
+                    $pdf->Cell($widths[4], 5.5, (int)$r->usulan_cb, 1, 0, 'C');
+                    $pdf->Cell($widths[5], 5.5, (int)$r->usulan_cmb, 1, 0, 'C');
+                    $pdf->Cell($widths[6], 5.5, (int)$r->usulan_cmk, 1, 0, 'C');
+                    $pdf->Cell($widths[7], 5.5, (int)$r->usulan_asimilasi, 1, 0, 'C');
+                    $pdf->Cell($widths[8], 5.5, (int)$r->sk_terbit_pb, 1, 0, 'C');
+                    $pdf->Cell($widths[9], 5.5, (int)$r->sk_terbit_cb, 1, 0, 'C');
+                    $pdf->Cell($widths[10], 5.5, (int)$r->sk_terbit_cmb, 1, 0, 'C');
+                    $pdf->Cell($widths[11], 5.5, (int)$r->sk_terbit_cmk, 1, 0, 'C');
+                    $pdf->Cell($widths[12], 5.5, (int)$r->sk_terbit_asimilasi, 1, 0, 'C');
+                    $pdf->Cell($widths[13], 5.5, $totRow, 1, 1, 'C');
+                }
+
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->SetFillColor(52, 73, 94);
+                $pdf->SetTextColor(255, 255, 255);
+                $pdf->Cell(array_sum(array_slice($widths, 0, 13)), 6, 'TOTAL', 1, 0, 'C', true);
+                $pdf->Cell($widths[13], 6, $grandTotal, 1, 1, 'C', true);
+
+                self::renderSignature($pdf, $instansi, $signData, 'L');
             }
         }
     }
 
-    private static function renderSignature($pdf, $instansi, $signData)
+    private static function renderSignature($pdf, $instansi, $signData, $orientation = 'P')
     {
+        $showTtd = !isset($signData['show_ttd']) || (bool)$signData['show_ttd'];
+        if (!$showTtd) {
+            return;
+        }
+
+        $showTtdImage = !isset($signData['show_ttd_image']) || (bool)$signData['show_ttd_image'];
+        $showStempel = !isset($signData['show_stempel']) || (bool)$signData['show_stempel'];
+
         $pdf->Ln(4);
         $pdf->SetFont('helvetica', '', 9);
         $pdf->Cell(0, 5, 'Demikian laporan ini disampaikan, atas perhatiannya diucapkan terima kasih.', 0, 1, 'L');
@@ -480,9 +563,9 @@ class PdfReportService
         $tempatTtd = $signData['tempat_ttd'] ?? 'Serang';
         $jabatanTtd = $signData['jabatan_ttd'] ?? 'Kepala Bidang Pelayanan dan Pembinaan';
         $namaTtd = $signData['nama_ttd'] ?? 'Surya Dharma';
-        $tglTtd = formatIndonesianDate(date('Y-m-d'), false);
+        $tglTtd = function_exists('formatIndonesianDate') ? formatIndonesianDate(date('Y-m-d'), false) : date('d/m/Y');
 
-        $sigX = 130;
+        $sigX = ($orientation === 'L') ? 215 : 130;
         $pdf->SetX($sigX);
         $pdf->Cell(70, 5, $tempatTtd . ', ' . $tglTtd, 0, 1, 'C');
         $pdf->SetX($sigX);
@@ -490,10 +573,10 @@ class PdfReportService
         $pdf->Ln(2);
 
         $yBeforeSig = $pdf->GetY();
-        if (!empty($instansi?->ttd_image) && file_exists(public_path($instansi->ttd_image))) {
+        if ($showTtdImage && !empty($instansi?->ttd_image) && file_exists(public_path($instansi->ttd_image))) {
             $pdf->Image(public_path($instansi->ttd_image), $sigX + 15, $yBeforeSig - 2, 40, 0);
         }
-        if (!empty($instansi?->stempel_image) && file_exists(public_path($instansi->stempel_image))) {
+        if ($showStempel && !empty($instansi?->stempel_image) && file_exists(public_path($instansi->stempel_image))) {
             $pdf->Image(public_path($instansi->stempel_image), $sigX + 5, $yBeforeSig - 5, 35, 0);
         }
 

@@ -111,25 +111,15 @@
                     </div>
                 </div>
 
-                <!-- Banner & Kop Surat -->
-                <div class="card border-0 shadow-sm">
+                <!-- Dokumen Laporan (TTD, Stempel & Kop Surat) -->
+                <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-dark text-white py-2.5 fw-semibold small">
-                        <i class="fas fa-file-signature me-1"></i> Welcome Banner & TTD
+                        <i class="fas fa-stamp me-1"></i> Aset Laporan (TTD, Stempel & Kop Surat)
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-sm-6">
-                                <label class="form-label small fw-semibold">Welcome Banner (Popup)</label>
-                                @if($instansi->welcome_banner)
-                                <div class="mb-2 d-flex align-items-center gap-2">
-                                    <img src="{{ asset($instansi->welcome_banner) }}" alt="Banner" class="img-thumbnail" style="max-height: 50px;">
-                                    <button type="submit" name="delete_welcome_banner" value="1" class="btn btn-outline-danger btn-sm py-0 px-2" onclick="return confirm('Hapus banner?')"><i class="fas fa-trash"></i></button>
-                                </div>
-                                @endif
-                                <input type="file" name="welcome_banner" class="form-control form-control-sm" accept="image/*">
-                            </div>
-                            <div class="col-sm-6">
-                                <label class="form-label small fw-semibold">Gambar Tanda Tangan</label>
+                                <label class="form-label small fw-semibold">Gambar Tanda Tangan (TTD)</label>
                                 @if($instansi->ttd_image)
                                 <div class="mb-2 d-flex align-items-center gap-2">
                                     <img src="{{ asset($instansi->ttd_image) }}" alt="TTD" class="img-thumbnail" style="max-height: 50px;">
@@ -137,8 +127,46 @@
                                 </div>
                                 @endif
                                 <input type="file" name="ttd_image" class="form-control form-control-sm" accept="image/*">
+                                <small class="text-muted d-block mt-1" style="font-size: 11px;">Format PNG transparan dianjurkan</small>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">Gambar Stempel Resmi</label>
+                                @if($instansi->stempel_image)
+                                <div class="mb-2 d-flex align-items-center gap-2">
+                                    <img src="{{ asset($instansi->stempel_image) }}" alt="Stempel" class="img-thumbnail" style="max-height: 50px;">
+                                    <button type="submit" name="delete_stempel_image" value="1" class="btn btn-outline-danger btn-sm py-0 px-2" onclick="return confirm('Hapus Stempel?')"><i class="fas fa-trash"></i></button>
+                                </div>
+                                @endif
+                                <input type="file" name="stempel_image" class="form-control form-control-sm" accept="image/*">
+                                <small class="text-muted d-block mt-1" style="font-size: 11px;">Format PNG transparan dianjurkan</small>
+                            </div>
+                            <div class="col-sm-12">
+                                <label class="form-label small fw-semibold">Logo Kop Surat Laporan</label>
+                                @if($instansi->logo_kop)
+                                <div class="mb-2 d-flex align-items-center gap-2">
+                                    <img src="{{ asset($instansi->logo_kop) }}" alt="Logo Kop" class="img-thumbnail" style="max-height: 50px;">
+                                    <button type="submit" name="delete_logo_kop" value="1" class="btn btn-outline-danger btn-sm py-0 px-2" onclick="return confirm('Hapus Logo Kop?')"><i class="fas fa-trash"></i></button>
+                                </div>
+                                @endif
+                                <input type="file" name="logo_kop" class="form-control form-control-sm" accept="image/*">
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Banner Popup -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-secondary text-white py-2.5 fw-semibold small">
+                        <i class="fas fa-image me-1"></i> Welcome Banner (Popup)
+                    </div>
+                    <div class="card-body">
+                        @if($instansi->welcome_banner)
+                        <div class="mb-2 d-flex align-items-center gap-2">
+                            <img src="{{ asset($instansi->welcome_banner) }}" alt="Banner" class="img-thumbnail" style="max-height: 50px;">
+                            <button type="submit" name="delete_welcome_banner" value="1" class="btn btn-outline-danger btn-sm py-0 px-2" onclick="return confirm('Hapus banner?')"><i class="fas fa-trash"></i></button>
+                        </div>
+                        @endif
+                        <input type="file" name="welcome_banner" class="form-control form-control-sm" accept="image/*">
                     </div>
                 </div>
             </div>
