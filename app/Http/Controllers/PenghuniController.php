@@ -11,32 +11,35 @@ use Illuminate\Support\Facades\DB;
 class PenghuniController extends Controller
 {
     private $klasifikasiKeys = [
-        'Pidana Umum'           => 'pidana_umum',
-        'Tipikor'               => 'tipikor',
-        'Narkoba Bandar'        => 'narkoba_bandar',
-        'Narkoba Pengguna'      => 'narkoba_pengguna',
-        'Teroris'               => 'teroris',
-        'Trafficking'           => 'trafficking',
-        'Ilegal Logging'        => 'ilegal_logging',
-        'Money Laundering'      => 'money_laundering',
-        'Genosida'              => 'genosida',
-        'UU ITE'                => 'uu_ite',
-        'WNA'                   => 'wna',
-        'Sakit Berkepanjangan'  => 'sakit_berkepanjangan',
-        'Lansia >70 tahun'      => 'lansia_70_tahun',
-        'Pidana Mati'           => 'pidana_mati',
-        'Seumur Hidup'          => 'seumur_hidup'
+        'Pidana Umum' => 'pidana_umum',
+        'Tipikor' => 'tipikor',
+        'Narkoba Bandar' => 'narkoba_bandar',
+        'Narkoba Pengguna' => 'narkoba_pengguna',
+        'Teroris' => 'teroris',
+        'Trafficking' => 'trafficking',
+        'Ilegal Logging' => 'ilegal_logging',
+        'Money Laundering' => 'money_laundering',
+        'Genosida' => 'genosida',
+        'UU ITE' => 'uu_ite',
+        'WNA' => 'wna',
+        'Sakit Berkepanjangan' => 'sakit_berkepanjangan',
+        'Lansia >70 tahun' => 'lansia_70_tahun',
+        'Pidana Mati' => 'pidana_mati',
+        'Seumur Hidup' => 'seumur_hidup',
     ];
 
     private $klasifikasiUmum = ['Pidana Umum'];
+
     private $klasifikasiKhusus = ['Tipikor', 'Narkoba Bandar', 'Narkoba Pengguna', 'Teroris', 'Trafficking', 'Ilegal Logging', 'Money Laundering', 'Genosida'];
+
     private $klasifikasiUUITE = ['UU ITE'];
+
     private $klasifikasiLainnya = ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup'];
 
     public function index(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('penghuni')) {
+        if (! $user->hasAccess('penghuni')) {
             abort(403);
         }
 
@@ -108,19 +111,19 @@ class PenghuniController extends Controller
     public function getPreviousData(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('penghuni')) {
+        if (! $user->hasAccess('penghuni')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $uptId = (int) $request->query('upt_id');
         $tanggal = $request->query('tanggal', date('Y-m-d'));
 
-        if (!$uptId) {
+        if (! $uptId) {
             return response()->json(['success' => false, 'has_data' => false, 'message' => 'Pilih UPT terlebih dahulu.']);
         }
 
         // Input data tidak ada hari libur: ambil tepat data hari kemarin (H-1)
-        $previousDate = date('Y-m-d', strtotime($tanggal . ' - 1 day'));
+        $previousDate = date('Y-m-d', strtotime($tanggal.' - 1 day'));
 
         $records = DataPenghuni::where('upt_id', $uptId)
             ->whereDate('tanggal', $previousDate)
@@ -132,7 +135,7 @@ class PenghuniController extends Controller
                 'has_data' => false,
                 'previous_date' => $previousDate,
                 'formatted_yesterday' => formatIndonesianDate($previousDate),
-                'message' => 'Data hari kemarin (' . formatIndonesianDate($previousDate) . ') belum diinput untuk UPT ini. Silakan input data hari kemarin terlebih dahulu atau input manual dari 0.'
+                'message' => 'Data hari kemarin ('.formatIndonesianDate($previousDate).') belum diinput untuk UPT ini. Silakan input data hari kemarin terlebih dahulu atau input manual dari 0.',
             ]);
         }
 
@@ -158,19 +161,19 @@ class PenghuniController extends Controller
             'has_data' => count($data) > 0,
             'previous_date' => $previousDate,
             'formatted_date' => formatIndonesianDate($previousDate),
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('penghuni')) {
+        if (! $user->hasAccess('penghuni')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
@@ -182,13 +185,13 @@ class PenghuniController extends Controller
         $uptId = (int) $request->input('upt_id');
         $tanggal = $request->input('tanggal');
 
-        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
         // Cegah duplikasi
         if (DataPenghuni::where('upt_id', $uptId)->where('tanggal', $tanggal)->exists()) {
-            return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal ' . formatDate($tanggal) . ' sudah ada. Silakan gunakan tombol edit.');
+            return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan gunakan tombol edit.');
         }
 
         DB::beginTransaction();
@@ -198,14 +201,14 @@ class PenghuniController extends Controller
                 DataPenghuni::create([
                     'upt_id' => $uptId,
                     'klasifikasi_pidana' => $klasifikasi,
-                    'tahanan_dewasa_laki' => (int) $request->input('tahanan_dl_' . $key, 0),
-                    'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dp_' . $key, 0),
-                    'tahanan_anak_laki' => (int) $request->input('tahanan_al_' . $key, 0),
-                    'tahanan_anak_perempuan' => (int) $request->input('tahanan_ap_' . $key, 0),
-                    'narapidana_dewasa_laki' => (int) $request->input('narapidana_dl_' . $key, 0),
-                    'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dp_' . $key, 0),
-                    'narapidana_anak_laki' => (int) $request->input('narapidana_al_' . $key, 0),
-                    'narapidana_anak_perempuan' => (int) $request->input('narapidana_ap_' . $key, 0),
+                    'tahanan_dewasa_laki' => (int) $request->input('tahanan_dl_'.$key, 0),
+                    'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dp_'.$key, 0),
+                    'tahanan_anak_laki' => (int) $request->input('tahanan_al_'.$key, 0),
+                    'tahanan_anak_perempuan' => (int) $request->input('tahanan_ap_'.$key, 0),
+                    'narapidana_dewasa_laki' => (int) $request->input('narapidana_dl_'.$key, 0),
+                    'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dp_'.$key, 0),
+                    'narapidana_anak_laki' => (int) $request->input('narapidana_al_'.$key, 0),
+                    'narapidana_anak_perempuan' => (int) $request->input('narapidana_ap_'.$key, 0),
                     'tanggal' => $tanggal,
                     'keterangan' => $request->input('keterangan', ''),
                 ]);
@@ -220,24 +223,25 @@ class PenghuniController extends Controller
             return back()->with('success', "Berhasil menyimpan {$inserted} data penghuni.");
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage());
         }
     }
 
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('penghuni')) {
+        if (! $user->hasAccess('penghuni')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
         $penghuni = DataPenghuni::findOrFail($id);
-        if (!$user->isAdmin() && $user->upt_id && (int) $penghuni->upt_id !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && (int) $penghuni->upt_id !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda tidak berhak mengubah data milik UPT lain.');
         }
 
@@ -268,17 +272,17 @@ class PenghuniController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('penghuni')) {
+        if (! $user->hasAccess('penghuni')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
         $penghuni = DataPenghuni::findOrFail($id);
-        if (!$user->isAdmin() && $user->upt_id && (int) $penghuni->upt_id !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && (int) $penghuni->upt_id !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda tidak berhak menghapus data milik UPT lain.');
         }
 

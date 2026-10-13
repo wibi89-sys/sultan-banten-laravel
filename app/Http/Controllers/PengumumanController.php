@@ -13,7 +13,7 @@ class PengumumanController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('pengumuman')) {
+        if (! $user->hasAccess('pengumuman')) {
             abort(403);
         }
 
@@ -26,8 +26,12 @@ class PengumumanController extends Controller
 
         if ($request->filled('status')) {
             $status = $request->query('status');
-            if ($status === 'aktif') $query->where('aktif', 1);
-            if ($status === 'nonaktif') $query->where('aktif', 0);
+            if ($status === 'aktif') {
+                $query->where('aktif', 1);
+            }
+            if ($status === 'nonaktif') {
+                $query->where('aktif', 0);
+            }
         }
 
         $pengumumanList = $query->paginate(20)->withQueryString();
@@ -38,7 +42,7 @@ class PengumumanController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('pengumuman')) {
+        if (! $user->hasAccess('pengumuman')) {
             abort(403);
         }
 
@@ -52,7 +56,7 @@ class PengumumanController extends Controller
         $gambar = null;
         if ($request->hasFile('gambar')) {
             $uploadPath = public_path('uploads/pengumuman');
-            if (!File::isDirectory($uploadPath)) {
+            if (! File::isDirectory($uploadPath)) {
                 File::makeDirectory($uploadPath, 0755, true);
             }
             $file = $request->file('gambar');
@@ -60,7 +64,7 @@ class PengumumanController extends Controller
             if (in_array($ext, ['php', 'phtml', 'phar', 'blade', 'exe', 'sh', 'bat'])) {
                 return back()->with('error', 'Format gambar tidak diizinkan.');
             }
-            $filename = 'pengumuman_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+            $filename = 'pengumuman_'.time().'_'.bin2hex(random_bytes(8)).'.'.$ext;
             $file->move($uploadPath, $filename);
             $gambar = "uploads/pengumuman/{$filename}";
         }
@@ -87,7 +91,7 @@ class PengumumanController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('pengumuman')) {
+        if (! $user->hasAccess('pengumuman')) {
             abort(403);
         }
 
@@ -110,7 +114,7 @@ class PengumumanController extends Controller
 
         if ($request->hasFile('gambar')) {
             $uploadPath = public_path('uploads/pengumuman');
-            if (!File::isDirectory($uploadPath)) {
+            if (! File::isDirectory($uploadPath)) {
                 File::makeDirectory($uploadPath, 0755, true);
             }
             $file = $request->file('gambar');
@@ -118,7 +122,7 @@ class PengumumanController extends Controller
             if (in_array($ext, ['php', 'phtml', 'phar', 'blade', 'exe', 'sh', 'bat'])) {
                 return back()->with('error', 'Format gambar tidak diizinkan.');
             }
-            $filename = 'pengumuman_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+            $filename = 'pengumuman_'.time().'_'.bin2hex(random_bytes(8)).'.'.$ext;
             $file->move($uploadPath, $filename);
 
             if ($gambar && File::exists(public_path($gambar))) {
@@ -148,7 +152,7 @@ class PengumumanController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('pengumuman')) {
+        if (! $user->hasAccess('pengumuman')) {
             abort(403);
         }
 

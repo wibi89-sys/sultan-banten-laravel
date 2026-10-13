@@ -11,7 +11,7 @@ class UptController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if (!$user->hasAccess('upt')) {
+        if (! $user->hasAccess('upt')) {
             abort(403);
         }
 
@@ -23,7 +23,7 @@ class UptController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('upt')) {
+        if (! $user->hasAccess('upt')) {
             abort(403);
         }
 
@@ -48,7 +48,7 @@ class UptController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('upt')) {
+        if (! $user->hasAccess('upt')) {
             abort(403);
         }
 
@@ -75,7 +75,7 @@ class UptController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('upt')) {
+        if (! $user->hasAccess('upt')) {
             abort(403);
         }
 

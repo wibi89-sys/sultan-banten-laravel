@@ -17,12 +17,12 @@ class WhatsAppController extends Controller
     public function settingsIndex()
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_settings')) {
+        if (! $user->hasAccess('wa_settings')) {
             abort(403, 'Akses ditolak.');
         }
 
         $waSettings = WaSetting::getFirst();
-        if (!$waSettings) {
+        if (! $waSettings) {
             $waSettings = WaSetting::create([
                 'gateway_name' => 'fonnte',
                 'api_url' => 'https://api.fonnte.com/send',
@@ -45,13 +45,13 @@ class WhatsAppController extends Controller
     public function settingsUpdate(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_settings')) {
+        if (! $user->hasAccess('wa_settings')) {
             abort(403, 'Akses ditolak.');
         }
 
         $waSettings = WaSetting::getFirst();
-        if (!$waSettings) {
-            $waSettings = new WaSetting();
+        if (! $waSettings) {
+            $waSettings = new WaSetting;
         }
 
         $waSettings->gateway_name = $request->input('gateway_name', 'fonnte');
@@ -73,7 +73,7 @@ class WhatsAppController extends Controller
     public function settingsTest(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_settings')) {
+        if (! $user->hasAccess('wa_settings')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -83,42 +83,46 @@ class WhatsAppController extends Controller
             $testNumber = trim($request->input('test_number', ''));
             $testMessage = trim($request->input('test_message', 'Test notification dari Sultan Banten'));
 
-            if (!$testNumber) {
+            if (! $testNumber) {
                 return back()->with('error', 'Nomor tujuan harus diisi.');
             }
 
             $res = WhatsAppService::send($testNumber, $testMessage);
+
             return $res['success']
                 ? back()->with('success', "✅ Pesan test berhasil dikirim ke {$testNumber}")
-                : back()->with('error', '❌ Gagal mengirim pesan: ' . ($res['message'] ?? 'Unknown error'));
+                : back()->with('error', '❌ Gagal mengirim pesan: '.($res['message'] ?? 'Unknown error'));
         }
 
         if ($action === 'test_group') {
             $settings = WaSetting::getFirst();
             $groupId = trim($settings->group_id ?? '');
-            if (!$groupId) {
+            if (! $groupId) {
                 return back()->with('error', 'Group ID belum dikonfigurasi di pengaturan.');
             }
 
-            $testMessage = "📢 *TEST PESAN GRUP*\n\nIni adalah pesan test dari Sultan Banten.\n\n_Terkirim: " . date('d/m/Y H:i:s') . '_';
+            $testMessage = "📢 *TEST PESAN GRUP*\n\nIni adalah pesan test dari Sultan Banten.\n\n_Terkirim: ".date('d/m/Y H:i:s').'_';
             $res = WhatsAppService::send($groupId, $testMessage);
+
             return $res['success']
                 ? back()->with('success', '✅ Pesan test berhasil dikirim ke grup WhatsApp!')
-                : back()->with('error', '❌ Gagal mengirim ke grup: ' . ($res['message'] ?? 'Unknown error'));
+                : back()->with('error', '❌ Gagal mengirim ke grup: '.($res['message'] ?? 'Unknown error'));
         }
 
         if ($action === 'send_morning') {
             $res = WhatsAppService::sendMorningReminder();
+
             return $res['success']
                 ? back()->with('success', "✅ Reminder pagi berhasil dikirim ke {$res['sent']} operator.")
-                : back()->with('error', '❌ Gagal mengirim reminder: ' . $res['message']);
+                : back()->with('error', '❌ Gagal mengirim reminder: '.$res['message']);
         }
 
         if ($action === 'send_afternoon') {
             $res = WhatsAppService::sendAfternoonReport();
+
             return $res['success']
                 ? back()->with('success', "✅ Laporan siang berhasil dikirim ke grup WhatsApp! Belum input: Penghuni ({$res['missing_penghuni']}), Overstaying ({$res['missing_overstaying']}), Integrasi ({$res['missing_integrasi']}), Bebas Harian ({$res['missing_bebas_harian']})")
-                : back()->with('error', '❌ Gagal mengirim laporan: ' . $res['message']);
+                : back()->with('error', '❌ Gagal mengirim laporan: '.$res['message']);
         }
 
         return back();
@@ -128,7 +132,7 @@ class WhatsAppController extends Controller
     public function scheduleIndex()
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -149,7 +153,7 @@ class WhatsAppController extends Controller
     public function scheduleStore(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -179,7 +183,7 @@ class WhatsAppController extends Controller
     public function scheduleUpdate(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -211,7 +215,7 @@ class WhatsAppController extends Controller
     public function scheduleDestroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -227,12 +231,12 @@ class WhatsAppController extends Controller
     public function scheduleToggle($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
         $schedule = WaScheduledReport::findOrFail($id);
-        $schedule->aktif = !$schedule->aktif;
+        $schedule->aktif = ! $schedule->aktif;
         $schedule->save();
 
         return back()->with('success', 'Status jadwal berhasil diubah!');
@@ -241,7 +245,7 @@ class WhatsAppController extends Controller
     public function scheduleSendNow($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -249,14 +253,14 @@ class WhatsAppController extends Controller
 
         return $res['success']
             ? back()->with('success', '✅ Laporan berhasil dikirim sekarang!')
-            : back()->with('error', '❌ Gagal mengirim laporan: ' . ($res['message'] ?? 'Error'));
+            : back()->with('error', '❌ Gagal mengirim laporan: '.($res['message'] ?? 'Error'));
     }
 
     // ==================== WA PIMPINAN ====================
     public function pimpinanIndex()
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -268,7 +272,7 @@ class WhatsAppController extends Controller
     public function pimpinanStore(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -293,7 +297,7 @@ class WhatsAppController extends Controller
     public function pimpinanUpdate(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -320,7 +324,7 @@ class WhatsAppController extends Controller
     public function pimpinanDestroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('wa_schedule')) {
+        if (! $user->hasAccess('wa_schedule')) {
             abort(403, 'Akses ditolak.');
         }
 

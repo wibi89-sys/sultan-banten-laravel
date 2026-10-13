@@ -12,7 +12,7 @@ class OverstayingController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('overstaying')) {
+        if (! $user->hasAccess('overstaying')) {
             abort(403);
         }
 
@@ -60,12 +60,12 @@ class OverstayingController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('overstaying')) {
+        if (! $user->hasAccess('overstaying')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
@@ -77,12 +77,12 @@ class OverstayingController extends Controller
         $uptId = (int) $request->input('upt_id');
         $tanggal = $request->input('tanggal');
 
-        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
         if (DataOverstaying::where('upt_id', $uptId)->where('tanggal', $tanggal)->exists()) {
-            return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal ' . formatDate($tanggal) . ' sudah ada. Silakan edit data yang ada.');
+            return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan edit data yang ada.');
         }
 
         $data = DataOverstaying::create([
@@ -110,17 +110,17 @@ class OverstayingController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('overstaying')) {
+        if (! $user->hasAccess('overstaying')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
         $data = DataOverstaying::findOrFail($id);
-        if (!$user->isAdmin() && $user->upt_id && ((int) $data->upt_id !== (int) $user->upt_id || (int) $request->input('upt_id') !== (int) $user->upt_id)) {
+        if (! $user->isAdmin() && $user->upt_id && ((int) $data->upt_id !== (int) $user->upt_id || (int) $request->input('upt_id') !== (int) $user->upt_id)) {
             abort(403, 'Akses ditolak. Anda tidak berhak mengubah data milik UPT lain.');
         }
 
@@ -153,17 +153,17 @@ class OverstayingController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('overstaying')) {
+        if (! $user->hasAccess('overstaying')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
         $data = DataOverstaying::findOrFail($id);
-        if (!$user->isAdmin() && $user->upt_id && (int) $data->upt_id !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && (int) $data->upt_id !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda tidak berhak menghapus data milik UPT lain.');
         }
 

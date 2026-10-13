@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\DataBebasHarian;
-use App\Models\DataIntegrasi;
 use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
 use App\Models\Instansi;
@@ -30,11 +29,11 @@ class DashboardController extends Controller
 
         // UPT with Data query
         $uptDataQuery = DB::table('data_penghuni')->where('tanggal', $filterTanggal)
-            ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))
             ->select('upt_id')
-            ->union(DB::table('data_overstaying')->where('tanggal', $filterTanggal)->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))->select('upt_id'))
-            ->union(DB::table('data_integrasi')->where('tanggal', $filterTanggal)->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))->select('upt_id'))
-            ->union(DB::table('data_bebas_harian')->where('tanggal', $filterTanggal)->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))->select('upt_id'))
+            ->union(DB::table('data_overstaying')->where('tanggal', $filterTanggal)->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))->select('upt_id'))
+            ->union(DB::table('data_integrasi')->where('tanggal', $filterTanggal)->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))->select('upt_id'))
+            ->union(DB::table('data_bebas_harian')->where('tanggal', $filterTanggal)->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))->select('upt_id'))
             ->distinct()
             ->pluck('upt_id');
 
@@ -47,12 +46,12 @@ class DashboardController extends Controller
 
         // Penghuni Base Query
         $penghuniBase = DataPenghuni::where('tanggal', $filterTanggal)
-            ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt));
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt));
 
         // Main stats (excluding lainnya)
         $mainPenghuni = DB::table('data_penghuni')
             ->where('tanggal', $filterTanggal)
-            ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))
             ->whereNotIn('klasifikasi_pidana', $klasifikasiLainnya)
             ->selectRaw('
                 COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan), 0) as total_tahanan,
@@ -74,7 +73,7 @@ class DashboardController extends Controller
 
         // Overstaying Total
         $totalOverstaying = (int) DataOverstaying::where('tanggal', $filterTanggal)
-            ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))
             ->sum(DB::raw('overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av'));
 
         // Helper Klasifikasi Total (1 single query instead of 8 separate queries)
@@ -84,11 +83,12 @@ class DashboardController extends Controller
             ->groupBy('klasifikasi_pidana')
             ->pluck('total', 'klasifikasi_pidana');
 
-        $sumForList = function(array $list) use ($klasifikasiSums) {
+        $sumForList = function (array $list) use ($klasifikasiSums) {
             $sum = 0;
             foreach ($list as $k) {
                 $sum += (int) ($klasifikasiSums[$k] ?? 0);
             }
+
             return $sum;
         };
 
@@ -103,7 +103,7 @@ class DashboardController extends Controller
 
         // Bebas Harian Stats
         $bebasRes = DataBebasHarian::where('tanggal', $filterTanggal)
-            ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))
             ->selectRaw('
                 COALESCE(SUM(bebas_murni), 0) as bm,
                 COALESCE(SUM(pb), 0) as pb,
@@ -151,7 +151,7 @@ class DashboardController extends Controller
         }
 
         $overstayingData = DataOverstaying::where('tanggal', $filterTanggal)
-            ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt_id', $filterUpt))
             ->selectRaw('
                 SUM(tahanan_ai) as tahanan_ai, SUM(tahanan_aii) as tahanan_aii, 
                 SUM(tahanan_aiii) as tahanan_aiii, SUM(tahanan_aiv) as tahanan_aiv, SUM(tahanan_av) as tahanan_av,
@@ -162,8 +162,8 @@ class DashboardController extends Controller
 
         if ($overstayingData) {
             foreach ($kategoriOverstaying as $key => $label) {
-                $tahanan = (int) ($overstayingData->{'tahanan_' . $key} ?? 0);
-                $overstaying = (int) ($overstayingData->{'overstaying_' . $key} ?? 0);
+                $tahanan = (int) ($overstayingData->{'tahanan_'.$key} ?? 0);
+                $overstaying = (int) ($overstayingData->{'overstaying_'.$key} ?? 0);
                 $overstayingStats[$key] = [
                     'tahanan' => $tahanan,
                     'overstaying' => $overstaying,
@@ -174,7 +174,7 @@ class DashboardController extends Controller
 
         // Data per UPT for Overkapasitas Table & Leaflet Map Locations
         $uptDataTable = Upt::select('upt.id', 'upt.nama_upt', 'upt.kapasitas', 'upt.alamat', 'upt.latitude', 'upt.longitude')
-            ->when($filterUpt > 0, fn($q) => $q->where('upt.id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt.id', $filterUpt))
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN dp.klasifikasi_pidana NOT IN ('WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup') 
                     THEN dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan ELSE 0 END), 0) as total_tahanan,
@@ -184,7 +184,7 @@ class DashboardController extends Controller
                     THEN dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + 
                     dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan ELSE 0 END), 0) as total_penghuni
             ")
-            ->leftJoin('data_penghuni as dp', function($join) use ($filterTanggal) {
+            ->leftJoin('data_penghuni as dp', function ($join) use ($filterTanggal) {
                 $join->on('upt.id', '=', 'dp.upt_id')->where('dp.tanggal', '=', $filterTanggal);
             })
             ->groupBy('upt.id', 'upt.nama_upt', 'upt.kapasitas', 'upt.alamat', 'upt.latitude', 'upt.longitude')
@@ -201,11 +201,11 @@ class DashboardController extends Controller
             ->get();
 
         // UPT Locations for Leaflet Map (Reuses uptDataTable to eliminate duplicate query)
-        $uptLocations = $uptDataTable->filter(fn($u) => !is_null($u->latitude) && !is_null($u->longitude))->values();
+        $uptLocations = $uptDataTable->filter(fn ($u) => ! is_null($u->latitude) && ! is_null($u->longitude))->values();
 
         // Data Penghuni Berdasarkan Jenis Kejahatan Table
         $jenisKejahatanData = Upt::select('upt.id', 'upt.nama_upt')
-            ->when($filterUpt > 0, fn($q) => $q->where('upt.id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt.id', $filterUpt))
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN dp.klasifikasi_pidana = 'Pidana Umum' 
                     THEN dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + 
@@ -255,7 +255,7 @@ class DashboardController extends Controller
                 COALESCE(SUM(dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + 
                              dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan), 0) as total_penghuni
             ")
-            ->leftJoin('data_penghuni as dp', function($join) use ($filterTanggal) {
+            ->leftJoin('data_penghuni as dp', function ($join) use ($filterTanggal) {
                 $join->on('upt.id', '=', 'dp.upt_id')->where('dp.tanggal', '=', $filterTanggal);
             })
             ->groupBy('upt.id', 'upt.nama_upt')
@@ -267,7 +267,7 @@ class DashboardController extends Controller
 
         // Data Bebas Harian per UPT
         $bebasHarianUptData = Upt::select('upt.id', 'upt.nama_upt')
-            ->when($filterUpt > 0, fn($q) => $q->where('upt.id', $filterUpt))
+            ->when($filterUpt > 0, fn ($q) => $q->where('upt.id', $filterUpt))
             ->selectRaw('
                 COALESCE(SUM(dbh.bebas_murni), 0) as bebas_murni,
                 COALESCE(SUM(dbh.pb), 0) as pb,
@@ -278,7 +278,7 @@ class DashboardController extends Controller
                 COALESCE(SUM(dbh.lainnya), 0) as lainnya,
                 COALESCE(SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya), 0) as total_bebas
             ')
-            ->leftJoin('data_bebas_harian as dbh', function($join) use ($filterTanggal) {
+            ->leftJoin('data_bebas_harian as dbh', function ($join) use ($filterTanggal) {
                 $join->on('upt.id', '=', 'dbh.upt_id')->where('dbh.tanggal', '=', $filterTanggal);
             })
             ->groupBy('upt.id', 'upt.nama_upt')

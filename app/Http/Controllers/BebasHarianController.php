@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\DataBebasHarian;
-use App\Models\Instansi;
 use App\Models\Upt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,22 +11,22 @@ use Illuminate\Support\Facades\DB;
 class BebasHarianController extends Controller
 {
     private $klasifikasiList = [
-        'Pidana Umum'       => 'pidana_umum',
-        'Tipikor'           => 'tipikor',
-        'Narkoba Bandar'    => 'narkoba_bandar',
-        'Narkoba Pengguna'  => 'narkoba_pengguna',
-        'Teroris'           => 'teroris',
-        'Trafficking'       => 'trafficking',
-        'Ilegal Logging'    => 'ilegal_logging',
-        'Money Laundering'  => 'money_laundering',
-        'Genosida'          => 'genosida',
-        'UU ITE'            => 'uu_ite'
+        'Pidana Umum' => 'pidana_umum',
+        'Tipikor' => 'tipikor',
+        'Narkoba Bandar' => 'narkoba_bandar',
+        'Narkoba Pengguna' => 'narkoba_pengguna',
+        'Teroris' => 'teroris',
+        'Trafficking' => 'trafficking',
+        'Ilegal Logging' => 'ilegal_logging',
+        'Money Laundering' => 'money_laundering',
+        'Genosida' => 'genosida',
+        'UU ITE' => 'uu_ite',
     ];
 
     public function index(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('bebas_harian')) {
+        if (! $user->hasAccess('bebas_harian')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -96,14 +95,14 @@ class BebasHarianController extends Controller
     public function detail(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('bebas_harian')) {
+        if (! $user->hasAccess('bebas_harian')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $uptId = (int) $request->query('upt_id');
         $tanggal = $request->query('tanggal');
 
-        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             return response()->json(['message' => 'Akses ditolak.'], 403);
         }
 
@@ -117,12 +116,12 @@ class BebasHarianController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('bebas_harian')) {
+        if (! $user->hasAccess('bebas_harian')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
@@ -135,7 +134,7 @@ class BebasHarianController extends Controller
         $tanggal = $request->input('tanggal');
         $keteranganGlobal = $request->input('keterangan_global', '');
 
-        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
@@ -151,14 +150,14 @@ class BebasHarianController extends Controller
                     'upt_id' => $uptId,
                     'tanggal' => $tanggal,
                     'klasifikasi_pidana' => $klasifikasi,
-                    'bebas_murni' => (int) $request->input('bebas_murni_' . $key, 0),
-                    'pb' => (int) $request->input('pb_' . $key, 0),
-                    'cb' => (int) $request->input('cb_' . $key, 0),
-                    'cmb' => (int) $request->input('cmb_' . $key, 0),
-                    'asimilasi' => (int) $request->input('asimilasi_' . $key, 0),
-                    'bdh' => (int) $request->input('bdh_' . $key, 0),
-                    'lainnya' => (int) $request->input('lainnya_' . $key, 0),
-                    'ket_lainnya' => $request->input('ket_lainnya_' . $key, ''),
+                    'bebas_murni' => (int) $request->input('bebas_murni_'.$key, 0),
+                    'pb' => (int) $request->input('pb_'.$key, 0),
+                    'cb' => (int) $request->input('cb_'.$key, 0),
+                    'cmb' => (int) $request->input('cmb_'.$key, 0),
+                    'asimilasi' => (int) $request->input('asimilasi_'.$key, 0),
+                    'bdh' => (int) $request->input('bdh_'.$key, 0),
+                    'lainnya' => (int) $request->input('lainnya_'.$key, 0),
+                    'ket_lainnya' => $request->input('ket_lainnya_'.$key, ''),
                     'keterangan' => $keteranganGlobal,
                 ]);
             }
@@ -179,19 +178,20 @@ class BebasHarianController extends Controller
             return back()->with('success', 'Data bebas harian berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage());
         }
     }
 
     public function update(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('bebas_harian')) {
+        if (! $user->hasAccess('bebas_harian')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
@@ -204,7 +204,7 @@ class BebasHarianController extends Controller
         $tanggal = $request->input('edit_tanggal');
         $keteranganGlobal = $request->input('edit_keterangan_global', '');
 
-        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda tidak berhak mengubah data milik UPT lain.');
         }
 
@@ -218,14 +218,14 @@ class BebasHarianController extends Controller
                     'upt_id' => $uptId,
                     'tanggal' => $tanggal,
                     'klasifikasi_pidana' => $klasifikasi,
-                    'bebas_murni' => (int) $request->input('edit_bebas_murni_' . $key, 0),
-                    'pb' => (int) $request->input('edit_pb_' . $key, 0),
-                    'cb' => (int) $request->input('edit_cb_' . $key, 0),
-                    'cmb' => (int) $request->input('edit_cmb_' . $key, 0),
-                    'asimilasi' => (int) $request->input('edit_asimilasi_' . $key, 0),
-                    'bdh' => (int) $request->input('edit_bdh_' . $key, 0),
-                    'lainnya' => (int) $request->input('edit_lainnya_' . $key, 0),
-                    'ket_lainnya' => $request->input('edit_ket_lainnya_' . $key, ''),
+                    'bebas_murni' => (int) $request->input('edit_bebas_murni_'.$key, 0),
+                    'pb' => (int) $request->input('edit_pb_'.$key, 0),
+                    'cb' => (int) $request->input('edit_cb_'.$key, 0),
+                    'cmb' => (int) $request->input('edit_cmb_'.$key, 0),
+                    'asimilasi' => (int) $request->input('edit_asimilasi_'.$key, 0),
+                    'bdh' => (int) $request->input('edit_bdh_'.$key, 0),
+                    'lainnya' => (int) $request->input('edit_lainnya_'.$key, 0),
+                    'ket_lainnya' => $request->input('edit_ket_lainnya_'.$key, ''),
                     'keterangan' => $keteranganGlobal,
                 ]);
             }
@@ -246,26 +246,27 @@ class BebasHarianController extends Controller
             return back()->with('success', 'Data bebas harian berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal memperbarui data: '.$e->getMessage());
         }
     }
 
     public function destroy(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('bebas_harian')) {
+        if (! $user->hasAccess('bebas_harian')) {
             abort(403);
         }
 
         $timeCheck = isInputTimeAllowed();
-        if (!$timeCheck['allowed']) {
+        if (! $timeCheck['allowed']) {
             return back()->with('error', $timeCheck['message']);
         }
 
         $uptId = (int) $request->input('del_upt_id');
         $tanggal = $request->input('del_tanggal');
 
-        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+        if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda tidak berhak menghapus data milik UPT lain.');
         }
 
@@ -284,7 +285,7 @@ class BebasHarianController extends Controller
 
             return back()->with('success', 'Data bebas harian berhasil dihapus.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus data: '.$e->getMessage());
         }
     }
 }

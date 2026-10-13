@@ -8,6 +8,7 @@
             --secondary-color: #764ba2;
             --text-primary: #212529;
             --text-secondary: #6c757d;
+            --text-muted: #6c757d;
             --border-color: #e9ecef;
             --text-overstaying: #dc2626;
             --text-lainnya: #e65100;
@@ -19,6 +20,7 @@
             --bg-topbar: #1e293b;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
+            --text-muted: #94a3b8;
             --border-color: #334155;
             --text-overstaying: #f87171;
             --text-lainnya: #fb923c;
@@ -27,6 +29,7 @@
         /* Text color classes */
         .text-overstaying { color: var(--text-overstaying); }
         .text-lainnya { color: var(--text-lainnya); }
+        .text-purple { color: #8b5cf6 !important; }
 
         /* Dark Mode Text Fixes */
         [data-theme="dark"] .stat-label {
@@ -39,7 +42,39 @@
         }
 
         [data-theme="dark"] .text-muted {
-            color: var(--text-muted) !important;
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="dark"] .text-secondary {
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="dark"] .text-success {
+            color: #34d399 !important;
+        }
+
+        [data-theme="dark"] .text-danger {
+            color: #fb7185 !important;
+        }
+
+        [data-theme="dark"] .text-primary {
+            color: #60a5fa !important;
+        }
+
+        [data-theme="dark"] .text-info {
+            color: #22d3ee !important;
+        }
+
+        [data-theme="dark"] .text-warning {
+            color: #fbbf24 !important;
+        }
+
+        [data-theme="dark"] .text-warning-emphasis {
+            color: #fbbf24 !important;
+        }
+
+        [data-theme="dark"] .text-purple {
+            color: #c084fc !important;
         }
 
         [data-theme="dark"] .form-label {
@@ -1126,12 +1161,21 @@
             }
         }
 
-        /* Bento Grid Layout */
-        .bento-hero-grid {
+        /* Bento Cockpit Layout (Center Speedometer Flanked by 3 Cards Left & 3 Cards Right) */
+        .bento-hero-grid,
+        .bento-cockpit-grid {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
+            grid-template-columns: minmax(230px, 3.1fr) minmax(460px, 5.8fr) minmax(230px, 3.1fr);
             gap: 16px;
             margin-bottom: 24px;
+            align-items: stretch;
+        }
+
+        .bento-flank {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: space-between;
         }
 
         .bento-card {
@@ -1153,48 +1197,149 @@
             box-shadow: var(--bento-shadow-hover);
         }
 
-        /* Hero Bento Card (Main Occupancy Speedometer Card) */
+        /* Hero Bento Card (Main Occupancy Speedometer Card - Center Cockpit) */
         .bento-card-hero {
-            grid-column: span 5;
+            grid-column: auto;
             background: linear-gradient(145deg, rgba(14, 165, 233, 0.12) 0%, var(--bento-bg) 65%);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            height: 100%;
+            border-color: rgba(14, 165, 233, 0.25);
+            box-shadow: var(--bento-shadow), 0 0 0 1px rgba(14, 165, 233, 0.15);
         }
 
         [data-theme="dark"] .bento-card-hero {
-            background: linear-gradient(145deg, rgba(14, 165, 233, 0.16) 0%, rgba(13, 22, 42, 0.85) 65%) !important;
-            border-color: rgba(56, 189, 248, 0.28) !important;
-            box-shadow: 0 10px 35px -5px rgba(14, 165, 233, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+            background: linear-gradient(145deg, rgba(14, 165, 233, 0.18) 0%, rgba(13, 22, 42, 0.9) 65%) !important;
+            border-color: rgba(56, 189, 248, 0.35) !important;
+            box-shadow: 0 12px 40px -6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 189, 248, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
         }
 
-        .bento-card-subhero {
-            grid-column: span 7;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+        .speedo-cockpit-center {
+            grid-column: auto;
         }
 
+        /* Speedometer Flank Cards */
+        .speedo-flank-card {
+            background: var(--bento-bg);
+            border: 1px solid var(--bento-border);
+            border-radius: 16px;
+            padding: 12px 14px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speedo-flank-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--bento-border-hover);
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .speedo-flank-card {
+            background: rgba(18, 28, 51, 0.72) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+        }
+
+        [data-theme="dark"] .speedo-flank-card:hover {
+            background: rgba(24, 38, 68, 0.88) !important;
+            border-color: rgba(56, 189, 248, 0.4) !important;
+            box-shadow: 0 8px 24px rgba(0, 242, 254, 0.12) !important;
+        }
+
+        .speedo-flank-card .bento-stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text-primary);
+        }
+
+        .speedo-flank-card .bento-stat-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+        }
+
+        /* Speedometer Telemetry Horizontal Progress Bar */
+        .speedo-telemetry-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(148, 163, 184, 0.18);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        [data-theme="dark"] .speedo-telemetry-track {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .speedo-telemetry-fill {
+            height: 100%;
+            border-radius: 4px;
+            box-shadow: 0 0 10px var(--bar-glow, rgba(56, 189, 248, 0.6));
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Responsive Breakpoints for Bento Cockpit */
         @media (max-width: 1199.98px) {
-            .bento-card-hero { grid-column: span 12; }
-            .bento-card-subhero { grid-column: span 12; }
+            .bento-cockpit-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .speedo-cockpit-center {
+                grid-column: span 2 !important;
+                order: 1;
+                margin-bottom: 4px;
+            }
+            .bento-flank.flank-left {
+                order: 2;
+                grid-column: span 1;
+            }
+            .bento-flank.flank-right {
+                order: 3;
+                grid-column: span 1;
+            }
         }
 
         @media (max-width: 767.98px) {
-            .bento-card-subhero { grid-template-columns: repeat(2, 1fr); }
+            .bento-cockpit-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12px !important;
+            }
+            .speedo-cockpit-center {
+                width: 100% !important;
+                order: 1 !important;
+            }
+            .bento-flank.flank-left {
+                order: 2 !important;
+                width: 100% !important;
+            }
+            .bento-flank.flank-right {
+                order: 3 !important;
+                width: 100% !important;
+            }
+            .speedo-flank-card {
+                padding: 10px 12px;
+            }
+            .speedo-flank-card .bento-stat-value {
+                font-size: 20px;
+            }
         }
 
-        @media (max-width: 480px) {
-            .bento-card-subhero { grid-template-columns: 1fr; }
-        }
-
-        /* Speedometer Arc Gauge Container */
+        /* Speedometer Arc Gauge Container (Enlarged & Balanced) */
         .speedo-gauge-box {
             position: relative;
-            width: 220px;
+            width: 320px;
             max-width: 100%;
-            height: 125px;
-            margin: 0 auto;
+            height: 185px;
+            margin: 4px auto 16px auto;
             display: flex;
             align-items: flex-end;
             justify-content: center;
@@ -1209,21 +1354,21 @@
         .speedo-track {
             fill: none;
             stroke: var(--speedo-track);
-            stroke-width: 12;
+            stroke-width: 14;
             stroke-linecap: round;
         }
 
         .speedo-fill {
             fill: none;
-            stroke-width: 12;
+            stroke-width: 14;
             stroke-linecap: round;
             transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 0 10px var(--gauge-glow, rgba(56, 189, 248, 0.5)));
+            filter: drop-shadow(0 0 14px var(--gauge-glow, rgba(56, 189, 248, 0.6)));
         }
 
         .speedo-gauge-content {
             position: absolute;
-            bottom: 4px;
+            bottom: 14px;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -1233,32 +1378,71 @@
         }
 
         .radial-gauge-val {
-            font-size: 34px !important;
+            font-size: 52px !important;
             font-weight: 800 !important;
             line-height: 1 !important;
             color: var(--speedo-text) !important;
             letter-spacing: 0.02em !important;
-            text-shadow: 0 0 20px rgba(56, 189, 248, 0.45);
+            text-shadow: 0 0 28px rgba(56, 189, 248, 0.45);
         }
 
         .radial-gauge-sub {
-            font-size: 10.5px !important;
+            font-size: 13.5px !important;
             font-weight: 700 !important;
             text-transform: uppercase !important;
-            letter-spacing: 0.08em !important;
+            letter-spacing: 0.1em !important;
             color: var(--text-secondary) !important;
-            margin-top: 3px;
+            margin-top: 6px;
         }
 
         .speedo-ticks {
             position: absolute;
             bottom: -22px;
-            width: 204px;
+            width: 84%;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 4px;
+            padding: 0;
             z-index: 2;
+        }
+
+        /* Prominent Overkapasitas Badge in Hero Card */
+        .speedo-over-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px !important;
+            border-radius: 22px !important;
+            font-size: 12.5px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .speedo-over-badge .overkapasitas-val {
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0.02em;
+        }
+
+        .speedo-over-badge .overkapasitas-lbl {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        [data-theme="dark"] .speedo-over-badge.pill-badge-rose {
+            box-shadow: 0 0 16px rgba(244, 63, 94, 0.25);
+        }
+        [data-theme="dark"] .speedo-over-badge.pill-badge-amber {
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+        }
+        [data-theme="dark"] .speedo-over-badge.pill-badge-emerald {
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
         }
 
         .speedo-tick-item {
@@ -1323,6 +1507,134 @@
         [data-theme="dark"] .speedo-tick-item.tick-max .tick-label {
             color: #fb7185;
             text-shadow: 0 0 10px rgba(251, 113, 133, 0.6);
+        }
+
+        /* Speedometer Dual Cockpit Cluster */
+        .speedo-cluster-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 12px;
+            margin: 6px auto 20px auto;
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .speedo-dial-box {
+            position: relative;
+            flex: 1 1 0;
+            max-width: 220px;
+            height: 145px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .speedo-cluster-divider {
+            width: 1px;
+            height: 95px;
+            background: linear-gradient(180deg, transparent 0%, var(--bento-border) 25%, var(--bento-border) 75%, transparent 100%);
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .speedo-cluster-divider {
+            background: linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.3) 25%, rgba(56, 189, 248, 0.3) 75%, transparent 100%);
+            opacity: 0.8;
+        }
+
+        .speedo-cluster-val {
+            font-size: 32px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            letter-spacing: 0.02em !important;
+            white-space: nowrap;
+        }
+
+        [data-theme="dark"] .speedo-cluster-val {
+            text-shadow: 0 0 22px currentColor;
+        }
+
+        .speedo-cluster-sub {
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.08em !important;
+            color: var(--text-secondary) !important;
+            margin-top: 5px;
+            white-space: nowrap;
+        }
+
+        /* Tick specific themes for Cluster */
+        .speedo-tick-item.tick-hunian-min .tick-pip {
+            background: #00f2fe;
+            box-shadow: 0 0 6px #00f2fe;
+            opacity: 0.95;
+        }
+        .speedo-tick-item.tick-hunian-min .tick-label {
+            color: #0284c7;
+        }
+        [data-theme="dark"] .speedo-tick-item.tick-hunian-min .tick-label {
+            color: #38bdf8;
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+        }
+
+        .speedo-tick-item.tick-hunian-max .tick-pip {
+            background: #0284c7;
+            box-shadow: 0 0 6px #0284c7;
+            opacity: 0.95;
+        }
+        .speedo-tick-item.tick-hunian-max .tick-label {
+            color: #0284c7;
+        }
+        [data-theme="dark"] .speedo-tick-item.tick-hunian-max .tick-label {
+            color: #38bdf8;
+        }
+
+        .speedo-tick-item.tick-over-min .tick-pip {
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+            opacity: 0.95;
+        }
+        .speedo-tick-item.tick-over-min .tick-label {
+            color: #059669;
+        }
+        [data-theme="dark"] .speedo-tick-item.tick-over-min .tick-label {
+            color: #34d399;
+        }
+
+        .speedo-tick-item.tick-over-max .tick-pip {
+            background: #f43f5e;
+            box-shadow: 0 0 6px #f43f5e;
+            opacity: 0.95;
+        }
+        .speedo-tick-item.tick-over-max .tick-label {
+            color: #e11d48;
+        }
+        [data-theme="dark"] .speedo-tick-item.tick-over-max .tick-label {
+            color: #fb7185;
+            text-shadow: 0 0 8px rgba(251, 113, 133, 0.6);
+        }
+
+        @media (max-width: 575.98px) {
+            .speedo-cluster-wrap {
+                gap: 6px;
+                margin-bottom: 14px;
+            }
+            .speedo-dial-box {
+                height: 120px;
+                max-width: 155px;
+            }
+            .speedo-cluster-val {
+                font-size: 24px !important;
+            }
+            .speedo-cluster-sub {
+                font-size: 9.5px !important;
+            }
+            .speedo-ticks .speedo-tick-item .tick-label {
+                font-size: 10px;
+            }
         }
 
         /* Stat Card Mini inside Bento */
@@ -1599,6 +1911,10 @@
         /* Donut Cockpit Telemetry */
         .donut-chart-container {
             position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .donut-center-telemetry {
@@ -1615,7 +1931,7 @@
         }
 
         .donut-center-val {
-            font-size: 26px;
+            font-size: 34px;
             font-weight: 800;
             line-height: 1;
             color: var(--text-primary);
@@ -1624,16 +1940,16 @@
 
         [data-theme="dark"] .donut-center-val {
             color: #f8fafc;
-            text-shadow: 0 0 16px rgba(99, 102, 241, 0.45);
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
         }
 
         .donut-center-sub {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             color: var(--text-secondary);
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
         .donut-legend-pip {
@@ -1671,6 +1987,18 @@
         [data-theme="dark"] .telemetry-legend-item {
             background: rgba(18, 28, 51, 0.45);
             border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="dark"] .telemetry-legend-item strong {
+            color: #ffffff !important;
+        }
+
+        [data-theme="dark"] .telemetry-legend-name {
+            color: #e2e8f0 !important;
+        }
+
+        [data-theme="dark"] .telemetry-legend-pct {
+            color: #cbd5e1 !important;
         }
 
         .telemetry-legend-item:hover {
@@ -1717,14 +2045,24 @@
         }
 
         /* Snapshot Cards Styling */
+        .snapshot-card {
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 84px;
+            transition: all 0.25s ease;
+        }
+
         .snapshot-card-label {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
             color: var(--text-secondary);
             margin-bottom: 2px;
-            white-space: nowrap;
+            line-height: 1.2;
+            word-break: break-word;
         }
 
         .snapshot-card-value {
@@ -1735,12 +2073,37 @@
             font-family: var(--font-speedometer) !important;
         }
 
+        .snapshot-card-sub {
+            font-size: 10.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.2;
+        }
+
+        [data-theme="dark"] .snapshot-card-label {
+            color: #cbd5e1 !important;
+        }
+        [data-theme="dark"] .snapshot-card-label.text-success { color: #34d399 !important; }
+        [data-theme="dark"] .snapshot-card-label.text-danger { color: #fb7185 !important; }
+        [data-theme="dark"] .snapshot-card-label.text-primary { color: #60a5fa !important; }
+        [data-theme="dark"] .snapshot-card-label.text-info { color: #22d3ee !important; }
+        [data-theme="dark"] .snapshot-card-label.text-warning,
+        [data-theme="dark"] .snapshot-card-label.text-warning-emphasis { color: #fbbf24 !important; }
+        [data-theme="dark"] .snapshot-card-label.text-purple { color: #c084fc !important; }
+        [data-theme="dark"] .snapshot-card-label.text-muted { color: #94a3b8 !important; }
+
+        [data-theme="dark"] .snapshot-card-value {
+            color: #ffffff !important;
+        }
+
         [data-theme="dark"] .snapshot-card-value.text-danger {
             color: #fb7185 !important;
             text-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
         }
 
-        [data-theme="dark"] .snapshot-card-value.text-warning {
+        [data-theme="dark"] .snapshot-card-value.text-warning,
+        [data-theme="dark"] .snapshot-card-value.text-warning-emphasis {
             color: #fbbf24 !important;
             text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
         }
@@ -1750,22 +2113,1211 @@
             text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
         }
 
+        [data-theme="dark"] .snapshot-card-value.text-primary {
+            color: #60a5fa !important;
+            text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+        }
+
+        [data-theme="dark"] .snapshot-card-value.text-info {
+            color: #22d3ee !important;
+            text-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+        }
+
+        [data-theme="dark"] .snapshot-card-value.text-purple {
+            color: #c084fc !important;
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+        }
+
+        [data-theme="dark"] .snapshot-card-value.text-secondary {
+            color: #cbd5e1 !important;
+        }
+
+        [data-theme="dark"] .snapshot-card-value.text-muted {
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="dark"] .snapshot-card-sub {
+            color: #94a3b8 !important;
+        }
+        [data-theme="dark"] .snapshot-card-sub.text-success { color: #34d399 !important; }
+
         .snapshot-card-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13.5px;
+            flex-shrink: 0;
+            transition: all 0.25s ease;
+        }
+
+        .snapshot-card:hover .snapshot-card-icon {
+            transform: scale(1.1);
+        }
+
+        /* ========================================================
+           GLOBAL MOBILE RESPONSIVE OPTIMIZATIONS
+           ======================================================== */
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw;
+        }
+
+        .content-wrapper {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        @media (max-width: 767.98px) {
+            .content-wrapper {
+                padding: 12px 10px !important;
+            }
+
+            .exec-filter-bar {
+                padding: 12px 12px !important;
+                border-radius: 14px !important;
+                margin-bottom: 12px !important;
+            }
+
+            .exec-tabs-wrapper {
+                position: relative !important;
+                top: 0 !important;
+                margin-bottom: 14px !important;
+                padding: 4px !important;
+                border-radius: 12px !important;
+            }
+
+            .exec-tab-btn {
+                padding: 6px 12px !important;
+                font-size: 11px !important;
+            }
+
+            .exec-tab-btn.ms-auto {
+                margin-left: 0 !important;
+            }
+
+            .bento-hero-grid {
+                gap: 10px !important;
+                margin-bottom: 14px !important;
+            }
+
+            .bento-card {
+                padding: 14px 14px !important;
+                border-radius: 16px !important;
+            }
+
+            .chart-card-modern {
+                padding: 14px 14px !important;
+                border-radius: 16px !important;
+                margin-bottom: 14px !important;
+            }
+
+            .bento-stat-mini {
+                padding: 10px 12px !important;
+                border-radius: 12px !important;
+            }
+
+            .bento-stat-value {
+                font-size: 20px !important;
+            }
+
+            .bento-stat-label {
+                font-size: 9.5px !important;
+            }
+
+            .bento-stat-icon {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 12px !important;
+                border-radius: 8px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .snapshot-card {
+                padding: 10px 12px !important;
+                min-height: 74px !important;
+            }
+
+            .snapshot-card-label {
+                font-size: 9.5px !important;
+                letter-spacing: 0.02em !important;
+            }
+
+            .snapshot-card-value {
+                font-size: 20px !important;
+            }
+
+            .snapshot-card-icon {
+                width: 26px !important;
+                height: 26px !important;
+                font-size: 11.5px !important;
+                border-radius: 7px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 10px 8px !important;
+            }
+
+            .speedo-gauge-box {
+                width: 250px !important;
+                height: 150px !important;
+            }
+
+            .radial-gauge-val {
+                font-size: 38px !important;
+            }
+
+            .radial-gauge-sub {
+                font-size: 11px !important;
+            }
+
+            .speedo-ticks {
+                width: 86% !important;
+            }
+
+            .speedo-tick-item .tick-label {
+                font-size: 11.5px !important;
+            }
+
+            .hud-over-telemetry-badge {
+                padding: 4px 10px !important;
+            }
+
+            .hud-over-huge-val {
+                font-size: 20px !important;
+            }
+
+            .hud-over-title {
+                font-size: 8.5px !important;
+            }
+
+            .donut-center-val {
+                font-size: 22px !important;
+            }
+        }
+
+        /* ========================================================== */
+        /* TACTICAL GIS COMMAND CENTER & LEAFLET HUD STYLING          */
+        /* ========================================================== */
+
+        /* Map Card Container */
+        .map-command-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #mapBanten {
+            height: 440px;
+            width: 100%;
+            border-radius: 14px;
+            z-index: 1;
+            border: 1px solid var(--border-color, #e2e8f0);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: border-color 0.3s ease;
+        }
+
+        [data-theme="dark"] #mapBanten {
+            border-color: rgba(56, 189, 248, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.08);
+        }
+
+        /* 100% Free Dark Basemap Tiles (No API Key Required) */
+        .hud-dark-base-tiles {
+            filter: brightness(0.92) contrast(1.16) hue-rotate(195deg) saturate(0.85);
+            transition: filter 0.3s ease;
+        }
+
+        .hud-dark-ref-tiles {
+            filter: brightness(1.1) contrast(1.1);
+        }
+
+        /* Map Header Controls */
+        .hud-control-btn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 11px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            background: rgba(56, 189, 248, 0.1);
+            color: #0284c7;
+        }
+
+        .hud-control-btn:hover {
+            background: #0284c7;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        [data-theme="dark"] .hud-control-btn {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+        }
+
+        [data-theme="dark"] .hud-control-btn:hover {
+            background: #38bdf8;
+            color: #0f172a;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Map Filter Chips */
+        .map-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .map-filter-chip {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color, #cbd5e1);
+            background: var(--card-bg, #ffffff);
+            color: var(--text-secondary, #64748b);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .map-filter-chip:hover {
+            color: #0284c7;
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .map-filter-chip.active {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+        }
+
+        [data-theme="dark"] .map-filter-chip {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .map-filter-chip:hover {
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.12);
+        }
+
+        [data-theme="dark"] .map-filter-chip.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(37, 99, 235, 0.35));
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+        }
+
+        /* High-Tech Tactical Radar Map Markers */
+        .hud-leaflet-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .hud-marker-wrapper {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hud-marker-wrapper:hover {
+            transform: scale(1.18);
+            z-index: 9999 !important;
+        }
+
+        /* Outer Radar Ping Animation */
+        .hud-marker-pulse {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: hudRadarPing 2.4s infinite cubic-bezier(0.2, 0.6, 0.35, 1);
+        }
+
+        @keyframes hudRadarPing {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.9;
+            }
+            70% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+        }
+
+        /* Core Marker Icon Badge */
+        .hud-marker-core {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 11px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+            transition: all 0.2s ease;
+        }
+
+        /* Floating Status Tag */
+        .hud-marker-badge {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 1px 5px;
+            border-radius: 8px;
+            color: #ffffff;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* Status: Longgar / Emerald */
+        .hud-emerald .hud-marker-core {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+        }
+        .hud-emerald .hud-marker-pulse {
+            background: rgba(16, 185, 129, 0.45);
+        }
+        .hud-emerald .hud-marker-badge {
+            background: #047857;
+        }
+
+        /* Status: Waspada / Amber */
+        .hud-amber .hud-marker-core {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+        }
+        .hud-amber .hud-marker-pulse {
+            background: rgba(245, 158, 11, 0.5);
+        }
+        .hud-amber .hud-marker-badge {
+            background: #b45309;
+        }
+
+        /* Status: Kritis / Overkapasitas / Rose */
+        .hud-rose .hud-marker-core {
+            background: linear-gradient(135deg, #f43f5e, #e11d48);
+            box-shadow: 0 0 18px rgba(244, 63, 94, 0.8);
+            animation: hudPulseFast 1.8s infinite alternate;
+        }
+        .hud-rose .hud-marker-pulse {
+            background: rgba(244, 63, 94, 0.55);
+            animation-duration: 1.6s;
+        }
+        .hud-rose .hud-marker-badge {
+            background: #be123c;
+        }
+
+        @keyframes hudPulseFast {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        /* Leaflet Popup HUD Custom Styling */
+        .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.96) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(2, 132, 199, 0.25) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 0 20px rgba(2, 132, 199, 0.12) !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .leaflet-popup-content-wrapper {
+            background: rgba(13, 22, 42, 0.94) !important;
+            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.15) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(255, 255, 255, 0.96) !important;
+            border: 1px solid rgba(2, 132, 199, 0.25) !important;
+            border-top: none !important;
+            border-left: none !important;
+        }
+
+        [data-theme="dark"] .leaflet-popup-tip {
+            background: rgba(13, 22, 42, 0.94) !important;
+            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+            border-top: none !important;
+            border-left: none !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 0 !important;
+            line-height: 1.4;
+        }
+
+        .leaflet-container a.leaflet-popup-close-button {
+            top: 10px !important;
+            right: 12px !important;
+            color: #64748b !important;
+            padding: 4px !important;
+            font-size: 16px !important;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        [data-theme="dark"] .leaflet-container a.leaflet-popup-close-button {
+            color: #94a3b8 !important;
+        }
+
+        .leaflet-container a.leaflet-popup-close-button:hover {
+            color: #f43f5e !important;
+            background: rgba(244, 63, 94, 0.15);
+        }
+
+        /* Popup Content HUD Layout */
+        .hud-popup-card {
+            min-width: 250px;
+            max-width: 290px;
+            font-family: var(--font-ui, sans-serif);
+        }
+
+        .hud-popup-header {
+            padding: 12px 14px 10px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, transparent 100%);
+        }
+
+        .hud-popup-cat {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #0284c7;
+            margin-bottom: 2px;
+        }
+
+        [data-theme="dark"] .hud-popup-cat {
+            color: #38bdf8;
+        }
+
+        .hud-popup-title {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+        }
+
+        [data-theme="dark"] .hud-popup-title {
+            color: #f8fafc;
+        }
+
+        .hud-popup-body {
+            padding: 10px 14px 14px;
+        }
+
+        /* Clickable Address Link inside Popup */
+        .hud-popup-address {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #64748b;
+            text-decoration: none;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .hud-popup-address:hover {
+            color: #0284c7;
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.35);
+            transform: translateY(-1px);
+        }
+
+        [data-theme="dark"] .hud-popup-address {
+            color: #94a3b8;
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+
+        [data-theme="dark"] .hud-popup-address:hover {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.45);
+        }
+
+        .hud-popup-address-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        /* Popup Telemetry Grid */
+        .hud-popup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .hud-popup-stat {
+            background: rgba(148, 163, 184, 0.06);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 8px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        [data-theme="dark"] .hud-popup-stat {
+            background: rgba(30, 41, 59, 0.5);
+            border-color: rgba(148, 163, 184, 0.15);
+        }
+
+        .hud-popup-stat-lbl {
+            font-size: 9.5px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        [data-theme="dark"] .hud-popup-stat-lbl {
+            color: #94a3b8;
+        }
+
+        .hud-popup-stat-val {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 1px;
+        }
+
+        [data-theme="dark"] .hud-popup-stat-val {
+            color: #f1f5f9;
+        }
+
+        /* Popup Occupancy Progress Track */
+        .hud-popup-progress-track {
+            height: 5px;
+            width: 100%;
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .hud-popup-progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .hud-popup-progress-fill.bg-emerald {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .hud-popup-progress-fill.bg-amber {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .hud-popup-progress-fill.bg-rose {
+            background: linear-gradient(90deg, #f43f5e, #fb7185);
+        }
+
+        /* Action Button for Google Maps Navigation */
+        .hud-btn-maps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #ffffff !important;
+            text-decoration: none;
+            border: none;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .hud-btn-maps:hover {
+            background: linear-gradient(135deg, #0369a1, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+        }
+
+        [data-theme="dark"] .hud-btn-maps {
+            background: linear-gradient(135deg, #0284c7, #1d4ed8);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+        }
+
+        [data-theme="dark"] .hud-btn-maps:hover {
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            color: #0f172a !important;
+            box-shadow: 0 0 24px rgba(56, 189, 248, 0.55);
+        }
+
+        /* Table Enhancements in Tab 2 */
+        .table-address-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10.5px;
+            color: var(--text-secondary, #64748b);
+            text-decoration: none;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: rgba(148, 163, 184, 0.08);
+            transition: all 0.2s ease;
+            max-width: 100%;
+        }
+
+        .table-address-link:hover {
+            color: #0284c7;
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        [data-theme="dark"] .table-address-link {
+            color: #94a3b8;
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        [data-theme="dark"] .table-address-link:hover {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.18);
+        }
+
+        .btn-focus-marker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            transition: all 0.2s ease;
+            color: #0284c7;
+        }
+
+        .btn-focus-marker:hover {
+            background: rgba(56, 189, 248, 0.15);
+            color: #0284c7;
+            transform: scale(1.15);
+        }
+
+        [data-theme="dark"] .btn-focus-marker {
+            color: #38bdf8;
+        }
+
+        [data-theme="dark"] .btn-focus-marker:hover {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+        }
+
+        /* ========================================================== */
+        /* TAB 3: PIDUM & PIDSUS COMMAND CENTER STYLING               */
+        /* ========================================================== */
+
+        /* Pidum/Pidsus 3-Pillar KPI Cards */
+        .pillar-kpi-card {
+            position: relative;
+            padding: 16px 18px;
+            border-radius: 16px;
+            background: var(--card-bg, #ffffff);
+            border: 1px solid var(--border-color, #e2e8f0);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+        }
+
+        .pillar-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .pillar-kpi-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.7));
+            border-color: rgba(148, 163, 184, 0.15);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Pillar Card Themes */
+        .pillar-pidum {
+            border-left: 4px solid #3b82f6 !important;
+        }
+        .pillar-pidum .pillar-icon {
+            background: rgba(59, 130, 246, 0.12);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+        [data-theme="dark"] .pillar-pidum:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .pillar-pidsus {
+            border-left: 4px solid #8b5cf6 !important;
+        }
+        .pillar-pidsus .pillar-icon {
+            background: rgba(139, 92, 246, 0.12);
+            color: #8b5cf6;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+        [data-theme="dark"] .pillar-pidsus:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .pillar-uu-ite {
+            border-left: 4px solid #06b6d4 !important;
+        }
+        .pillar-uu-ite .pillar-icon {
+            background: rgba(6, 182, 212, 0.12);
+            color: #06b6d4;
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+        [data-theme="dark"] .pillar-uu-ite:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+        }
+
+        .pillar-total {
+            border-left: 4px solid #10b981 !important;
+        }
+        .pillar-total .pillar-icon {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        [data-theme="dark"] .pillar-total:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+        }
+
+        .pillar-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 16px;
             flex-shrink: 0;
+        }
+
+        .pillar-val {
+            font-family: var(--font-speedometer);
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+        }
+
+        [data-theme="dark"] .pillar-val {
+            color: #ffffff !important;
+            text-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+        }
+
+        .pillar-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .pillar-kpi-card {
+            background: #111a2e !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        [data-theme="dark"] .pillar-kpi-card .pillar-val {
+            color: #ffffff !important;
+            text-shadow: 0 0 16px rgba(255, 255, 255, 0.25) !important;
+        }
+
+        [data-theme="dark"] .pillar-label {
+            color: #e2e8f0 !important;
+        }
+
+        [data-theme="dark"] .pillar-kpi-card:hover .pillar-label {
+            color: #ffffff !important;
+        }
+
+        [data-theme="dark"] .command-section-title {
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .section-header.command-section-title {
+            color: #f1f5f9 !important;
+        }
+
+        /* Category header badges in #tableKejahatan */
+        .th-group-pidum {
+            background: rgba(59, 130, 246, 0.12) !important;
+            color: #2563eb !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #3b82f6 !important;
+        }
+        [data-theme="dark"] .th-group-pidum {
+            background: rgba(59, 130, 246, 0.25) !important;
+            color: #60a5fa !important;
+        }
+
+        .th-group-pidsus {
+            background: rgba(139, 92, 246, 0.12) !important;
+            color: #7c3aed !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #8b5cf6 !important;
+        }
+        [data-theme="dark"] .th-group-pidsus {
+            background: rgba(139, 92, 246, 0.25) !important;
+            color: #c084fc !important;
+        }
+
+        .th-group-ite {
+            background: rgba(6, 182, 212, 0.12) !important;
+            color: #0891b2 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #06b6d4 !important;
+        }
+        [data-theme="dark"] .th-group-ite {
+            background: rgba(6, 182, 212, 0.25) !important;
+            color: #22d3ee !important;
+        }
+
+        .th-group-khusus {
+            background: rgba(244, 63, 94, 0.1) !important;
+            color: #e11d48 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #f43f5e !important;
+        }
+        [data-theme="dark"] .th-group-khusus {
+            background: rgba(244, 63, 94, 0.25) !important;
+            color: #fb7185 !important;
+        }
+
+        /* Sub-column headers in #tableKejahatan */
+        .th-sub-col {
+            font-size: 9px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            padding: 6px 3px !important;
+            vertical-align: middle !important;
+        }
+
+        [data-theme="dark"] .th-sub-col {
+            color: #e2e8f0 !important;
+            background: #152240 !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* Comprehensive Dark Mode Overrides for Tables */
+        [data-theme="dark"] .table {
+            --bs-table-color: #f1f5f9 !important;
+            --bs-table-bg: transparent !important;
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .table-light,
+        [data-theme="dark"] .table thead.table-light,
+        [data-theme="dark"] .table tfoot.table-light {
+            --bs-table-color: #f1f5f9 !important;
+            --bs-table-bg: #111c35 !important;
+            --bs-table-border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #f1f5f9 !important;
+            background-color: #111c35 !important;
+        }
+
+        [data-theme="dark"] .table-light > :not(caption) > * > *,
+        [data-theme="dark"] .table-light th,
+        [data-theme="dark"] .table-light td {
+            color: #f1f5f9 !important;
+            background-color: #111c35 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        [data-theme="dark"] .table thead th {
+            background: #111c35 !important;
+            color: #f1f5f9 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        [data-theme="dark"] .table tfoot td {
+            background: #111c35 !important;
+            color: #f8fafc !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        [data-theme="dark"] .table tbody td {
+            color: #e2e8f0 !important;
+            border-color: rgba(255, 255, 255, 0.07) !important;
+        }
+
+        [data-theme="dark"] .table tbody td .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        .badge-pidsus-total {
+            background: rgba(139, 92, 246, 0.15);
+            color: #7c3aed;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-family: var(--font-speedometer);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        [data-theme="dark"] .badge-pidsus-total {
+            background: rgba(139, 92, 246, 0.25);
+            color: #c4b5fd;
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Table cell zero mute */
+        .val-zero {
+            color: var(--text-secondary);
+            opacity: 0.35;
+            font-family: var(--font-speedometer);
+        }
+
+        [data-theme="dark"] .val-zero {
+            color: #64748b !important;
+            opacity: 0.55 !important;
+        }
+
+        .val-active {
+            font-family: var(--font-speedometer);
+            font-weight: 600;
+            font-size: 11px;
+            color: inherit;
+        }
+
+        [data-theme="dark"] .val-active {
+            color: #f8fafc !important;
+        }
+
+        [data-theme="dark"] .table-search-box .form-control {
+            background-color: rgba(15, 23, 42, 0.6) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .table-search-box .form-control::placeholder {
+            color: #64748b !important;
+        }
+
+        [data-theme="dark"] .table-search-box i {
+            color: #94a3b8 !important;
+        }
+
+        /* Table PMSH Split Bar */
+        .pmsh-bar-track {
+            height: 6px;
+            width: 100%;
+            background: rgba(148, 163, 184, 0.15);
+            border-radius: 999px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .pmsh-bar-pm {
+            height: 100%;
+            background: linear-gradient(90deg, #f43f5e, #e11d48);
+        }
+
+        .pmsh-bar-sh {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6, #6366f1);
+        }
+
+        /* ========================================================
+           TAB BEBAS HARIAN COCKPIT STYLES
+           ======================================================== */
+        .pillar-bebas-hero {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.04) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.35) !important;
+            border-left: 5px solid #10b981 !important;
+            border-radius: 14px;
+            padding: 16px 20px;
+            position: relative;
+            overflow: hidden;
             transition: all 0.25s ease;
         }
 
-        .bento-card:hover .snapshot-card-icon {
-            transform: scale(1.08);
+        [data-theme="dark"] .pillar-bebas-hero {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.06) 100%);
+            border-color: rgba(16, 185, 129, 0.4) !important;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
         }
 
+        .pillar-bebas-hero:hover {
+            transform: translateY(-2px);
+            border-color: rgba(16, 185, 129, 0.6) !important;
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.25) !important;
+        }
 
+        .pillar-bebas-hero::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+            pointer-events: none;
+        }
 
+        /* Table Bebas Harian Header Groups */
+        .th-group-bebas-bm {
+            background: rgba(100, 116, 139, 0.1) !important;
+            color: #64748b !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #64748b !important;
+        }
+        [data-theme="dark"] .th-group-bebas-bm {
+            background: rgba(100, 116, 139, 0.2) !important;
+            color: #94a3b8 !important;
+        }
+
+        .th-group-bebas-pb {
+            background: rgba(59, 130, 246, 0.1) !important;
+            color: #2563eb !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #3b82f6 !important;
+        }
+        [data-theme="dark"] .th-group-bebas-pb {
+            background: rgba(59, 130, 246, 0.2) !important;
+            color: #60a5fa !important;
+        }
+
+        .th-group-bebas-cb {
+            background: rgba(6, 182, 212, 0.1) !important;
+            color: #0891b2 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #06b6d4 !important;
+        }
+        [data-theme="dark"] .th-group-bebas-cb {
+            background: rgba(6, 182, 212, 0.2) !important;
+            color: #22d3ee !important;
+        }
+
+        .th-group-bebas-cmb {
+            background: rgba(139, 92, 246, 0.1) !important;
+            color: #7c3aed !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #8b5cf6 !important;
+        }
+        [data-theme="dark"] .th-group-bebas-cmb {
+            background: rgba(139, 92, 246, 0.2) !important;
+            color: #a78bfa !important;
+        }
+
+        .th-group-bebas-asim {
+            background: rgba(245, 158, 11, 0.1) !important;
+            color: #d97706 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #f59e0b !important;
+        }
+        [data-theme="dark"] .th-group-bebas-asim {
+            background: rgba(245, 158, 11, 0.2) !important;
+            color: #fbbf24 !important;
+        }
+
+        .th-group-bebas-bdh {
+            background: rgba(239, 68, 68, 0.1) !important;
+            color: #dc2626 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #ef4444 !important;
+        }
+        [data-theme="dark"] .th-group-bebas-bdh {
+            background: rgba(239, 68, 68, 0.2) !important;
+            color: #f87171 !important;
+        }
+
+        .th-group-bebas-lny {
+            background: rgba(148, 163, 184, 0.1) !important;
+            color: #475569 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #94a3b8 !important;
+        }
+        [data-theme="dark"] .th-group-bebas-lny {
+            background: rgba(148, 163, 184, 0.2) !important;
+            color: #cbd5e1 !important;
+        }
+
+        .th-group-bebas-total {
+            background: rgba(16, 185, 129, 0.15) !important;
+            color: #059669 !important;
+            font-weight: 800 !important;
+            border-bottom: 2px solid #10b981 !important;
+        }
+        [data-theme="dark"] .th-group-bebas-total {
+            background: rgba(16, 185, 129, 0.25) !important;
+            color: #34d399 !important;
+        }
+
+        .badge-bebas-total {
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-family: var(--font-speedometer);
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+        [data-theme="dark"] .badge-bebas-total {
+            background: rgba(16, 185, 129, 0.25);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+        }
 

@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class WaCronCommand extends Command
 {
     protected $signature = 'wa:cron {action=run : The action to run (run, morning, afternoon, scheduled)}';
+
     protected $description = 'Run WhatsApp notification cron tasks (morning reminder, afternoon report, scheduled reports)';
 
     public function handle()
@@ -17,10 +18,10 @@ class WaCronCommand extends Command
 
         $result = WhatsAppService::runCron($action);
 
-        if (!empty($result['success'])) {
-            $this->info("Cron task completed successfully: " . json_encode($result, JSON_PRETTY_PRINT));
+        if (! empty($result['success'])) {
+            $this->info('Cron task completed successfully: '.json_encode($result, JSON_PRETTY_PRINT));
         } else {
-            $this->warn("Cron task returned: " . ($result['message'] ?? 'Failed'));
+            $this->warn('Cron task returned: '.($result['message'] ?? 'Failed'));
         }
 
         return 0;

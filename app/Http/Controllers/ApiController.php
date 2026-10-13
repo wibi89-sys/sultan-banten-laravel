@@ -17,10 +17,10 @@ class ApiController extends Controller
         $expectedKey = env('API_SECRET_KEY', 'ditjenpas_banten_secret_key_2026');
         $providedKey = (string) ($request->query('api_key') ?: $request->header('X-API-KEY') ?: '');
 
-        if (!hash_equals($expectedKey, $providedKey)) {
+        if (! hash_equals($expectedKey, $providedKey)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized access. Valid API Key required.'
+                'message' => 'Unauthorized access. Valid API Key required.',
             ], 403);
         }
 
@@ -33,19 +33,21 @@ class ApiController extends Controller
                 $uptList = Upt::orderBy('nama_upt')->get()->map(function ($upt) {
                     return [
                         'id' => $upt->id,
-                        'nama' => $upt->nama_upt
+                        'nama' => $upt->nama_upt,
                     ];
                 });
 
                 return response()->json([
                     'success' => true,
-                    'data' => $uptList
+                    'data' => $uptList,
                 ]);
             }
 
             if ($action === 'by_klasifikasi') {
                 $query = DataPenghuni::where('tanggal', $tanggal);
-                if ($uptId) $query->where('upt_id', $uptId);
+                if ($uptId) {
+                    $query->where('upt_id', $uptId);
+                }
 
                 $data = $query->select(
                     'klasifikasi_pidana',
@@ -54,7 +56,7 @@ class ApiController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'data' => $data
+                    'data' => $data,
                 ]);
             }
 
@@ -73,7 +75,7 @@ class ApiController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'data' => $data
+                    'data' => $data,
                 ]);
             }
 
@@ -87,7 +89,7 @@ class ApiController extends Controller
                 ->where(function ($q) use ($tanggal) {
                     $q->whereNull('tanggal_selesai')->orWhere('tanggal_selesai', '>=', $tanggal);
                 })
-                ->when($uptId, fn($q) => $q->where(fn($sub) => $sub->where('tipe', 'Global')->orWhere('upt_id', $uptId)))
+                ->when($uptId, fn ($q) => $q->where(fn ($sub) => $sub->where('tipe', 'Global')->orWhere('upt_id', $uptId)))
                 ->orderByDesc('created_at')
                 ->limit(5)
                 ->get();
@@ -100,12 +102,12 @@ class ApiController extends Controller
                     'statistics' => $reportData,
                     'announcements' => $announcements,
                     'instansi' => $instansi,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Internal Server Error: ' . $e->getMessage()
+                'message' => 'Internal Server Error: '.$e->getMessage(),
             ], 500);
         }
     }

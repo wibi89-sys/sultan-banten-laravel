@@ -54,7 +54,7 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        if (!Hash::check($request->input('current_password'), $user->password)) {
+        if (! Hash::check($request->input('current_password'), $user->password)) {
             return back()->with('error', 'Password saat ini tidak valid!');
         }
 
@@ -81,7 +81,7 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         $uploadDir = public_path('uploads/profile');
-        if (!File::isDirectory($uploadDir)) {
+        if (! File::isDirectory($uploadDir)) {
             File::makeDirectory($uploadDir, 0755, true);
         }
 
@@ -89,11 +89,11 @@ class ProfileController extends Controller
         $rawExt = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'png');
         $allowedExtensions = ['jpeg', 'png', 'jpg', 'gif', 'webp'];
         $extension = in_array($rawExt, $allowedExtensions, true) ? $rawExt : 'png';
-        $filename = 'user_' . $user->id . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $filename = 'user_'.$user->id.'_'.bin2hex(random_bytes(8)).'.'.$extension;
         $file->move($uploadDir, $filename);
-        $relativePath = 'uploads/profile/' . $filename;
+        $relativePath = 'uploads/profile/'.$filename;
 
-        if (!empty($user->foto) && File::exists(public_path($user->foto))) {
+        if (! empty($user->foto) && File::exists(public_path($user->foto))) {
             File::delete(public_path($user->foto));
         }
 
@@ -110,7 +110,7 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        if (!empty($user->foto) && File::exists(public_path($user->foto))) {
+        if (! empty($user->foto) && File::exists(public_path($user->foto))) {
             File::delete(public_path($user->foto));
         }
 

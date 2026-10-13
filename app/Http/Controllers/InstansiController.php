@@ -12,7 +12,7 @@ class InstansiController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if (!$user->hasAccess('instansi')) {
+        if (! $user->hasAccess('instansi')) {
             abort(403);
         }
 
@@ -24,7 +24,7 @@ class InstansiController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('instansi')) {
+        if (! $user->hasAccess('instansi')) {
             abort(403);
         }
 
@@ -45,8 +45,8 @@ class InstansiController extends Controller
         ]);
 
         $instansi = Instansi::first();
-        if (!$instansi) {
-            $instansi = new Instansi();
+        if (! $instansi) {
+            $instansi = new Instansi;
         }
 
         $instansi->nama_instansi = $request->input('nama_instansi');
@@ -64,7 +64,7 @@ class InstansiController extends Controller
         // File uploads
         $imageFields = ['logo', 'favicon', 'welcome_banner', 'kop_image', 'logo_kop', 'ttd_image', 'stempel_image'];
         $uploadPath = public_path('uploads');
-        if (!File::isDirectory($uploadPath)) {
+        if (! File::isDirectory($uploadPath)) {
             File::makeDirectory($uploadPath, 0755, true);
         }
 
@@ -85,7 +85,7 @@ class InstansiController extends Controller
                 if (in_array($ext, ['php', 'phtml', 'phar', 'php5', 'php7', 'blade', 'exe', 'sh', 'bat'])) {
                     return back()->with('error', 'Format file tidak diizinkan untuk alasan keamanan.');
                 }
-                $filename = "{$field}_" . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+                $filename = "{$field}_".time().'_'.bin2hex(random_bytes(8)).'.'.$ext;
                 $file->move($uploadPath, $filename);
 
                 // Remove previous file

@@ -29,7 +29,7 @@ class UserController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if (!$user->hasAccess('user')) {
+        if (! $user->hasAccess('user')) {
             abort(403);
         }
 
@@ -42,7 +42,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('user')) {
+        if (! $user->hasAccess('user')) {
             abort(403);
         }
 
@@ -75,7 +75,7 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('user')) {
+        if (! $user->hasAccess('user')) {
             abort(403);
         }
 
@@ -111,7 +111,7 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (!$user->hasAccess('user')) {
+        if (! $user->hasAccess('user')) {
             abort(403);
         }
 

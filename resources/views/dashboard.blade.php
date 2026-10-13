@@ -19,7 +19,7 @@
     <!-- Executive Glass Filter Bar -->
     <div class="exec-filter-bar mb-3">
         <form method="GET" action="{{ route('dashboard') }}" class="row g-2 align-items-center">
-            <div class="col-12 col-md-auto d-flex align-items-center gap-1 mb-2 mb-md-0">
+            <div class="col-12 col-md-auto d-flex align-items-center flex-wrap gap-1 mb-2 mb-md-0">
                 <span class="text-secondary small fw-bold me-1"><i class="fas fa-calendar-alt text-primary me-1"></i>Preset:</span>
                 <button type="button" class="date-quick-btn {{ $filterTanggal == date('Y-m-d') ? 'active' : '' }}" data-days="0">Hari Ini</button>
                 <button type="button" class="date-quick-btn {{ $filterTanggal == date('Y-m-d', strtotime('-1 day')) ? 'active' : '' }}" data-days="1">Kemarin</button>
@@ -88,9 +88,12 @@
         @php
             $tingkatVal = (float) ($stats['tingkat_hunian'] ?? 0);
             $persenOver = (float) ($stats['persen_overkapasitas'] ?? 0);
-            $gaugeStroke = 339.29; // 2 * PI * 54
-            $gaugePercent = min(100, max(0, $tingkatVal));
-            $gaugeOffset = $gaugeStroke - ($gaugeStroke * $gaugePercent / 100);
+            $totalPenghuni = (int) ($stats['total_penghuni'] ?? 0);
+            $pctTahanan = $totalPenghuni > 0 ? round((($stats['total_tahanan'] ?? 0) / $totalPenghuni) * 100, 1) : 0;
+            $pctNapi = $totalPenghuni > 0 ? round((($stats['total_narapidana'] ?? 0) / $totalPenghuni) * 100, 1) : 0;
+            $grandTotalPerkara = (($stats['total_pidum'] ?? 0) + ($stats['total_pidsus'] ?? 0)) ?: 1;
+            $pctPidum = round((($stats['total_pidum'] ?? 0) / $grandTotalPerkara) * 100, 1);
+            $pctPidsus = round((($stats['total_pidsus'] ?? 0) / $grandTotalPerkara) * 100, 1);
             
             if ($persenOver > 50) {
                 $statusColor = '#f43f5e';
@@ -107,73 +110,210 @@
             }
         @endphp
 
-        <!-- Bento Hero Grid -->
-        <div class="bento-hero-grid">
+        <!-- Bento Cockpit Center Grid (Speedometer Diapit di Tengah) -->
+        <div class="bento-hero-grid bento-cockpit-grid">
             
-            <!-- Bento Hero Card (Radial Occupancy Gauge) -->
-            <div class="bento-card bento-card-hero">
-                <div>
-                    <div class="d-flex align-items-center justify-content-between mb-3">
+            <!-- LEFT FLANK: 3 METRIC TILES (12 UPT dengan data, Total Tahanan, Total Narapidana) -->
+            <div class="bento-flank flank-left">
+                <!-- Tile 1: 12 UPT dengan Data -->
+                <div class="speedo-flank-card" title="12 UPT Pemasyarakatan se-Banten">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="live-beacon" style="background-color: {{ $statusColor }};">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%); color: #10b981;">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div>
+                                <span class="bento-stat-label d-block">12 UPT dengan Data</span>
+                                <span class="small text-muted" style="font-size: 10px;">Monitoring Aktif</span>
+                            </div>
+                        </div>
+                        <span class="pill-badge pill-badge-emerald" style="font-size: 9.5px; padding: 3px 8px;">
+                            <i class="fas fa-check-circle me-1" style="font-size: 9px;"></i>12/12
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between my-1">
+                        <div class="bento-stat-value font-speedometer count-up text-success" data-target="{{ $stats['total_upt'] }}">
+                            {{ number_format($stats['total_upt'], 0, ',', '.') }}
+                        </div>
+                        <span class="font-speedometer small fw-bold text-success" style="font-size: 11px;">100% SINKRON</span>
+                    </div>
+                    <div class="speedo-telemetry-track mt-1" title="Kepatuhan Sinkronisasi: 100%">
+                        <div class="speedo-telemetry-fill" style="width: 100%; background: linear-gradient(90deg, #10b981, #34d399); --bar-glow: #10b981;"></div>
+                    </div>
+                </div>
+
+                <!-- Tile 2: Total Tahanan -->
+                <div class="speedo-flank-card" title="Total Tahanan: {{ number_format($stats['total_tahanan'], 0, ',', '.') }}">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.25) 100%); color: #3b82f6;">
+                                <i class="fas fa-user-lock"></i>
+                            </div>
+                            <div>
+                                <span class="bento-stat-label d-block">Total Tahanan</span>
+                                <span class="small text-muted" style="font-size: 10px;">Proses Peradilan</span>
+                            </div>
+                        </div>
+                        <span class="pill-badge pill-badge-indigo" style="font-size: 9.5px; padding: 3px 8px;">Tahanan</span>
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between my-1">
+                        <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_tahanan'] }}">
+                            {{ number_format($stats['total_tahanan'], 0, ',', '.') }}
+                        </div>
+                        <span class="font-speedometer small fw-bold text-primary" style="font-size: 11.5px;">{{ $pctTahanan }}% Porsi</span>
+                    </div>
+                    <div class="speedo-telemetry-track mt-1" title="Porsi Tahanan: {{ $pctTahanan }}%">
+                        <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctTahanan)) }}%; background: linear-gradient(90deg, #3b82f6, #60a5fa); --bar-glow: #3b82f6;"></div>
+                    </div>
+                </div>
+
+                <!-- Tile 3: Total Narapidana -->
+                <div class="speedo-flank-card" title="Total Narapidana: {{ number_format($stats['total_narapidana'], 0, ',', '.') }}">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(225, 29, 72, 0.25) 100%); color: #f43f5e;">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div>
+                                <span class="bento-stat-label d-block">Total Narapidana</span>
+                                <span class="small text-muted" style="font-size: 10px;">Vonis Hakim</span>
+                            </div>
+                        </div>
+                        <span class="pill-badge pill-badge-rose" style="font-size: 9.5px; padding: 3px 8px;">Narapidana</span>
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between my-1">
+                        <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_narapidana'] }}">
+                            {{ number_format($stats['total_narapidana'], 0, ',', '.') }}
+                        </div>
+                        <span class="font-speedometer small fw-bold text-danger" style="font-size: 11.5px;">{{ $pctNapi }}% Porsi</span>
+                    </div>
+                    <div class="speedo-telemetry-track mt-1" title="Porsi Narapidana: {{ $pctNapi }}%">
+                        <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctNapi)) }}%; background: linear-gradient(90deg, #f43f5e, #fb7185); --bar-glow: #f43f5e;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER COCKPIT: DUAL SPEEDOMETER HERO CARD -->
+            <div class="bento-card bento-card-hero speedo-cockpit-center">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(2, 132, 199, 0.25) 100%); color: #0284c7;">
+                                <i class="fas fa-gauge-high"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold" style="font-size: 13px; color: var(--text-primary); letter-spacing: 0.02em;">Indikator Kapasitas</span>
+                                <span class="d-block text-secondary small" style="font-size: 10px;">Monitoring Hunian & Beban</span>
+                            </div>
+                        </div>
+                        <span class="pill-badge {{ $statusBadgeClass }}" style="font-size: 11.5px; padding: 5px 12px; font-weight: 600;">
+                            <span class="live-beacon me-1" style="background-color: {{ $statusColor }};">
                                 <span class="beacon-ping"></span>
                                 <span class="beacon-dot"></span>
                             </span>
-                            <span class="fw-bold" style="font-size: 13px; color: var(--text-primary);">Tingkat Hunian Wilayah</span>
-                        </div>
-                        <span class="pill-badge {{ $statusBadgeClass }}">
-                            {{ $persenOver > 0 ? '+' : '' }}{{ $persenOver }}% Over
+                            {{ $statusText }}
                         </span>
                     </div>
 
-                    <!-- High-Tech Speedometer Arc Gauge -->
+                    <!-- Dual Speedometer Cockpit Cluster -->
                     @php
                         $arcLen = 251.32; // PI * R (80)
-                        $clampedVal = min(100, max(0, $tingkatVal));
-                        $arcOffset = $arcLen - ($arcLen * $clampedVal / 100);
-                    @endphp
-                    <div class="speedo-gauge-box my-2 mb-4">
-                        <svg class="speedo-gauge-svg" viewBox="0 0 200 125">
-                            <defs>
-                                <linearGradient id="speedoGradDynamic" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#00f2fe"/>
-                                    <stop offset="70%" stop-color="{{ $statusColor }}"/>
-                                    <stop offset="100%" stop-color="{{ $statusColor }}"/>
-                                </linearGradient>
-                            </defs>
-                            <!-- Speedometer Track -->
-                            <path class="speedo-track" d="M 20 105 A 80 80 0 0 1 180 105" />
-                            <!-- Speedometer Active Progress -->
-                            <path class="speedo-fill" d="M 20 105 A 80 80 0 0 1 180 105"
-                                  stroke="url(#speedoGradDynamic)"
-                                  stroke-dasharray="251.32"
-                                  stroke-dashoffset="{{ $arcOffset }}"
-                                  style="--gauge-glow: {{ $statusColor }}77;" />
-                        </svg>
                         
-                        <div class="speedo-gauge-content">
-                            <div class="radial-gauge-val font-speedometer count-up" data-target="{{ $tingkatVal }}">{{ $tingkatVal }}%</div>
-                            <div class="radial-gauge-sub">{{ $statusText }}</div>
+                        // Left Dial: Tingkat Hunian (0% - 100%+)
+                        $clampedHunian = min(100, max(0, $tingkatVal));
+                        $arcOffsetHunian = $arcLen - ($arcLen * $clampedHunian / 100);
+
+                        // Right Dial: % Overkapasitas (0% - 100%+)
+                        $clampedOver = min(100, max(0, $persenOver));
+                        $arcOffsetOver = $arcLen - ($arcLen * $clampedOver / 100);
+                    @endphp
+                    <div class="speedo-cluster-wrap my-2 mb-3">
+                        <!-- DIAL 1: TINGKAT HUNIAN -->
+                        <div class="speedo-dial-box" title="Tingkat Hunian: {{ $tingkatVal }}%">
+                            <svg class="speedo-gauge-svg" viewBox="0 0 200 125">
+                                <defs>
+                                    <linearGradient id="speedoGradHunian" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#00f2fe"/>
+                                        <stop offset="100%" stop-color="#0284c7"/>
+                                    </linearGradient>
+                                </defs>
+                                <path class="speedo-track" d="M 20 105 A 80 80 0 0 1 180 105" />
+                                <path class="speedo-fill" d="M 20 105 A 80 80 0 0 1 180 105"
+                                      stroke="url(#speedoGradHunian)"
+                                      stroke-dasharray="251.32"
+                                      stroke-dashoffset="{{ $arcOffsetHunian }}"
+                                      style="--gauge-glow: rgba(0, 242, 254, 0.6);" />
+                            </svg>
+                            
+                            <div class="speedo-gauge-content">
+                                <div class="speedo-cluster-val font-speedometer count-up" data-target="{{ $tingkatVal }}" style="color: #0284c7;">
+                                    {{ $tingkatVal }}%
+                                </div>
+                                <div class="speedo-cluster-sub">Tingkat Hunian</div>
+                            </div>
+
+                            <div class="speedo-ticks">
+                                <span class="speedo-tick-item tick-hunian-min" title="Batas Minimum (0%)">
+                                    <span class="tick-pip"></span>
+                                    <span class="tick-label">0%</span>
+                                </span>
+                                <span class="speedo-tick-item tick-mid" title="Batas Normal (50%)">
+                                    <span class="tick-pip"></span>
+                                    <span class="tick-label">50%</span>
+                                </span>
+                                <span class="speedo-tick-item tick-hunian-max" title="Kapasitas Penuh (100%)">
+                                    <span class="tick-pip"></span>
+                                    <span class="tick-label">100%</span>
+                                </span>
+                            </div>
                         </div>
 
-                        <div class="speedo-ticks">
-                            <span class="speedo-tick-item tick-min" title="Batas Minimum (0%)">
-                                <span class="tick-pip"></span>
-                                <span class="tick-label">0%</span>
-                            </span>
-                            <span class="speedo-tick-item tick-mid" title="Batas Normal (50%)">
-                                <span class="tick-pip"></span>
-                                <span class="tick-label">50%</span>
-                            </span>
-                            <span class="speedo-tick-item tick-max" title="Kapasitas Penuh (100%)">
-                                <span class="tick-pip"></span>
-                                <span class="tick-label">100%</span>
-                            </span>
+                        <!-- CLUSTER DIVIDER -->
+                        <div class="speedo-cluster-divider"></div>
+
+                        <!-- DIAL 2: % OVERKAPASITAS -->
+                        <div class="speedo-dial-box" title="Overkapasitas: {{ $persenOver }}%">
+                            <svg class="speedo-gauge-svg" viewBox="0 0 200 125">
+                                <defs>
+                                    <linearGradient id="speedoGradOver" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="{{ $statusColor }}99"/>
+                                        <stop offset="100%" stop-color="{{ $statusColor }}"/>
+                                    </linearGradient>
+                                </defs>
+                                <path class="speedo-track" d="M 20 105 A 80 80 0 0 1 180 105" />
+                                <path class="speedo-fill" d="M 20 105 A 80 80 0 0 1 180 105"
+                                      stroke="url(#speedoGradOver)"
+                                      stroke-dasharray="251.32"
+                                      stroke-dashoffset="{{ $arcOffsetOver }}"
+                                      style="--gauge-glow: {{ $statusColor }}77;" />
+                            </svg>
+                            
+                            <div class="speedo-gauge-content">
+                                <div class="speedo-cluster-val font-speedometer count-up" data-prefix="+" data-target="{{ $persenOver }}" style="color: {{ $statusColor }};">
+                                    {{ $persenOver > 0 ? '+' : '' }}{{ $persenOver }}%
+                                </div>
+                                <div class="speedo-cluster-sub">Over Kapasitas</div>
+                            </div>
+
+                            <div class="speedo-ticks">
+                                <span class="speedo-tick-item tick-over-min" title="Batas Aman (0%)">
+                                    <span class="tick-pip"></span>
+                                    <span class="tick-label">0%</span>
+                                </span>
+                                <span class="speedo-tick-item tick-mid" title="Ambang Waspada (50%)">
+                                    <span class="tick-pip"></span>
+                                    <span class="tick-label">50%</span>
+                                </span>
+                                <span class="speedo-tick-item tick-over-max" title="Kritis (100%+) - Over">
+                                    <span class="tick-pip"></span>
+                                    <span class="tick-label">100%+</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-3 border-top d-flex justify-content-between align-items-center" style="border-color: var(--bento-border) !important;">
+                <div class="pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: var(--bento-border) !important;">
                     <div>
                         <span class="text-secondary small d-block text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.05em;">Total Penghuni</span>
                         <strong class="count-up font-speedometer" data-target="{{ $stats['total_penghuni'] }}" style="font-size: 20px; color: var(--text-primary);">
@@ -195,186 +335,168 @@
                 </div>
             </div>
 
-            <!-- Bento Subhero Grid (6 Key Metric Tiles) -->
-            <div class="bento-card-subhero">
-                
-                <!-- Tile 1: Total Tahanan -->
-                <div class="bento-stat-mini">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.25) 100%); color: #3b82f6;">
-                            <i class="fas fa-user-lock"></i>
+            <!-- RIGHT FLANK: 3 METRIC TILES (Total Pidum, Total Pidsus, Overstaying) -->
+            <div class="bento-flank flank-right">
+                <!-- Tile 4: Total Pidum -->
+                <div class="speedo-flank-card" title="Total Pidana Umum: {{ number_format($stats['total_pidum'], 0, ',', '.') }}">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.25) 100%); color: #8b5cf6;">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div>
+                                <span class="bento-stat-label d-block">Total Pidum</span>
+                                <span class="small text-muted" style="font-size: 10px;">Pidana Umum</span>
+                            </div>
                         </div>
-                        <span class="pill-badge pill-badge-indigo" style="font-size: 9px;">Tahanan</span>
+                        <span class="pill-badge pill-badge-purple" style="font-size: 9.5px; padding: 3px 8px;">Pidum</span>
                     </div>
-                    <div>
-                        <div class="bento-stat-value count-up" data-target="{{ $stats['total_tahanan'] }}">
-                            {{ number_format($stats['total_tahanan'], 0, ',', '.') }}
+                    <div class="d-flex align-items-baseline justify-content-between my-1">
+                        <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_pidum'] }}">
+                            {{ number_format($stats['total_pidum'], 0, ',', '.') }}
                         </div>
-                        <p class="bento-stat-label">Total Tahanan</p>
+                        <span class="font-speedometer small fw-bold" style="font-size: 11.5px; color: #a855f7;">{{ $pctPidum }}% Share</span>
                     </div>
-                </div>
-
-                <!-- Tile 2: Total Narapidana -->
-                <div class="bento-stat-mini">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(225, 29, 72, 0.25) 100%); color: #f43f5e;">
-                            <i class="fas fa-user-check"></i>
-                        </div>
-                        <span class="pill-badge pill-badge-rose" style="font-size: 9px;">Narapidana</span>
-                    </div>
-                    <div>
-                        <div class="bento-stat-value count-up" data-target="{{ $stats['total_narapidana'] }}">
-                            {{ number_format($stats['total_narapidana'], 0, ',', '.') }}
-                        </div>
-                        <p class="bento-stat-label">Total Narapidana</p>
+                    <div class="speedo-telemetry-track mt-1" title="Share Pidum: {{ $pctPidum }}%">
+                        <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctPidum)) }}%; background: linear-gradient(90deg, #8b5cf6, #c084fc); --bar-glow: #8b5cf6;"></div>
                     </div>
                 </div>
 
-                <!-- Tile 3: UPT dengan Data -->
-                <div class="bento-stat-mini">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%); color: #10b981;">
-                            <i class="fas fa-building"></i>
+                <!-- Tile 5: Total Pidsus -->
+                <div class="speedo-flank-card" title="Total Pidana Khusus: {{ number_format($stats['total_pidsus'], 0, ',', '.') }}">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(8, 145, 178, 0.25) 100%); color: #06b6d4;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div>
+                                <span class="bento-stat-label d-block">Total Pidsus</span>
+                                <span class="small text-muted" style="font-size: 10px;">Pidana Khusus</span>
+                            </div>
                         </div>
-                        <span class="pill-badge pill-badge-emerald" style="font-size: 9px;">Aktif</span>
+                        <span class="pill-badge pill-badge-cyan" style="font-size: 9.5px; padding: 3px 8px;">Pidsus</span>
                     </div>
-                    <div>
-                        <div class="bento-stat-value count-up" data-target="{{ $stats['total_upt'] }}">
-                            {{ number_format($stats['total_upt'], 0, ',', '.') }}
+                    <div class="d-flex align-items-baseline justify-content-between my-1">
+                        <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_pidsus'] }}">
+                            {{ number_format($stats['total_pidsus'], 0, ',', '.') }}
                         </div>
-                        <p class="bento-stat-label">UPT dengan Data</p>
+                        <span class="font-speedometer small fw-bold text-info" style="font-size: 11.5px;">{{ $pctPidsus }}% Share</span>
+                    </div>
+                    <div class="speedo-telemetry-track mt-1" title="Share Pidsus: {{ $pctPidsus }}%">
+                        <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctPidsus)) }}%; background: linear-gradient(90deg, #06b6d4, #22d3ee); --bar-glow: #06b6d4;"></div>
                     </div>
                 </div>
 
-                <!-- Tile 4: Overstaying Alert -->
-                <div class="bento-stat-mini" style="border-left: 3px solid #ef4444;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.25) 100%); color: #ef4444;">
-                            <i class="fas fa-clock"></i>
+                <!-- Tile 6: Overstaying Alert -->
+                <div class="speedo-flank-card" style="border-left: 3px solid #ef4444;" title="Tahanan Lewat Batas Waktu">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.25) 100%); color: #ef4444;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <span class="bento-stat-label d-block">Overstaying</span>
+                                <span class="small text-muted" style="font-size: 10px;">Masa Tahanan Habis</span>
+                            </div>
                         </div>
-                        @if($stats['total_overstaying'] > 0)
-                        <span class="live-beacon" style="background-color: #ef4444;">
+                        @if(($stats['total_overstaying'] ?? 0) > 0)
+                        <span class="live-beacon" style="background-color: #ef4444;" title="Peringatan Terdeteksi">
                             <span class="beacon-ping"></span>
                             <span class="beacon-dot"></span>
                         </span>
+                        @else
+                        <span class="pill-badge pill-badge-emerald" style="font-size: 9.5px; padding: 3px 8px;">Nihil</span>
                         @endif
                     </div>
-                    <div>
-                        <div class="bento-stat-value text-danger count-up" data-target="{{ $stats['total_overstaying'] }}">
+                    <div class="d-flex align-items-baseline justify-content-between my-1">
+                        <div class="bento-stat-value text-danger font-speedometer count-up" data-target="{{ $stats['total_overstaying'] }}">
                             {{ number_format($stats['total_overstaying'], 0, ',', '.') }}
                         </div>
-                        <p class="bento-stat-label">Overstaying Tahanan</p>
+                        <span class="font-speedometer small fw-bold text-danger" style="font-size: 11px;">
+                            {{ ($stats['total_overstaying'] ?? 0) > 0 ? 'PERINGATAN' : 'AMAN' }}
+                        </span>
+                    </div>
+                    <div class="speedo-telemetry-track mt-1" title="Status Overstaying">
+                        <div class="speedo-telemetry-fill" style="width: {{ ($stats['total_overstaying'] ?? 0) > 0 ? '100' : '0' }}%; background: linear-gradient(90deg, #ef4444, #f87171); --bar-glow: #ef4444;"></div>
                     </div>
                 </div>
-
-                <!-- Tile 5: Pidana Umum -->
-                <div class="bento-stat-mini">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.25) 100%); color: #8b5cf6;">
-                            <i class="fas fa-balance-scale"></i>
-                        </div>
-                        <span class="pill-badge pill-badge-purple" style="font-size: 9px;">Pidum</span>
-                    </div>
-                    <div>
-                        <div class="bento-stat-value count-up" data-target="{{ $stats['total_pidum'] }}">
-                            {{ number_format($stats['total_pidum'], 0, ',', '.') }}
-                        </div>
-                        <p class="bento-stat-label">Total Pidum</p>
-                    </div>
-                </div>
-
-                <!-- Tile 6: Pidana Khusus -->
-                <div class="bento-stat-mini">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="bento-stat-icon" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(8, 145, 178, 0.25) 100%); color: #06b6d4;">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <span class="pill-badge pill-badge-cyan" style="font-size: 9px;">Pidsus</span>
-                    </div>
-                    <div>
-                        <div class="bento-stat-value count-up" data-target="{{ $stats['total_pidsus'] }}">
-                            {{ number_format($stats['total_pidsus'], 0, ',', '.') }}
-                        </div>
-                        <p class="bento-stat-label">Total Pidsus</p>
-                    </div>
-                </div>
-
             </div>
+
         </div>
 
         <!-- Quick Summary Snapshot: Kasus Khusus & Bebas Harian -->
-        <div class="row row-cols-2 row-cols-sm-3 row-cols-xl-5 g-2 mb-3">
+        <div class="row g-2 mb-3">
             <!-- Card 1: Pidana Mati -->
-            <div class="col">
-                <div class="bento-card p-3 h-100 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="snapshot-card-label">Pidana Mati</div>
-                        <div class="snapshot-card-value font-speedometer text-danger count-up" data-target="{{ $stats['total_pidana_mati'] }}">
-                            {{ number_format($stats['total_pidana_mati'], 0, ',', '.') }}
-                        </div>
+            <div class="col-6 col-sm-4 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">Pidana Mati</span>
+                        <span class="snapshot-card-icon" style="background: rgba(244, 63, 94, 0.14); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.25);">
+                            <i class="fas fa-skull-crossbones"></i>
+                        </span>
                     </div>
-                    <div class="snapshot-card-icon" style="background: rgba(244, 63, 94, 0.14); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.25);">
-                        <i class="fas fa-skull-crossbones"></i>
+                    <div class="snapshot-card-value font-speedometer text-danger count-up" data-target="{{ $stats['total_pidana_mati'] }}">
+                        {{ number_format($stats['total_pidana_mati'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
 
             <!-- Card 2: Seumur Hidup -->
-            <div class="col">
-                <div class="bento-card p-3 h-100 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="snapshot-card-label">Seumur Hidup</div>
-                        <div class="snapshot-card-value font-speedometer text-danger count-up" data-target="{{ $stats['total_seumur_hidup'] }}">
-                            {{ number_format($stats['total_seumur_hidup'], 0, ',', '.') }}
-                        </div>
+            <div class="col-6 col-sm-4 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">Seumur Hidup</span>
+                        <span class="snapshot-card-icon" style="background: rgba(225, 29, 72, 0.14); color: #e11d48; border: 1px solid rgba(225, 29, 72, 0.25);">
+                            <i class="fas fa-infinity"></i>
+                        </span>
                     </div>
-                    <div class="snapshot-card-icon" style="background: rgba(225, 29, 72, 0.14); color: #e11d48; border: 1px solid rgba(225, 29, 72, 0.25);">
-                        <i class="fas fa-infinity"></i>
+                    <div class="snapshot-card-value font-speedometer text-danger count-up" data-target="{{ $stats['total_seumur_hidup'] }}">
+                        {{ number_format($stats['total_seumur_hidup'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
 
             <!-- Card 3: WNA -->
-            <div class="col">
-                <div class="bento-card p-3 h-100 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="snapshot-card-label">WNA</div>
-                        <div class="snapshot-card-value font-speedometer text-warning count-up" data-target="{{ $stats['total_wna'] }}">
-                            {{ number_format($stats['total_wna'], 0, ',', '.') }}
-                        </div>
+            <div class="col-6 col-sm-4 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">WNA</span>
+                        <span class="snapshot-card-icon" style="background: rgba(245, 158, 11, 0.14); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25);">
+                            <i class="fas fa-globe"></i>
+                        </span>
                     </div>
-                    <div class="snapshot-card-icon" style="background: rgba(245, 158, 11, 0.14); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25);">
-                        <i class="fas fa-globe"></i>
+                    <div class="snapshot-card-value font-speedometer text-warning count-up" data-target="{{ $stats['total_wna'] }}">
+                        {{ number_format($stats['total_wna'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
 
             <!-- Card 4: Lansia > 70 Tahun -->
-            <div class="col">
-                <div class="bento-card p-3 h-100 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="snapshot-card-label">Lansia > 70 Thn</div>
-                        <div class="snapshot-card-value font-speedometer text-warning count-up" data-target="{{ $stats['total_lansia'] }}">
-                            {{ number_format($stats['total_lansia'], 0, ',', '.') }}
-                        </div>
+            <div class="col-6 col-sm-6 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">Lansia > 70 Thn</span>
+                        <span class="snapshot-card-icon" style="background: rgba(249, 115, 22, 0.14); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.25);">
+                            <i class="fas fa-user-clock"></i>
+                        </span>
                     </div>
-                    <div class="snapshot-card-icon" style="background: rgba(249, 115, 22, 0.14); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.25);">
-                        <i class="fas fa-user-clock"></i>
+                    <div class="snapshot-card-value font-speedometer text-warning count-up" data-target="{{ $stats['total_lansia'] }}">
+                        {{ number_format($stats['total_lansia'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
 
             <!-- Card 5: Bebas Hari Ini -->
-            <div class="col col-12 col-sm-auto flex-sm-grow-1 flex-xl-grow-0">
-                <div class="bento-card p-3 h-100 d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="snapshot-card-label">Bebas Hari Ini</div>
-                        <div class="snapshot-card-value font-speedometer text-success count-up" data-target="{{ $stats['total_bebas'] }}">
-                            {{ number_format($stats['total_bebas'], 0, ',', '.') }}
-                        </div>
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">Bebas Hari Ini</span>
+                        <span class="snapshot-card-icon" style="background: rgba(16, 185, 129, 0.14); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);">
+                            <i class="fas fa-door-open"></i>
+                        </span>
                     </div>
-                    <div class="snapshot-card-icon" style="background: rgba(16, 185, 129, 0.14); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);">
-                        <i class="fas fa-door-open"></i>
+                    <div class="snapshot-card-value font-speedometer text-success count-up" data-target="{{ $stats['total_bebas'] }}">
+                        {{ number_format($stats['total_bebas'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
@@ -404,58 +526,56 @@
                 </div>
             </div>
             <div class="col-lg-4 mb-3">
-                <div class="chart-card-modern h-100 d-flex flex-column justify-content-between">
-                    <div>
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="bento-stat-icon mb-0" style="width: 28px; height: 28px; font-size: 12px; background: rgba(99, 102, 241, 0.15); color: #818cf8;">
-                                    <i class="fas fa-chart-pie"></i>
-                                </span>
-                                <h6 class="mb-0 fw-bold" style="color: var(--text-primary); font-size: 14px;">
-                                    Distribusi Napi & Tahanan
-                                </h6>
-                            </div>
-                            @php
-                                $napiRatio = $stats['total_penghuni'] > 0 ? round(($stats['total_narapidana'] / $stats['total_penghuni']) * 100, 1) : 0;
-                            @endphp
-                            <span class="pill-badge pill-badge-indigo" style="font-size: 10px;">
-                                {{ $napiRatio }}% Napi
+                <div class="chart-card-modern h-100 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-2 flex-shrink-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="bento-stat-icon mb-0" style="width: 28px; height: 28px; font-size: 12px; background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+                                <i class="fas fa-chart-pie"></i>
                             </span>
+                            <h6 class="mb-0 fw-bold" style="color: var(--text-primary); font-size: 14px;">
+                                Distribusi Napi & Tahanan
+                            </h6>
                         </div>
+                        @php
+                            $napiRatio = $stats['total_penghuni'] > 0 ? round(($stats['total_narapidana'] / $stats['total_penghuni']) * 100, 1) : 0;
+                        @endphp
+                        <span class="pill-badge pill-badge-indigo" style="font-size: 10px;">
+                            {{ $napiRatio }}% Napi
+                        </span>
+                    </div>
 
-                        <!-- High-Tech Speedometer / Cockpit Donut Ring -->
-                        <div class="donut-chart-container my-3 position-relative d-flex align-items-center justify-content-center" style="height: 200px;">
-                            <canvas id="chartNarapidanaTahanan"></canvas>
-                            <div class="donut-center-telemetry">
-                                <div class="donut-center-val font-speedometer count-up" data-target="{{ $stats['total_penghuni'] }}">
-                                    {{ number_format($stats['total_penghuni'], 0, ',', '.') }}
-                                </div>
-                                <div class="donut-center-sub">Total Jiwa</div>
+                    <!-- High-Tech Cockpit Donut Ring Centered & Scaled to Frame -->
+                    <div class="donut-chart-container position-relative d-flex align-items-center justify-content-center flex-grow-1 my-auto" style="min-height: 280px; max-height: 310px; width: 100%;">
+                        <canvas id="chartNarapidanaTahanan"></canvas>
+                        <div class="donut-center-telemetry">
+                            <div class="donut-center-val font-speedometer count-up" data-target="{{ $stats['total_penghuni'] }}">
+                                {{ number_format($stats['total_penghuni'], 0, ',', '.') }}
                             </div>
+                            <div class="donut-center-sub">Total Jiwa</div>
                         </div>
                     </div>
 
                     <!-- Telemetry Ratio Breakdown Footer -->
-                    <div class="d-flex justify-content-between align-items-center gap-2 pt-2 border-top" style="border-color: var(--bento-border) !important;">
+                    <div class="d-flex justify-content-between align-items-center gap-2 pt-3 border-top mt-auto flex-shrink-0" style="border-color: var(--bento-border) !important;">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="donut-legend-pip" style="background: #6366f1; box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);"></span>
+                            <span class="donut-legend-pip" style="background: #6366f1; box-shadow: 0 0 10px rgba(99, 102, 241, 0.7); width: 12px; height: 12px;"></span>
                             <div>
-                                <div class="text-secondary text-uppercase fw-bold" style="font-size: 9.5px; letter-spacing: 0.05em;">Narapidana</div>
-                                <div class="fw-bold font-speedometer" style="font-size: 15px; color: var(--text-primary);">
+                                <div class="text-secondary text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.05em;">Narapidana</div>
+                                <div class="fw-bold font-speedometer" style="font-size: 16px; color: var(--text-primary);">
                                     {{ number_format($stats['total_narapidana']) }}
-                                    <small class="text-secondary fw-normal font-speedometer" style="font-size: 11px;">({{ $napiRatio }}%)</small>
+                                    <small class="text-secondary fw-bold font-speedometer" style="font-size: 12px;">({{ $napiRatio }}%)</small>
                                 </div>
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2 text-end">
                             <div>
-                                <div class="text-secondary text-uppercase fw-bold" style="font-size: 9.5px; letter-spacing: 0.05em;">Tahanan</div>
-                                <div class="fw-bold font-speedometer" style="font-size: 15px; color: var(--text-primary);">
+                                <div class="text-secondary text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.05em;">Tahanan</div>
+                                <div class="fw-bold font-speedometer" style="font-size: 16px; color: var(--text-primary);">
                                     {{ number_format($stats['total_tahanan']) }}
-                                    <small class="text-secondary fw-normal font-speedometer" style="font-size: 11px;">({{ round(100 - $napiRatio, 1) }}%)</small>
+                                    <small class="text-secondary fw-bold font-speedometer" style="font-size: 12px;">({{ round(100 - $napiRatio, 1) }}%)</small>
                                 </div>
                             </div>
-                            <span class="donut-legend-pip" style="background: #f43f5e; box-shadow: 0 0 8px rgba(244, 63, 94, 0.6);"></span>
+                            <span class="donut-legend-pip" style="background: #f43f5e; box-shadow: 0 0 10px rgba(244, 63, 94, 0.7); width: 12px; height: 12px;"></span>
                         </div>
                     </div>
                 </div>
@@ -470,24 +590,45 @@
     <div class="tab-section" data-tab-section="gis">
         
         <!-- Peta Lokasi UPT di Banten -->
-        <div class="chart-card-modern mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <div class="chart-card-modern mb-3 map-command-card">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                 <div class="section-header command-section-title mb-0">
-                    <i class="fas fa-map-marked-alt text-primary me-2"></i>Peta Lokasi UPT di Banten
+                    <i class="fas fa-satellite-dish text-primary me-2"></i>Peta Lokasi UPT di Banten
                 </div>
-                <div class="btn-group btn-group-sm mt-2 mt-sm-0" role="group">
-                    <button type="button" class="btn btn-outline-primary" id="btnStreet">Street</button>
-                    <button type="button" class="btn btn-outline-primary" id="btnSatellite">Satellite</button>
-                    <button type="button" class="btn btn-outline-primary active" id="btnHybrid">Hybrid</button>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-2 mt-sm-0">
+                    <button type="button" class="btn btn-sm hud-control-btn" id="btnFitBounds" title="Pusatkan radar ke titik tengah persebaran UPT">
+                        <i class="fas fa-crosshairs text-primary"></i>
+                        <span>Pusatkan Peta</span>
+                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" id="btnDark" title="Tampilan Cyber Dark Mode">Dark HUD</button>
+                        <button type="button" class="btn btn-outline-primary" id="btnStreet" title="Tampilan Peta Jalan OpenStreetMap">Street</button>
+                        <button type="button" class="btn btn-outline-primary active" id="btnHybrid" title="Tampilan Citra Satelit Esri">Satelit</button>
+                    </div>
                 </div>
             </div>
-            <div id="mapBanten" style="height: 420px; width: 100%; border-radius: 14px; z-index: 1;"></div>
+
+            <!-- Interactive Filter Chips -->
+            <div class="map-filter-group mb-2" id="mapUptFilterGroup">
+                <span class="text-xs text-muted me-1 fw-semibold"><i class="fas fa-filter text-primary me-1"></i>Filter Radar:</span>
+                <button type="button" class="map-filter-chip active" data-filter="all">Semua ({{ count($uptLocations) }})</button>
+                <button type="button" class="map-filter-chip" data-filter="lapas">Lapas</button>
+                <button type="button" class="map-filter-chip" data-filter="rutan">Rutan</button>
+                <button type="button" class="map-filter-chip" data-filter="lpka_bapas">LPKA / Terbuka</button>
+                <button type="button" class="map-filter-chip" data-filter="over">Overkapasitas</button>
+            </div>
+
+            <div id="mapBanten" style="height: 440px; width: 100%; border-radius: 14px; z-index: 1;"></div>
+
             <div class="d-flex align-items-center justify-content-between mt-2 flex-wrap gap-2 text-muted small">
-                <div><i class="fas fa-info-circle text-primary me-1"></i> Klik marker UPT untuk memunculkan detail hunian & kapasitas</div>
-                <div class="d-flex gap-2 align-items-center" style="font-size: 10px;">
-                    <span class="pill-badge pill-badge-emerald">Longgar</span>
-                    <span class="pill-badge pill-badge-amber">Hampir Penuh</span>
-                    <span class="pill-badge pill-badge-rose">Overkapasitas</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="live-pulse"></span>
+                    <span><i class="fas fa-info-circle text-primary me-1"></i>Klik radar UPT untuk membuka HUD & rute Google Maps</span>
+                </div>
+                <div class="d-flex gap-2 align-items-center flex-wrap" style="font-size: 10px;">
+                    <span class="pill-badge pill-badge-emerald"><i class="fas fa-circle text-xs me-1"></i>Normal / Longgar (&le;100%)</span>
+                    <span class="pill-badge pill-badge-amber"><i class="fas fa-circle text-xs me-1"></i>Waspada (101-150%)</span>
+                    <span class="pill-badge pill-badge-rose"><i class="fas fa-circle text-xs me-1"></i>Kritis (&gt;150%)</span>
                 </div>
             </div>
         </div>
@@ -499,13 +640,13 @@
                     <h6 class="mb-0 fw-bold" style="color: var(--text-primary); font-size: 14px;">
                         <i class="fas fa-table text-primary me-2"></i>Data Penghuni & Overkapasitas per UPT
                     </h6>
-                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }}</small>
+                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }} &bull; Klik alamat untuk rute navigasi</small>
                 </div>
                 
                 <!-- Instant Search Box -->
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableOverkapasitas" placeholder="Cari nama UPT...">
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableOverkapasitas" placeholder="Cari nama UPT / kota...">
                 </div>
             </div>
             
@@ -514,7 +655,7 @@
                     <thead class="table-light">
                         <tr>
                             <th class="text-center py-2" style="width: 35px;">No</th>
-                            <th class="py-2" style="min-width: 140px;">Unit Pelaksana Teknis</th>
+                            <th class="py-2" style="min-width: 170px;">Unit Pelaksana Teknis & Alamat</th>
                             <th class="text-center py-2" style="width: 70px;">Kapasitas</th>
                             <th class="text-center py-2" style="width: 70px;">Tahanan</th>
                             <th class="text-center py-2" style="width: 70px;">Narapidana</th>
@@ -532,24 +673,49 @@
                                 $colorClass = getOverkapasitasColorClass($persen);
                                 $barWidth = min(100, max(0, $tingkatHunianUpt));
                                 $barColor = $persen > 50 ? '#f43f5e' : ($persen > 0 ? '#f59e0b' : '#10b981');
+                                $mapsUrl = ($row->latitude && $row->longitude)
+                                    ? "https://www.google.com/maps/search/?api=1&query={$row->latitude},{$row->longitude}"
+                                    : (!empty($row->alamat) ? "https://www.google.com/maps/search/?api=1&query=" . urlencode($row->nama_upt . ' ' . $row->alamat) : null);
                             @endphp
                             <tr>
-                                <td class="text-center py-2">{{ $no++ }}</td>
-                                <td class="py-2 fw-medium">{{ $row->nama_upt }}</td>
-                                <td class="text-center py-2">{{ number_format($row->kapasitas) }}</td>
-                                <td class="text-center py-2">{{ number_format($row->total_tahanan) }}</td>
-                                <td class="text-center py-2">{{ number_format($row->total_narapidana) }}</td>
-                                <td class="text-center py-2"><strong>{{ number_format($row->total_penghuni) }}</strong></td>
+                                <td class="text-center py-2 font-speedometer">{{ $no++ }}</td>
                                 <td class="py-2">
-                                    <div class="d-flex justify-content-between align-items-center" style="font-size: 10px;">
-                                        <strong>{{ $tingkatHunianUpt }}%</strong>
+                                    <div class="d-flex align-items-center justify-content-between gap-1">
+                                        <span class="fw-semibold" style="color: var(--text-primary); font-size: 11.5px;">{{ $row->nama_upt }}</span>
+                                        @if($row->latitude && $row->longitude)
+                                            <button type="button" class="btn btn-focus-marker" data-upt-id="{{ $row->id }}" title="Fokuskan radar ke lokasi ini di peta">
+                                                <i class="fas fa-crosshairs"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    @if($mapsUrl)
+                                        <div class="mt-1">
+                                            <a href="{{ $mapsUrl }}" target="_blank" rel="noopener noreferrer" class="table-address-link" title="Buka di Google Maps / Aplikasi Navigasi">
+                                                <i class="fas fa-map-marker-alt text-danger"></i>
+                                                <span class="text-truncate" style="max-width: 170px;">{{ $row->alamat ?: 'Provinsi Banten' }}</span>
+                                                <i class="fas fa-external-link-alt opacity-75" style="font-size: 8px;"></i>
+                                            </a>
+                                        </div>
+                                    @elseif(!empty($row->alamat))
+                                        <div class="small text-muted text-truncate mt-1" style="max-width: 180px;">
+                                            <i class="fas fa-map-marker-alt text-muted me-1"></i>{{ $row->alamat }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2 font-speedometer">{{ number_format($row->kapasitas) }}</td>
+                                <td class="text-center py-2 font-speedometer">{{ number_format($row->total_tahanan) }}</td>
+                                <td class="text-center py-2 font-speedometer">{{ number_format($row->total_narapidana) }}</td>
+                                <td class="text-center py-2 font-speedometer"><strong>{{ number_format($row->total_penghuni) }}</strong></td>
+                                <td class="py-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 10px;">
+                                        <strong class="font-speedometer" style="font-size: 11px;">{{ $tingkatHunianUpt }}%</strong>
                                     </div>
                                     <div class="table-bar-track">
                                         <div class="table-bar-fill" style="width: {{ $barWidth }}%; background-color: {{ $barColor }};"></div>
                                     </div>
                                 </td>
-                                <td class="text-center py-2 {{ $colorClass }}" style="font-size: 11px;">
-                                    <strong>{{ $persen > 0 ? '+' : '' }}{{ $persen }}%</strong>
+                                <td class="text-center py-2 {{ $colorClass }}">
+                                    <strong class="font-speedometer" style="font-size: 11px;">{{ $persen > 0 ? '+' : '' }}{{ $persen }}%</strong>
                                 </td>
                             </tr>
                         @empty
@@ -559,16 +725,16 @@
                     <tfoot class="table-light">
                         <tr class="fw-bold">
                             <td colspan="2" class="text-end py-2">TOTAL</td>
-                            <td class="text-center py-2">{{ number_format($stats['total_kapasitas']) }}</td>
-                            <td class="text-center py-2">{{ number_format($stats['total_tahanan']) }}</td>
-                            <td class="text-center py-2">{{ number_format($stats['total_narapidana']) }}</td>
-                            <td class="text-center py-2"><strong>{{ number_format($stats['total_penghuni']) }}</strong></td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($stats['total_kapasitas']) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($stats['total_tahanan']) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($stats['total_narapidana']) }}</td>
+                            <td class="text-center py-2 font-speedometer"><strong>{{ number_format($stats['total_penghuni']) }}</strong></td>
                             @php $total_tingkat_hunian = $stats['total_kapasitas'] > 0 ? round(($stats['total_penghuni'] / $stats['total_kapasitas']) * 100, 1) : 0; @endphp
-                            <td class="text-center py-2 {{ getOverkapasitasColorClass($stats['persen_overkapasitas']) }}" style="font-size: 11px;">
-                                <strong>{{ $total_tingkat_hunian }}%</strong>
+                            <td class="text-center py-2 {{ getOverkapasitasColorClass($stats['persen_overkapasitas']) }}">
+                                <strong class="font-speedometer" style="font-size: 11px;">{{ $total_tingkat_hunian }}%</strong>
                             </td>
-                            <td class="text-center py-2 {{ getOverkapasitasColorClass($stats['persen_overkapasitas']) }}" style="font-size: 11px;">
-                                <strong>{{ $stats['persen_overkapasitas'] > 0 ? '+' : '' }}{{ $stats['persen_overkapasitas'] }}%</strong>
+                            <td class="text-center py-2 {{ getOverkapasitasColorClass($stats['persen_overkapasitas']) }}">
+                                <strong class="font-speedometer" style="font-size: 11px;">{{ $stats['persen_overkapasitas'] > 0 ? '+' : '' }}{{ $stats['persen_overkapasitas'] }}%</strong>
                             </td>
                         </tr>
                     </tfoot>
@@ -583,154 +749,259 @@
     <!-- ======================================================== -->
     <div class="tab-section" data-tab-section="klasifikasi">
 
-        <!-- Klasifikasi Statistics Cards -->
-        <div class="section-header command-section-title"><i class="fas fa-gavel me-1"></i>Pidum dan Pidsus</div>
+        @php
+            $grandTotalPerkara = (int)$stats['total_pidum'] + (int)$stats['total_pidsus'] + (int)$stats['total_uu_ite'];
+            $pctPidum = $grandTotalPerkara > 0 ? round(($stats['total_pidum'] / $grandTotalPerkara) * 100, 1) : 0;
+            $pctPidsus = $grandTotalPerkara > 0 ? round(($stats['total_pidsus'] / $grandTotalPerkara) * 100, 1) : 0;
+            $pctUUIte = $grandTotalPerkara > 0 ? round(($stats['total_uu_ite'] / $grandTotalPerkara) * 100, 1) : 0;
+        @endphp
+
+        <!-- Klasifikasi Statistics Cards Header (Preserves 'Pidum dan Pidsus' exact string for tests) -->
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <div class="section-header command-section-title mb-0">
+                <i class="fas fa-balance-scale text-primary me-2"></i>Pidum dan Pidsus
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="live-pulse"></span>
+                <span class="text-xs text-muted fw-semibold">Telemetri Klasifikasi Hukum & Perkara</span>
+            </div>
+        </div>
+
+        <!-- 4 Primary Legal Pillars -->
         <div class="row mb-3 g-2">
-            <!-- Pidana Umum -->
-            <div class="col-6 col-md-4">
-                <div class="stat-card stat-card-sm pidum h-100">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-7 me-2"><i class="fas fa-user"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm count-up" data-target="{{ $stats['total_pidum'] }}">{{ number_format($stats['total_pidum'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Pidum</p>
+            <!-- 1. Total Penghuni (Pidum + Pidsus + ITE) -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="pillar-kpi-card pillar-total h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="pill-badge pill-badge-emerald" style="font-size: 9.5px;">Akumulasi Perkara</span>
+                            <div class="pillar-label mt-1">Jumlah Penghuni (Pidum+Pidsus+ITE)</div>
                         </div>
+                        <div class="pillar-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-baseline mt-auto">
+                        <div class="pillar-val count-up" data-target="{{ $grandTotalPerkara }}">
+                            {{ number_format($grandTotalPerkara, 0, ',', '.') }}
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle font-speedometer" style="font-size: 11px;">
+                            Total Penghuni
+                        </span>
+                    </div>
+                    <div class="table-bar-track mt-2">
+                        <div class="table-bar-fill" style="width: 100%; background: linear-gradient(90deg, #10b981, #06b6d4);"></div>
                     </div>
                 </div>
             </div>
-            <!-- Pidana Khusus -->
-            <div class="col-6 col-md-4">
-                <div class="stat-card stat-card-sm pidsus h-100">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-8 me-2"><i class="fas fa-gavel"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm count-up" data-target="{{ $stats['total_pidsus'] }}">{{ number_format($stats['total_pidsus'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Pidsus</p>
+
+            <!-- 2. Pidana Umum -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="pillar-kpi-card pillar-pidum h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="pill-badge pill-badge-cyan" style="font-size: 9.5px;">Pidana Umum</span>
+                            <div class="pillar-label mt-1">Total Pidum</div>
                         </div>
+                        <div class="pillar-icon">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-baseline mt-auto">
+                        <div class="pillar-val count-up" data-target="{{ $stats['total_pidum'] }}">
+                            {{ number_format($stats['total_pidum'], 0, ',', '.') }}
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle font-speedometer" style="font-size: 11px;">
+                            {{ $pctPidum }}% Share
+                        </span>
+                    </div>
+                    <div class="table-bar-track mt-2">
+                        <div class="table-bar-fill" style="width: {{ $pctPidum }}%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
                     </div>
                 </div>
             </div>
-            <!-- UU ITE -->
-            <div class="col-6 col-md-4">
-                <div class="stat-card stat-card-sm uu-ite h-100">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-9 me-2"><i class="fas fa-laptop"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm count-up" data-target="{{ $stats['total_uu_ite'] }}">{{ number_format($stats['total_uu_ite'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total UU ITE</p>
+
+            <!-- 3. Pidana Khusus -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="pillar-kpi-card pillar-pidsus h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="pill-badge pill-badge-purple" style="font-size: 9.5px;">Pidana Khusus</span>
+                            <div class="pillar-label mt-1">Total Pidsus</div>
                         </div>
+                        <div class="pillar-icon">
+                            <i class="fas fa-handcuffs"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-baseline mt-auto">
+                        <div class="pillar-val count-up" data-target="{{ $stats['total_pidsus'] }}">
+                            {{ number_format($stats['total_pidsus'], 0, ',', '.') }}
+                        </div>
+                        <span class="badge bg-purple bg-opacity-10 text-purple border border-purple-subtle font-speedometer" style="font-size: 11px; color: #a855f7; border-color: rgba(168, 85, 247, 0.3);">
+                            {{ $pctPidsus }}% Share
+                        </span>
+                    </div>
+                    <div class="table-bar-track mt-2">
+                        <div class="table-bar-fill" style="width: {{ $pctPidsus }}%; background: linear-gradient(90deg, #8b5cf6, #c084fc);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. UU ITE -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="pillar-kpi-card pillar-uu-ite h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="pill-badge pill-badge-cyan" style="font-size: 9.5px; background: rgba(6, 182, 212, 0.12); color: #06b6d4;">Cyber / Siber</span>
+                            <div class="pillar-label mt-1">Total UU ITE</div>
+                        </div>
+                        <div class="pillar-icon">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-baseline mt-auto">
+                        <div class="pillar-val count-up" data-target="{{ $stats['total_uu_ite'] }}">
+                            {{ number_format($stats['total_uu_ite'], 0, ',', '.') }}
+                        </div>
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle font-speedometer" style="font-size: 11px;">
+                            {{ $pctUUIte }}% Share
+                        </span>
+                    </div>
+                    <div class="table-bar-track mt-2">
+                        <div class="table-bar-fill" style="width: {{ max(4, $pctUUIte) }}%; background: linear-gradient(90deg, #06b6d4, #38bdf8);"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Penghuni Lainnya Cards -->
-        <div class="section-header lainnya"><i class="fas fa-exclamation-triangle me-1"></i>Lainnya</div>
-        <div class="row mb-3 g-2">
-            <div class="col-6 col-md-4">
-                <div class="stat-card stat-card-sm lainnya h-100">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-warning me-2"><i class="fas fa-globe"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-lainnya count-up" data-target="{{ $stats['total_wna'] }}">{{ number_format($stats['total_wna'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total WNA</p>
-                        </div>
-                    </div>
-                </div>
+        <!-- Section: Snapshot Kasus Khusus, Kelompok Rentan & Vonis Berat -->
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <div class="section-header command-section-title mb-0" style="font-size: 12px;">
+                <i class="fas fa-shield-virus text-warning me-2"></i>Atensi Khusus, Kelompok Rentan & Vonis Berat
             </div>
-            <div class="col-6 col-md-4">
-                <div class="stat-card stat-card-sm lainnya h-100">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-warning me-2"><i class="fas fa-hospital"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-lainnya count-up" data-target="{{ $stats['total_sakit'] }}">{{ number_format($stats['total_sakit'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Sakit Berkepanjangan</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4">
-                <div class="stat-card stat-card-sm lainnya h-100">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-warning me-2"><i class="fas fa-user-clock"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-lainnya count-up" data-target="{{ $stats['total_lansia'] }}">{{ number_format($stats['total_lansia'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Lansia >70 Tahun</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <span class="text-xs text-muted">5 Indikator Pengawasan Intensif</span>
         </div>
 
-        <!-- Pidana Mati dan Seumur Hidup Cards -->
-        <div class="section-header text-danger" style="border-bottom: 2px solid #dc3545;"><i class="fas fa-skull-crossbones me-1"></i>Pidana Mati dan Seumur Hidup</div>
+        <!-- 5 Snapshot Bento Cards Row -->
         <div class="row mb-3 g-2">
-            <div class="col-6 col-md-6">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #dc3545;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-danger text-white me-2"><i class="fas fa-skull-crossbones"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-danger count-up" data-target="{{ $stats['total_pidana_mati'] }}">{{ number_format($stats['total_pidana_mati'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Pidana Mati</p>
+            <!-- WNA -->
+            <div class="col-6 col-md-2-4">
+                <div class="bento-card snapshot-card h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label">WNA</span>
+                        <div class="snapshot-card-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                            <i class="fas fa-globe-americas"></i>
                         </div>
+                    </div>
+                    <div class="snapshot-card-value text-warning count-up" data-target="{{ $stats['total_wna'] }}">
+                        {{ number_format($stats['total_wna'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-6">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #dc3545;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-danger text-white me-2"><i class="fas fa-infinity"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-danger count-up" data-target="{{ $stats['total_seumur_hidup'] }}">{{ number_format($stats['total_seumur_hidup'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Seumur Hidup</p>
+
+            <!-- Sakit Berkepanjangan -->
+            <div class="col-6 col-md-2-4">
+                <div class="bento-card snapshot-card h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label">Sakit Menahun</span>
+                        <div class="snapshot-card-icon" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e;">
+                            <i class="fas fa-heart-pulse"></i>
                         </div>
+                    </div>
+                    <div class="snapshot-card-value text-danger count-up" data-target="{{ $stats['total_sakit'] }}">
+                        {{ number_format($stats['total_sakit'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lansia >70 Tahun -->
+            <div class="col-6 col-md-2-4">
+                <div class="bento-card snapshot-card h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label">Lansia >70 Thn</span>
+                        <div class="snapshot-card-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                    </div>
+                    <div class="snapshot-card-value text-primary count-up" data-target="{{ $stats['total_lansia'] }}">
+                        {{ number_format($stats['total_lansia'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pidana Mati -->
+            <div class="col-6 col-md-2-4">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #f43f5e;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-danger">Pidana Mati</span>
+                        <div class="snapshot-card-icon" style="background: rgba(244, 63, 94, 0.2); color: #f43f5e;">
+                            <i class="fas fa-skull-crossbones"></i>
+                        </div>
+                    </div>
+                    <div class="snapshot-card-value text-danger count-up" data-target="{{ $stats['total_pidana_mati'] }}">
+                        {{ number_format($stats['total_pidana_mati'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seumur Hidup -->
+            <div class="col-12 col-md-2-4">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #8b5cf6;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-purple">Seumur Hidup</span>
+                        <div class="snapshot-card-icon" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">
+                            <i class="fas fa-infinity"></i>
+                        </div>
+                    </div>
+                    <div class="snapshot-card-value text-purple count-up" data-target="{{ $stats['total_seumur_hidup'] }}">
+                        {{ number_format($stats['total_seumur_hidup'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Tabel Data Penghuni Berdasarkan Jenis Kejahatan per UPT -->
-        <div class="table-card-modern">
+        <div class="table-card-modern mb-3">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div>
                     <h6 class="mb-0 fw-bold" style="color: var(--text-primary); font-size: 14px;">
                         <i class="fas fa-table text-primary me-2"></i>Data Penghuni Berdasarkan Jenis Kejahatan per UPT
                     </h6>
-                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }}</small>
+                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }} &bull; Matriks Klasifikasi Perkara Lengkap</small>
                 </div>
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableKejahatan" placeholder="Cari UPT...">
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableKejahatan" placeholder="Cari nama UPT...">
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tableKejahatan" style="font-size: 10px;">
+                <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tableKejahatan" style="font-size: 11px;">
                     <thead class="table-light">
                         <tr>
-                            <th rowspan="2" class="text-center align-middle py-1" style="width: 25px;">No</th>
-                            <th rowspan="2" class="align-middle py-1" style="min-width: 80px;">UPT</th>
-                            <th class="text-center py-1 bg-primary bg-opacity-10" style="width: 40px;">Pidum</th>
-                            <th colspan="9" class="text-center py-1 bg-info bg-opacity-25" style="font-size: 9px;">Pidsus</th>
-                            <th class="text-center py-1 bg-primary bg-opacity-10" style="width: 40px;">ITE</th>
-                            <th colspan="5" class="text-center py-1 bg-warning bg-opacity-25" style="font-size: 9px;">Lainnya</th>
+                            <th rowspan="2" class="text-center align-middle py-2" style="width: 35px;">No</th>
+                            <th rowspan="2" class="align-middle py-2" style="min-width: 150px;">Unit Pelaksana Teknis</th>
+                            <th class="text-center py-1 th-group-pidum" style="min-width: 55px;">PIDUM</th>
+                            <th colspan="9" class="text-center py-1 th-group-pidsus">TINDAK PIDANA KHUSUS (PIDSUS)</th>
+                            <th class="text-center py-1 th-group-ite" style="min-width: 50px;">ITE</th>
+                            <th colspan="5" class="text-center py-1 th-group-khusus">ATENSI KHUSUS & VONIS BERAT</th>
                         </tr>
                         <tr>
-                            <th class="text-center py-1 bg-primary bg-opacity-10" style="width: 40px; font-size: 9px;">Jml</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Tipikor</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Nrk<br>Br</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Nrk<br>Pg</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Teror</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Traff</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Ileg<br>Log</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Money<br>Lau</th>
-                            <th class="text-center py-1 bg-info bg-opacity-25" style="width: 38px; font-size: 9px;">Geno</th>
-                            <th class="text-center py-1 bg-success text-white" style="width: 42px; font-size: 9px;"><strong>Jml</strong></th>
-                            <th class="text-center py-1 bg-primary bg-opacity-10" style="width: 40px; font-size: 9px;">Jml</th>
-                            <th class="text-center py-1 bg-warning bg-opacity-25" style="width: 38px; font-size: 9px;">WNA</th>
-                            <th class="text-center py-1 bg-warning bg-opacity-25" style="width: 38px; font-size: 9px;">Sakit</th>
-                            <th class="text-center py-1 bg-warning bg-opacity-25" style="width: 38px; font-size: 9px;">Lansia</th>
-                            <th class="text-center py-1 bg-warning bg-opacity-25" style="width: 38px; font-size: 9px;">MT</th>
-                            <th class="text-center py-1 bg-warning bg-opacity-25" style="width: 38px; font-size: 9px;">SH</th>
+                            <th class="text-center th-sub-col th-group-pidum">Jml</th>
+                            <th class="text-center th-sub-col">Tipikor</th>
+                            <th class="text-center th-sub-col">Nrk Bdr</th>
+                            <th class="text-center th-sub-col">Nrk Peng</th>
+                            <th class="text-center th-sub-col">Teror</th>
+                            <th class="text-center th-sub-col">Traff</th>
+                            <th class="text-center th-sub-col">Ileg Log</th>
+                            <th class="text-center th-sub-col">Money Lau</th>
+                            <th class="text-center th-sub-col">Geno</th>
+                            <th class="text-center th-sub-col th-group-pidsus fw-bold">Total</th>
+                            <th class="text-center th-sub-col th-group-ite">Jml</th>
+                            <th class="text-center th-sub-col">WNA</th>
+                            <th class="text-center th-sub-col">Sakit</th>
+                            <th class="text-center th-sub-col">Lansia</th>
+                            <th class="text-center th-sub-col th-group-khusus text-danger fw-bold">Mati</th>
+                            <th class="text-center th-sub-col th-group-khusus fw-bold text-purple">Seumur</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -777,58 +1048,79 @@
                             $p_ite = $statistikTotalRow > 0 ? round(($row->uu_ite / $statistikTotalRow) * 100, 1) : 0;
                             @endphp
                             <tr>
-                                <td class="text-center py-1">{{ $no++ }}</td>
-                                <td class="py-1 fw-medium">{{ $row->nama_upt }}</td>
-                                <td class="text-center py-1">{{ number_format($row->pidum) }}<br><small class="text-muted" style="font-size: 8px;">{{ $p_pidum }}%</small></td>
-                                <td class="text-center py-1">{{ number_format($row->tipikor) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->narkoba_bandar) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->narkoba_pengguna) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->teroris) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->trafficking) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->ilegal_logging) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->money_laundering) }}</td>
-                                <td class="text-center py-1">{{ number_format($row->genosida) }}</td>
-                                <td class="text-center py-1 table-success"><strong>{{ number_format($pidsusTotal) }}</strong><br><small class="text-success" style="font-size: 8px;">({{ $p_pidsus }}%)</small></td>
-                                <td class="text-center py-1">{{ number_format($row->uu_ite) }}<br><small class="text-muted" style="font-size: 8px;">{{ $p_ite }}%</small></td>
-                                <td class="text-center py-1 text-warning-emphasis">{{ number_format($wna) }}</td>
-                                <td class="text-center py-1 text-warning-emphasis">{{ number_format($sakit) }}</td>
-                                <td class="text-center py-1 text-warning-emphasis">{{ number_format($lansia) }}</td>
-                                <td class="text-center py-1 text-danger fw-bold">{{ number_format($pidana_mati) }}</td>
-                                <td class="text-center py-1 text-danger fw-bold">{{ number_format($seumur_hidup) }}</td>
+                                <td class="text-center py-2 font-speedometer">{{ $no++ }}</td>
+                                <td class="py-2 fw-medium">{{ $row->nama_upt }}</td>
+                                <td class="text-center py-2">
+                                    @if((int)$row->pidum > 0)
+                                        <span class="val-active">{{ number_format($row->pidum) }}</span>
+                                        <div class="text-muted" style="font-size: 8.5px;">{{ $p_pidum }}%</div>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">{!! (int)$row->tipikor > 0 ? '<span class="val-active">' . number_format($row->tipikor) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->narkoba_bandar > 0 ? '<span class="val-active">' . number_format($row->narkoba_bandar) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->narkoba_pengguna > 0 ? '<span class="val-active">' . number_format($row->narkoba_pengguna) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->teroris > 0 ? '<span class="val-active text-danger fw-bold">' . number_format($row->teroris) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->trafficking > 0 ? '<span class="val-active">' . number_format($row->trafficking) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->ilegal_logging > 0 ? '<span class="val-active">' . number_format($row->ilegal_logging) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->money_laundering > 0 ? '<span class="val-active">' . number_format($row->money_laundering) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! (int)$row->genosida > 0 ? '<span class="val-active">' . number_format($row->genosida) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">
+                                    @if($pidsusTotal > 0)
+                                        <span class="badge-pidsus-total">{{ number_format($pidsusTotal) }}</span>
+                                        <div class="text-purple" style="font-size: 8.5px;">({{ $p_pidsus }}%)</div>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if((int)$row->uu_ite > 0)
+                                        <span class="val-active text-info">{{ number_format($row->uu_ite) }}</span>
+                                        <div class="text-muted" style="font-size: 8.5px;">{{ $p_ite }}%</div>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">{!! $wna > 0 ? '<span class="val-active text-warning">' . number_format($wna) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! $sakit > 0 ? '<span class="val-active text-danger">' . number_format($sakit) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! $lansia > 0 ? '<span class="val-active text-primary">' . number_format($lansia) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! $pidana_mati > 0 ? '<span class="val-active text-danger fw-bold">' . number_format($pidana_mati) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
+                                <td class="text-center py-2">{!! $seumur_hidup > 0 ? '<span class="val-active fw-bold text-purple">' . number_format($seumur_hidup) . '</span>' : '<span class="val-zero">-</span>' !!}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="18" class="text-center py-2 text-muted">Belum ada data</td></tr>
+                            <tr><td colspan="18" class="text-center py-3 text-muted">Belum ada data</td></tr>
                         @endforelse
                     </tbody>
                     <tfoot class="table-light">
                         @php $statistikGrandTotal = $totalPidum + $totalPidsus + $totalUUITE; @endphp
-                        <tr class="fw-bold" style="font-size: 10px;">
-                            <td colspan="2" class="text-end py-1">TOTAL</td>
-                            <td class="text-center py-1">
-                                {{ number_format($totalPidum) }}<br>
-                                <small class="text-muted" style="font-size: 8px;">{{ $statistikGrandTotal > 0 ? round(($totalPidum / $statistikGrandTotal) * 100, 1) : 0 }}%</small>
+                        <tr class="fw-bold">
+                            <td colspan="2" class="text-end py-2">TOTAL</td>
+                            <td class="text-center py-2 th-group-pidum">
+                                <span class="font-speedometer" style="font-size: 12px;">{{ number_format($totalPidum) }}</span>
+                                <div style="font-size: 8.5px;">{{ $statistikGrandTotal > 0 ? round(($totalPidum / $statistikGrandTotal) * 100, 1) : 0 }}%</div>
                             </td>
-                            <td class="text-center py-1">{{ number_format($totalTipikor) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalNarkobaBandar) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalNarkobaPengguna) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalTeroris) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalTrafficking) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalIlegalLogging) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalMoneyLaundering) }}</td>
-                            <td class="text-center py-1">{{ number_format($totalGenosida) }}</td>
-                            <td class="text-center py-1 table-success">
-                                {{ number_format($totalPidsus) }}<br>
-                                <small class="text-success" style="font-size: 8px;">{{ $statistikGrandTotal > 0 ? round(($totalPidsus / $statistikGrandTotal) * 100, 1) : 0 }}%</small>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalTipikor) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalNarkobaBandar) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalNarkobaPengguna) }}</td>
+                            <td class="text-center py-2 font-speedometer text-danger">{{ number_format($totalTeroris) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalTrafficking) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalIlegalLogging) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalMoneyLaundering) }}</td>
+                            <td class="text-center py-2 font-speedometer">{{ number_format($totalGenosida) }}</td>
+                            <td class="text-center py-2 th-group-pidsus">
+                                <span class="badge-pidsus-total" style="font-size: 12px;">{{ number_format($totalPidsus) }}</span>
+                                <div class="text-purple" style="font-size: 8.5px;">{{ $statistikGrandTotal > 0 ? round(($totalPidsus / $statistikGrandTotal) * 100, 1) : 0 }}%</div>
                             </td>
-                            <td class="text-center py-1">
-                                {{ number_format($totalUUITE) }}<br>
-                                <small class="text-muted" style="font-size: 8px;">{{ $statistikGrandTotal > 0 ? round(($totalUUITE / $statistikGrandTotal) * 100, 1) : 0 }}%</small>
+                            <td class="text-center py-2 th-group-ite">
+                                <span class="font-speedometer" style="font-size: 12px;">{{ number_format($totalUUITE) }}</span>
+                                <div style="font-size: 8.5px;">{{ $statistikGrandTotal > 0 ? round(($totalUUITE / $statistikGrandTotal) * 100, 1) : 0 }}%</div>
                             </td>
-                            <td class="text-center py-1 text-warning-emphasis">{{ number_format($totalWNA) }}</td>
-                            <td class="text-center py-1 text-warning-emphasis">{{ number_format($totalSakit) }}</td>
-                            <td class="text-center py-1 text-warning-emphasis">{{ number_format($totalLansia) }}</td>
-                            <td class="text-center py-1 text-danger">{{ number_format($totalPidanaMati) }}</td>
-                            <td class="text-center py-1 text-danger">{{ number_format($totalSeumurHidup) }}</td>
+                            <td class="text-center py-2 font-speedometer text-warning">{{ number_format($totalWNA) }}</td>
+                            <td class="text-center py-2 font-speedometer text-danger">{{ number_format($totalSakit) }}</td>
+                            <td class="text-center py-2 font-speedometer text-primary">{{ number_format($totalLansia) }}</td>
+                            <td class="text-center py-2 font-speedometer text-danger fw-bold" style="font-size: 12px;">{{ number_format($totalPidanaMati) }}</td>
+                            <td class="text-center py-2 font-speedometer fw-bold text-purple" style="font-size: 12px;">{{ number_format($totalSeumurHidup) }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -836,21 +1128,31 @@
         </div>
 
         <!-- Tabel Pidana Mati dan Seumur Hidup per UPT -->
-        <div class="table-card-modern">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="mb-0 text-danger fw-bold"><i class="fas fa-skull-crossbones me-2"></i>Data Pidana Mati dan Seumur Hidup per UPT</h6>
-                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle">
-                    <i class="fas fa-calendar-day me-1"></i>{{ formatIndonesianDate($filterTanggal, false) }}
-                </span>
+        <div class="table-card-modern mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h6 class="mb-0 text-danger fw-bold" style="font-size: 13.5px;">
+                        <i class="fas fa-skull-crossbones me-2"></i>Data Narapidana Pidana Mati & Seumur Hidup per UPT
+                    </h6>
+                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }} &bull; Vonis Hukuman Maksimal</small>
+                </div>
+                <div class="table-search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tablePMSH" placeholder="Cari UPT...">
+                </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm mb-0 align-middle" style="font-size: 11px;">
+                <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tablePMSH" style="font-size: 11px;">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-center py-2" style="width: 40px;">No</th>
-                            <th class="py-2" style="min-width: 150px;">Unit Pelaksana Teknis</th>
-                            <th class="text-center py-2" style="width: 120px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">Pidana Mati</th>
-                            <th class="text-center py-2" style="width: 120px; background-color: rgba(220, 53, 69, 0.1); color: #dc3545;">Seumur Hidup</th>
+                            <th class="text-center py-2" style="width: 45px;">No</th>
+                            <th class="py-2">Unit Pelaksana Teknis</th>
+                            <th class="text-center py-2 text-danger" style="width: 140px; background-color: rgba(244, 63, 94, 0.12);">
+                                <i class="fas fa-skull-crossbones me-1"></i>Pidana Mati
+                            </th>
+                            <th class="text-center py-2 text-purple" style="width: 140px; background-color: rgba(139, 92, 246, 0.12);">
+                                <i class="fas fa-infinity me-1"></i>Seumur Hidup
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -867,10 +1169,22 @@
                             $totalSH += $sh;
                             @endphp
                             <tr>
-                                <td class="text-center py-2">{{ $no++ }}</td>
-                                <td class="py-2">{{ $row->nama_upt }}</td>
-                                <td class="text-center py-2 text-danger"><strong>{{ number_format($pm) }}</strong></td>
-                                <td class="text-center py-2 text-danger"><strong>{{ number_format($sh) }}</strong></td>
+                                <td class="text-center py-2 font-speedometer">{{ $no++ }}</td>
+                                <td class="py-2 fw-medium">{{ $row->nama_upt }}</td>
+                                <td class="text-center py-2">
+                                    @if($pm > 0)
+                                        <strong class="text-danger font-speedometer" style="font-size: 12px;">{{ number_format($pm) }}</strong>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($sh > 0)
+                                        <strong class="font-speedometer text-purple" style="font-size: 12px;">{{ number_format($sh) }}</strong>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr><td colspan="4" class="text-center text-muted py-3">Belum ada data</td></tr>
@@ -879,53 +1193,91 @@
                     <tfoot class="table-light">
                         <tr class="fw-bold">
                             <td colspan="2" class="text-end py-2">TOTAL</td>
-                            <td class="text-center py-2 text-danger" style="background-color: rgba(220, 53, 69, 0.1);">{{ number_format($totalPM) }}</td>
-                            <td class="text-center py-2 text-danger" style="background-color: rgba(220, 53, 69, 0.1);">{{ number_format($totalSH) }}</td>
+                            <td class="text-center py-2 text-danger font-speedometer" style="background-color: rgba(244, 63, 94, 0.12); font-size: 12px;">
+                                {{ number_format($totalPM) }}
+                            </td>
+                            <td class="text-center py-2 font-speedometer text-purple" style="background-color: rgba(139, 92, 246, 0.12); font-size: 12px;">
+                                {{ number_format($totalSH) }}
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
 
-        <!-- Chart Penghuni Berdasarkan Umur dan Jenis Kelamin -->
-        <div class="row">
-            <div class="col-lg-6 mb-3">
+        <!-- Chart Demografi Umur dan Jenis Kelamin -->
+        <div class="row g-3">
+            <div class="col-lg-6">
                 <div class="chart-card-modern h-100">
-                    <h6 class="mb-3 fw-bold" style="color: var(--text-primary);"><i class="fas fa-venus-mars text-primary me-2"></i>Penghuni Berdasarkan Umur & Jenis Kelamin</h6>
-                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
-                        <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: rgba(54, 162, 235, 0.1); flex: 1 1 45%;">
-                            <div style="width: 12px; height: 12px; background: rgba(54, 162, 235, 0.9); border-radius: 3px;"></div>
-                            <span class="small fw-medium" style="font-size: 11px;">Dewasa ♂: <span id="legend-dewasa-laki">0</span></span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: rgba(54, 162, 235, 0.1); flex: 1 1 45%;">
-                            <div style="width: 12px; height: 12px; background: rgba(54, 162, 235, 0.6); border-radius: 3px;"></div>
-                            <span class="small fw-medium" style="font-size: 11px;">Anak ♂: <span id="legend-anak-laki">0</span></span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: rgba(255, 99, 132, 0.1); flex: 1 1 45%;">
-                            <div style="width: 12px; height: 12px; background: rgba(255, 99, 132, 0.9); border-radius: 3px;"></div>
-                            <span class="small fw-medium" style="font-size: 11px;">Dewasa ♀: <span id="legend-dewasa-perempuan">0</span></span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: rgba(255, 99, 132, 0.1); flex: 1 1 45%;">
-                            <div style="width: 12px; height: 12px; background: rgba(255, 99, 132, 0.6); border-radius: 3px;"></div>
-                            <span class="small fw-medium" style="font-size: 11px;">Anak ♀: <span id="legend-anak-perempuan">0</span></span>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-header command-section-title mb-0" style="font-size: 13px;">
+                            <i class="fas fa-venus-mars text-primary me-2"></i>Penghuni Berdasarkan Umur & Gender
                         </div>
                     </div>
-                    <div style="height: 220px;">
+                    <!-- Telemetry Badges Grid -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6 col-sm-3">
+                            <div class="telemetry-legend-item d-flex align-items-center gap-2 p-2">
+                                <span class="donut-legend-pip" style="background: #38bdf8;"></span>
+                                <div class="text-truncate">
+                                    <div class="text-xs text-muted">Dewasa ♂</div>
+                                    <strong class="font-speedometer text-xs" id="legend-dewasa-laki">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="telemetry-legend-item d-flex align-items-center gap-2 p-2">
+                                <span class="donut-legend-pip" style="background: #60a5fa;"></span>
+                                <div class="text-truncate">
+                                    <div class="text-xs text-muted">Anak ♂</div>
+                                    <strong class="font-speedometer text-xs" id="legend-anak-laki">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="telemetry-legend-item d-flex align-items-center gap-2 p-2">
+                                <span class="donut-legend-pip" style="background: #f43f5e;"></span>
+                                <div class="text-truncate">
+                                    <div class="text-xs text-muted">Dewasa ♀</div>
+                                    <strong class="font-speedometer text-xs" id="legend-dewasa-perempuan">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="telemetry-legend-item d-flex align-items-center gap-2 p-2">
+                                <span class="donut-legend-pip" style="background: #fb7185;"></span>
+                                <div class="text-truncate">
+                                    <div class="text-xs text-muted">Anak ♀</div>
+                                    <strong class="font-speedometer text-xs" id="legend-anak-perempuan">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="height: 220px; position: relative;">
                         <canvas id="chartUmurGender"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 mb-3">
+
+            <div class="col-lg-6">
                 <div class="chart-card-modern h-100">
-                    <h6 class="mb-3 fw-bold" style="color: var(--text-primary);"><i class="fas fa-chart-pie text-primary me-2"></i>Distribusi Jenis Kelamin</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-header command-section-title mb-0" style="font-size: 13px;">
+                            <i class="fas fa-chart-pie text-primary me-2"></i>Distribusi Jenis Kelamin
+                        </div>
+                    </div>
                     <div class="row align-items-center">
-                        <div class="col-5">
-                            <div style="height: 180px;">
+                        <div class="col-12 col-sm-6">
+                            <div class="donut-chart-container position-relative" style="height: 200px;">
                                 <canvas id="chartGenderDistribution"></canvas>
+                                <div class="donut-center-telemetry">
+                                    <div class="donut-center-val font-speedometer" id="donutGenderCenterVal">0</div>
+                                    <div class="donut-center-sub">Total Jiwa</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-7">
-                            <div id="genderLegendContainer"></div>
+                        <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                            <div id="genderLegendContainer" class="d-flex flex-column gap-2"></div>
                         </div>
                     </div>
                 </div>
@@ -939,96 +1291,160 @@
     <!-- ======================================================== -->
     <div class="tab-section" data-tab-section="bebas">
 
-        <!-- Bebas Harian Statistics Cards -->
-        <div class="section-header command-section-title" style="border-bottom: 2px solid #10b981; color: #10b981;">
-            <i class="fas fa-door-open me-1"></i>Pengeluaran / Bebas Harian
+        <!-- Bebas Harian Section Header -->
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div>
+                <div class="section-header command-section-title mb-0" style="border-bottom: 2px solid #10b981; color: #10b981;">
+                    <i class="fas fa-door-open me-2"></i>Pengeluaran / Bebas Harian
+                </div>
+                <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }} &bull; Rekapitulasi Pembebasan & Pengeluaran WBP Seluruh UPT Banten</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="pill-badge pill-badge-emerald">
+                    <i class="fas fa-check-circle"></i> {{ number_format($stats['total_bebas']) }} Total Bebas Hari Ini
+                </span>
+            </div>
         </div>
-        <div class="row mb-3 g-2">
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #6b7280;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-secondary text-white me-2"><i class="fas fa-check-circle"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm count-up" data-target="{{ $stats['bebas_murni'] }}">{{ number_format($stats['bebas_murni'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Bebas Murni</p>
+
+        <!-- Bebas Harian Cockpit Bento Grid (Symmetric 4x2 Grid: 8 Rapi Bento Cards) -->
+        <div class="row g-2 mb-3">
+            <!-- 1. Total Pengeluaran Hari Ini (Hero Card) -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #10b981; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.04));">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-success">Total Pengeluaran</span>
+                        <div class="snapshot-card-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                            <i class="fas fa-door-open"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-success count-up" data-target="{{ $stats['total_bebas'] }}">
+                        {{ number_format($stats['total_bebas']) }}
+                    </div>
+                    <div class="snapshot-card-sub text-success">Total Bebas Hari Ini</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #3b82f6;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-primary text-white me-2"><i class="fas fa-user-check"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-primary count-up" data-target="{{ $stats['bebas_pb'] }}">{{ number_format($stats['bebas_pb'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">PB (Bersyarat)</p>
+
+            <!-- 2. Bebas Murni -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #64748b;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label">Bebas Murni</span>
+                        <div class="snapshot-card-icon" style="background: rgba(100, 116, 139, 0.15); color: #64748b;">
+                            <i class="fas fa-certificate"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-secondary count-up" data-target="{{ $stats['bebas_murni'] }}">
+                        {{ number_format($stats['bebas_murni']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Habis Masa Pidana</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #06b6d4;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-info text-white me-2"><i class="fas fa-calendar-check"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-info count-up" data-target="{{ $stats['bebas_cb'] }}">{{ number_format($stats['bebas_cb'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">CB (Cuti Bersyarat)</p>
+
+            <!-- 3. PB -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #3b82f6;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-primary">PB (Bersyarat)</span>
+                        <div class="snapshot-card-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+                            <i class="fas fa-user-check"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-primary count-up" data-target="{{ $stats['bebas_pb'] }}">
+                        {{ number_format($stats['bebas_pb']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Pembebasan Bersyarat</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #f59e0b;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-warning text-dark me-2"><i class="fas fa-hourglass-end"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-warning count-up" data-target="{{ $stats['bebas_cmb'] }}">{{ number_format($stats['bebas_cmb'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">CMB</p>
+
+            <!-- 4. CB -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #06b6d4;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-info">CB (Bersyarat)</span>
+                        <div class="snapshot-card-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-info count-up" data-target="{{ $stats['bebas_cb'] }}">
+                        {{ number_format($stats['bebas_cb']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Cuti Bersyarat</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #10b981;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-success text-white me-2"><i class="fas fa-home"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-success count-up" data-target="{{ $stats['bebas_asimilasi'] }}">{{ number_format($stats['bebas_asimilasi'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Asimilasi</p>
+
+            <!-- 5. CMB -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #8b5cf6;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-purple">CMB</span>
+                        <div class="snapshot-card-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                            <i class="fas fa-walking"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-purple count-up" data-target="{{ $stats['bebas_cmb'] }}">
+                        {{ number_format($stats['bebas_cmb']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Cuti Menjelang Bebas</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #ef4444;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm bg-danger text-white me-2"><i class="fas fa-balance-scale"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm text-danger count-up" data-target="{{ $stats['bebas_bdh'] }}">{{ number_format($stats['bebas_bdh'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">BDH (Demi Hukum)</p>
+
+            <!-- 6. Asimilasi -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #f59e0b;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-warning-emphasis">Asimilasi</span>
+                        <div class="snapshot-card-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                            <i class="fas fa-house-user"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-warning-emphasis count-up" data-target="{{ $stats['bebas_asimilasi'] }}">
+                        {{ number_format($stats['bebas_asimilasi']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Asimilasi Rumah / Kerja</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3 col-xl">
-                <div class="stat-card stat-card-sm h-100" style="border-left: 4px solid #8b5cf6;">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon-sm text-white me-2" style="background: #8b5cf6;"><i class="fas fa-flag-checkered"></i></div>
-                        <div class="flex-grow-1">
-                            <div class="stat-value-sm fw-bold count-up" data-target="{{ $stats['total_bebas'] }}" style="color: #8b5cf6;">{{ number_format($stats['total_bebas'], 0, ',', '.') }}</div>
-                            <p class="stat-label-sm">Total Bebas</p>
+
+            <!-- 7. BDH -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #f43f5e;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-danger">BDH (Demi Hukum)</span>
+                        <div class="snapshot-card-icon" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e;">
+                            <i class="fas fa-scale-balanced"></i>
                         </div>
                     </div>
+                    <div class="snapshot-card-value font-speedometer text-danger count-up" data-target="{{ $stats['bebas_bdh'] }}">
+                        {{ number_format($stats['bebas_bdh']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Bebas Demi Hukum</div>
+                </div>
+            </div>
+
+            <!-- 8. Lainnya -->
+            <div class="col-6 col-md-3">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #94a3b8;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-muted">Lain-lain</span>
+                        <div class="snapshot-card-icon" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                    </div>
+                    <div class="snapshot-card-value font-speedometer text-muted count-up" data-target="{{ $stats['bebas_lainnya'] }}">
+                        {{ number_format($stats['bebas_lainnya']) }}
+                    </div>
+                    <div class="snapshot-card-sub">Pengeluaran Lainnya</div>
                 </div>
             </div>
         </div>
 
         <!-- Tabel Bebas Harian per UPT -->
-        <div class="table-card-modern">
+        <div class="table-card-modern mb-3">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div>
-                    <h6 class="mb-0 text-success fw-bold"><i class="fas fa-door-open me-2"></i>Data Pengeluaran / Bebas Harian per UPT</h6>
-                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }}</small>
+                    <h6 class="mb-0 text-success fw-bold" style="font-size: 13.5px;">
+                        <i class="fas fa-door-open me-2"></i>Data Pengeluaran / Bebas Harian per UPT
+                    </h6>
+                    <small class="text-secondary">{{ formatIndonesianDate($filterTanggal, false) }} &bull; Rincian Lengkap per Jenis Bebas</small>
                 </div>
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
@@ -1040,15 +1456,15 @@
                     <thead class="table-light">
                         <tr>
                             <th class="text-center py-2" style="width: 40px;">No</th>
-                            <th class="py-2" style="min-width: 170px;">Unit Pelaksana Teknis</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(107, 114, 128, 0.08);">Bebas Murni</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(59, 130, 246, 0.08); color: #1d4ed8;">PB</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(6, 182, 212, 0.08); color: #0891b2;">CB</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(139, 92, 246, 0.08); color: #7c3aed;">CMB</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(245, 158, 11, 0.08); color: #b45309;">Asimilasi</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(239, 68, 68, 0.08); color: #b91c1c;">BDH</th>
-                            <th class="text-center py-2" style="width: 95px; background-color: rgba(100, 116, 139, 0.08); color: #475569;">Lainnya</th>
-                            <th class="text-center py-2" style="width: 100px; background-color: rgba(16, 185, 129, 0.15); color: #047857;">Total</th>
+                            <th class="py-2" style="min-width: 180px;">Unit Pelaksana Teknis</th>
+                            <th class="text-center py-2 th-group-bebas-bm" style="width: 95px;">Bebas Murni</th>
+                            <th class="text-center py-2 th-group-bebas-pb" style="width: 90px;">PB</th>
+                            <th class="text-center py-2 th-group-bebas-cb" style="width: 90px;">CB</th>
+                            <th class="text-center py-2 th-group-bebas-cmb" style="width: 90px;">CMB</th>
+                            <th class="text-center py-2 th-group-bebas-asim" style="width: 95px;">Asimilasi</th>
+                            <th class="text-center py-2 th-group-bebas-bdh" style="width: 90px;">BDH</th>
+                            <th class="text-center py-2 th-group-bebas-lny" style="width: 90px;">Lainnya</th>
+                            <th class="text-center py-2 th-group-bebas-total" style="width: 105px;">Total Bebas</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1073,16 +1489,64 @@
                             $totSemua += $totalUpt;
                             @endphp
                             <tr>
-                                <td class="text-center py-2">{{ $noBebas++ }}</td>
+                                <td class="text-center py-2 font-speedometer">{{ $noBebas++ }}</td>
                                 <td class="py-2 fw-medium">{{ $rowBebas->nama_upt }}</td>
-                                <td class="text-center py-2 {{ $bm > 0 ? 'fw-bold' : 'text-muted' }}">{{ number_format($bm) }}</td>
-                                <td class="text-center py-2 {{ $pb > 0 ? 'fw-bold text-primary' : 'text-muted' }}">{{ number_format($pb) }}</td>
-                                <td class="text-center py-2 {{ $cb > 0 ? 'fw-bold text-info' : 'text-muted' }}">{{ number_format($cb) }}</td>
-                                <td class="text-center py-2 {{ $cmb > 0 ? 'fw-bold' : 'text-muted' }}" style="{{ $cmb > 0 ? 'color: #7c3aed;' : '' }}">{{ number_format($cmb) }}</td>
-                                <td class="text-center py-2 {{ $asim > 0 ? 'fw-bold text-warning-emphasis' : 'text-muted' }}">{{ number_format($asim) }}</td>
-                                <td class="text-center py-2 {{ $bdh > 0 ? 'fw-bold text-danger' : 'text-muted' }}">{{ number_format($bdh) }}</td>
-                                <td class="text-center py-2 {{ $lny > 0 ? 'fw-bold text-secondary' : 'text-muted' }}">{{ number_format($lny) }}</td>
-                                <td class="text-center py-2 fw-bold text-success" style="background-color: rgba(16, 185, 129, 0.05);">{{ number_format($totalUpt) }}</td>
+                                <td class="text-center py-2">
+                                    @if($bm > 0)
+                                        <span class="val-active text-secondary">{{ number_format($bm) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($pb > 0)
+                                        <span class="val-active text-primary">{{ number_format($pb) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($cb > 0)
+                                        <span class="val-active text-info">{{ number_format($cb) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($cmb > 0)
+                                        <span class="val-active text-purple">{{ number_format($cmb) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($asim > 0)
+                                        <span class="val-active text-warning-emphasis">{{ number_format($asim) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($bdh > 0)
+                                        <span class="val-active text-danger">{{ number_format($bdh) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($lny > 0)
+                                        <span class="val-active text-muted">{{ number_format($lny) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-2">
+                                    @if($totalUpt > 0)
+                                        <span class="badge-bebas-total">{{ number_format($totalUpt) }}</span>
+                                    @else
+                                        <span class="val-zero">-</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr><td colspan="10" class="text-center text-muted py-3">Belum ada data pengeluaran / bebas harian</td></tr>
@@ -1091,14 +1555,14 @@
                     <tfoot class="table-light">
                         <tr class="fw-bold">
                             <td colspan="2" class="text-end py-2">TOTAL</td>
-                            <td class="text-center py-2" style="background-color: rgba(107, 114, 128, 0.08);">{{ number_format($totBM) }}</td>
-                            <td class="text-center py-2 text-primary" style="background-color: rgba(59, 130, 246, 0.08);">{{ number_format($totPB) }}</td>
-                            <td class="text-center py-2 text-info" style="background-color: rgba(6, 182, 212, 0.08);">{{ number_format($totCB) }}</td>
-                            <td class="text-center py-2" style="background-color: rgba(139, 92, 246, 0.08); color: #7c3aed;">{{ number_format($totCMB) }}</td>
-                            <td class="text-center py-2 text-warning-emphasis" style="background-color: rgba(245, 158, 11, 0.08);">{{ number_format($totAsim) }}</td>
-                            <td class="text-center py-2 text-danger" style="background-color: rgba(239, 68, 68, 0.08);">{{ number_format($totBDH) }}</td>
-                            <td class="text-center py-2 text-secondary" style="background-color: rgba(100, 116, 139, 0.08);">{{ number_format($totLny) }}</td>
-                            <td class="text-center py-2 text-success" style="background-color: rgba(16, 185, 129, 0.18); font-size: 12px;">{{ number_format($totSemua) }}</td>
+                            <td class="text-center py-2 th-group-bebas-bm font-speedometer" style="font-size: 12px;">{{ number_format($totBM) }}</td>
+                            <td class="text-center py-2 th-group-bebas-pb font-speedometer" style="font-size: 12px;">{{ number_format($totPB) }}</td>
+                            <td class="text-center py-2 th-group-bebas-cb font-speedometer" style="font-size: 12px;">{{ number_format($totCB) }}</td>
+                            <td class="text-center py-2 th-group-bebas-cmb font-speedometer" style="font-size: 12px;">{{ number_format($totCMB) }}</td>
+                            <td class="text-center py-2 th-group-bebas-asim font-speedometer" style="font-size: 12px;">{{ number_format($totAsim) }}</td>
+                            <td class="text-center py-2 th-group-bebas-bdh font-speedometer" style="font-size: 12px;">{{ number_format($totBDH) }}</td>
+                            <td class="text-center py-2 th-group-bebas-lny font-speedometer" style="font-size: 12px;">{{ number_format($totLny) }}</td>
+                            <td class="text-center py-2 th-group-bebas-total font-speedometer" style="font-size: 13px;">{{ number_format($totSemua) }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -1276,13 +1740,21 @@
             }
         });
 
-        // Invalidate Leaflet map size when tab becomes visible
+        // Invalidate Leaflet map size and auto-zoom to cluster center when tab becomes visible
         if (tabName === 'gis' || tabName === 'all') {
             setTimeout(() => {
                 if (typeof mapBanten !== 'undefined') {
                     mapBanten.invalidateSize();
+                    if (typeof zoomToClusterCenter === 'function') {
+                        zoomToClusterCenter(false);
+                    }
                 }
-            }, 200);
+            }, 60);
+            setTimeout(() => {
+                if (typeof mapBanten !== 'undefined' && typeof zoomToClusterCenter === 'function') {
+                    zoomToClusterCenter(true);
+                }
+            }, 220);
         }
     }
 
@@ -1332,6 +1804,7 @@
         counters.forEach(counter => {
             const target = parseFloat(counter.getAttribute('data-target')) || 0;
             const isPercent = counter.textContent.includes('%');
+            const hasPlus = counter.getAttribute('data-prefix') === '+' || counter.textContent.trim().startsWith('+');
             const duration = 1000;
             const startTime = performance.now();
 
@@ -1342,7 +1815,7 @@
                 const current = target * easeOut;
 
                 if (isPercent) {
-                    counter.textContent = current.toFixed(1) + '%';
+                    counter.textContent = (hasPlus && current > 0 ? '+' : '') + current.toFixed(1) + '%';
                 } else {
                     counter.textContent = formatNumber(Math.round(current));
                 }
@@ -1351,7 +1824,7 @@
                     requestAnimationFrame(step);
                 } else {
                     if (isPercent) {
-                        counter.textContent = target.toFixed(1) + '%';
+                        counter.textContent = (hasPlus && target > 0 ? '+' : '') + target.toFixed(1) + '%';
                     } else {
                         counter.textContent = formatNumber(Math.round(target));
                     }
@@ -1501,7 +1974,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '72%',
+                cutout: '67%',
                 animation: { duration: 900, easing: 'easeOutQuart' },
                 plugins: {
                     legend: { display: false },
@@ -1521,7 +1994,7 @@
                     },
                     datalabels: {
                         color: '#ffffff',
-                        font: { family: 'Rajdhani', weight: '700', size: 12.5 },
+                        font: { family: 'Rajdhani', weight: '700', size: 14 },
                         formatter: function(value, context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
@@ -1626,28 +2099,40 @@
                     {
                         label: 'Laki-laki',
                         data: [intDewasaLaki, intAnakLaki],
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 6
+                        backgroundColor: '#38bdf8',
+                        hoverBackgroundColor: '#0284c7',
+                        borderRadius: 8,
+                        barPercentage: 0.55,
+                        categoryPercentage: 0.7
                     },
                     {
                         label: 'Perempuan',
                         data: [intDewasaPerempuan, intAnakPerempuan],
-                        backgroundColor: '#ec4899',
-                        borderRadius: 6
+                        backgroundColor: '#f43f5e',
+                        hoverBackgroundColor: '#e11d48',
+                        borderRadius: 8,
+                        barPercentage: 0.55,
+                        categoryPercentage: 0.7
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 900, easing: 'easeOutQuart' },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                        padding: 10,
                         cornerRadius: 8,
+                        titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                        bodyFont: { family: 'Plus Jakarta Sans', size: 11 },
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': ' + formatNumber(context.parsed.y) + ' orang';
+                                const total = totalUmurGender;
+                                const pct = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0;
+                                return context.dataset.label + ': ' + formatNumber(context.parsed.y) + ' jiwa (' + pct + '%)';
                             }
                         }
                     }
@@ -1656,40 +2141,58 @@
                     y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(148, 163, 184, 0.1)' },
-                        ticks: { callback: function(value) { return formatNumber(value); } }
+                        ticks: {
+                            callback: function(value) { return formatNumber(value); },
+                            font: { family: 'Rajdhani', size: 11, weight: '600' }
+                        }
                     },
-                    x: { grid: { display: false } }
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } }
+                    }
                 }
             }
         });
     }
 
-    // Gender Distribution Chart
+    // Gender Distribution Hollow Donut Chart
     const totalLaki = intDewasaLaki + intAnakLaki;
     const totalPerempuan = intDewasaPerempuan + intAnakPerempuan;
     const totalGender = totalLaki + totalPerempuan;
 
+    if (document.getElementById('donutGenderCenterVal')) {
+        document.getElementById('donutGenderCenterVal').textContent = formatNumber(totalGender);
+    }
+
     const ctxGenderDist = document.getElementById('chartGenderDistribution');
     if (ctxGenderDist) {
+        const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark';
         new Chart(ctxGenderDist, {
             type: 'doughnut',
             data: {
                 labels: ['Laki-laki', 'Perempuan'],
                 datasets: [{
                     data: [totalLaki, totalPerempuan],
-                    backgroundColor: ['#3b82f6', '#ec4899'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    backgroundColor: ['#38bdf8', '#f43f5e'],
+                    hoverBackgroundColor: ['#0284c7', '#e11d48'],
+                    borderWidth: 3,
+                    borderColor: isDarkNow ? 'rgba(13, 22, 42, 0.9)' : '#ffffff',
+                    hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '55%',
+                cutout: '72%',
+                animation: { duration: 900, easing: 'easeOutQuart' },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                        padding: 10,
+                        cornerRadius: 8,
+                        titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                        bodyFont: { family: 'Plus Jakarta Sans', size: 11 },
                         callbacks: {
                             label: function(context) {
                                 const percentage = totalGender > 0 ? ((context.parsed / totalGender) * 100).toFixed(1) : 0;
@@ -1706,77 +2209,130 @@
         const persenLaki = totalGender > 0 ? ((totalLaki / totalGender) * 100).toFixed(1) : 0;
         const persenPerempuan = totalGender > 0 ? ((totalPerempuan / totalGender) * 100).toFixed(1) : 0;
         document.getElementById('genderLegendContainer').innerHTML = `
-            <table class="table table-sm table-borderless mb-0" style="font-size: 11px;">
-                <tbody>
-                    <tr>
-                        <td style="width: 15px;"><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;"></span></td>
-                        <td>Laki-laki</td>
-                        <td class="text-end fw-bold">${formatNumber(totalLaki)}</td>
-                        <td class="text-end text-muted">(${persenLaki}%)</td>
-                    </tr>
-                    <tr>
-                        <td><span style="display:inline-block;width:10px;height:10px;background:#ec4899;border-radius:2px;"></span></td>
-                        <td>Perempuan</td>
-                        <td class="text-end fw-bold">${formatNumber(totalPerempuan)}</td>
-                        <td class="text-end text-muted">(${persenPerempuan}%)</td>
-                    </tr>
-                    <tr class="border-top">
-                        <td colspan="2" class="fw-bold">Total</td>
-                        <td class="text-end fw-bold">${formatNumber(totalGender)}</td>
-                        <td class="text-end text-muted">(100%)</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="telemetry-legend-item d-flex align-items-center p-2 mb-1">
+                <span class="donut-legend-pip me-2" style="background:#38bdf8;"></span>
+                <span class="telemetry-legend-name">Laki-laki</span>
+                <span class="telemetry-legend-val">${formatNumber(totalLaki)}</span>
+                <span class="telemetry-legend-pct text-cyan">(${persenLaki}%)</span>
+            </div>
+            <div class="telemetry-legend-item d-flex align-items-center p-2 mb-1">
+                <span class="donut-legend-pip me-2" style="background:#f43f5e;"></span>
+                <span class="telemetry-legend-name">Perempuan</span>
+                <span class="telemetry-legend-val">${formatNumber(totalPerempuan)}</span>
+                <span class="telemetry-legend-pct text-danger">(${persenPerempuan}%)</span>
+            </div>
+            <div class="telemetry-legend-item d-flex align-items-center p-2 border-top mt-1" style="background: rgba(148, 163, 184, 0.05);">
+                <span class="donut-legend-pip me-2" style="background:#8b5cf6;"></span>
+                <span class="telemetry-legend-name fw-bold">Total Jiwa</span>
+                <span class="telemetry-legend-val fw-bold">${formatNumber(totalGender)}</span>
+                <span class="telemetry-legend-pct fw-bold">(100%)</span>
+            </div>
         `;
     }
 
-    // Leaflet GIS Map Initialization
+    // Leaflet GIS Map Initialization with Multi-Layer Radar (100% Free - NO API KEY REQUIRED)
+    // Esri Canvas Dark Gray provides professional tactical dark basemap without any API key or watermarks
+    const darkBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri, HERE, Garmin, &copy; OpenStreetMap',
+        maxNativeZoom: 16,
+        maxZoom: 19,
+        className: 'hud-dark-base-tiles'
+    });
+
+    const darkRefLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '',
+        maxNativeZoom: 16,
+        maxZoom: 19,
+        className: 'hud-dark-ref-tiles'
+    });
+
+    const darkLayer = L.layerGroup([darkBaseLayer, darkRefLayer]);
+
     const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
     });
 
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Esri World Imagery'
+        attribution: 'Esri World Imagery',
+        maxZoom: 19
     });
 
     const hybridLayer = L.layerGroup([
         satelliteLayer,
-        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}')
+        L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        })
     ]);
 
-    const mapBanten = L.map('mapBanten', {
-        layers: [hybridLayer]
-    }).setView([-6.4409, 106.1385], 9);
+    const isInitDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const initialMapLayer = isInitDark ? darkLayer : hybridLayer;
 
+    // Centered initially at Banten cluster center: [-6.22, 106.35]
+    const mapBanten = L.map('mapBanten', {
+        layers: [initialMapLayer],
+        center: [-6.22, 106.35],
+        zoom: 10
+    });
+
+    const btnDark = document.getElementById('btnDark');
     const btnStreet = document.getElementById('btnStreet');
-    const btnSatellite = document.getElementById('btnSatellite');
     const btnHybrid = document.getElementById('btnHybrid');
+    const btnFitBounds = document.getElementById('btnFitBounds');
 
     function updateActiveMapBtn(activeBtn) {
-        [btnStreet, btnSatellite, btnHybrid].forEach(btn => btn?.classList.remove('active'));
+        [btnDark, btnStreet, btnHybrid].forEach(btn => btn?.classList.remove('active'));
         activeBtn?.classList.add('active');
     }
 
+    function removeAllBaseLayers() {
+        [darkLayer, streetLayer, satelliteLayer, hybridLayer].forEach(layer => {
+            if (mapBanten.hasLayer(layer)) {
+                mapBanten.removeLayer(layer);
+            }
+        });
+    }
+
+    if (isInitDark && btnDark) {
+        updateActiveMapBtn(btnDark);
+    }
+
+    btnDark?.addEventListener('click', function() {
+        removeAllBaseLayers();
+        darkLayer.addTo(mapBanten);
+        updateActiveMapBtn(this);
+    });
+
     btnStreet?.addEventListener('click', function() {
-        mapBanten.removeLayer(satelliteLayer);
-        mapBanten.removeLayer(hybridLayer);
+        removeAllBaseLayers();
         streetLayer.addTo(mapBanten);
         updateActiveMapBtn(this);
     });
 
-    btnSatellite?.addEventListener('click', function() {
-        mapBanten.removeLayer(streetLayer);
-        mapBanten.removeLayer(hybridLayer);
-        satelliteLayer.addTo(mapBanten);
-        updateActiveMapBtn(this);
-    });
-
     btnHybrid?.addEventListener('click', function() {
-        mapBanten.removeLayer(streetLayer);
-        mapBanten.removeLayer(satelliteLayer);
+        removeAllBaseLayers();
         hybridLayer.addTo(mapBanten);
         updateActiveMapBtn(this);
     });
+
+    // Auto synchronize map basemap when dark mode toggle is clicked
+    const themeObserver = new MutationObserver(function() {
+        const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDarkNow) {
+            if (!mapBanten.hasLayer(darkLayer) && !mapBanten.hasLayer(hybridLayer)) {
+                removeAllBaseLayers();
+                darkLayer.addTo(mapBanten);
+                updateActiveMapBtn(btnDark);
+            }
+        } else {
+            if (mapBanten.hasLayer(darkLayer)) {
+                removeAllBaseLayers();
+                streetLayer.addTo(mapBanten);
+                updateActiveMapBtn(btnStreet);
+            }
+        }
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     // Markers with glowing status pin
     const uptLocations = {!! json_encode($uptLocations) !!};
@@ -1784,61 +2340,220 @@
 
     uptLocations.forEach(upt => {
         const totalPenghuni = parseInt(upt.total_penghuni) || 0;
+        const totalTahanan = parseInt(upt.total_tahanan) || 0;
+        const totalNapi = parseInt(upt.total_narapidana) || 0;
         const kapasitas = parseInt(upt.kapasitas) || 0;
         const persen = kapasitas > 0 ? Math.round(((totalPenghuni - kapasitas) / kapasitas) * 100) : 0;
+        const tingkatHunian = kapasitas > 0 ? Math.round((totalPenghuni / kapasitas) * 100) : 0;
         const persenText = persen > 0 ? '+' + persen + '%' : persen + '%';
         
-        let markerColor = '#10b981';
+        let statusClass = 'emerald';
         let statusBadge = 'Longgar';
-        if (persen > 50) { markerColor = '#f43f5e'; statusBadge = 'Sangat Over'; }
-        else if (persen > 0) { markerColor = '#f59e0b'; statusBadge = 'Sedikit Over'; }
+        let markerColor = '#10b981';
+        if (persen > 50) { 
+            statusClass = 'rose'; 
+            statusBadge = 'Kritis'; 
+            markerColor = '#f43f5e';
+        } else if (persen > 0) { 
+            statusClass = 'amber'; 
+            statusBadge = 'Waspada'; 
+            markerColor = '#f59e0b';
+        }
+
+        const namaUpper = (upt.nama_upt || '').toUpperCase();
+        let iconClass = 'fa-building';
+        if (namaUpper.includes('RUTAN')) {
+            iconClass = 'fa-shield-halved';
+        } else if (namaUpper.includes('ANAK') || namaUpper.includes('LPKA')) {
+            iconClass = 'fa-child';
+        } else if (namaUpper.includes('PEREMPUAN')) {
+            iconClass = 'fa-venus';
+        }
 
         const markerHtml = `
-            <div style="background: ${markerColor}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 0 10px ${markerColor}99; border: 2px solid white;">
-                <i class="fas fa-building" style="font-size: 11px;"></i>
+            <div class="hud-marker-wrapper hud-${statusClass}" title="${upt.nama_upt}">
+                <div class="hud-marker-pulse"></div>
+                <div class="hud-marker-core">
+                    <i class="fas ${iconClass}"></i>
+                </div>
+                <div class="hud-marker-badge font-speedometer">${persenText}</div>
             </div>
         `;
 
         const customIcon = L.divIcon({
-            className: 'custom-upt-marker',
+            className: 'hud-leaflet-marker',
             html: markerHtml,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -15]
+            iconSize: [44, 44],
+            iconAnchor: [22, 22],
+            popupAnchor: [0, -22]
         });
 
         if (upt.latitude && upt.longitude) {
-            const marker = L.marker([parseFloat(upt.latitude), parseFloat(upt.longitude)], { icon: customIcon })
-                .addTo(mapBanten)
-                .bindPopup(`
-                    <div style="min-width: 220px; font-family: var(--font-ui, sans-serif);">
-                        <div style="font-weight: 700; color: #38bdf8; margin-bottom: 4px; font-size: 13px;">
-                            ${upt.nama_upt}
-                        </div>
-                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">
-                            <i class="fas fa-map-marker-alt text-danger me-1"></i> ${upt.alamat || 'Provinsi Banten'}
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 3px;">
-                            <span style="opacity: 0.8;">Kapasitas:</span> <strong class="font-speedometer" style="font-size: 13px;">${formatNumber(kapasitas)}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 3px;">
-                            <span style="opacity: 0.8;">Penghuni:</span> <strong class="font-speedometer" style="font-size: 13px;">${formatNumber(totalPenghuni)}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-top: 5px; padding-top: 5px; border-top: 1px dashed rgba(148, 163, 184, 0.3);">
-                            <span style="opacity: 0.8;">Status:</span> <strong class="font-speedometer" style="color: ${markerColor}; font-size: 13px;">${persenText} (${statusBadge})</strong>
+            const lat = parseFloat(upt.latitude);
+            const lng = parseFloat(upt.longitude);
+            const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            const addressText = upt.alamat ? upt.alamat : 'Provinsi Banten, Indonesia';
+
+            const popupContent = `
+                <div class="hud-popup-card">
+                    <div class="hud-popup-header">
+                        <div class="hud-popup-cat">UPT PEMASYARAKATAN BANTEN</div>
+                        <div class="hud-popup-title">${upt.nama_upt}</div>
+                        <div class="d-flex align-items-center justify-content-between mt-1">
+                            <span class="pill-badge pill-badge-${statusClass}">${statusBadge} (${persenText})</span>
+                            <span class="text-xs text-muted font-speedometer">${tingkatHunian}% Hunian</span>
                         </div>
                     </div>
-                `);
-            markers.push(marker);
+                    <div class="hud-popup-body">
+                        <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="hud-popup-address" title="Buka alamat di Google Maps / Aplikasi Navigasi">
+                            <i class="fas fa-map-marker-alt text-danger flex-shrink-0"></i>
+                            <span class="hud-popup-address-text">${addressText}</span>
+                            <i class="fas fa-external-link-alt flex-shrink-0 text-cyan opacity-75"></i>
+                        </a>
+
+                        <div class="hud-popup-grid mt-2">
+                            <div class="hud-popup-stat">
+                                <span class="hud-popup-stat-lbl">Kapasitas</span>
+                                <span class="hud-popup-stat-val font-speedometer">${formatNumber(kapasitas)}</span>
+                            </div>
+                            <div class="hud-popup-stat">
+                                <span class="hud-popup-stat-lbl">Penghuni</span>
+                                <span class="hud-popup-stat-val font-speedometer" style="color: ${markerColor};">${formatNumber(totalPenghuni)}</span>
+                            </div>
+                            <div class="hud-popup-stat">
+                                <span class="hud-popup-stat-lbl">Tahanan</span>
+                                <span class="hud-popup-stat-val font-speedometer">${formatNumber(totalTahanan)}</span>
+                            </div>
+                            <div class="hud-popup-stat">
+                                <span class="hud-popup-stat-lbl">Narapidana</span>
+                                <span class="hud-popup-stat-val font-speedometer">${formatNumber(totalNapi)}</span>
+                            </div>
+                        </div>
+
+                        <div class="hud-popup-progress-track mt-2">
+                            <div class="hud-popup-progress-fill bg-${statusClass}" style="width: ${Math.min(100, Math.max(5, tingkatHunian))}%;"></div>
+                        </div>
+
+                        <div class="hud-popup-actions mt-3">
+                            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="hud-btn-maps w-100">
+                                <i class="fas fa-location-arrow"></i>
+                                <span>Petunjuk Arah (Google Maps)</span>
+                                <i class="fas fa-arrow-up-right-from-square ms-auto" style="font-size: 10px;"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker([lat, lng], { icon: customIcon })
+                .addTo(mapBanten)
+                .bindPopup(popupContent, {
+                    maxWidth: 320,
+                    className: 'hud-custom-popup'
+                });
+
+            markers.push({
+                id: upt.id,
+                data: upt,
+                layer: marker
+            });
         }
     });
 
-    if (markers.length > 0) {
-        const group = L.featureGroup(markers);
-        mapBanten.fitBounds(group.getBounds().pad(0.1));
+    // Function to zoom directly to the center of the marker cluster
+    function zoomToClusterCenter(animate = true) {
+        if (!mapBanten || markers.length === 0) return;
+        mapBanten.invalidateSize();
+        
+        const activeMarkers = markers.filter(m => mapBanten.hasLayer(m.layer));
+        const targetMarkers = activeMarkers.length > 0 ? activeMarkers : markers;
+        
+        if (targetMarkers.length > 0) {
+            const group = L.featureGroup(targetMarkers.map(m => m.layer));
+            const bounds = group.getBounds();
+            if (bounds.isValid()) {
+                mapBanten.fitBounds(bounds.pad(0.12), {
+                    padding: [25, 25],
+                    maxZoom: 12,
+                    animate: animate,
+                    duration: 0.8
+                });
+            }
+        } else {
+            mapBanten.setView([-6.22, 106.35], 10, { animate: animate });
+        }
     }
 
-    setTimeout(() => { mapBanten.invalidateSize(); }, 400);
+    // Connect Pusatkan button
+    btnFitBounds?.addEventListener('click', function(e) {
+        e.preventDefault();
+        zoomToClusterCenter(true);
+    });
+
+    // Map Radar Type Filters
+    document.querySelectorAll('.map-filter-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('.map-filter-chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const filterType = this.getAttribute('data-filter');
+
+            markers.forEach(item => {
+                let show = false;
+                const nama = (item.data.nama_upt || '').toUpperCase();
+                const total = parseInt(item.data.total_penghuni) || 0;
+                const kap = parseInt(item.data.kapasitas) || 0;
+                const isOver = kap > 0 && total > kap;
+
+                if (filterType === 'all') {
+                    show = true;
+                } else if (filterType === 'lapas') {
+                    show = nama.includes('LAPAS') || nama.includes('LEMBAGA PEMASYARAKATAN');
+                } else if (filterType === 'rutan') {
+                    show = nama.includes('RUTAN') || nama.includes('RUMAH TAHANAN');
+                } else if (filterType === 'lpka_bapas') {
+                    show = nama.includes('LPKA') || nama.includes('ANAK') || nama.includes('TERBUKA') || nama.includes('BAPAS') || nama.includes('RUPBASAN');
+                } else if (filterType === 'over') {
+                    show = isOver;
+                }
+
+                if (show) {
+                    if (!mapBanten.hasLayer(item.layer)) {
+                        mapBanten.addLayer(item.layer);
+                    }
+                } else {
+                    if (mapBanten.hasLayer(item.layer)) {
+                        mapBanten.removeLayer(item.layer);
+                    }
+                }
+            });
+
+            zoomToClusterCenter(true);
+        });
+    });
+
+    // Focus on marker from table row button
+    document.querySelectorAll('.btn-focus-marker').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const uptId = parseInt(this.getAttribute('data-upt-id'));
+            const target = markers.find(m => m.id === uptId);
+            if (target && mapBanten) {
+                const mapEl = document.getElementById('mapBanten');
+                if (mapEl) {
+                    mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                setTimeout(() => {
+                    mapBanten.setView([parseFloat(target.data.latitude), parseFloat(target.data.longitude)], 14, { animate: true });
+                    target.layer.openPopup();
+                }, 400);
+            }
+        });
+    });
+
+    // Initial cluster center calculation
+    setTimeout(() => {
+        zoomToClusterCenter(false);
+    }, 350);
 
     @if($user && $pengumumanPopup->isNotEmpty())
     document.addEventListener('DOMContentLoaded', function() {
