@@ -83,23 +83,44 @@ class ActivityLogController extends Controller
         // Statistics
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
+        $totalLogs = ActivityLog::count();
+
+        $topUsersData = ActivityLog::select('user_name', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('user_name')
+            ->groupBy('user_name')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get()
+            ->map(function ($item) use ($totalLogs) {
+                return [
+                    'user_name' => $item->user_name,
+                    'total' => (int) $item->total,
+                    'percentage' => $totalLogs > 0 ? round(($item->total / $totalLogs) * 100, 1) : 0,
+                ];
+            })
+            ->toArray();
+
+        $byActionData = ActivityLog::select('aksi', DB::raw('COUNT(*) as total'))
+            ->groupBy('aksi')
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($item) use ($totalLogs) {
+                return [
+                    'aksi' => $item->aksi,
+                    'total' => (int) $item->total,
+                    'percentage' => $totalLogs > 0 ? round(($item->total / $totalLogs) * 100, 1) : 0,
+                ];
+            })
+            ->toArray();
 
         $stats = [
-            'total' => ActivityLog::count(),
+            'total' => $totalLogs,
             'today' => ActivityLog::whereDate('created_at', $today)->count(),
             'this_week' => ActivityLog::where('created_at', '>=', $startOfWeek)->count(),
-            'top_users' => ActivityLog::select('user_name', DB::raw('COUNT(*) as total'))
-                ->whereNotNull('user_name')
-                ->groupBy('user_name')
-                ->orderByDesc('total')
-                ->limit(5)
-                ->get()
-                ->toArray(),
-            'by_action' => ActivityLog::select('aksi', DB::raw('COUNT(*) as total'))
-                ->groupBy('aksi')
-                ->orderByDesc('total')
-                ->get()
-                ->toArray(),
+            'total_users_active' => ActivityLog::whereNotNull('user_name')->distinct()->count('user_name'),
+            'top_user' => $topUsersData[0] ?? null,
+            'top_users' => $topUsersData,
+            'by_action' => $byActionData,
         ];
 
         $allUsers = User::orderBy('nama_lengkap')->get(['id', 'nama_lengkap', 'username']);

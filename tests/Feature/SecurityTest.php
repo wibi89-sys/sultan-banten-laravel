@@ -77,4 +77,18 @@ class SecurityTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
     }
+
+    public function test_activity_log_page_renders_successfully(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (!$admin) {
+            $this->markTestSkipped('No admin found');
+        }
+
+        $response = $this->actingAs($admin)->get('/activity-log');
+        $response->assertStatus(200);
+        $response->assertSee('Activity Log');
+        $response->assertSee('Distribusi Aktivitas Sistem');
+        $response->assertSee('Top 5 Pengguna Paling Aktif');
+    }
 }
