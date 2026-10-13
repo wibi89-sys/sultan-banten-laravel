@@ -172,8 +172,8 @@ class DashboardController extends Controller
             }
         }
 
-        // Data per UPT for Overkapasitas Table
-        $uptDataTable = Upt::select('upt.id', 'upt.nama_upt', 'upt.kapasitas')
+        // Data per UPT for Overkapasitas Table & Leaflet Map Locations
+        $uptDataTable = Upt::select('upt.id', 'upt.nama_upt', 'upt.kapasitas', 'upt.alamat', 'upt.latitude', 'upt.longitude')
             ->when($filterUpt > 0, fn($q) => $q->where('upt.id', $filterUpt))
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN dp.klasifikasi_pidana NOT IN ('WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup') 
@@ -187,7 +187,7 @@ class DashboardController extends Controller
             ->leftJoin('data_penghuni as dp', function($join) use ($filterTanggal) {
                 $join->on('upt.id', '=', 'dp.upt_id')->where('dp.tanggal', '=', $filterTanggal);
             })
-            ->groupBy('upt.id', 'upt.nama_upt', 'upt.kapasitas')
+            ->groupBy('upt.id', 'upt.nama_upt', 'upt.kapasitas', 'upt.alamat', 'upt.latitude', 'upt.longitude')
             ->orderBy('upt.nama_upt')
             ->get();
 
@@ -200,22 +200,8 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->get();
 
-        // UPT Locations for Leaflet Map
-        $uptLocations = Upt::select('upt.id', 'upt.nama_upt', 'upt.alamat', 'upt.kapasitas', 'upt.latitude', 'upt.longitude')
-            ->whereNotNull('upt.latitude')
-            ->whereNotNull('upt.longitude')
-            ->when($filterUpt > 0, fn($q) => $q->where('upt.id', $filterUpt))
-            ->selectRaw("
-                COALESCE(SUM(dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + 
-                    dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan), 0) as total_penghuni
-            ")
-            ->leftJoin('data_penghuni as dp', function($join) use ($filterTanggal) {
-                $join->on('upt.id', '=', 'dp.upt_id')
-                    ->where('dp.tanggal', '=', $filterTanggal)
-                    ->whereNotIn('dp.klasifikasi_pidana', ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup']);
-            })
-            ->groupBy('upt.id', 'upt.nama_upt', 'upt.alamat', 'upt.kapasitas', 'upt.latitude', 'upt.longitude')
-            ->get();
+        // UPT Locations for Leaflet Map (Reuses uptDataTable to eliminate duplicate query)
+        $uptLocations = $uptDataTable->filter(fn($u) => !is_null($u->latitude) && !is_null($u->longitude))->values();
 
         // Data Penghuni Berdasarkan Jenis Kejahatan Table
         $jenisKejahatanData = Upt::select('upt.id', 'upt.nama_upt')
@@ -276,23 +262,8 @@ class DashboardController extends Controller
             ->orderBy('upt.nama_upt')
             ->get();
 
-        // Data Pidana Mati & Seumur Hidup per UPT
-        $pmshData = Upt::select('upt.id', 'upt.nama_upt')
-            ->when($filterUpt > 0, fn($q) => $q->where('upt.id', $filterUpt))
-            ->selectRaw("
-                COALESCE(SUM(CASE WHEN dp.klasifikasi_pidana = 'Pidana Mati' 
-                    THEN dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + 
-                    dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan ELSE 0 END), 0) as pidana_mati,
-                COALESCE(SUM(CASE WHEN dp.klasifikasi_pidana = 'Seumur Hidup' 
-                    THEN dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + 
-                    dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan ELSE 0 END), 0) as seumur_hidup
-            ")
-            ->leftJoin('data_penghuni as dp', function($join) use ($filterTanggal) {
-                $join->on('upt.id', '=', 'dp.upt_id')->where('dp.tanggal', '=', $filterTanggal);
-            })
-            ->groupBy('upt.id', 'upt.nama_upt')
-            ->orderBy('upt.nama_upt')
-            ->get();
+        // Data Pidana Mati & Seumur Hidup per UPT (Reuses jenisKejahatanData to eliminate duplicate query)
+        $pmshData = $jenisKejahatanData;
 
         // Data Bebas Harian per UPT
         $bebasHarianUptData = Upt::select('upt.id', 'upt.nama_upt')

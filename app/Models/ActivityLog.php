@@ -45,7 +45,7 @@ class ActivityLog extends Model
             'aksi' => $aksi,
             'modul' => $modul,
             'deskripsi' => $deskripsi,
-            'detail' => is_array($detail) ? json_encode($detail) : $detail,
+            'detail' => is_string($detail) ? (json_decode($detail, true) ?: $detail) : $detail,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'created_at' => now(),
