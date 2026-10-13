@@ -7,7 +7,7 @@
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <!-- Dashboard Modern Styles -->
-<link href="{{ asset('assets/css/dashboard-page.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/css/dashboard-page.css') }}?v={{ file_exists(public_path('assets/css/dashboard-page.css')) ? filemtime(public_path('assets/css/dashboard-page.css')) : time() }}" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -25,10 +25,10 @@
                 <button type="button" class="date-quick-btn {{ $filterTanggal == date('Y-m-d', strtotime('-1 day')) ? 'active' : '' }}" data-days="1">Kemarin</button>
                 <button type="button" class="date-quick-btn {{ $filterTanggal == date('Y-m-d', strtotime('-7 days')) ? 'active' : '' }}" data-days="7">7 Hari Lalu</button>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-12 col-sm-6 col-md-3">
                 <input type="date" id="filterTanggalInput" name="tanggal" class="form-control form-control-sm" value="{{ $filterTanggal }}">
             </div>
-            <div class="col-6 col-md-4">
+            <div class="col-12 col-sm-6 col-md-4">
                 <select name="upt_id" class="form-select form-select-sm">
                     <option value="0">-- Seluruh UPT Banten --</option>
                     @foreach ($uptList as $upt)
@@ -37,7 +37,7 @@
                 </select>
             </div>
             <div class="col-12 col-md-auto ms-md-auto d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm" style="border-radius: 20px; font-weight: 600;">
+                <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm flex-grow-1 flex-md-grow-0" style="border-radius: 20px; font-weight: 600;">
                     <i class="fas fa-filter me-1"></i> Terapkan
                 </button>
                 @if($filterUpt > 0 || $filterTanggal != date('Y-m-d'))
@@ -313,20 +313,20 @@
                     </div>
                 </div>
 
-                <div class="pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: var(--bento-border) !important;">
-                    <div>
+                <div class="pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 speedo-bottom-telemetry" style="border-color: var(--bento-border) !important;">
+                    <div class="speedo-bottom-stat">
                         <span class="text-secondary small d-block text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.05em;">Total Penghuni</span>
                         <strong class="count-up font-speedometer" data-target="{{ $stats['total_penghuni'] }}" style="font-size: 20px; color: var(--text-primary);">
                             {{ number_format($stats['total_penghuni'], 0, ',', '.') }}
                         </strong>
                     </div>
-                    <div class="text-center px-2">
+                    <div class="speedo-bottom-stat text-center px-1">
                         <div class="small text-muted text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.05em;">Status</div>
                         <span class="badge {{ getOverkapasitasColorClass($stats['persen_overkapasitas']) }} px-2 py-1" style="font-size: 10.5px; border-radius: 12px; font-weight: 600;">
                             {{ $persenOver > 0 ? 'Overkapasitas' : 'Normal' }}
                         </span>
                     </div>
-                    <div class="text-end">
+                    <div class="speedo-bottom-stat text-end">
                         <span class="text-secondary small d-block text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.05em;">Total Kapasitas</span>
                         <strong class="count-up font-speedometer" data-target="{{ $stats['total_kapasitas'] }}" style="font-size: 20px; color: var(--text-primary);">
                             {{ number_format($stats['total_kapasitas'], 0, ',', '.') }}
@@ -763,7 +763,7 @@
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="live-pulse"></span>
-                <span class="text-xs text-muted fw-semibold">Telemetri Klasifikasi Hukum & Perkara</span>
+                <span class="text-xs text-muted fw-semibold d-none d-sm-inline">Telemetri Klasifikasi Hukum & Perkara</span>
             </div>
         </div>
 

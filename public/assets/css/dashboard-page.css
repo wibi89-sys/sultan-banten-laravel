@@ -1288,22 +1288,29 @@
         }
 
         /* Responsive Breakpoints for Bento Cockpit */
-        @media (max-width: 1199.98px) {
+        @media (min-width: 768px) and (max-width: 1199.98px) {
             .bento-cockpit-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
+                gap: 14px !important;
             }
             .speedo-cockpit-center {
                 grid-column: span 2 !important;
-                order: 1;
-                margin-bottom: 4px;
+                order: 1 !important;
+                margin-bottom: 2px;
             }
             .bento-flank.flank-left {
-                order: 2;
-                grid-column: span 1;
+                order: 2 !important;
+                grid-column: span 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12px !important;
             }
             .bento-flank.flank-right {
-                order: 3;
-                grid-column: span 1;
+                order: 3 !important;
+                grid-column: span 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12px !important;
             }
         }
 
@@ -1320,16 +1327,41 @@
             .bento-flank.flank-left {
                 order: 2 !important;
                 width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
             }
             .bento-flank.flank-right {
                 order: 3 !important;
                 width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+            }
+            /* Smart Pairing for 6 Flank Cards on Mobile */
+            .bento-flank.flank-left > .speedo-flank-card:nth-child(1) {
+                grid-column: span 2 !important; /* 12 UPT Sinkron Banner */
+            }
+            .bento-flank.flank-left > .speedo-flank-card:nth-child(2),
+            .bento-flank.flank-left > .speedo-flank-card:nth-child(3) {
+                grid-column: span 1 !important; /* Total Tahanan & Total Narapidana */
+            }
+            .bento-flank.flank-right > .speedo-flank-card:nth-child(1),
+            .bento-flank.flank-right > .speedo-flank-card:nth-child(2) {
+                grid-column: span 1 !important; /* Total Pidum & Total Pidsus */
+            }
+            .bento-flank.flank-right > .speedo-flank-card:nth-child(3) {
+                grid-column: span 2 !important; /* Overstaying Alert Banner */
             }
             .speedo-flank-card {
-                padding: 10px 12px;
+                padding: 11px 12px !important;
+                border-radius: 14px !important;
             }
             .speedo-flank-card .bento-stat-value {
-                font-size: 20px;
+                font-size: 21px !important;
+            }
+            .speedo-flank-card .bento-stat-label {
+                font-size: 11px !important;
             }
         }
 
@@ -1619,12 +1651,12 @@
 
         @media (max-width: 575.98px) {
             .speedo-cluster-wrap {
-                gap: 6px;
-                margin-bottom: 14px;
+                gap: 6px !important;
+                margin-bottom: 14px !important;
             }
             .speedo-dial-box {
-                height: 120px;
-                max-width: 155px;
+                height: 120px !important;
+                max-width: 160px !important;
             }
             .speedo-cluster-val {
                 font-size: 24px !important;
@@ -1633,7 +1665,43 @@
                 font-size: 9.5px !important;
             }
             .speedo-ticks .speedo-tick-item .tick-label {
-                font-size: 10px;
+                font-size: 9.5px !important;
+            }
+            .speedo-cluster-divider {
+                height: 75px !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .speedo-cluster-wrap {
+                gap: 4px !important;
+                margin-bottom: 10px !important;
+            }
+            .speedo-dial-box {
+                height: 102px !important;
+                max-width: 135px !important;
+            }
+            .speedo-cluster-val {
+                font-size: 19px !important;
+            }
+            .speedo-cluster-sub {
+                font-size: 8px !important;
+                letter-spacing: 0.04em !important;
+            }
+            .speedo-ticks .speedo-tick-item .tick-label {
+                font-size: 8.5px !important;
+            }
+            .speedo-cluster-divider {
+                height: 60px !important;
+            }
+            .speedo-flank-card {
+                padding: 9px 9px !important;
+            }
+            .speedo-flank-card .bento-stat-value {
+                font-size: 17px !important;
+            }
+            .speedo-flank-card .bento-stat-label {
+                font-size: 9.5px !important;
             }
         }
 
@@ -2172,7 +2240,28 @@
 
         @media (max-width: 767.98px) {
             .content-wrapper {
-                padding: 12px 10px !important;
+                padding: 12px 10px 56px 10px !important;
+            }
+
+            .main-content.no-sidebar .topbar {
+                padding: 12px 14px !important;
+            }
+
+            .main-content.no-sidebar .topbar .public-logo {
+                height: 36px !important;
+            }
+
+            .main-content.no-sidebar .topbar .public-title {
+                font-size: 15px !important;
+            }
+
+            .main-content.no-sidebar .topbar .public-subtitle {
+                font-size: 10.5px !important;
+            }
+
+            .main-content.no-sidebar .topbar .btn-login-public {
+                padding: 6px 13px !important;
+                font-size: 11.5px !important;
             }
 
             .exec-filter-bar {
@@ -2181,17 +2270,26 @@
                 margin-bottom: 12px !important;
             }
 
+            .date-quick-btn {
+                padding: 5px 10px !important;
+                font-size: 11px !important;
+            }
+
             .exec-tabs-wrapper {
                 position: relative !important;
                 top: 0 !important;
                 margin-bottom: 14px !important;
                 padding: 4px !important;
                 border-radius: 12px !important;
+                -webkit-overflow-scrolling: touch !important;
+                scroll-snap-type: x mandatory !important;
             }
 
             .exec-tab-btn {
-                padding: 6px 12px !important;
-                font-size: 11px !important;
+                padding: 7px 13px !important;
+                font-size: 11.5px !important;
+                scroll-snap-align: start !important;
+                min-height: 36px !important;
             }
 
             .exec-tab-btn.ms-auto {
@@ -2208,10 +2306,66 @@
                 border-radius: 16px !important;
             }
 
+            .speedo-bottom-telemetry strong {
+                font-size: 17px !important;
+            }
+
+            .speedo-bottom-telemetry .badge {
+                font-size: 9.5px !important;
+                padding: 2px 7px !important;
+            }
+
             .chart-card-modern {
                 padding: 14px 14px !important;
                 border-radius: 16px !important;
                 margin-bottom: 14px !important;
+            }
+
+            /* Responsive Donut Container */
+            .donut-chart-container {
+                min-height: 240px !important;
+                max-height: 275px !important;
+            }
+
+            .donut-center-val {
+                font-size: 26px !important;
+            }
+
+            .donut-center-sub {
+                font-size: 9.5px !important;
+            }
+
+            /* Responsive Map */
+            #mapBanten {
+                height: 340px !important;
+            }
+
+            .map-filter-group {
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+                padding-bottom: 4px !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .map-filter-chip {
+                padding: 3px 9px !important;
+                font-size: 10px !important;
+            }
+
+            /* Responsive Tables */
+            .table-responsive {
+                -webkit-overflow-scrolling: touch !important;
+                margin-bottom: 8px !important;
+            }
+
+            .table-search-box {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin-top: 4px !important;
+            }
+
+            .table {
+                font-size: 11px !important;
             }
 
             .bento-stat-mini {
@@ -2259,7 +2413,11 @@
 
         @media (max-width: 480px) {
             .content-wrapper {
-                padding: 10px 8px !important;
+                padding: 8px 8px 56px 8px !important;
+            }
+
+            #mapBanten {
+                height: 300px !important;
             }
 
             .speedo-gauge-box {
@@ -2296,7 +2454,37 @@
             }
 
             .donut-center-val {
-                font-size: 22px !important;
+                font-size: 23px !important;
+            }
+
+            .speedo-bottom-telemetry strong {
+                font-size: 16px !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .snapshot-card-value {
+                font-size: 17px !important;
+            }
+
+            .snapshot-card-label {
+                font-size: 8.5px !important;
+            }
+
+            .donut-center-val {
+                font-size: 20px !important;
+            }
+
+            .speedo-bottom-telemetry strong {
+                font-size: 14px !important;
+            }
+
+            .speedo-bottom-telemetry .badge {
+                font-size: 8.5px !important;
+            }
+
+            .table {
+                font-size: 10px !important;
             }
         }
 
