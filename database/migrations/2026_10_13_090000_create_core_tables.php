@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. UPT
-        if (!Schema::hasTable('upt')) {
+        if (! Schema::hasTable('upt')) {
             Schema::create('upt', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('nama_upt', 100);
@@ -25,7 +25,7 @@ return new class extends Migration
         }
 
         // 2. Instansi
-        if (!Schema::hasTable('instansi')) {
+        if (! Schema::hasTable('instansi')) {
             Schema::create('instansi', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('nama_instansi', 100);
@@ -55,7 +55,7 @@ return new class extends Migration
         }
 
         // 3. Activity Logs
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             Schema::create('activity_logs', function (Blueprint $table) {
                 $table->increments('id');
                 $table->integer('user_id')->index('idx_user_id');
@@ -71,7 +71,7 @@ return new class extends Migration
         }
 
         // 4. Data Penghuni
-        if (!Schema::hasTable('data_penghuni')) {
+        if (! Schema::hasTable('data_penghuni')) {
             Schema::create('data_penghuni', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('upt_id')->index('fk_penghuni_upt');
@@ -79,7 +79,7 @@ return new class extends Migration
                     'Pidana Umum', 'Tipikor', 'Narkoba Bandar', 'Narkoba Pengguna',
                     'Teroris', 'Trafficking', 'Ilegal Logging', 'Money Laundering',
                     'Genosida', 'WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun',
-                    'Pidana Mati', 'Seumur Hidup', 'UU ITE'
+                    'Pidana Mati', 'Seumur Hidup', 'UU ITE',
                 ])->index('idx_klasifikasi');
                 $table->integer('tahanan_dewasa_laki')->default(0);
                 $table->integer('tahanan_dewasa_perempuan')->default(0);
@@ -93,13 +93,13 @@ return new class extends Migration
                 $table->text('keterangan')->nullable();
                 $table->timestamps();
 
-                $table->index(['upt_id', 'tanggal'], 'idx_upt_tanggal');
+                $table->unique(['upt_id', 'tanggal', 'klasifikasi_pidana'], 'unique_upt_tgl_klasifikasi');
                 $table->foreign('upt_id', 'fk_penghuni_upt')->references('id')->on('upt')->onDelete('cascade');
             });
         }
 
         // 5. Data Overstaying
-        if (!Schema::hasTable('data_overstaying')) {
+        if (! Schema::hasTable('data_overstaying')) {
             Schema::create('data_overstaying', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('upt_id')->index('fk_overstaying_upt');
@@ -117,13 +117,13 @@ return new class extends Migration
                 $table->text('keterangan')->nullable();
                 $table->timestamps();
 
-                $table->index(['upt_id', 'tanggal'], 'idx_upt_tanggal');
+                $table->unique(['upt_id', 'tanggal'], 'idx_upt_tanggal');
                 $table->foreign('upt_id', 'fk_overstaying_upt')->references('id')->on('upt')->onDelete('cascade');
             });
         }
 
         // 6. Data Integrasi
-        if (!Schema::hasTable('data_integrasi')) {
+        if (! Schema::hasTable('data_integrasi')) {
             Schema::create('data_integrasi', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('upt_id')->index('fk_integrasi_upt');
@@ -141,13 +141,13 @@ return new class extends Migration
                 $table->text('keterangan')->nullable();
                 $table->timestamps();
 
-                $table->index(['upt_id', 'tanggal'], 'idx_upt_tanggal');
+                $table->unique(['upt_id', 'tanggal'], 'idx_upt_tanggal');
                 $table->foreign('upt_id', 'fk_integrasi_upt')->references('id')->on('upt')->onDelete('cascade');
             });
         }
 
         // 7. Data Bebas Harian
-        if (!Schema::hasTable('data_bebas_harian')) {
+        if (! Schema::hasTable('data_bebas_harian')) {
             Schema::create('data_bebas_harian', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('upt_id');
@@ -155,7 +155,7 @@ return new class extends Migration
                 $table->enum('klasifikasi_pidana', [
                     'Pidana Umum', 'Tipikor', 'Narkoba Bandar', 'Narkoba Pengguna',
                     'Teroris', 'Trafficking', 'Ilegal Logging', 'Money Laundering',
-                    'Genosida', 'UU ITE'
+                    'Genosida', 'UU ITE',
                 ])->index('idx_bebas_klasifikasi');
                 $table->integer('bebas_murni')->default(0);
                 $table->integer('pb')->default(0);
@@ -168,12 +168,12 @@ return new class extends Migration
                 $table->text('keterangan')->nullable();
                 $table->timestamps();
 
-                $table->index(['upt_id', 'tanggal'], 'idx_bebas_upt_tgl');
+                $table->unique(['upt_id', 'tanggal', 'klasifikasi_pidana'], 'unique_bebas_upt_tgl_klasifikasi');
             });
         }
 
         // 8. Data Asesmen
-        if (!Schema::hasTable('data_asesmen')) {
+        if (! Schema::hasTable('data_asesmen')) {
             Schema::create('data_asesmen', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('nama', 255);
@@ -220,7 +220,7 @@ return new class extends Migration
         }
 
         // 9. Pengumuman
-        if (!Schema::hasTable('pengumuman')) {
+        if (! Schema::hasTable('pengumuman')) {
             Schema::create('pengumuman', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('judul', 255);
@@ -242,7 +242,7 @@ return new class extends Migration
         }
 
         // 10. Pengumuman Dibaca
-        if (!Schema::hasTable('pengumuman_dibaca')) {
+        if (! Schema::hasTable('pengumuman_dibaca')) {
             Schema::create('pengumuman_dibaca', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('pengumuman_id');
@@ -256,7 +256,7 @@ return new class extends Migration
         }
 
         // 11. WA Settings
-        if (!Schema::hasTable('wa_settings')) {
+        if (! Schema::hasTable('wa_settings')) {
             Schema::create('wa_settings', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('gateway_name', 50)->default('fonnte')->nullable();
@@ -276,7 +276,7 @@ return new class extends Migration
         }
 
         // 12. WA Pimpinan
-        if (!Schema::hasTable('wa_pimpinan')) {
+        if (! Schema::hasTable('wa_pimpinan')) {
             Schema::create('wa_pimpinan', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('nama', 100);
@@ -289,7 +289,7 @@ return new class extends Migration
         }
 
         // 13. WA Scheduled Reports
-        if (!Schema::hasTable('wa_scheduled_reports')) {
+        if (! Schema::hasTable('wa_scheduled_reports')) {
             Schema::create('wa_scheduled_reports', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('nama_laporan', 100);
@@ -306,7 +306,7 @@ return new class extends Migration
         }
 
         // 14. WA Notification Logs
-        if (!Schema::hasTable('wa_notification_logs')) {
+        if (! Schema::hasTable('wa_notification_logs')) {
             Schema::create('wa_notification_logs', function (Blueprint $table) {
                 $table->increments('id');
                 $table->enum('tipe', ['reminder_pagi', 'reminder_siang', 'test']);
@@ -320,7 +320,7 @@ return new class extends Migration
         }
 
         // 15. WA Scheduled Report Logs
-        if (!Schema::hasTable('wa_scheduled_report_logs')) {
+        if (! Schema::hasTable('wa_scheduled_report_logs')) {
             Schema::create('wa_scheduled_report_logs', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('report_id')->index('report_id');

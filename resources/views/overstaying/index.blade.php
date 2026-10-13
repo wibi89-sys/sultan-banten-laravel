@@ -239,22 +239,28 @@
                 <h5 class="modal-title fs-6"><i class="fas fa-plus-circle me-2"></i>Tambah Data Overstaying</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ route('overstaying.store') }}">
+            <form method="POST" action="{{ route('overstaying.store') }}" id="formAdd">
                 @csrf
                 <div class="modal-body">
+                    <!-- Duplicate Alert Banner -->
+                    <div id="add_duplicate_warning" class="alert alert-danger py-2 px-3 small d-none align-items-center mb-3">
+                        <i class="fas fa-exclamation-circle fs-5 me-2 flex-shrink-0"></i>
+                        <span id="add_duplicate_message"></span>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2 mb-md-0">
                             <label class="form-label small fw-semibold">UPT <span class="text-danger">*</span></label>
-                            <select name="upt_id" class="form-select form-select-sm" required>
+                            <select name="upt_id" id="add_upt_id" class="form-select form-select-sm" required>
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
-                                <option value="{{ $upt->id }}" {{ $userUptFilter == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
+                                <option value="{{ $upt->id }}" {{ (old('upt_id', $userUptFilter) == $upt->id) ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', date('Y-m-d')) }}" required>
                         </div>
                     </div>
                     
@@ -266,23 +272,23 @@
                             <div class="input-grid">
                                 <div>
                                     <label class="form-label small text-muted">AI</label>
-                                    <input type="number" name="tahanan_ai" id="add_t_ai" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_ai" id="add_t_ai" class="form-control form-control-sm" value="{{ old('tahanan_ai', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AII</label>
-                                    <input type="number" name="tahanan_aii" id="add_t_aii" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_aii" id="add_t_aii" class="form-control form-control-sm" value="{{ old('tahanan_aii', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIII</label>
-                                    <input type="number" name="tahanan_aiii" id="add_t_aiii" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_aiii" id="add_t_aiii" class="form-control form-control-sm" value="{{ old('tahanan_aiii', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIV</label>
-                                    <input type="number" name="tahanan_aiv" id="add_t_aiv" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_aiv" id="add_t_aiv" class="form-control form-control-sm" value="{{ old('tahanan_aiv', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AV</label>
-                                    <input type="number" name="tahanan_av" id="add_t_av" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_av" id="add_t_av" class="form-control form-control-sm" value="{{ old('tahanan_av', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                             </div>
                             <div class="jumlah-box tahanan">
@@ -296,23 +302,23 @@
                             <div class="input-grid">
                                 <div>
                                     <label class="form-label small text-muted">AI</label>
-                                    <input type="number" name="overstaying_ai" id="add_o_ai" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_ai" id="add_o_ai" class="form-control form-control-sm" value="{{ old('overstaying_ai', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AII</label>
-                                    <input type="number" name="overstaying_aii" id="add_o_aii" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_aii" id="add_o_aii" class="form-control form-control-sm" value="{{ old('overstaying_aii', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIII</label>
-                                    <input type="number" name="overstaying_aiii" id="add_o_aiii" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_aiii" id="add_o_aiii" class="form-control form-control-sm" value="{{ old('overstaying_aiii', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIV</label>
-                                    <input type="number" name="overstaying_aiv" id="add_o_aiv" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_aiv" id="add_o_aiv" class="form-control form-control-sm" value="{{ old('overstaying_aiv', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AV</label>
-                                    <input type="number" name="overstaying_av" id="add_o_av" class="form-control form-control-sm" value="0" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_av" id="add_o_av" class="form-control form-control-sm" value="{{ old('overstaying_av', 0) }}" min="0" onchange="updateJumlah('add')">
                                 </div>
                             </div>
                             <div class="jumlah-box overstaying">
@@ -323,12 +329,12 @@
                     
                     <div class="mt-3">
                         <label class="form-label small">Keterangan</label>
-                        <textarea name="keterangan" class="form-control form-control-sm" rows="2"></textarea>
+                        <textarea name="keterangan" class="form-control form-control-sm" rows="2">{{ old('keterangan') }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Simpan</button>
+                    <button type="submit" id="add_btn_submit" class="btn btn-primary btn-sm px-3">Simpan</button>
                 </div>
             </form>
         </div>
@@ -349,6 +355,12 @@
                 <div class="modal-body">
                     <input type="hidden" name="id" id="edit_id">
                     
+                    <!-- Duplicate Alert Banner -->
+                    <div id="edit_duplicate_warning" class="alert alert-danger py-2 px-3 small d-none align-items-center mb-3">
+                        <i class="fas fa-exclamation-circle fs-5 me-2 flex-shrink-0"></i>
+                        <span id="edit_duplicate_message"></span>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2 mb-md-0">
                             <label class="form-label small fw-semibold">UPT <span class="text-danger">*</span></label>
@@ -434,7 +446,7 @@
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Simpan Perubahan</button>
+                    <button type="submit" id="edit_btn_submit" class="btn btn-primary btn-sm px-3">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -464,6 +476,68 @@
         if (oEl) oEl.textContent = totalOverstay;
     }
 
+    let checkDuplicateTimeout = null;
+
+    function checkDuplicateDate(prefix) {
+        const uptSelect = document.getElementById(prefix + '_upt_id');
+        const tglInput = document.getElementById(prefix + '_tanggal');
+        const warningBox = document.getElementById(prefix + '_duplicate_warning');
+        const messageEl = document.getElementById(prefix + '_duplicate_message');
+        const submitBtn = document.getElementById(prefix + '_btn_submit');
+        const excludeId = prefix === 'edit' ? (document.getElementById('edit_id')?.value || 0) : 0;
+
+        if (!uptSelect || !tglInput || !warningBox || !submitBtn) return;
+
+        const uptId = uptSelect.value;
+        const tanggal = tglInput.value;
+
+        if (!uptId || !tanggal) {
+            warningBox.classList.add('d-none');
+            warningBox.classList.remove('d-flex');
+            submitBtn.disabled = false;
+            return;
+        }
+
+        clearTimeout(checkDuplicateTimeout);
+        checkDuplicateTimeout = setTimeout(() => {
+            fetch(`{{ route('overstaying.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}&exclude_id=${encodeURIComponent(excludeId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exists) {
+                        messageEl.textContent = data.message || 'Data overstaying untuk UPT ini pada tanggal tersebut sudah ada.';
+                        warningBox.classList.remove('d-none');
+                        warningBox.classList.add('d-flex');
+                        submitBtn.disabled = true;
+                    } else {
+                        warningBox.classList.add('d-none');
+                        warningBox.classList.remove('d-flex');
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(() => {
+                    submitBtn.disabled = false;
+                });
+        }, 200);
+    }
+
+    const addUpt = document.getElementById('add_upt_id');
+    const addTanggal = document.getElementById('add_tanggal');
+    if (addUpt) addUpt.addEventListener('change', () => checkDuplicateDate('add'));
+    if (addTanggal) addTanggal.addEventListener('change', () => checkDuplicateDate('add'));
+
+    const editUpt = document.getElementById('edit_upt_id');
+    const editTanggal = document.getElementById('edit_tanggal');
+    if (editUpt) editUpt.addEventListener('change', () => checkDuplicateDate('edit'));
+    if (editTanggal) editTanggal.addEventListener('change', () => checkDuplicateDate('edit'));
+
+    const modalAddEl = document.getElementById('modalAdd');
+    if (modalAddEl) {
+        modalAddEl.addEventListener('show.bs.modal', function() {
+            updateJumlah('add');
+            checkDuplicateDate('add');
+        });
+    }
+
     function editData(data) {
         document.getElementById('formEdit').action = '/overstaying/' + data.id;
         document.getElementById('edit_id').value = data.id;
@@ -485,7 +559,33 @@
         document.getElementById('edit_keterangan').value = data.keterangan || '';
         updateJumlah('edit');
 
+        const editWarning = document.getElementById('edit_duplicate_warning');
+        if (editWarning) {
+            editWarning.classList.add('d-none');
+            editWarning.classList.remove('d-flex');
+        }
+        const editBtn = document.getElementById('edit_btn_submit');
+        if (editBtn) editBtn.disabled = false;
+
         new bootstrap.Modal(document.getElementById('modalEdit')).show();
     }
+
+    // Double-submit prevention
+    ['formAdd', 'formEdit'].forEach(id => {
+        const formEl = document.getElementById(id);
+        if (formEl) {
+            formEl.addEventListener('submit', function(e) {
+                const btn = formEl.querySelector('button[type="submit"]');
+                if (btn) {
+                    if (btn.disabled) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                }
+            });
+        }
+    });
 </script>
 @endpush

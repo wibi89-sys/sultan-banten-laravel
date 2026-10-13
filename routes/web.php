@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
 
     // Data Penghuni
     Route::get('/penghuni', [PenghuniController::class, 'index'])->name('penghuni.index');
+    Route::get('/penghuni/check-exists', [PenghuniController::class, 'checkExists'])->name('penghuni.check-exists');
     Route::get('/penghuni/previous-data', [PenghuniController::class, 'getPreviousData'])->name('penghuni.previous-data');
     Route::post('/penghuni', [PenghuniController::class, 'store'])->name('penghuni.store');
     Route::put('/penghuni/{id}', [PenghuniController::class, 'update'])->name('penghuni.update');
@@ -61,18 +62,21 @@ Route::middleware('auth')->group(function () {
 
     // Data Overstaying
     Route::get('/overstaying', [OverstayingController::class, 'index'])->name('overstaying.index');
+    Route::get('/overstaying/check-exists', [OverstayingController::class, 'checkExists'])->name('overstaying.check-exists');
     Route::post('/overstaying', [OverstayingController::class, 'store'])->name('overstaying.store');
     Route::put('/overstaying/{id}', [OverstayingController::class, 'update'])->name('overstaying.update');
     Route::delete('/overstaying/{id}', [OverstayingController::class, 'destroy'])->name('overstaying.destroy');
 
     // Data Integrasi
     Route::get('/integrasi', [IntegrasiController::class, 'index'])->name('integrasi.index');
+    Route::get('/integrasi/check-exists', [IntegrasiController::class, 'checkExists'])->name('integrasi.check-exists');
     Route::post('/integrasi', [IntegrasiController::class, 'store'])->name('integrasi.store');
     Route::put('/integrasi/{id}', [IntegrasiController::class, 'update'])->name('integrasi.update');
     Route::delete('/integrasi/{id}', [IntegrasiController::class, 'destroy'])->name('integrasi.destroy');
 
     // Bebas Harian Routes
     Route::get('/bebas-harian', [BebasHarianController::class, 'index'])->name('bebas-harian.index');
+    Route::get('/bebas-harian/check-exists', [BebasHarianController::class, 'checkExists'])->name('bebas-harian.check-exists');
     Route::get('/bebas-harian/detail', [BebasHarianController::class, 'detail'])->name('bebas-harian.detail');
     Route::post('/bebas-harian', [BebasHarianController::class, 'store'])->name('bebas-harian.store');
     Route::put('/bebas-harian', [BebasHarianController::class, 'update'])->name('bebas-harian.update');

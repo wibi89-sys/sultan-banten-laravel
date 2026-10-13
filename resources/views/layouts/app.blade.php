@@ -386,6 +386,11 @@
                 <i class="fas fa-exclamation-circle me-1"></i> {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+        @elseif($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                <i class="fas fa-exclamation-circle me-1"></i> {{ $errors->first() }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
         @endif
 
         @yield('content')
