@@ -22,23 +22,26 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-// Public API endpoint
-Route::get('/api/stats', [ApiController::class, 'stats'])->name('api.stats');
+// Public API endpoint with throttle
+Route::get('/api/stats', [ApiController::class, 'stats'])
+    ->middleware('throttle:60,1')
+    ->name('api.stats');
 
-// Public Cron WhatsApp endpoint (matches native cron-wa.php)
+// Public Cron WhatsApp endpoint with throttle & secure key check
 Route::get('/cron-wa', function (\Illuminate\Http\Request $request) {
-    $secretKey = 'ditjenpas_banten_2026_secret';
-    if ($request->query('key') !== $secretKey) {
+    $secretKey = env('CRON_SECRET_KEY', 'ditjenpas_banten_2026_secret');
+    $providedKey = (string) $request->query('key', '');
+    if (!hash_equals($secretKey, $providedKey)) {
         return response()->json(['success' => false, 'message' => 'Invalid secret key'], 403);
     }
     $action = $request->query('action', 'run');
     $result = \App\Services\WhatsAppService::runCron($action);
     return response()->json($result);
-})->name('cron.wa');
+})->middleware('throttle:30,1')->name('cron.wa');
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes (Must be logged in)

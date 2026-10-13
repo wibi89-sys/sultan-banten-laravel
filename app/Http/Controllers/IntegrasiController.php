@@ -77,6 +77,10 @@ class IntegrasiController extends Controller
         $uptId = (int) $request->input('upt_id');
         $tanggal = $request->input('tanggal');
 
+        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+            abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
+        }
+
         if (DataIntegrasi::where('upt_id', $uptId)->where('tanggal', $tanggal)->exists()) {
             return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal ' . formatDate($tanggal) . ' sudah ada. Silakan edit data yang ada.');
         }
@@ -116,6 +120,10 @@ class IntegrasiController extends Controller
         }
 
         $data = DataIntegrasi::findOrFail($id);
+        if (!$user->isAdmin() && $user->upt_id && ((int) $data->upt_id !== (int) $user->upt_id || (int) $request->input('upt_id') !== (int) $user->upt_id)) {
+            abort(403, 'Akses ditolak. Anda tidak berhak mengubah data milik UPT lain.');
+        }
+
         $request->validate([
             'upt_id' => 'required|exists:upt,id',
             'tanggal' => 'required|date',
@@ -149,7 +157,16 @@ class IntegrasiController extends Controller
             abort(403);
         }
 
+        $timeCheck = isInputTimeAllowed();
+        if (!$timeCheck['allowed']) {
+            return back()->with('error', $timeCheck['message']);
+        }
+
         $data = DataIntegrasi::findOrFail($id);
+        if (!$user->isAdmin() && $user->upt_id && (int) $data->upt_id !== (int) $user->upt_id) {
+            abort(403, 'Akses ditolak. Anda tidak berhak menghapus data milik UPT lain.');
+        }
+
         $old = $data->toArray();
         $data->delete();
 

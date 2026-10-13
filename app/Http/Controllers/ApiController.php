@@ -12,13 +12,12 @@ use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
-    private $apiKey = 'ditjenpas_banten_secret_key_2026';
-
     public function stats(Request $request)
     {
-        $providedKey = $request->query('api_key') ?: $request->header('X-API-KEY');
+        $expectedKey = env('API_SECRET_KEY', 'ditjenpas_banten_secret_key_2026');
+        $providedKey = (string) ($request->query('api_key') ?: $request->header('X-API-KEY') ?: '');
 
-        if ($providedKey !== $this->apiKey) {
+        if (!hash_equals($expectedKey, $providedKey)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access. Valid API Key required.'

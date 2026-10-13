@@ -28,6 +28,22 @@ class InstansiController extends Controller
             abort(403);
         }
 
+        $request->validate([
+            'nama_instansi' => 'nullable|string|max:255',
+            'alamat' => 'nullable|string|max:500',
+            'telepon' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:100',
+            'website' => 'nullable|string|max:255',
+            'running_text' => 'nullable|string|max:1000',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+            'favicon' => 'nullable|mimes:ico,png,jpg,jpeg,svg|max:1024',
+            'welcome_banner' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'kop_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'logo_kop' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'ttd_image' => 'nullable|image|mimes:png,webp|max:2048',
+            'stempel_image' => 'nullable|image|mimes:png,webp|max:2048',
+        ]);
+
         $instansi = Instansi::first();
         if (!$instansi) {
             $instansi = new Instansi();
@@ -64,8 +80,12 @@ class InstansiController extends Controller
             // Upload request
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
-                $ext = $file->getClientOriginalExtension();
-                $filename = "{$field}_" . time() . '_' . uniqid() . '.' . $ext;
+                $ext = strtolower($file->extension() ?: $file->getClientOriginalExtension());
+                // Cegah ekstensi berbahaya
+                if (in_array($ext, ['php', 'phtml', 'phar', 'php5', 'php7', 'blade', 'exe', 'sh', 'bat'])) {
+                    return back()->with('error', 'Format file tidak diizinkan untuk alasan keamanan.');
+                }
+                $filename = "{$field}_" . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
                 $file->move($uploadPath, $filename);
 
                 // Remove previous file

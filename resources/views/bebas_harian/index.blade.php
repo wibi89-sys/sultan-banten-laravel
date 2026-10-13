@@ -53,10 +53,25 @@
             <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-door-open me-2 text-primary"></i>Pencatatan Bebas Harian</h5>
             <p class="text-muted mb-0 small">Pencatatan harian WBP / Tahanan bebas (Bebas Murni, PB, CB, CMB, Asimilasi, BDH, Lainnya)</p>
         </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambah">
-            <i class="fas fa-plus me-1"></i> Input Bebas Hari Ini
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            @if($timeRestriction['active'] && !$canInput)
+            <span class="badge bg-warning text-dark px-3 py-2">
+                <i class="fas fa-clock me-1"></i>
+                Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
+            </span>
+            @endif
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambah" {{ !$canInput ? 'disabled' : '' }}>
+                <i class="fas fa-plus me-1"></i> Input Bebas Hari Ini
+            </button>
+        </div>
     </div>
+
+    @if($timeRestriction['active'] && !$canInput && $timeRestrictionMessage)
+    <div class="alert alert-warning py-2 mb-3">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        {{ $timeRestrictionMessage }}
+    </div>
+    @endif
 
     <!-- Filter Card -->
     <div class="card border-0 shadow-sm mb-4">
@@ -120,7 +135,7 @@
                     <tbody>
                         @forelse ($dataList as $row)
                             <tr>
-                                <td class="text-center">{{ $loop->iteration }}</td>
+                                <td class="text-center">{{ ($dataList->currentPage() - 1) * $dataList->perPage() + $loop->iteration }}</td>
                                 <td class="fw-semibold">{{ indonesianDate($row->tanggal) }}</td>
                                 <td>{{ $row->nama_upt }}</td>
                                 <td class="text-center"><span class="badge bg-secondary">{{ $row->total_bm }}</span></td>
@@ -161,6 +176,11 @@
                 </table>
             </div>
         </div>
+        @if ($dataList->hasPages())
+        <div class="card-footer bg-white border-0 py-3">
+            {{ $dataList->links() }}
+        </div>
+        @endif
     </div>
 </div>
 

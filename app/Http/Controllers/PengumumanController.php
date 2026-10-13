@@ -45,7 +45,8 @@ class PengumumanController extends Controller
         $request->validate([
             'judul' => 'required|string|max:255',
             'isi' => 'required|string',
-            'kategori' => 'required|string',
+            'kategori' => 'required|string|max:50',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $gambar = null;
@@ -55,8 +56,11 @@ class PengumumanController extends Controller
                 File::makeDirectory($uploadPath, 0755, true);
             }
             $file = $request->file('gambar');
-            $ext = $file->getClientOriginalExtension();
-            $filename = 'pengumuman_' . time() . '_' . uniqid() . '.' . $ext;
+            $ext = strtolower($file->extension() ?: $file->getClientOriginalExtension());
+            if (in_array($ext, ['php', 'phtml', 'phar', 'blade', 'exe', 'sh', 'bat'])) {
+                return back()->with('error', 'Format gambar tidak diizinkan.');
+            }
+            $filename = 'pengumuman_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
             $file->move($uploadPath, $filename);
             $gambar = "uploads/pengumuman/{$filename}";
         }
@@ -92,7 +96,8 @@ class PengumumanController extends Controller
         $request->validate([
             'judul' => 'required|string|max:255',
             'isi' => 'required|string',
-            'kategori' => 'required|string',
+            'kategori' => 'required|string|max:50',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $gambar = $p->gambar;
@@ -109,8 +114,11 @@ class PengumumanController extends Controller
                 File::makeDirectory($uploadPath, 0755, true);
             }
             $file = $request->file('gambar');
-            $ext = $file->getClientOriginalExtension();
-            $filename = 'pengumuman_' . time() . '_' . uniqid() . '.' . $ext;
+            $ext = strtolower($file->extension() ?: $file->getClientOriginalExtension());
+            if (in_array($ext, ['php', 'phtml', 'phar', 'blade', 'exe', 'sh', 'bat'])) {
+                return back()->with('error', 'Format gambar tidak diizinkan.');
+            }
+            $filename = 'pengumuman_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
             $file->move($uploadPath, $filename);
 
             if ($gambar && File::exists(public_path($gambar))) {

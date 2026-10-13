@@ -182,6 +182,10 @@ class PenghuniController extends Controller
         $uptId = (int) $request->input('upt_id');
         $tanggal = $request->input('tanggal');
 
+        if (!$user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
+            abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
+        }
+
         // Cegah duplikasi
         if (DataPenghuni::where('upt_id', $uptId)->where('tanggal', $tanggal)->exists()) {
             return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal ' . formatDate($tanggal) . ' sudah ada. Silakan gunakan tombol edit.');
@@ -233,6 +237,10 @@ class PenghuniController extends Controller
         }
 
         $penghuni = DataPenghuni::findOrFail($id);
+        if (!$user->isAdmin() && $user->upt_id && (int) $penghuni->upt_id !== (int) $user->upt_id) {
+            abort(403, 'Akses ditolak. Anda tidak berhak mengubah data milik UPT lain.');
+        }
+
         $request->validate([
             'klasifikasi_pidana' => 'required',
             'tanggal' => 'required|date',
@@ -264,7 +272,16 @@ class PenghuniController extends Controller
             abort(403);
         }
 
+        $timeCheck = isInputTimeAllowed();
+        if (!$timeCheck['allowed']) {
+            return back()->with('error', $timeCheck['message']);
+        }
+
         $penghuni = DataPenghuni::findOrFail($id);
+        if (!$user->isAdmin() && $user->upt_id && (int) $penghuni->upt_id !== (int) $user->upt_id) {
+            abort(403, 'Akses ditolak. Anda tidak berhak menghapus data milik UPT lain.');
+        }
+
         $old = $penghuni->toArray();
         $penghuni->delete();
 

@@ -77,21 +77,29 @@ class DashboardController extends Controller
             ->when($filterUpt > 0, fn($q) => $q->where('upt_id', $filterUpt))
             ->sum(DB::raw('overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av'));
 
-        // Helper Klasifikasi Total
-        $getKlasifikasiTotal = function($list) use ($penghuniBase) {
-            return (int) (clone $penghuniBase)
-                ->whereIn('klasifikasi_pidana', $list)
-                ->sum(DB::raw('tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan + narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan'));
+        // Helper Klasifikasi Total (1 single query instead of 8 separate queries)
+        $klasifikasiSums = (clone $penghuniBase)
+            ->select('klasifikasi_pidana')
+            ->selectRaw('SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan + narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan) as total')
+            ->groupBy('klasifikasi_pidana')
+            ->pluck('total', 'klasifikasi_pidana');
+
+        $sumForList = function(array $list) use ($klasifikasiSums) {
+            $sum = 0;
+            foreach ($list as $k) {
+                $sum += (int) ($klasifikasiSums[$k] ?? 0);
+            }
+            return $sum;
         };
 
-        $totalPidum = $getKlasifikasiTotal($klasifikasiPidum);
-        $totalPidsus = $getKlasifikasiTotal($klasifikasiPidsus);
-        $totalUuIte = $getKlasifikasiTotal($klasifikasiUUITE);
-        $totalWna = $getKlasifikasiTotal(['WNA']);
-        $totalSakit = $getKlasifikasiTotal(['Sakit Berkepanjangan']);
-        $totalLansia = $getKlasifikasiTotal(['Lansia >70 tahun']);
-        $totalPidanaMati = $getKlasifikasiTotal(['Pidana Mati']);
-        $totalSeumurHidup = $getKlasifikasiTotal(['Seumur Hidup']);
+        $totalPidum = $sumForList($klasifikasiPidum);
+        $totalPidsus = $sumForList($klasifikasiPidsus);
+        $totalUuIte = $sumForList($klasifikasiUUITE);
+        $totalWna = $sumForList(['WNA']);
+        $totalSakit = $sumForList(['Sakit Berkepanjangan']);
+        $totalLansia = $sumForList(['Lansia >70 tahun']);
+        $totalPidanaMati = $sumForList(['Pidana Mati']);
+        $totalSeumurHidup = $sumForList(['Seumur Hidup']);
 
         // Bebas Harian Stats
         $bebasRes = DataBebasHarian::where('tanggal', $filterTanggal)

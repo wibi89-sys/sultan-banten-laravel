@@ -43,7 +43,7 @@ class ExampleTest extends TestCase
         $response = $this->actingAs($user)->get('/kroscek');
         $response->assertStatus(200);
         $response->assertSee('Kroscek Data Tahanan');
-        $response->assertSee('Sudah Input');
+        $response->assertSee('Bebas Harian Input');
     }
 
     public function test_authenticated_user_can_access_bebas_harian(): void
