@@ -86,8 +86,10 @@ class ProfileController extends Controller
         }
 
         $file = $request->file('photo');
-        $extension = $file->getClientOriginalExtension();
-        $filename = 'user_' . $user->id . '_' . time() . '.' . $extension;
+        $rawExt = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'png');
+        $allowedExtensions = ['jpeg', 'png', 'jpg', 'gif', 'webp'];
+        $extension = in_array($rawExt, $allowedExtensions, true) ? $rawExt : 'png';
+        $filename = 'user_' . $user->id . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
         $file->move($uploadDir, $filename);
         $relativePath = 'uploads/profile/' . $filename;
 

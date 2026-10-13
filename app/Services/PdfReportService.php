@@ -420,30 +420,64 @@ class PdfReportService
                 }
                 $pdf->Ln();
 
-                $upts = Upt::orderBy('nama_upt')->get();
+                $uptQuery = Upt::orderBy('nama_upt');
+                if ($uptId) {
+                    $uptQuery->where('id', $uptId);
+                }
+                $upts = $uptQuery->get();
+
                 $no = 1;
                 $gKap = 0; $gTah = 0; $gNap = 0; $gTot = 0; $gOvs = 0; $gInt = 0;
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetTextColor(0, 0, 0);
 
-                foreach ($upts as $u) {
-                    $qP = DataPenghuni::where('upt_id', $u->id)
-                        ->whereNotIn('klasifikasi_pidana', ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup']);
-                    if ($tanggalMulai && $tanggalAkhir) $qP->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]);
+                $exclude = ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup'];
 
-                    $tah = (int) (clone $qP)->sum(DB::raw('tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan'));
-                    $nap = (int) (clone $qP)->sum(DB::raw('narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan'));
+                $penghuniMap = DB::table('data_penghuni')
+                    ->select(
+                        'upt_id',
+                        DB::raw('COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan), 0) as tah'),
+                        DB::raw('COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as nap')
+                    )
+                    ->whereNotIn('klasifikasi_pidana', $exclude)
+                    ->when($uptId, fn($q) => $q->where('upt_id', $uptId))
+                    ->when($tanggalMulai && $tanggalAkhir, fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
+                    ->groupBy('upt_id')
+                    ->get()
+                    ->keyBy('upt_id');
+
+                $overstayingMap = DB::table('data_overstaying')
+                    ->select(
+                        'upt_id',
+                        DB::raw('COALESCE(SUM(overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av), 0) as ovs')
+                    )
+                    ->when($uptId, fn($q) => $q->where('upt_id', $uptId))
+                    ->when($tanggalMulai && $tanggalAkhir, fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
+                    ->groupBy('upt_id')
+                    ->get()
+                    ->keyBy('upt_id');
+
+                $integrasiMap = DB::table('data_integrasi')
+                    ->select(
+                        'upt_id',
+                        DB::raw('COALESCE(SUM(usulan_pb + usulan_cb + usulan_cmb + usulan_cmk + usulan_asimilasi + sk_terbit_pb + sk_terbit_cb + sk_terbit_cmb + sk_terbit_cmk + sk_terbit_asimilasi), 0) as int_total')
+                    )
+                    ->when($uptId, fn($q) => $q->where('upt_id', $uptId))
+                    ->when($tanggalMulai && $tanggalAkhir, fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
+                    ->groupBy('upt_id')
+                    ->get()
+                    ->keyBy('upt_id');
+
+                foreach ($upts as $u) {
+                    $pData = $penghuniMap->get($u->id);
+                    $tah = (int) ($pData->tah ?? 0);
+                    $nap = (int) ($pData->nap ?? 0);
                     $tot = $tah + $nap;
                     $kap = (int) $u->kapasitas;
                     $persen = $kap > 0 ? round(($tot / $kap) * 100, 1) : 0;
 
-                    $qO = DataOverstaying::where('upt_id', $u->id);
-                    if ($tanggalMulai && $tanggalAkhir) $qO->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]);
-                    $ovs = (int) $qO->sum(DB::raw('overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av'));
-
-                    $qI = DataIntegrasi::where('upt_id', $u->id);
-                    if ($tanggalMulai && $tanggalAkhir) $qI->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]);
-                    $int = (int) $qI->sum(DB::raw('usulan_pb + usulan_cb + usulan_cmb + usulan_cmk + usulan_asimilasi + sk_terbit_pb + sk_terbit_cb + sk_terbit_cmb + sk_terbit_cmk + sk_terbit_asimilasi'));
+                    $ovs = (int) ($overstayingMap->get($u->id)?->ovs ?? 0);
+                    $int = (int) ($integrasiMap->get($u->id)?->int_total ?? 0);
 
                     $gKap += $kap; $gTah += $tah; $gNap += $nap; $gTot += $tot; $gOvs += $ovs; $gInt += $int;
 
