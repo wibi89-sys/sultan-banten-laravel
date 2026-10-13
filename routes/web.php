@@ -16,6 +16,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UptController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppController;
+use App\Services\WhatsAppService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes (Dashboard is public like in native PHP)
@@ -28,14 +30,15 @@ Route::get('/api/stats', [ApiController::class, 'stats'])
     ->name('api.stats');
 
 // Public Cron WhatsApp endpoint with throttle & secure key check
-Route::get('/cron-wa', function (\Illuminate\Http\Request $request) {
+Route::get('/cron-wa', function (Request $request) {
     $secretKey = env('CRON_SECRET_KEY', 'ditjenpas_banten_2026_secret');
     $providedKey = (string) $request->query('key', '');
-    if (!hash_equals($secretKey, $providedKey)) {
+    if (! hash_equals($secretKey, $providedKey)) {
         return response()->json(['success' => false, 'message' => 'Invalid secret key'], 403);
     }
     $action = $request->query('action', 'run');
-    $result = \App\Services\WhatsAppService::runCron($action);
+    $result = WhatsAppService::runCron($action);
+
     return response()->json($result);
 })->middleware('throttle:30,1')->name('cron.wa');
 
@@ -122,8 +125,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/wa-pimpinan/{id}', [WhatsAppController::class, 'pimpinanUpdate'])->name('wa.pimpinan.update');
     Route::delete('/wa-pimpinan/{id}', [WhatsAppController::class, 'pimpinanDestroy'])->name('wa.pimpinan.destroy');
 
-    // Activity Log
+    // Activity Log & Leaderboard
     Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+    Route::get('/activity-log/ranking', [ActivityLogController::class, 'ranking'])->name('activity-log.ranking');
+    Route::get('/activity-log/ranking/export-excel', [ActivityLogController::class, 'exportRankingExcel'])->name('activity-log.ranking.excel');
 
     // Profil
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

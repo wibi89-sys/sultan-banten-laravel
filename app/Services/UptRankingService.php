@@ -1,0 +1,445 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Instansi;
+use App\Models\Upt;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\DB;
+
+class UptRankingService
+{
+    /**
+     * Hitung rekapitulasi poin dan peringkat kedisiplinan seluruh UPT dalam rentang tanggal.
+     *
+     * @param  string|null  $startDate  (Y-m-d)
+     * @param  string|null  $endDate  (Y-m-d)
+     */
+    public static function calculateRanking(?string $startDate = null, ?string $endDate = null): array
+    {
+        $today = date('Y-m-d');
+        $startDate = $startDate ?: date('Y-m-01');
+        $endDate = $endDate ?: date('Y-m-t');
+
+        // Pastikan format tanggal valid
+        try {
+            $carbonStart = Carbon::parse($startDate)->startOfDay();
+            $carbonEnd = Carbon::parse($endDate)->endOfDay();
+        } catch (\Exception $e) {
+            $carbonStart = Carbon::now()->startOfMonth();
+            $carbonEnd = Carbon::now()->endOfMonth();
+            $startDate = $carbonStart->format('Y-m-d');
+            $endDate = $carbonEnd->format('Y-m-d');
+        }
+
+        if ($carbonStart->gt($carbonEnd)) {
+            $temp = $carbonStart;
+            $carbonStart = $carbonEnd;
+            $carbonEnd = $temp;
+            $startDate = $carbonStart->format('Y-m-d');
+            $endDate = $carbonEnd->format('Y-m-d');
+        }
+
+        // Tanggal evaluasi efektif: tidak menghitung tanggal masa depan jika belum tiba
+        $effectiveEnd = Carbon::parse(min($endDate, $today))->endOfDay();
+        $isFutureRangeOnly = $carbonStart->gt($effectiveEnd);
+
+        // Ambil batas jam instansi
+        $instansi = Instansi::getFirst();
+        $jamSelesaiStr = substr($instansi->jam_selesai ?? '11:00:00', 0, 8);
+        if (strlen($jamSelesaiStr) === 5) {
+            $jamSelesaiStr .= ':00';
+        }
+
+        // Generate daftar hari dalam periode evaluasi
+        $dateList = [];
+        if (! $isFutureRangeOnly) {
+            $period = CarbonPeriod::create($carbonStart->format('Y-m-d'), $effectiveEnd->format('Y-m-d'));
+            foreach ($period as $date) {
+                $dateList[] = $date->format('Y-m-d');
+            }
+        }
+        $totalDays = count($dateList);
+        $maxPointsPerUpt = $totalDays * 100;
+
+        // Ambil seluruh UPT terdaftar
+        $upts = Upt::orderBy('nama_upt')->get();
+
+        if ($totalDays === 0) {
+            return [
+                'period' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'effective_end_date' => $effectiveEnd->format('Y-m-d'),
+                    'total_days' => 0,
+                    'max_points' => 0,
+                    'jam_selesai' => substr($jamSelesaiStr, 0, 5),
+                ],
+                'rankings' => [],
+                'summary' => [
+                    'total_upt' => $upts->count(),
+                    'top_upt' => null,
+                    'avg_compliance' => 0,
+                    'total_sync_kroscek' => 0,
+                ],
+            ];
+        }
+
+        $queryStartDate = $startDate;
+        $queryEndDate = $effectiveEnd->format('Y-m-d');
+
+        // 1. Data Penghuni: min created_at & total tahanan valid kroscek
+        $penghuniRaw = DB::table('data_penghuni')
+            ->select(
+                'upt_id',
+                'tanggal',
+                DB::raw('MIN(created_at) as first_created_at'),
+                DB::raw("SUM(CASE WHEN klasifikasi_pidana NOT IN ('WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup') 
+                         THEN (tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan) 
+                         ELSE 0 END) as total_tahanan")
+            )
+            ->whereBetween('tanggal', [$queryStartDate, $queryEndDate])
+            ->groupBy('upt_id', 'tanggal')
+            ->get();
+
+        $penghuniMap = [];
+        foreach ($penghuniRaw as $r) {
+            $penghuniMap[$r->upt_id][$r->tanggal] = [
+                'created_at' => $r->first_created_at,
+                'total_tahanan' => (int) $r->total_tahanan,
+            ];
+        }
+
+        // 2. Data Overstaying: min created_at & total tahanan AI-AV
+        $overstayingRaw = DB::table('data_overstaying')
+            ->select(
+                'upt_id',
+                'tanggal',
+                DB::raw('MIN(created_at) as first_created_at'),
+                DB::raw('SUM(tahanan_ai + tahanan_aii + tahanan_aiii + tahanan_aiv + tahanan_av) as total_tahanan')
+            )
+            ->whereBetween('tanggal', [$queryStartDate, $queryEndDate])
+            ->groupBy('upt_id', 'tanggal')
+            ->get();
+
+        $overstayingMap = [];
+        foreach ($overstayingRaw as $r) {
+            $overstayingMap[$r->upt_id][$r->tanggal] = [
+                'created_at' => $r->first_created_at,
+                'total_tahanan' => (int) $r->total_tahanan,
+            ];
+        }
+
+        // 3. Data Integrasi: min created_at
+        $integrasiRaw = DB::table('data_integrasi')
+            ->select('upt_id', 'tanggal', DB::raw('MIN(created_at) as first_created_at'))
+            ->whereBetween('tanggal', [$queryStartDate, $queryEndDate])
+            ->groupBy('upt_id', 'tanggal')
+            ->get();
+
+        $integrasiMap = [];
+        foreach ($integrasiRaw as $r) {
+            $integrasiMap[$r->upt_id][$r->tanggal] = [
+                'created_at' => $r->first_created_at,
+            ];
+        }
+
+        // 4. Data Bebas Harian: min created_at
+        $bebasRaw = DB::table('data_bebas_harian')
+            ->select('upt_id', 'tanggal', DB::raw('MIN(created_at) as first_created_at'))
+            ->whereBetween('tanggal', [$queryStartDate, $queryEndDate])
+            ->groupBy('upt_id', 'tanggal')
+            ->get();
+
+        $bebasMap = [];
+        foreach ($bebasRaw as $r) {
+            $bebasMap[$r->upt_id][$r->tanggal] = [
+                'created_at' => $r->first_created_at,
+            ];
+        }
+
+        $namaHari = [
+            'Sunday' => 'Minggu',
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+        ];
+
+        $rankings = [];
+
+        foreach ($upts as $upt) {
+            $uptId = $upt->id;
+            $totalPoints = 0;
+            $countHariSempurna = 0;
+            $countModulTepat = 0;
+            $countModulTerlambat = 0;
+            $countModulKosong = 0;
+            $countKroscekSesuai = 0;
+            $countKroscekSelisih = 0;
+            $countKroscekKosong = 0;
+            $inputTimeMinutesSum = 0;
+            $inputTimeCount = 0;
+
+            $dailyBreakdown = [];
+            $selisihDates = [];
+
+            foreach ($dateList as $tgl) {
+                $deadline = Carbon::parse($tgl.' '.$jamSelesaiStr);
+                $carbonTgl = Carbon::parse($tgl);
+                $hariLabel = $namaHari[$carbonTgl->englishDayOfWeek] ?? $carbonTgl->englishDayOfWeek;
+
+                $dayPoints = 0;
+
+                // Modul 1: Penghuni
+                $pData = $penghuniMap[$uptId][$tgl] ?? null;
+                $pScore = self::evaluateModule($pData, $deadline, $tgl);
+                $dayPoints += $pScore['poin'];
+                if ($pScore['status'] === 'tepat') {
+                    $countModulTepat++;
+                } elseif ($pScore['status'] === 'terlambat') {
+                    $countModulTerlambat++;
+                } else {
+                    $countModulKosong++;
+                }
+                if ($pScore['jam_menit'] !== null) {
+                    $inputTimeMinutesSum += $pScore['jam_menit'];
+                    $inputTimeCount++;
+                }
+
+                // Modul 2: Overstaying
+                $oData = $overstayingMap[$uptId][$tgl] ?? null;
+                $oScore = self::evaluateModule($oData, $deadline, $tgl);
+                $dayPoints += $oScore['poin'];
+                if ($oScore['status'] === 'tepat') {
+                    $countModulTepat++;
+                } elseif ($oScore['status'] === 'terlambat') {
+                    $countModulTerlambat++;
+                } else {
+                    $countModulKosong++;
+                }
+                if ($oScore['jam_menit'] !== null) {
+                    $inputTimeMinutesSum += $oScore['jam_menit'];
+                    $inputTimeCount++;
+                }
+
+                // Modul 3: Integrasi
+                $iData = $integrasiMap[$uptId][$tgl] ?? null;
+                $iScore = self::evaluateModule($iData, $deadline, $tgl);
+                $dayPoints += $iScore['poin'];
+                if ($iScore['status'] === 'tepat') {
+                    $countModulTepat++;
+                } elseif ($iScore['status'] === 'terlambat') {
+                    $countModulTerlambat++;
+                } else {
+                    $countModulKosong++;
+                }
+                if ($iScore['jam_menit'] !== null) {
+                    $inputTimeMinutesSum += $iScore['jam_menit'];
+                    $inputTimeCount++;
+                }
+
+                // Modul 4: Bebas Harian
+                $bData = $bebasMap[$uptId][$tgl] ?? null;
+                $bScore = self::evaluateModule($bData, $deadline, $tgl);
+                $dayPoints += $bScore['poin'];
+                if ($bScore['status'] === 'tepat') {
+                    $countModulTepat++;
+                } elseif ($bScore['status'] === 'terlambat') {
+                    $countModulTerlambat++;
+                } else {
+                    $countModulKosong++;
+                }
+                if ($bScore['jam_menit'] !== null) {
+                    $inputTimeMinutesSum += $bScore['jam_menit'];
+                    $inputTimeCount++;
+                }
+
+                // Komponen 5: Kroscek Tahanan (Penghuni vs Overstaying)
+                $kroscekScore = [
+                    'status' => 'kosong',
+                    'poin' => 0,
+                    'tahanan_penghuni' => null,
+                    'tahanan_overstaying' => null,
+                    'selisih' => 0,
+                ];
+
+                if ($pData !== null && $oData !== null) {
+                    $pTotal = $pData['total_tahanan'];
+                    $oTotal = $oData['total_tahanan'];
+                    $kroscekScore['tahanan_penghuni'] = $pTotal;
+                    $kroscekScore['tahanan_overstaying'] = $oTotal;
+
+                    if ($pTotal === $oTotal) {
+                        $kroscekScore['status'] = 'sesuai';
+                        $kroscekScore['poin'] = 20;
+                        $countKroscekSesuai++;
+                    } else {
+                        $selisih = abs($pTotal - $oTotal);
+                        $kroscekScore['status'] = 'selisih';
+                        $kroscekScore['selisih'] = $selisih;
+                        $kroscekScore['poin'] = 0;
+                        $countKroscekSelisih++;
+
+                        $selisihDates[] = [
+                            'tanggal' => $tgl,
+                            'hari' => $hariLabel,
+                            'tahanan_penghuni' => $pTotal,
+                            'tahanan_overstaying' => $oTotal,
+                            'selisih' => $selisih,
+                        ];
+                    }
+                } else {
+                    $countKroscekKosong++;
+                }
+
+                $dayPoints += $kroscekScore['poin'];
+                $totalPoints += $dayPoints;
+
+                if ($dayPoints === 100) {
+                    $countHariSempurna++;
+                }
+
+                $dailyBreakdown[] = [
+                    'tanggal' => $tgl,
+                    'hari' => $hariLabel,
+                    'penghuni' => $pScore,
+                    'overstaying' => $oScore,
+                    'integrasi' => $iScore,
+                    'bebas' => $bScore,
+                    'kroscek' => $kroscekScore,
+                    'total_poin' => $dayPoints,
+                ];
+            }
+
+            $avgMinutes = $inputTimeCount > 0 ? (int) round($inputTimeMinutesSum / $inputTimeCount) : null;
+            $avgTimeString = $avgMinutes !== null
+                ? sprintf('%02d:%02d WIB', floor($avgMinutes / 60), $avgMinutes % 60)
+                : '-';
+
+            $compliancePct = $maxPointsPerUpt > 0
+                ? round(($totalPoints / $maxPointsPerUpt) * 100, 1)
+                : 0;
+
+            $rankings[] = [
+                'upt_id' => $uptId,
+                'nama_upt' => $upt->nama_upt,
+                'total_points' => $totalPoints,
+                'max_points' => $maxPointsPerUpt,
+                'persentase_kepatuhan' => $compliancePct,
+                'count_hari_sempurna' => $countHariSempurna,
+                'count_modul_tepat' => $countModulTepat,
+                'count_modul_terlambat' => $countModulTerlambat,
+                'count_modul_kosong' => $countModulKosong,
+                'count_kroscek_sesuai' => $countKroscekSesuai,
+                'count_kroscek_selisih' => $countKroscekSelisih,
+                'count_kroscek_kosong' => $countKroscekKosong,
+                'rata_rata_jam_input' => $avgTimeString,
+                'daily_breakdown' => $dailyBreakdown,
+                'selisih_dates' => $selisihDates,
+            ];
+        }
+
+        // Urutkan ranking: Total Poin desc, Persentase desc, Hari Sempurna desc, Nama UPT asc
+        usort($rankings, function ($a, $b) {
+            if ($a['total_points'] !== $b['total_points']) {
+                return $b['total_points'] <=> $a['total_points'];
+            }
+            if ($a['count_hari_sempurna'] !== $b['count_hari_sempurna']) {
+                return $b['count_hari_sempurna'] <=> $a['count_hari_sempurna'];
+            }
+            if ($a['count_kroscek_sesuai'] !== $b['count_kroscek_sesuai']) {
+                return $b['count_kroscek_sesuai'] <=> $a['count_kroscek_sesuai'];
+            }
+
+            return strcmp($a['nama_upt'], $b['nama_upt']);
+        });
+
+        // Berikan nomor peringkat dan tandai yang terburuk (peringkat paling bawah)
+        $totalRanked = count($rankings);
+        foreach ($rankings as $idx => &$item) {
+            $item['rank'] = $idx + 1;
+            $item['is_worst'] = ($totalRanked > 1 && ($idx + 1) === $totalRanked);
+        }
+        unset($item);
+
+        $totalCompliance = array_sum(array_column($rankings, 'persentase_kepatuhan'));
+        $avgCompliance = count($rankings) > 0 ? round($totalCompliance / count($rankings), 1) : 0;
+        $totalSync = array_sum(array_column($rankings, 'count_kroscek_sesuai'));
+
+        return [
+            'period' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'effective_end_date' => $effectiveEnd->format('Y-m-d'),
+                'total_days' => $totalDays,
+                'max_points' => $maxPointsPerUpt,
+                'jam_selesai' => substr($jamSelesaiStr, 0, 5),
+            ],
+            'rankings' => $rankings,
+            'summary' => [
+                'total_upt' => count($rankings),
+                'top_upt' => $rankings[0] ?? null,
+                'lowest_upt' => $totalRanked > 1 ? $rankings[$totalRanked - 1] : null,
+                'avg_compliance' => $avgCompliance,
+                'total_sync_kroscek' => $totalSync,
+            ],
+        ];
+    }
+
+    /**
+     * Evaluasi ketepatan waktu suatu modul berdasarkan created_at vs deadline
+     */
+    private static function evaluateModule(?array $data, Carbon $deadline, string $tanggalLaporan): array
+    {
+        if (! $data || empty($data['created_at'])) {
+            return [
+                'status' => 'kosong',
+                'poin' => 0,
+                'jam_str' => '-',
+                'jam_menit' => null,
+                'keterangan' => 'Belum Input',
+            ];
+        }
+
+        $createdAt = Carbon::parse($data['created_at']);
+        $jamMenit = ($createdAt->hour * 60) + $createdAt->minute;
+        $createdDate = $createdAt->format('Y-m-d');
+
+        $targetDate = Carbon::parse($tanggalLaporan)->startOfDay();
+        $sourceDate = $createdAt->copy()->startOfDay();
+
+        if ($createdDate === $tanggalLaporan) {
+            $ket = $createdAt->format('H:i').' WIB';
+        } elseif ($createdDate < $tanggalLaporan) {
+            $daysDiff = abs((int) $targetDate->diffInDays($sourceDate));
+            $ket = 'H-'.$daysDiff.' ('.$createdAt->format('d/m H:i').')';
+        } else {
+            $daysDiff = abs((int) $sourceDate->diffInDays($targetDate));
+            $ket = 'Susulan H+'.$daysDiff.' ('.$createdAt->format('d/m H:i').')';
+        }
+
+        // Jika dibuat sebelum atau tepat pada deadline (termasuk H-1 sore)
+        if ($createdAt->lte($deadline)) {
+            return [
+                'status' => 'tepat',
+                'poin' => 20,
+                'jam_str' => $createdAt->format('H:i'),
+                'jam_menit' => $jamMenit,
+                'keterangan' => $ket,
+            ];
+        }
+
+        // Jika melewati batas jam
+        return [
+            'status' => 'terlambat',
+            'poin' => 10,
+            'jam_str' => $createdAt->format('H:i'),
+            'jam_menit' => $jamMenit,
+            'keterangan' => $ket,
+        ];
+    }
+}

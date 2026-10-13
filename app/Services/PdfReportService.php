@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\DataBebasHarian;
 use App\Models\DataIntegrasi;
-use App\Models\DataOverstaying;
-use App\Models\DataPenghuni;
 use App\Models\Instansi;
 use App\Models\Upt;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +12,7 @@ class PdfReportService
     public static function generate(string $reportType, ?int $uptId, string $tanggalMulai, string $tanggalAkhir, array $signData = [])
     {
         $tcpdfPath = app_path('Libraries/tcpdf/tcpdf.php');
-        if (!file_exists($tcpdfPath)) {
+        if (! file_exists($tcpdfPath)) {
             $tcpdfPath = base_path('../tcpdf/tcpdf.php');
         }
         require_once $tcpdfPath;
@@ -28,39 +25,43 @@ class PdfReportService
             'overstaying' => 'LAPORAN OVERSTAYING TAHANAN',
             'integrasi' => 'LAPORAN DATA INTEGRASI',
             'bebas_harian' => 'LAPORAN PENGELUARAN / BEBAS HARIAN',
-            'rekapitulasi' => 'LAPORAN REKAPITULASI'
+            'rekapitulasi' => 'LAPORAN REKAPITULASI',
         ];
 
         $orientation = in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian']) ? 'P' : 'L';
 
         // Instantiate TCPDF
-        $pdf = new class($orientation, 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF {
+        $pdf = new class($orientation, 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
+        {
             public $instansiModel = null;
+
             public $reportType = 'penghuni';
+
             public $showQrCode = true;
 
             public function Header() {}
 
-            public function Footer() {
+            public function Footer()
+            {
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
                     $qrText = "✅ Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
-                    $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0,0,0], 'bgcolor' => false];
+                    $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
                     $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
                 }
 
                 $this->SetY(-15);
                 $this->SetFont('helvetica', 'I', 7);
                 $this->SetTextColor(100, 100, 100);
-                $this->Cell(0, 5, 'Halaman ' . $this->getAliasNumPage() . ' dari ' . $this->getAliasNbPages(), 0, 0, 'C');
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, 0, 'C');
                 $this->SetTextColor(0, 0, 0);
             }
         };
 
         $pdf->instansiModel = $instansi;
         $pdf->reportType = $reportType;
-        $pdf->showQrCode = !empty($signData['show_qrcode']);
+        $pdf->showQrCode = ! empty($signData['show_qrcode']);
         $pdf->SetCreator('Sultan Banten');
         $pdf->SetAuthor($user->nama_lengkap ?? 'Admin');
         $pdf->SetTitle($reportTitles[$reportType] ?? 'Laporan');
@@ -71,9 +72,9 @@ class PdfReportService
         // Header / Kop
         if (in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian'])) {
             $logoKop = null;
-            if (!empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+            if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
                 $logoKop = public_path($instansi->logo_kop);
-            } elseif (!empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+            } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
                 $logoKop = public_path($instansi->logo);
             }
 
@@ -94,9 +95,9 @@ class PdfReportService
             $pdf->SetX(45);
             $pdf->Cell($wKop, 5, "Jl.KH.Sam'un No.44 Serang, Banten", 0, 1, 'C');
             $pdf->SetX(45);
-            $pdf->Cell($wKop, 5, "Telepon: 0822-6666-2044, Faksimilie: 0822-6666-2044", 0, 1, 'C');
+            $pdf->Cell($wKop, 5, 'Telepon: 0822-6666-2044, Faksimilie: 0822-6666-2044', 0, 1, 'C');
             $pdf->SetX(45);
-            $pdf->Cell($wKop, 5, "Laman: djpasbanten@gmail.com, Pos-el: djpasbanten@gmail.com", 0, 1, 'C');
+            $pdf->Cell($wKop, 5, 'Laman: djpasbanten@gmail.com, Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
 
             $pdf->Ln(2);
             $pdf->SetLineWidth(0.5);
@@ -110,7 +111,7 @@ class PdfReportService
         } else {
             $pdf->SetFont('helvetica', 'B', 14);
             $pdf->Cell(0, 8, strtoupper($instansi?->nama_instansi ?? 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN'), 0, 1, 'C');
-            if (!empty($instansi?->alamat)) {
+            if (! empty($instansi?->alamat)) {
                 $pdf->SetFont('helvetica', '', 9);
                 $pdf->Cell(0, 5, $instansi->alamat, 0, 1, 'C');
             }
@@ -123,10 +124,11 @@ class PdfReportService
         // Fetch Data & Draw Table
         self::renderReportContent($pdf, $reportType, $uptId, $tanggalMulai, $tanggalAkhir, $instansi, $signData);
 
-        $filename = "Laporan_{$reportType}_" . date('Ymd_His') . ".pdf";
+        $filename = "Laporan_{$reportType}_".date('Ymd_His').'.pdf';
+
         return response($pdf->Output($filename, 'S'), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
         ]);
     }
 
@@ -134,16 +136,16 @@ class PdfReportService
     {
         // Date String
         $hariTanggalStr = 'Semua Periode';
-        if (!empty($tanggalMulai) && !empty($tanggalAkhir)) {
+        if (! empty($tanggalMulai) && ! empty($tanggalAkhir)) {
             if ($tanggalMulai == $tanggalAkhir) {
                 $hariTanggalStr = formatIndonesianDate($tanggalMulai, true);
             } else {
-                $hariTanggalStr = formatIndonesianDate($tanggalMulai, false) . ' s/d ' . formatIndonesianDate($tanggalAkhir, false);
+                $hariTanggalStr = formatIndonesianDate($tanggalMulai, false).' s/d '.formatIndonesianDate($tanggalAkhir, false);
             }
-        } elseif (!empty($tanggalMulai)) {
-            $hariTanggalStr = 'Mulai ' . formatIndonesianDate($tanggalMulai, false);
-        } elseif (!empty($tanggalAkhir)) {
-            $hariTanggalStr = 'Sampai ' . formatIndonesianDate($tanggalAkhir, false);
+        } elseif (! empty($tanggalMulai)) {
+            $hariTanggalStr = 'Mulai '.formatIndonesianDate($tanggalMulai, false);
+        } elseif (! empty($tanggalAkhir)) {
+            $hariTanggalStr = 'Sampai '.formatIndonesianDate($tanggalAkhir, false);
         }
 
         if ($reportType === 'penghuni') {
@@ -164,7 +166,8 @@ class PdfReportService
             $pdf->Cell($widths[4], 8, 'Narapidana', 1, 0, 'C', true);
             $pdf->Cell($widths[5], 8, 'Total', 1, 0, 'C', true);
 
-            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $x = $pdf->GetX();
+            $y = $pdf->GetY();
             $pdf->MultiCell($widths[6], 8, "Tingkat\nHunian", 1, 'C', true, 0, $x, $y, true, 0, false, true, 8, 'M');
             $pdf->Cell($widths[7], 8, '% Over', 1, 1, 'C', true);
 
@@ -174,8 +177,12 @@ class PdfReportService
                 ->join('data_penghuni as dp', 'u.id', '=', 'dp.upt_id')
                 ->whereNotIn('dp.klasifikasi_pidana', $exclude);
 
-            if ($uptId) $q->where('u.id', $uptId);
-            if ($tanggalMulai && $tanggalAkhir) $q->whereBetween('dp.tanggal', [$tanggalMulai, $tanggalAkhir]);
+            if ($uptId) {
+                $q->where('u.id', $uptId);
+            }
+            if ($tanggalMulai && $tanggalAkhir) {
+                $q->whereBetween('dp.tanggal', [$tanggalMulai, $tanggalAkhir]);
+            }
 
             $data = $q->select(
                 'u.nama_upt', 'u.kapasitas', 'dp.tanggal',
@@ -183,10 +190,13 @@ class PdfReportService
                 DB::raw('COALESCE(SUM(dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan), 0) as total_narapidana'),
                 DB::raw('COALESCE(SUM(dp.tahanan_dewasa_laki + dp.tahanan_dewasa_perempuan + dp.tahanan_anak_laki + dp.tahanan_anak_perempuan + dp.narapidana_dewasa_laki + dp.narapidana_dewasa_perempuan + dp.narapidana_anak_laki + dp.narapidana_anak_perempuan), 0) as total_penghuni')
             )->groupBy('u.id', 'u.nama_upt', 'u.kapasitas', 'dp.tanggal')
-            ->orderBy('u.nama_upt')->orderBy('dp.tanggal')->get();
+                ->orderBy('u.nama_upt')->orderBy('dp.tanggal')->get();
 
             $no = 1;
-            $gKapasitas = 0; $gTahanan = 0; $gNapi = 0; $gTotal = 0;
+            $gKapasitas = 0;
+            $gTahanan = 0;
+            $gNapi = 0;
+            $gTotal = 0;
             $pdf->SetFont('helvetica', '', 8);
 
             foreach ($data as $r) {
@@ -195,7 +205,10 @@ class PdfReportService
                 $nap = (int) $r->total_narapidana;
                 $tot = (int) $r->total_penghuni;
 
-                $gKapasitas += $kap; $gTahanan += $tah; $gNapi += $nap; $gTotal += $tot;
+                $gKapasitas += $kap;
+                $gTahanan += $tah;
+                $gNapi += $nap;
+                $gTotal += $tot;
                 $persen = $kap > 0 ? round((($tot - $kap) / $kap) * 100, 1) : 0;
                 $tingkat = $kap > 0 ? round(($tot / $kap) * 100, 1) : 0;
 
@@ -204,7 +217,8 @@ class PdfReportService
                 $rowH = max(7, $numLines * 3.8);
 
                 $pdf->Cell($widths[0], $rowH, $no++, 1, 0, 'C');
-                $x = $pdf->GetX(); $y = $pdf->GetY();
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
                 $pdf->MultiCell($widths[1], $rowH, $textUPT, 1, 'L', false, 0, $x, $y, true, 0, false, true, $rowH, 'M');
                 $pdf->Cell($widths[2], $rowH, number_format($kap), 1, 0, 'C');
                 $pdf->Cell($widths[3], $rowH, number_format($tah), 1, 0, 'C');
@@ -218,13 +232,13 @@ class PdfReportService
                 $pdf->SetFillColor($fillColor[0], $fillColor[1], $fillColor[2]);
                 $pdf->SetTextColor($textColor[0], $textColor[1], $textColor[2]);
                 $pdf->SetFont('helvetica', '', 7);
-                $pdf->Cell($widths[6], $rowH, $tingkat . '%', 1, 0, 'C', true);
-                $pdf->Cell($widths[7], $rowH, ($persen > 0 ? '+' : '') . $persen . '%', 1, 1, 'C', true);
+                $pdf->Cell($widths[6], $rowH, $tingkat.'%', 1, 0, 'C', true);
+                $pdf->Cell($widths[7], $rowH, ($persen > 0 ? '+' : '').$persen.'%', 1, 1, 'C', true);
                 $pdf->SetTextColor(0, 0, 0);
                 $pdf->SetFont('helvetica', '', 8);
             }
 
-            if ($tanggalMulai === $tanggalAkhir && !empty($tanggalMulai)) {
+            if ($tanggalMulai === $tanggalAkhir && ! empty($tanggalMulai)) {
                 $totPersen = $gKapasitas > 0 ? round((($gTotal - $gKapasitas) / $gKapasitas) * 100, 1) : 0;
                 $totHunian = $gKapasitas > 0 ? round(($gTotal / $gKapasitas) * 100, 1) : 0;
 
@@ -235,15 +249,15 @@ class PdfReportService
                 $pdf->Cell($widths[3], 7, number_format($gTahanan), 1, 0, 'C', true);
                 $pdf->Cell($widths[4], 7, number_format($gNapi), 1, 0, 'C', true);
                 $pdf->Cell($widths[5], 7, number_format($gTotal), 1, 0, 'C', true);
-                $pdf->Cell($widths[6], 7, $totHunian . '%', 1, 0, 'C', true);
-                $pdf->Cell($widths[7], 7, ($totPersen > 0 ? '+' : '') . $totPersen . '%', 1, 1, 'C', true);
+                $pdf->Cell($widths[6], 7, $totHunian.'%', 1, 0, 'C', true);
+                $pdf->Cell($widths[7], 7, ($totPersen > 0 ? '+' : '').$totPersen.'%', 1, 1, 'C', true);
             }
 
             self::renderSignature($pdf, $instansi, $signData);
 
         } elseif ($reportType === 'bebas_harian') {
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(0, 5, 'Hari/Tanggal : ' . $hariTanggalStr, 0, 1, 'L');
+            $pdf->Cell(0, 5, 'Hari/Tanggal : '.$hariTanggalStr, 0, 1, 'L');
             $pdf->Ln(2);
 
             $widths = [8, 42, 12, 12, 12, 12, 12, 12, 14, 14, 40];
@@ -264,8 +278,12 @@ class PdfReportService
             $pdf->Cell($widths[10], 7, 'KETERANGAN', 1, 1, 'C', true);
 
             $q = DB::table('data_bebas_harian as dbh')->join('upt as u', 'dbh.upt_id', '=', 'u.id');
-            if ($uptId) $q->where('dbh.upt_id', $uptId);
-            if ($tanggalMulai && $tanggalAkhir) $q->whereBetween('dbh.tanggal', [$tanggalMulai, $tanggalAkhir]);
+            if ($uptId) {
+                $q->where('dbh.upt_id', $uptId);
+            }
+            if ($tanggalMulai && $tanggalAkhir) {
+                $q->whereBetween('dbh.tanggal', [$tanggalMulai, $tanggalAkhir]);
+            }
 
             $data = $q->select(
                 'u.nama_upt',
@@ -282,26 +300,48 @@ class PdfReportService
             )->groupBy('u.id', 'u.nama_upt')->orderBy('u.nama_upt')->get();
 
             $no = 1;
-            $tBm = 0; $tPb = 0; $tCb = 0; $tCmb = 0; $tAsim = 0; $tBdh = 0; $tLain = 0; $gTotal = 0;
+            $tBm = 0;
+            $tPb = 0;
+            $tCb = 0;
+            $tCmb = 0;
+            $tAsim = 0;
+            $tBdh = 0;
+            $tLain = 0;
+            $gTotal = 0;
             $pdf->SetFont('helvetica', '', 7.5);
 
             foreach ($data as $r) {
-                $bm = (int)$r->total_bm; $pb = (int)$r->total_pb; $cb = (int)$r->total_cb;
-                $cmb = (int)$r->total_cmb; $asim = (int)$r->total_asimilasi; $bdh = (int)$r->total_bdh;
-                $lain = (int)$r->total_lainnya; $sub = (int)$r->total_bebas;
+                $bm = (int) $r->total_bm;
+                $pb = (int) $r->total_pb;
+                $cb = (int) $r->total_cb;
+                $cmb = (int) $r->total_cmb;
+                $asim = (int) $r->total_asimilasi;
+                $bdh = (int) $r->total_bdh;
+                $lain = (int) $r->total_lainnya;
+                $sub = (int) $r->total_bebas;
 
-                $tBm += $bm; $tPb += $pb; $tCb += $cb; $tCmb += $cmb; $tAsim += $asim; $tBdh += $bdh; $tLain += $lain; $gTotal += $sub;
+                $tBm += $bm;
+                $tPb += $pb;
+                $tCb += $cb;
+                $tCmb += $cmb;
+                $tAsim += $asim;
+                $tBdh += $bdh;
+                $tLain += $lain;
+                $gTotal += $sub;
 
                 $textUPT = $r->nama_upt;
-                $textKet = trim(($r->keterangan ?? '') . (!empty($r->rincian_lainnya) ? ' (' . $r->rincian_lainnya . ')' : ''));
-                if (empty($textKet)) $textKet = '-';
+                $textKet = trim(($r->keterangan ?? '').(! empty($r->rincian_lainnya) ? ' ('.$r->rincian_lainnya.')' : ''));
+                if (empty($textKet)) {
+                    $textKet = '-';
+                }
 
                 $nUPT = $pdf->getNumLines($textUPT, $widths[1]);
                 $nKet = $pdf->getNumLines($textKet, $widths[10]);
                 $rowH = max(6, max($nUPT, $nKet) * 4.5);
 
                 $pdf->Cell($widths[0], $rowH, $no++, 1, 0, 'C');
-                $x = $pdf->GetX(); $y = $pdf->GetY();
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
                 $pdf->MultiCell($widths[1], $rowH, $textUPT, 1, 'L', false, 0, $x, $y, true, 0, false, true, $rowH, 'M');
                 $pdf->Cell($widths[2], $rowH, $bm, 1, 0, 'C');
                 $pdf->Cell($widths[3], $rowH, $pb, 1, 0, 'C');
@@ -313,7 +353,8 @@ class PdfReportService
                 $pdf->SetFont('helvetica', 'B', 7.5);
                 $pdf->Cell($widths[9], $rowH, $sub, 1, 0, 'C');
                 $pdf->SetFont('helvetica', '', 7.5);
-                $x = $pdf->GetX(); $y = $pdf->GetY();
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
                 $pdf->MultiCell($widths[10], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
             }
 
@@ -334,7 +375,7 @@ class PdfReportService
 
         } elseif ($reportType === 'overstaying') {
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(0, 5, 'Hari/Tanggal : ' . $hariTanggalStr, 0, 1, 'L');
+            $pdf->Cell(0, 5, 'Hari/Tanggal : '.$hariTanggalStr, 0, 1, 'L');
             $pdf->Ln(2);
 
             $widths = [8, 55, 13, 13, 13, 13, 13, 15, 47];
@@ -353,29 +394,43 @@ class PdfReportService
             $pdf->Cell($widths[8], 7, 'KETERANGAN', 1, 1, 'C', true);
 
             $q = DB::table('data_overstaying as do')->join('upt as u', 'do.upt_id', '=', 'u.id');
-            if ($uptId) $q->where('do.upt_id', $uptId);
-            if ($tanggalMulai && $tanggalAkhir) $q->whereBetween('do.tanggal', [$tanggalMulai, $tanggalAkhir]);
+            if ($uptId) {
+                $q->where('do.upt_id', $uptId);
+            }
+            if ($tanggalMulai && $tanggalAkhir) {
+                $q->whereBetween('do.tanggal', [$tanggalMulai, $tanggalAkhir]);
+            }
 
             $data = $q->select('do.*', 'u.nama_upt')->orderBy('u.nama_upt')->orderBy('do.tanggal')->get();
 
             $no = 1;
-            $tAI = 0; $tAII = 0; $tAIII = 0; $tAIV = 0; $tAV = 0; $gTotal = 0;
+            $tAI = 0;
+            $tAII = 0;
+            $tAIII = 0;
+            $tAIV = 0;
+            $tAV = 0;
+            $gTotal = 0;
             $pdf->SetFont('helvetica', '', 8);
 
             foreach ($data as $r) {
                 $sub = $r->overstaying_ai + $r->overstaying_aii + $r->overstaying_aiii + $r->overstaying_aiv + $r->overstaying_av;
-                $tAI += $r->overstaying_ai; $tAII += $r->overstaying_aii; $tAIII += $r->overstaying_aiii;
-                $tAIV += $r->overstaying_aiv; $tAV += $r->overstaying_av; $gTotal += $sub;
+                $tAI += $r->overstaying_ai;
+                $tAII += $r->overstaying_aii;
+                $tAIII += $r->overstaying_aiii;
+                $tAIV += $r->overstaying_aiv;
+                $tAV += $r->overstaying_av;
+                $gTotal += $sub;
 
                 $textUPT = $r->nama_upt;
-                $textKet = !empty($r->keterangan) ? $r->keterangan : 'Nihil';
+                $textKet = ! empty($r->keterangan) ? $r->keterangan : 'Nihil';
 
                 $nUPT = $pdf->getNumLines($textUPT, $widths[1]);
                 $nKet = $pdf->getNumLines($textKet, $widths[8]);
                 $rowH = max(6, max($nUPT, $nKet) * 4);
 
                 $pdf->Cell($widths[0], $rowH, $no++, 1, 0, 'C');
-                $x = $pdf->GetX(); $y = $pdf->GetY();
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
                 $pdf->MultiCell($widths[1], $rowH, $textUPT, 1, 'L', false, 0, $x, $y, true, 0, false, true, $rowH, 'M');
                 $pdf->Cell($widths[2], $rowH, $r->overstaying_ai, 1, 0, 'C');
                 $pdf->Cell($widths[3], $rowH, $r->overstaying_aii, 1, 0, 'C');
@@ -385,7 +440,8 @@ class PdfReportService
                 $pdf->SetFont('helvetica', 'B', 8);
                 $pdf->Cell($widths[7], $rowH, $sub, 1, 0, 'C');
                 $pdf->SetFont('helvetica', '', 8);
-                $x = $pdf->GetX(); $y = $pdf->GetY();
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
                 $pdf->MultiCell($widths[8], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
             }
 
@@ -405,7 +461,7 @@ class PdfReportService
         } else {
             // Landscape reports (Integrasi, Rekapitulasi)
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(0, 5, 'Periode: ' . $hariTanggalStr, 0, 1, 'L');
+            $pdf->Cell(0, 5, 'Periode: '.$hariTanggalStr, 0, 1, 'L');
             $pdf->Ln(2);
 
             if ($reportType === 'rekapitulasi') {
@@ -427,7 +483,12 @@ class PdfReportService
                 $upts = $uptQuery->get();
 
                 $no = 1;
-                $gKap = 0; $gTah = 0; $gNap = 0; $gTot = 0; $gOvs = 0; $gInt = 0;
+                $gKap = 0;
+                $gTah = 0;
+                $gNap = 0;
+                $gTot = 0;
+                $gOvs = 0;
+                $gInt = 0;
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetTextColor(0, 0, 0);
 
@@ -440,8 +501,8 @@ class PdfReportService
                         DB::raw('COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as nap')
                     )
                     ->whereNotIn('klasifikasi_pidana', $exclude)
-                    ->when($uptId, fn($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
+                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
+                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
                     ->groupBy('upt_id')
                     ->get()
                     ->keyBy('upt_id');
@@ -451,8 +512,8 @@ class PdfReportService
                         'upt_id',
                         DB::raw('COALESCE(SUM(overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av), 0) as ovs')
                     )
-                    ->when($uptId, fn($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
+                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
+                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
                     ->groupBy('upt_id')
                     ->get()
                     ->keyBy('upt_id');
@@ -462,8 +523,8 @@ class PdfReportService
                         'upt_id',
                         DB::raw('COALESCE(SUM(usulan_pb + usulan_cb + usulan_cmb + usulan_cmk + usulan_asimilasi + sk_terbit_pb + sk_terbit_cb + sk_terbit_cmb + sk_terbit_cmk + sk_terbit_asimilasi), 0) as int_total')
                     )
-                    ->when($uptId, fn($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
+                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
+                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
                     ->groupBy('upt_id')
                     ->get()
                     ->keyBy('upt_id');
@@ -479,7 +540,12 @@ class PdfReportService
                     $ovs = (int) ($overstayingMap->get($u->id)?->ovs ?? 0);
                     $int = (int) ($integrasiMap->get($u->id)?->int_total ?? 0);
 
-                    $gKap += $kap; $gTah += $tah; $gNap += $nap; $gTot += $tot; $gOvs += $ovs; $gInt += $int;
+                    $gKap += $kap;
+                    $gTah += $tah;
+                    $gNap += $nap;
+                    $gTot += $tot;
+                    $gOvs += $ovs;
+                    $gInt += $int;
 
                     $pdf->Cell($widths[0], 6, $no++, 1, 0, 'C');
                     $pdf->Cell($widths[1], 6, $u->nama_upt, 1, 0, 'L');
@@ -487,7 +553,7 @@ class PdfReportService
                     $pdf->Cell($widths[3], 6, number_format($tah), 1, 0, 'C');
                     $pdf->Cell($widths[4], 6, number_format($nap), 1, 0, 'C');
                     $pdf->Cell($widths[5], 6, number_format($tot), 1, 0, 'C');
-                    $pdf->Cell($widths[6], 6, $persen . '%', 1, 0, 'C');
+                    $pdf->Cell($widths[6], 6, $persen.'%', 1, 0, 'C');
                     $pdf->Cell($widths[7], 6, number_format($ovs), 1, 0, 'C');
                     $pdf->Cell($widths[8], 6, number_format($int), 1, 1, 'C');
                 }
@@ -501,7 +567,7 @@ class PdfReportService
                 $pdf->Cell($widths[4], 7, number_format($gNapi ?? $gNap), 1, 0, 'C', true);
                 $pdf->Cell($widths[5], 7, number_format($gTot), 1, 0, 'C', true);
                 $totPersen = $gKap > 0 ? round(($gTot / $gKap) * 100, 1) : 0;
-                $pdf->Cell($widths[6], 7, $totPersen . '%', 1, 0, 'C', true);
+                $pdf->Cell($widths[6], 7, $totPersen.'%', 1, 0, 'C', true);
                 $pdf->Cell($widths[7], 7, number_format($gOvs), 1, 0, 'C', true);
                 $pdf->Cell($widths[8], 7, number_format($gInt), 1, 1, 'C', true);
 
@@ -538,8 +604,12 @@ class PdfReportService
                 $pdf->Cell($widths[13], 0, '', 0, 1);
 
                 $q = DataIntegrasi::with('upt')->orderBy('tanggal', 'desc');
-                if ($uptId) $q->where('upt_id', $uptId);
-                if ($tanggalMulai && $tanggalAkhir) $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]);
+                if ($uptId) {
+                    $q->where('upt_id', $uptId);
+                }
+                if ($tanggalMulai && $tanggalAkhir) {
+                    $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]);
+                }
                 $data = $q->get();
 
                 $pdf->SetFont('helvetica', '', 7);
@@ -548,23 +618,23 @@ class PdfReportService
                 $grandTotal = 0;
 
                 foreach ($data as $r) {
-                    $totRow = (int)$r->usulan_pb + (int)$r->usulan_cb + (int)$r->usulan_cmb + (int)$r->usulan_cmk + (int)$r->usulan_asimilasi
-                            + (int)$r->sk_terbit_pb + (int)$r->sk_terbit_cb + (int)$r->sk_terbit_cmb + (int)$r->sk_terbit_cmk + (int)$r->sk_terbit_asimilasi;
+                    $totRow = (int) $r->usulan_pb + (int) $r->usulan_cb + (int) $r->usulan_cmb + (int) $r->usulan_cmk + (int) $r->usulan_asimilasi
+                            + (int) $r->sk_terbit_pb + (int) $r->sk_terbit_cb + (int) $r->sk_terbit_cmb + (int) $r->sk_terbit_cmk + (int) $r->sk_terbit_asimilasi;
                     $grandTotal += $totRow;
 
                     $pdf->Cell($widths[0], 5.5, $no++, 1, 0, 'C');
                     $pdf->Cell($widths[1], 5.5, $r->upt?->nama_upt ?? '-', 1, 0, 'L');
                     $pdf->Cell($widths[2], 5.5, $r->tanggal ? date('d/m/Y', strtotime($r->tanggal)) : '-', 1, 0, 'C');
-                    $pdf->Cell($widths[3], 5.5, (int)$r->usulan_pb, 1, 0, 'C');
-                    $pdf->Cell($widths[4], 5.5, (int)$r->usulan_cb, 1, 0, 'C');
-                    $pdf->Cell($widths[5], 5.5, (int)$r->usulan_cmb, 1, 0, 'C');
-                    $pdf->Cell($widths[6], 5.5, (int)$r->usulan_cmk, 1, 0, 'C');
-                    $pdf->Cell($widths[7], 5.5, (int)$r->usulan_asimilasi, 1, 0, 'C');
-                    $pdf->Cell($widths[8], 5.5, (int)$r->sk_terbit_pb, 1, 0, 'C');
-                    $pdf->Cell($widths[9], 5.5, (int)$r->sk_terbit_cb, 1, 0, 'C');
-                    $pdf->Cell($widths[10], 5.5, (int)$r->sk_terbit_cmb, 1, 0, 'C');
-                    $pdf->Cell($widths[11], 5.5, (int)$r->sk_terbit_cmk, 1, 0, 'C');
-                    $pdf->Cell($widths[12], 5.5, (int)$r->sk_terbit_asimilasi, 1, 0, 'C');
+                    $pdf->Cell($widths[3], 5.5, (int) $r->usulan_pb, 1, 0, 'C');
+                    $pdf->Cell($widths[4], 5.5, (int) $r->usulan_cb, 1, 0, 'C');
+                    $pdf->Cell($widths[5], 5.5, (int) $r->usulan_cmb, 1, 0, 'C');
+                    $pdf->Cell($widths[6], 5.5, (int) $r->usulan_cmk, 1, 0, 'C');
+                    $pdf->Cell($widths[7], 5.5, (int) $r->usulan_asimilasi, 1, 0, 'C');
+                    $pdf->Cell($widths[8], 5.5, (int) $r->sk_terbit_pb, 1, 0, 'C');
+                    $pdf->Cell($widths[9], 5.5, (int) $r->sk_terbit_cb, 1, 0, 'C');
+                    $pdf->Cell($widths[10], 5.5, (int) $r->sk_terbit_cmb, 1, 0, 'C');
+                    $pdf->Cell($widths[11], 5.5, (int) $r->sk_terbit_cmk, 1, 0, 'C');
+                    $pdf->Cell($widths[12], 5.5, (int) $r->sk_terbit_asimilasi, 1, 0, 'C');
                     $pdf->Cell($widths[13], 5.5, $totRow, 1, 1, 'C');
                 }
 
@@ -581,13 +651,13 @@ class PdfReportService
 
     private static function renderSignature($pdf, $instansi, $signData, $orientation = 'P')
     {
-        $showTtd = !isset($signData['show_ttd']) || (bool)$signData['show_ttd'];
-        if (!$showTtd) {
+        $showTtd = ! isset($signData['show_ttd']) || (bool) $signData['show_ttd'];
+        if (! $showTtd) {
             return;
         }
 
-        $showTtdImage = !isset($signData['show_ttd_image']) || (bool)$signData['show_ttd_image'];
-        $showStempel = !isset($signData['show_stempel']) || (bool)$signData['show_stempel'];
+        $showTtdImage = ! isset($signData['show_ttd_image']) || (bool) $signData['show_ttd_image'];
+        $showStempel = ! isset($signData['show_stempel']) || (bool) $signData['show_stempel'];
 
         $pdf->Ln(4);
         $pdf->SetFont('helvetica', '', 9);
@@ -601,17 +671,18 @@ class PdfReportService
 
         $sigX = ($orientation === 'L') ? 215 : 130;
         $pdf->SetX($sigX);
-        $pdf->Cell(70, 5, $tempatTtd . ', ' . $tglTtd, 0, 1, 'C');
+        $pdf->Cell(70, 5, $tempatTtd.', '.$tglTtd, 0, 1, 'C');
         $pdf->SetX($sigX);
         $pdf->Cell(70, 5, $jabatanTtd, 0, 1, 'C');
         $pdf->Ln(2);
 
         $yBeforeSig = $pdf->GetY();
-        if ($showTtdImage && !empty($instansi?->ttd_image) && file_exists(public_path($instansi->ttd_image))) {
+        if ($showTtdImage && ! empty($instansi?->ttd_image) && file_exists(public_path($instansi->ttd_image))) {
             $pdf->Image(public_path($instansi->ttd_image), $sigX + 15, $yBeforeSig - 2, 40, 0);
         }
-        if ($showStempel && !empty($instansi?->stempel_image) && file_exists(public_path($instansi->stempel_image))) {
-            $pdf->Image(public_path($instansi->stempel_image), $sigX + 5, $yBeforeSig - 5, 35, 0);
+        if ($showStempel && ! empty($instansi?->stempel_image) && file_exists(public_path($instansi->stempel_image))) {
+            // Geser stempel ke kiri (sigX - 12) agar berada di sisi kiri dan hanya menyinggung tepi tanda tangan, tidak menutupi tanda tangan sepenuhnya
+            $pdf->Image(public_path($instansi->stempel_image), $sigX - 12, $yBeforeSig - 4, 35, 0);
         }
 
         $pdf->Ln(20);

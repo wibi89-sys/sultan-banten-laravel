@@ -278,6 +278,28 @@
 @endpush
 
 @section('content')
+<!-- Top Tab Navigation -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom">
+    <ul class="nav nav-pills gap-2 p-1 bg-light rounded-pill border">
+        <li class="nav-item">
+            <a class="nav-link active rounded-pill px-4 py-2 fw-semibold" href="{{ route('activity-log.index') }}">
+                <i class="fas fa-list-alt me-2"></i>Riwayat Log Sistem
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 py-2 fw-semibold text-secondary" href="{{ route('activity-log.ranking') }}">
+                <i class="fas fa-trophy me-2 text-warning"></i>Leaderboard & Kepatuhan UPT
+            </a>
+        </li>
+    </ul>
+
+    <div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill small">
+            <i class="fas fa-history me-1"></i> Audit Trail Sistem
+        </span>
+    </div>
+</div>
+
 <!-- Section 1: Executive KPI Cards -->
 <div class="row g-3 mb-4">
     <!-- Card 1: Total Aktivitas -->
