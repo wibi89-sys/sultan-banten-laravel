@@ -8,7 +8,7 @@ Aplikasi Monitoring dan Pelaporan Terpadu Unit Pelaksana Teknis (UPT) Pemasyarak
 1. [Prasyarat Sistem](#-prasyarat-sistem)
 2. [Panduan Deploy ke Shared Hosting (cPanel)](#-panduan-deploy-ke-shared-hosting-cpanel)
    - [Cara 1: Melalui Terminal / SSH cPanel (Sangat Direkomendasikan)](#cara-1-melalui-terminal--ssh-cpanel-sangat-direkomendasikan)
-   - [Cara 2: Melalui Fitur GUI "Git™ Version Control" cPanel](#cara-2-melalui-fitur-gui-git-version-control-cpanel)
+   - [Cara 2: Melalui Fitur GUI "Git™ Version Control" cPanel + Bantuan Terminal](#cara-2-melalui-fitur-gui-git-version-control-cpanel--bantuan-terminal)
    - [Setup Cron Job Scheduler di cPanel](#setup-cron-job-scheduler-di-cpanel)
 3. [Panduan Deploy ke VPS Linux (Ubuntu / Debian)](#-panduan-deploy-ke-vps-linux-ubuntu--debian)
    - [1. Update Sistem & Install Kebutuhan](#1-update-sistem--install-kebutuhan)
@@ -168,30 +168,143 @@ Jika hosting Anda menonaktifkan pembuatan symlink ke `public_html`:
 
 ---
 
-### Cara 2: Melalui Fitur GUI "Git™ Version Control" cPanel
+### Cara 2: Melalui Fitur GUI "Git™ Version Control" cPanel + Bantuan Terminal
 
-Jika paket hosting Anda **tidak memiliki akses menu Terminal / SSH**, Anda dapat menggunakan antarmuka grafis Git bawaan cPanel:
+Metode ini sangat ideal jika Anda lebih nyaman melakukan **clone dan pull melalui antarmuka grafis (GUI) cPanel**, lalu menggunakan **Terminal cPanel** untuk menjalankan perintah setup Laravel agar seluruh fitur aplikasi (database, upload foto, storage, PDF, scheduler) berfungsi 100%.
 
-#### Langkah 1: Clone via cPanel GUI
-1. Buka cPanel > cari dan klik menu **Git™ Version Control**.
-2. Klik tombol **Create** di pojok kanan atas.
-3. Isi form:
-   - **Clone a Repository**: Aktifkan toggle / centang (ON).
+---
+
+#### Langkah 1: Clone Repository via GUI cPanel
+1. Login ke dashboard **cPanel**.
+2. Masuk ke menu **Git™ Version Control** (kategori *Files*).
+3. Klik tombol **Create** di kanan atas.
+4. Isi form pembuatan repository:
+   - **Clone a Repository**: Aktifkan (*Toggle ON*).
    - **Clone URL**: `https://github.com/wibi89-sys/sultan-banten-laravel.git`
-   - **Repository Path**: `sultan-banten` (otomatis akan ditempatkan di `/home/username/sultan-banten`).
+   - **Repository Path**: `sultan-banten` *(cPanel otomatis membuat folder di `/home/username/sultan-banten`)*.
    - **Repository Name**: `sultan-banten`
-4. Klik tombol **Create**. Tunggu beberapa saat hingga cPanel selesai meng-clone repository.
+5. Klik tombol **Create**. Tunggu beberapa saat sampai status berubah menjadi sukses.
 
-#### Langkah 2: Setup File Environment & Vendor
-1. Buka cPanel > **File Manager**.
-2. Masuk ke folder `/home/username/sultan-banten`.
-3. Klik kanan file `.env.example`, pilih **Copy**, beri nama baru `.env`.
-4. Edit file `.env` dan masukkan detail database Anda (lihat petunjuk database di atas).
-5. Buat zip folder `vendor` dari komputer lokal Anda, lalu upload dan ekstrak ke `/home/username/sultan-banten/vendor` (jika tidak ada akses Terminal untuk menjalankan `composer install`).
+---
 
-#### Langkah 3: Menghubungkan Web Root & Update di Masa Depan
-1. Arahkan Document Root domain ke folder `sultan-banten/public` via menu cPanel **Domains**.
-2. Kapan pun ada update terbaru di GitHub, Anda tinggal membuka menu **Git™ Version Control** di cPanel > klik **Manage** pada repository `sultan-banten` > klik tab **Pull or Deploy** > klik tombol **Update from Remote**.
+#### Langkah 2: Buka Terminal cPanel & Setup Dependencies
+Setelah repository ter-clone oleh GUI, buka menu **Terminal** di dashboard cPanel (kategori *Advanced*):
+
+```bash
+# 1. Masuk ke direktori project hasil clone
+cd ~/sultan-banten
+
+# 2. Salin template konfigurasi environment
+cp .env.example .env
+
+# 3. Install seluruh paket library PHP produksi
+composer install --optimize-autoloader --no-dev
+
+# 4. Generate Application Key Laravel
+php artisan key:generate
+```
+
+---
+
+#### Langkah 3: Setup Database MySQL & Migrasi Tabel
+1. Di tab browser cPanel baru, buka menu **MySQL® Database Wizard**.
+2. Masukkan nama database (misal: `username_sultan`) > klik **Next**.
+3. Buat user database baru dan password yang kuat > klik **Create User**.
+4. Centang **ALL PRIVILEGES** > klik **Make Changes**.
+5. Kembali ke Terminal cPanel, edit file `.env`:
+   ```bash
+   nano .env
+   ```
+   Sesuaikan parameter database & kunci rahasia:
+   ```env
+   APP_NAME="Sultan Banten"
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://domainanda.com
+
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=username_sultan
+   DB_USERNAME=username_userdb
+   DB_PASSWORD=password_database_anda
+
+   # Kunci rahasia untuk scheduler WA & API (minimal 16-32 karakter acak)
+   CRON_SECRET_KEY=kunci_acak_rahasia_cron_anda
+   API_SECRET_KEY=kunci_acak_rahasia_api_anda
+   ```
+   *(Tekan `Ctrl+O` lalu `Enter` untuk menyimpan, lalu `Ctrl+X` untuk keluar).*
+
+6. Jalankan migrasi seluruh tabel (UPT, instansi, penghuni, log, WA, dll.) langsung dari Terminal:
+   ```bash
+   php artisan migrate --force
+   ```
+
+---
+
+#### Langkah 4: Setup Storage Link & Folder Izin Upload
+Aplikasi Sultan Banten memiliki fitur upload foto profil pengguna, logo/kop/stempel instansi, dan banner pengumuman. Pastikan symbolic link dan folder upload sudah siap:
+
+```bash
+# 1. Buat symbolic link storage publik
+php artisan storage:link
+
+# 2. Buat folder upload khusus jika belum ada
+mkdir -p ~/sultan-banten/public/uploads/profile
+mkdir -p ~/sultan-banten/public/uploads/instansi
+mkdir -p ~/sultan-banten/public/uploads/pengumuman
+
+# 3. Atur permission izin tulis agar web server dapat menyimpan upload file & log
+chmod -R 775 ~/sultan-banten/storage
+chmod -R 775 ~/sultan-banten/bootstrap/cache
+chmod -R 775 ~/sultan-banten/public/uploads
+```
+
+---
+
+#### Langkah 5: Hubungkan Web Root Domain ke Folder `public`
+
+Agar domain Anda membuka aplikasi dengan aman tanpa mengekspos file `.env`:
+
+**Opsi A: Melalui Menu Domains cPanel (Paling Mudah)**
+1. Buka menu cPanel > **Domains**.
+2. Klik tombol **Manage** di samping nama domain/subdomain Anda.
+3. Pada kolom **Document Root**, ubah path menjadi:
+   ```text
+   /home/username/sultan-banten/public
+   ```
+4. Klik **Update**.
+
+**Opsi B: Menggunakan Symbolic Link `public_html` (Jika Document Root Terkunci)**
+Jika paket cPanel Anda tidak mengizinkan pengubahan Document Root domain utama:
+```bash
+# Hapus folder public_html kosong bawaan
+rm -rf ~/public_html
+
+# Buat symbolic link langsung ke folder public project
+ln -s ~/sultan-banten/public ~/public_html
+```
+
+---
+
+#### Langkah 6: Optimasi Kecepatan Produksi
+Jalankan kompilasi cache pada Terminal agar aplikasi berjalan dengan performa maksimal:
+
+```bash
+cd ~/sultan-banten
+php artisan optimize
+```
+
+---
+
+#### Langkah 7: Cara Melakukan Update Kode di Masa Depan
+Kapan pun ada commit pembaruan baru di repositori GitHub:
+1. **Tarik Kode via GUI**: Buka cPanel > **Git™ Version Control** > klik **Manage** pada `sultan-banten` > klik tab **Pull or Deploy** > klik tombol **Update from Remote**.
+2. **Refresh Aplikasi via Terminal**: Buka Terminal cPanel dan jalankan perintah satu baris ini:
+   ```bash
+   cd ~/sultan-banten && php artisan migrate --force && php artisan optimize
+   ```
+   *Seluruh migrasi database baru dan cache aplikasi langsung ter-update otomatis!*
 
 ---
 
