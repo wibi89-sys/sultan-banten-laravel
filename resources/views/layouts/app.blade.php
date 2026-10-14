@@ -26,8 +26,9 @@
     <!-- Non-blocking FontAwesome stylesheet -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-    <!-- Google Fonts: Plus Jakarta Sans (UI) & Rajdhani, Chakra Petch (Speedometer / HUD Display) -->
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Streamlined & Non-blocking Preload with Instant System Fallback -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Rajdhani:wght@600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Rajdhani:wght@600;700&display=swap"></noscript>
     <link href="{{ asset('assets/css/modern-theme.css') }}" rel="stylesheet">
     <script>
         // Set tema seawal mungkin agar tidak berkedip
@@ -233,16 +234,20 @@
             @if(!empty($instansi->logo))
                 @php
                     $sideLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                    $sideThumbLogo = preg_replace('/\.' . preg_quote($sideLogoExt, '/') . '$/i', '_thumb.webp', $instansi->logo);
                     $sideWebpLogo = preg_replace('/\.' . preg_quote($sideLogoExt, '/') . '$/i', '.webp', $instansi->logo);
+                    $hasSideThumbLogo = file_exists(public_path($sideThumbLogo));
                     $hasSideWebpLogo = file_exists(public_path($sideWebpLogo));
+                    $chosenSideLogo = $hasSideThumbLogo ? $sideThumbLogo : ($hasSideWebpLogo ? $sideWebpLogo : $instansi->logo);
+                    $isSideWebp = $hasSideThumbLogo || $hasSideWebpLogo;
                 @endphp
-                @if($hasSideWebpLogo)
+                @if($isSideWebp)
                 <picture>
-                    <source srcset="{{ asset($sideWebpLogo) }}" type="image/webp">
-                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;">
+                    <source srcset="{{ asset($chosenSideLogo) }}" type="image/webp">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;" loading="lazy">
                 </picture>
                 @else
-                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;">
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;" loading="lazy">
                 @endif
             @else
                 <i class="fas fa-building fa-3x text-white mb-2"></i>
@@ -366,16 +371,20 @@
                 @if(!empty($instansi->logo))
                 @php
                     $logoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                    $thumbLogo = preg_replace('/\.' . preg_quote($logoExt, '/') . '$/i', '_thumb.webp', $instansi->logo);
                     $webpLogo = preg_replace('/\.' . preg_quote($logoExt, '/') . '$/i', '.webp', $instansi->logo);
+                    $hasThumbLogo = file_exists(public_path($thumbLogo));
                     $hasWebpLogo = file_exists(public_path($webpLogo));
+                    $chosenLogo = $hasThumbLogo ? $thumbLogo : ($hasWebpLogo ? $webpLogo : $instansi->logo);
+                    $isWebp = $hasThumbLogo || $hasWebpLogo;
                 @endphp
-                @if($hasWebpLogo)
+                @if($isWebp)
                 <picture>
-                    <source srcset="{{ asset($webpLogo) }}" type="image/webp">
-                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45">
+                    <source srcset="{{ asset($chosenLogo) }}" type="image/webp">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45" fetchpriority="high">
                 </picture>
                 @else
-                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45">
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45" fetchpriority="high">
                 @endif
                 @endif
                 <div>

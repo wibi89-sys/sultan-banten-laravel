@@ -99,6 +99,10 @@ class InstansiController extends Controller
                     if (File::exists($prevWebp)) {
                         File::delete($prevWebp);
                     }
+                    $prevThumb = preg_replace('/\.[^.]+$/', '_thumb.webp', public_path($instansi->{$field}));
+                    if (File::exists($prevThumb)) {
+                        File::delete($prevThumb);
+                    }
                 }
                 $instansi->{$field} = "uploads/{$filename}";
 
@@ -116,6 +120,24 @@ class InstansiController extends Controller
                                 imagesavealpha($sourceImg, true);
                             }
                             imagewebp($sourceImg, $webpFilePath, 82);
+
+                            // For logos, also generate small 90x90 thumbnail
+                            if (in_array($field, ['logo', 'logo_kop'])) {
+                                $origW = imagesx($sourceImg);
+                                $origH = imagesy($sourceImg);
+                                $thumbW = 90;
+                                $thumbH = (int) round(($origH / max(1, $origW)) * $thumbW);
+                                $thumbImg = imagecreatetruecolor($thumbW, $thumbH);
+                                imagealphablending($thumbImg, false);
+                                imagesavealpha($thumbImg, true);
+                                $transparent = imagecolorallocatealpha($thumbImg, 255, 255, 255, 127);
+                                imagefilledrectangle($thumbImg, 0, 0, $thumbW, $thumbH, $transparent);
+                                imagecopyresampled($thumbImg, $sourceImg, 0, 0, 0, 0, $thumbW, $thumbH, $origW, $origH);
+                                $thumbFilename = preg_replace('/\.'.preg_quote($ext, '/').'$/i', '_thumb.webp', $filename);
+                                imagewebp($thumbImg, $uploadPath.DIRECTORY_SEPARATOR.$thumbFilename, 85);
+                                imagedestroy($thumbImg);
+                            }
+
                             imagedestroy($sourceImg);
                         }
                     } catch (\Throwable $e) {
