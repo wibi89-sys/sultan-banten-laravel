@@ -205,10 +205,10 @@ class ActivityLogController extends Controller
             echo '<table border="1" style="font-family: Arial, sans-serif; font-size: 12px; border-collapse: collapse;">';
 
             // Header Dokumen
-            echo '<tr><td colspan="12" align="center" style="font-size: 15px; font-weight: bold; background-color: #f8fafc;">REKAPITULASI LEADERBOARD &amp; PERINGKAT KEDISIPLINAN UPT</td></tr>';
-            echo '<tr><td colspan="12" align="center" style="font-size: 12px; font-weight: bold; background-color: #f8fafc;">KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM / DITJENPAS BANTEN</td></tr>';
-            echo '<tr><td colspan="12" align="center" style="font-size: 11px;">Periode Evaluasi: '.date('d/m/Y', strtotime($period['start_date'])).' s/d '.date('d/m/Y', strtotime($period['end_date'])).' ('.$period['total_days'].' Hari Efektif) | Batas Jam Input: '.$period['jam_selesai'].' WIB (100 Poin/Hari)</td></tr>';
-            echo '<tr><td colspan="12"></td></tr>';
+            echo '<tr><td colspan="13" align="center" style="font-size: 15px; font-weight: bold; background-color: #f8fafc;">REKAPITULASI LEADERBOARD &amp; PERINGKAT KEDISIPLINAN UPT</td></tr>';
+            echo '<tr><td colspan="13" align="center" style="font-size: 12px; font-weight: bold; background-color: #f8fafc;">KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM / DITJENPAS BANTEN</td></tr>';
+            echo '<tr><td colspan="13" align="center" style="font-size: 11px;">Periode Evaluasi: '.date('d/m/Y', strtotime($period['start_date'])).' s/d '.date('d/m/Y', strtotime($period['end_date'])).' ('.$period['total_days'].' Hari Efektif) | Batas Jam Input: '.$period['jam_selesai'].' WIB (100 Poin/Hari)</td></tr>';
+            echo '<tr><td colspan="13"></td></tr>';
 
             // Header Tabel
             echo '<tr style="background-color: #1e3a8a; color: #ffffff; font-weight: bold; text-align: center;">';
@@ -222,6 +222,7 @@ class ActivityLogController extends Controller
             echo '<th style="padding: 8px;">Modul Terlambat</th>';
             echo '<th style="padding: 8px;">Modul Belum Diisi</th>';
             echo '<th style="padding: 8px;">Kroscek Tahanan Sesuai</th>';
+            echo '<th style="padding: 8px;">Kroscek Hasil Perbaikan</th>';
             echo '<th style="padding: 8px;">Kroscek Tahanan Selisih</th>';
             echo '<th style="padding: 8px;">Rata-rata Jam Selesai Input</th>';
             echo '</tr>';
@@ -248,6 +249,7 @@ class ActivityLogController extends Controller
                 echo '<td align="center" style="color: #b45309;">'.$row['count_modul_terlambat'].'</td>';
                 echo '<td align="center" style="color: #b91c1c;">'.$row['count_modul_kosong'].'</td>';
                 echo '<td align="center" style="color: #047857; font-weight: bold;">'.$row['count_kroscek_sesuai'].'x</td>';
+                echo '<td align="center" style="color: #d97706; font-weight: bold;">'.($row['count_kroscek_perbaikan'] ?? 0).'x</td>';
                 echo '<td align="center" style="color: #b91c1c;">'.$row['count_kroscek_selisih'].'x</td>';
                 echo '<td align="center">'.$row['rata_rata_jam_input'].'</td>';
                 echo '</tr>';

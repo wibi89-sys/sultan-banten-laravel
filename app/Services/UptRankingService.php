@@ -95,6 +95,7 @@ class UptRankingService
                 'upt_id',
                 'tanggal',
                 DB::raw('MIN(created_at) as first_created_at'),
+                DB::raw('MAX(updated_at) as last_updated_at'),
                 DB::raw("SUM(CASE WHEN klasifikasi_pidana NOT IN ('WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup') 
                          THEN (tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan) 
                          ELSE 0 END) as total_tahanan")
@@ -107,6 +108,7 @@ class UptRankingService
         foreach ($penghuniRaw as $r) {
             $penghuniMap[$r->upt_id][$r->tanggal] = [
                 'created_at' => $r->first_created_at,
+                'updated_at' => $r->last_updated_at,
                 'total_tahanan' => (int) $r->total_tahanan,
             ];
         }
@@ -117,6 +119,7 @@ class UptRankingService
                 'upt_id',
                 'tanggal',
                 DB::raw('MIN(created_at) as first_created_at'),
+                DB::raw('MAX(updated_at) as last_updated_at'),
                 DB::raw('SUM(tahanan_ai + tahanan_aii + tahanan_aiii + tahanan_aiv + tahanan_av) as total_tahanan')
             )
             ->whereBetween('tanggal', [$queryStartDate, $queryEndDate])
@@ -127,8 +130,28 @@ class UptRankingService
         foreach ($overstayingRaw as $r) {
             $overstayingMap[$r->upt_id][$r->tanggal] = [
                 'created_at' => $r->first_created_at,
+                'updated_at' => $r->last_updated_at,
                 'total_tahanan' => (int) $r->total_tahanan,
             ];
+        }
+
+        // 5. Activity Logs: cek riwayat perbaikan (edit) modul penghuni / overstaying
+        $editLogMap = [];
+        try {
+            $editLogs = DB::table('activity_logs')
+                ->where('aksi', 'edit')
+                ->whereIn('modul', ['penghuni', 'overstaying'])
+                ->whereNotNull('detail')
+                ->get(['detail']);
+
+            foreach ($editLogs as $log) {
+                $detail = is_array($log->detail) ? $log->detail : json_decode($log->detail, true);
+                if (is_array($detail) && ! empty($detail['upt_id']) && ! empty($detail['tanggal'])) {
+                    $editLogMap[$detail['upt_id']][$detail['tanggal']] = true;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Abaikan jika tabel atau log tidak tersedia
         }
 
         // 3. Data Integrasi: min created_at
@@ -179,6 +202,7 @@ class UptRankingService
             $countModulTerlambat = 0;
             $countModulKosong = 0;
             $countKroscekSesuai = 0;
+            $countKroscekPerbaikan = 0;
             $countKroscekSelisih = 0;
             $countKroscekKosong = 0;
             $inputTimeMinutesSum = 0;
@@ -259,39 +283,23 @@ class UptRankingService
                 }
 
                 // Komponen 5: Kroscek Tahanan (Penghuni vs Overstaying)
-                $kroscekScore = [
-                    'status' => 'kosong',
-                    'poin' => 0,
-                    'tahanan_penghuni' => null,
-                    'tahanan_overstaying' => null,
-                    'selisih' => 0,
-                ];
+                $hasEditLog = ! empty($editLogMap[$uptId][$tgl]);
+                $kroscekScore = self::evaluateKroscek($pData, $oData, $hasEditLog);
 
-                if ($pData !== null && $oData !== null) {
-                    $pTotal = $pData['total_tahanan'];
-                    $oTotal = $oData['total_tahanan'];
-                    $kroscekScore['tahanan_penghuni'] = $pTotal;
-                    $kroscekScore['tahanan_overstaying'] = $oTotal;
-
-                    if ($pTotal === $oTotal) {
-                        $kroscekScore['status'] = 'sesuai';
-                        $kroscekScore['poin'] = 20;
-                        $countKroscekSesuai++;
-                    } else {
-                        $selisih = abs($pTotal - $oTotal);
-                        $kroscekScore['status'] = 'selisih';
-                        $kroscekScore['selisih'] = $selisih;
-                        $kroscekScore['poin'] = 0;
-                        $countKroscekSelisih++;
-
-                        $selisihDates[] = [
-                            'tanggal' => $tgl,
-                            'hari' => $hariLabel,
-                            'tahanan_penghuni' => $pTotal,
-                            'tahanan_overstaying' => $oTotal,
-                            'selisih' => $selisih,
-                        ];
-                    }
+                if ($kroscekScore['status'] === 'sesuai') {
+                    $countKroscekSesuai++;
+                } elseif ($kroscekScore['status'] === 'sesuai_perbaikan') {
+                    $countKroscekSesuai++;
+                    $countKroscekPerbaikan++;
+                } elseif ($kroscekScore['status'] === 'selisih') {
+                    $countKroscekSelisih++;
+                    $selisihDates[] = [
+                        'tanggal' => $tgl,
+                        'hari' => $hariLabel,
+                        'tahanan_penghuni' => $kroscekScore['tahanan_penghuni'],
+                        'tahanan_overstaying' => $kroscekScore['tahanan_overstaying'],
+                        'selisih' => $kroscekScore['selisih'],
+                    ];
                 } else {
                     $countKroscekKosong++;
                 }
@@ -335,6 +343,7 @@ class UptRankingService
                 'count_modul_terlambat' => $countModulTerlambat,
                 'count_modul_kosong' => $countModulKosong,
                 'count_kroscek_sesuai' => $countKroscekSesuai,
+                'count_kroscek_perbaikan' => $countKroscekPerbaikan,
                 'count_kroscek_selisih' => $countKroscekSelisih,
                 'count_kroscek_kosong' => $countKroscekKosong,
                 'rata_rata_jam_input' => $avgTimeString,
@@ -451,6 +460,77 @@ class UptRankingService
             'jam_str' => $createdAt->format('H:i'),
             'jam_menit' => $jamMenit,
             'keterangan' => $ket,
+        ];
+    }
+
+    /**
+     * Evaluasi kesesuaian (kroscek) jumlah tahanan antara Data Penghuni dan Data Overstaying.
+     *
+     * Aturan Poin:
+     * - Sesuai langsung tanpa perbaikan = 20 Poin
+     * - Sesuai setelah perbaikan (awalnya berselisih lalu diedit/diperbaiki) = 10 Poin
+     * - Selisih = 0 Poin
+     * - Kosong / data belum lengkap = 0 Poin
+     */
+    public static function evaluateKroscek(?array $penghuniData, ?array $overstayingData, bool $hasEditLog = false): array
+    {
+        if (! $penghuniData || ! $overstayingData) {
+            return [
+                'status' => 'kosong',
+                'poin' => 0,
+                'tahanan_penghuni' => $penghuniData['total_tahanan'] ?? null,
+                'tahanan_overstaying' => $overstayingData['total_tahanan'] ?? null,
+                'selisih' => 0,
+                'is_perbaikan' => false,
+            ];
+        }
+
+        $pTotal = (int) ($penghuniData['total_tahanan'] ?? 0);
+        $oTotal = (int) ($overstayingData['total_tahanan'] ?? 0);
+
+        if ($pTotal === $oTotal) {
+            $isPenghuniEdited = false;
+            if (! empty($penghuniData['created_at']) && ! empty($penghuniData['updated_at'])) {
+                $isPenghuniEdited = abs(Carbon::parse($penghuniData['updated_at'])->diffInSeconds(Carbon::parse($penghuniData['created_at']))) > 5;
+            }
+
+            $isOverstayingEdited = false;
+            if (! empty($overstayingData['created_at']) && ! empty($overstayingData['updated_at'])) {
+                $isOverstayingEdited = abs(Carbon::parse($overstayingData['updated_at'])->diffInSeconds(Carbon::parse($overstayingData['created_at']))) > 5;
+            }
+
+            $isPerbaikan = $hasEditLog || $isPenghuniEdited || $isOverstayingEdited;
+
+            if ($isPerbaikan) {
+                return [
+                    'status' => 'sesuai_perbaikan',
+                    'poin' => 10,
+                    'tahanan_penghuni' => $pTotal,
+                    'tahanan_overstaying' => $oTotal,
+                    'selisih' => 0,
+                    'is_perbaikan' => true,
+                ];
+            }
+
+            return [
+                'status' => 'sesuai',
+                'poin' => 20,
+                'tahanan_penghuni' => $pTotal,
+                'tahanan_overstaying' => $oTotal,
+                'selisih' => 0,
+                'is_perbaikan' => false,
+            ];
+        }
+
+        $selisih = abs($pTotal - $oTotal);
+
+        return [
+            'status' => 'selisih',
+            'poin' => 0,
+            'tahanan_penghuni' => $pTotal,
+            'tahanan_overstaying' => $oTotal,
+            'selisih' => $selisih,
+            'is_perbaikan' => false,
         ];
     }
 }

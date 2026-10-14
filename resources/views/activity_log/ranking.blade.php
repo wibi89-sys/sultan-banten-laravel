@@ -582,9 +582,14 @@
                         <!-- Kroscek Tahanan -->
                         <td class="text-center">
                             <div class="d-flex justify-content-center align-items-center gap-1 flex-wrap">
-                                <span class="badge bg-success-subtle text-success py-1 px-2" title="{{ $upt['count_kroscek_sesuai'] }} hari sinkron/sesuai (+20 poin)">
+                                <span class="badge bg-success-subtle text-success py-1 px-2" title="{{ $upt['count_kroscek_sesuai'] }} hari sinkron/sesuai">
                                     <i class="fas fa-check-double me-1"></i>{{ $upt['count_kroscek_sesuai'] }}x
                                 </span>
+                                @if(!empty($upt['count_kroscek_perbaikan']) && $upt['count_kroscek_perbaikan'] > 0)
+                                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle py-1 px-1 small" title="{{ $upt['count_kroscek_perbaikan'] }} hari sinkron hasil perbaikan (+10 poin)">
+                                        <i class="fas fa-wrench text-warning me-1"></i>{{ $upt['count_kroscek_perbaikan'] }}x Edit
+                                    </span>
+                                @endif
                                 @if($upt['count_kroscek_selisih'] > 0)
                                     <button type="button" 
                                             class="btn btn-danger btn-sm py-0 px-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1 btn-selisih-interactive text-white" 
@@ -640,7 +645,7 @@
                             <li><strong>Data Overstaying:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
                             <li><strong>Data Integrasi:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
                             <li><strong>Data Bebas Harian:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Kroscek Tahanan Sinkron:</strong> Tahanan Penghuni vs Overstaying <strong>Sesuai</strong> = <strong>+20 Poin</strong> (Jika Selisih = 0 Poin).</li>
+                            <li><strong>Kroscek Tahanan Sinkron:</strong> Sesuai Langsung = <strong>+20 Poin</strong> | Sesuai Hasil Perbaikan = <strong>+10 Poin</strong> | Masih Selisih / Kosong = <strong>0 Poin</strong>.</li>
                         </ul>
                     </div>
                 </div>
@@ -651,6 +656,7 @@
                             <li><strong>Input H-1 (Pre-Input):</strong> Pengisian sore hari H-1 untuk tanggal esok hari dihitung <strong>Tepat Waktu (20 Poin Penuh)</strong> karena data sudah siap sebelum deadline.</li>
                             <li><strong>Input Lebih Dari Jam Batas (Hari-H):</strong> Pengisian lewat pukul {{ $rankingData['period']['jam_selesai'] }} WIB pada hari yang sama (hari-H) mendapat <strong>10 Poin</strong> per modul.</li>
                             <li><strong>Input Terlambat Melewati Hari:</strong> Pengisian terlambat yang baru diinput setelah melewati hari-H (hari berikutnya / susulan) mendapat <strong>5 Poin</strong> per modul.</li>
+                            <li><strong>Perbaikan Selisih Kroscek Tahanan:</strong> Jika data kroscek awalnya terdapat selisih lalu diperbaiki hingga sinkron, nilai kroscek tidak full 20 melainkan mendapat <strong>10 Poin</strong>.</li>
                             <li><strong>Input Pagi lalu di-Edit Sore:</strong> Ketepatan waktu dinilai dari waktu pembuatan awal (<code>created_at</code>), sehingga data yang diedit tetap <strong>Tepat Waktu</strong>.</li>
                             <li><strong>Operasional 7 Hari Seminggu:</strong> Setiap hari tanpa hari libur dihitung wajib lapor sesuai standar operasional Lapas/Rutan Ditjenpas.</li>
                         </ul>
@@ -763,7 +769,7 @@
                 </div>
             </div>
             <div class="modal-footer bg-light justify-content-between">
-                <small class="text-muted"><i class="fas fa-lightbulb text-warning me-1"></i>Kroscek yang sinkron memberikan <strong>+20 Poin</strong> per hari.</small>
+                <small class="text-muted"><i class="fas fa-lightbulb text-warning me-1"></i>Kroscek yang sinkron memberikan <strong>+20 Poin</strong> (atau <strong>+10 Poin</strong> jika sinkron setelah perbaikan selisih).</small>
                 <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -853,6 +859,7 @@
                 <div class="p-2 border rounded bg-light ${upt.count_kroscek_selisih > 0 ? 'border-danger' : ''}">
                     <small class="text-muted d-block" style="font-size: 11px;">Kroscek Tahanan</small>
                     <strong class="text-success fs-6">${upt.count_kroscek_sesuai}x Sesuai</strong>
+                    ${(upt.count_kroscek_perbaikan || 0) > 0 ? `<span class="badge bg-warning-subtle text-dark border border-warning-subtle ms-1" title="${upt.count_kroscek_perbaikan}x hasil edit/perbaikan (${upt.count_kroscek_perbaikan * 10} poin)">${upt.count_kroscek_perbaikan}x Edit</span>` : ''}
                     ${upt.count_kroscek_selisih > 0 ? `<span class="badge bg-danger ms-1">${upt.count_kroscek_selisih}x Selisih</span>` : ''}
                 </div>
             </div>
@@ -938,6 +945,8 @@
             const kroscekUrl = `{{ route('kroscek.index') }}?tanggal=${row.tanggal}`;
             if (row.kroscek.status === 'sesuai') {
                 kroscekHtml = `<span class="badge bg-success-subtle text-success d-block py-1 mb-1"><i class="fas fa-check-double me-1"></i>Sesuai (+20)</span><small class="text-muted" style="font-size:10px;">Tahanan: ${row.kroscek.tahanan_penghuni ?? 0} = ${row.kroscek.tahanan_overstaying ?? 0}</small>`;
+            } else if (row.kroscek.status === 'sesuai_perbaikan') {
+                kroscekHtml = `<span class="badge bg-warning-subtle text-dark border border-warning-subtle d-block py-1 mb-1"><i class="fas fa-wrench text-warning me-1"></i>Perbaikan (+10)</span><small class="text-muted" style="font-size:10px;">Sinkron (${row.kroscek.tahanan_penghuni ?? 0}) via Edit</small>`;
             } else if (row.kroscek.status === 'selisih') {
                 kroscekHtml = `
                     <span class="badge bg-danger-subtle text-danger d-block py-1 mb-1"><i class="fas fa-exclamation-triangle me-1"></i>Selisih (0)</span>
