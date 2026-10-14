@@ -393,7 +393,7 @@ class UptRankingService
     /**
      * Evaluasi ketepatan waktu suatu modul berdasarkan created_at vs deadline
      */
-    private static function evaluateModule(?array $data, Carbon $deadline, string $tanggalLaporan): array
+    public static function evaluateModule(?array $data, Carbon $deadline, string $tanggalLaporan): array
     {
         if (! $data || empty($data['created_at'])) {
             return [
@@ -433,10 +433,21 @@ class UptRankingService
             ];
         }
 
-        // Jika melewati batas jam
+        // Jika melewati batas jam tapi masih diinput pada hari-H
+        if ($createdDate === $tanggalLaporan) {
+            return [
+                'status' => 'terlambat',
+                'poin' => 10,
+                'jam_str' => $createdAt->format('H:i'),
+                'jam_menit' => $jamMenit,
+                'keterangan' => $ket,
+            ];
+        }
+
+        // Jika terlambat dan baru diinput setelah melewati hari-H (hari berikutnya / susulan)
         return [
             'status' => 'terlambat',
-            'poin' => 10,
+            'poin' => 5,
             'jam_str' => $createdAt->format('H:i'),
             'jam_menit' => $jamMenit,
             'keterangan' => $ket,

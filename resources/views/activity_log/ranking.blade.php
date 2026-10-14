@@ -636,10 +636,10 @@
                     <div class="p-3 bg-light rounded-3 h-100 border">
                         <h6 class="fw-bold text-primary mb-2"><i class="fas fa-star me-1"></i>Komposisi 100 Poin Harian (5 Komponen @ 20 Poin):</h6>
                         <ul class="mb-0 ps-3 text-secondary">
-                            <li><strong>Data Penghuni:</strong> Tepat Waktu = 20 Poin | Telat/Sore = 10 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Overstaying:</strong> Tepat Waktu = 20 Poin | Telat/Sore = 10 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Integrasi:</strong> Tepat Waktu = 20 Poin | Telat/Sore = 10 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Bebas Harian:</strong> Tepat Waktu = 20 Poin | Telat/Sore = 10 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Penghuni:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Overstaying:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Integrasi:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Bebas Harian:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
                             <li><strong>Kroscek Tahanan Sinkron:</strong> Tahanan Penghuni vs Overstaying <strong>Sesuai</strong> = <strong>+20 Poin</strong> (Jika Selisih = 0 Poin).</li>
                         </ul>
                     </div>
@@ -649,7 +649,8 @@
                         <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-1"></i>Aturan Khusus Lapangan:</h6>
                         <ul class="mb-0 ps-3 text-secondary">
                             <li><strong>Input H-1 (Pre-Input):</strong> Pengisian sore hari H-1 untuk tanggal esok hari dihitung <strong>Tepat Waktu (20 Poin Penuh)</strong> karena data sudah siap sebelum deadline.</li>
-                            <li><strong>Input Lebih Dari Jam Batas:</strong> Pengisian lewat pukul {{ $rankingData['period']['jam_selesai'] }} WIB hari-H atau hari berikutnya mendapat <strong>10 Poin</strong> per modul.</li>
+                            <li><strong>Input Lebih Dari Jam Batas (Hari-H):</strong> Pengisian lewat pukul {{ $rankingData['period']['jam_selesai'] }} WIB pada hari yang sama (hari-H) mendapat <strong>10 Poin</strong> per modul.</li>
+                            <li><strong>Input Terlambat Melewati Hari:</strong> Pengisian terlambat yang baru diinput setelah melewati hari-H (hari berikutnya / susulan) mendapat <strong>5 Poin</strong> per modul.</li>
                             <li><strong>Input Pagi lalu di-Edit Sore:</strong> Ketepatan waktu dinilai dari waktu pembuatan awal (<code>created_at</code>), sehingga data yang diedit tetap <strong>Tepat Waktu</strong>.</li>
                             <li><strong>Operasional 7 Hari Seminggu:</strong> Setiap hari tanpa hari libur dihitung wajib lapor sesuai standar operasional Lapas/Rutan Ditjenpas.</li>
                         </ul>
@@ -924,7 +925,9 @@
                 if (mod.status === 'tepat') {
                     return `<span class="badge bg-success-subtle text-success d-block py-1 mb-1"><i class="fas fa-check-circle me-1"></i>Tepat (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
                 } else if (mod.status === 'terlambat') {
-                    return `<span class="badge bg-warning-subtle text-warning d-block py-1 mb-1"><i class="fas fa-clock me-1"></i>Telat (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
+                    const isSusulan = mod.poin === 5;
+                    const badgeLabel = isSusulan ? 'Susulan' : 'Telat';
+                    return `<span class="badge bg-warning-subtle text-warning d-block py-1 mb-1"><i class="fas fa-clock me-1"></i>${badgeLabel} (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
                 } else {
                     return `<span class="badge bg-danger-subtle text-danger d-block py-1 mb-1"><i class="fas fa-times-circle me-1"></i>Kosong (0)</span><small class="text-muted" style="font-size:10px;">-</small>`;
                 }
