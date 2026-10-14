@@ -1646,11 +1646,11 @@
         .speedo-cockpit-stage {
             position: relative;
             width: 100%;
-            min-height: 240px;
+            min-height: 270px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 4px 0 10px 0;
+            padding: 6px 0 12px 0;
         }
 
         /* Hero Speedometer Container (Center Main) */
@@ -1658,9 +1658,9 @@
             position: relative;
             width: 380px;
             max-width: 100%;
-            height: 230px;
+            height: 260px;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
             margin: 0 auto;
         }
@@ -1694,16 +1694,55 @@
             fill: var(--speedo-scale-apex, #cbd5e1);
         }
 
-        /* Center Big Text: 180.5% & Tingkat Hunian */
+        /* Center Big Text: 180.5% & Tingkat Hunian Tepat di Tengah Rongga 3/4 Lingkaran */
         .hero-center-text {
             position: absolute;
-            bottom: 24px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -46%);
             text-align: center;
             pointer-events: none;
             width: 100%;
             z-index: 5;
+        }
+
+        /* Minimalist Beacon-Only Badge (Icon Merah/Kuning/Hijau Saja Tanpa Teks Panjang) */
+        .pill-badge-beacon-only {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid rgba(244, 63, 94, 0.35);
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        :root:not([data-theme="dark"]) .pill-badge-beacon-only {
+            background: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+        }
+
+        .pill-badge-beacon-only.pill-badge-emerald {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        :root:not([data-theme="dark"]) .pill-badge-beacon-only.pill-badge-emerald {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        .pill-badge-beacon-only.pill-badge-amber {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        :root:not([data-theme="dark"]) .pill-badge-beacon-only.pill-badge-amber {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.25);
         }
 
         .hero-center-val {

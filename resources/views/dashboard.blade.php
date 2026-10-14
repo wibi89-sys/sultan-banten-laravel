@@ -204,23 +204,22 @@
                                 <span class="d-block text-secondary small" style="font-size: 10px;">Monitoring Hunian & Beban</span>
                             </div>
                         </div>
-                        <span class="pill-badge {{ $statusBadgeClass }}" style="font-size: 11.5px; padding: 5px 12px; font-weight: 600;">
-                            <span class="live-beacon me-1" style="background-color: {{ $statusColor }};">
+                        <span class="pill-badge-beacon-only {{ $statusBadgeClass }}" title="Status: {{ $statusText }}" data-bs-toggle="tooltip">
+                            <span class="live-beacon" style="background-color: {{ $statusColor }};">
                                 <span class="beacon-ping"></span>
                                 <span class="beacon-dot"></span>
                             </span>
-                            {{ $statusText }}
                         </span>
                     </div>
 
                     <!-- Cockpit Stage: Main Speedometer & Top-Right Overkapasitas Gauge -->
                     @php
-                        // Scale 0% - 300% Tingkat Hunian (Radius 138, Center 180, 195)
+                        // Scale 0% - 300% Tingkat Hunian (Radius 112, Center 180, 140, Sweep 270 deg)
                         $clampedHunian = min(300, max(0, $tingkatVal));
                         $ratioHunian = $clampedHunian / 300;
-                        $arcLenFull = 433.54; // PI * R (138)
+                        $arcLenFull = 527.79; // (3/4) * 2 * PI * 112
                         $arcOffsetHunianFull = $arcLenFull - ($arcLenFull * $ratioHunian);
-                        $needleAngle = -90 + ($ratioHunian * 180);
+                        $needleAngle = -135 + ($ratioHunian * 270);
 
                         // Interpolasi Gradasi 5 Warna: Hijau (0%) -> Biru (75%) -> Orange (150%) -> Merah (225%) -> Hitam (300%)
                         $getHunianColor = function($val) {
@@ -258,12 +257,12 @@
                     @endphp
 
                     <div class="speedo-cockpit-stage my-2 mb-3">
-                        <!-- TINGKAT HUNIAN HERO SPEEDOMETER (0% - 300%) SESUAI REFERENSI -->
+                        <!-- TINGKAT HUNIAN HERO SPEEDOMETER (0% - 300%) SESUAI REFERENSI 3/4 LINGKARAN (270°) -->
                         <div class="speedo-main-wrap" title="Tingkat Hunian: {{ $tingkatVal }}%">
-                            <svg class="speedo-main-svg" viewBox="0 0 360 220">
+                            <svg class="speedo-main-svg" viewBox="0 0 360 260">
                                 <defs>
                                     <!-- Gradasi 5 Warna: Hijau -> Biru -> Orange -> Merah -> Hitam (0% s/d 300%) -->
-                                    <linearGradient id="speedoRibbonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <linearGradient id="speedoRibbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop offset="0%" stop-color="#10b981"/>   <!-- Hijau (0%) -->
                                         <stop offset="25%" stop-color="#0284c7"/>  <!-- Biru (~75-100%) -->
                                         <stop offset="50%" stop-color="#ea580c"/>  <!-- Orange (~150%) -->
@@ -279,55 +278,66 @@
                                     </linearGradient>
                                 </defs>
 
-                                <!-- Outer Ambient Rim (Soft Natural Chassis) -->
-                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none" stroke="var(--speedo-rim)" stroke-width="32" stroke-linecap="round" />
+                                <!-- Outer Ambient Rim 3/4 Lingkaran (Sweep 270 Derajat) -->
+                                <path d="M 100.8 219.2 A 112 112 0 1 1 259.2 219.2" fill="none" stroke="var(--speedo-rim)" stroke-width="32" stroke-linecap="round" />
 
-                                <!-- Hairline Outer Ring -->
-                                <path d="M 40 195 A 140 140 0 0 1 320 195" fill="none" stroke="var(--speedo-border-hairline)" stroke-width="1" />
+                                <!-- Hairline Outer Ring 3/4 Lingkaran -->
+                                <path d="M 99.4 220.6 A 114 114 0 1 1 260.6 220.6" fill="none" stroke="var(--speedo-border-hairline)" stroke-width="1" />
 
-                                <!-- Base Track Slot (Translucent, Adapts to Light & Dark) -->
-                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none" stroke="var(--speedo-slot)" stroke-width="24" stroke-linecap="round" />
+                                <!-- Base Track Slot 3/4 Lingkaran (Translucent, Adapts to Light & Dark) -->
+                                <path d="M 100.8 219.2 A 112 112 0 1 1 259.2 219.2" fill="none" stroke="var(--speedo-slot)" stroke-width="24" stroke-linecap="round" />
 
-                                <!-- The 5-Color Arc Ribbon (0% - 300% Selalu Tampil Penuh Sesuai Gambar Referensi) -->
-                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none"
+                                <!-- The 5-Color Arc Ribbon 3/4 Lingkaran (270 Derajat) -->
+                                <path d="M 100.8 219.2 A 112 112 0 1 1 259.2 219.2" fill="none"
                                       stroke="url(#speedoRibbonGrad)"
                                       stroke-width="22"
                                       stroke-linecap="round"
                                       class="speedo-ribbon-glow" />
 
-                                <!-- Subtle Inner Scale Track Line -->
-                                <path d="M 64 195 A 116 116 0 0 1 296 195" fill="none" stroke="var(--speedo-scale-line)" stroke-width="1.2" />
+                                <!-- Subtle Inner Scale Track Line 3/4 Lingkaran -->
+                                <path d="M 113.5 206.5 A 94 94 0 1 1 246.5 206.5" fill="none" stroke="var(--speedo-scale-line)" stroke-width="1.2" />
 
-                                <!-- Scale Tick Marks Sesuai Gambar Referensi -->
-                                <line x1="42" y1="195" x2="56" y2="195" stroke="var(--speedo-tick-major)" stroke-width="2" />
-                                <line x1="74.4" y1="134" x2="81.3" y2="138" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
-                                <line x1="88.2" y1="103.2" x2="98.1" y2="113.1" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
-                                <line x1="119" y1="89" x2="126" y2="101" stroke="var(--speedo-tick-major)" stroke-width="2" />
-                                <line x1="148.4" y1="77.3" x2="150.5" y2="85" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
-                                <line x1="180" y1="73" x2="180" y2="87" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
-                                <line x1="211.6" y1="77.3" x2="209.5" y2="85" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
-                                <line x1="241" y1="89" x2="234" y2="101" stroke="var(--speedo-tick-major)" stroke-width="2" />
-                                <line x1="271.8" y1="103.2" x2="261.9" y2="113.1" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
-                                <line x1="285.6" y1="134" x2="278.7" y2="138" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
-                                <line x1="318" y1="195" x2="304" y2="195" stroke="var(--speedo-tick-major)" stroke-width="2" />
+                                <!-- Scale Tick Marks Sesuai Model Awal Sepanjang 270 Derajat -->
+                                <!-- 0% Tick (Angle -135°) -->
+                                <line x1="113.5" y1="206.5" x2="105.0" y2="215.0" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
+                                <!-- 30% Tick (Angle -108°) -->
+                                <line x1="90.6" y1="169.0" x2="82.1" y2="171.8" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <!-- 60% Tick (Angle -81°) -->
+                                <line x1="87.2" y1="125.3" x2="79.3" y2="123.9" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <!-- 100% Tick (Angle -45°) -->
+                                <line x1="113.5" y1="73.5" x2="106.5" y2="66.5" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
+                                <!-- 125% Tick (Angle -22.5°) -->
+                                <line x1="144.0" y1="53.2" x2="140.2" y2="44.0" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <!-- 150% Apex Tick (Angle 0°) -->
+                                <line x1="180.0" y1="46.0" x2="180.0" y2="34.0" stroke="var(--speedo-tick-major)" stroke-width="3" />
+                                <!-- 175% Tick (Angle +22.5°) -->
+                                <line x1="216.0" y1="53.2" x2="219.8" y2="44.0" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <!-- 200% Tick (Angle +45°) -->
+                                <line x1="246.5" y1="73.5" x2="253.5" y2="66.5" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
+                                <!-- 240% Tick (Angle +81°) -->
+                                <line x1="272.8" y1="125.3" x2="280.7" y2="123.9" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <!-- 270% Tick (Angle +108°) -->
+                                <line x1="269.4" y1="169.0" x2="277.9" y2="171.8" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <!-- 300% Tick (Angle +135°) -->
+                                <line x1="246.5" y1="206.5" x2="255.0" y2="215.0" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
 
-                                <!-- Scale Labels (Sama Persis Gambar Referensi: 0%, 100%, 150%, 200%, 300%) -->
-                                <text class="speedo-scale-num" x="34" y="218" text-anchor="middle">0%</text>
-                                <text class="speedo-scale-num" x="124" y="116" text-anchor="middle">100%</text>
-                                <text class="speedo-scale-num apex-label" x="180" y="100" text-anchor="middle">150%</text>
-                                <text class="speedo-scale-num" x="236" y="116" text-anchor="middle">200%</text>
-                                <text class="speedo-scale-num" x="326" y="218" text-anchor="middle">300%</text>
+                                <!-- Scale Labels (Presisi Sesuai Model Awal: 0%, 100%, 150%, 200%, 300%) -->
+                                <text class="speedo-scale-num" x="90" y="238" text-anchor="middle">0%</text>
+                                <text class="speedo-scale-num" x="122" y="92" text-anchor="middle">100%</text>
+                                <text class="speedo-scale-num apex-label" x="180" y="66" text-anchor="middle">150%</text>
+                                <text class="speedo-scale-num" x="238" y="92" text-anchor="middle">200%</text>
+                                <text class="speedo-scale-num" x="270" y="238" text-anchor="middle">300%</text>
 
-                                <!-- Glowing Ray Marker Berkas Sinar Menunjuk Nilai Aktif -->
-                                <g id="speedoHunianMarker" transform="rotate({{ $needleAngle }}, 180, 195)">
-                                    <polygon points="178,195 178.6,46 181.4,46 182,195" fill="url(#cyanRayGrad)" opacity="0.85" />
-                                    <line x1="180" y1="44" x2="180" y2="82" stroke="var(--speedo-needle-outer, #38bdf8)" stroke-width="4.5" stroke-linecap="round" style="filter: var(--speedo-needle-filter);" />
-                                    <line x1="180" y1="46" x2="180" y2="78" stroke="var(--speedo-needle-inner, #ffffff)" stroke-width="2" stroke-linecap="round" />
-                                    <circle cx="180" cy="54" r="2.5" fill="var(--speedo-needle-dot, #ffffff)" />
+                                <!-- Glowing Ray Marker (Angle: -135° s/d +135°, Poros (180, 140)) -->
+                                <g id="speedoHunianMarker" transform="rotate({{ $needleAngle }}, 180, 140)">
+                                    <polygon points="178,140 178.6,26 181.4,26 182,140" fill="url(#cyanRayGrad)" opacity="0.85" />
+                                    <line x1="180" y1="24" x2="180" y2="60" stroke="var(--speedo-needle-outer, #38bdf8)" stroke-width="4.5" stroke-linecap="round" style="filter: var(--speedo-needle-filter);" />
+                                    <line x1="180" y1="26" x2="180" y2="56" stroke="var(--speedo-needle-inner, #ffffff)" stroke-width="2" stroke-linecap="round" />
+                                    <circle cx="180" cy="34" r="2.5" fill="var(--speedo-needle-dot, #ffffff)" />
                                 </g>
                             </svg>
 
-                            <!-- Center Big Text: 180.5% & Tingkat Hunian Tepat di Tengah Rongga Busur -->
+                            <!-- Center Big Text: 180.5% & Tingkat Hunian Tepat di Tengah Rongga 3/4 Lingkaran -->
                             <div class="hero-center-text">
                                 <div id="speedoHunianVal" class="hero-center-val font-speedometer count-up" data-target="{{ $tingkatVal }}" style="color: {{ $hunianColor }};">
                                     {{ $tingkatVal }}%
@@ -1926,8 +1936,8 @@
                     counter.style.color = cColor;
                     const marker = document.getElementById('speedoHunianMarker');
                     if (marker) {
-                        const angle = -90 + (Math.min(300, Math.max(0, current)) / 300 * 180);
-                        marker.setAttribute('transform', `rotate(${angle.toFixed(2)}, 180, 195)`);
+                        const angle = -135 + (Math.min(300, Math.max(0, current)) / 300 * 270);
+                        marker.setAttribute('transform', `rotate(${angle.toFixed(2)}, 180, 140)`);
                     }
                 }
 
@@ -1954,8 +1964,8 @@
                         counter.style.color = finalColor;
                         const marker = document.getElementById('speedoHunianMarker');
                         if (marker) {
-                            const angle = -90 + (Math.min(300, Math.max(0, target)) / 300 * 180);
-                            marker.setAttribute('transform', `rotate(${angle.toFixed(2)}, 180, 195)`);
+                            const angle = -135 + (Math.min(300, Math.max(0, target)) / 300 * 270);
+                            marker.setAttribute('transform', `rotate(${angle.toFixed(2)}, 180, 140)`);
                         }
                     }
 
