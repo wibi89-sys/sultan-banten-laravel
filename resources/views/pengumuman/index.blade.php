@@ -22,8 +22,8 @@
         <div class="card-body py-2">
             <form method="GET" action="{{ route('pengumuman.index') }}" class="row g-2 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Kategori</label>
-                    <select name="kategori" class="form-select form-select-sm">
+                    <label for="filter_kategori" class="form-label small fw-semibold">Kategori</label>
+                    <select id="filter_kategori" name="kategori" class="form-select form-select-sm" aria-label="Filter Kategori">
                         <option value="">-- Semua Kategori --</option>
                         <option value="Penting" {{ request('kategori') == 'Penting' ? 'selected' : '' }}>Penting</option>
                         <option value="Biasa" {{ request('kategori') == 'Biasa' ? 'selected' : '' }}>Biasa</option>
@@ -32,16 +32,16 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Status</label>
-                    <select name="status" class="form-select form-select-sm">
+                    <label for="filter_status" class="form-label small fw-semibold">Status</label>
+                    <select id="filter_status" name="status" class="form-select form-select-sm" aria-label="Filter Status">
                         <option value="">-- Semua Status --</option>
                         <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
                         <option value="nonaktif" {{ request('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                     </select>
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="fas fa-search me-1"></i>Filter</button>
-                    <a href="{{ route('pengumuman.index') }}" class="btn btn-secondary btn-sm flex-fill">Reset</a>
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill" aria-label="Terapkan Filter Pengumuman"><i class="fas fa-search me-1"></i>Filter</button>
+                    <a href="{{ route('pengumuman.index') }}" class="btn btn-secondary btn-sm flex-fill" aria-label="Reset Filter">Reset</a>
                 </div>
             </form>
         </div>
@@ -102,13 +102,13 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($p) }})" title="Edit">
+                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($p) }})" title="Edit" aria-label="Edit Pengumuman {{ $p->judul }}">
                             <i class="fas fa-edit"></i>
                         </button>
                         <form action="{{ route('pengumuman.destroy', $p->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus pengumuman ini?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus">
+                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus" aria-label="Hapus Pengumuman {{ $p->judul }}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -134,19 +134,19 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-plus me-2"></i>Tambah Pengumuman Baru</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('pengumuman.store') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Judul Pengumuman <span class="text-danger">*</span></label>
-                        <input type="text" name="judul" class="form-control form-control-sm" required placeholder="Judul ringkas">
+                        <label for="add_judul" class="form-label small fw-semibold">Judul Pengumuman <span class="text-danger">*</span></label>
+                        <input type="text" name="judul" id="add_judul" class="form-control form-control-sm" required placeholder="Judul ringkas" aria-label="Judul Pengumuman">
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Kategori <span class="text-danger">*</span></label>
-                            <select name="kategori" class="form-select form-select-sm" required>
+                            <label for="add_kategori" class="form-label small fw-semibold">Kategori <span class="text-danger">*</span></label>
+                            <select name="kategori" id="add_kategori" class="form-select form-select-sm" required aria-label="Kategori Pengumuman">
                                 <option value="Penting">Penting</option>
                                 <option value="Biasa">Biasa</option>
                                 <option value="Agenda">Agenda</option>
@@ -154,15 +154,15 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Tipe Sasaran</label>
-                            <select name="tipe" class="form-select form-select-sm" id="add_tipe" onchange="toggleUptSelect('add')">
+                            <label for="add_tipe" class="form-label small fw-semibold">Tipe Sasaran</label>
+                            <select name="tipe" class="form-select form-select-sm" id="add_tipe" onchange="toggleUptSelect('add')" aria-label="Tipe Sasaran">
                                 <option value="Global">Global (Semua UPT & Publik)</option>
                                 <option value="UPT">UPT Spesifik</option>
                             </select>
                         </div>
                         <div class="col-12" id="add_upt_container" style="display: none;">
-                            <label class="form-label small fw-semibold">Pilih UPT Target</label>
-                            <select name="upt_id" class="form-select form-select-sm">
+                            <label for="add_upt_id" class="form-label small fw-semibold">Pilih UPT Target</label>
+                            <select name="upt_id" id="add_upt_id" class="form-select form-select-sm" aria-label="Pilih UPT Target">
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
                                 <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
@@ -171,22 +171,22 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Isi Pengumuman <span class="text-danger">*</span></label>
-                        <textarea name="isi" class="form-control form-control-sm" rows="4" required placeholder="Tuliskan isi pengumuman atau informasi lengkap"></textarea>
+                        <label for="add_isi" class="form-label small fw-semibold">Isi Pengumuman <span class="text-danger">*</span></label>
+                        <textarea name="isi" id="add_isi" class="form-control form-control-sm" rows="4" required placeholder="Tuliskan isi pengumuman atau informasi lengkap" aria-label="Isi Pengumuman"></textarea>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Tanggal Mulai (Opsional)</label>
-                            <input type="date" name="tanggal_mulai" class="form-control form-control-sm">
+                            <label for="add_tanggal_mulai" class="form-label small fw-semibold">Tanggal Mulai (Opsional)</label>
+                            <input type="date" name="tanggal_mulai" id="add_tanggal_mulai" class="form-control form-control-sm" aria-label="Tanggal Mulai">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Tanggal Selesai (Opsional)</label>
-                            <input type="date" name="tanggal_selesai" class="form-control form-control-sm">
+                            <label for="add_tanggal_selesai" class="form-label small fw-semibold">Tanggal Selesai (Opsional)</label>
+                            <input type="date" name="tanggal_selesai" id="add_tanggal_selesai" class="form-control form-control-sm" aria-label="Tanggal Selesai">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Lampiran Gambar (Opsional)</label>
-                        <input type="file" name="gambar" class="form-control form-control-sm" accept="image/*">
+                        <label for="add_gambar" class="form-label small fw-semibold">Lampiran Gambar (Opsional)</label>
+                        <input type="file" name="gambar" id="add_gambar" class="form-control form-control-sm" accept="image/*" aria-label="Lampiran Gambar">
                     </div>
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
@@ -214,20 +214,20 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-warning text-dark">
                 <h5 class="modal-title fs-6"><i class="fas fa-edit me-2"></i>Edit Pengumuman</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" id="formEdit" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Judul Pengumuman <span class="text-danger">*</span></label>
-                        <input type="text" name="judul" id="edit_judul" class="form-control form-control-sm" required>
+                        <label for="edit_judul" class="form-label small fw-semibold">Judul Pengumuman <span class="text-danger">*</span></label>
+                        <input type="text" name="judul" id="edit_judul" class="form-control form-control-sm" required aria-label="Judul Pengumuman">
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Kategori <span class="text-danger">*</span></label>
-                            <select name="kategori" id="edit_kategori" class="form-select form-select-sm" required>
+                            <label for="edit_kategori" class="form-label small fw-semibold">Kategori <span class="text-danger">*</span></label>
+                            <select name="kategori" id="edit_kategori" class="form-select form-select-sm" required aria-label="Kategori Pengumuman">
                                 <option value="Penting">Penting</option>
                                 <option value="Biasa">Biasa</option>
                                 <option value="Agenda">Agenda</option>
@@ -235,15 +235,15 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Tipe Sasaran</label>
-                            <select name="tipe" id="edit_tipe" class="form-select form-select-sm" onchange="toggleUptSelect('edit')">
+                            <label for="edit_tipe" class="form-label small fw-semibold">Tipe Sasaran</label>
+                            <select name="tipe" id="edit_tipe" class="form-select form-select-sm" onchange="toggleUptSelect('edit')" aria-label="Tipe Sasaran">
                                 <option value="Global">Global (Semua UPT & Publik)</option>
                                 <option value="UPT">UPT Spesifik</option>
                             </select>
                         </div>
                         <div class="col-12" id="edit_upt_container" style="display: none;">
-                            <label class="form-label small fw-semibold">Pilih UPT Target</label>
-                            <select name="upt_id" id="edit_upt_id" class="form-select form-select-sm">
+                            <label for="edit_upt_id" class="form-label small fw-semibold">Pilih UPT Target</label>
+                            <select name="upt_id" id="edit_upt_id" class="form-select form-select-sm" aria-label="Pilih UPT Target">
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
                                 <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
@@ -252,23 +252,23 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Isi Pengumuman <span class="text-danger">*</span></label>
-                        <textarea name="isi" id="edit_isi" class="form-control form-control-sm" rows="4" required></textarea>
+                        <label for="edit_isi" class="form-label small fw-semibold">Isi Pengumuman <span class="text-danger">*</span></label>
+                        <textarea name="isi" id="edit_isi" class="form-control form-control-sm" rows="4" required aria-label="Isi Pengumuman"></textarea>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Tanggal Mulai</label>
-                            <input type="date" name="tanggal_mulai" id="edit_tanggal_mulai" class="form-control form-control-sm">
+                            <label for="edit_tanggal_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
+                            <input type="date" name="tanggal_mulai" id="edit_tanggal_mulai" class="form-control form-control-sm" aria-label="Tanggal Mulai">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Tanggal Selesai</label>
-                            <input type="date" name="tanggal_selesai" id="edit_tanggal_selesai" class="form-control form-control-sm">
+                            <label for="edit_tanggal_selesai" class="form-label small fw-semibold">Tanggal Selesai</label>
+                            <input type="date" name="tanggal_selesai" id="edit_tanggal_selesai" class="form-control form-control-sm" aria-label="Tanggal Selesai">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Ganti Gambar (Opsional)</label>
+                        <label for="edit_gambar" class="form-label small fw-semibold">Ganti Gambar (Opsional)</label>
                         <div id="edit_gambar_preview" class="mb-2"></div>
-                        <input type="file" name="gambar" class="form-control form-control-sm" accept="image/*">
+                        <input type="file" name="gambar" id="edit_gambar" class="form-control form-control-sm" accept="image/*" aria-label="Ganti Gambar">
                     </div>
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">

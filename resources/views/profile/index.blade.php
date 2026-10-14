@@ -77,7 +77,7 @@
         <div class="content-card mb-4">
             <div class="profile-photo-container">
                 @if(!empty($user->foto) && file_exists(public_path($user->foto)))
-                    <img src="{{ asset($user->foto) }}" alt="Foto Profil" class="profile-photo">
+                    <img src="{{ asset($user->foto) }}" alt="Foto Profil" class="profile-photo" width="140" height="140">
                 @else
                     <div class="profile-photo-placeholder">
                         <i class="fas fa-user"></i>
@@ -95,21 +95,21 @@
                 @csrf
                 <div class="mb-3">
                     <label for="photo" class="form-label small fw-semibold">Upload Foto Profil</label>
-                    <input type="file" class="form-control form-control-sm @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/*" required>
+                    <input type="file" class="form-control form-control-sm @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/*" aria-label="Upload Foto Profil" required>
                     @error('photo')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                     <div class="form-text small text-muted">Format: JPG, PNG, GIF, WebP. Maks: 2MB</div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1" aria-label="Upload Foto Profil Baru">
                         <i class="fas fa-upload me-1"></i> Upload Foto
                     </button>
                     @if(!empty($user->foto) && file_exists(public_path($user->foto)))
                     <form action="{{ route('profile.photo.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus foto profil?');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus foto">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus foto" aria-label="Hapus Foto Profil">
                             <i class="fas fa-trash"></i>
                         </button>
                     </form>
@@ -156,19 +156,19 @@
                 @csrf
                 <div class="mb-3">
                     <label for="nama_lengkap" class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control @error('nama_lengkap') is-invalid @enderror" id="nama_lengkap" name="nama_lengkap" value="{{ old('nama_lengkap', $user->nama_lengkap) }}" required>
+                    <input type="text" class="form-control @error('nama_lengkap') is-invalid @enderror" id="nama_lengkap" name="nama_lengkap" value="{{ old('nama_lengkap', $user->nama_lengkap) }}" aria-label="Nama Lengkap" required>
                     @error('nama_lengkap')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="mb-3">
                     <label for="no_wa" class="form-label small fw-semibold">Nomor WhatsApp</label>
-                    <input type="text" class="form-control @error('no_wa') is-invalid @enderror" id="no_wa" name="no_wa" value="{{ old('no_wa', $user->no_wa) }}" placeholder="Contoh: 08123456789">
+                    <input type="text" class="form-control @error('no_wa') is-invalid @enderror" id="no_wa" name="no_wa" value="{{ old('no_wa', $user->no_wa) }}" placeholder="Contoh: 08123456789" aria-label="Nomor WhatsApp">
                     @error('no_wa')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <button type="submit" class="btn btn-primary px-4">
+                <button type="submit" class="btn btn-primary px-4" aria-label="Simpan Perubahan Profil">
                     <i class="fas fa-save me-1"></i> Simpan Perubahan
                 </button>
             </form>
@@ -181,14 +181,14 @@
                 @csrf
                 <div class="mb-3">
                     <label for="current_password" class="form-label small fw-semibold">Password Saat Ini <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="current_password" name="current_password" required>
+                    <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="current_password" name="current_password" aria-label="Password Saat Ini" required>
                     @error('current_password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="mb-3">
                     <label for="new_password" class="form-label small fw-semibold">Password Baru <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control @error('new_password') is-invalid @enderror" id="new_password" name="new_password" required minlength="6">
+                    <input type="password" class="form-control @error('new_password') is-invalid @enderror" id="new_password" name="new_password" aria-label="Password Baru" required minlength="6">
                     <div class="form-text small text-muted">Minimal 6 karakter</div>
                     @error('new_password')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -196,12 +196,12 @@
                 </div>
                 <div class="mb-3">
                     <label for="confirm_password" class="form-label small fw-semibold">Konfirmasi Password Baru <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control @error('confirm_password') is-invalid @enderror" id="confirm_password" name="confirm_password" required minlength="6">
+                    <input type="password" class="form-control @error('confirm_password') is-invalid @enderror" id="confirm_password" name="confirm_password" aria-label="Konfirmasi Password Baru" required minlength="6">
                     @error('confirm_password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <button type="submit" class="btn btn-warning px-4">
+                <button type="submit" class="btn btn-warning px-4" aria-label="Simpan Password Baru">
                     <i class="fas fa-key me-1"></i> Ubah Password
                 </button>
             </form>

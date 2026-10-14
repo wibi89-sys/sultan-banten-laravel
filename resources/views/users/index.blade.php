@@ -82,14 +82,14 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($u) }})" title="Edit">
+                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($u) }})" title="Edit" aria-label="Edit User {{ $u->username }}">
                             <i class="fas fa-edit"></i>
                         </button>
                         @if($u->id != auth()->id())
                         <form action="{{ route('users.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus">
+                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus" aria-label="Hapus User {{ $u->username }}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -112,39 +112,39 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-user-plus me-2"></i>Tambah Pengguna Baru</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('users.store') }}">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                            <input type="text" name="nama_lengkap" class="form-control form-control-sm" required placeholder="Nama lengkap staf/operator">
+                            <label for="add_nama_lengkap" class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_lengkap" id="add_nama_lengkap" class="form-control form-control-sm" required placeholder="Nama lengkap staf/operator" aria-label="Nama Lengkap">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Username <span class="text-danger">*</span></label>
-                            <input type="text" name="username" class="form-control form-control-sm" required placeholder="Username unik login">
+                            <label for="add_username" class="form-label small fw-semibold">Username <span class="text-danger">*</span></label>
+                            <input type="text" name="username" id="add_username" class="form-control form-control-sm" required placeholder="Username unik login" aria-label="Username">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control form-control-sm" required minlength="6" placeholder="Minimal 6 karakter">
+                            <label for="add_password" class="form-label small fw-semibold">Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password" id="add_password" class="form-control form-control-sm" required minlength="6" placeholder="Minimal 6 karakter" aria-label="Password">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nomor WhatsApp</label>
-                            <input type="text" name="no_wa" class="form-control form-control-sm" placeholder="Contoh: 08123456789">
+                            <label for="add_no_wa" class="form-label small fw-semibold">Nomor WhatsApp</label>
+                            <input type="text" name="no_wa" id="add_no_wa" class="form-control form-control-sm" placeholder="Contoh: 08123456789" aria-label="Nomor WhatsApp">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Role <span class="text-danger">*</span></label>
-                            <select name="role" class="form-select form-select-sm" required>
+                            <label for="add_role" class="form-label small fw-semibold">Role <span class="text-danger">*</span></label>
+                            <select name="role" id="add_role" class="form-select form-select-sm" required aria-label="Role Pengguna">
                                 <option value="operator">Operator UPT</option>
                                 <option value="viewer">Viewer (Hanya Lihat)</option>
                                 <option value="admin">Administrator Wilayah</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Penetapan UPT</label>
-                            <select name="upt_id" class="form-select form-select-sm">
+                            <label for="add_upt_id" class="form-label small fw-semibold">Penetapan UPT</label>
+                            <select name="upt_id" id="add_upt_id" class="form-select form-select-sm" aria-label="Penetapan UPT">
                                 <option value="">-- Semua UPT / Kanwil --</option>
                                 @foreach ($uptList as $upt)
                                 <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
@@ -227,7 +227,7 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-warning text-dark">
                 <h5 class="modal-title fs-6"><i class="fas fa-user-edit me-2"></i>Edit Pengguna</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" id="formEdit">
                 @csrf
@@ -235,32 +235,32 @@
                 <div class="modal-body">
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                            <input type="text" name="nama_lengkap" id="edit_nama_lengkap" class="form-control form-control-sm" required>
+                            <label for="edit_nama_lengkap" class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_lengkap" id="edit_nama_lengkap" class="form-control form-control-sm" required aria-label="Nama Lengkap">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Username</label>
-                            <input type="text" id="edit_username" class="form-control form-control-sm" readonly disabled>
+                            <label for="edit_username" class="form-label small fw-semibold">Username</label>
+                            <input type="text" id="edit_username" class="form-control form-control-sm" readonly disabled aria-label="Username">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Password Baru (Opsional)</label>
-                            <input type="password" name="password" class="form-control form-control-sm" minlength="6" placeholder="Kosongkan jika tidak diganti">
+                            <label for="edit_password" class="form-label small fw-semibold">Password Baru (Opsional)</label>
+                            <input type="password" name="password" id="edit_password" class="form-control form-control-sm" minlength="6" placeholder="Kosongkan jika tidak diganti" aria-label="Password Baru">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nomor WhatsApp</label>
-                            <input type="text" name="no_wa" id="edit_no_wa" class="form-control form-control-sm">
+                            <label for="edit_no_wa" class="form-label small fw-semibold">Nomor WhatsApp</label>
+                            <input type="text" name="no_wa" id="edit_no_wa" class="form-control form-control-sm" aria-label="Nomor WhatsApp">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Role <span class="text-danger">*</span></label>
-                            <select name="role" id="edit_role" class="form-select form-select-sm" required>
+                            <label for="edit_role" class="form-label small fw-semibold">Role <span class="text-danger">*</span></label>
+                            <select name="role" id="edit_role" class="form-select form-select-sm" required aria-label="Role Pengguna">
                                 <option value="operator">Operator UPT</option>
                                 <option value="viewer">Viewer (Hanya Lihat)</option>
                                 <option value="admin">Administrator Wilayah</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Penetapan UPT</label>
-                            <select name="upt_id" id="edit_upt_id" class="form-select form-select-sm">
+                            <label for="edit_upt_id" class="form-label small fw-semibold">Penetapan UPT</label>
+                            <select name="upt_id" id="edit_upt_id" class="form-select form-select-sm" aria-label="Penetapan UPT">
                                 <option value="">-- Semua UPT / Kanwil --</option>
                                 @foreach ($uptList as $upt)
                                 <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>

@@ -22,9 +22,9 @@
             <form action="{{ route('wa.settings.update') }}" method="POST">
                 @csrf
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">Gateway</label>
+                    <label for="gateway_name" class="col-sm-4 col-form-label small fw-semibold">Gateway</label>
                     <div class="col-sm-8">
-                        <select name="gateway_name" class="form-select form-select-sm">
+                        <select name="gateway_name" id="gateway_name" class="form-select form-select-sm" aria-label="Gateway WhatsApp">
                             <option value="fonnte" {{ ($waSettings->gateway_name ?? 'fonnte') == 'fonnte' ? 'selected' : '' }}>Fonnte</option>
                             <option value="wablas" {{ ($waSettings->gateway_name ?? '') == 'wablas' ? 'selected' : '' }}>Wablas</option>
                             <option value="starsender" {{ ($waSettings->gateway_name ?? '') == 'starsender' ? 'selected' : '' }}>Starsender</option>
@@ -34,29 +34,32 @@
                 </div>
                 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">API Key</label>
+                    <label for="api_key" class="col-sm-4 col-form-label small fw-semibold">API Key</label>
                     <div class="col-sm-8">
-                        <input type="text" name="api_key" class="form-control form-control-sm" 
+                        <input type="text" name="api_key" id="api_key" class="form-control form-control-sm" 
                             value="{{ $waSettings->api_key ?? '' }}" 
-                            placeholder="Masukkan API Key dari gateway">
+                            placeholder="Masukkan API Key dari gateway"
+                            aria-label="API Key Gateway">
                     </div>
                 </div>
                 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">API URL</label>
+                    <label for="api_url" class="col-sm-4 col-form-label small fw-semibold">API URL</label>
                     <div class="col-sm-8">
-                        <input type="text" name="api_url" class="form-control form-control-sm" 
+                        <input type="text" name="api_url" id="api_url" class="form-control form-control-sm" 
                             value="{{ $waSettings->api_url ?? 'https://api.fonnte.com/send' }}" 
-                            placeholder="URL endpoint API">
+                            placeholder="URL endpoint API"
+                            aria-label="API URL Endpoint">
                     </div>
                 </div>
                 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">Group ID</label>
+                    <label for="group_id" class="col-sm-4 col-form-label small fw-semibold">Group ID</label>
                     <div class="col-sm-8">
-                        <input type="text" name="group_id" class="form-control form-control-sm" 
+                        <input type="text" name="group_id" id="group_id" class="form-control form-control-sm" 
                             value="{{ $waSettings->group_id ?? '' }}" 
-                            placeholder="ID Grup WhatsApp untuk laporan">
+                            placeholder="ID Grup WhatsApp untuk laporan"
+                            aria-label="Group ID WhatsApp">
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">
                             <strong>Fonnte:</strong> Kode undangan grup atau Group JID (<code>120363xxx@g.us</code>)
                         </small>
@@ -64,25 +67,27 @@
                 </div>
                 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">Reminder Pagi</label>
+                    <label for="jam_reminder_pagi" class="col-sm-4 col-form-label small fw-semibold">Reminder Pagi</label>
                     <div class="col-sm-8">
-                        <input type="time" name="jam_reminder_pagi" class="form-control form-control-sm" 
-                            value="{{ substr($waSettings->jam_reminder_pagi ?? '07:30:00', 0, 5) }}">
+                        <input type="time" name="jam_reminder_pagi" id="jam_reminder_pagi" class="form-control form-control-sm" 
+                            value="{{ substr($waSettings->jam_reminder_pagi ?? '07:30:00', 0, 5) }}"
+                            aria-label="Jam Reminder Pagi">
                         <small class="text-muted" style="font-size: 11px;">Waktu kirim reminder ke operator</small>
                     </div>
                 </div>
                 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">Laporan Siang</label>
+                    <label for="jam_reminder_siang" class="col-sm-4 col-form-label small fw-semibold">Laporan Siang</label>
                     <div class="col-sm-8">
-                        <input type="time" name="jam_reminder_siang" class="form-control form-control-sm" 
-                            value="{{ substr($waSettings->jam_reminder_siang ?? '12:00:00', 0, 5) }}">
+                        <input type="time" name="jam_reminder_siang" id="jam_reminder_siang" class="form-control form-control-sm" 
+                            value="{{ substr($waSettings->jam_reminder_siang ?? '12:00:00', 0, 5) }}"
+                            aria-label="Jam Laporan Siang">
                         <small class="text-muted" style="font-size: 11px;">Waktu kirim laporan ke grup</small>
                     </div>
                 </div>
                 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-4 col-form-label small fw-semibold">Status Gateway</label>
+                    <label for="aktif" class="col-sm-4 col-form-label small fw-semibold">Status Gateway</label>
                     <div class="col-sm-8">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="aktif" id="aktif" 
@@ -100,18 +105,18 @@
                 <h6 class="mb-3 fw-bold fs-6"><i class="fas fa-file-alt text-primary me-2"></i>Template Pesan</h6>
                 
                 <div class="mb-3">
-                    <label class="form-label small fw-semibold">Template Pesan Pagi (Reminder Input Data)</label>
-                    <textarea name="template_pagi" class="form-control form-control-sm" rows="4" 
-                        placeholder="Template pesan untuk reminder pagi...">{{ $waSettings->template_pagi ?? '' }}</textarea>
+                    <label for="template_pagi" class="form-label small fw-semibold">Template Pesan Pagi (Reminder Input Data)</label>
+                    <textarea name="template_pagi" id="template_pagi" class="form-control form-control-sm" rows="4" 
+                        placeholder="Template pesan untuk reminder pagi..." aria-label="Template Pesan Pagi">{{ $waSettings->template_pagi ?? '' }}</textarea>
                     <small class="text-muted" style="font-size: 11px;">
                         <strong>Variabel:</strong> <code>{nama}</code>, <code>{upt}</code>, <code>{jam_mulai}</code>, <code>{jam_selesai}</code>, <code>{list_missing}</code>
                     </small>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label small fw-semibold">Template Pesan Siang (Laporan Belum Input)</label>
-                    <textarea name="template_siang" class="form-control form-control-sm" rows="4" 
-                        placeholder="Template pesan untuk laporan siang...">{{ $waSettings->template_siang ?? '' }}</textarea>
+                    <label for="template_siang" class="form-label small fw-semibold">Template Pesan Siang (Laporan Belum Input)</label>
+                    <textarea name="template_siang" id="template_siang" class="form-control form-control-sm" rows="4" 
+                        placeholder="Template pesan untuk laporan siang..." aria-label="Template Pesan Siang">{{ $waSettings->template_siang ?? '' }}</textarea>
                     <small class="text-muted" style="font-size: 11px;">
                         <strong>Variabel:</strong> <code>{tanggal}</code>, <code>{waktu}</code>, <code>{list_belum_input}</code>, <code>{total_belum}</code>
                     </small>
@@ -135,16 +140,16 @@
             <form action="{{ route('wa.settings.test') }}" method="POST" class="mb-4">
                 @csrf
                 <input type="hidden" name="action" value="test_message">
-                <label class="form-label small fw-semibold">Test Kirim Pesan (Nomor Pribadi)</label>
+                <label for="test_number" class="form-label small fw-semibold">Test Kirim Pesan (Nomor Pribadi)</label>
                 <div class="row g-2 mb-2">
                     <div class="col-5">
-                        <input type="text" name="test_number" class="form-control form-control-sm" placeholder="Nomor WA (08xxx)" required>
+                        <input type="text" name="test_number" id="test_number" class="form-control form-control-sm" placeholder="Nomor WA (08xxx)" aria-label="Nomor WhatsApp Test" required>
                     </div>
                     <div class="col-7">
-                        <input type="text" name="test_message" class="form-control form-control-sm" placeholder="Pesan test" value="Test dari Sultan Banten">
+                        <input type="text" name="test_message" id="test_message" class="form-control form-control-sm" placeholder="Pesan test" value="Test dari Sultan Banten" aria-label="Pesan Test">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-outline-success btn-sm">
+                <button type="submit" class="btn btn-outline-success btn-sm" aria-label="Test Kirim Pesan ke Nomor">
                     <i class="fab fa-whatsapp me-1"></i> Test ke Nomor
                 </button>
             </form>
@@ -157,7 +162,7 @@
                 <div class="mb-2">
                     <small class="text-muted">Target Group ID: <code>{{ $waSettings->group_id ?? '-' }}</code></small>
                 </div>
-                <button type="submit" class="btn btn-outline-primary btn-sm">
+                <button type="submit" class="btn btn-outline-primary btn-sm" aria-label="Test Kirim Pesan ke Grup">
                     <i class="fas fa-users me-1"></i> Test ke Grup
                 </button>
             </form>
@@ -168,14 +173,14 @@
                 <form action="{{ route('wa.settings.test') }}" method="POST" class="d-inline">
                     @csrf
                     <input type="hidden" name="action" value="send_morning">
-                    <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Kirim reminder pagi ke operator sekarang?');">
+                    <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Kirim reminder pagi ke operator sekarang?');" aria-label="Kirim Reminder Pagi ke Seluruh Operator">
                         <i class="fas fa-sun me-1"></i> Kirim Reminder Pagi
                     </button>
                 </form>
                 <form action="{{ route('wa.settings.test') }}" method="POST" class="d-inline">
                     @csrf
                     <input type="hidden" name="action" value="send_afternoon">
-                    <button type="submit" class="btn btn-info text-white btn-sm" onclick="return confirm('Kirim laporan monitoring siang ke grup sekarang?');">
+                    <button type="submit" class="btn btn-info text-white btn-sm" onclick="return confirm('Kirim laporan monitoring siang ke grup sekarang?');" aria-label="Kirim Laporan Siang ke Grup">
                         <i class="fas fa-chart-line me-1"></i> Kirim Laporan Siang
                     </button>
                 </form>

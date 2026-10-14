@@ -88,8 +88,8 @@
         <div class="row g-3">
             @if(!$userUptFilter)
             <div class="col-md-4">
-                <label class="form-label fw-semibold small">Pilih UPT</label>
-                <select name="upt_id" id="upt_id" class="form-select">
+                <label for="upt_id" class="form-label fw-semibold small">Pilih UPT</label>
+                <select name="upt_id" id="upt_id" class="form-select" aria-label="Pilih UPT">
                     <option value="">Semua UPT</option>
                     @foreach ($uptList as $upt)
                     <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
@@ -99,19 +99,19 @@
             @else
             <input type="hidden" name="upt_id" value="{{ $userUptFilter }}">
             <div class="col-md-4">
-                <label class="form-label fw-semibold small">UPT</label>
-                <input type="text" class="form-control" value="{{ auth()->user()->upt?->nama_upt ?? '-' }}" readonly>
+                <label for="upt_readonly" class="form-label fw-semibold small">UPT</label>
+                <input type="text" id="upt_readonly" class="form-control" value="{{ auth()->user()->upt?->nama_upt ?? '-' }}" aria-label="UPT" readonly>
             </div>
             @endif
             
             <div class="col-md-4">
-                <label class="form-label fw-semibold small">Tanggal Mulai</label>
-                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control" value="{{ $defaultStartDate }}" required>
+                <label for="tanggal_mulai" class="form-label fw-semibold small">Tanggal Mulai</label>
+                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control" value="{{ $defaultStartDate }}" aria-label="Tanggal Mulai" required>
             </div>
             
             <div class="col-md-4">
-                <label class="form-label fw-semibold small">Tanggal Akhir</label>
-                <input type="date" name="tanggal_akhir" id="tanggal_akhir" class="form-control" value="{{ $defaultEndDate }}" required>
+                <label for="tanggal_akhir" class="form-label fw-semibold small">Tanggal Akhir</label>
+                <input type="date" name="tanggal_akhir" id="tanggal_akhir" class="form-control" value="{{ $defaultEndDate }}" aria-label="Tanggal Akhir" required>
             </div>
         </div>
         
@@ -193,16 +193,16 @@
                 <div id="signatureDetailsContainer" class="p-3 border rounded" style="background: var(--card-bg, #fff);">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Tempat Penandatanganan</label>
-                            <input type="text" name="tempat_ttd" id="tempat_ttd" class="form-control form-control-sm" placeholder="Contoh: Serang" value="Serang">
+                            <label for="tempat_ttd" class="form-label fw-semibold small">Tempat Penandatanganan</label>
+                            <input type="text" name="tempat_ttd" id="tempat_ttd" class="form-control form-control-sm" placeholder="Contoh: Serang" value="Serang" aria-label="Tempat Penandatanganan">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold small">Jabatan Penanda Tangan</label>
-                            <input type="text" name="jabatan_ttd" id="jabatan_ttd" class="form-control form-control-sm" placeholder="Contoh: Kepala Bidang Pelayanan dan Pembinaan" value="Kepala Bidang Pelayanan dan Pembinaan">
+                            <label for="jabatan_ttd" class="form-label fw-semibold small">Jabatan Penanda Tangan</label>
+                            <input type="text" name="jabatan_ttd" id="jabatan_ttd" class="form-control form-control-sm" placeholder="Contoh: Kepala Bidang Pelayanan dan Pembinaan" value="Kepala Bidang Pelayanan dan Pembinaan" aria-label="Jabatan Penanda Tangan">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Nama Penanda Tangan</label>
-                            <input type="text" name="nama_ttd" id="nama_ttd" class="form-control form-control-sm" placeholder="Contoh: Surya Dharma" value="Surya Dharma">
+                            <label for="nama_ttd" class="form-label fw-semibold small">Nama Penanda Tangan</label>
+                            <input type="text" name="nama_ttd" id="nama_ttd" class="form-control form-control-sm" placeholder="Contoh: Surya Dharma" value="Surya Dharma" aria-label="Nama Penanda Tangan">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label fw-semibold small d-block">Gambar TTD Digital</label>
@@ -225,13 +225,13 @@
         <hr class="my-4">
         
         <div class="d-flex justify-content-end gap-2 flex-wrap">
-            <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+            <button type="button" class="btn btn-outline-secondary" onclick="resetForm()" aria-label="Reset Filter">
                 <i class="fas fa-redo me-1"></i> Reset Filter
             </button>
-            <button type="button" class="btn btn-danger px-4" onclick="submitPdf()">
+            <button type="button" class="btn btn-danger px-4" onclick="submitPdf()" aria-label="Cetak Dokumen PDF">
                 <i class="fas fa-file-pdf me-1"></i> Cetak PDF
             </button>
-            <button type="submit" class="btn btn-success px-4" onclick="document.getElementById('formLaporan').action='{{ route('laporan.excel') }}';">
+            <button type="submit" class="btn btn-success px-4" onclick="document.getElementById('formLaporan').action='{{ route('laporan.excel') }}';" aria-label="Download Laporan Excel">
                 <i class="fas fa-file-excel me-1"></i> Download Excel
             </button>
         </div>

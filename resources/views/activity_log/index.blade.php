@@ -557,17 +557,17 @@
         <div class="row g-2 align-items-end">
             <!-- Search Text -->
             <div class="col-12 col-md-3">
-                <label class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-search me-1"></i>Kata Kunci</label>
+                <label for="filter_search_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-search me-1"></i>Kata Kunci</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0"><i class="fas fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama atau deskripsi..." value="{{ $filterSearch }}">
+                    <input type="text" id="filter_search_log" name="search" class="form-control border-start-0" placeholder="Cari nama atau deskripsi..." value="{{ $filterSearch }}" aria-label="Kata Kunci Pencarian">
                 </div>
             </div>
 
             <!-- Filter Aksi -->
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-bolt me-1"></i>Aksi</label>
-                <select name="aksi" class="form-select form-select-sm">
+                <label for="filter_aksi_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-bolt me-1"></i>Aksi</label>
+                <select id="filter_aksi_log" name="aksi" class="form-select form-select-sm" aria-label="Filter Aksi">
                     <option value="">Semua Aksi</option>
                     @foreach ($aksiLabels as $key => $label)
                         <option value="{{ $key }}" {{ $filterAksi == $key ? 'selected' : '' }}>{{ $label['label'] }}</option>
@@ -577,8 +577,8 @@
 
             <!-- Filter Modul -->
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-cubes me-1"></i>Modul</label>
-                <select name="modul" class="form-select form-select-sm">
+                <label for="filter_modul_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-cubes me-1"></i>Modul</label>
+                <select id="filter_modul_log" name="modul" class="form-select form-select-sm" aria-label="Filter Modul">
                     <option value="">Semua Modul</option>
                     @foreach ($modulLabels as $key => $label)
                         <option value="{{ $key }}" {{ $filterModul == $key ? 'selected' : '' }}>{{ $label }}</option>
@@ -588,8 +588,8 @@
 
             <!-- Filter User -->
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-user me-1"></i>Pengguna</label>
-                <select name="user_id" class="form-select form-select-sm">
+                <label for="filter_user_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-user me-1"></i>Pengguna</label>
+                <select id="filter_user_log" name="user_id" class="form-select form-select-sm" aria-label="Filter Pengguna">
                     <option value="">Semua User</option>
                     @foreach ($allUsers as $u)
                         <option value="{{ $u->id }}" {{ $filterUserId == $u->id ? 'selected' : '' }}>{{ $u->nama_lengkap ?? $u->username }}</option>
@@ -599,12 +599,12 @@
 
             <!-- Filter Rentang Tanggal -->
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-calendar-alt me-1"></i>Rentang Tanggal</label>
+                <label for="filter_tanggal_mulai_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-calendar-alt me-1"></i>Rentang Tanggal</label>
                 <div class="input-group input-group-sm">
-                    <input type="date" name="tanggal_mulai" class="form-control" value="{{ $filterTanggalMulai }}" title="Tanggal Mulai">
+                    <input type="date" id="filter_tanggal_mulai_log" name="tanggal_mulai" class="form-control" value="{{ $filterTanggalMulai }}" title="Tanggal Mulai" aria-label="Tanggal Mulai">
                     <span class="input-group-text bg-light border-start-0 border-end-0">-</span>
-                    <input type="date" name="tanggal_akhir" class="form-control" value="{{ $filterTanggalAkhir }}" title="Tanggal Akhir">
-                    <button type="submit" class="btn btn-primary" title="Terapkan Filter">
+                    <input type="date" id="filter_tanggal_akhir_log" name="tanggal_akhir" class="form-control" value="{{ $filterTanggalAkhir }}" title="Tanggal Akhir" aria-label="Tanggal Akhir">
+                    <button type="submit" class="btn btn-primary" title="Terapkan Filter" aria-label="Terapkan Filter">
                         <i class="fas fa-filter"></i>
                     </button>
                 </div>
@@ -691,7 +691,7 @@
                     </td>
                     <td class="text-center">
                         @if(!empty($log->detail))
-                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $log->id }}" title="Lihat detail payload">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $log->id }}" title="Lihat detail payload" aria-label="Lihat detail payload log #{{ $log->id }}">
                             <i class="fas fa-eye"></i>
                         </button>
                         
@@ -709,7 +709,7 @@
                                                 <span class="text-muted small">{{ $userName }} &bull; {{ $log->created_at ? $log->created_at->format('d/m/Y H:i:s') : '-' }}</span>
                                             </div>
                                         </div>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
                                     </div>
                                     <div class="modal-body text-start p-4">
                                         <!-- Quick Meta Grid -->

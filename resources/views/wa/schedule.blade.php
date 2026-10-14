@@ -51,7 +51,7 @@
                     <td>
                         <form action="{{ route('wa.schedule.toggle', $s->id) }}" method="POST" class="d-inline">
                             @csrf
-                            <button type="submit" class="btn btn-xs py-0 px-2 badge {{ $s->aktif ? 'bg-success' : 'bg-secondary' }}" style="border:none; cursor:pointer;" title="Klik untuk ubah status">
+                            <button type="submit" class="btn btn-xs py-0 px-2 badge {{ $s->aktif ? 'bg-success' : 'bg-secondary' }}" style="border:none; cursor:pointer;" title="Klik untuk ubah status" aria-label="Ubah Status Jadwal {{ $s->nama_laporan }}">
                                 {{ $s->aktif ? 'Aktif' : 'Nonaktif' }}
                             </button>
                         </form>
@@ -61,19 +61,19 @@
                             <!-- Send Now -->
                             <form action="{{ route('wa.schedule.sendNow', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirim laporan ini sekarang?');">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-success btn-sm" title="Kirim Sekarang">
+                                <button type="submit" class="btn btn-outline-success btn-sm" title="Kirim Sekarang" aria-label="Kirim Laporan {{ $s->nama_laporan }} Sekarang">
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
                             </form>
                             <!-- Edit -->
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $s->id }}" title="Edit">
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $s->id }}" title="Edit" aria-label="Edit Jadwal {{ $s->nama_laporan }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <!-- Delete -->
                             <form action="{{ route('wa.schedule.destroy', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus jadwal laporan ini?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" aria-label="Hapus Jadwal {{ $s->nama_laporan }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -85,7 +85,7 @@
                                 <div class="modal-content">
                                     <div class="modal-header py-2 bg-primary text-white">
                                         <h5 class="modal-title fs-6"><i class="fas fa-edit me-2"></i>Edit Jadwal Laporan</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
                                     </div>
                                     <form action="{{ route('wa.schedule.update', $s->id) }}" method="POST">
                                         @csrf
@@ -93,28 +93,28 @@
                                         <div class="modal-body">
                                             <div class="row g-3 mb-3">
                                                 <div class="col-md-6">
-                                                    <label class="form-label small fw-semibold">Nama Laporan <span class="text-danger">*</span></label>
-                                                    <input type="text" name="nama_laporan" class="form-control form-control-sm" value="{{ $s->nama_laporan }}" required>
+                                                    <label for="edit_nama_laporan_{{ $s->id }}" class="form-label small fw-semibold">Nama Laporan <span class="text-danger">*</span></label>
+                                                    <input type="text" name="nama_laporan" id="edit_nama_laporan_{{ $s->id }}" class="form-control form-control-sm" value="{{ $s->nama_laporan }}" aria-label="Nama Laporan" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label small fw-semibold">Target Penerima</label>
-                                                    <select name="target_penerima" class="form-select form-select-sm">
+                                                    <label for="edit_target_{{ $s->id }}" class="form-label small fw-semibold">Target Penerima</label>
+                                                    <select name="target_penerima" id="edit_target_{{ $s->id }}" class="form-select form-select-sm" aria-label="Target Penerima">
                                                         <option value="grup" {{ !$s->kirim_ke_pimpinan && $s->group_id !== '-' ? 'selected' : '' }}>Hanya Grup</option>
                                                         <option value="pimpinan" {{ $s->kirim_ke_pimpinan && $s->group_id === '-' ? 'selected' : '' }}>Hanya Pimpinan</option>
                                                         <option value="keduanya" {{ $s->kirim_ke_pimpinan && $s->group_id !== '-' ? 'selected' : '' }}>Grup & Pimpinan</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label small fw-semibold">Group ID</label>
-                                                    <input type="text" name="group_id" class="form-control form-control-sm" value="{{ $s->group_id }}">
+                                                    <label for="edit_group_id_{{ $s->id }}" class="form-label small fw-semibold">Group ID</label>
+                                                    <input type="text" name="group_id" id="edit_group_id_{{ $s->id }}" class="form-control form-control-sm" value="{{ $s->group_id }}" aria-label="Group ID">
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label small fw-semibold">Jam Kirim <span class="text-danger">*</span></label>
-                                                    <input type="time" name="jam_kirim" class="form-control form-control-sm" value="{{ substr($s->jam_kirim, 0, 5) }}" required>
+                                                    <label for="edit_jam_kirim_{{ $s->id }}" class="form-label small fw-semibold">Jam Kirim <span class="text-danger">*</span></label>
+                                                    <input type="time" name="jam_kirim" id="edit_jam_kirim_{{ $s->id }}" class="form-control form-control-sm" value="{{ substr($s->jam_kirim, 0, 5) }}" aria-label="Jam Kirim" required>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label class="form-label small fw-semibold">Hari / Frekuensi</label>
-                                                    <select name="hari" class="form-select form-select-sm">
+                                                    <label for="edit_hari_{{ $s->id }}" class="form-label small fw-semibold">Hari / Frekuensi</label>
+                                                    <select name="hari" id="edit_hari_{{ $s->id }}" class="form-select form-select-sm" aria-label="Hari / Frekuensi">
                                                         <option value="daily" {{ $s->hari === 'daily' ? 'selected' : '' }}>Setiap Hari (Daily)</option>
                                                         <option value="weekdays" {{ $s->hari === 'weekdays' ? 'selected' : '' }}>Hari Kerja (Senin-Jumat)</option>
                                                         <option value="monday" {{ $s->hari === 'monday' ? 'selected' : '' }}>Senin Saja</option>
@@ -123,8 +123,8 @@
                                                 </div>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label small fw-semibold">Template Pesan</label>
-                                                <textarea name="template_pesan" class="form-control form-control-sm" rows="8">{{ $s->template_pesan }}</textarea>
+                                                <label for="edit_template_{{ $s->id }}" class="form-label small fw-semibold">Template Pesan</label>
+                                                <textarea name="template_pesan" id="edit_template_{{ $s->id }}" class="form-control form-control-sm" rows="8" aria-label="Template Pesan">{{ $s->template_pesan }}</textarea>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" name="aktif" id="aktifEdit{{ $s->id }}" {{ $s->aktif ? 'checked' : '' }}>
@@ -172,35 +172,35 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-plus-circle me-2"></i>Tambah Jadwal Laporan WhatsApp</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form action="{{ route('wa.schedule.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Nama Laporan <span class="text-danger">*</span></label>
-                            <input type="text" name="nama_laporan" class="form-control form-control-sm" placeholder="Contoh: Laporan Sore Harian" required>
+                            <label for="add_nama_laporan" class="form-label small fw-semibold">Nama Laporan <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_laporan" id="add_nama_laporan" class="form-control form-control-sm" placeholder="Contoh: Laporan Sore Harian" aria-label="Nama Laporan" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Target Penerima</label>
-                            <select name="target_penerima" class="form-select form-select-sm">
+                            <label for="add_target_penerima" class="form-label small fw-semibold">Target Penerima</label>
+                            <select name="target_penerima" id="add_target_penerima" class="form-select form-select-sm" aria-label="Target Penerima">
                                 <option value="grup">Hanya Grup WhatsApp</option>
                                 <option value="pimpinan">Hanya Daftar Pimpinan</option>
                                 <option value="keduanya">Keduanya (Grup & Pimpinan)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Group ID</label>
-                            <input type="text" name="group_id" class="form-control form-control-sm" placeholder="ID grup WhatsApp (jika kirim ke grup)">
+                            <label for="add_group_id" class="form-label small fw-semibold">Group ID</label>
+                            <input type="text" name="group_id" id="add_group_id" class="form-control form-control-sm" placeholder="ID grup WhatsApp (jika kirim ke grup)" aria-label="Group ID">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Jam Kirim <span class="text-danger">*</span></label>
-                            <input type="time" name="jam_kirim" class="form-control form-control-sm" value="16:00" required>
+                            <label for="add_jam_kirim" class="form-label small fw-semibold">Jam Kirim <span class="text-danger">*</span></label>
+                            <input type="time" name="jam_kirim" id="add_jam_kirim" class="form-control form-control-sm" value="16:00" aria-label="Jam Kirim" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-semibold">Hari / Frekuensi</label>
-                            <select name="hari" class="form-select form-select-sm">
+                            <label for="add_hari" class="form-label small fw-semibold">Hari / Frekuensi</label>
+                            <select name="hari" id="add_hari" class="form-select form-select-sm" aria-label="Hari / Frekuensi">
                                 <option value="daily">Setiap Hari (Daily)</option>
                                 <option value="weekdays">Hari Kerja (Senin-Jumat)</option>
                                 <option value="monday">Senin Saja</option>
@@ -209,8 +209,8 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Template Pesan</label>
-                        <textarea name="template_pesan" class="form-control form-control-sm" rows="8">{{ $defaultTemplate }}</textarea>
+                        <label for="add_template_pesan" class="form-label small fw-semibold">Template Pesan</label>
+                        <textarea name="template_pesan" id="add_template_pesan" class="form-control form-control-sm" rows="8" aria-label="Template Pesan">{{ $defaultTemplate }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">

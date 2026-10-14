@@ -47,13 +47,13 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($upt) }})" title="Edit">
+                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($upt) }})" title="Edit" aria-label="Edit UPT {{ $upt->nama_upt }}">
                             <i class="fas fa-edit"></i>
                         </button>
                         <form action="{{ route('upt.destroy', $upt->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus UPT ini?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus">
+                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus" aria-label="Hapus UPT {{ $upt->nama_upt }}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -75,31 +75,31 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-plus me-2"></i>Tambah UPT Baru</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('upt.store') }}">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Nama UPT <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_upt" class="form-control form-control-sm" required placeholder="Contoh: Lapas Kelas IIA Serang">
+                        <label for="add_nama_upt" class="form-label small fw-semibold">Nama UPT <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_upt" id="add_nama_upt" class="form-control form-control-sm" required placeholder="Contoh: Lapas Kelas IIA Serang" aria-label="Nama UPT">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Alamat</label>
-                        <textarea name="alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat lengkap UPT"></textarea>
+                        <label for="add_alamat_upt" class="form-label small fw-semibold">Alamat</label>
+                        <textarea name="alamat" id="add_alamat_upt" class="form-control form-control-sm" rows="2" placeholder="Alamat lengkap UPT" aria-label="Alamat UPT"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Kapasitas Hunian <span class="text-danger">*</span></label>
-                        <input type="number" name="kapasitas" class="form-control form-control-sm" required min="0" value="0">
+                        <label for="add_kapasitas_upt" class="form-label small fw-semibold">Kapasitas Hunian <span class="text-danger">*</span></label>
+                        <input type="number" name="kapasitas" id="add_kapasitas_upt" class="form-control form-control-sm" required min="0" value="0" aria-label="Kapasitas Hunian">
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
-                            <label class="form-label small fw-semibold">Latitude</label>
-                            <input type="text" name="latitude" class="form-control form-control-sm" placeholder="-6.123456">
+                            <label for="add_latitude_upt" class="form-label small fw-semibold">Latitude</label>
+                            <input type="text" name="latitude" id="add_latitude_upt" class="form-control form-control-sm" placeholder="-6.123456" aria-label="Latitude UPT">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-semibold">Longitude</label>
-                            <input type="text" name="longitude" class="form-control form-control-sm" placeholder="106.123456">
+                            <label for="add_longitude_upt" class="form-label small fw-semibold">Longitude</label>
+                            <input type="text" name="longitude" id="add_longitude_upt" class="form-control form-control-sm" placeholder="106.123456" aria-label="Longitude UPT">
                         </div>
                     </div>
                 </div>
@@ -118,32 +118,32 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-warning text-dark">
                 <h5 class="modal-title fs-6"><i class="fas fa-edit me-2"></i>Edit Data UPT</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" id="formEdit">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Nama UPT <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_upt" id="edit_nama_upt" class="form-control form-control-sm" required>
+                        <label for="edit_nama_upt" class="form-label small fw-semibold">Nama UPT <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_upt" id="edit_nama_upt" class="form-control form-control-sm" required aria-label="Nama UPT">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Alamat</label>
-                        <textarea name="alamat" id="edit_alamat" class="form-control form-control-sm" rows="2"></textarea>
+                        <label for="edit_alamat" class="form-label small fw-semibold">Alamat</label>
+                        <textarea name="alamat" id="edit_alamat" class="form-control form-control-sm" rows="2" aria-label="Alamat UPT"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Kapasitas Hunian <span class="text-danger">*</span></label>
-                        <input type="number" name="kapasitas" id="edit_kapasitas" class="form-control form-control-sm" required min="0">
+                        <label for="edit_kapasitas" class="form-label small fw-semibold">Kapasitas Hunian <span class="text-danger">*</span></label>
+                        <input type="number" name="kapasitas" id="edit_kapasitas" class="form-control form-control-sm" required min="0" aria-label="Kapasitas Hunian">
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
-                            <label class="form-label small fw-semibold">Latitude</label>
-                            <input type="text" name="latitude" id="edit_latitude" class="form-control form-control-sm">
+                            <label for="edit_latitude" class="form-label small fw-semibold">Latitude</label>
+                            <input type="text" name="latitude" id="edit_latitude" class="form-control form-control-sm" aria-label="Latitude UPT">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-semibold">Longitude</label>
-                            <input type="text" name="longitude" id="edit_longitude" class="form-control form-control-sm">
+                            <label for="edit_longitude" class="form-label small fw-semibold">Longitude</label>
+                            <input type="text" name="longitude" id="edit_longitude" class="form-control form-control-sm" aria-label="Longitude UPT">
                         </div>
                     </div>
                 </div>

@@ -125,23 +125,23 @@
         <div class="card-body py-3">
             <form method="GET" action="{{ route('kroscek.index') }}" class="row align-items-end g-3">
                 <div class="col-md-4 col-sm-6">
-                    <label class="form-label fw-bold mb-1 small text-secondary">
+                    <label for="filter_tanggal" class="form-label fw-bold mb-1 small text-secondary">
                         <i class="fas fa-calendar-day me-1 text-primary"></i>Pilih Tanggal Kroscek
                     </label>
-                    <input type="date" name="tanggal" class="form-control" value="{{ $filterTanggal }}" required>
+                    <input type="date" id="filter_tanggal" name="tanggal" class="form-control" value="{{ $filterTanggal }}" aria-label="Pilih Tanggal Kroscek" required>
                 </div>
                 <div class="col-md-2 col-sm-6">
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-primary w-100" aria-label="Tampilkan Data Kroscek">
                         <i class="fas fa-search me-1"></i> Tampilkan
                     </button>
                 </div>
                 <div class="col-md-6 col-12">
-                    <label class="form-label fw-bold mb-1 small text-secondary">
+                    <label for="searchUpt" class="form-label fw-bold mb-1 small text-secondary">
                         <i class="fas fa-filter me-1 text-primary"></i>Cari Nama UPT
                     </label>
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" id="searchUpt" class="form-control" placeholder="Ketik untuk mencari UPT...">
+                        <input type="text" id="searchUpt" class="form-control" placeholder="Ketik untuk mencari UPT..." aria-label="Cari Nama UPT">
                     </div>
                 </div>
             </form>

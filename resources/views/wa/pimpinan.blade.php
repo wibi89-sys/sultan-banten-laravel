@@ -43,13 +43,13 @@
                     </td>
                     <td class="text-center">
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditPimpinan{{ $p->id }}" title="Edit">
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditPimpinan{{ $p->id }}" title="Edit" aria-label="Edit Pimpinan {{ $p->nama }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <form action="{{ route('wa.pimpinan.destroy', $p->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data pimpinan ini?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" aria-label="Hapus Pimpinan {{ $p->nama }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -61,27 +61,27 @@
                                 <div class="modal-content">
                                     <div class="modal-header py-2 bg-primary text-white">
                                         <h5 class="modal-title fs-6"><i class="fas fa-edit me-2"></i>Edit Data Pimpinan</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
                                     </div>
                                     <form action="{{ route('wa.pimpinan.update', $p->id) }}" method="POST">
                                         @csrf
                                         @method('PUT')
                                         <div class="modal-body">
                                             <div class="mb-3">
-                                                <label class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                                                <input type="text" name="nama" class="form-control form-control-sm" value="{{ $p->nama }}" required>
+                                                <label for="edit_nama_{{ $p->id }}" class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                                                <input type="text" name="nama" id="edit_nama_{{ $p->id }}" class="form-control form-control-sm" value="{{ $p->nama }}" aria-label="Nama Lengkap" required>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label small fw-semibold">Jabatan</label>
-                                                <input type="text" name="jabatan" class="form-control form-control-sm" value="{{ $p->jabatan }}" placeholder="Contoh: Kakanwil">
+                                                <label for="edit_jabatan_{{ $p->id }}" class="form-label small fw-semibold">Jabatan</label>
+                                                <input type="text" name="jabatan" id="edit_jabatan_{{ $p->id }}" class="form-control form-control-sm" value="{{ $p->jabatan }}" placeholder="Contoh: Kakanwil" aria-label="Jabatan">
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label small fw-semibold">Nomor WhatsApp <span class="text-danger">*</span></label>
-                                                <input type="text" name="no_wa" class="form-control form-control-sm" value="{{ $p->no_wa }}" placeholder="08xxxxxxxxxx" required>
+                                                <label for="edit_no_wa_{{ $p->id }}" class="form-label small fw-semibold">Nomor WhatsApp <span class="text-danger">*</span></label>
+                                                <input type="text" name="no_wa" id="edit_no_wa_{{ $p->id }}" class="form-control form-control-sm" value="{{ $p->no_wa }}" placeholder="08xxxxxxxxxx" aria-label="Nomor WhatsApp" required>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label small fw-semibold">Urutan Tampilan</label>
-                                                <input type="number" name="urutan" class="form-control form-control-sm" value="{{ $p->urutan }}" min="0">
+                                                <label for="edit_urutan_{{ $p->id }}" class="form-label small fw-semibold">Urutan Tampilan</label>
+                                                <input type="number" name="urutan" id="edit_urutan_{{ $p->id }}" class="form-control form-control-sm" value="{{ $p->urutan }}" min="0" aria-label="Urutan Tampilan">
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" name="aktif" id="aktifEdit{{ $p->id }}" {{ $p->aktif ? 'checked' : '' }}>
@@ -114,26 +114,26 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-plus-circle me-2"></i>Tambah Data Pimpinan</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form action="{{ route('wa.pimpinan.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                        <input type="text" name="nama" class="form-control form-control-sm" placeholder="Nama dan Gelar" required>
+                        <label for="add_pimpinan_nama" class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                        <input type="text" name="nama" id="add_pimpinan_nama" class="form-control form-control-sm" placeholder="Nama dan Gelar" aria-label="Nama Lengkap" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Jabatan</label>
-                        <input type="text" name="jabatan" class="form-control form-control-sm" placeholder="Contoh: Kepala Kantor Wilayah">
+                        <label for="add_pimpinan_jabatan" class="form-label small fw-semibold">Jabatan</label>
+                        <input type="text" name="jabatan" id="add_pimpinan_jabatan" class="form-control form-control-sm" placeholder="Contoh: Kepala Kantor Wilayah" aria-label="Jabatan">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Nomor WhatsApp <span class="text-danger">*</span></label>
-                        <input type="text" name="no_wa" class="form-control form-control-sm" placeholder="08xxxxxxxxxx" required>
+                        <label for="add_pimpinan_no_wa" class="form-label small fw-semibold">Nomor WhatsApp <span class="text-danger">*</span></label>
+                        <input type="text" name="no_wa" id="add_pimpinan_no_wa" class="form-control form-control-sm" placeholder="08xxxxxxxxxx" aria-label="Nomor WhatsApp" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Urutan Tampilan</label>
-                        <input type="number" name="urutan" class="form-control form-control-sm" value="{{ count($pimpinanList) + 1 }}" min="0">
+                        <label for="add_pimpinan_urutan" class="form-label small fw-semibold">Urutan Tampilan</label>
+                        <input type="number" name="urutan" id="add_pimpinan_urutan" class="form-control form-control-sm" value="{{ count($pimpinanList) + 1 }}" min="0" aria-label="Urutan Tampilan">
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" name="aktif" id="aktifAdd" checked>

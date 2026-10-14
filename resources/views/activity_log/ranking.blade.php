@@ -193,7 +193,8 @@
             <i class="fas fa-clock me-1"></i> Batas Waktu: <strong>{{ $rankingData['period']['jam_selesai'] }} WIB</strong>
         </span>
         <a href="{{ route('activity-log.ranking.excel', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
-           class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm">
+           class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm"
+           aria-label="Export Excel Ranking Kepatuhan UPT">
             <i class="fas fa-file-excel me-1"></i> Export Excel
         </a>
     </div>
@@ -337,19 +338,19 @@
 
             <!-- Custom Date Inputs -->
             <div class="col-6 col-lg-3">
-                <label class="form-label small fw-bold text-muted mb-1">
+                <label for="rank_start_date" class="form-label small fw-bold text-muted mb-1">
                     <i class="fas fa-calendar-alt text-primary me-1"></i>Tanggal Mulai
                 </label>
-                <input type="date" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $startDate }}" required onchange="document.getElementById('presetInput').value='custom'">
+                <input type="date" id="rank_start_date" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $startDate }}" aria-label="Tanggal Mulai" required onchange="document.getElementById('presetInput').value='custom'">
             </div>
             <div class="col-6 col-lg-3">
-                <label class="form-label small fw-bold text-muted mb-1">
+                <label for="rank_end_date" class="form-label small fw-bold text-muted mb-1">
                     <i class="fas fa-calendar-alt text-primary me-1"></i>Tanggal Akhir
                 </label>
-                <input type="date" name="tanggal_akhir" class="form-control form-control-sm" value="{{ $endDate }}" required onchange="document.getElementById('presetInput').value='custom'">
+                <input type="date" id="rank_end_date" name="tanggal_akhir" class="form-control form-control-sm" value="{{ $endDate }}" aria-label="Tanggal Akhir" required onchange="document.getElementById('presetInput').value='custom'">
             </div>
             <div class="col-12 col-lg-1">
-                <button type="submit" class="btn btn-primary btn-sm w-100">
+                <button type="submit" class="btn btn-primary btn-sm w-100" aria-label="Terapkan Filter Periode">
                     <i class="fas fa-filter me-1"></i> Filter
                 </button>
             </div>
