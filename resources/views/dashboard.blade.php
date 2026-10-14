@@ -683,7 +683,58 @@
                 <button type="button" class="map-filter-chip" data-filter="over">Overkapasitas</button>
             </div>
 
-            <div id="mapBanten" style="height: 440px; width: 100%; border-radius: 14px; z-index: 1;"></div>
+            <div class="map-interactive-wrapper">
+                <div id="mapBanten" style="height: 440px; width: 100%; border-radius: 14px; z-index: 1;"></div>
+
+                <!-- Modern Mobile Bottom Sheet HUD (Hanya Aktif di Selular < 768px) -->
+                <div id="mapMobileSheet" class="map-mobile-sheet" aria-hidden="true">
+                    <div class="mobile-sheet-drag-handle" id="mobileSheetHandle"><span></span></div>
+                    <div class="mobile-sheet-header">
+                        <div class="mobile-sheet-title-group">
+                            <span id="sheetBadge" class="pill-badge pill-badge-emerald">Status</span>
+                            <h6 id="sheetTitle" class="mobile-sheet-title">Nama UPT</h6>
+                        </div>
+                        <button type="button" class="btn-sheet-close" id="btnSheetClose" aria-label="Tutup detail UPT">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="mobile-sheet-body">
+                        <a id="sheetAddress" href="#" target="_blank" rel="noopener noreferrer" class="mobile-sheet-address" title="Buka alamat di Google Maps / Navigasi">
+                            <i class="fas fa-map-marker-alt text-danger me-1 flex-shrink-0"></i>
+                            <span id="sheetAddressText" class="mobile-sheet-address-text">Alamat UPT</span>
+                            <i class="fas fa-external-link-alt ms-1 text-cyan opacity-75" style="font-size: 9px;"></i>
+                        </a>
+                        <div class="mobile-sheet-grid">
+                            <div class="mobile-sheet-stat">
+                                <span class="mobile-sheet-stat-lbl">Kapasitas</span>
+                                <span id="sheetKapasitas" class="mobile-sheet-stat-val font-speedometer">0</span>
+                            </div>
+                            <div class="mobile-sheet-stat">
+                                <span class="mobile-sheet-stat-lbl">Penghuni</span>
+                                <span id="sheetPenghuni" class="mobile-sheet-stat-val font-speedometer">0</span>
+                            </div>
+                            <div class="mobile-sheet-stat">
+                                <span class="mobile-sheet-stat-lbl">Tahanan</span>
+                                <span id="sheetTahanan" class="mobile-sheet-stat-val font-speedometer">0</span>
+                            </div>
+                            <div class="mobile-sheet-stat">
+                                <span class="mobile-sheet-stat-lbl">Narapidana</span>
+                                <span id="sheetNapi" class="mobile-sheet-stat-val font-speedometer">0</span>
+                            </div>
+                        </div>
+                        <div class="mobile-sheet-progress-track">
+                            <div id="sheetProgressFill" class="mobile-sheet-progress-fill bg-emerald" style="width: 0%;"></div>
+                        </div>
+                        <div class="mobile-sheet-actions">
+                            <a id="sheetGmapsBtn" href="#" target="_blank" rel="noopener noreferrer" class="hud-btn-maps w-100">
+                                <i class="fas fa-location-arrow"></i>
+                                <span>Petunjuk Arah (Google Maps)</span>
+                                <i class="fas fa-arrow-up-right-from-square ms-auto" style="font-size: 10px;"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="d-flex align-items-center justify-content-between mt-2 flex-wrap gap-2 text-muted small">
                 <div class="d-flex align-items-center gap-2">
@@ -2601,6 +2652,23 @@
                     className: 'hud-custom-popup'
                 });
 
+            marker.on('click', function(e) {
+                if (isMobileScreen()) {
+                    setTimeout(() => mapBanten.closePopup(), 0);
+                    openMobileSheet(upt, marker);
+                } else {
+                    closeMobileSheet();
+                    marker.openPopup();
+                }
+            });
+
+            marker.on('popupopen', function() {
+                if (isMobileScreen()) {
+                    mapBanten.closePopup();
+                    openMobileSheet(upt, marker);
+                }
+            });
+
             markers.push({
                 id: upt.id,
                 data: upt,
@@ -2609,10 +2677,118 @@
         }
     });
 
+    // Helper to check if current viewport is mobile screen
+    function isMobileScreen() {
+        return window.innerWidth < 768;
+    }
+
+    // Mobile Bottom Sheet HUD Elements & Controls
+    const mapMobileSheet = document.getElementById('mapMobileSheet');
+    const btnSheetClose = document.getElementById('btnSheetClose');
+    const sheetBadge = document.getElementById('sheetBadge');
+    const sheetTitle = document.getElementById('sheetTitle');
+    const sheetAddress = document.getElementById('sheetAddress');
+    const sheetAddressText = document.getElementById('sheetAddressText');
+    const sheetKapasitas = document.getElementById('sheetKapasitas');
+    const sheetPenghuni = document.getElementById('sheetPenghuni');
+    const sheetTahanan = document.getElementById('sheetTahanan');
+    const sheetNapi = document.getElementById('sheetNapi');
+    const sheetProgressFill = document.getElementById('sheetProgressFill');
+    const sheetGmapsBtn = document.getElementById('sheetGmapsBtn');
+
+    function closeMobileSheet() {
+        if (mapMobileSheet) {
+            mapMobileSheet.classList.remove('is-open');
+            mapMobileSheet.setAttribute('aria-hidden', 'true');
+        }
+        document.querySelectorAll('.hud-marker-wrapper').forEach(el => el.classList.remove('is-selected'));
+    }
+
+    function openMobileSheet(uptData, markerLayer) {
+        if (!mapMobileSheet) return;
+
+        const totalPenghuni = parseInt(uptData.total_penghuni) || 0;
+        const totalTahanan = parseInt(uptData.total_tahanan) || 0;
+        const totalNapi = parseInt(uptData.total_narapidana) || 0;
+        const kapasitas = parseInt(uptData.kapasitas) || 0;
+        const persen = kapasitas > 0 ? Math.round(((totalPenghuni - kapasitas) / kapasitas) * 100) : 0;
+        const tingkatHunian = kapasitas > 0 ? Math.round((totalPenghuni / kapasitas) * 100) : 0;
+        const persenText = persen > 0 ? '+' + persen + '%' : persen + '%';
+
+        let statusClass = 'emerald';
+        let statusBadge = 'Longgar';
+        let markerColor = '#10b981';
+        if (persen > 50) { 
+            statusClass = 'rose'; 
+            statusBadge = 'Kritis'; 
+            markerColor = '#f43f5e';
+        } else if (persen > 0) { 
+            statusClass = 'amber'; 
+            statusBadge = 'Waspada'; 
+            markerColor = '#f59e0b';
+        }
+
+        const lat = parseFloat(uptData.latitude);
+        const lng = parseFloat(uptData.longitude);
+        const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        const addressText = uptData.alamat ? uptData.alamat : 'Provinsi Banten, Indonesia';
+
+        if (sheetBadge) {
+            sheetBadge.className = `pill-badge pill-badge-${statusClass}`;
+            sheetBadge.textContent = `${statusBadge} (${persenText})`;
+        }
+        if (sheetTitle) sheetTitle.textContent = uptData.nama_upt || 'UPT Pemasyarakatan';
+        if (sheetAddress) sheetAddress.href = gmapsUrl;
+        if (sheetAddressText) sheetAddressText.textContent = addressText;
+        if (sheetKapasitas) sheetKapasitas.textContent = formatNumber(kapasitas);
+        if (sheetPenghuni) {
+            sheetPenghuni.textContent = formatNumber(totalPenghuni);
+            sheetPenghuni.style.color = markerColor;
+        }
+        if (sheetTahanan) sheetTahanan.textContent = formatNumber(totalTahanan);
+        if (sheetNapi) sheetNapi.textContent = formatNumber(totalNapi);
+        if (sheetProgressFill) {
+            sheetProgressFill.className = `mobile-sheet-progress-fill bg-${statusClass}`;
+            sheetProgressFill.style.width = `${Math.min(100, Math.max(5, tingkatHunian))}%`;
+        }
+        if (sheetGmapsBtn) sheetGmapsBtn.href = gmapsUrl;
+
+        // Highlight selected marker pin with glow ring
+        document.querySelectorAll('.hud-marker-wrapper').forEach(el => el.classList.remove('is-selected'));
+        const wrapper = markerLayer?.getElement()?.querySelector('.hud-marker-wrapper');
+        if (wrapper) {
+            wrapper.classList.add('is-selected');
+        }
+
+        // Smart vertical offset pan on mobile: keep marker in the visible upper half of map
+        if (mapBanten && !isNaN(lat) && !isNaN(lng)) {
+            const targetLatLng = L.latLng(lat, lng);
+            const pt = mapBanten.latLngToContainerPoint(targetLatLng);
+            const offsetPt = L.point(pt.x, pt.y + 75);
+            const newCenter = mapBanten.containerPointToLatLng(offsetPt);
+            mapBanten.panTo(newCenter, { animate: true, duration: 0.35 });
+        }
+
+        mapMobileSheet.classList.add('is-open');
+        mapMobileSheet.setAttribute('aria-hidden', 'false');
+    }
+
+    btnSheetClose?.addEventListener('click', function(e) {
+        e.preventDefault();
+        closeMobileSheet();
+    });
+
+    mapBanten.on('click', function(e) {
+        if (isMobileScreen()) {
+            closeMobileSheet();
+        }
+    });
+
     // Function to zoom directly to the center of the marker cluster
     function zoomToClusterCenter(animate = true) {
         if (!mapBanten || markers.length === 0) return;
         mapBanten.invalidateSize();
+        closeMobileSheet();
         
         const activeMarkers = markers.filter(m => mapBanten.hasLayer(m.layer));
         const targetMarkers = activeMarkers.length > 0 ? activeMarkers : markers;
@@ -2645,6 +2821,7 @@
             document.querySelectorAll('.map-filter-chip').forEach(c => c.classList.remove('active'));
             this.classList.add('active');
             const filterType = this.getAttribute('data-filter');
+            closeMobileSheet();
 
             markers.forEach(item => {
                 let show = false;
@@ -2692,8 +2869,15 @@
                     mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
                 setTimeout(() => {
-                    mapBanten.setView([parseFloat(target.data.latitude), parseFloat(target.data.longitude)], 14, { animate: true });
-                    target.layer.openPopup();
+                    if (isMobileScreen()) {
+                        mapBanten.setView([parseFloat(target.data.latitude), parseFloat(target.data.longitude)], 13, { animate: true });
+                        setTimeout(() => {
+                            openMobileSheet(target.data, target.layer);
+                        }, 250);
+                    } else {
+                        mapBanten.setView([parseFloat(target.data.latitude), parseFloat(target.data.longitude)], 14, { animate: true });
+                        target.layer.openPopup();
+                    }
                 }, 400);
             }
         });
