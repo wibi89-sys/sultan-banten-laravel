@@ -304,7 +304,7 @@
             <div class="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
                 <div class="flex items-center gap-2 sm:gap-3">
                     @if (!empty($instansi->logo))
-                        <img src="{{ asset($instansi->logo) }}" alt="Logo" class="w-6 h-6 sm:w-8 sm:h-8 object-contain">
+                        <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-6 h-6 sm:w-8 sm:h-8 object-contain" width="32" height="32" loading="lazy">
                     @else
                         <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded flex items-center justify-center">
                             <i class="fas fa-balance-scale text-xs sm:text-sm text-primary"></i>
