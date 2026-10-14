@@ -1697,9 +1697,9 @@
         /* Center Big Text: 180.5% & Tingkat Hunian Tepat di Tengah Rongga 3/4 Lingkaran */
         .hero-center-text {
             position: absolute;
-            top: 50%;
+            top: 52%;
             left: 50%;
-            transform: translate(-50%, -46%);
+            transform: translate(-50%, -30%);
             text-align: center;
             pointer-events: none;
             width: 100%;
