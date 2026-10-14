@@ -969,6 +969,12 @@
             --pill-bg: #f1f5f9;
             --speedo-track: #e2e8f0;
             --speedo-text: #0f172a;
+            --speedo-bezel: #e2e8f0;
+            --speedo-slot: #cbd5e1;
+            --speedo-inner-dome-stop1: #f8fafc;
+            --speedo-inner-dome-stop2: #e2e8f0;
+            --speedo-scale-line: rgba(0, 0, 0, 0.12);
+            --speedo-tick-color: #64748b;
         }
 
         /* Dark Mode - Matched precisely to the high-tech Preview Concept */
@@ -987,6 +993,12 @@
             --pill-bg: rgba(255, 255, 255, 0.06);
             --speedo-track: rgba(255, 255, 255, 0.08);
             --speedo-text: #ffffff;
+            --speedo-bezel: #080e18;
+            --speedo-slot: #121c2c;
+            --speedo-inner-dome-stop1: #0e1726;
+            --speedo-inner-dome-stop2: #05080f;
+            --speedo-scale-line: rgba(255, 255, 255, 0.1);
+            --speedo-tick-color: #94a3b8;
         }
 
         /* Apply Typography Hierarchy */
@@ -1598,98 +1610,25 @@
             white-space: nowrap;
         }
 
-        /* Speedometer Hero Stage (Matches User Reference Image) */
+        /* ========================================================
+           SPEEDOMETER COCKPIT DIGITAL GAUGES (EXACT PLAN MATCH)
+           ======================================================== */
         .speedo-cockpit-stage {
             position: relative;
             width: 100%;
+            min-height: 240px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin: 6px 0 16px 0;
+            padding: 4px 0 10px 0;
         }
 
-        /* Companion Overkapasitas Gauge at Kanan Atas */
-        .speedo-overkapasitas-topright {
-            position: absolute;
-            top: -4px;
-            right: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(244, 63, 94, 0.05);
-            border: 1px solid rgba(244, 63, 94, 0.15);
-            border-radius: 18px;
-            padding: 6px 12px 5px 12px;
-            backdrop-filter: blur(8px);
-            z-index: 5;
-            transition: all 0.3s ease;
-        }
-
-        .speedo-over-mini-wrap {
-            position: relative;
-            width: 100px;
-            height: 58px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .speedo-over-mini-svg {
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-        }
-
-        .speedo-mini-track {
-            fill: none;
-            stroke: rgba(148, 163, 184, 0.2);
-            stroke-width: 7;
-            stroke-linecap: round;
-        }
-
-        .speedo-mini-fill {
-            fill: none;
-            stroke-width: 7;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .speedo-mini-marker {
-            transform-origin: 52.5px 55px;
-            transition: transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .speedo-over-mini-content {
-            position: absolute;
-            bottom: 3px;
-            text-align: center;
-            width: 100%;
-        }
-
-        .speedo-over-mini-val {
-            font-family: var(--font-speedometer, 'Outfit', sans-serif);
-            font-size: 16px;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.01em;
-        }
-
-        .speedo-over-mini-lbl {
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-secondary);
-            margin-top: 3px;
-        }
-
-        /* Main Tingkat Hunian Speedometer */
+        /* Hero Speedometer Container (Center Main) */
         .speedo-main-wrap {
             position: relative;
-            width: 100%;
-            max-width: 360px;
-            height: 205px;
+            width: 380px;
+            max-width: 100%;
+            height: 230px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
@@ -1700,192 +1639,148 @@
             width: 100%;
             height: 100%;
             overflow: visible;
+            display: block;
         }
 
-        .speedo-track-bezel {
-            fill: none;
-            stroke: var(--speedo-track-bg, #0f172a);
-            stroke-width: 24;
-            stroke-linecap: round;
-            opacity: 0.45;
+        .speedo-inner-dome {
+            fill: url(#innerDomeGradDark);
+            transition: fill 0.3s ease;
         }
 
-        .speedo-track-base {
-            fill: none;
-            stroke: var(--speedo-track-bg, #1e293b);
-            stroke-width: 16;
-            stroke-linecap: round;
+        :root:not([data-theme="dark"]) .speedo-inner-dome {
+            fill: url(#innerDomeGradLight);
         }
 
-        .speedo-fill-glow {
-            fill: none;
-            stroke-width: 16;
-            stroke-linecap: round;
-            filter: drop-shadow(0 0 14px currentColor);
-            transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .speedo-inner-ring {
-            fill: none;
-            stroke: rgba(148, 163, 184, 0.15);
-            stroke-width: 1.5;
-        }
-
-        .speedo-tick-line {
-            stroke: var(--text-secondary, #94a3b8);
-            opacity: 0.55;
-        }
-
-        .speedo-tick-text {
-            font-family: var(--font-speedometer, 'Outfit', sans-serif);
-            font-size: 11.5px;
+        .speedo-scale-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
             font-weight: 700;
-            fill: var(--text-secondary);
-            text-anchor: middle;
-            user-select: none;
+            fill: var(--speedo-tick-color, #94a3b8);
+            transition: fill 0.3s ease;
         }
 
-        .speedo-ray-marker {
-            transform-origin: 150px 165px;
-            transition: transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        .speedo-scale-num.apex-label {
+            font-size: 15px;
+            font-weight: 800;
+            fill: #cbd5e1;
         }
 
-        /* Center Big Digital Readout */
-        .speedo-center-readout {
+        :root:not([data-theme="dark"]) .speedo-scale-num {
+            fill: #64748b;
+        }
+
+        :root:not([data-theme="dark"]) .speedo-scale-num.apex-label {
+            fill: #1e293b;
+        }
+
+        /* Center Big Text: 180.5% & Tingkat Hunian */
+        .hero-center-text {
             position: absolute;
-            bottom: 22px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
-            width: 100%;
             pointer-events: none;
+            width: 100%;
+            z-index: 5;
         }
 
-        .speedo-hero-val {
-            font-family: var(--font-speedometer, 'Outfit', sans-serif);
-            font-size: 44px;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.02em;
-            transition: color 0.5s ease;
+        .hero-center-val {
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 52px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            letter-spacing: -0.02em !important;
+            text-shadow: 0 0 28px currentColor;
+            display: block;
         }
 
-        [data-theme="dark"] .speedo-hero-val {
-            text-shadow: 0 0 24px currentColor;
-        }
-
-        .speedo-hero-lbl {
-            font-size: 13.5px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            color: var(--text-secondary);
+        .hero-center-lbl {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
             margin-top: 5px;
+            letter-spacing: 0.02em;
+            display: block;
         }
 
-        /* Tick specific themes for Cluster */
-        .speedo-tick-item.tick-hunian-min .tick-pip {
-            background: #00f2fe;
-            box-shadow: 0 0 6px #00f2fe;
-            opacity: 0.95;
-        }
-        .speedo-tick-item.tick-hunian-min .tick-label {
-            color: #0284c7;
-        }
-        [data-theme="dark"] .speedo-tick-item.tick-hunian-min .tick-label {
-            color: #38bdf8;
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
-        }
-
-        .speedo-tick-item.tick-hunian-max .tick-pip {
-            background: #0284c7;
-            box-shadow: 0 0 6px #0284c7;
-            opacity: 0.95;
-        }
-        .speedo-tick-item.tick-hunian-max .tick-label {
-            color: #0284c7;
-        }
-        [data-theme="dark"] .speedo-tick-item.tick-hunian-max .tick-label {
-            color: #38bdf8;
+        /* Top-Right Overkapasitas Gauge (Semi-circular Digital Arc) */
+        .over-gauge-topright {
+            position: absolute;
+            top: -4px;
+            right: 0px;
+            width: 136px;
+            height: 96px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+            transition: all 0.25s ease;
         }
 
-        .speedo-tick-item.tick-over-min .tick-pip {
-            background: #10b981;
-            box-shadow: 0 0 6px #10b981;
-            opacity: 0.95;
-        }
-        .speedo-tick-item.tick-over-min .tick-label {
-            color: #059669;
-        }
-        [data-theme="dark"] .speedo-tick-item.tick-over-min .tick-label {
-            color: #34d399;
+        .over-gauge-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            display: block;
         }
 
-        .speedo-tick-item.tick-over-max .tick-pip {
-            background: #f43f5e;
-            box-shadow: 0 0 6px #f43f5e;
-            opacity: 0.95;
-        }
-        .speedo-tick-item.tick-over-max .tick-label {
-            color: #e11d48;
-        }
-        [data-theme="dark"] .speedo-tick-item.tick-over-max .tick-label {
-            color: #fb7185;
-            text-shadow: 0 0 8px rgba(251, 113, 133, 0.6);
+        .over-center-text {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            width: 100%;
         }
 
-        @media (max-width: 575.98px) {
-            .speedo-cluster-wrap {
-                gap: 6px !important;
-                margin-bottom: 14px !important;
-            }
-            .speedo-dial-box {
-                height: 120px !important;
-                max-width: 160px !important;
-            }
-            .speedo-cluster-val {
-                font-size: 24px !important;
-            }
-            .speedo-cluster-sub {
-                font-size: 9.5px !important;
-            }
-            .speedo-ticks .speedo-tick-item .tick-label {
-                font-size: 9.5px !important;
-            }
-            .speedo-cluster-divider {
-                height: 75px !important;
-            }
+        .over-center-val {
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 21px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            letter-spacing: -0.01em !important;
+            text-shadow: 0 0 16px currentColor;
+            display: block;
         }
 
-        @media (max-width: 380px) {
-            .speedo-cluster-wrap {
-                gap: 4px !important;
-                margin-bottom: 10px !important;
+        .over-center-lbl {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--text-secondary, #94a3b8);
+            margin-top: 2px;
+            letter-spacing: 0.02em;
+            display: block;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 640px) {
+            .speedo-cockpit-stage {
+                min-height: 250px;
+                padding-top: 36px;
             }
-            .speedo-dial-box {
-                height: 102px !important;
-                max-width: 135px !important;
+            .over-gauge-topright {
+                top: -8px;
+                right: -4px;
+                width: 110px;
+                height: 76px;
             }
-            .speedo-cluster-val {
-                font-size: 19px !important;
-            }
-            .speedo-cluster-sub {
-                font-size: 8px !important;
-                letter-spacing: 0.04em !important;
-            }
-            .speedo-ticks .speedo-tick-item .tick-label {
-                font-size: 8.5px !important;
-            }
-            .speedo-cluster-divider {
-                height: 60px !important;
-            }
-            .speedo-flank-card {
-                padding: 9px 9px !important;
-            }
-            .speedo-flank-card .bento-stat-value {
+            .over-center-val {
                 font-size: 17px !important;
             }
-            .speedo-flank-card .bento-stat-label {
-                font-size: 9.5px !important;
+            .over-center-lbl {
+                font-size: 9px !important;
+            }
+            .speedo-main-wrap {
+                width: 100%;
+                height: 200px;
+            }
+            .hero-center-val {
+                font-size: 40px !important;
+            }
+            .hero-center-lbl {
+                font-size: 12px;
             }
         }
 
