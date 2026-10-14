@@ -365,11 +365,12 @@
             </div>
             <form id="formInputMassal" method="POST" action="{{ route('penghuni.store') }}">
                 @csrf
+                <input type="hidden" name="force_update" id="penghuni_force_update" value="0">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2 mb-md-0">
                             <label class="form-label small fw-semibold">UPT <span class="text-danger">*</span></label>
-                            <select name="upt_id" class="form-select form-select-sm" required>
+                            <select name="upt_id" id="penghuni_add_upt_id" class="form-select form-select-sm" required>
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
                                 <option value="{{ $upt->id }}" {{ $userUptFilter == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
@@ -378,8 +379,14 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" id="penghuni_add_tanggal" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
                         </div>
+                    </div>
+                    
+                    <!-- Duplicate Alert Banner -->
+                    <div id="penghuni_duplicate_warning" class="alert alert-warning py-2 px-3 mb-2 small d-none align-items-center">
+                        <i class="fas fa-exclamation-triangle fs-5 me-2 flex-shrink-0 text-warning"></i>
+                        <span id="penghuni_duplicate_message"></span>
                     </div>
                     
                     <!-- Banner Informasi Auto-Copy Data Kemarin -->
@@ -518,7 +525,7 @@
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-4">
+                    <button type="submit" id="penghuni_btn_submit" class="btn btn-primary btn-sm px-4">
                         <i class="fas fa-save me-1"></i> Simpan Semua Data
                     </button>
                 </div>
@@ -592,7 +599,7 @@
                     <!-- Narapidana Input -->
                     <div class="card mb-3 border-primary border-opacity-25">
                         <div class="card-header bg-primary bg-opacity-10 py-1.5 fw-semibold small text-primary">
-                            <i class="fas fa-user-times me-1"></i> NARAPIDANA
+                            <i class="fas fa-users me-1"></i> NARAPIDANA
                         </div>
                         <div class="card-body py-2">
                             <div class="row g-2">
@@ -626,6 +633,37 @@
                     <button type="submit" class="btn btn-primary btn-sm px-3">Simpan Perubahan</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Duplicate Penghuni -->
+<div class="modal fade" id="modalConfirmDuplicatePenghuni" tabindex="-1" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header py-2 bg-warning text-dark">
+                <h5 class="modal-title fs-6 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Penghuni
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-2" id="confirm_duplicate_penghuni_msg">
+                    Data penghuni untuk UPT ini pada tanggal yang dipilih sudah ada di sistem.
+                </p>
+                <div class="alert alert-warning py-2 px-3 small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Apakah Anda ingin meng-<strong>Update</strong> data penghuni yang sudah ada tersebut dengan data baru ini, atau <strong>Batalkan</strong>?
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnConfirmUpdatePenghuni">
+                    <i class="fas fa-sync-alt me-1"></i>Update
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -780,11 +818,46 @@
         }
     }
 
+    let checkDuplicatePenghuniTimeout = null;
+
+    function checkDuplicatePenghuni() {
+        if (!selectUpt || !inputTanggal) return;
+        const uptId = selectUpt.value;
+        const tanggal = inputTanggal.value;
+        const warningBox = document.getElementById('penghuni_duplicate_warning');
+        const messageEl = document.getElementById('penghuni_duplicate_message');
+
+        if (!uptId || !tanggal || !warningBox || !messageEl) return;
+
+        clearTimeout(checkDuplicatePenghuniTimeout);
+        checkDuplicatePenghuniTimeout = setTimeout(() => {
+            fetch(`{{ route('penghuni.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exists) {
+                        messageEl.innerHTML = (data.message || 'Data penghuni untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
+                        warningBox.classList.remove('d-none');
+                        warningBox.classList.add('d-flex');
+                    } else {
+                        warningBox.classList.add('d-none');
+                        warningBox.classList.remove('d-flex');
+                    }
+                })
+                .catch(() => {});
+        }, 200);
+    }
+
     if (selectUpt) {
-        selectUpt.addEventListener('change', loadPreviousData);
+        selectUpt.addEventListener('change', () => {
+            loadPreviousData();
+            checkDuplicatePenghuni();
+        });
     }
     if (inputTanggal) {
-        inputTanggal.addEventListener('change', loadPreviousData);
+        inputTanggal.addEventListener('change', () => {
+            loadPreviousData();
+            checkDuplicatePenghuni();
+        });
     }
     if (btnResetZero) {
         btnResetZero.addEventListener('click', resetFormToZero);
@@ -795,8 +868,102 @@
 
     if (modalAddEl) {
         modalAddEl.addEventListener('show.bs.modal', function() {
+            const forceInput = document.getElementById('penghuni_force_update');
+            if (forceInput) forceInput.value = '0';
+
             if (selectUpt && selectUpt.value) {
                 loadPreviousData();
+                checkDuplicatePenghuni();
+            }
+        });
+    }
+
+    // Intercept formInputMassal submit to check duplicate & show Update / Batal confirmation
+    const formInputMassal = document.getElementById('formInputMassal');
+    if (formInputMassal) {
+        formInputMassal.addEventListener('submit', function(e) {
+            const forceUpdateInput = document.getElementById('penghuni_force_update');
+            if (forceUpdateInput && forceUpdateInput.value === '1') {
+                return true;
+            }
+
+            e.preventDefault();
+            const uptId = selectUpt ? selectUpt.value : '';
+            const tanggal = inputTanggal ? inputTanggal.value : '';
+
+            if (!uptId || !tanggal) {
+                this.submit();
+                return;
+            }
+
+            const submitBtn = document.getElementById('penghuni_btn_submit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memeriksa...';
+            }
+
+            fetch(`{{ route('penghuni.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Semua Data';
+                    }
+
+                    if (data.exists) {
+                        const msgEl = document.getElementById('confirm_duplicate_penghuni_msg');
+                        if (msgEl) {
+                            msgEl.innerHTML = `Data penghuni untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
+                        }
+                        const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmDuplicatePenghuni'));
+                        modalConfirm.show();
+                    } else {
+                        forceUpdateInput.value = '0';
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                        }
+                        formInputMassal.submit();
+                    }
+                })
+                .catch(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Semua Data';
+                    }
+                    formInputMassal.submit();
+                });
+        });
+    }
+
+    document.getElementById('btnConfirmUpdatePenghuni')?.addEventListener('click', function() {
+        const modalEl = document.getElementById('modalConfirmDuplicatePenghuni');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+        const forceUpdateInput = document.getElementById('penghuni_force_update');
+        if (forceUpdateInput) forceUpdateInput.value = '1';
+
+        const submitBtn = document.getElementById('penghuni_btn_submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
+        }
+        formInputMassal.submit();
+    });
+
+    // Double-submit prevention for formEdit
+    const formEditPenghuni = document.getElementById('formEdit');
+    if (formEditPenghuni) {
+        formEditPenghuni.addEventListener('submit', function(e) {
+            const btn = formEditPenghuni.querySelector('button[type="submit"]');
+            if (btn) {
+                if (btn.disabled) {
+                    e.preventDefault();
+                    return false;
+                }
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
             }
         });
     }

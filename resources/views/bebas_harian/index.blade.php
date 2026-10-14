@@ -196,15 +196,22 @@
             </div>
             <form method="POST" action="{{ route('bebas-harian.store') }}" id="formTambah">
                 @csrf
+                <input type="hidden" name="force_update" id="bebas_force_update" value="0">
                 <div class="modal-body">
+                    <!-- Duplicate Alert Banner -->
+                    <div id="bebas_duplicate_warning" class="alert alert-warning py-2 px-3 mb-3 small d-none align-items-center">
+                        <i class="fas fa-exclamation-triangle fs-5 me-2 flex-shrink-0 text-warning"></i>
+                        <span id="bebas_duplicate_message"></span>
+                    </div>
+
                     <div class="row g-3 mb-4 bg-light p-3 rounded">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">UPT Pemasyarakatan <span class="text-danger">*</span></label>
                             @if ($userUptFilter)
-                                <input type="hidden" name="upt_id" value="{{ $userUptFilter }}">
+                                <input type="hidden" name="upt_id" id="bebas_add_upt_id" value="{{ $userUptFilter }}">
                                 <input type="text" class="form-control" value="{{ auth()->user()->upt->nama_upt ?? '-' }}" readonly>
                             @else
-                                <select name="upt_id" class="form-select" required>
+                                <select name="upt_id" id="bebas_add_upt_id" class="form-select" required>
                                     <option value="">-- Pilih UPT --</option>
                                     @foreach ($uptList as $upt)
                                         <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
@@ -214,7 +221,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tanggal Bebas <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" id="bebas_add_tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
                         </div>
                     </div>
 
@@ -274,7 +281,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary px-4">
+                    <button type="submit" id="bebas_btn_submit" class="btn btn-primary px-4">
                         <i class="fas fa-save me-1"></i> Simpan Data Bebas Harian
                     </button>
                 </div>
@@ -366,6 +373,37 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Duplicate Bebas Harian -->
+<div class="modal fade" id="modalConfirmDuplicateBebas" tabindex="-1" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header py-2 bg-warning text-dark">
+                <h5 class="modal-title fs-6 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Bebas Harian
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-2" id="confirm_duplicate_bebas_msg">
+                    Data bebas harian untuk UPT ini pada tanggal yang dipilih sudah ada di sistem.
+                </p>
+                <div class="alert alert-warning py-2 px-3 small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Apakah Anda ingin meng-<strong>Update</strong> data bebas harian yang sudah ada tersebut dengan angka baru ini, atau <strong>Batalkan</strong>?
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnConfirmUpdateBebas">
+                    <i class="fas fa-sync-alt me-1"></i>Update
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -515,6 +553,149 @@
             .catch(err => {
                 alert('Gagal mengambil data untuk diedit: ' + err.message);
             });
+    }
+
+    let checkDuplicateBebasTimeout = null;
+
+    function checkDuplicateBebas() {
+        const uptSelect = document.getElementById('bebas_add_upt_id');
+        const tglInput = document.getElementById('bebas_add_tanggal');
+        const warningBox = document.getElementById('bebas_duplicate_warning');
+        const messageEl = document.getElementById('bebas_duplicate_message');
+
+        if (!uptSelect || !tglInput || !warningBox || !messageEl) return;
+
+        const uptId = uptSelect.value;
+        const tanggal = tglInput.value;
+
+        if (!uptId || !tanggal) {
+            warningBox.classList.add('d-none');
+            warningBox.classList.remove('d-flex');
+            return;
+        }
+
+        clearTimeout(checkDuplicateBebasTimeout);
+        checkDuplicateBebasTimeout = setTimeout(() => {
+            fetch(`{{ route('bebas-harian.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exists) {
+                        messageEl.innerHTML = (data.message || 'Data bebas harian untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
+                        warningBox.classList.remove('d-none');
+                        warningBox.classList.add('d-flex');
+                    } else {
+                        warningBox.classList.add('d-none');
+                        warningBox.classList.remove('d-flex');
+                    }
+                })
+                .catch(() => {});
+        }, 200);
+    }
+
+    const bebasUpt = document.getElementById('bebas_add_upt_id');
+    const bebasTanggal = document.getElementById('bebas_add_tanggal');
+    if (bebasUpt) bebasUpt.addEventListener('change', checkDuplicateBebas);
+    if (bebasTanggal) bebasTanggal.addEventListener('change', checkDuplicateBebas);
+
+    const modalTambahEl = document.getElementById('modalTambah');
+    if (modalTambahEl) {
+        modalTambahEl.addEventListener('show.bs.modal', function() {
+            const forceInput = document.getElementById('bebas_force_update');
+            if (forceInput) forceInput.value = '0';
+            checkDuplicateBebas();
+        });
+    }
+
+    // Intercept formTambah submit to check duplicate & show Update / Batal confirmation
+    const formTambah = document.getElementById('formTambah');
+    if (formTambah) {
+        formTambah.addEventListener('submit', function(e) {
+            const forceUpdateInput = document.getElementById('bebas_force_update');
+            if (forceUpdateInput && forceUpdateInput.value === '1') {
+                return true;
+            }
+
+            e.preventDefault();
+            const uptSelect = document.getElementById('bebas_add_upt_id');
+            const tglInput = document.getElementById('bebas_add_tanggal');
+            const uptId = uptSelect ? uptSelect.value : '';
+            const tanggal = tglInput ? tglInput.value : '';
+
+            if (!uptId || !tanggal) {
+                this.submit();
+                return;
+            }
+
+            const submitBtn = document.getElementById('bebas_btn_submit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memeriksa...';
+            }
+
+            fetch(`{{ route('bebas-harian.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Data Bebas Harian';
+                    }
+
+                    if (data.exists) {
+                        const msgEl = document.getElementById('confirm_duplicate_bebas_msg');
+                        if (msgEl) {
+                            msgEl.innerHTML = `Data bebas harian untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
+                        }
+                        const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmDuplicateBebas'));
+                        modalConfirm.show();
+                    } else {
+                        forceUpdateInput.value = '0';
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                        }
+                        formTambah.submit();
+                    }
+                })
+                .catch(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Data Bebas Harian';
+                    }
+                    formTambah.submit();
+                });
+        });
+    }
+
+    document.getElementById('btnConfirmUpdateBebas')?.addEventListener('click', function() {
+        const modalEl = document.getElementById('modalConfirmDuplicateBebas');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+        const forceUpdateInput = document.getElementById('bebas_force_update');
+        if (forceUpdateInput) forceUpdateInput.value = '1';
+
+        const submitBtn = document.getElementById('bebas_btn_submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
+        }
+        formTambah.submit();
+    });
+
+    // Double-submit prevention for formEdit
+    const formEditBebas = document.getElementById('formEdit');
+    if (formEditBebas) {
+        formEditBebas.addEventListener('submit', function(e) {
+            const btn = formEditBebas.querySelector('button[type="submit"]');
+            if (btn) {
+                if (btn.disabled) {
+                    e.preventDefault();
+                    return false;
+                }
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+            }
+        });
     }
 </script>
 @endpush

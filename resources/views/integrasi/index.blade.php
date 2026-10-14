@@ -249,13 +249,20 @@
                 <h5 class="modal-title fs-6"><i class="fas fa-plus-circle me-2"></i>Tambah Data Integrasi</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ route('integrasi.store') }}">
+            <form method="POST" action="{{ route('integrasi.store') }}" id="formAdd">
                 @csrf
+                <input type="hidden" name="force_update" id="add_force_update" value="0">
                 <div class="modal-body">
+                    <!-- Duplicate Alert Banner -->
+                    <div id="add_duplicate_warning" class="alert alert-warning py-2 px-3 small d-none align-items-center mb-3">
+                        <i class="fas fa-exclamation-triangle fs-5 me-2 flex-shrink-0 text-warning"></i>
+                        <span id="add_duplicate_message"></span>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2 mb-md-0">
                             <label class="form-label small fw-semibold">UPT <span class="text-danger">*</span></label>
-                            <select name="upt_id" class="form-select form-select-sm" required>
+                            <select name="upt_id" id="add_upt_id" class="form-select form-select-sm" required>
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
                                 <option value="{{ $upt->id }}" {{ $userUptFilter == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
@@ -264,7 +271,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
                         </div>
                     </div>
                     
@@ -338,7 +345,7 @@
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Simpan</button>
+                    <button type="submit" id="add_btn_submit" class="btn btn-primary btn-sm px-3">Simpan</button>
                 </div>
             </form>
         </div>
@@ -450,6 +457,36 @@
         </div>
     </div>
 </div>
+<!-- Modal Konfirmasi Duplicate Integrasi -->
+<div class="modal fade" id="modalConfirmDuplicateIntegrasi" tabindex="-1" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header py-2 bg-warning text-dark">
+                <h5 class="modal-title fs-6 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Integrasi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-2" id="confirm_duplicate_integrasi_msg">
+                    Data integrasi untuk UPT ini pada tanggal yang dipilih sudah ada di sistem.
+                </p>
+                <div class="alert alert-warning py-2 px-3 small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Apakah Anda ingin meng-<strong>Update</strong> data yang sudah ada dengan angka baru ini, atau <strong>Batalkan</strong>?
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnConfirmUpdateIntegrasi">
+                    <i class="fas fa-sync-alt me-1"></i>Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -474,6 +511,132 @@
         if (skEl) skEl.textContent = totSK;
     }
 
+    let checkDuplicateTimeout = null;
+
+    function checkDuplicateDate(prefix) {
+        const uptSelect = document.getElementById(prefix + '_upt_id');
+        const tglInput = document.getElementById(prefix + '_tanggal');
+        const warningBox = document.getElementById(prefix + '_duplicate_warning');
+        const messageEl = document.getElementById(prefix + '_duplicate_message');
+        const submitBtn = document.getElementById(prefix + '_btn_submit');
+        const excludeId = prefix === 'edit' ? (document.getElementById('edit_id')?.value || 0) : 0;
+
+        if (!uptSelect || !tglInput || !warningBox) return;
+
+        const uptId = uptSelect.value;
+        const tanggal = tglInput.value;
+
+        if (!uptId || !tanggal) {
+            warningBox.classList.add('d-none');
+            warningBox.classList.remove('d-flex');
+            return;
+        }
+
+        clearTimeout(checkDuplicateTimeout);
+        checkDuplicateTimeout = setTimeout(() => {
+            fetch(`{{ route('integrasi.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}&exclude_id=${encodeURIComponent(excludeId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exists) {
+                        messageEl.innerHTML = (data.message || 'Data integrasi untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
+                        warningBox.classList.remove('d-none');
+                        warningBox.classList.add('d-flex');
+                    } else {
+                        warningBox.classList.add('d-none');
+                        warningBox.classList.remove('d-flex');
+                    }
+                })
+                .catch(() => {});
+        }, 200);
+    }
+
+    const addUpt = document.getElementById('add_upt_id');
+    const addTanggal = document.getElementById('add_tanggal');
+    if (addUpt) addUpt.addEventListener('change', () => checkDuplicateDate('add'));
+    if (addTanggal) addTanggal.addEventListener('change', () => checkDuplicateDate('add'));
+
+    const modalAddEl = document.getElementById('modalAdd');
+    if (modalAddEl) {
+        modalAddEl.addEventListener('show.bs.modal', function() {
+            document.getElementById('add_force_update').value = '0';
+            updateJumlah('add');
+            checkDuplicateDate('add');
+        });
+    }
+
+    // Intercept formAdd submit to check duplicate & show Update / Batal confirmation
+    document.getElementById('formAdd')?.addEventListener('submit', function(e) {
+        const forceUpdateInput = document.getElementById('add_force_update');
+        if (forceUpdateInput && forceUpdateInput.value === '1') {
+            return true;
+        }
+
+        e.preventDefault();
+        const uptSelect = document.getElementById('add_upt_id');
+        const tglInput = document.getElementById('add_tanggal');
+        const uptId = uptSelect ? uptSelect.value : '';
+        const tanggal = tglInput ? tglInput.value : '';
+
+        if (!uptId || !tanggal) {
+            this.submit();
+            return;
+        }
+
+        const submitBtn = document.getElementById('add_btn_submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memeriksa...';
+        }
+
+        fetch(`{{ route('integrasi.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Simpan';
+                }
+
+                if (data.exists) {
+                    const msgEl = document.getElementById('confirm_duplicate_integrasi_msg');
+                    if (msgEl) {
+                        msgEl.innerHTML = `Data integrasi untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
+                    }
+                    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmDuplicateIntegrasi'));
+                    modalConfirm.show();
+                } else {
+                    forceUpdateInput.value = '0';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                    }
+                    document.getElementById('formAdd').submit();
+                }
+            })
+            .catch(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Simpan';
+                }
+                document.getElementById('formAdd').submit();
+            });
+    });
+
+    document.getElementById('btnConfirmUpdateIntegrasi')?.addEventListener('click', function() {
+        const modalEl = document.getElementById('modalConfirmDuplicateIntegrasi');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+        const forceUpdateInput = document.getElementById('add_force_update');
+        if (forceUpdateInput) forceUpdateInput.value = '1';
+
+        const submitBtn = document.getElementById('add_btn_submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
+        }
+        document.getElementById('formAdd').submit();
+    });
+
     function editData(data) {
         document.getElementById('formEdit').action = '/integrasi/' + data.id;
         document.getElementById('edit_id').value = data.id;
@@ -496,6 +659,22 @@
         updateJumlah('edit');
 
         new bootstrap.Modal(document.getElementById('modalEdit')).show();
+    }
+
+    // Double-submit prevention for formEdit
+    const formEditEl = document.getElementById('formEdit');
+    if (formEditEl) {
+        formEditEl.addEventListener('submit', function(e) {
+            const btn = formEditEl.querySelector('button[type="submit"]');
+            if (btn) {
+                if (btn.disabled) {
+                    e.preventDefault();
+                    return false;
+                }
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+            }
+        });
     }
 </script>
 @endpush

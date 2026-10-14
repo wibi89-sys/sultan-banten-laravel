@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\DataBebasHarian;
 use App\Models\Upt;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -113,7 +117,34 @@ class BebasHarianController extends Controller
         return response()->json($details);
     }
 
-    public function store(Request $request)
+    public function checkExists(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        if (! $user->hasAccess('bebas_harian')) {
+            return response()->json(['allowed' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $uptId = (int) $request->query('upt_id');
+        $tanggal = $request->query('tanggal');
+
+        if (! $uptId || ! $tanggal) {
+            return response()->json(['exists' => false]);
+        }
+
+        $exists = DataBebasHarian::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->exists();
+        $upt = Upt::find($uptId);
+
+        return response()->json([
+            'exists' => $exists,
+            'upt_name' => $upt?->nama_upt ?? 'UPT',
+            'tanggal_formatted' => formatDate($tanggal),
+            'message' => $exists
+                ? 'Data bebas harian untuk '.($upt?->nama_upt ?? 'UPT ini').' pada tanggal '.formatDate($tanggal).' sudah ada.'
+                : null,
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
         if (! $user->hasAccess('bebas_harian')) {
@@ -122,7 +153,7 @@ class BebasHarianController extends Controller
 
         $timeCheck = isInputTimeAllowed();
         if (! $timeCheck['allowed']) {
-            return back()->with('error', $timeCheck['message']);
+            return back()->with('error', $timeCheck['message'])->withInput();
         }
 
         $request->validate([
@@ -133,18 +164,24 @@ class BebasHarianController extends Controller
         $uptId = (int) $request->input('upt_id');
         $tanggal = $request->input('tanggal');
         $keteranganGlobal = $request->input('keterangan_global', '');
+        $forceUpdate = $request->boolean('force_update') || $request->input('force_update') === '1';
 
         if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
-        // Cegah duplikasi
-        if (DataBebasHarian::where('upt_id', $uptId)->where('tanggal', $tanggal)->exists()) {
-            return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal tersebut sudah ada. Silakan gunakan tombol edit.');
+        $isExisting = DataBebasHarian::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->exists();
+
+        if ($isExisting && ! $forceUpdate) {
+            return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
         }
 
         DB::beginTransaction();
         try {
+            if ($isExisting) {
+                DataBebasHarian::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->delete();
+            }
+
             foreach ($this->klasifikasiList as $klasifikasi => $key) {
                 DataBebasHarian::create([
                     'upt_id' => $uptId,
@@ -165,21 +202,33 @@ class BebasHarianController extends Controller
             DB::commit();
 
             $upt = Upt::find($uptId);
-            ActivityLog::create([
-                'user_id' => $user->id,
-                'user_name' => $user->nama_lengkap ?? $user->username,
-                'aksi' => 'tambah',
-                'modul' => 'bebas_harian',
-                'deskripsi' => "Menambahkan data bebas harian UPT {$upt->nama_upt} tanggal {$tanggal}",
-                'data_lama' => null,
-                'data_baru' => json_encode(['upt_id' => $uptId, 'tanggal' => $tanggal]),
-            ]);
+            $action = $isExisting ? 'edit' : 'tambah';
+            $msg = $isExisting
+                ? "Memperbarui data bebas harian UPT {$upt->nama_upt} tanggal {$tanggal} via form input"
+                : "Menambahkan data bebas harian UPT {$upt->nama_upt} tanggal {$tanggal}";
 
-            return back()->with('success', 'Data bebas harian berhasil disimpan.');
+            ActivityLog::log($action, 'bebas_harian', $msg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+
+            $successMsg = $isExisting
+                ? "Data bebas harian untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
+                : 'Data bebas harian berhasil disimpan.';
+
+            return back()->with('success', $successMsg);
+        } catch (UniqueConstraintViolationException $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+        } catch (QueryException $e) {
+            DB::rollBack();
+            if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? null) == 1062) {
+                return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+            }
+
+            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage());
+            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage())->withInput();
         }
     }
 

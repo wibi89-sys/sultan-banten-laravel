@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\DataPenghuni;
 use App\Models\Upt;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -165,7 +169,40 @@ class PenghuniController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function checkExists(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        if (! $user->hasAccess('penghuni')) {
+            return response()->json(['allowed' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $uptId = (int) $request->query('upt_id');
+        $tanggal = $request->query('tanggal');
+        $excludeId = (int) $request->query('exclude_id', 0);
+
+        if (! $uptId || ! $tanggal) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = DataPenghuni::where('upt_id', $uptId)->whereDate('tanggal', $tanggal);
+        if ($excludeId > 0) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $exists = $query->exists();
+        $upt = Upt::find($uptId);
+
+        return response()->json([
+            'exists' => $exists,
+            'upt_name' => $upt?->nama_upt ?? 'UPT',
+            'tanggal_formatted' => formatDate($tanggal),
+            'message' => $exists
+                ? 'Data penghuni untuk '.($upt?->nama_upt ?? 'UPT ini').' pada tanggal '.formatDate($tanggal).' sudah ada.'
+                : null,
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
         if (! $user->hasAccess('penghuni')) {
@@ -174,7 +211,7 @@ class PenghuniController extends Controller
 
         $timeCheck = isInputTimeAllowed();
         if (! $timeCheck['allowed']) {
-            return back()->with('error', $timeCheck['message']);
+            return back()->with('error', $timeCheck['message'])->withInput();
         }
 
         $request->validate([
@@ -184,51 +221,77 @@ class PenghuniController extends Controller
 
         $uptId = (int) $request->input('upt_id');
         $tanggal = $request->input('tanggal');
+        $forceUpdate = $request->boolean('force_update') || $request->input('force_update') === '1';
 
         if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
-        // Cegah duplikasi
-        if (DataPenghuni::where('upt_id', $uptId)->where('tanggal', $tanggal)->exists()) {
-            return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan gunakan tombol edit.');
+        $isExisting = DataPenghuni::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->exists();
+
+        if ($isExisting && ! $forceUpdate) {
+            return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
         }
 
         DB::beginTransaction();
         try {
-            $inserted = 0;
+            $processed = 0;
             foreach ($this->klasifikasiKeys as $klasifikasi => $key) {
-                DataPenghuni::create([
-                    'upt_id' => $uptId,
-                    'klasifikasi_pidana' => $klasifikasi,
-                    'tahanan_dewasa_laki' => (int) $request->input('tahanan_dl_'.$key, 0),
-                    'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dp_'.$key, 0),
-                    'tahanan_anak_laki' => (int) $request->input('tahanan_al_'.$key, 0),
-                    'tahanan_anak_perempuan' => (int) $request->input('tahanan_ap_'.$key, 0),
-                    'narapidana_dewasa_laki' => (int) $request->input('narapidana_dl_'.$key, 0),
-                    'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dp_'.$key, 0),
-                    'narapidana_anak_laki' => (int) $request->input('narapidana_al_'.$key, 0),
-                    'narapidana_anak_perempuan' => (int) $request->input('narapidana_ap_'.$key, 0),
-                    'tanggal' => $tanggal,
-                    'keterangan' => $request->input('keterangan', ''),
-                ]);
-                $inserted++;
+                DataPenghuni::updateOrCreate(
+                    [
+                        'upt_id' => $uptId,
+                        'tanggal' => $tanggal,
+                        'klasifikasi_pidana' => $klasifikasi,
+                    ],
+                    [
+                        'tahanan_dewasa_laki' => (int) $request->input('tahanan_dl_'.$key, 0),
+                        'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dp_'.$key, 0),
+                        'tahanan_anak_laki' => (int) $request->input('tahanan_al_'.$key, 0),
+                        'tahanan_anak_perempuan' => (int) $request->input('tahanan_ap_'.$key, 0),
+                        'narapidana_dewasa_laki' => (int) $request->input('narapidana_dl_'.$key, 0),
+                        'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dp_'.$key, 0),
+                        'narapidana_anak_laki' => (int) $request->input('narapidana_al_'.$key, 0),
+                        'narapidana_anak_perempuan' => (int) $request->input('narapidana_ap_'.$key, 0),
+                        'keterangan' => $request->input('keterangan', ''),
+                    ]
+                );
+                $processed++;
             }
 
             DB::commit();
 
             $upt = Upt::find($uptId);
-            ActivityLog::log('tambah', 'penghuni', "Menambahkan {$inserted} data penghuni untuk UPT {$upt->nama_upt} tanggal {$tanggal}", ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+            $action = $isExisting ? 'edit' : 'tambah';
+            $msg = $isExisting
+                ? "Memperbarui {$processed} data penghuni untuk UPT {$upt->nama_upt} tanggal {$tanggal} via form input"
+                : "Menambahkan {$processed} data penghuni untuk UPT {$upt->nama_upt} tanggal {$tanggal}";
 
-            return back()->with('success', "Berhasil menyimpan {$inserted} data penghuni.");
+            ActivityLog::log($action, 'penghuni', $msg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+
+            $successMsg = $isExisting
+                ? "Data penghuni untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
+                : "Berhasil menyimpan {$processed} data penghuni.";
+
+            return back()->with('success', $successMsg);
+        } catch (UniqueConstraintViolationException $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+        } catch (QueryException $e) {
+            DB::rollBack();
+            if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? null) == 1062) {
+                return back()->with('error', 'Data penghuni untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+            }
+
+            return back()->with('error', 'Gagal menyimpan data penghuni: '.$e->getMessage())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage());
+            return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage())->withInput();
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): RedirectResponse
     {
         $user = auth()->user();
         if (! $user->hasAccess('penghuni')) {
@@ -237,7 +300,7 @@ class PenghuniController extends Controller
 
         $timeCheck = isInputTimeAllowed();
         if (! $timeCheck['allowed']) {
-            return back()->with('error', $timeCheck['message']);
+            return back()->with('error', $timeCheck['message'])->withInput();
         }
 
         $penghuni = DataPenghuni::findOrFail($id);
@@ -250,8 +313,21 @@ class PenghuniController extends Controller
             'tanggal' => 'required|date',
         ]);
 
+        $tanggal = $request->input('tanggal');
+        $klasifikasi = $request->input('klasifikasi_pidana');
+
+        $existsOther = DataPenghuni::where('upt_id', $penghuni->upt_id)
+            ->whereDate('tanggal', $tanggal)
+            ->where('klasifikasi_pidana', $klasifikasi)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($existsOther) {
+            return back()->with('error', 'Data penghuni untuk klasifikasi '.$klasifikasi.' pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+        }
+
         $penghuni->update([
-            'klasifikasi_pidana' => $request->input('klasifikasi_pidana'),
+            'klasifikasi_pidana' => $klasifikasi,
             'tahanan_dewasa_laki' => (int) $request->input('tahanan_dewasa_laki', 0),
             'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dewasa_perempuan', 0),
             'tahanan_anak_laki' => (int) $request->input('tahanan_anak_laki', 0),
@@ -260,7 +336,7 @@ class PenghuniController extends Controller
             'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dewasa_perempuan', 0),
             'narapidana_anak_laki' => (int) $request->input('narapidana_anak_laki', 0),
             'narapidana_anak_perempuan' => (int) $request->input('narapidana_anak_perempuan', 0),
-            'tanggal' => $request->input('tanggal'),
+            'tanggal' => $tanggal,
             'keterangan' => $request->input('keterangan', ''),
         ]);
 

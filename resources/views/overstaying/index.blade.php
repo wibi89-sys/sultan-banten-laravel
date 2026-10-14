@@ -241,10 +241,11 @@
             </div>
             <form method="POST" action="{{ route('overstaying.store') }}" id="formAdd">
                 @csrf
+                <input type="hidden" name="force_update" id="add_force_update" value="0">
                 <div class="modal-body">
                     <!-- Duplicate Alert Banner -->
-                    <div id="add_duplicate_warning" class="alert alert-danger py-2 px-3 small d-none align-items-center mb-3">
-                        <i class="fas fa-exclamation-circle fs-5 me-2 flex-shrink-0"></i>
+                    <div id="add_duplicate_warning" class="alert alert-warning py-2 px-3 small d-none align-items-center mb-3">
+                        <i class="fas fa-exclamation-triangle fs-5 me-2 flex-shrink-0 text-warning"></i>
                         <span id="add_duplicate_message"></span>
                     </div>
 
@@ -452,6 +453,36 @@
         </div>
     </div>
 </div>
+<!-- Modal Konfirmasi Duplicate Overstaying -->
+<div class="modal fade" id="modalConfirmDuplicateOverstaying" tabindex="-1" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header py-2 bg-warning text-dark">
+                <h5 class="modal-title fs-6 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Overstaying
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-2" id="confirm_duplicate_overstaying_msg">
+                    Data overstaying untuk UPT ini pada tanggal yang dipilih sudah ada di sistem.
+                </p>
+                <div class="alert alert-warning py-2 px-3 small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Apakah Anda ingin meng-<strong>Update</strong> data yang sudah ada dengan angka baru ini, atau <strong>Batalkan</strong>?
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnConfirmUpdateOverstaying">
+                    <i class="fas fa-sync-alt me-1"></i>Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -504,10 +535,10 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.exists) {
-                        messageEl.textContent = data.message || 'Data overstaying untuk UPT ini pada tanggal tersebut sudah ada.';
+                        messageEl.innerHTML = (data.message || 'Data overstaying untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
                         warningBox.classList.remove('d-none');
                         warningBox.classList.add('d-flex');
-                        submitBtn.disabled = true;
+                        submitBtn.disabled = false;
                     } else {
                         warningBox.classList.add('d-none');
                         warningBox.classList.remove('d-flex');
@@ -533,10 +564,84 @@
     const modalAddEl = document.getElementById('modalAdd');
     if (modalAddEl) {
         modalAddEl.addEventListener('show.bs.modal', function() {
+            document.getElementById('add_force_update').value = '0';
             updateJumlah('add');
             checkDuplicateDate('add');
         });
     }
+
+    // Intercept formAdd submit to check duplicate & show Update / Batal confirmation
+    document.getElementById('formAdd')?.addEventListener('submit', function(e) {
+        const forceUpdateInput = document.getElementById('add_force_update');
+        if (forceUpdateInput && forceUpdateInput.value === '1') {
+            return true;
+        }
+
+        e.preventDefault();
+        const uptSelect = document.getElementById('add_upt_id');
+        const tglInput = document.getElementById('add_tanggal');
+        const uptId = uptSelect ? uptSelect.value : '';
+        const tanggal = tglInput ? tglInput.value : '';
+
+        if (!uptId || !tanggal) {
+            this.submit();
+            return;
+        }
+
+        const submitBtn = document.getElementById('add_btn_submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memeriksa...';
+        }
+
+        fetch(`{{ route('overstaying.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Simpan';
+                }
+
+                if (data.exists) {
+                    const msgEl = document.getElementById('confirm_duplicate_overstaying_msg');
+                    if (msgEl) {
+                        msgEl.innerHTML = `Data overstaying untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
+                    }
+                    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmDuplicateOverstaying'));
+                    modalConfirm.show();
+                } else {
+                    forceUpdateInput.value = '0';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+                    }
+                    document.getElementById('formAdd').submit();
+                }
+            })
+            .catch(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Simpan';
+                }
+                document.getElementById('formAdd').submit();
+            });
+    });
+
+    document.getElementById('btnConfirmUpdateOverstaying')?.addEventListener('click', function() {
+        const modalEl = document.getElementById('modalConfirmDuplicateOverstaying');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+        const forceUpdateInput = document.getElementById('add_force_update');
+        if (forceUpdateInput) forceUpdateInput.value = '1';
+
+        const submitBtn = document.getElementById('add_btn_submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
+        }
+        document.getElementById('formAdd').submit();
+    });
 
     function editData(data) {
         document.getElementById('formEdit').action = '/overstaying/' + data.id;
@@ -570,22 +675,20 @@
         new bootstrap.Modal(document.getElementById('modalEdit')).show();
     }
 
-    // Double-submit prevention
-    ['formAdd', 'formEdit'].forEach(id => {
-        const formEl = document.getElementById(id);
-        if (formEl) {
-            formEl.addEventListener('submit', function(e) {
-                const btn = formEl.querySelector('button[type="submit"]');
-                if (btn) {
-                    if (btn.disabled) {
-                        e.preventDefault();
-                        return false;
-                    }
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+    // Double-submit prevention for formEdit
+    const formEditEl = document.getElementById('formEdit');
+    if (formEditEl) {
+        formEditEl.addEventListener('submit', function(e) {
+            const btn = formEditEl.querySelector('button[type="submit"]');
+            if (btn) {
+                if (btn.disabled) {
+                    e.preventDefault();
+                    return false;
                 }
-            });
-        }
-    });
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+            }
+        });
+    }
 </script>
 @endpush
