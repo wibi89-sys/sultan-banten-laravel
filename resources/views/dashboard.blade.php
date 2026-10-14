@@ -217,51 +217,107 @@
                     @php
                         $arcLen = 251.32; // PI * R (80)
                         
-                        // Left Dial: Tingkat Hunian (0% - 100%+)
-                        $clampedHunian = min(100, max(0, $tingkatVal));
-                        $arcOffsetHunian = $arcLen - ($arcLen * $clampedHunian / 100);
+                        // Left Dial: Tingkat Hunian (0% - 300%) Digital Speedometer
+                        $clampedHunian = min(300, max(0, $tingkatVal));
+                        $ratioHunian = $clampedHunian / 300;
+                        $arcOffsetHunian = $arcLen - ($arcLen * $ratioHunian);
+                        $needleAngle = -90 + ($ratioHunian * 180);
 
-                        // Right Dial: % Overkapasitas (0% - 100%+)
+                        // Interpolasi Gradasi 5 Warna: Hijau (0%) -> Biru (75%) -> Orange (150%) -> Merah (225%) -> Hitam (300%)
+                        $getHunianColor = function($val) {
+                            $val = max(0, min(300, (float)$val));
+                            if ($val <= 75) {
+                                $t = $val / 75;
+                                $r = round(16 + (2 - 16) * $t);
+                                $g = round(185 + (132 - 185) * $t);
+                                $b = round(129 + (199 - 129) * $t);
+                            } elseif ($val <= 150) {
+                                $t = ($val - 75) / 75;
+                                $r = round(2 + (245 - 2) * $t);
+                                $g = round(132 + (158 - 132) * $t);
+                                $b = round(199 + (11 - 199) * $t);
+                            } elseif ($val <= 225) {
+                                $t = ($val - 150) / 75;
+                                $r = round(245 + (239 - 245) * $t);
+                                $g = round(158 + (68 - 158) * $t);
+                                $b = round(11 + (68 - 11) * $t);
+                            } else {
+                                $t = ($val - 225) / 75;
+                                $r = round(239 + (15 - 239) * $t);
+                                $g = round(68 + (23 - 68) * $t);
+                                $b = round(68 + (42 - 68) * $t);
+                            }
+                            return sprintf('#%02x%02x%02x', $r, $g, $b);
+                        };
+                        $hunianColor = $getHunianColor($tingkatVal);
+
+                        // Right Dial: % Overkapasitas (0% - 100%+) - Tetap dipertahankan seperti sebelumnya
                         $clampedOver = min(100, max(0, $persenOver));
                         $arcOffsetOver = $arcLen - ($arcLen * $clampedOver / 100);
                     @endphp
                     <div class="speedo-cluster-wrap my-2 mb-3">
-                        <!-- DIAL 1: TINGKAT HUNIAN -->
+                        <!-- DIAL 1: TINGKAT HUNIAN (0% - 300%) DIGITAL SPEEDOMETER -->
                         <div class="speedo-dial-box" title="Tingkat Hunian: {{ $tingkatVal }}%">
                             <svg class="speedo-gauge-svg" viewBox="0 0 200 125">
                                 <defs>
-                                    <linearGradient id="speedoGradHunian" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="#00f2fe"/>
-                                        <stop offset="100%" stop-color="#0284c7"/>
+                                    <linearGradient id="speedoGradHunian300" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#10b981"/>   <!-- 0% (Hijau) -->
+                                        <stop offset="25%" stop-color="#0284c7"/>  <!-- 75% (Biru) -->
+                                        <stop offset="50%" stop-color="#f59e0b"/>  <!-- 150% (Orange) -->
+                                        <stop offset="75%" stop-color="#ef4444"/>  <!-- 225% (Merah) -->
+                                        <stop offset="100%" stop-color="#0f172a"/> <!-- 300% (Hitam) -->
                                     </linearGradient>
                                 </defs>
+                                <!-- Jalur Latar Speedometer -->
                                 <path class="speedo-track" d="M 20 105 A 80 80 0 0 1 180 105" />
+
+                                <!-- Jalur Ticks Speedometer Digital -->
+                                <line x1="20" y1="105" x2="27" y2="105" class="speedo-digital-tick" stroke-width="2" />
+                                <line x1="43.4" y1="48.4" x2="48.4" y2="53.4" class="speedo-digital-tick" />
+                                <line x1="60" y1="35.7" x2="63.5" y2="41.8" class="speedo-digital-tick" stroke-width="1.8" />
+                                <line x1="100" y1="25" x2="100" y2="32" class="speedo-digital-tick" stroke-width="2" />
+                                <line x1="140" y1="35.7" x2="136.5" y2="41.8" class="speedo-digital-tick" stroke-width="1.8" />
+                                <line x1="156.6" y1="48.4" x2="151.6" y2="53.4" class="speedo-digital-tick" />
+                                <line x1="180" y1="105" x2="173" y2="105" class="speedo-digital-tick" stroke-width="2" />
+
+                                <!-- Arc Fill Progress (0% - 300%) -->
                                 <path class="speedo-fill" d="M 20 105 A 80 80 0 0 1 180 105"
-                                      stroke="url(#speedoGradHunian)"
+                                      stroke="url(#speedoGradHunian300)"
                                       stroke-dasharray="251.32"
                                       stroke-dashoffset="{{ $arcOffsetHunian }}"
-                                      style="--gauge-glow: rgba(0, 242, 254, 0.6);" />
+                                      style="--gauge-glow: {{ $hunianColor }}77;" />
+
+                                <!-- Garis Penunjuk Radial Digital (Bukan Jarum Tengah) -->
+                                <g class="speedo-digital-marker" id="speedoHunianMarker" style="transform: rotate({{ $needleAngle }}deg); transform-origin: 100px 105px;">
+                                    <line x1="100" y1="13" x2="100" y2="37" stroke="{{ $hunianColor }}" stroke-width="3.5" stroke-linecap="round" />
+                                </g>
                             </svg>
                             
-                            <div class="speedo-gauge-content">
-                                <div class="speedo-cluster-val font-speedometer count-up" data-target="{{ $tingkatVal }}" style="color: #0284c7;">
+                            <!-- Angka Diletakkan Tepat di Tengah Rongga Busur -->
+                            <div class="speedo-gauge-content speedo-digital-center">
+                                <div id="speedoHunianVal" class="speedo-cluster-val font-speedometer count-up" data-target="{{ $tingkatVal }}" style="color: {{ $hunianColor }}; font-size: 34px;">
                                     {{ $tingkatVal }}%
                                 </div>
                                 <div class="speedo-cluster-sub">Tingkat Hunian</div>
                             </div>
 
+                            <!-- Skala Ticks Bersih (Tanpa Teks Kapasitas Penuh) -->
                             <div class="speedo-ticks">
-                                <span class="speedo-tick-item tick-hunian-min" title="Batas Minimum (0%)">
-                                    <span class="tick-pip"></span>
-                                    <span class="tick-label">0%</span>
+                                <span class="speedo-tick-item" title="Batas Minimum (0%)">
+                                    <span class="tick-pip" style="background: #10b981;"></span>
+                                    <span class="tick-label" style="color: #10b981;">0%</span>
                                 </span>
-                                <span class="speedo-tick-item tick-mid" title="Batas Normal (50%)">
-                                    <span class="tick-pip"></span>
-                                    <span class="tick-label">50%</span>
+                                <span class="speedo-tick-item" title="100%">
+                                    <span class="tick-pip" style="background: #0284c7; height: 8px;"></span>
+                                    <span class="tick-label" style="color: #0284c7;">100%</span>
                                 </span>
-                                <span class="speedo-tick-item tick-hunian-max" title="Kapasitas Penuh (100%)">
-                                    <span class="tick-pip"></span>
-                                    <span class="tick-label">100%</span>
+                                <span class="speedo-tick-item" title="200%">
+                                    <span class="tick-pip" style="background: #ea580c; height: 8px;"></span>
+                                    <span class="tick-label" style="color: #ea580c;">200%</span>
+                                </span>
+                                <span class="speedo-tick-item" title="Maksimum (300%)">
+                                    <span class="tick-pip" style="background: #0f172a;"></span>
+                                    <span class="tick-label" style="color: #0f172a;">300%</span>
                                 </span>
                             </div>
                         </div>
@@ -1814,6 +1870,34 @@
         });
     });
 
+    // Helper interpolasi warna dinamis JavaScript (0% - 300%)
+    function getHunianColorJs(val) {
+        val = Math.max(0, Math.min(300, parseFloat(val) || 0));
+        let r, g, b;
+        if (val <= 75) {
+            const t = val / 75;
+            r = Math.round(16 + (2 - 16) * t);
+            g = Math.round(185 + (132 - 185) * t);
+            b = Math.round(129 + (199 - 129) * t);
+        } else if (val <= 150) {
+            const t = (val - 75) / 75;
+            r = Math.round(2 + (245 - 2) * t);
+            g = Math.round(132 + (158 - 132) * t);
+            b = Math.round(199 + (11 - 199) * t);
+        } else if (val <= 225) {
+            const t = (val - 150) / 75;
+            r = Math.round(245 + (239 - 245) * t);
+            g = Math.round(158 + (68 - 158) * t);
+            b = Math.round(11 + (68 - 11) * t);
+        } else {
+            const t = (val - 225) / 75;
+            r = Math.round(239 + (15 - 239) * t);
+            g = Math.round(68 + (23 - 68) * t);
+            b = Math.round(68 + (42 - 68) * t);
+        }
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
     // Smooth Count-Up Animation
     function animateCountUp() {
         const counters = document.querySelectorAll('.count-up');
@@ -1836,6 +1920,18 @@
                     counter.textContent = formatNumber(Math.round(current));
                 }
 
+                if (counter.id === 'speedoHunianVal') {
+                    const cColor = getHunianColorJs(current);
+                    counter.style.color = cColor;
+                    const marker = document.getElementById('speedoHunianMarker');
+                    if (marker) {
+                        const angle = -90 + (Math.min(300, current) / 300 * 180);
+                        marker.style.transform = `rotate(${angle}deg)`;
+                        const line = marker.querySelector('line');
+                        if (line) line.setAttribute('stroke', cColor);
+                    }
+                }
+
                 if (progress < 1) {
                     requestAnimationFrame(step);
                 } else {
@@ -1843,6 +1939,18 @@
                         counter.textContent = (hasPlus && target > 0 ? '+' : '') + target.toFixed(1) + '%';
                     } else {
                         counter.textContent = formatNumber(Math.round(target));
+                    }
+
+                    if (counter.id === 'speedoHunianVal') {
+                        const finalColor = getHunianColorJs(target);
+                        counter.style.color = finalColor;
+                        const marker = document.getElementById('speedoHunianMarker');
+                        if (marker) {
+                            const angle = -90 + (Math.min(300, target) / 300 * 180);
+                            marker.style.transform = `rotate(${angle}deg)`;
+                            const line = marker.querySelector('line');
+                            if (line) line.setAttribute('stroke', finalColor);
+                        }
                     }
                 }
             }

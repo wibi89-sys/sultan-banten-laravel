@@ -1598,6 +1598,27 @@
             white-space: nowrap;
         }
 
+        /* Digital Speedometer Center & Marker */
+        .speedo-digital-center {
+            bottom: 24px !important;
+        }
+
+        .speedo-digital-marker {
+            transform-origin: 100px 105px;
+            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+
+        .speedo-digital-tick {
+            stroke: #94a3b8;
+            opacity: 0.6;
+        }
+
+        [data-theme="dark"] .speedo-digital-tick {
+            stroke: #64748b;
+            opacity: 0.7;
+        }
+
         /* Tick specific themes for Cluster */
         .speedo-tick-item.tick-hunian-min .tick-pip {
             background: #00f2fe;
