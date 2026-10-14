@@ -73,6 +73,10 @@ class InstansiController extends Controller
             if ($request->has("delete_{$field}")) {
                 if ($instansi->{$field} && File::exists(public_path($instansi->{$field}))) {
                     File::delete(public_path($instansi->{$field}));
+                    $prevWebp = preg_replace('/\.[^.]+$/', '.webp', public_path($instansi->{$field}));
+                    if (File::exists($prevWebp)) {
+                        File::delete($prevWebp);
+                    }
                 }
                 $instansi->{$field} = null;
             }
@@ -91,8 +95,33 @@ class InstansiController extends Controller
                 // Remove previous file
                 if ($instansi->{$field} && File::exists(public_path($instansi->{$field}))) {
                     File::delete(public_path($instansi->{$field}));
+                    $prevWebp = preg_replace('/\.[^.]+$/', '.webp', public_path($instansi->{$field}));
+                    if (File::exists($prevWebp)) {
+                        File::delete($prevWebp);
+                    }
                 }
                 $instansi->{$field} = "uploads/{$filename}";
+
+                // Auto-generate WebP version for high performance
+                if (function_exists('imagewebp') && in_array($ext, ['png', 'jpg', 'jpeg'])) {
+                    $srcFilePath = $uploadPath.DIRECTORY_SEPARATOR.$filename;
+                    $webpFilename = preg_replace('/\.'.preg_quote($ext, '/').'$/i', '.webp', $filename);
+                    $webpFilePath = $uploadPath.DIRECTORY_SEPARATOR.$webpFilename;
+                    try {
+                        $sourceImg = ($ext === 'png') ? @imagecreatefrompng($srcFilePath) : @imagecreatefromjpeg($srcFilePath);
+                        if ($sourceImg) {
+                            if ($ext === 'png') {
+                                imagepalettetotruecolor($sourceImg);
+                                imagealphablending($sourceImg, true);
+                                imagesavealpha($sourceImg, true);
+                            }
+                            imagewebp($sourceImg, $webpFilePath, 82);
+                            imagedestroy($sourceImg);
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore and keep original
+                    }
+                }
             }
         }
 

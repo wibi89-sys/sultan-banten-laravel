@@ -4,13 +4,11 @@
 @section('page_title', 'Dashboard')
 
 @push('styles')
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- Leaflet CSS (Non-blocking preload, GIS map is in secondary tab) -->
+<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""></noscript>
 <!-- Dashboard Modern Styles -->
 <link href="{{ asset('assets/css/dashboard-page.css') }}?v={{ file_exists(public_path('assets/css/dashboard-page.css')) ? filemtime(public_path('assets/css/dashboard-page.css')) : time() }}" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 @endpush
 
 @section('content')
@@ -26,10 +24,10 @@
                 <button type="button" class="date-quick-btn {{ $filterTanggal == date('Y-m-d', strtotime('-7 days')) ? 'active' : '' }}" data-days="7">7 Hari Lalu</button>
             </div>
             <div class="col-12 col-sm-6 col-md-3">
-                <input type="date" id="filterTanggalInput" name="tanggal" class="form-control form-control-sm" value="{{ $filterTanggal }}">
+                <input type="date" id="filterTanggalInput" name="tanggal" class="form-control form-control-sm" value="{{ $filterTanggal }}" aria-label="Filter Tanggal Laporan">
             </div>
             <div class="col-12 col-sm-6 col-md-4">
-                <select name="upt_id" class="form-select form-select-sm">
+                <select name="upt_id" class="form-select form-select-sm" aria-label="Filter Berdasarkan Satuan Kerja UPT">
                     <option value="0">-- Seluruh UPT Banten --</option>
                     @foreach ($uptList as $upt)
                     <option value="{{ $upt->id }}" {{ $filterUpt == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
@@ -41,7 +39,7 @@
                     <i class="fas fa-filter me-1"></i> Terapkan
                 </button>
                 @if($filterUpt > 0 || $filterTanggal != date('Y-m-d'))
-                <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-secondary" style="border-radius: 20px;" title="Reset Filter">
+                <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-secondary" style="border-radius: 20px;" title="Reset Filter" aria-label="Reset Filter Tanggal dan UPT">
                     <i class="fas fa-redo"></i>
                 </a>
                 @endif
@@ -596,14 +594,14 @@
                     <i class="fas fa-satellite-dish text-primary me-2"></i>Peta Lokasi UPT di Banten
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap mt-2 mt-sm-0">
-                    <button type="button" class="btn btn-sm hud-control-btn" id="btnFitBounds" title="Pusatkan radar ke titik tengah persebaran UPT">
+                    <button type="button" class="btn btn-sm hud-control-btn" id="btnFitBounds" title="Pusatkan radar ke titik tengah persebaran UPT" aria-label="Pusatkan radar ke titik tengah persebaran UPT">
                         <i class="fas fa-crosshairs text-primary"></i>
                         <span>Pusatkan Peta</span>
                     </button>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" id="btnDark" title="Tampilan Cyber Dark Mode">Dark HUD</button>
-                        <button type="button" class="btn btn-outline-primary" id="btnStreet" title="Tampilan Peta Jalan OpenStreetMap">Street</button>
-                        <button type="button" class="btn btn-outline-primary active" id="btnHybrid" title="Tampilan Citra Satelit Esri">Satelit</button>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Pilihan Gaya Peta">
+                        <button type="button" class="btn btn-outline-primary" id="btnDark" title="Tampilan Cyber Dark Mode" aria-label="Tampilan Peta Dark HUD">Dark HUD</button>
+                        <button type="button" class="btn btn-outline-primary" id="btnStreet" title="Tampilan Peta Jalan OpenStreetMap" aria-label="Tampilan Peta Jalan Street">Street</button>
+                        <button type="button" class="btn btn-outline-primary active" id="btnHybrid" title="Tampilan Citra Satelit Esri" aria-label="Tampilan Citra Satelit">Satelit</button>
                     </div>
                 </div>
             </div>
@@ -646,7 +644,7 @@
                 <!-- Instant Search Box -->
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableOverkapasitas" placeholder="Cari nama UPT / kota...">
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableOverkapasitas" placeholder="Cari nama UPT / kota..." aria-label="Cari nama UPT atau kota di tabel overkapasitas">
                 </div>
             </div>
             
@@ -683,7 +681,7 @@
                                     <div class="d-flex align-items-center justify-content-between gap-1">
                                         <span class="fw-semibold" style="color: var(--text-primary); font-size: 11.5px;">{{ $row->nama_upt }}</span>
                                         @if($row->latitude && $row->longitude)
-                                            <button type="button" class="btn btn-focus-marker" data-upt-id="{{ $row->id }}" title="Fokuskan radar ke lokasi ini di peta">
+                                            <button type="button" class="btn btn-focus-marker" data-upt-id="{{ $row->id }}" title="Fokuskan radar ke lokasi ini di peta" aria-label="Fokuskan radar ke lokasi {{ $row->nama_upt }} di peta">
                                                 <i class="fas fa-crosshairs"></i>
                                             </button>
                                         @endif
@@ -971,7 +969,7 @@
                 </div>
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableKejahatan" placeholder="Cari nama UPT...">
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableKejahatan" placeholder="Cari nama UPT..." aria-label="Cari nama UPT di tabel jenis kejahatan">
                 </div>
             </div>
             <div class="table-responsive">
@@ -1138,7 +1136,7 @@
                 </div>
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tablePMSH" placeholder="Cari UPT...">
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tablePMSH" placeholder="Cari UPT..." aria-label="Cari nama UPT di tabel pidana mati dan seumur hidup">
                 </div>
             </div>
             <div class="table-responsive">
@@ -1448,7 +1446,7 @@
                 </div>
                 <div class="table-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableBebasHarian" placeholder="Cari UPT...">
+                    <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableBebasHarian" placeholder="Cari UPT..." aria-label="Cari nama UPT di tabel bebas harian">
                 </div>
             </div>
             <div class="table-responsive">
@@ -1665,11 +1663,13 @@
                         @endforeach
                     </div>
                     @if(count($pengumumanPopup) > 1)
-                    <button class="carousel-control-prev" type="button" data-bs-target="#pengumumanCarousel" data-bs-slide="prev">
+                    <button class="carousel-control-prev" type="button" data-bs-target="#pengumumanCarousel" data-bs-slide="prev" aria-label="Pengumuman Sebelumnya">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Sebelumnya</span>
                     </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#pengumumanCarousel" data-bs-slide="next">
+                    <button class="carousel-control-next" type="button" data-bs-target="#pengumumanCarousel" data-bs-slide="next" aria-label="Pengumuman Selanjutnya">
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Selanjutnya</span>
                     </button>
                     @endif
                 </div>
@@ -1686,11 +1686,23 @@
 <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 800px;">
         <div class="modal-content border-0 shadow-lg" style="background: var(--bg-card, #fff);">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             <div class="modal-body text-center">
                 @if(!empty($instansi->welcome_banner))
+                @php
+                    $bannerExt = pathinfo($instansi->welcome_banner, PATHINFO_EXTENSION);
+                    $webpBanner = preg_replace('/\.' . preg_quote($bannerExt, '/') . '$/i', '.webp', $instansi->welcome_banner);
+                    $hasWebpBanner = file_exists(public_path($webpBanner));
+                @endphp
                 <div class="welcome-banner-container">
-                    <img src="{{ asset($instansi->welcome_banner) }}" class="img-fluid welcome-banner-img" alt="Welcome Sultan Banten">
+                    @if($hasWebpBanner)
+                    <picture>
+                        <source srcset="{{ asset($webpBanner) }}" type="image/webp">
+                        <img src="{{ asset($instansi->welcome_banner) }}" class="img-fluid welcome-banner-img" alt="Welcome Sultan Banten" width="800" height="400" fetchpriority="high" decoding="async">
+                    </picture>
+                    @else
+                    <img src="{{ asset($instansi->welcome_banner) }}" class="img-fluid welcome-banner-img" alt="Welcome Sultan Banten" width="800" height="400" fetchpriority="high" decoding="async">
+                    @endif
                 </div>
                 @endif
                 <div class="welcome-text-container">
@@ -1707,6 +1719,10 @@
 @endsection
 
 @push('scripts')
+<!-- Chart.js & Leaflet GIS Core -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     // Helper function for Indonesian number format
     function formatNumber(num) {

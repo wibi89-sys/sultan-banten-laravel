@@ -7,18 +7,27 @@
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="{{ !empty($instansi->favicon) ? asset($instansi->favicon) : asset('assets/favicon.ico') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistem Informasi Pelayanan Terpadu Pemasyarakatan Kantor Wilayah Kementerian Hukum dan HAM Banten (SULTAN Banten)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>@yield('title', 'Sultan Banten - Kemenkumham Banten')</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts: Plus Jakarta Sans (UI) & Rajdhani, Chakra Petch (Speedometer / HUD Display) -->
+    <!-- Preconnect to external CDNs for faster DNS and TLS negotiation -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Non-blocking FontAwesome stylesheet -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <!-- Google Fonts: Plus Jakarta Sans (UI) & Rajdhani, Chakra Petch (Speedometer / HUD Display) -->
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link href="{{ asset('assets/css/modern-theme.css') }}" rel="stylesheet">
     <script>
         // Set tema seawal mungkin agar tidak berkedip
@@ -222,7 +231,19 @@
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
             @if(!empty($instansi->logo))
-                <img src="{{ asset($instansi->logo) }}" alt="Logo">
+                @php
+                    $sideLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                    $sideWebpLogo = preg_replace('/\.' . preg_quote($sideLogoExt, '/') . '$/i', '.webp', $instansi->logo);
+                    $hasSideWebpLogo = file_exists(public_path($sideWebpLogo));
+                @endphp
+                @if($hasSideWebpLogo)
+                <picture>
+                    <source srcset="{{ asset($sideWebpLogo) }}" type="image/webp">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;">
+                </picture>
+                @else
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;">
+                @endif
             @else
                 <i class="fas fa-building fa-3x text-white mb-2"></i>
             @endif
@@ -333,17 +354,29 @@
     @endif
 
     <!-- Main Content -->
-    <div class="main-content {{ !$user ? 'no-sidebar' : '' }}">
+    <main id="main-content" role="main" class="main-content {{ !$user ? 'no-sidebar' : '' }}">
         <!-- Topbar -->
         <div class="topbar d-flex justify-content-between align-items-center flex-wrap">
             <div class="d-flex align-items-center">
                 @if($user)
-                <button class="toggle-btn d-lg-none me-2" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+                <button class="toggle-btn d-lg-none me-2" id="toggleSidebar" aria-label="Toggle Menu Sidebar"><i class="fas fa-bars"></i></button>
                 <h4 class="mb-0">@yield('page_title', 'Dashboard')</h4>
                 @else
                 <!-- Public Header with Logo -->
                 @if(!empty($instansi->logo))
-                <img src="{{ asset($instansi->logo) }}" alt="Logo" class="public-logo me-3">
+                @php
+                    $logoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                    $webpLogo = preg_replace('/\.' . preg_quote($logoExt, '/') . '$/i', '.webp', $instansi->logo);
+                    $hasWebpLogo = file_exists(public_path($webpLogo));
+                @endphp
+                @if($hasWebpLogo)
+                <picture>
+                    <source srcset="{{ asset($webpLogo) }}" type="image/webp">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45">
+                </picture>
+                @else
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45">
+                @endif
                 @endif
                 <div>
                     <h5 class="mb-0 fw-bold public-title">{{ $instansi->nama_instansi ?? 'Sultan Banten' }}</h5>
@@ -355,8 +388,8 @@
                 <!-- Dark Mode Switch -->
                 <div class="dark-mode-switch">
                     <span class="switch-label d-none d-md-inline"><i class="fas fa-sun text-warning"></i></span>
-                    <label class="switch">
-                        <input type="checkbox" id="darkModeToggle">
+                    <label class="switch" for="darkModeToggle">
+                        <input type="checkbox" id="darkModeToggle" aria-label="Aktifkan Mode Gelap">
                         <span class="slider"></span>
                     </label>
                     <span class="switch-label d-none d-md-inline"><i class="fas fa-moon text-primary"></i></span>
@@ -377,19 +410,19 @@
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
                 <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup notifikasi"></button>
             </div>
         @endif
 
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
                 <i class="fas fa-exclamation-circle me-1"></i> {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup notifikasi"></button>
             </div>
         @elseif($errors->any())
             <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
                 <i class="fas fa-exclamation-circle me-1"></i> {{ $errors->first() }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup notifikasi"></button>
             </div>
         @endif
 
@@ -399,7 +432,7 @@
         <footer class="text-center py-3 mt-auto" style="background: transparent; color: var(--text-secondary); font-size: 12px;">
             © Ditjenpas Banten {{ date('Y') }}
         </footer>
-    </div>
+    </main>
 
     @php
         $marqueeAnnouncements = \App\Models\Pengumuman::where('aktif', 1)

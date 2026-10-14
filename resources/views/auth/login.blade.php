@@ -7,9 +7,14 @@
     <meta charset="UTF-8">
     <link rel="icon" href="{{ asset('assets/favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Halaman Masuk SULTAN BANTEN - Sistem Informasi & Pelaporan Terpadu Divisi Pemasyarakatan Kantor Wilayah Kemenkumham Banten.">
     <title>Login - Sultan Banten</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -81,7 +86,19 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 sm:gap-3">
                         @if (!empty($instansi->logo))
-                            <img src="{{ asset($instansi->logo) }}" alt="Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1">
+                            @php
+                                $loginLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                                $loginWebpLogo = preg_replace('/\.' . preg_quote($loginLogoExt, '/') . '$/i', '.webp', $instansi->logo);
+                                $hasLoginWebp = file_exists(public_path($loginWebpLogo));
+                            @endphp
+                            @if($hasLoginWebp)
+                            <picture>
+                                <source srcset="{{ asset($loginWebpLogo) }}" type="image/webp">
+                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48">
+                            </picture>
+                            @else
+                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48">
+                            @endif
                         @else
                             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center">
                                 <i class="fas fa-balance-scale text-lg sm:text-2xl text-primary"></i>
