@@ -268,60 +268,48 @@
                                         <stop offset="25%" stop-color="#0284c7"/>  <!-- Biru (~75-100%) -->
                                         <stop offset="50%" stop-color="#ea580c"/>  <!-- Orange (~150%) -->
                                         <stop offset="75%" stop-color="#dc2626"/>  <!-- Merah (~200-225%) -->
-                                        <stop offset="100%" stop-color="#020617"/> <!-- Hitam (300%) -->
+                                        <stop offset="100%" stop-color="var(--speedo-ribbon-end, #020617)"/> <!-- Hitam/Charcoal (300%) -->
                                     </linearGradient>
 
-                                    <!-- Glowing Cyan-White Ray Marker (Sesuai Mockup Gambar Referensi) -->
+                                    <!-- Glowing Ray Marker (CSS-Variable Powered for Light & Dark Theme) -->
                                     <linearGradient id="cyanRayGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                                        <stop offset="0%" stop-color="rgba(56, 189, 248, 0)"/>
-                                        <stop offset="40%" stop-color="rgba(56, 189, 248, 0.25)"/>
-                                        <stop offset="100%" stop-color="#38bdf8"/>
+                                        <stop offset="0%" stop-color="var(--speedo-ray-base, rgba(56, 189, 248, 0))"/>
+                                        <stop offset="40%" stop-color="var(--speedo-ray-mid, rgba(56, 189, 248, 0.25))"/>
+                                        <stop offset="100%" stop-color="var(--speedo-ray-tip, #38bdf8)"/>
                                     </linearGradient>
-
-                                    <!-- Inner Dome Gradient (Dark & Light) -->
-                                    <radialGradient id="innerDomeGradDark" cx="50%" cy="100%" r="90%">
-                                        <stop offset="0%" stop-color="#0e1726"/>
-                                        <stop offset="85%" stop-color="#070b14"/>
-                                        <stop offset="100%" stop-color="#04070d"/>
-                                    </radialGradient>
-                                    <radialGradient id="innerDomeGradLight" cx="50%" cy="100%" r="90%">
-                                        <stop offset="0%" stop-color="#ffffff"/>
-                                        <stop offset="85%" stop-color="#f8fafc"/>
-                                        <stop offset="100%" stop-color="#e2e8f0"/>
-                                    </radialGradient>
                                 </defs>
 
-                                <!-- Outer Casing Bezel (Dark Chassis Frame) -->
-                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none" stroke="var(--speedo-bezel, #080e18)" stroke-width="36" stroke-linecap="round" />
+                                <!-- Outer Ambient Rim (Soft Natural Chassis) -->
+                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none" stroke="var(--speedo-rim)" stroke-width="32" stroke-linecap="round" />
 
-                                <!-- Base Track Slot -->
-                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none" stroke="var(--speedo-slot, #121c2c)" stroke-width="26" stroke-linecap="round" />
+                                <!-- Hairline Outer Ring -->
+                                <path d="M 40 195 A 140 140 0 0 1 320 195" fill="none" stroke="var(--speedo-border-hairline)" stroke-width="1" />
+
+                                <!-- Base Track Slot (Translucent, Adapts to Light & Dark) -->
+                                <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none" stroke="var(--speedo-slot)" stroke-width="24" stroke-linecap="round" />
 
                                 <!-- The 5-Color Arc Ribbon (0% - 300% Selalu Tampil Penuh Sesuai Gambar Referensi) -->
                                 <path d="M 42 195 A 138 138 0 0 1 318 195" fill="none"
                                       stroke="url(#speedoRibbonGrad)"
-                                      stroke-width="24"
+                                      stroke-width="22"
                                       stroke-linecap="round"
-                                      filter="drop-shadow(0 0 16px rgba(234, 88, 12, 0.45))" />
-
-                                <!-- Inner Dome (Sesuai Mode Gelap & Terang) -->
-                                <path class="speedo-inner-dome" d="M 58 195 A 122 122 0 0 1 302 195 Z" fill="url(#innerDomeGradDark)" />
+                                      class="speedo-ribbon-glow" />
 
                                 <!-- Subtle Inner Scale Track Line -->
-                                <path d="M 64 195 A 116 116 0 0 1 296 195" fill="none" stroke="var(--speedo-scale-line, rgba(255, 255, 255, 0.12))" stroke-width="1.5" />
+                                <path d="M 64 195 A 116 116 0 0 1 296 195" fill="none" stroke="var(--speedo-scale-line)" stroke-width="1.2" />
 
                                 <!-- Scale Tick Marks Sesuai Gambar Referensi -->
-                                <line x1="42" y1="195" x2="56" y2="195" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="2.5" opacity="0.6" />
-                                <line x1="74.4" y1="134" x2="81.3" y2="138" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="1.5" opacity="0.4" />
-                                <line x1="88.2" y1="103.2" x2="98.1" y2="113.1" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="1.5" opacity="0.4" />
-                                <line x1="119" y1="89" x2="126" y2="101" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="2.5" opacity="0.75" />
-                                <line x1="148.4" y1="77.3" x2="150.5" y2="85" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="1.5" opacity="0.4" />
-                                <line x1="180" y1="73" x2="180" y2="87" stroke="var(--speedo-tick-color, #cbd5e1)" stroke-width="2.5" opacity="0.85" />
-                                <line x1="211.6" y1="77.3" x2="209.5" y2="85" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="1.5" opacity="0.4" />
-                                <line x1="241" y1="89" x2="234" y2="101" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="2.5" opacity="0.75" />
-                                <line x1="271.8" y1="103.2" x2="261.9" y2="113.1" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="1.5" opacity="0.4" />
-                                <line x1="285.6" y1="134" x2="278.7" y2="138" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="1.5" opacity="0.4" />
-                                <line x1="318" y1="195" x2="304" y2="195" stroke="var(--speedo-tick-color, #94a3b8)" stroke-width="2.5" opacity="0.6" />
+                                <line x1="42" y1="195" x2="56" y2="195" stroke="var(--speedo-tick-major)" stroke-width="2" />
+                                <line x1="74.4" y1="134" x2="81.3" y2="138" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <line x1="88.2" y1="103.2" x2="98.1" y2="113.1" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <line x1="119" y1="89" x2="126" y2="101" stroke="var(--speedo-tick-major)" stroke-width="2" />
+                                <line x1="148.4" y1="77.3" x2="150.5" y2="85" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <line x1="180" y1="73" x2="180" y2="87" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
+                                <line x1="211.6" y1="77.3" x2="209.5" y2="85" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <line x1="241" y1="89" x2="234" y2="101" stroke="var(--speedo-tick-major)" stroke-width="2" />
+                                <line x1="271.8" y1="103.2" x2="261.9" y2="113.1" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <line x1="285.6" y1="134" x2="278.7" y2="138" stroke="var(--speedo-tick-minor)" stroke-width="1.5" />
+                                <line x1="318" y1="195" x2="304" y2="195" stroke="var(--speedo-tick-major)" stroke-width="2" />
 
                                 <!-- Scale Labels (Sama Persis Gambar Referensi: 0%, 100%, 150%, 200%, 300%) -->
                                 <text class="speedo-scale-num" x="34" y="218" text-anchor="middle">0%</text>
@@ -330,12 +318,12 @@
                                 <text class="speedo-scale-num" x="236" y="116" text-anchor="middle">200%</text>
                                 <text class="speedo-scale-num" x="326" y="218" text-anchor="middle">300%</text>
 
-                                <!-- Glowing Cyan-White Ray Marker Berkas Sinar Menunjuk Nilai Aktif -->
+                                <!-- Glowing Ray Marker Berkas Sinar Menunjuk Nilai Aktif -->
                                 <g id="speedoHunianMarker" transform="rotate({{ $needleAngle }}, 180, 195)">
-                                    <polygon points="178,195 178.6,46 181.4,46 182,195" fill="url(#cyanRayGrad)" opacity="0.8" />
-                                    <line x1="180" y1="44" x2="180" y2="82" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round" filter="drop-shadow(0 0 10px #38bdf8)" />
-                                    <line x1="180" y1="46" x2="180" y2="78" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
-                                    <circle cx="180" cy="54" r="2.5" fill="#ffffff" />
+                                    <polygon points="178,195 178.6,46 181.4,46 182,195" fill="url(#cyanRayGrad)" opacity="0.85" />
+                                    <line x1="180" y1="44" x2="180" y2="82" stroke="var(--speedo-needle-outer, #38bdf8)" stroke-width="4.5" stroke-linecap="round" style="filter: var(--speedo-needle-filter);" />
+                                    <line x1="180" y1="46" x2="180" y2="78" stroke="var(--speedo-needle-inner, #ffffff)" stroke-width="2" stroke-linecap="round" />
+                                    <circle cx="180" cy="54" r="2.5" fill="var(--speedo-needle-dot, #ffffff)" />
                                 </g>
                             </svg>
 
@@ -357,17 +345,17 @@
                                         <stop offset="100%" stop-color="{{ $statusColor }}"/>
                                     </linearGradient>
                                 </defs>
-                                <path d="M 17 85 A 58 58 0 0 1 133 85" fill="none" stroke="var(--speedo-slot, #121c2c)" stroke-width="14" stroke-linecap="round" />
+                                <path d="M 17 85 A 58 58 0 0 1 133 85" fill="none" stroke="var(--speedo-slot)" stroke-width="12" stroke-linecap="round" />
                                 <path d="M 17 85 A 58 58 0 0 1 133 85" fill="none"
                                       stroke="url(#overSemiGrad)"
-                                      stroke-width="12"
+                                      stroke-width="10"
                                       stroke-linecap="round"
                                       stroke-dasharray="182.21"
                                       stroke-dashoffset="{{ $arcOffsetOverMini }}"
-                                      filter="drop-shadow(0 0 10px {{ $statusColor }}99)" />
+                                      class="over-arc-glow" />
                                 <g id="speedoOverMiniMarker" transform="rotate({{ $needleAngleOver }}, 75, 85)">
-                                    <line x1="75" y1="20" x2="75" y2="34" stroke="{{ $statusColor }}" stroke-width="3" stroke-linecap="round" filter="drop-shadow(0 0 4px {{ $statusColor }})" />
-                                    <line x1="75" y1="22" x2="75" y2="32" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                                    <line x1="75" y1="20" x2="75" y2="34" stroke="{{ $statusColor }}" stroke-width="3" stroke-linecap="round" class="over-marker-glow" />
+                                    <line x1="75" y1="22" x2="75" y2="32" stroke="var(--speedo-over-needle-core, #ffffff)" stroke-width="1.2" stroke-linecap="round" />
                                 </g>
                             </svg>
                             <div class="over-center-text">

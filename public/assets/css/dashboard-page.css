@@ -969,12 +969,27 @@
             --pill-bg: #f1f5f9;
             --speedo-track: #e2e8f0;
             --speedo-text: #0f172a;
-            --speedo-bezel: #e2e8f0;
-            --speedo-slot: #cbd5e1;
-            --speedo-inner-dome-stop1: #f8fafc;
-            --speedo-inner-dome-stop2: #e2e8f0;
-            --speedo-scale-line: rgba(0, 0, 0, 0.12);
-            --speedo-tick-color: #64748b;
+            --speedo-rim: rgba(0, 0, 0, 0.02);
+            --speedo-slot: rgba(0, 0, 0, 0.05);
+            --speedo-border-hairline: rgba(0, 0, 0, 0.06);
+            --speedo-ribbon-end: #0f172a;
+            --speedo-ribbon-filter: none;
+            --speedo-scale-line: rgba(0, 0, 0, 0.09);
+            --speedo-tick-major: rgba(0, 0, 0, 0.38);
+            --speedo-tick-minor: rgba(0, 0, 0, 0.18);
+            --speedo-scale-text: #64748b;
+            --speedo-scale-apex: #1e293b;
+            --speedo-ray-base: rgba(2, 132, 199, 0);
+            --speedo-ray-mid: rgba(2, 132, 199, 0.12);
+            --speedo-ray-tip: rgba(2, 132, 199, 0.65);
+            --speedo-needle-outer: #0284c7;
+            --speedo-needle-inner: #38bdf8;
+            --speedo-needle-dot: #0369a1;
+            --speedo-needle-filter: drop-shadow(0 2px 4px rgba(2, 132, 199, 0.35));
+            --speedo-center-val-shadow: none;
+            --speedo-over-glow: none;
+            --speedo-over-val-shadow: none;
+            --speedo-over-needle-core: #ffffff;
         }
 
         /* Dark Mode - Matched precisely to the high-tech Preview Concept */
@@ -993,12 +1008,27 @@
             --pill-bg: rgba(255, 255, 255, 0.06);
             --speedo-track: rgba(255, 255, 255, 0.08);
             --speedo-text: #ffffff;
-            --speedo-bezel: #080e18;
-            --speedo-slot: #121c2c;
-            --speedo-inner-dome-stop1: #0e1726;
-            --speedo-inner-dome-stop2: #05080f;
-            --speedo-scale-line: rgba(255, 255, 255, 0.1);
-            --speedo-tick-color: #94a3b8;
+            --speedo-rim: rgba(255, 255, 255, 0.025);
+            --speedo-slot: rgba(0, 0, 0, 0.45);
+            --speedo-border-hairline: rgba(255, 255, 255, 0.08);
+            --speedo-ribbon-end: #020617;
+            --speedo-ribbon-filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+            --speedo-scale-line: rgba(255, 255, 255, 0.12);
+            --speedo-tick-major: rgba(255, 255, 255, 0.65);
+            --speedo-tick-minor: rgba(255, 255, 255, 0.3);
+            --speedo-scale-text: #94a3b8;
+            --speedo-scale-apex: #cbd5e1;
+            --speedo-ray-base: rgba(56, 189, 248, 0);
+            --speedo-ray-mid: rgba(56, 189, 248, 0.25);
+            --speedo-ray-tip: #38bdf8;
+            --speedo-needle-outer: #38bdf8;
+            --speedo-needle-inner: #ffffff;
+            --speedo-needle-dot: #ffffff;
+            --speedo-needle-filter: drop-shadow(0 0 10px #38bdf8);
+            --speedo-center-val-shadow: 0 0 28px currentColor;
+            --speedo-over-glow: drop-shadow(0 0 8px currentColor);
+            --speedo-over-val-shadow: 0 0 16px currentColor;
+            --speedo-over-needle-core: #ffffff;
         }
 
         /* Apply Typography Hierarchy */
@@ -1642,35 +1672,26 @@
             display: block;
         }
 
-        .speedo-inner-dome {
-            fill: url(#innerDomeGradDark);
-            transition: fill 0.3s ease;
+        .speedo-ribbon-glow {
+            filter: var(--speedo-ribbon-filter, none);
         }
 
-        :root:not([data-theme="dark"]) .speedo-inner-dome {
-            fill: url(#innerDomeGradLight);
+        .speedo-inner-dome {
+            display: none !important;
         }
 
         .speedo-scale-num {
             font-family: 'Outfit', sans-serif;
             font-size: 14px;
             font-weight: 700;
-            fill: var(--speedo-tick-color, #94a3b8);
+            fill: var(--speedo-scale-text, #94a3b8);
             transition: fill 0.3s ease;
         }
 
         .speedo-scale-num.apex-label {
             font-size: 15px;
             font-weight: 800;
-            fill: #cbd5e1;
-        }
-
-        :root:not([data-theme="dark"]) .speedo-scale-num {
-            fill: #64748b;
-        }
-
-        :root:not([data-theme="dark"]) .speedo-scale-num.apex-label {
-            fill: #1e293b;
+            fill: var(--speedo-scale-apex, #cbd5e1);
         }
 
         /* Center Big Text: 180.5% & Tingkat Hunian */
@@ -1691,7 +1712,7 @@
             font-weight: 800 !important;
             line-height: 1 !important;
             letter-spacing: -0.02em !important;
-            text-shadow: 0 0 28px currentColor;
+            text-shadow: var(--speedo-center-val-shadow, none);
             display: block;
         }
 
@@ -1725,6 +1746,14 @@
             display: block;
         }
 
+        .over-arc-glow {
+            filter: var(--speedo-over-glow, none);
+        }
+
+        .over-marker-glow {
+            filter: var(--speedo-over-glow, none);
+        }
+
         .over-center-text {
             position: absolute;
             bottom: 8px;
@@ -1741,7 +1770,7 @@
             font-weight: 800 !important;
             line-height: 1 !important;
             letter-spacing: -0.01em !important;
-            text-shadow: 0 0 16px currentColor;
+            text-shadow: var(--speedo-over-val-shadow, none);
             display: block;
         }
 
