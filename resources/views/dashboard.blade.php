@@ -213,14 +213,13 @@
                         </span>
                     </div>
 
-                    <!-- Dual Speedometer Cockpit Cluster -->
+                    <!-- Cockpit Stage: Main Speedometer & Top-Right Overkapasitas Gauge -->
                     @php
-                        $arcLen = 251.32; // PI * R (80)
-                        
-                        // Left Dial: Tingkat Hunian (0% - 300%) Digital Speedometer
+                        // Scale 0% - 300% Tingkat Hunian
                         $clampedHunian = min(300, max(0, $tingkatVal));
                         $ratioHunian = $clampedHunian / 300;
-                        $arcOffsetHunian = $arcLen - ($arcLen * $ratioHunian);
+                        $arcLenFull = 345.57; // PI * R (110)
+                        $arcOffsetHunianFull = $arcLenFull - ($arcLenFull * $ratioHunian);
                         $needleAngle = -90 + ($ratioHunian * 180);
 
                         // Interpolasi Gradasi 5 Warna: Hijau (0%) -> Biru (75%) -> Orange (150%) -> Merah (225%) -> Hitam (300%)
@@ -251,117 +250,105 @@
                         };
                         $hunianColor = $getHunianColor($tingkatVal);
 
-                        // Right Dial: % Overkapasitas (0% - 100%+) - Tetap dipertahankan seperti sebelumnya
+                        // Mini Overkapasitas Arc (Kanan Atas)
+                        $arcLenMini = 131.95; // PI * 42
                         $clampedOver = min(100, max(0, $persenOver));
-                        $arcOffsetOver = $arcLen - ($arcLen * $clampedOver / 100);
+                        $arcOffsetOverMini = $arcLenMini - ($arcLenMini * $clampedOver / 100);
+                        $needleAngleOver = -90 + ($clampedOver / 100 * 180);
                     @endphp
-                    <div class="speedo-cluster-wrap my-2 mb-3">
-                        <!-- DIAL 1: TINGKAT HUNIAN (0% - 300%) DIGITAL SPEEDOMETER -->
-                        <div class="speedo-dial-box" title="Tingkat Hunian: {{ $tingkatVal }}%">
-                            <svg class="speedo-gauge-svg" viewBox="0 0 200 125">
-                                <defs>
-                                    <linearGradient id="speedoGradHunian300" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="#10b981"/>   <!-- 0% (Hijau) -->
-                                        <stop offset="25%" stop-color="#0284c7"/>  <!-- 75% (Biru) -->
-                                        <stop offset="50%" stop-color="#f59e0b"/>  <!-- 150% (Orange) -->
-                                        <stop offset="75%" stop-color="#ef4444"/>  <!-- 225% (Merah) -->
-                                        <stop offset="100%" stop-color="#0f172a"/> <!-- 300% (Hitam) -->
-                                    </linearGradient>
-                                </defs>
-                                <!-- Jalur Latar Speedometer -->
-                                <path class="speedo-track" d="M 20 105 A 80 80 0 0 1 180 105" />
 
-                                <!-- Jalur Ticks Speedometer Digital -->
-                                <line x1="20" y1="105" x2="27" y2="105" class="speedo-digital-tick" stroke-width="2" />
-                                <line x1="43.4" y1="48.4" x2="48.4" y2="53.4" class="speedo-digital-tick" />
-                                <line x1="60" y1="35.7" x2="63.5" y2="41.8" class="speedo-digital-tick" stroke-width="1.8" />
-                                <line x1="100" y1="25" x2="100" y2="32" class="speedo-digital-tick" stroke-width="2" />
-                                <line x1="140" y1="35.7" x2="136.5" y2="41.8" class="speedo-digital-tick" stroke-width="1.8" />
-                                <line x1="156.6" y1="48.4" x2="151.6" y2="53.4" class="speedo-digital-tick" />
-                                <line x1="180" y1="105" x2="173" y2="105" class="speedo-digital-tick" stroke-width="2" />
-
-                                <!-- Arc Fill Progress (0% - 300%) -->
-                                <path class="speedo-fill" d="M 20 105 A 80 80 0 0 1 180 105"
-                                      stroke="url(#speedoGradHunian300)"
-                                      stroke-dasharray="251.32"
-                                      stroke-dashoffset="{{ $arcOffsetHunian }}"
-                                      style="--gauge-glow: {{ $hunianColor }}77;" />
-
-                                <!-- Garis Penunjuk Radial Digital (Bukan Jarum Tengah) -->
-                                <g class="speedo-digital-marker" id="speedoHunianMarker" style="transform: rotate({{ $needleAngle }}deg); transform-origin: 100px 105px;">
-                                    <line x1="100" y1="13" x2="100" y2="37" stroke="{{ $hunianColor }}" stroke-width="3.5" stroke-linecap="round" />
-                                </g>
-                            </svg>
-                            
-                            <!-- Angka Diletakkan Tepat di Tengah Rongga Busur -->
-                            <div class="speedo-gauge-content speedo-digital-center">
-                                <div id="speedoHunianVal" class="speedo-cluster-val font-speedometer count-up" data-target="{{ $tingkatVal }}" style="color: {{ $hunianColor }}; font-size: 34px;">
-                                    {{ $tingkatVal }}%
+                    <div class="speedo-cockpit-stage my-2 mb-3">
+                        <!-- OVERKAPASITAS DI KANAN ATAS (SETENGAH MELINGKAR DIGITAL SPEEDOMETER) -->
+                        <div class="speedo-overkapasitas-topright" title="Overkapasitas: {{ $persenOver > 0 ? '+' : '' }}{{ $persenOver }}%">
+                            <div class="speedo-over-mini-wrap">
+                                <svg class="speedo-over-mini-svg" viewBox="0 0 105 65">
+                                    <defs>
+                                        <linearGradient id="miniOverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="{{ $statusColor }}66"/>
+                                            <stop offset="100%" stop-color="{{ $statusColor }}"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path class="speedo-mini-track" d="M 10.5 55 A 42 42 0 0 1 94.5 55" />
+                                    <path class="speedo-mini-fill" d="M 10.5 55 A 42 42 0 0 1 94.5 55" 
+                                          stroke="url(#miniOverGrad)" 
+                                          stroke-dasharray="131.95" 
+                                          stroke-dashoffset="{{ $arcOffsetOverMini }}"
+                                          style="--gauge-glow: {{ $statusColor }}88;" />
+                                    <g class="speedo-mini-marker" id="speedoOverMiniMarker" style="transform: rotate({{ $needleAngleOver }}deg);">
+                                        <line x1="52.5" y1="8" x2="52.5" y2="20" stroke="{{ $statusColor }}" stroke-width="2.5" stroke-linecap="round" />
+                                    </g>
+                                </svg>
+                                <div class="speedo-over-mini-content">
+                                    <div id="speedoOverMiniVal" class="speedo-over-mini-val font-speedometer count-up" data-prefix="+" data-target="{{ $persenOver }}" style="color: {{ $statusColor }};">
+                                        {{ $persenOver > 0 ? '+' : '' }}{{ $persenOver }}%
+                                    </div>
+                                    <div class="speedo-over-mini-lbl">Overkapasitas</div>
                                 </div>
-                                <div class="speedo-cluster-sub">Tingkat Hunian</div>
-                            </div>
-
-                            <!-- Skala Ticks Bersih (Tanpa Teks Kapasitas Penuh) -->
-                            <div class="speedo-ticks">
-                                <span class="speedo-tick-item" title="Batas Minimum (0%)">
-                                    <span class="tick-pip" style="background: #10b981;"></span>
-                                    <span class="tick-label" style="color: #10b981;">0%</span>
-                                </span>
-                                <span class="speedo-tick-item" title="100%">
-                                    <span class="tick-pip" style="background: #0284c7; height: 8px;"></span>
-                                    <span class="tick-label" style="color: #0284c7;">100%</span>
-                                </span>
-                                <span class="speedo-tick-item" title="200%">
-                                    <span class="tick-pip" style="background: #ea580c; height: 8px;"></span>
-                                    <span class="tick-label" style="color: #ea580c;">200%</span>
-                                </span>
-                                <span class="speedo-tick-item" title="Maksimum (300%)">
-                                    <span class="tick-pip" style="background: #0f172a;"></span>
-                                    <span class="tick-label" style="color: #0f172a;">300%</span>
-                                </span>
                             </div>
                         </div>
 
-                        <!-- CLUSTER DIVIDER -->
-                        <div class="speedo-cluster-divider"></div>
-
-                        <!-- DIAL 2: % OVERKAPASITAS -->
-                        <div class="speedo-dial-box" title="Overkapasitas: {{ $persenOver }}%">
-                            <svg class="speedo-gauge-svg" viewBox="0 0 200 125">
+                        <!-- TINGKAT HUNIAN HERO SPEEDOMETER (0% - 300%) SESUAI REFERENSI -->
+                        <div class="speedo-main-wrap" title="Tingkat Hunian: {{ $tingkatVal }}%">
+                            <svg class="speedo-main-svg" viewBox="0 0 300 190">
                                 <defs>
-                                    <linearGradient id="speedoGradOver" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="{{ $statusColor }}99"/>
-                                        <stop offset="100%" stop-color="{{ $statusColor }}"/>
+                                    <linearGradient id="speedoGradHunianFull" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#10b981"/>   <!-- Hijau (0%) -->
+                                        <stop offset="25%" stop-color="#0284c7"/>  <!-- Biru (~75%) -->
+                                        <stop offset="50%" stop-color="#ea580c"/>  <!-- Orange (~150%) -->
+                                        <stop offset="75%" stop-color="#ef4444"/>  <!-- Merah (~225%) -->
+                                        <stop offset="100%" stop-color="#020617"/> <!-- Hitam (300%) -->
+                                    </linearGradient>
+                                    <linearGradient id="speedoRayGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                                        <stop offset="0%" stop-color="rgba(234, 88, 12, 0)"/>
+                                        <stop offset="40%" stop-color="rgba(234, 88, 12, 0.3)"/>
+                                        <stop offset="100%" stop-color="{{ $hunianColor }}"/>
                                     </linearGradient>
                                 </defs>
-                                <path class="speedo-track" d="M 20 105 A 80 80 0 0 1 180 105" />
-                                <path class="speedo-fill" d="M 20 105 A 80 80 0 0 1 180 105"
-                                      stroke="url(#speedoGradOver)"
-                                      stroke-dasharray="251.32"
-                                      stroke-dashoffset="{{ $arcOffsetOver }}"
-                                      style="--gauge-glow: {{ $statusColor }}77;" />
-                            </svg>
-                            
-                            <div class="speedo-gauge-content">
-                                <div class="speedo-cluster-val font-speedometer count-up" data-prefix="+" data-target="{{ $persenOver }}" style="color: {{ $statusColor }};">
-                                    {{ $persenOver > 0 ? '+' : '' }}{{ $persenOver }}%
-                                </div>
-                                <div class="speedo-cluster-sub">Over Kapasitas</div>
-                            </div>
 
-                            <div class="speedo-ticks">
-                                <span class="speedo-tick-item tick-over-min" title="Batas Aman (0%)">
-                                    <span class="tick-pip"></span>
-                                    <span class="tick-label">0%</span>
-                                </span>
-                                <span class="speedo-tick-item tick-mid" title="Ambang Waspada (50%)">
-                                    <span class="tick-pip"></span>
-                                    <span class="tick-label">50%</span>
-                                </span>
-                                <span class="speedo-tick-item tick-over-max" title="Kritis (100%+) - Over">
-                                    <span class="tick-pip"></span>
-                                    <span class="tick-label">100%+</span>
-                                </span>
+                                <!-- Casing / Bezel Speedometer -->
+                                <path class="speedo-track-bezel" d="M 40 165 A 110 110 0 0 1 260 165" />
+                                <path class="speedo-track-base" d="M 40 165 A 110 110 0 0 1 260 165" />
+                                <path class="speedo-inner-ring" d="M 58 165 A 92 92 0 0 1 242 165" />
+
+                                <!-- Ticks Garis Presisi Speedometer Digital -->
+                                <line x1="40" y1="165" x2="52" y2="165" class="speedo-tick-line" stroke-width="2" />
+                                <line x1="60.3" y1="110" x2="70.7" y2="116" class="speedo-tick-line" stroke-width="1.2" />
+                                <line x1="95" y1="69.7" x2="101" y2="80.1" class="speedo-tick-line" stroke-width="2" />
+                                <line x1="121.5" y1="58.8" x2="124.6" y2="70.4" class="speedo-tick-line" stroke-width="1" />
+                                <line x1="150" y1="55" x2="150" y2="67" class="speedo-tick-line" stroke-width="2" />
+                                <line x1="178.5" y1="58.8" x2="175.4" y2="70.4" class="speedo-tick-line" stroke-width="1" />
+                                <line x1="205" y1="69.7" x2="199" y2="80.1" class="speedo-tick-line" stroke-width="2" />
+                                <line x1="239.7" y1="110" x2="229.3" y2="116" class="speedo-tick-line" stroke-width="1.2" />
+                                <line x1="260" y1="165" x2="248" y2="165" class="speedo-tick-line" stroke-width="2" />
+
+                                <!-- Label Ticks Skala: Tepat Sesuai Gambar Referensi -->
+                                <text x="35" y="186" class="speedo-tick-text" style="font-size: 13px;">0%</text>
+                                <text x="106" y="96" class="speedo-tick-text">100%</text>
+                                <text x="150" y="82" class="speedo-tick-text" style="font-size: 13px;">150%</text>
+                                <text x="194" y="96" class="speedo-tick-text">200%</text>
+                                <text x="265" y="186" class="speedo-tick-text" style="font-size: 13px;">300%</text>
+
+                                <!-- Arc Fill Progress (0% - 300%) -->
+                                <path class="speedo-fill-glow" d="M 40 165 A 110 110 0 0 1 260 165"
+                                      stroke="url(#speedoGradHunianFull)"
+                                      stroke-dasharray="345.57"
+                                      stroke-dashoffset="{{ $arcOffsetHunianFull }}"
+                                      style="color: {{ $hunianColor }};" />
+
+                                <!-- Garis Penunjuk Digital Menyala (Ray Beam Marker) -->
+                                <g class="speedo-ray-marker" id="speedoHunianMarker" style="transform: rotate({{ $needleAngle }}deg);">
+                                    <polygon points="148.5,165 149.2,50 150.8,50 151.5,165" fill="url(#speedoRayGrad)" opacity="0.65" />
+                                    <line x1="150" y1="44" x2="150" y2="72" stroke="{{ $hunianColor }}" stroke-width="3.5" stroke-linecap="round" filter="drop-shadow(0 0 6px {{ $hunianColor }})" />
+                                    <circle cx="150" cy="55" r="2" fill="#ffffff" />
+                                </g>
+                            </svg>
+
+                            <!-- Angka Besar di Tengah: 180.5% & Tingkat Hunian -->
+                            <div class="speedo-center-readout">
+                                <div id="speedoHunianVal" class="speedo-hero-val font-speedometer count-up" data-target="{{ $tingkatVal }}" style="color: {{ $hunianColor }};">
+                                    {{ $tingkatVal }}%
+                                </div>
+                                <div class="speedo-hero-lbl">Tingkat Hunian</div>
                             </div>
                         </div>
                     </div>
@@ -1932,6 +1919,15 @@
                     }
                 }
 
+                if (counter.id === 'speedoOverMiniVal') {
+                    const overMarker = document.getElementById('speedoOverMiniMarker');
+                    if (overMarker) {
+                        const clamped = Math.min(100, Math.max(0, current));
+                        const angle = -90 + (clamped / 100 * 180);
+                        overMarker.style.transform = `rotate(${angle}deg)`;
+                    }
+                }
+
                 if (progress < 1) {
                     requestAnimationFrame(step);
                 } else {
@@ -1950,6 +1946,15 @@
                             marker.style.transform = `rotate(${angle}deg)`;
                             const line = marker.querySelector('line');
                             if (line) line.setAttribute('stroke', finalColor);
+                        }
+                    }
+
+                    if (counter.id === 'speedoOverMiniVal') {
+                        const overMarker = document.getElementById('speedoOverMiniMarker');
+                        if (overMarker) {
+                            const clamped = Math.min(100, Math.max(0, target));
+                            const angle = -90 + (clamped / 100 * 180);
+                            overMarker.style.transform = `rotate(${angle}deg)`;
                         }
                     }
                 }
