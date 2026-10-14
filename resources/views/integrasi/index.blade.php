@@ -89,16 +89,16 @@
         <div class="card-body py-2">
             <form method="GET" action="{{ route('integrasi.index') }}" class="row g-2 align-items-end">
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
-                    <input type="date" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}">
+                    <label for="filter_integrasi_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" id="filter_integrasi_mulai" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}" aria-label="Tanggal Mulai">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold">Tanggal Sampai</label>
-                    <input type="date" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}">
+                    <label for="filter_integrasi_sampai" class="form-label small fw-semibold">Tanggal Sampai</label>
+                    <input type="date" id="filter_integrasi_sampai" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}" aria-label="Tanggal Sampai">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">UPT</label>
-                    <select name="upt_id" class="form-select form-select-sm" {{ $userUptFilter ? 'disabled' : '' }}>
+                    <label for="filter_integrasi_upt" class="form-label small fw-semibold">UPT</label>
+                    <select id="filter_integrasi_upt" name="upt_id" class="form-select form-select-sm" aria-label="Pilih Satuan Kerja UPT" {{ $userUptFilter ? 'disabled' : '' }}>
                         <option value="0">-- Semua UPT --</option>
                         @foreach ($uptList as $upt)
                         <option value="{{ $upt->id }}" {{ $filterUpt == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
@@ -194,13 +194,13 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <button class="btn btn-warning btn-sm py-0 px-1.5" onclick="editData({{ json_encode($data) }})" title="Edit">
+                            <button class="btn btn-warning btn-sm py-0 px-1.5" onclick="editData({{ json_encode($data) }})" title="Edit" aria-label="Edit Data Integrasi {{ $data->upt->nama_upt ?? '' }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <form action="{{ route('integrasi.destroy', $data->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data integrasi ini?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm py-0 px-1.5" title="Hapus">
+                                <button type="submit" class="btn btn-danger btn-sm py-0 px-1.5" title="Hapus" aria-label="Hapus Data Integrasi {{ $data->upt->nama_upt ?? '' }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -247,7 +247,7 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-plus-circle me-2"></i>Tambah Data Integrasi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('integrasi.store') }}" id="formAdd">
                 @csrf
@@ -358,7 +358,7 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-warning text-dark">
                 <h5 class="modal-title fs-6"><i class="fas fa-edit me-2"></i>Edit Data Integrasi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" id="formEdit">
                 @csrf
@@ -465,7 +465,7 @@
                 <h5 class="modal-title fs-6 fw-bold">
                     <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Integrasi
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <div class="modal-body py-3">
                 <p class="mb-2" id="confirm_duplicate_integrasi_msg">

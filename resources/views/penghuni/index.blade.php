@@ -214,16 +214,16 @@
             <form method="GET" action="{{ route('penghuni.index') }}" class="row g-2 align-items-end">
                 <input type="hidden" name="tab" value="{{ $selectedTab }}">
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
-                    <input type="date" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}">
+                    <label for="filter_penghuni_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" id="filter_penghuni_mulai" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}" aria-label="Tanggal Mulai">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold">Tanggal Sampai</label>
-                    <input type="date" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}">
+                    <label for="filter_penghuni_sampai" class="form-label small fw-semibold">Tanggal Sampai</label>
+                    <input type="date" id="filter_penghuni_sampai" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}" aria-label="Tanggal Sampai">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">UPT</label>
-                    <select name="upt_id" class="form-select form-select-sm" {{ $userUptFilter ? 'disabled' : '' }}>
+                    <label for="filter_penghuni_upt" class="form-label small fw-semibold">UPT</label>
+                    <select id="filter_penghuni_upt" name="upt_id" class="form-select form-select-sm" aria-label="Pilih Satuan Kerja UPT" {{ $userUptFilter ? 'disabled' : '' }}>
                         <option value="0">-- Semua UPT --</option>
                         @foreach ($uptList as $upt)
                         <option value="{{ $upt->id }}" {{ $filterUpt == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
@@ -311,13 +311,13 @@
                         <td class="text-center">{{ $data->narapidana_anak_perempuan }}</td>
                         <td class="text-center fw-bold">{{ number_format($total, 0, ',', '.') }}</td>
                         <td class="text-center">
-                            <button class="btn btn-warning btn-sm py-0 px-1.5" onclick="editData({{ json_encode($data) }})" title="Edit">
+                            <button class="btn btn-warning btn-sm py-0 px-1.5" onclick="editData({{ json_encode($data) }})" title="Edit" aria-label="Edit Data Penghuni {{ $data->upt->nama_upt ?? '' }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <form action="{{ route('penghuni.destroy', $data->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data penghuni ini?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm py-0 px-1.5" title="Hapus">
+                                <button type="submit" class="btn btn-danger btn-sm py-0 px-1.5" title="Hapus" aria-label="Hapus Data Penghuni {{ $data->upt->nama_upt ?? '' }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -361,7 +361,7 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-plus-circle me-2"></i>Input Data Penghuni Seluruh Klasifikasi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form id="formInputMassal" method="POST" action="{{ route('penghuni.store') }}">
                 @csrf
@@ -540,7 +540,7 @@
         <div class="modal-content">
             <div class="modal-header py-2 bg-warning text-dark">
                 <h5 class="modal-title fs-6"><i class="fas fa-edit me-2"></i>Edit Data Penghuni</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" id="formEdit">
                 @csrf
@@ -645,7 +645,7 @@
                 <h5 class="modal-title fs-6 fw-bold">
                     <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Penghuni
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <div class="modal-body py-3">
                 <p class="mb-2" id="confirm_duplicate_penghuni_msg">

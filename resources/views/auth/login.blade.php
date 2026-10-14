@@ -15,7 +15,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Non-blocking Google Fonts: Poppins with System Fallback -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"></noscript>
     <style>
         :root {
             --primary-color: #1e40af;
@@ -24,7 +26,7 @@
         }
         
         * {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         .bg-primary { background-color: var(--primary-color); }
@@ -88,16 +90,20 @@
                         @if (!empty($instansi->logo))
                             @php
                                 $loginLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                                $loginThumbLogo = preg_replace('/\.' . preg_quote($loginLogoExt, '/') . '$/i', '_thumb.webp', $instansi->logo);
                                 $loginWebpLogo = preg_replace('/\.' . preg_quote($loginLogoExt, '/') . '$/i', '.webp', $instansi->logo);
+                                $hasLoginThumb = file_exists(public_path($loginThumbLogo));
                                 $hasLoginWebp = file_exists(public_path($loginWebpLogo));
+                                $chosenLoginLogo = $hasLoginThumb ? $loginThumbLogo : ($hasLoginWebp ? $loginWebpLogo : $instansi->logo);
+                                $isLoginWebp = $hasLoginThumb || $hasLoginWebp;
                             @endphp
-                            @if($hasLoginWebp)
+                            @if($isLoginWebp)
                             <picture>
-                                <source srcset="{{ asset($loginWebpLogo) }}" type="image/webp">
-                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48">
+                                <source srcset="{{ asset($chosenLoginLogo) }}" type="image/webp">
+                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48" fetchpriority="high">
                             </picture>
                             @else
-                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48">
+                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48" fetchpriority="high">
                             @endif
                         @else
                             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center">
@@ -143,11 +149,11 @@
                     @csrf
                     <div class="relative">
                         <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input type="text" name="username" value="{{ old('username') }}" class="input-field w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Username" required autofocus>
+                        <input type="text" id="username_mobile" name="username" value="{{ old('username') }}" class="input-field w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Username" aria-label="Username" required autofocus>
                     </div>
                     <div class="relative">
                         <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input type="password" name="password" class="input-field w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Password" required>
+                        <input type="password" id="password_mobile" name="password" class="input-field w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Password" aria-label="Password" required>
                     </div>
                     <div class="flex items-center text-xs text-gray-600">
                         <label class="flex items-center cursor-pointer">
@@ -222,11 +228,11 @@
                         @csrf
                         <div class="relative">
                             <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" name="username" value="{{ old('username') }}" class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none text-gray-800 placeholder:text-gray-400" placeholder="Username" required autofocus>
+                            <input type="text" id="username_desktop" name="username" value="{{ old('username') }}" class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none text-gray-800 placeholder:text-gray-400" placeholder="Username" aria-label="Username" required autofocus>
                         </div>
                         <div class="relative">
                             <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="password" name="password" class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none text-gray-800 placeholder:text-gray-400" placeholder="Password" required>
+                            <input type="password" id="password_desktop" name="password" class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none text-gray-800 placeholder:text-gray-400" placeholder="Password" aria-label="Password" required>
                         </div>
                         <div class="flex items-center text-xs text-gray-600">
                             <label class="flex items-center cursor-pointer">
@@ -304,7 +310,18 @@
             <div class="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
                 <div class="flex items-center gap-2 sm:gap-3">
                     @if (!empty($instansi->logo))
-                        <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-6 h-6 sm:w-8 sm:h-8 object-contain" width="32" height="32" loading="lazy">
+                        @php
+                            $footLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
+                            $footThumbLogo = preg_replace('/\.' . preg_quote($footLogoExt, '/') . '$/i', '_thumb.webp', $instansi->logo);
+                            $hasFootThumb = file_exists(public_path($footThumbLogo));
+                            $chosenFootLogo = $hasFootThumb ? $footThumbLogo : $instansi->logo;
+                        @endphp
+                        <picture>
+                            @if($hasFootThumb)
+                            <source srcset="{{ asset($chosenFootLogo) }}" type="image/webp">
+                            @endif
+                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-6 h-6 sm:w-8 sm:h-8 object-contain" width="32" height="32" loading="lazy">
+                        </picture>
                     @else
                         <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded flex items-center justify-center">
                             <i class="fas fa-balance-scale text-xs sm:text-sm text-primary"></i>

@@ -79,8 +79,8 @@
             <form method="GET" action="{{ route('bebas-harian.index') }}" class="row g-3 align-items-end">
                 @if(!$userUptFilter)
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">UPT</label>
-                    <select name="upt_id" class="form-select form-select-sm">
+                    <label for="filter_bebas_upt" class="form-label small fw-semibold">UPT</label>
+                    <select id="filter_bebas_upt" name="upt_id" class="form-select form-select-sm" aria-label="Pilih Satuan Kerja UPT">
                         <option value="">-- Semua UPT --</option>
                         @foreach ($uptList as $upt)
                             <option value="{{ $upt->id }}" {{ $filterUpt == $upt->id ? 'selected' : '' }}>
@@ -91,12 +91,12 @@
                 </div>
                 @endif
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
-                    <input type="date" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}">
+                    <label for="filter_bebas_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" id="filter_bebas_mulai" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}" aria-label="Tanggal Mulai">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Tanggal Sampai</label>
-                    <input type="date" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}">
+                    <label for="filter_bebas_sampai" class="form-label small fw-semibold">Tanggal Sampai</label>
+                    <input type="date" id="filter_bebas_sampai" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}" aria-label="Tanggal Sampai">
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
@@ -150,7 +150,7 @@
                                 </td>
                                 <td><small class="text-muted">{{ $row->keterangan ?? '-' }}</small></td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data">
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data" aria-label="Edit Data Bebas Harian {{ $row->nama_upt }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <form method="POST" action="{{ route('bebas-harian.destroy') }}" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus seluruh data bebas harian UPT ini pada tanggal {{ indonesianDate($row->tanggal) }}?')">
@@ -158,7 +158,7 @@
                                         @method('DELETE')
                                         <input type="hidden" name="del_upt_id" value="{{ $row->upt_id }}">
                                         <input type="hidden" name="del_tanggal" value="{{ $row->tanggal }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data" aria-label="Hapus Data Bebas Harian {{ $row->nama_upt }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -192,7 +192,7 @@
                 <h5 class="modal-title fw-bold">
                     <i class="fas fa-door-open me-2"></i> Form Input Bebas Harian
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('bebas-harian.store') }}" id="formTambah">
                 @csrf
@@ -298,7 +298,7 @@
                 <h5 class="modal-title fw-bold">
                     <i class="fas fa-edit me-2"></i> Edit Data Bebas Harian
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('bebas-harian.update') }}" id="formEdit">
                 @csrf
@@ -385,7 +385,7 @@
                 <h5 class="modal-title fs-6 fw-bold">
                     <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Bebas Harian
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <div class="modal-body py-3">
                 <p class="mb-2" id="confirm_duplicate_bebas_msg">
