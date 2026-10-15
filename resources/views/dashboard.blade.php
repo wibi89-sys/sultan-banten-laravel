@@ -133,9 +133,9 @@
                         <div class="bento-stat-value font-speedometer count-up text-success" data-target="{{ $stats['total_upt'] }}">
                             {{ number_format($stats['total_upt'], 0, ',', '.') }}
                         </div>
-                        <span class="font-speedometer small fw-bold text-success" style="font-size: 11px;">100% SINKRON</span>
+                        <span class="font-speedometer small fw-bold text-success" style="font-size: 11px;">100%</span>
                     </div>
-                    <div class="speedo-telemetry-track mt-1" title="Kepatuhan Sinkronisasi: 100%">
+                    <div class="speedo-telemetry-track mt-1" title="Kepatuhan: 100%">
                         <div class="speedo-telemetry-fill" style="width: 100%; background: linear-gradient(90deg, #10b981, #34d399); --bar-glow: #10b981;"></div>
                     </div>
                 </div>
@@ -158,9 +158,9 @@
                         <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_tahanan'] }}">
                             {{ number_format($stats['total_tahanan'], 0, ',', '.') }}
                         </div>
-                        <span class="font-speedometer small fw-bold text-primary" style="font-size: 11.5px;">{{ $pctTahanan }}% Porsi</span>
+                        <span class="font-speedometer small fw-bold text-primary" style="font-size: 11.5px;">{{ $pctTahanan }}%</span>
                     </div>
-                    <div class="speedo-telemetry-track mt-1" title="Porsi Tahanan: {{ $pctTahanan }}%">
+                    <div class="speedo-telemetry-track mt-1" title="Tahanan: {{ $pctTahanan }}%">
                         <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctTahanan)) }}%; background: linear-gradient(90deg, #3b82f6, #60a5fa); --bar-glow: #3b82f6;"></div>
                     </div>
                 </div>
@@ -183,9 +183,9 @@
                         <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_narapidana'] }}">
                             {{ number_format($stats['total_narapidana'], 0, ',', '.') }}
                         </div>
-                        <span class="font-speedometer small fw-bold text-danger" style="font-size: 11.5px;">{{ $pctNapi }}% Porsi</span>
+                        <span class="font-speedometer small fw-bold text-danger" style="font-size: 11.5px;">{{ $pctNapi }}%</span>
                     </div>
-                    <div class="speedo-telemetry-track mt-1" title="Porsi Narapidana: {{ $pctNapi }}%">
+                    <div class="speedo-telemetry-track mt-1" title="Narapidana: {{ $pctNapi }}%">
                         <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctNapi)) }}%; background: linear-gradient(90deg, #f43f5e, #fb7185); --bar-glow: #f43f5e;"></div>
                     </div>
                 </div>
@@ -259,7 +259,7 @@
                     <div class="speedo-cockpit-stage my-2 mb-3">
                         <!-- TINGKAT HUNIAN HERO SPEEDOMETER (0% - 300%) SESUAI REFERENSI 3/4 LINGKARAN (270°) -->
                         <div class="speedo-main-wrap" title="Tingkat Hunian: {{ $tingkatVal }}%">
-                            <svg class="speedo-main-svg" viewBox="0 0 360 260">
+                            <svg class="speedo-main-svg" viewBox="0 0 360 268">
                                 <defs>
                                     <!-- Gradasi 5 Warna: Hijau -> Biru -> Orange -> Merah -> Hitam (0% s/d 300%) -->
                                     <linearGradient id="speedoRibbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -322,11 +322,11 @@
                                 <line x1="246.5" y1="206.5" x2="255.0" y2="215.0" stroke="var(--speedo-tick-major)" stroke-width="2.5" />
 
                                 <!-- Scale Labels (Presisi Sesuai Model Awal: 0%, 100%, 150%, 200%, 300%) -->
-                                <text class="speedo-scale-num" x="90" y="238" text-anchor="middle">0%</text>
+                                <text class="speedo-scale-num" x="90" y="252" text-anchor="middle">0%</text>
                                 <text class="speedo-scale-num" x="122" y="92" text-anchor="middle">100%</text>
                                 <text class="speedo-scale-num apex-label" x="180" y="66" text-anchor="middle">150%</text>
                                 <text class="speedo-scale-num" x="238" y="92" text-anchor="middle">200%</text>
-                                <text class="speedo-scale-num" x="270" y="238" text-anchor="middle">300%</text>
+                                <text class="speedo-scale-num" x="270" y="252" text-anchor="middle">300%</text>
 
                                 <!-- Glowing Ray Marker (Angle: -135° s/d +135°, Poros (180, 140)) -->
                                 <g id="speedoHunianMarker" transform="rotate({{ $needleAngle }}, 180, 140)">
@@ -420,9 +420,9 @@
                         <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_pidum'] }}">
                             {{ number_format($stats['total_pidum'], 0, ',', '.') }}
                         </div>
-                        <span class="font-speedometer small fw-bold" style="font-size: 11.5px; color: #a855f7;">{{ $pctPidum }}% Share</span>
+                        <span class="font-speedometer small fw-bold" style="font-size: 11.5px; color: #a855f7;">{{ $pctPidum }}%</span>
                     </div>
-                    <div class="speedo-telemetry-track mt-1" title="Share Pidum: {{ $pctPidum }}%">
+                    <div class="speedo-telemetry-track mt-1" title="Pidum: {{ $pctPidum }}%">
                         <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctPidum)) }}%; background: linear-gradient(90deg, #8b5cf6, #c084fc); --bar-glow: #8b5cf6;"></div>
                     </div>
                 </div>
@@ -445,9 +445,9 @@
                         <div class="bento-stat-value font-speedometer count-up" data-target="{{ $stats['total_pidsus'] }}">
                             {{ number_format($stats['total_pidsus'], 0, ',', '.') }}
                         </div>
-                        <span class="font-speedometer small fw-bold text-info" style="font-size: 11.5px;">{{ $pctPidsus }}% Share</span>
+                        <span class="font-speedometer small fw-bold text-info" style="font-size: 11.5px;">{{ $pctPidsus }}%</span>
                     </div>
-                    <div class="speedo-telemetry-track mt-1" title="Share Pidsus: {{ $pctPidsus }}%">
+                    <div class="speedo-telemetry-track mt-1" title="Pidsus: {{ $pctPidsus }}%">
                         <div class="speedo-telemetry-fill" style="width: {{ min(100, max(5, $pctPidsus)) }}%; background: linear-gradient(90deg, #06b6d4, #22d3ee); --bar-glow: #06b6d4;"></div>
                     </div>
                 </div>
