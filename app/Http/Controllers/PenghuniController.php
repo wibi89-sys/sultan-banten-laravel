@@ -236,37 +236,65 @@ class PenghuniController extends Controller
         DB::beginTransaction();
         try {
             $processed = 0;
+            $anyChanged = false;
+            $anyTahananChanged = false;
+            $tahananFields = ['tahanan_dewasa_laki', 'tahanan_dewasa_perempuan', 'tahanan_anak_laki', 'tahanan_anak_perempuan'];
+
             foreach ($this->klasifikasiKeys as $klasifikasi => $key) {
-                DataPenghuni::updateOrCreate(
-                    [
-                        'upt_id' => $uptId,
-                        'tanggal' => $tanggal,
-                        'klasifikasi_pidana' => $klasifikasi,
-                    ],
-                    [
-                        'tahanan_dewasa_laki' => (int) $request->input('tahanan_dl_'.$key, 0),
-                        'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dp_'.$key, 0),
-                        'tahanan_anak_laki' => (int) $request->input('tahanan_al_'.$key, 0),
-                        'tahanan_anak_perempuan' => (int) $request->input('tahanan_ap_'.$key, 0),
-                        'narapidana_dewasa_laki' => (int) $request->input('narapidana_dl_'.$key, 0),
-                        'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dp_'.$key, 0),
-                        'narapidana_anak_laki' => (int) $request->input('narapidana_al_'.$key, 0),
-                        'narapidana_anak_perempuan' => (int) $request->input('narapidana_ap_'.$key, 0),
-                        'keterangan' => $request->input('keterangan', ''),
-                    ]
-                );
+                $payload = [
+                    'tahanan_dewasa_laki' => (int) $request->input('tahanan_dl_'.$key, 0),
+                    'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dp_'.$key, 0),
+                    'tahanan_anak_laki' => (int) $request->input('tahanan_al_'.$key, 0),
+                    'tahanan_anak_perempuan' => (int) $request->input('tahanan_ap_'.$key, 0),
+                    'narapidana_dewasa_laki' => (int) $request->input('narapidana_dl_'.$key, 0),
+                    'narapidana_dewasa_perempuan' => (int) $request->input('narapidana_dp_'.$key, 0),
+                    'narapidana_anak_laki' => (int) $request->input('narapidana_al_'.$key, 0),
+                    'narapidana_anak_perempuan' => (int) $request->input('narapidana_ap_'.$key, 0),
+                    'keterangan' => $request->input('keterangan', ''),
+                ];
+
+                $row = DataPenghuni::firstOrNew([
+                    'upt_id' => $uptId,
+                    'tanggal' => $tanggal,
+                    'klasifikasi_pidana' => $klasifikasi,
+                ]);
+
+                if ($row->exists) {
+                    $row->fill($payload);
+                    if ($row->isDirty()) {
+                        $anyChanged = true;
+                        if (count(array_intersect(array_keys($row->getDirty()), $tahananFields)) > 0) {
+                            $anyTahananChanged = true;
+                        }
+                        $row->save();
+                    }
+                } else {
+                    $row->fill($payload);
+                    $row->save();
+                    $anyChanged = true;
+                    $anyTahananChanged = true;
+                }
                 $processed++;
             }
 
             DB::commit();
 
             $upt = Upt::find($uptId);
+
+            if ($isExisting && ! $anyChanged) {
+                return back()->with('success', "Data penghuni untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' sudah sesuai (tidak ada perubahan data).');
+            }
+
             $action = $isExisting ? 'edit' : 'tambah';
             $msg = $isExisting
                 ? "Memperbarui {$processed} data penghuni untuk UPT {$upt->nama_upt} tanggal {$tanggal} via form input"
                 : "Menambahkan {$processed} data penghuni untuk UPT {$upt->nama_upt} tanggal {$tanggal}";
 
-            ActivityLog::log($action, 'penghuni', $msg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+            ActivityLog::log($action, 'penghuni', $msg, [
+                'upt_id' => $uptId,
+                'tanggal' => $tanggal,
+                'is_tahanan_changed' => $isExisting ? $anyTahananChanged : true,
+            ]);
 
             $successMsg = $isExisting
                 ? "Data penghuni untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
@@ -326,7 +354,7 @@ class PenghuniController extends Controller
             return back()->with('error', 'Data penghuni untuk klasifikasi '.$klasifikasi.' pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
         }
 
-        $penghuni->update([
+        $penghuni->fill([
             'klasifikasi_pidana' => $klasifikasi,
             'tahanan_dewasa_laki' => (int) $request->input('tahanan_dewasa_laki', 0),
             'tahanan_dewasa_perempuan' => (int) $request->input('tahanan_dewasa_perempuan', 0),
@@ -340,7 +368,20 @@ class PenghuniController extends Controller
             'keterangan' => $request->input('keterangan', ''),
         ]);
 
-        ActivityLog::log('edit', 'penghuni', "Mengubah data penghuni ID {$id} ({$penghuni->klasifikasi_pidana})", $penghuni->toArray());
+        if (! $penghuni->isDirty()) {
+            return back()->with('success', 'Data penghuni sudah sesuai (tidak ada perubahan data).');
+        }
+
+        $dirtyFields = array_keys($penghuni->getDirty());
+        $tahananFields = ['tahanan_dewasa_laki', 'tahanan_dewasa_perempuan', 'tahanan_anak_laki', 'tahanan_anak_perempuan'];
+        $isTahananChanged = count(array_intersect($dirtyFields, $tahananFields)) > 0;
+
+        $penghuni->save();
+
+        ActivityLog::log('edit', 'penghuni', "Mengubah data penghuni ID {$id} ({$penghuni->klasifikasi_pidana})", array_merge($penghuni->toArray(), [
+            'changed_fields' => $dirtyFields,
+            'is_tahanan_changed' => $isTahananChanged,
+        ]));
 
         return back()->with('success', 'Data penghuni berhasil diperbarui.');
     }

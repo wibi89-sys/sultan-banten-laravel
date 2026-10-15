@@ -242,30 +242,43 @@ class OverstayingController extends Controller
                 'keterangan' => $request->input('keterangan', ''),
             ];
 
-            $data = DataOverstaying::updateOrCreate(
-                [
-                    'upt_id' => $uptId,
-                    'tanggal' => $tanggal,
-                ],
-                $payload
-            );
+            $upt = Upt::find($uptId);
+            $uptName = $upt?->nama_upt ?? 'UPT';
+
+            if ($existing) {
+                $existing->fill($payload);
+                // Jika tidak ada perubahan data sama sekali
+                if (! $existing->isDirty()) {
+                    DB::rollBack();
+
+                    return back()->with('success', "Data overstaying untuk UPT {$uptName} tanggal ".formatDate($tanggal).' sudah sesuai (tidak ada perubahan data).');
+                }
+
+                $dirtyFields = array_keys($existing->getDirty());
+                $tahananFields = ['tahanan_ai', 'tahanan_aii', 'tahanan_aiii', 'tahanan_aiv', 'tahanan_av'];
+                $isTahananChanged = count(array_intersect($dirtyFields, $tahananFields)) > 0;
+
+                $existing->save();
+                DB::commit();
+
+                ActivityLog::log('edit', 'overstaying', "Memperbarui data overstaying UPT {$uptName} tanggal {$tanggal} via form input", array_merge($existing->toArray(), [
+                    'changed_fields' => $dirtyFields,
+                    'is_tahanan_changed' => $isTahananChanged,
+                ]));
+
+                return back()->with('success', "Data overstaying untuk UPT {$uptName} tanggal ".formatDate($tanggal).' berhasil diperbarui.');
+            }
+
+            $data = DataOverstaying::create(array_merge([
+                'upt_id' => $uptId,
+                'tanggal' => $tanggal,
+            ], $payload));
 
             DB::commit();
 
-            $upt = Upt::find($uptId);
-            $uptName = $upt?->nama_upt ?? 'UPT';
-            $action = $isUpdate ? 'edit' : 'tambah';
-            $logMsg = $isUpdate
-                ? "Memperbarui data overstaying UPT {$uptName} tanggal {$tanggal} via form input"
-                : "Menambahkan data overstaying UPT {$uptName} tanggal {$tanggal}";
+            ActivityLog::log('tambah', 'overstaying', "Menambahkan data overstaying UPT {$uptName} tanggal {$tanggal}", $data->toArray());
 
-            ActivityLog::log($action, 'overstaying', $logMsg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
-
-            $successMsg = $isUpdate
-                ? "Data overstaying untuk UPT {$uptName} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
-                : 'Data overstaying berhasil ditambahkan.';
-
-            return back()->with('success', $successMsg);
+            return back()->with('success', 'Data overstaying berhasil ditambahkan.');
         } catch (UniqueConstraintViolationException $e) {
             DB::rollBack();
 
@@ -327,22 +340,35 @@ class OverstayingController extends Controller
             return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan pilih tanggal lain atau gunakan data yang sudah ada.')->withInput();
         }
 
+        $payload = [
+            'upt_id' => $uptId,
+            'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
+            'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
+            'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
+            'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
+            'tahanan_av' => (int) $request->input('tahanan_av', 0),
+            'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
+            'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
+            'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
+            'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
+            'overstaying_av' => (int) $request->input('overstaying_av', 0),
+            'tanggal' => $tanggal,
+            'keterangan' => $request->input('keterangan', ''),
+        ];
+
+        $data->fill($payload);
+
+        // Jika tidak ada data yang berubah sama sekali
+        if (! $data->isDirty()) {
+            return back()->with('success', 'Data overstaying sudah sesuai (tidak ada perubahan data).');
+        }
+
+        $dirtyFields = array_keys($data->getDirty());
+        $tahananFields = ['tahanan_ai', 'tahanan_aii', 'tahanan_aiii', 'tahanan_aiv', 'tahanan_av'];
+        $isTahananChanged = count(array_intersect($dirtyFields, $tahananFields)) > 0;
+
         try {
-            $data->update([
-                'upt_id' => $uptId,
-                'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
-                'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
-                'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
-                'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
-                'tahanan_av' => (int) $request->input('tahanan_av', 0),
-                'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
-                'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
-                'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
-                'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
-                'overstaying_av' => (int) $request->input('overstaying_av', 0),
-                'tanggal' => $tanggal,
-                'keterangan' => $request->input('keterangan', ''),
-            ]);
+            $data->save();
         } catch (UniqueConstraintViolationException $e) {
             return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
         } catch (QueryException $e) {
@@ -353,7 +379,10 @@ class OverstayingController extends Controller
             return back()->with('error', 'Gagal memperbarui data: '.$e->getMessage())->withInput();
         }
 
-        ActivityLog::log('edit', 'overstaying', "Mengubah data overstaying ID {$id}", $data->toArray());
+        ActivityLog::log('edit', 'overstaying', "Mengubah data overstaying ID {$id}", array_merge($data->toArray(), [
+            'changed_fields' => $dirtyFields,
+            'is_tahanan_changed' => $isTahananChanged,
+        ]));
 
         return back()->with('success', 'Data overstaying berhasil diperbarui.');
     }

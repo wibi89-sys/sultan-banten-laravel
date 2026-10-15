@@ -147,6 +147,11 @@ class UptRankingService
             foreach ($editLogs as $log) {
                 $detail = is_array($log->detail) ? $log->detail : json_decode($log->detail, true);
                 if (is_array($detail) && ! empty($detail['upt_id']) && ! empty($detail['tanggal'])) {
+                    // Jika log memiliki info 'is_tahanan_changed' dan nilainya false, bukan perbaikan tahanan
+                    if (isset($detail['is_tahanan_changed']) && ! $detail['is_tahanan_changed']) {
+                        continue;
+                    }
+
                     $uId = $detail['upt_id'];
                     $t = $detail['tanggal'];
                     $logTime = ! empty($log->created_at) ? Carbon::parse($log->created_at) : null;
@@ -553,6 +558,21 @@ class UptRankingService
             if (! $latestEditTime || $editLogTime->gt($latestEditTime)) {
                 $latestEditTime = $editLogTime;
             }
+        }
+
+        // Khusus UPT dengan 0 tahanan di kedua modul (misal Lapas Perempuan/Lapas Anak),
+        // jika tidak ada log edit perubahan tahanan, maka mutlak Sesuai Langsung (+20 Poin)
+        if ($pTotal === 0 && $oTotal === 0 && ! $hasEditLog) {
+            return [
+                'status' => 'sesuai',
+                'poin' => 20,
+                'tahanan_penghuni' => 0,
+                'tahanan_overstaying' => 0,
+                'selisih' => 0,
+                'is_perbaikan' => false,
+                'keterangan' => 'Sesuai Langsung',
+                'edit_time' => null,
+            ];
         }
 
         $isPerbaikan = $hasEditLog || $isPenghuniEdited || $isOverstayingEdited;

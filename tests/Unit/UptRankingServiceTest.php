@@ -209,4 +209,24 @@ class UptRankingServiceTest extends TestCase
         $this->assertEquals(10, $result['selisih']);
         $this->assertFalse($result['is_perbaikan']);
     }
+
+    public function test_evaluate_kroscek_with_zero_tahanan_on_both_sides_defaults_to_sesuai_langsung(): void
+    {
+        $penghuni = [
+            'total_tahanan' => 0,
+            'created_at' => '2026-08-31 14:15:00',
+            'updated_at' => '2026-08-31 14:15:00',
+        ];
+        $overstaying = [
+            'total_tahanan' => 0,
+            'created_at' => '2026-08-31 14:16:00',
+            'updated_at' => '2026-08-31 14:16:00',
+        ];
+
+        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying);
+
+        $this->assertEquals('sesuai', $result['status']);
+        $this->assertEquals(20, $result['poin']);
+        $this->assertFalse($result['is_perbaikan']);
+    }
 }
