@@ -5,27 +5,38 @@
 
 @push('styles')
 <style>
-    /* Styling Kartu & Banner */
+    /* Styling Kartu KPI dengan Garis Batas Jelas */
     .kpi-card {
-        border-radius: 14px;
-        border: 1px solid rgba(0,0,0,0.06);
-        background: #fff;
+        border-radius: 12px;
+        border: 1.5px solid #cbd5e1 !important;
+        background: #ffffff;
         transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
         position: relative;
         overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
     .kpi-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        border-color: #94a3b8 !important;
     }
     .kpi-card .icon-box {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 18px;
+    }
+
+    /* Card Kroscek Data Khusus */
+    .kroscek-card-box {
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        overflow: hidden;
     }
 
     /* Status Pill Badges */
@@ -98,7 +109,7 @@
         font-weight: 600;
         border-radius: 50rem;
         padding: 6px 14px;
-        border: 1px solid #e5e7eb;
+        border: 1.5px solid #cbd5e1;
         background-color: #fff;
         color: #4b5563;
         transition: all 0.15s ease;
@@ -106,7 +117,7 @@
     .btn-quick-filter:hover {
         background-color: #f9fafb;
         color: #111827;
-        border-color: #d1d5db;
+        border-color: #94a3b8;
     }
     .btn-quick-filter.active {
         background-color: #2563eb;
@@ -175,11 +186,11 @@
             $isLengkap = $myUptData['is_all_completed'];
         @endphp
 
-        {{-- Banner Status Utama UPT --}}
-        <div class="alert border-0 shadow-sm p-4 mb-4 rounded-4 @if($isSinkron && $isLengkap) bg-success bg-opacity-10 border-start border-4 border-success @elseif($isSelisih) bg-danger bg-opacity-10 border-start border-4 border-danger @else bg-warning bg-opacity-10 border-start border-4 border-warning @endif">
+        {{-- Banner Status Utama UPT dengan Garis Jelas --}}
+        <div class="alert p-4 mb-4 rounded-4 shadow-sm @if($isSinkron && $isLengkap) bg-success bg-opacity-10 border-success @elseif($isSelisih) bg-danger bg-opacity-10 border-danger @else bg-warning bg-opacity-10 border-warning @endif" style="border: 1.5px solid @if($isSinkron && $isLengkap) #a7f3d0 @elseif($isSelisih) #fecaca @else #fde68a @endif !important; border-left: 5px solid @if($isSinkron && $isLengkap) #10b981 @elseif($isSelisih) #ef4444 @else #f59e0b @endif !important;">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center @if($isSinkron && $isLengkap) bg-success text-white @elseif($isSelisih) bg-danger text-white @else bg-warning text-dark @endif" style="width: 56px; height: 56px;">
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center shadow-sm @if($isSinkron && $isLengkap) bg-success text-white @elseif($isSelisih) bg-danger text-white @else bg-warning text-dark @endif" style="width: 56px; height: 56px;">
                         <i class="fas @if($isSinkron && $isLengkap) fa-check-circle fs-3 @elseif($isSelisih) fa-exclamation-triangle fs-3 @else fa-hourglass-half fs-3 @endif"></i>
                     </div>
                     <div>
@@ -214,80 +225,117 @@
             </div>
         </div>
 
-        {{-- Kartu Kroscek Perbandingan Tahanan (Penghuni vs Overstaying) --}}
-        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="card-header bg-primary bg-opacity-10 py-3 border-0">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span class="fw-bold text-primary">
-                        <i class="fas fa-balance-scale me-2"></i>Komparasi Sinkronisasi Tahanan (Penghuni vs Overstaying)
-                    </span>
-                    <span class="small text-muted">
-                        *Tahanan non-WNA/sakit/lansia/pidana mati di Penghuni harus sama persis dengan Tahanan AI–AV Overstaying
-                    </span>
+        {{-- CARD KROSCEK DATA: Komparasi Sinkronisasi Tahanan dengan Garis Jelas & Desain Premium --}}
+        <div class="kroscek-card-box mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">Card Kroscek Data: Komparasi Tahanan Penghuni vs Overstaying</h6>
+                        <small class="text-muted">Sinkronisasi Tahanan non-WNA/sakit/lansia/pidana mati di Penghuni dengan Tahanan AI–AV di Overstaying</small>
+                    </div>
+                </div>
+                <div>
+                    @if($isSinkron)
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fw-bold">
+                            <i class="fas fa-check-circle me-1"></i> Data Tahanan Sinkron (Cocok)
+                        </span>
+                    @elseif($isSelisih)
+                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 fw-bold">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Terdeteksi Selisih {{ $myUptData['selisih'] }} Orang
+                        </span>
+                    @else
+                        <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 px-3 py-2 fw-bold">
+                            <i class="fas fa-hourglass-half me-1"></i> Menunggu Kelengkapan Input
+                        </span>
+                    @endif
                 </div>
             </div>
-            <div class="card-body p-4">
-                <div class="row align-items-center g-4">
-                    {{-- Sisi Penghuni --}}
-                    <div class="col-md-5">
-                        <div class="p-3 bg-light rounded-3 border text-center h-100">
-                            <span class="text-muted small fw-semibold text-uppercase">Tahanan di Data Penghuni</span>
-                            <h2 class="fw-bold my-2 text-dark font-monospace">
-                                {{ $myUptData['tahanan_penghuni'] !== null ? number_format($myUptData['tahanan_penghuni']) : '-' }}
-                                <small class="fs-6 fw-normal text-muted font-sans-serif">Orang</small>
-                            </h2>
-                            <div class="small text-muted">
+            <div class="card-body p-4 bg-light bg-opacity-50">
+                <div class="row align-items-stretch g-3">
+                    {{-- Sisi Kiri: Data Penghuni --}}
+                    <div class="col-lg-5">
+                        <div class="p-3 bg-white rounded-3 h-100 shadow-sm" style="border: 1.5px solid #93c5fd !important; border-top: 4px solid #2563eb !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-primary small text-uppercase">
+                                    <i class="fas fa-users me-1"></i> 1. Modul Penghuni
+                                </span>
                                 @if($myUptData['penghuni']['exists'])
-                                    <i class="fas fa-clock text-primary me-1"></i> Jam Input: <strong>{{ $myUptData['penghuni']['jam_str'] }} WIB</strong>
-                                    <span class="badge @if($myUptData['penghuni']['is_tepat']) bg-success @else bg-warning text-dark @endif ms-1">
-                                        {{ $myUptData['penghuni']['is_tepat'] ? 'Tepat Waktu' : 'Terlambat' }}
+                                    <span class="badge {{ $myUptData['penghuni']['is_tepat'] ? 'bg-success text-white' : 'bg-warning text-dark' }}" style="font-size: 11px;">
+                                        <i class="fas fa-clock me-1"></i>{{ $myUptData['penghuni']['jam_str'] }} WIB ({{ $myUptData['penghuni']['is_tepat'] ? 'Tepat' : 'Terlambat' }})
                                     </span>
                                 @else
-                                    <span class="badge bg-danger">Belum Input Penghuni</span>
+                                    <span class="badge bg-danger text-white" style="font-size: 11px;">Belum Input</span>
                                 @endif
+                            </div>
+                            
+                            <div class="text-center py-2">
+                                <span class="text-muted small fw-semibold">Jumlah Tahanan di Form Penghuni:</span>
+                                <h1 class="fw-bold my-1 text-dark font-monospace display-6">
+                                    {{ $myUptData['tahanan_penghuni'] !== null ? number_format($myUptData['tahanan_penghuni']) : '-' }}
+                                    <small class="fs-6 fw-normal text-muted font-sans-serif">Orang</small>
+                                </h1>
+                            </div>
+
+                            <div class="border-top pt-2 mt-2 small text-muted d-flex justify-content-between">
+                                <span>Narapidana: <strong>{{ number_format($myUptData['penghuni']['total_napi']) }}</strong></span>
+                                <span>Total Isi: <strong class="text-primary">{{ number_format($myUptData['penghuni']['total_penghuni']) }}</strong> WBP</span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Indikator Hasil Tengah --}}
-                    <div class="col-md-2 text-center">
-                        <div class="my-2">
-                            @if($isSinkron)
-                                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow" style="width: 52px; height: 52px;">
-                                    <i class="fas fa-equals fs-4"></i>
-                                </div>
-                                <div class="mt-2 fw-bold text-success small">SINKRON</div>
-                            @elseif($isSelisih)
-                                <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow" style="width: 52px; height: 52px;">
-                                    <i class="fas fa-not-equal fs-4"></i>
-                                </div>
-                                <div class="mt-2 fw-bold text-danger small">SELISIH {{ $myUptData['selisih'] }}</div>
-                            @else
-                                <div class="bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow" style="width: 52px; height: 52px;">
-                                    <i class="fas fa-question fs-4"></i>
-                                </div>
-                                <div class="mt-2 fw-bold text-muted small">BELUM LENGKAP</div>
-                            @endif
-                        </div>
+                    {{-- Kolom Tengah: Indikator Kroscek --}}
+                    <div class="col-lg-2 d-flex flex-column align-items-center justify-content-center text-center py-2">
+                        @if($isSinkron)
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow mb-2" style="width: 58px; height: 58px;">
+                                <i class="fas fa-equals fs-3"></i>
+                            </div>
+                            <span class="badge bg-success px-3 py-1 fw-bold fs-6 shadow-sm">SINKRON</span>
+                            <small class="text-success fw-bold mt-1">Selisih: 0 Orang</small>
+                        @elseif($isSelisih)
+                            <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow mb-2" style="width: 58px; height: 58px;">
+                                <i class="fas fa-not-equal fs-3"></i>
+                            </div>
+                            <span class="badge bg-danger px-3 py-1 fw-bold fs-6 shadow-sm">SELISIH</span>
+                            <small class="text-danger fw-bold mt-1">{{ $myUptData['selisih'] }} Orang</small>
+                        @else
+                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center shadow mb-2" style="width: 58px; height: 58px;">
+                                <i class="fas fa-question fs-3"></i>
+                            </div>
+                            <span class="badge bg-secondary px-3 py-1 fw-bold fs-6 shadow-sm">BELUM</span>
+                            <small class="text-muted mt-1">Data Belum Lengkap</small>
+                        @endif
                     </div>
 
-                    {{-- Sisi Overstaying --}}
-                    <div class="col-md-5">
-                        <div class="p-3 bg-light rounded-3 border text-center h-100">
-                            <span class="text-muted small fw-semibold text-uppercase">Tahanan di Data Overstaying (AI–AV)</span>
-                            <h2 class="fw-bold my-2 text-dark font-monospace">
-                                {{ $myUptData['tahanan_overstaying'] !== null ? number_format($myUptData['tahanan_overstaying']) : '-' }}
-                                <small class="fs-6 fw-normal text-muted font-sans-serif">Orang</small>
-                            </h2>
-                            <div class="small text-muted">
+                    {{-- Sisi Kanan: Data Overstaying --}}
+                    <div class="col-lg-5">
+                        <div class="p-3 bg-white rounded-3 h-100 shadow-sm" style="border: 1.5px solid #c4b5fd !important; border-top: 4px solid #7c3aed !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small text-uppercase" style="color: #6d28d9;">
+                                    <i class="fas fa-clock me-1"></i> 2. Modul Overstaying (AI–AV)
+                                </span>
                                 @if($myUptData['overstaying']['exists'])
-                                    <i class="fas fa-clock text-primary me-1"></i> Jam Input: <strong>{{ $myUptData['overstaying']['jam_str'] }} WIB</strong>
-                                    <span class="badge @if($myUptData['overstaying']['is_tepat']) bg-success @else bg-warning text-dark @endif ms-1">
-                                        {{ $myUptData['overstaying']['is_tepat'] ? 'Tepat Waktu' : 'Terlambat' }}
+                                    <span class="badge {{ $myUptData['overstaying']['is_tepat'] ? 'bg-success text-white' : 'bg-warning text-dark' }}" style="font-size: 11px;">
+                                        <i class="fas fa-clock me-1"></i>{{ $myUptData['overstaying']['jam_str'] }} WIB ({{ $myUptData['overstaying']['is_tepat'] ? 'Tepat' : 'Terlambat' }})
                                     </span>
                                 @else
-                                    <span class="badge bg-danger">Belum Input Overstaying</span>
+                                    <span class="badge bg-danger text-white" style="font-size: 11px;">Belum Input</span>
                                 @endif
+                            </div>
+                            
+                            <div class="text-center py-2">
+                                <span class="text-muted small fw-semibold">Jumlah Tahanan di Form Overstaying:</span>
+                                <h1 class="fw-bold my-1 text-dark font-monospace display-6">
+                                    {{ $myUptData['tahanan_overstaying'] !== null ? number_format($myUptData['tahanan_overstaying']) : '-' }}
+                                    <small class="fs-6 fw-normal text-muted font-sans-serif">Orang</small>
+                                </h1>
+                            </div>
+
+                            <div class="border-top pt-2 mt-2 small text-muted d-flex justify-content-between">
+                                <span>Rincian: {{ $myUptData['overstaying']['tahanan_ai'] }}/{{ $myUptData['overstaying']['tahanan_aii'] }}/{{ $myUptData['overstaying']['tahanan_aiii'] }}/{{ $myUptData['overstaying']['tahanan_aiv'] }}/{{ $myUptData['overstaying']['tahanan_av'] }}</span>
+                                <span>Overstay: <strong class="{{ $myUptData['overstaying']['total_overstaying'] > 0 ? 'text-danger' : 'text-success' }}">{{ $myUptData['overstaying']['total_overstaying'] }}</strong></span>
                             </div>
                         </div>
                     </div>
@@ -295,12 +343,12 @@
 
                 {{-- Alert Saran Aksi jika masih ada kendala --}}
                 @if(!$isSinkron || !$isLengkap)
-                    <div class="mt-3 p-3 bg-white border border-warning rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="mt-3 p-3 bg-white rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-sm" style="border: 1px solid #fde68a !important; border-left: 4px solid #f59e0b !important;">
                         <div class="d-flex align-items-center gap-2 text-dark small">
                             <i class="fas fa-info-circle text-warning fs-5"></i>
                             <span>
                                 @if($isSelisih)
-                                    Jumlah tahanan berbeda <strong>{{ $myUptData['selisih'] }} orang</strong>. Silakan periksa angka tahanan pada modul Penghuni atau Overstaying Anda.
+                                    Jumlah tahanan berbeda <strong>{{ $myUptData['selisih'] }} orang</strong>. Pastikan angka tahanan pada modul Penghuni dan Overstaying (AI s/d AV) telah sesuai dengan data riil hari ini.
                                 @else
                                     Modul yang belum Anda input hari ini: 
                                     <strong>{{ implode(', ', $myUptData['missing_modules']) }}</strong>.
@@ -325,7 +373,7 @@
         </div>
 
         {{-- Tabel 4 Modul Laporan dengan Garis Jelas Khusus Operator --}}
-        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="kroscek-card-box mb-4">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="fw-bold text-dark mb-0">
                     <i class="fas fa-table-list text-primary me-2"></i>Status & Jam Input 4 Modul Laporan Harian
@@ -551,97 +599,163 @@
     {{-- ========================================================================= --}}
     @else
 
-        {{-- 4 Kartu KPI Wilayah Se-Banten --}}
+        @php
+            $pctSinkron = $totalUpt > 0 ? round(($totalSinkron / $totalUpt) * 100) : 0;
+            $pctLengkap = $totalUpt > 0 ? round(($totalLengkap4 / $totalUpt) * 100) : 0;
+            $pctTahanan = $totalPopulasiSeBanten > 0 ? round(($totalTahananSeBanten / $totalPopulasiSeBanten) * 100) : 0;
+        @endphp
+
+        {{-- 4 Kartu KPI Wilayah Se-Banten dengan Garis Jelas & Desain Premium --}}
         <div class="row g-3 mb-4">
             {{-- KPI 1: Kroscek Tahanan Sinkron --}}
             <div class="col-6 col-lg-3">
-                <div class="p-3 kpi-card h-100 border-start border-4 border-success">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-semibold text-uppercase">Kroscek Tahanan</span>
+                <div class="p-3 kpi-card h-100" style="border-top: 4px solid #10b981 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 11px;">
+                            Kroscek Data Tahanan
+                        </span>
                         <div class="icon-box bg-success bg-opacity-10 text-success">
                             <i class="fas fa-check-double"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-success font-monospace">
-                        {{ $totalSinkron }} <span class="fs-6 text-muted fw-normal font-sans-serif">/ {{ $totalUpt }} UPT</span>
-                    </h3>
-                    <small class="text-muted">
+                    <div class="d-flex align-items-baseline gap-1 mb-1">
+                        <h3 class="mb-0 fw-bold text-success font-monospace">{{ $totalSinkron }}</h3>
+                        <span class="text-muted small">/ {{ $totalUpt }} UPT Sinkron</span>
+                    </div>
+
+                    {{-- Mini Progress Bar --}}
+                    <div class="progress mb-2" style="height: 6px; background-color: #e2e8f0; border-radius: 4px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ $pctSinkron }}%;" aria-valuenow="{{ $pctSinkron }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 10.5px;">
+                            <i class="fas fa-check-circle me-1"></i>{{ $pctSinkron }}% Sinkron
+                        </span>
                         @if($totalSelisih > 0)
-                            <span class="text-danger fw-bold"><i class="fas fa-exclamation-circle"></i> {{ $totalSelisih }} UPT Selisih</span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10.5px;">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ $totalSelisih }} Selisih
+                            </span>
                         @else
-                            <span class="text-success fw-bold"><i class="fas fa-check-circle"></i> 100% Sinkron</span>
+                            <span class="badge bg-light text-muted border" style="font-size: 10.5px;">
+                                0 Selisih
+                            </span>
                         @endif
-                    </small>
+                    </div>
                 </div>
             </div>
 
             {{-- KPI 2: Kelengkapan 4 Modul --}}
             <div class="col-6 col-lg-3">
-                <div class="p-3 kpi-card h-100 border-start border-4 border-primary">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-semibold text-uppercase">Kelengkapan Modul</span>
+                <div class="p-3 kpi-card h-100" style="border-top: 4px solid #2563eb !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 11px;">
+                            Kelengkapan Modul
+                        </span>
                         <div class="icon-box bg-primary bg-opacity-10 text-primary">
                             <i class="fas fa-layer-group"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-primary font-monospace">
-                        {{ $totalLengkap4 }} <span class="fs-6 text-muted fw-normal font-sans-serif">/ {{ $totalUpt }} UPT</span>
-                    </h3>
-                    <small class="text-muted">
+                    <div class="d-flex align-items-baseline gap-1 mb-1">
+                        <h3 class="mb-0 fw-bold text-primary font-monospace">{{ $totalLengkap4 }}</h3>
+                        <span class="text-muted small">/ {{ $totalUpt }} UPT Lengkap</span>
+                    </div>
+
+                    {{-- Mini Progress Bar --}}
+                    <div class="progress mb-2" style="height: 6px; background-color: #e2e8f0; border-radius: 4px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $pctLengkap }}%;" aria-valuenow="{{ $pctLengkap }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 10.5px;">
+                            <i class="fas fa-check-circle me-1"></i>{{ $pctLengkap }}% Lengkap
+                        </span>
                         @if($totalBelumLengkap > 0)
-                            <span class="text-warning fw-bold">{{ $totalBelumLengkap }} UPT Belum 4/4</span>
+                            <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25" style="font-size: 10.5px;">
+                                <i class="fas fa-clock me-1"></i>{{ $totalBelumLengkap }} Belum
+                            </span>
                         @else
-                            <span class="text-success fw-bold">Semua Lengkap 4/4</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 10.5px;">
+                                Semua 4/4
+                            </span>
                         @endif
-                    </small>
+                    </div>
                 </div>
             </div>
 
             {{-- KPI 3: Total Populasi WBP Se-Banten --}}
             <div class="col-6 col-lg-3">
-                <div class="p-3 kpi-card h-100 border-start border-4 border-info">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-semibold text-uppercase">Total Isi WBP Banten</span>
+                <div class="p-3 kpi-card h-100" style="border-top: 4px solid #0891b2 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 11px;">
+                            Total Isi WBP Banten
+                        </span>
                         <div class="icon-box bg-info bg-opacity-10 text-info">
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-dark font-monospace">
-                        {{ number_format($totalPopulasiSeBanten) }} <small class="fs-6 text-muted fw-normal font-sans-serif">Jiwa</small>
-                    </h3>
-                    <small class="text-muted">
-                        {{ number_format($totalTahananSeBanten) }} Tahanan | {{ number_format($totalNapiSeBanten) }} Napi
-                    </small>
+                    <div class="d-flex align-items-baseline gap-1 mb-1">
+                        <h3 class="mb-0 fw-bold text-dark font-monospace">{{ number_format($totalPopulasiSeBanten) }}</h3>
+                        <span class="text-muted small">Jiwa</span>
+                    </div>
+
+                    {{-- Mini Progress Bar (Komposisi Tahanan vs Napi) --}}
+                    <div class="progress mb-2" style="height: 6px; background-color: #e2e8f0; border-radius: 4px;">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ $pctTahanan }}%;" aria-valuenow="{{ $pctTahanan }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                        <span class="badge bg-light text-dark border" style="font-size: 10.5px;">
+                            Tahanan: <strong>{{ number_format($totalTahananSeBanten) }}</strong>
+                        </span>
+                        <span class="badge bg-light text-dark border" style="font-size: 10.5px;">
+                            Napi: <strong>{{ number_format($totalNapiSeBanten) }}</strong>
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {{-- KPI 4: Bebas Hari Ini & Overstaying --}}
             <div class="col-6 col-lg-3">
-                <div class="p-3 kpi-card h-100 border-start border-4 border-secondary">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-semibold text-uppercase">Bebas Harian Input</span>
-                        <div class="icon-box bg-secondary bg-opacity-10 text-secondary">
+                <div class="p-3 kpi-card h-100" style="border-top: 4px solid #6366f1 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 11px;">
+                            Bebas Harian Input
+                        </span>
+                        <div class="icon-box bg-indigo bg-opacity-10" style="background-color: rgba(99, 102, 241, 0.1); color: #6366f1;">
                             <i class="fas fa-door-open"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-dark font-monospace">
-                        {{ number_format($totalBebasSeBanten) }} <small class="fs-6 text-muted fw-normal font-sans-serif">Bebas</small>
-                    </h3>
-                    <small class="text-muted">
-                        {{ number_format($totalUsulanSeBanten) }} Usulan | {{ number_format($totalOverstayingSeBanten) }} Overstay
-                    </small>
+                    <div class="d-flex align-items-baseline gap-1 mb-1">
+                        <h3 class="mb-0 fw-bold text-dark font-monospace">{{ number_format($totalBebasSeBanten) }}</h3>
+                        <span class="text-muted small">Orang Bebas</span>
+                    </div>
+
+                    {{-- Mini Progress Bar --}}
+                    <div class="progress mb-2" style="height: 6px; background-color: #e2e8f0; border-radius: 4px;">
+                        <div class="progress-bar" role="progressbar" style="width: 100%; background-color: #6366f1;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                        <span class="badge bg-light text-dark border" style="font-size: 10.5px;">
+                            Usulan: <strong>{{ number_format($totalUsulanSeBanten) }}</strong>
+                        </span>
+                        <span class="badge {{ $totalOverstayingSeBanten > 0 ? 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25' : 'bg-light text-dark border' }}" style="font-size: 10.5px;">
+                            Overstay: <strong>{{ number_format($totalOverstayingSeBanten) }}</strong>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Toolbar Pencarian & Quick Filter --}}
-        <div class="card mb-4 bg-light border-0 shadow-sm rounded-3">
+        {{-- Toolbar Pencarian & Quick Filter dengan Garis Jelas --}}
+        <div class="card mb-4 bg-light shadow-sm rounded-3" style="border: 1.5px solid #cbd5e1 !important;">
             <div class="card-body py-3">
                 <div class="row align-items-center g-3">
                     <div class="col-md-5">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                            <input type="text" id="searchUpt" class="form-control form-control-sm" placeholder="Cari nama UPT..." aria-label="Cari nama UPT">
+                            <span class="input-group-text bg-white border-end-0" style="border-color: #cbd5e1;"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="searchUpt" class="form-control form-control-sm border-start-0" style="border-color: #cbd5e1;" placeholder="Cari nama UPT..." aria-label="Cari nama UPT">
                         </div>
                     </div>
                     <div class="col-md-7">
@@ -905,15 +1019,15 @@
                     {{-- Tab 1: Penghuni --}}
                     <div class="tab-pane fade show active" id="tab-penghuni" role="tabpanel">
                         <div class="row g-3">
-                            <div class="col-sm-4 text-center p-3 bg-light rounded-3">
+                            <div class="col-sm-4 text-center p-3 bg-light rounded-3" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted small">Tahanan</span>
                                 <h4 class="fw-bold my-1 text-primary font-monospace" id="det_p_tahanan">0</h4>
                             </div>
-                            <div class="col-sm-4 text-center p-3 bg-light rounded-3">
+                            <div class="col-sm-4 text-center p-3 bg-light rounded-3" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted small">Narapidana</span>
                                 <h4 class="fw-bold my-1 text-dark font-monospace" id="det_p_napi">0</h4>
                             </div>
-                            <div class="col-sm-4 text-center p-3 bg-light rounded-3">
+                            <div class="col-sm-4 text-center p-3 bg-light rounded-3" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted small">Total Isi WBP</span>
                                 <h4 class="fw-bold my-1 text-success font-monospace" id="det_p_total">0</h4>
                             </div>
@@ -1010,32 +1124,32 @@
                     {{-- Tab 4: Bebas Harian --}}
                     <div class="tab-pane fade" id="tab-bebas" role="tabpanel">
                         <div class="row g-2 text-center small">
-                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
+                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted d-block">Bebas Murni</span>
                                 <strong class="fs-6 text-dark font-monospace" id="det_b_murni">0</strong>
                             </div>
-                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
+                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted d-block">PB</span>
                                 <strong class="fs-6 text-dark font-monospace" id="det_b_pb">0</strong>
                             </div>
-                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
+                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted d-block">CB</span>
                                 <strong class="fs-6 text-dark font-monospace" id="det_b_cb">0</strong>
                             </div>
-                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
+                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted d-block">CMB</span>
                                 <strong class="fs-6 text-dark font-monospace" id="det_b_cmb">0</strong>
                             </div>
-                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
+                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted d-block">Asimilasi</span>
                                 <strong class="fs-6 text-dark font-monospace" id="det_b_asimilasi">0</strong>
                             </div>
-                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
+                            <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
                                 <span class="text-muted d-block">BDH / Lain</span>
                                 <strong class="fs-6 text-dark font-monospace" id="det_b_lain">0</strong>
                             </div>
                         </div>
-                        <div class="p-3 bg-success bg-opacity-10 text-success rounded-3 mt-3 d-flex justify-content-between align-items-center">
+                        <div class="p-3 bg-success bg-opacity-10 text-success rounded-3 mt-3 d-flex justify-content-between align-items-center" style="border: 1px solid #a7f3d0;">
                             <span class="fw-bold"><i class="fas fa-door-open me-2"></i>Total Bebas Hari Ini:</span>
                             <h4 class="mb-0 fw-bold font-monospace" id="det_b_total">0 Orang</h4>
                         </div>
@@ -1099,7 +1213,7 @@
 
     // Modal Popup Detail UPT
     function showDetailModal(data) {
-        document.getElementById('detailUptName').innerHTML = `<i class="fas fa-building me-2"></i>` + data.nama_upt;
+        document.getElementById('detailUptName').innerHTML = `<i class=\"fas fa-building me-2\"></i>` + data.nama_upt;
         document.getElementById('detailTanggalLaporan').innerText = 'Tanggal Evaluasi: ' + '{{ \Carbon\Carbon::parse($filterTanggal)->translatedFormat('d F Y') }}';
 
         // Alert Status Kroscek
@@ -1117,21 +1231,21 @@
             alertTitle.innerText = 'Kroscek Tahanan: SINKRON (Cocok)';
             alertDesc.innerText = `Data Tahanan Penghuni (${data.tahanan_penghuni ?? 0}) = Tahanan Overstaying (${data.tahanan_overstaying ?? 0})`;
             alertBadge.className = 'status-pill status-pill-success';
-            alertBadge.innerHTML = '<i class="fas fa-check-circle"></i> Sinkron';
+            alertBadge.innerHTML = '<i class=\"fas fa-check-circle\"></i> Sinkron';
         } else if (data.status_kroscek === 'selisih') {
             alertBox.classList.add('bg-danger', 'bg-opacity-10', 'text-danger');
             alertIcon.className = 'fas fa-exclamation-triangle fs-4 text-danger';
             alertTitle.innerText = `Kroscek Tahanan: SELISIH ${data.selisih} ORANG`;
             alertDesc.innerText = `Data Tahanan Penghuni (${data.tahanan_penghuni ?? 0}) ≠ Tahanan Overstaying (${data.tahanan_overstaying ?? 0})`;
             alertBadge.className = 'status-pill status-pill-danger';
-            alertBadge.innerHTML = `<i class="fas fa-times-circle"></i> Selisih ${data.selisih}`;
+            alertBadge.innerHTML = `<i class=\"fas fa-times-circle\"></i> Selisih ${data.selisih}`;
         } else {
             alertBox.classList.add('bg-secondary', 'bg-opacity-10', 'text-secondary');
             alertIcon.className = 'fas fa-clock fs-4 text-secondary';
             alertTitle.innerText = 'Kroscek Tahanan: Belum Lengkap';
             alertDesc.innerText = 'Salah satu atau kedua modul (Penghuni / Overstaying) belum diinput.';
             alertBadge.className = 'status-pill status-pill-secondary';
-            alertBadge.innerHTML = '<i class="fas fa-minus-circle"></i> Belum Lengkap';
+            alertBadge.innerHTML = '<i class=\"fas fa-minus-circle\"></i> Belum Lengkap';
         }
 
         // Tab 1: Penghuni
