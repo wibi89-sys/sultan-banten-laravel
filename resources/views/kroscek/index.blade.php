@@ -34,8 +34,8 @@
         align-items: center;
         gap: 6px;
         font-weight: 600;
-        font-size: 12.5px;
-        padding: 5px 12px;
+        font-size: 12px;
+        padding: 4px 10px;
         border-radius: 50rem;
         line-height: 1.2;
     }
@@ -60,34 +60,36 @@
         border: 1px solid #e5e7eb;
     }
 
-    /* Mini Modul Chip [P] [O] [I] [B] */
-    .modul-chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 8px;
-        font-size: 11.5px;
-        font-weight: 600;
-        margin: 2px;
-        transition: transform 0.15s ease;
+    /* Tabel dengan Garis Batas Jelas */
+    .kroscek-table-grid {
+        border: 1.5px solid #94a3b8 !important;
+        border-collapse: collapse !important;
     }
-    .modul-chip:hover {
-        transform: scale(1.05);
+    .kroscek-table-grid th, 
+    .kroscek-table-grid td {
+        border: 1px solid #cbd5e1 !important;
+        vertical-align: middle;
     }
-    .modul-chip-done-tepat {
-        background-color: #ecfdf5;
-        color: #047857;
-        border: 1px solid #a7f3d0;
+    .kroscek-table-grid thead th {
+        border-bottom: 2px solid #64748b !important;
     }
-    .modul-chip-done-terlambat {
-        background-color: #fffbeb;
-        color: #b45309;
-        border: 1px solid #fde68a;
+    .th-group-kroscek {
+        background-color: #e0e7ff !important;
+        color: #1e1b4b !important;
+        font-weight: 700;
     }
-    .modul-chip-empty {
-        background-color: #fef2f2;
-        color: #b91c1c;
-        border: 1px dashed #fca5a5;
+    .th-sub-kroscek {
+        background-color: #eef2ff !important;
+        color: #312e81 !important;
+    }
+    .th-group-modul {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-weight: 700;
+    }
+    .th-sub-modul {
+        background-color: #f8fafc !important;
+        color: #1e293b !important;
     }
 
     /* Filter Buttons */
@@ -112,30 +114,6 @@
         border-color: #2563eb;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
     }
-
-    /* Modul Card Khusus Operator */
-    .operator-modul-card {
-        border-radius: 14px;
-        border: 1px solid rgba(0,0,0,0.08);
-        background: #fff;
-        transition: all 0.2s ease;
-        overflow: hidden;
-    }
-    .operator-modul-card:hover {
-        border-color: #93c5fd;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    }
-    .operator-modul-header {
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .operator-modul-body {
-        padding: 16px;
-    }
 </style>
 @endpush
 
@@ -155,9 +133,9 @@
             </h5>
             <p class="text-muted small mb-0">
                 @if($isOperator)
-                    Pantau sinkronisasi jumlah tahanan dan kelengkapan 4 modul laporan harian UPT Anda
+                    Pantau sinkronisasi jumlah tahanan dan kepatuhan waktu input 4 modul laporan harian UPT Anda
                 @else
-                    Pusat pemantauan kecocokan data tahanan dan kepatuhan 4 modul laporan harian seluruh UPT se-Banten
+                    Pusat pemantauan kecocokan data tahanan dan jam input 4 modul laporan harian seluruh UPT se-Banten
                 @endif
             </p>
         </div>
@@ -177,7 +155,6 @@
                 </button>
             </form>
             @php
-                $yesterday = date('Y-m-d', strtotime('-1 day'));
                 $today = date('Y-m-d');
             @endphp
             @if($filterTanggal !== $today)
@@ -255,13 +232,13 @@
                     <div class="col-md-5">
                         <div class="p-3 bg-light rounded-3 border text-center h-100">
                             <span class="text-muted small fw-semibold text-uppercase">Tahanan di Data Penghuni</span>
-                            <h2 class="fw-bold my-2 text-dark">
+                            <h2 class="fw-bold my-2 text-dark font-monospace">
                                 {{ $myUptData['tahanan_penghuni'] !== null ? number_format($myUptData['tahanan_penghuni']) : '-' }}
-                                <small class="fs-6 fw-normal text-muted">Orang</small>
+                                <small class="fs-6 fw-normal text-muted font-sans-serif">Orang</small>
                             </h2>
                             <div class="small text-muted">
                                 @if($myUptData['penghuni']['exists'])
-                                    <i class="fas fa-clock text-primary me-1"></i> Input: {{ $myUptData['penghuni']['jam_str'] }} WIB
+                                    <i class="fas fa-clock text-primary me-1"></i> Jam Input: <strong>{{ $myUptData['penghuni']['jam_str'] }} WIB</strong>
                                     <span class="badge @if($myUptData['penghuni']['is_tepat']) bg-success @else bg-warning text-dark @endif ms-1">
                                         {{ $myUptData['penghuni']['is_tepat'] ? 'Tepat Waktu' : 'Terlambat' }}
                                     </span>
@@ -298,13 +275,13 @@
                     <div class="col-md-5">
                         <div class="p-3 bg-light rounded-3 border text-center h-100">
                             <span class="text-muted small fw-semibold text-uppercase">Tahanan di Data Overstaying (AI–AV)</span>
-                            <h2 class="fw-bold my-2 text-dark">
+                            <h2 class="fw-bold my-2 text-dark font-monospace">
                                 {{ $myUptData['tahanan_overstaying'] !== null ? number_format($myUptData['tahanan_overstaying']) : '-' }}
-                                <small class="fs-6 fw-normal text-muted">Orang</small>
+                                <small class="fs-6 fw-normal text-muted font-sans-serif">Orang</small>
                             </h2>
                             <div class="small text-muted">
                                 @if($myUptData['overstaying']['exists'])
-                                    <i class="fas fa-clock text-primary me-1"></i> Input: {{ $myUptData['overstaying']['jam_str'] }} WIB
+                                    <i class="fas fa-clock text-primary me-1"></i> Jam Input: <strong>{{ $myUptData['overstaying']['jam_str'] }} WIB</strong>
                                     <span class="badge @if($myUptData['overstaying']['is_tepat']) bg-success @else bg-warning text-dark @endif ms-1">
                                         {{ $myUptData['overstaying']['is_tepat'] ? 'Tepat Waktu' : 'Terlambat' }}
                                     </span>
@@ -347,161 +324,225 @@
             </div>
         </div>
 
-        {{-- Grid 4 Pilar Modul Laporan UPT --}}
-        <h6 class="fw-bold text-dark mb-3">
-            <i class="fas fa-layer-group text-primary me-2"></i>Status 4 Pilar Modul Laporan Harian UPT
-        </h6>
-        <div class="row g-3 mb-4">
-            {{-- Modul 1: Penghuni --}}
-            <div class="col-md-6 col-lg-3">
-                <div class="operator-modul-card h-100">
-                    <div class="operator-modul-header">
-                        <span class="fw-bold text-dark small"><i class="fas fa-users text-primary me-2"></i>1. Penghuni</span>
-                        @if($myUptData['penghuni']['exists'])
-                            <span class="badge @if($myUptData['penghuni']['is_tepat']) bg-success @else bg-warning text-dark @endif">
-                                {{ $myUptData['penghuni']['jam_str'] }} WIB
-                            </span>
-                        @else
-                            <span class="badge bg-danger">Belum</span>
-                        @endif
-                    </div>
-                    <div class="operator-modul-body">
-                        @if($myUptData['penghuni']['exists'])
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>Tahanan:</span>
-                                <strong class="text-dark">{{ number_format($myUptData['penghuni']['total_tahanan']) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>Narapidana:</span>
-                                <strong class="text-dark">{{ number_format($myUptData['penghuni']['total_napi']) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between pt-2 border-top fw-bold text-dark small">
-                                <span>Total Isi WBP:</span>
-                                <span class="text-primary">{{ number_format($myUptData['penghuni']['total_penghuni']) }}</span>
-                            </div>
-                        @else
-                            <p class="text-muted small mb-3">Data penghuni belum diinput untuk tanggal ini.</p>
-                            <a href="{{ route('penghuni.index') }}" class="btn btn-sm btn-primary w-100">
-                                <i class="fas fa-plus me-1"></i> Input Penghuni
-                            </a>
-                        @endif
-                    </div>
-                </div>
+        {{-- Tabel 4 Modul Laporan dengan Garis Jelas Khusus Operator --}}
+        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="fas fa-table-list text-primary me-2"></i>Status & Jam Input 4 Modul Laporan Harian
+                </h6>
+                <span class="badge bg-light text-dark border px-2 py-1 small">
+                    <i class="fas fa-clock text-primary me-1"></i> Batas Jam Input: <strong>{{ substr($jamSelesaiStr, 0, 5) }} WIB</strong>
+                </span>
             </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle kroscek-table-grid mb-0">
+                    <thead class="text-center align-middle bg-light">
+                        <tr>
+                            <th style="width: 5%;">No</th>
+                            <th style="width: 22%;" class="text-start">Nama Modul Laporan</th>
+                            <th style="width: 15%;">Jam Input</th>
+                            <th style="width: 15%;">Status Ketepatan</th>
+                            <th style="width: 29%;" class="text-start">Ringkasan Data yang Diinput</th>
+                            <th style="width: 14%;">Aksi / Form</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{-- Baris 1: Modul Penghuni --}}
+                        <tr>
+                            <td class="text-center fw-bold text-muted">1</td>
+                            <td class="text-start">
+                                <div class="fw-bold text-dark">
+                                    <i class="fas fa-users text-primary me-2"></i>Penghuni
+                                </div>
+                                <small class="text-muted">Populasi Tahanan & Narapidana harian</small>
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['penghuni']['exists'])
+                                    <span class="fw-bold text-dark font-monospace fs-6">{{ $myUptData['penghuni']['jam_str'] }} WIB</span>
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Belum Input</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['penghuni']['exists'])
+                                    @if($myUptData['penghuni']['is_tepat'])
+                                        <span class="status-pill status-pill-success py-1 px-2">
+                                            <i class="fas fa-check-circle"></i> Tepat Waktu
+                                        </span>
+                                    @else
+                                        <span class="status-pill status-pill-warning py-1 px-2">
+                                            <i class="fas fa-clock"></i> Terlambat
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="status-pill status-pill-danger py-1 px-2">
+                                        <i class="fas fa-times-circle"></i> Belum Mengisi
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="text-start small">
+                                @if($myUptData['penghuni']['exists'])
+                                    <div>Tahanan: <strong>{{ number_format($myUptData['penghuni']['total_tahanan']) }}</strong> Orang</div>
+                                    <div>Narapidana: <strong>{{ number_format($myUptData['penghuni']['total_napi']) }}</strong> Orang</div>
+                                    <div class="fw-bold text-primary border-top pt-1 mt-1">Total Isi WBP: {{ number_format($myUptData['penghuni']['total_penghuni']) }} Orang</div>
+                                @else
+                                    <span class="text-muted fst-italic">Data belum diinput untuk tanggal ini</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('penghuni.index') }}" class="btn btn-sm btn-outline-primary px-3">
+                                    <i class="fas fa-edit me-1"></i> {{ $myUptData['penghuni']['exists'] ? 'Kelola Data' : 'Input Sekarang' }}
+                                </a>
+                            </td>
+                        </tr>
 
-            {{-- Modul 2: Overstaying --}}
-            <div class="col-md-6 col-lg-3">
-                <div class="operator-modul-card h-100">
-                    <div class="operator-modul-header">
-                        <span class="fw-bold text-dark small"><i class="fas fa-clock text-primary me-2"></i>2. Overstaying</span>
-                        @if($myUptData['overstaying']['exists'])
-                            <span class="badge @if($myUptData['overstaying']['is_tepat']) bg-success @else bg-warning text-dark @endif">
-                                {{ $myUptData['overstaying']['jam_str'] }} WIB
-                            </span>
-                        @else
-                            <span class="badge bg-danger">Belum</span>
-                        @endif
-                    </div>
-                    <div class="operator-modul-body">
-                        @if($myUptData['overstaying']['exists'])
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>Tahanan (AI-AV):</span>
-                                <strong class="text-dark">{{ number_format($myUptData['overstaying']['total_tahanan']) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>Overstaying Lewat:</span>
-                                <strong class="@if($myUptData['overstaying']['total_overstaying'] > 0) text-danger @else text-success @endif">
-                                    {{ number_format($myUptData['overstaying']['total_overstaying']) }} Orang
-                                </strong>
-                            </div>
-                            <div class="d-flex justify-content-between pt-2 border-top small text-muted">
-                                <span>Rincian AI–AV:</span>
-                                <span>{{ $myUptData['overstaying']['tahanan_ai'] }}/{{ $myUptData['overstaying']['tahanan_aii'] }}/{{ $myUptData['overstaying']['tahanan_aiii'] }}/{{ $myUptData['overstaying']['tahanan_aiv'] }}/{{ $myUptData['overstaying']['tahanan_av'] }}</span>
-                            </div>
-                        @else
-                            <p class="text-muted small mb-3">Data overstaying belum diinput untuk tanggal ini.</p>
-                            <a href="{{ route('overstaying.index') }}" class="btn btn-sm btn-primary w-100">
-                                <i class="fas fa-plus me-1"></i> Input Overstaying
-                            </a>
-                        @endif
-                    </div>
-                </div>
-            </div>
+                        {{-- Baris 2: Modul Overstaying --}}
+                        <tr>
+                            <td class="text-center fw-bold text-muted">2</td>
+                            <td class="text-start">
+                                <div class="fw-bold text-dark">
+                                    <i class="fas fa-clock text-primary me-2"></i>Overstaying
+                                </div>
+                                <small class="text-muted">Tahanan AI–AV & masa penahanan lewat</small>
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['overstaying']['exists'])
+                                    <span class="fw-bold text-dark font-monospace fs-6">{{ $myUptData['overstaying']['jam_str'] }} WIB</span>
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Belum Input</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['overstaying']['exists'])
+                                    @if($myUptData['overstaying']['is_tepat'])
+                                        <span class="status-pill status-pill-success py-1 px-2">
+                                            <i class="fas fa-check-circle"></i> Tepat Waktu
+                                        </span>
+                                    @else
+                                        <span class="status-pill status-pill-warning py-1 px-2">
+                                            <i class="fas fa-clock"></i> Terlambat
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="status-pill status-pill-danger py-1 px-2">
+                                        <i class="fas fa-times-circle"></i> Belum Mengisi
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="text-start small">
+                                @if($myUptData['overstaying']['exists'])
+                                    <div>Total Tahanan (AI–AV): <strong>{{ number_format($myUptData['overstaying']['total_tahanan']) }}</strong> Orang</div>
+                                    <div>Overstaying Lewat: <strong class="{{ $myUptData['overstaying']['total_overstaying'] > 0 ? 'text-danger' : 'text-success' }}">{{ number_format($myUptData['overstaying']['total_overstaying']) }} Orang</strong></div>
+                                    <div class="text-muted border-top pt-1 mt-1">Rincian AI–AV: {{ $myUptData['overstaying']['tahanan_ai'] }}/{{ $myUptData['overstaying']['tahanan_aii'] }}/{{ $myUptData['overstaying']['tahanan_aiii'] }}/{{ $myUptData['overstaying']['tahanan_aiv'] }}/{{ $myUptData['overstaying']['tahanan_av'] }}</div>
+                                @else
+                                    <span class="text-muted fst-italic">Data belum diinput untuk tanggal ini</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('overstaying.index') }}" class="btn btn-sm btn-outline-primary px-3">
+                                    <i class="fas fa-edit me-1"></i> {{ $myUptData['overstaying']['exists'] ? 'Kelola Data' : 'Input Sekarang' }}
+                                </a>
+                            </td>
+                        </tr>
 
-            {{-- Modul 3: Integrasi --}}
-            <div class="col-md-6 col-lg-3">
-                <div class="operator-modul-card h-100">
-                    <div class="operator-modul-header">
-                        <span class="fw-bold text-dark small"><i class="fas fa-exchange-alt text-primary me-2"></i>3. Integrasi</span>
-                        @if($myUptData['integrasi']['exists'])
-                            <span class="badge @if($myUptData['integrasi']['is_tepat']) bg-success @else bg-warning text-dark @endif">
-                                {{ $myUptData['integrasi']['jam_str'] }} WIB
-                            </span>
-                        @else
-                            <span class="badge bg-danger">Belum</span>
-                        @endif
-                    </div>
-                    <div class="operator-modul-body">
-                        @if($myUptData['integrasi']['exists'])
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>Total Usulan:</span>
-                                <strong class="text-primary">{{ number_format($myUptData['integrasi']['total_usulan']) }} Orang</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>SK Terbit:</span>
-                                <strong class="text-success">{{ number_format($myUptData['integrasi']['total_sk']) }} Orang</strong>
-                            </div>
-                            <div class="d-flex justify-content-between pt-2 border-top small text-muted">
-                                <span>Usulan PB/CB/CMB:</span>
-                                <span>{{ $myUptData['integrasi']['usulan_pb'] }}/{{ $myUptData['integrasi']['usulan_cb'] }}/{{ $myUptData['integrasi']['usulan_cmb'] }}</span>
-                            </div>
-                        @else
-                            <p class="text-muted small mb-3">Data integrasi belum diinput untuk tanggal ini.</p>
-                            <a href="{{ route('integrasi.index') }}" class="btn btn-sm btn-primary w-100">
-                                <i class="fas fa-plus me-1"></i> Input Integrasi
-                            </a>
-                        @endif
-                    </div>
-                </div>
-            </div>
+                        {{-- Baris 3: Modul Integrasi --}}
+                        <tr>
+                            <td class="text-center fw-bold text-muted">3</td>
+                            <td class="text-start">
+                                <div class="fw-bold text-dark">
+                                    <i class="fas fa-exchange-alt text-primary me-2"></i>Integrasi
+                                </div>
+                                <small class="text-muted">Usulan dan SK terbit PB, CB, CMB, dsb</small>
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['integrasi']['exists'])
+                                    <span class="fw-bold text-dark font-monospace fs-6">{{ $myUptData['integrasi']['jam_str'] }} WIB</span>
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Belum Input</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['integrasi']['exists'])
+                                    @if($myUptData['integrasi']['is_tepat'])
+                                        <span class="status-pill status-pill-success py-1 px-2">
+                                            <i class="fas fa-check-circle"></i> Tepat Waktu
+                                        </span>
+                                    @else
+                                        <span class="status-pill status-pill-warning py-1 px-2">
+                                            <i class="fas fa-clock"></i> Terlambat
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="status-pill status-pill-danger py-1 px-2">
+                                        <i class="fas fa-times-circle"></i> Belum Mengisi
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="text-start small">
+                                @if($myUptData['integrasi']['exists'])
+                                    <div>Total Usulan: <strong class="text-primary">{{ number_format($myUptData['integrasi']['total_usulan']) }} Orang</strong></div>
+                                    <div>SK Terbit: <strong class="text-success">{{ number_format($myUptData['integrasi']['total_sk']) }} Orang</strong></div>
+                                    <div class="text-muted border-top pt-1 mt-1">PB/CB/CMB: {{ $myUptData['integrasi']['usulan_pb'] }}/{{ $myUptData['integrasi']['usulan_cb'] }}/{{ $myUptData['integrasi']['usulan_cmb'] }}</div>
+                                @else
+                                    <span class="text-muted fst-italic">Data belum diinput untuk tanggal ini</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('integrasi.index') }}" class="btn btn-sm btn-outline-primary px-3">
+                                    <i class="fas fa-edit me-1"></i> {{ $myUptData['integrasi']['exists'] ? 'Kelola Data' : 'Input Sekarang' }}
+                                </a>
+                            </td>
+                        </tr>
 
-            {{-- Modul 4: Bebas Harian --}}
-            <div class="col-md-6 col-lg-3">
-                <div class="operator-modul-card h-100">
-                    <div class="operator-modul-header">
-                        <span class="fw-bold text-dark small"><i class="fas fa-door-open text-primary me-2"></i>4. Bebas Harian</span>
-                        @if($myUptData['bebas']['exists'])
-                            <span class="badge @if($myUptData['bebas']['is_tepat']) bg-success @else bg-warning text-dark @endif">
-                                {{ $myUptData['bebas']['jam_str'] }} WIB
-                            </span>
-                        @else
-                            <span class="badge bg-danger">Belum</span>
-                        @endif
-                    </div>
-                    <div class="operator-modul-body">
-                        @if($myUptData['bebas']['exists'])
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>WBP Bebas Hari Ini:</span>
-                                <strong class="@if($myUptData['bebas']['total_bebas'] > 0) text-success @else text-muted @endif">
-                                    {{ $myUptData['bebas']['total_bebas'] > 0 ? number_format($myUptData['bebas']['total_bebas']).' Orang' : 'Nihil (0 Bebas)' }}
-                                </strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1 small text-muted">
-                                <span>Bebas Murni:</span>
-                                <strong>{{ $myUptData['bebas']['bebas_murni'] }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between pt-2 border-top small text-muted">
-                                <span>PB/CB/Asimilasi:</span>
-                                <span>{{ $myUptData['bebas']['pb'] }}/{{ $myUptData['bebas']['cb'] }}/{{ $myUptData['bebas']['asimilasi'] }}</span>
-                            </div>
-                        @else
-                            <p class="text-muted small mb-3">Data bebas harian belum diinput untuk tanggal ini.</p>
-                            <a href="{{ route('bebas-harian.index') }}" class="btn btn-sm btn-primary w-100">
-                                <i class="fas fa-plus me-1"></i> Input Bebas Harian
-                            </a>
-                        @endif
-                    </div>
-                </div>
+                        {{-- Baris 4: Modul Bebas Harian --}}
+                        <tr>
+                            <td class="text-center fw-bold text-muted">4</td>
+                            <td class="text-start">
+                                <div class="fw-bold text-dark">
+                                    <i class="fas fa-door-open text-primary me-2"></i>Bebas Harian
+                                </div>
+                                <small class="text-muted">WBP yang bebas murni, PB, CB, CMB, asimilasi</small>
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['bebas']['exists'])
+                                    <span class="fw-bold text-dark font-monospace fs-6">{{ $myUptData['bebas']['jam_str'] }} WIB</span>
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Belum Input</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($myUptData['bebas']['exists'])
+                                    @if($myUptData['bebas']['is_tepat'])
+                                        <span class="status-pill status-pill-success py-1 px-2">
+                                            <i class="fas fa-check-circle"></i> Tepat Waktu
+                                        </span>
+                                    @else
+                                        <span class="status-pill status-pill-warning py-1 px-2">
+                                            <i class="fas fa-clock"></i> Terlambat
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="status-pill status-pill-danger py-1 px-2">
+                                        <i class="fas fa-times-circle"></i> Belum Mengisi
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="text-start small">
+                                @if($myUptData['bebas']['exists'])
+                                    <div>Total Bebas Hari Ini: <strong class="{{ $myUptData['bebas']['total_bebas'] > 0 ? 'text-success' : 'text-muted' }}">{{ $myUptData['bebas']['total_bebas'] > 0 ? number_format($myUptData['bebas']['total_bebas']).' Orang' : 'Nihil (0 Bebas)' }}</strong></div>
+                                    <div>Bebas Murni: <strong>{{ $myUptData['bebas']['bebas_murni'] }}</strong> | PB/CB: <strong>{{ $myUptData['bebas']['pb'] }}/{{ $myUptData['bebas']['cb'] }}</strong></div>
+                                @else
+                                    <span class="text-muted fst-italic">Data belum diinput untuk tanggal ini</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('bebas-harian.index') }}" class="btn btn-sm btn-outline-primary px-3">
+                                    <i class="fas fa-edit me-1"></i> {{ $myUptData['bebas']['exists'] ? 'Kelola Data' : 'Input Sekarang' }}
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -521,8 +562,8 @@
                             <i class="fas fa-check-double"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-success">
-                        {{ $totalSinkron }} <span class="fs-6 text-muted fw-normal">/ {{ $totalUpt }} UPT</span>
+                    <h3 class="mb-0 fw-bold text-success font-monospace">
+                        {{ $totalSinkron }} <span class="fs-6 text-muted fw-normal font-sans-serif">/ {{ $totalUpt }} UPT</span>
                     </h3>
                     <small class="text-muted">
                         @if($totalSelisih > 0)
@@ -543,12 +584,12 @@
                             <i class="fas fa-layer-group"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-primary">
-                        {{ $totalLengkap4 }} <span class="fs-6 text-muted fw-normal">/ {{ $totalUpt }} UPT</span>
+                    <h3 class="mb-0 fw-bold text-primary font-monospace">
+                        {{ $totalLengkap4 }} <span class="fs-6 text-muted fw-normal font-sans-serif">/ {{ $totalUpt }} UPT</span>
                     </h3>
                     <small class="text-muted">
                         @if($totalBelumLengkap > 0)
-                            <span class="text-warning fw-bold">{{ $totalBelumLengkap }} UPT Belum Lengkap 4/4</span>
+                            <span class="text-warning fw-bold">{{ $totalBelumLengkap }} UPT Belum 4/4</span>
                         @else
                             <span class="text-success fw-bold">Semua Lengkap 4/4</span>
                         @endif
@@ -565,8 +606,8 @@
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-dark">
-                        {{ number_format($totalPopulasiSeBanten) }} <small class="fs-6 text-muted fw-normal">Jiwa</small>
+                    <h3 class="mb-0 fw-bold text-dark font-monospace">
+                        {{ number_format($totalPopulasiSeBanten) }} <small class="fs-6 text-muted fw-normal font-sans-serif">Jiwa</small>
                     </h3>
                     <small class="text-muted">
                         {{ number_format($totalTahananSeBanten) }} Tahanan | {{ number_format($totalNapiSeBanten) }} Napi
@@ -583,11 +624,11 @@
                             <i class="fas fa-door-open"></i>
                         </div>
                     </div>
-                    <h3 class="mb-0 fw-bold text-dark">
-                        {{ number_format($totalBebasSeBanten) }} <small class="fs-6 text-muted fw-normal">Bebas</small>
+                    <h3 class="mb-0 fw-bold text-dark font-monospace">
+                        {{ number_format($totalBebasSeBanten) }} <small class="fs-6 text-muted fw-normal font-sans-serif">Bebas</small>
                     </h3>
                     <small class="text-muted">
-                        {{ number_format($totalUsulanSeBanten) }} Usulan Integrasi | {{ number_format($totalOverstayingSeBanten) }} Overstay
+                        {{ number_format($totalUsulanSeBanten) }} Usulan | {{ number_format($totalOverstayingSeBanten) }} Overstay
                     </small>
                 </div>
             </div>
@@ -623,17 +664,33 @@
             </div>
         </div>
 
-        {{-- Tabel Terpadu 12 UPT Se-Banten --}}
-        <div class="table-responsive rounded-3 border">
-            <table class="table table-hover align-middle table-sm mb-0">
-                <thead class="bg-primary bg-opacity-10">
-                    <tr>
-                        <th class="text-center py-2" width="4%">No</th>
-                        <th class="text-start py-2" width="23%">Nama UPT & Status Modul</th>
-                        <th class="text-center py-2" width="22%">Kroscek Tahanan<br><small class="text-muted fw-normal">(Penghuni vs Overstaying)</small></th>
-                        <th class="text-center py-2" width="25%">Status 4 Modul Laporan<br><small class="text-muted fw-normal">[P] Penghuni • [O] Overstay • [I] Integrasi • [B] Bebas</small></th>
-                        <th class="text-center py-2" width="16%">Populasi & Dinamika</th>
-                        <th class="text-center py-2" width="10%">Rincian</th>
+        {{-- Tabel Terpadu 12 UPT Se-Banten dengan Garis Jelas dan Kolom Modul Terpisah --}}
+        <div class="table-responsive rounded-3 shadow-sm mb-4">
+            <table class="table table-bordered table-hover align-middle mb-0 kroscek-table-grid">
+                <thead>
+                    <tr class="text-center align-middle">
+                        <th rowspan="2" class="text-center py-2" style="width: 3%;">No</th>
+                        <th rowspan="2" class="text-start py-2" style="width: 17%;">Nama UPT</th>
+                        <th colspan="3" class="text-center py-2 th-group-kroscek">
+                            <i class="fas fa-balance-scale me-1"></i> Kroscek Tahanan
+                        </th>
+                        <th colspan="4" class="text-center py-2 th-group-modul">
+                            <i class="fas fa-clock me-1"></i> Status & Jam Input 4 Modul Laporan
+                        </th>
+                        <th rowspan="2" class="text-center py-2" style="width: 15%;">Populasi & Dinamika</th>
+                        <th rowspan="2" class="text-center py-2" style="width: 7%;">Aksi</th>
+                    </tr>
+                    <tr class="text-center align-middle">
+                        {{-- Sub-header Kroscek Tahanan --}}
+                        <th class="py-2 small fw-bold th-sub-kroscek" style="width: 6.5%;">Penghuni</th>
+                        <th class="py-2 small fw-bold th-sub-kroscek" style="width: 6.5%;">Overstaying</th>
+                        <th class="py-2 small fw-bold th-sub-kroscek" style="width: 8%;">Status</th>
+                        
+                        {{-- Sub-header 4 Modul Laporan --}}
+                        <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Penghuni</th>
+                        <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Overstaying</th>
+                        <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Integrasi</th>
+                        <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Bebas Harian</th>
                     </tr>
                 </thead>
                 <tbody id="kroscekTableBody">
@@ -661,91 +718,106 @@
                                 </div>
                                 <div class="mt-1">
                                     @if($rowIsLengkap)
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 11px;">
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 10.5px;">
                                             <i class="fas fa-check-circle me-1"></i> 4/4 Lengkap
                                         </span>
                                     @else
-                                        <span class="badge bg-warning bg-opacity-10 text-warning text-dark border border-warning border-opacity-25" style="font-size: 11px;">
-                                            <i class="fas fa-clock me-1"></i> {{ $row['completed_count'] }}/4 (Kurang: {{ implode(', ', $row['missing_modules']) }})
+                                        <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25" style="font-size: 10.5px;">
+                                            <i class="fas fa-clock me-1"></i> {{ $row['completed_count'] }}/4 Terisi
                                         </span>
                                     @endif
                                 </div>
                             </td>
 
-                            {{-- Kroscek Tahanan --}}
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center align-items-center gap-2 mb-1">
-                                    <span class="badge bg-light text-dark border px-2 py-1" title="Tahanan di Penghuni">
-                                        P: <strong>{{ $row['tahanan_penghuni'] !== null ? number_format($row['tahanan_penghuni']) : '-' }}</strong>
-                                    </span>
-                                    <span class="text-muted fw-bold">vs</span>
-                                    <span class="badge bg-light text-dark border px-2 py-1" title="Tahanan di Overstaying (A1-A5)">
-                                        O: <strong>{{ $row['tahanan_overstaying'] !== null ? number_format($row['tahanan_overstaying']) : '-' }}</strong>
-                                    </span>
-                                </div>
+                            {{-- Kroscek Tahanan: Penghuni --}}
+                            <td class="text-center font-monospace fw-bold {{ $row['tahanan_penghuni'] !== null ? 'text-dark' : 'text-muted' }}">
+                                {{ $row['tahanan_penghuni'] !== null ? number_format($row['tahanan_penghuni']) : '-' }}
+                            </td>
 
+                            {{-- Kroscek Tahanan: Overstaying --}}
+                            <td class="text-center font-monospace fw-bold {{ $row['tahanan_overstaying'] !== null ? 'text-dark' : 'text-muted' }}">
+                                {{ $row['tahanan_overstaying'] !== null ? number_format($row['tahanan_overstaying']) : '-' }}
+                            </td>
+
+                            {{-- Kroscek Tahanan: Status --}}
+                            <td class="text-center">
                                 @if($rowIsSinkron)
-                                    <span class="status-pill status-pill-success">
+                                    <span class="status-pill status-pill-success py-1 px-2" style="font-size: 11px;">
                                         <i class="fas fa-check-circle"></i> Sinkron
                                     </span>
                                 @elseif($rowIsSelisih)
-                                    <span class="status-pill status-pill-danger fw-bold">
-                                        <i class="fas fa-exclamation-triangle"></i> Selisih {{ $row['selisih'] }} Orang
+                                    <span class="status-pill status-pill-danger py-1 px-2" style="font-size: 11px;">
+                                        <i class="fas fa-times-circle"></i> Selisih {{ $row['selisih'] }}
                                     </span>
                                 @else
-                                    <span class="status-pill status-pill-secondary">
-                                        <i class="fas fa-minus-circle"></i> Belum Lengkap
+                                    <span class="status-pill status-pill-secondary py-1 px-2" style="font-size: 11px;">
+                                        <i class="fas fa-minus-circle"></i> Belum
                                     </span>
                                 @endif
                             </td>
 
-                            {{-- Matriks 4 Modul --}}
+                            {{-- Modul 1: Penghuni --}}
                             <td class="text-center">
-                                <div class="d-flex justify-content-center align-items-center flex-wrap gap-1">
-                                    {{-- Modul Penghuni [P] --}}
-                                    @if($row['penghuni']['exists'])
-                                        <span class="modul-chip @if($row['penghuni']['is_tepat']) modul-chip-done-tepat @else modul-chip-done-terlambat @endif" title="Penghuni: {{ $row['penghuni']['jam_str'] }} WIB ({{ $row['penghuni']['is_tepat'] ? 'Tepat' : 'Terlambat' }})">
-                                            P: {{ $row['penghuni']['jam_str'] }}
-                                        </span>
+                                @if($row['penghuni']['exists'])
+                                    <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['penghuni']['jam_str'] }} WIB</div>
+                                    @if($row['penghuni']['is_tepat'])
+                                        <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
                                     @else
-                                        <span class="modul-chip modul-chip-empty" title="Penghuni: Belum Input">
-                                            P: Belum
-                                        </span>
+                                        <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
                                     @endif
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
+                                        <i class="fas fa-times me-1"></i>Belum
+                                    </span>
+                                @endif
+                            </td>
 
-                                    {{-- Modul Overstaying [O] --}}
-                                    @if($row['overstaying']['exists'])
-                                        <span class="modul-chip @if($row['overstaying']['is_tepat']) modul-chip-done-tepat @else modul-chip-done-terlambat @endif" title="Overstaying: {{ $row['overstaying']['jam_str'] }} WIB ({{ $row['overstaying']['is_tepat'] ? 'Tepat' : 'Terlambat' }})">
-                                            O: {{ $row['overstaying']['jam_str'] }}
-                                        </span>
+                            {{-- Modul 2: Overstaying --}}
+                            <td class="text-center">
+                                @if($row['overstaying']['exists'])
+                                    <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['overstaying']['jam_str'] }} WIB</div>
+                                    @if($row['overstaying']['is_tepat'])
+                                        <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
                                     @else
-                                        <span class="modul-chip modul-chip-empty" title="Overstaying: Belum Input">
-                                            O: Belum
-                                        </span>
+                                        <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
                                     @endif
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
+                                        <i class="fas fa-times me-1"></i>Belum
+                                    </span>
+                                @endif
+                            </td>
 
-                                    {{-- Modul Integrasi [I] --}}
-                                    @if($row['integrasi']['exists'])
-                                        <span class="modul-chip @if($row['integrasi']['is_tepat']) modul-chip-done-tepat @else modul-chip-done-terlambat @endif" title="Integrasi: {{ $row['integrasi']['jam_str'] }} WIB ({{ $row['integrasi']['total_usulan'] }} Usulan)">
-                                            I: {{ $row['integrasi']['jam_str'] }}
-                                        </span>
+                            {{-- Modul 3: Integrasi --}}
+                            <td class="text-center">
+                                @if($row['integrasi']['exists'])
+                                    <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['integrasi']['jam_str'] }} WIB</div>
+                                    @if($row['integrasi']['is_tepat'])
+                                        <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
                                     @else
-                                        <span class="modul-chip modul-chip-empty" title="Integrasi: Belum Input">
-                                            I: Belum
-                                        </span>
+                                        <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
                                     @endif
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
+                                        <i class="fas fa-times me-1"></i>Belum
+                                    </span>
+                                @endif
+                            </td>
 
-                                    {{-- Modul Bebas Harian [B] --}}
-                                    @if($row['bebas']['exists'])
-                                        <span class="modul-chip @if($row['bebas']['is_tepat']) modul-chip-done-tepat @else modul-chip-done-terlambat @endif" title="Bebas Harian: {{ $row['bebas']['jam_str'] }} WIB ({{ $row['bebas']['total_bebas'] }} Bebas)">
-                                            B: {{ $row['bebas']['jam_str'] }}
-                                        </span>
+                            {{-- Modul 4: Bebas Harian --}}
+                            <td class="text-center">
+                                @if($row['bebas']['exists'])
+                                    <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['bebas']['jam_str'] }} WIB</div>
+                                    @if($row['bebas']['is_tepat'])
+                                        <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
                                     @else
-                                        <span class="modul-chip modul-chip-empty" title="Bebas Harian: Belum Input">
-                                            B: Belum
-                                        </span>
+                                        <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
                                     @endif
-                                </div>
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
+                                        <i class="fas fa-times me-1"></i>Belum
+                                    </span>
+                                @endif
                             </td>
 
                             {{-- Populasi & Dinamika --}}
@@ -767,7 +839,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">Belum ada data UPT terdaftar.</td>
+                            <td colspan="11" class="text-center py-4 text-muted">Belum ada data UPT terdaftar.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -835,15 +907,15 @@
                         <div class="row g-3">
                             <div class="col-sm-4 text-center p-3 bg-light rounded-3">
                                 <span class="text-muted small">Tahanan</span>
-                                <h4 class="fw-bold my-1 text-primary" id="det_p_tahanan">0</h4>
+                                <h4 class="fw-bold my-1 text-primary font-monospace" id="det_p_tahanan">0</h4>
                             </div>
                             <div class="col-sm-4 text-center p-3 bg-light rounded-3">
                                 <span class="text-muted small">Narapidana</span>
-                                <h4 class="fw-bold my-1 text-dark" id="det_p_napi">0</h4>
+                                <h4 class="fw-bold my-1 text-dark font-monospace" id="det_p_napi">0</h4>
                             </div>
                             <div class="col-sm-4 text-center p-3 bg-light rounded-3">
                                 <span class="text-muted small">Total Isi WBP</span>
-                                <h4 class="fw-bold my-1 text-success" id="det_p_total">0</h4>
+                                <h4 class="fw-bold my-1 text-success font-monospace" id="det_p_total">0</h4>
                             </div>
                         </div>
                         <div class="mt-3 small text-muted">
@@ -874,7 +946,7 @@
                                         <td id="det_o_t_aiii">0</td>
                                         <td id="det_o_t_aiv">0</td>
                                         <td id="det_o_t_av">0</td>
-                                        <td class="fw-bold text-primary" id="det_o_t_total">0</td>
+                                        <td class="fw-bold text-primary font-monospace" id="det_o_t_total">0</td>
                                     </tr>
                                     <tr>
                                         <td class="text-start fw-semibold text-danger">Overstaying Lewat</td>
@@ -883,7 +955,7 @@
                                         <td id="det_o_o_aiii">0</td>
                                         <td id="det_o_o_aiv">0</td>
                                         <td id="det_o_o_av">0</td>
-                                        <td class="fw-bold text-danger" id="det_o_o_total">0</td>
+                                        <td class="fw-bold text-danger font-monospace" id="det_o_o_total">0</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -916,7 +988,7 @@
                                         <td id="det_i_u_cmb">0</td>
                                         <td id="det_i_u_cmk">0</td>
                                         <td id="det_i_u_asimilasi">0</td>
-                                        <td class="fw-bold text-primary" id="det_i_u_total">0</td>
+                                        <td class="fw-bold text-primary font-monospace" id="det_i_u_total">0</td>
                                     </tr>
                                     <tr>
                                         <td class="text-start fw-semibold text-success">SK Terbit</td>
@@ -925,7 +997,7 @@
                                         <td id="det_i_s_cmb">0</td>
                                         <td id="det_i_s_cmk">0</td>
                                         <td id="det_i_s_asimilasi">0</td>
-                                        <td class="fw-bold text-success" id="det_i_s_total">0</td>
+                                        <td class="fw-bold text-success font-monospace" id="det_i_s_total">0</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -940,32 +1012,32 @@
                         <div class="row g-2 text-center small">
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
                                 <span class="text-muted d-block">Bebas Murni</span>
-                                <strong class="fs-6 text-dark" id="det_b_murni">0</strong>
+                                <strong class="fs-6 text-dark font-monospace" id="det_b_murni">0</strong>
                             </div>
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
                                 <span class="text-muted d-block">PB</span>
-                                <strong class="fs-6 text-dark" id="det_b_pb">0</strong>
+                                <strong class="fs-6 text-dark font-monospace" id="det_b_pb">0</strong>
                             </div>
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
                                 <span class="text-muted d-block">CB</span>
-                                <strong class="fs-6 text-dark" id="det_b_cb">0</strong>
+                                <strong class="fs-6 text-dark font-monospace" id="det_b_cb">0</strong>
                             </div>
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
                                 <span class="text-muted d-block">CMB</span>
-                                <strong class="fs-6 text-dark" id="det_b_cmb">0</strong>
+                                <strong class="fs-6 text-dark font-monospace" id="det_b_cmb">0</strong>
                             </div>
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
                                 <span class="text-muted d-block">Asimilasi</span>
-                                <strong class="fs-6 text-dark" id="det_b_asimilasi">0</strong>
+                                <strong class="fs-6 text-dark font-monospace" id="det_b_asimilasi">0</strong>
                             </div>
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2">
                                 <span class="text-muted d-block">BDH / Lain</span>
-                                <strong class="fs-6 text-dark" id="det_b_lain">0</strong>
+                                <strong class="fs-6 text-dark font-monospace" id="det_b_lain">0</strong>
                             </div>
                         </div>
                         <div class="p-3 bg-success bg-opacity-10 text-success rounded-3 mt-3 d-flex justify-content-between align-items-center">
                             <span class="fw-bold"><i class="fas fa-door-open me-2"></i>Total Bebas Hari Ini:</span>
-                            <h4 class="mb-0 fw-bold" id="det_b_total">0 Orang</h4>
+                            <h4 class="mb-0 fw-bold font-monospace" id="det_b_total">0 Orang</h4>
                         </div>
                         <div class="mt-2 small text-muted">
                             <i class="fas fa-info-circle me-1 text-primary"></i> Waktu Input: <strong id="det_b_waktu">-</strong>
@@ -1106,8 +1178,10 @@
         document.getElementById('det_b_cb').innerText = data.bebas.cb;
         document.getElementById('det_b_cmb').innerText = data.bebas.cmb;
         document.getElementById('det_b_asimilasi').innerText = data.bebas.asimilasi;
-        document.getElementById('det_b_bdh').innerText = data.bebas.bdh;
-        document.getElementById('det_b_lain').innerText = data.bebas.lainnya;
+        const detBdh = document.getElementById('det_b_bdh');
+        if (detBdh) detBdh.innerText = data.bebas.bdh;
+        const detLain = document.getElementById('det_b_lain');
+        if (detLain) detLain.innerText = (data.bebas.bdh ? data.bebas.bdh + ' / ' : '') + data.bebas.lainnya;
         document.getElementById('det_b_total').innerText = data.bebas.total_bebas + ' Orang';
         document.getElementById('det_b_waktu').innerText = data.bebas.exists ? `${data.bebas.jam_str} WIB (${data.bebas.is_tepat ? 'Tepat Waktu' : 'Terlambat'})` : 'Belum Diinput';
 
