@@ -142,12 +142,17 @@ class UptRankingService
                 ->where('aksi', 'edit')
                 ->whereIn('modul', ['penghuni', 'overstaying'])
                 ->whereNotNull('detail')
-                ->get(['detail']);
+                ->get(['detail', 'created_at']);
 
             foreach ($editLogs as $log) {
                 $detail = is_array($log->detail) ? $log->detail : json_decode($log->detail, true);
                 if (is_array($detail) && ! empty($detail['upt_id']) && ! empty($detail['tanggal'])) {
-                    $editLogMap[$detail['upt_id']][$detail['tanggal']] = true;
+                    $uId = $detail['upt_id'];
+                    $t = $detail['tanggal'];
+                    $logTime = ! empty($log->created_at) ? Carbon::parse($log->created_at) : null;
+                    if (! isset($editLogMap[$uId][$t]) || ($logTime && (! $editLogMap[$uId][$t] || $logTime->gt($editLogMap[$uId][$t])))) {
+                        $editLogMap[$uId][$t] = $logTime;
+                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -283,13 +288,19 @@ class UptRankingService
                 }
 
                 // Komponen 5: Kroscek Tahanan (Penghuni vs Overstaying)
-                $hasEditLog = ! empty($editLogMap[$uptId][$tgl]);
-                $kroscekScore = self::evaluateKroscek($pData, $oData, $hasEditLog);
+                $hasEditLog = isset($editLogMap[$uptId][$tgl]);
+                $editLogTime = $editLogMap[$uptId][$tgl] ?? null;
+                $kroscekScore = self::evaluateKroscek($pData, $oData, $hasEditLog, $deadline, $tgl, $editLogTime);
 
                 if ($kroscekScore['status'] === 'sesuai') {
                     $countKroscekSesuai++;
-                } elseif ($kroscekScore['status'] === 'sesuai_perbaikan') {
+                } elseif ($kroscekScore['status'] === 'sesuai_perbaikan_jam_input') {
                     $countKroscekSesuai++;
+                    $countKroscekPerbaikan++;
+                } elseif ($kroscekScore['status'] === 'sesuai_perbaikan_luar_jam' || $kroscekScore['status'] === 'sesuai_perbaikan') {
+                    $countKroscekSesuai++;
+                    $countKroscekPerbaikan++;
+                } elseif ($kroscekScore['status'] === 'sesuai_perbaikan_lewat_hari') {
                     $countKroscekPerbaikan++;
                 } elseif ($kroscekScore['status'] === 'selisih') {
                     $countKroscekSelisih++;
@@ -467,13 +478,19 @@ class UptRankingService
      * Evaluasi kesesuaian (kroscek) jumlah tahanan antara Data Penghuni dan Data Overstaying.
      *
      * Aturan Poin:
-     * - Sesuai langsung tanpa perbaikan = 20 Poin
-     * - Sesuai setelah perbaikan (awalnya berselisih lalu diedit/diperbaiki) = 10 Poin
-     * - Selisih = 0 Poin
-     * - Kosong / data belum lengkap = 0 Poin
+     * - Sesuai Langsung = +20 Poin
+     * - Sesuai Hasil Perbaikan di jam Input = +20 Poin
+     * - Sesuai Hasil Perbaikan diluar jam input dihari yang sama = +10 Poin
+     * - Masih Selisih / Kosong / diperbaiki lewat hari = 0 Poin
      */
-    public static function evaluateKroscek(?array $penghuniData, ?array $overstayingData, bool $hasEditLog = false): array
-    {
+    public static function evaluateKroscek(
+        ?array $penghuniData,
+        ?array $overstayingData,
+        bool $hasEditLog = false,
+        ?Carbon $deadline = null,
+        ?string $tgl = null,
+        ?Carbon $editLogTime = null
+    ): array {
         if (! $penghuniData || ! $overstayingData) {
             return [
                 'status' => 'kosong',
@@ -482,36 +499,66 @@ class UptRankingService
                 'tahanan_overstaying' => $overstayingData['total_tahanan'] ?? null,
                 'selisih' => 0,
                 'is_perbaikan' => false,
+                'keterangan' => 'Belum Lengkap',
+                'edit_time' => null,
             ];
         }
 
         $pTotal = (int) ($penghuniData['total_tahanan'] ?? 0);
         $oTotal = (int) ($overstayingData['total_tahanan'] ?? 0);
 
-        if ($pTotal === $oTotal) {
-            $isPenghuniEdited = false;
-            if (! empty($penghuniData['created_at']) && ! empty($penghuniData['updated_at'])) {
-                $isPenghuniEdited = abs(Carbon::parse($penghuniData['updated_at'])->diffInSeconds(Carbon::parse($penghuniData['created_at']))) > 5;
+        if ($pTotal !== $oTotal) {
+            $selisih = abs($pTotal - $oTotal);
+
+            return [
+                'status' => 'selisih',
+                'poin' => 0,
+                'tahanan_penghuni' => $pTotal,
+                'tahanan_overstaying' => $oTotal,
+                'selisih' => $selisih,
+                'is_perbaikan' => false,
+                'keterangan' => "Selisih {$selisih}",
+                'edit_time' => null,
+            ];
+        }
+
+        // Tahanan Penghuni == Tahanan Overstaying (Sinkron)
+        $isPenghuniEdited = false;
+        $latestEditTime = null;
+
+        if (! empty($penghuniData['created_at']) && ! empty($penghuniData['updated_at'])) {
+            $pCreated = Carbon::parse($penghuniData['created_at']);
+            $pUpdated = Carbon::parse($penghuniData['updated_at']);
+            if (abs($pUpdated->diffInSeconds($pCreated)) > 5) {
+                $isPenghuniEdited = true;
+                if (! $latestEditTime || $pUpdated->gt($latestEditTime)) {
+                    $latestEditTime = $pUpdated;
+                }
             }
+        }
 
-            $isOverstayingEdited = false;
-            if (! empty($overstayingData['created_at']) && ! empty($overstayingData['updated_at'])) {
-                $isOverstayingEdited = abs(Carbon::parse($overstayingData['updated_at'])->diffInSeconds(Carbon::parse($overstayingData['created_at']))) > 5;
+        $isOverstayingEdited = false;
+        if (! empty($overstayingData['created_at']) && ! empty($overstayingData['updated_at'])) {
+            $oCreated = Carbon::parse($overstayingData['created_at']);
+            $oUpdated = Carbon::parse($overstayingData['updated_at']);
+            if (abs($oUpdated->diffInSeconds($oCreated)) > 5) {
+                $isOverstayingEdited = true;
+                if (! $latestEditTime || $oUpdated->gt($latestEditTime)) {
+                    $latestEditTime = $oUpdated;
+                }
             }
+        }
 
-            $isPerbaikan = $hasEditLog || $isPenghuniEdited || $isOverstayingEdited;
-
-            if ($isPerbaikan) {
-                return [
-                    'status' => 'sesuai_perbaikan',
-                    'poin' => 10,
-                    'tahanan_penghuni' => $pTotal,
-                    'tahanan_overstaying' => $oTotal,
-                    'selisih' => 0,
-                    'is_perbaikan' => true,
-                ];
+        if ($editLogTime instanceof Carbon) {
+            if (! $latestEditTime || $editLogTime->gt($latestEditTime)) {
+                $latestEditTime = $editLogTime;
             }
+        }
 
+        $isPerbaikan = $hasEditLog || $isPenghuniEdited || $isOverstayingEdited;
+
+        // 1. Sesuai Langsung = +20 Poin
+        if (! $isPerbaikan) {
             return [
                 'status' => 'sesuai',
                 'poin' => 20,
@@ -519,18 +566,81 @@ class UptRankingService
                 'tahanan_overstaying' => $oTotal,
                 'selisih' => 0,
                 'is_perbaikan' => false,
+                'keterangan' => 'Sesuai Langsung',
+                'edit_time' => null,
             ];
         }
 
-        $selisih = abs($pTotal - $oTotal);
+        // 2, 3, 4: Sesuai Hasil Perbaikan
+        $targetDateStr = $tgl;
+        if (! $targetDateStr && $deadline) {
+            $targetDateStr = $deadline->format('Y-m-d');
+        }
+        if (! $targetDateStr) {
+            $targetDateStr = ! empty($penghuniData['created_at'])
+                ? Carbon::parse($penghuniData['created_at'])->format('Y-m-d')
+                : (! empty($overstayingData['created_at']) ? Carbon::parse($overstayingData['created_at'])->format('Y-m-d') : Carbon::now()->format('Y-m-d'));
+        }
 
+        $effectiveDeadline = $deadline ?? Carbon::parse($targetDateStr.' 11:00:00');
+
+        // Jika waktu edit tidak terlacak namun terbukti ada edit, gunakan fallback luar jam hari-H
+        if (! $latestEditTime) {
+            return [
+                'status' => 'sesuai_perbaikan_luar_jam',
+                'poin' => 10,
+                'tahanan_penghuni' => $pTotal,
+                'tahanan_overstaying' => $oTotal,
+                'selisih' => 0,
+                'is_perbaikan' => true,
+                'keterangan' => 'Sesuai Hasil Perbaikan di Luar Jam Hari-H',
+                'edit_time' => null,
+            ];
+        }
+
+        $editDateStr = $latestEditTime->format('Y-m-d');
+
+        // 2. Sesuai Hasil Perbaikan di jam Input = +20 Poin
+        // (Waktu perbaikan <= deadline jam input)
+        if ($latestEditTime->lte($effectiveDeadline)) {
+            return [
+                'status' => 'sesuai_perbaikan_jam_input',
+                'poin' => 20,
+                'tahanan_penghuni' => $pTotal,
+                'tahanan_overstaying' => $oTotal,
+                'selisih' => 0,
+                'is_perbaikan' => true,
+                'keterangan' => 'Sesuai Perbaikan di Jam Input',
+                'edit_time' => $latestEditTime->format('H:i'),
+            ];
+        }
+
+        // 3. Sesuai Hasil Perbaikan diluar jam input dihari yang sama = +10 Poin
+        // (Waktu perbaikan > deadline, namun masih pada tanggal laporan yang sama s/d 23:59:59)
+        if ($editDateStr === $targetDateStr) {
+            return [
+                'status' => 'sesuai_perbaikan_luar_jam',
+                'poin' => 10,
+                'tahanan_penghuni' => $pTotal,
+                'tahanan_overstaying' => $oTotal,
+                'selisih' => 0,
+                'is_perbaikan' => true,
+                'keterangan' => 'Sesuai Perbaikan di Luar Jam Hari-H',
+                'edit_time' => $latestEditTime->format('H:i'),
+            ];
+        }
+
+        // 4. Masih Selisih / Kosong / diperbaiki lewat hari = 0 Poin
+        // (Waktu perbaikan setelah hari-H lewat / tanggal edit > target tanggal laporan)
         return [
-            'status' => 'selisih',
+            'status' => 'sesuai_perbaikan_lewat_hari',
             'poin' => 0,
             'tahanan_penghuni' => $pTotal,
             'tahanan_overstaying' => $oTotal,
-            'selisih' => $selisih,
-            'is_perbaikan' => false,
+            'selisih' => 0,
+            'is_perbaikan' => true,
+            'keterangan' => 'Diperbaiki Lewat Hari',
+            'edit_time' => $latestEditTime->format('d/m H:i'),
         ];
     }
 }

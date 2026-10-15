@@ -91,12 +91,13 @@ class UptRankingServiceTest extends TestCase
         $this->assertFalse($result['is_perbaikan']);
     }
 
-    public function test_evaluate_kroscek_synced_after_penghuni_edit_returns_ten_points(): void
+    public function test_evaluate_kroscek_synced_after_penghuni_edit_within_input_hours_returns_twenty_points(): void
     {
+        $deadline = Carbon::parse('2026-10-15 11:00:00');
         $penghuni = [
             'total_tahanan' => 150,
             'created_at' => '2026-10-15 08:00:00',
-            'updated_at' => '2026-10-15 10:30:00', // Diedit 2.5 jam kemudian
+            'updated_at' => '2026-10-15 10:30:00', // Diedit pukul 10:30 (sebelum deadline 11:00)
         ];
         $overstaying = [
             'total_tahanan' => 150,
@@ -104,15 +105,60 @@ class UptRankingServiceTest extends TestCase
             'updated_at' => '2026-10-15 08:15:00',
         ];
 
-        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying);
+        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying, false, $deadline, '2026-10-15');
 
-        $this->assertEquals('sesuai_perbaikan', $result['status']);
+        $this->assertEquals('sesuai_perbaikan_jam_input', $result['status']);
+        $this->assertEquals(20, $result['poin']);
+        $this->assertTrue($result['is_perbaikan']);
+        $this->assertEquals('10:30', $result['edit_time']);
+    }
+
+    public function test_evaluate_kroscek_synced_after_edit_outside_input_hours_same_day_returns_ten_points(): void
+    {
+        $deadline = Carbon::parse('2026-10-15 11:00:00');
+        $penghuni = [
+            'total_tahanan' => 150,
+            'created_at' => '2026-10-15 08:00:00',
+            'updated_at' => '2026-10-15 14:30:00', // Diedit pukul 14:30 (melewati deadline 11:00 tetapi masih hari-H)
+        ];
+        $overstaying = [
+            'total_tahanan' => 150,
+            'created_at' => '2026-10-15 08:15:00',
+            'updated_at' => '2026-10-15 08:15:00',
+        ];
+
+        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying, false, $deadline, '2026-10-15');
+
+        $this->assertEquals('sesuai_perbaikan_luar_jam', $result['status']);
         $this->assertEquals(10, $result['poin']);
+        $this->assertTrue($result['is_perbaikan']);
+        $this->assertEquals('14:30', $result['edit_time']);
+    }
+
+    public function test_evaluate_kroscek_synced_after_edit_past_day_returns_zero_points(): void
+    {
+        $deadline = Carbon::parse('2026-10-15 11:00:00');
+        $penghuni = [
+            'total_tahanan' => 150,
+            'created_at' => '2026-10-15 08:00:00',
+            'updated_at' => '2026-10-16 09:00:00', // Diedit keesokan harinya (H+1)
+        ];
+        $overstaying = [
+            'total_tahanan' => 150,
+            'created_at' => '2026-10-15 08:15:00',
+            'updated_at' => '2026-10-15 08:15:00',
+        ];
+
+        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying, false, $deadline, '2026-10-15');
+
+        $this->assertEquals('sesuai_perbaikan_lewat_hari', $result['status']);
+        $this->assertEquals(0, $result['poin']);
         $this->assertTrue($result['is_perbaikan']);
     }
 
-    public function test_evaluate_kroscek_synced_after_overstaying_edit_returns_ten_points(): void
+    public function test_evaluate_kroscek_synced_with_edit_log_time(): void
     {
+        $deadline = Carbon::parse('2026-10-15 11:00:00');
         $penghuni = [
             'total_tahanan' => 150,
             'created_at' => '2026-10-15 08:00:00',
@@ -121,34 +167,26 @@ class UptRankingServiceTest extends TestCase
         $overstaying = [
             'total_tahanan' => 150,
             'created_at' => '2026-10-15 08:15:00',
-            'updated_at' => '2026-10-15 11:00:00', // Diedit hampir 3 jam kemudian
-        ];
-
-        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying);
-
-        $this->assertEquals('sesuai_perbaikan', $result['status']);
-        $this->assertEquals(10, $result['poin']);
-        $this->assertTrue($result['is_perbaikan']);
-    }
-
-    public function test_evaluate_kroscek_synced_with_edit_log_returns_ten_points(): void
-    {
-        $penghuni = [
-            'total_tahanan' => 150,
-            'created_at' => '2026-10-15 08:00:00',
-            'updated_at' => '2026-10-15 08:00:00',
-        ];
-        $overstaying = [
-            'total_tahanan' => 150,
-            'created_at' => '2026-10-15 08:15:00',
             'updated_at' => '2026-10-15 08:15:00',
         ];
 
-        $result = UptRankingService::evaluateKroscek($penghuni, $overstaying, true);
+        // Edit log di jam input (10:00)
+        $logTimeInHour = Carbon::parse('2026-10-15 10:00:00');
+        $resInHour = UptRankingService::evaluateKroscek($penghuni, $overstaying, true, $deadline, '2026-10-15', $logTimeInHour);
+        $this->assertEquals('sesuai_perbaikan_jam_input', $resInHour['status']);
+        $this->assertEquals(20, $resInHour['poin']);
 
-        $this->assertEquals('sesuai_perbaikan', $result['status']);
-        $this->assertEquals(10, $result['poin']);
-        $this->assertTrue($result['is_perbaikan']);
+        // Edit log di luar jam input hari-H (16:00)
+        $logTimeOutside = Carbon::parse('2026-10-15 16:00:00');
+        $resOutside = UptRankingService::evaluateKroscek($penghuni, $overstaying, true, $deadline, '2026-10-15', $logTimeOutside);
+        $this->assertEquals('sesuai_perbaikan_luar_jam', $resOutside['status']);
+        $this->assertEquals(10, $resOutside['poin']);
+
+        // Edit log lewat hari (H+1)
+        $logTimePast = Carbon::parse('2026-10-16 08:00:00');
+        $resPast = UptRankingService::evaluateKroscek($penghuni, $overstaying, true, $deadline, '2026-10-15', $logTimePast);
+        $this->assertEquals('sesuai_perbaikan_lewat_hari', $resPast['status']);
+        $this->assertEquals(0, $resPast['poin']);
     }
 
     public function test_evaluate_kroscek_with_difference_returns_zero_points(): void
