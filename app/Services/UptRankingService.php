@@ -528,57 +528,11 @@ class UptRankingService
         }
 
         // Tahanan Penghuni == Tahanan Overstaying (Sinkron)
-        $isPenghuniEdited = false;
-        $latestEditTime = null;
-
-        if (! empty($penghuniData['created_at']) && ! empty($penghuniData['updated_at'])) {
-            $pCreated = Carbon::parse($penghuniData['created_at']);
-            $pUpdated = Carbon::parse($penghuniData['updated_at']);
-            if (abs($pUpdated->diffInSeconds($pCreated)) > 5) {
-                $isPenghuniEdited = true;
-                if (! $latestEditTime || $pUpdated->gt($latestEditTime)) {
-                    $latestEditTime = $pUpdated;
-                }
-            }
-        }
-
-        $isOverstayingEdited = false;
-        if (! empty($overstayingData['created_at']) && ! empty($overstayingData['updated_at'])) {
-            $oCreated = Carbon::parse($overstayingData['created_at']);
-            $oUpdated = Carbon::parse($overstayingData['updated_at']);
-            if (abs($oUpdated->diffInSeconds($oCreated)) > 5) {
-                $isOverstayingEdited = true;
-                if (! $latestEditTime || $oUpdated->gt($latestEditTime)) {
-                    $latestEditTime = $oUpdated;
-                }
-            }
-        }
-
-        if ($editLogTime instanceof Carbon) {
-            if (! $latestEditTime || $editLogTime->gt($latestEditTime)) {
-                $latestEditTime = $editLogTime;
-            }
-        }
-
-        // Khusus UPT dengan 0 tahanan di kedua modul (misal Lapas Perempuan/Lapas Anak),
-        // jika tidak ada log edit perubahan tahanan, maka mutlak Sesuai Langsung (+20 Poin)
-        if ($pTotal === 0 && $oTotal === 0 && ! $hasEditLog) {
-            return [
-                'status' => 'sesuai',
-                'poin' => 20,
-                'tahanan_penghuni' => 0,
-                'tahanan_overstaying' => 0,
-                'selisih' => 0,
-                'is_perbaikan' => false,
-                'keterangan' => 'Sesuai Langsung',
-                'edit_time' => null,
-            ];
-        }
-
-        $isPerbaikan = $hasEditLog || $isPenghuniEdited || $isOverstayingEdited;
-
-        // 1. Sesuai Langsung = +20 Poin
-        if (! $isPerbaikan) {
+        // Sebuah data yang sudah sinkron HANYA dianggap sebagai hasil perbaikan jika memang ada riwayat
+        // log edit yang mengubah data tahanan ($hasEditLog == true).
+        // Perubahan updated_at pada data_penghuni (misal karena edit data narapidana) atau data_overstaying
+        // tanpa adanya log edit tahanan TIDAK BOLEH dianggap sebagai perbaikan tahanan.
+        if (! $hasEditLog) {
             return [
                 'status' => 'sesuai',
                 'poin' => 20,
@@ -589,6 +543,19 @@ class UptRankingService
                 'keterangan' => 'Sesuai Langsung',
                 'edit_time' => null,
             ];
+        }
+
+        // Tahanan Sinkron Hasil Perbaikan ($hasEditLog == true)
+        $latestEditTime = $editLogTime;
+
+        if (! $latestEditTime) {
+            $pUpdated = ! empty($penghuniData['updated_at']) ? Carbon::parse($penghuniData['updated_at']) : null;
+            $oUpdated = ! empty($overstayingData['updated_at']) ? Carbon::parse($overstayingData['updated_at']) : null;
+            if ($pUpdated && $oUpdated) {
+                $latestEditTime = $pUpdated->gt($oUpdated) ? $pUpdated : $oUpdated;
+            } else {
+                $latestEditTime = $pUpdated ?: $oUpdated;
+            }
         }
 
         // 2, 3, 4: Sesuai Hasil Perbaikan
