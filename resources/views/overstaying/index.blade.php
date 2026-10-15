@@ -264,6 +264,22 @@
                             <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', date('Y-m-d')) }}" required>
                         </div>
                     </div>
+
+                    <!-- Banner Informasi Auto-Copy Data Kemarin -->
+                    <div id="previousDataNotice" class="alert alert-info py-2 px-3 mb-3 small d-none d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <i class="fas fa-magic text-primary me-2"></i>
+                            <span id="previousDataText">Memeriksa data hari kemarin...</span>
+                        </div>
+                        <div class="d-flex gap-1 ms-auto">
+                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" id="btnResetZero" title="Kosongkan semua input ke 0">
+                                <i class="fas fa-eraser me-1"></i>Reset ke 0
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" id="btnReloadPrevious" title="Muat ulang data hari kemarin">
+                                <i class="fas fa-sync-alt me-1"></i>Muat Ulang
+                            </button>
+                        </div>
+                    </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3 mb-md-0">
@@ -551,10 +567,107 @@
         }, 200);
     }
 
+    const noticeBox = document.getElementById('previousDataNotice');
+    const noticeText = document.getElementById('previousDataText');
+    const btnResetZero = document.getElementById('btnResetZero');
+    const btnReloadPrevious = document.getElementById('btnReloadPrevious');
+
+    function loadPreviousData() {
+        const uptSelect = document.getElementById('add_upt_id');
+        const tglInput = document.getElementById('add_tanggal');
+        if (!uptSelect || !tglInput) return;
+        const uptId = uptSelect.value;
+        const tanggal = tglInput.value;
+        if (!uptId || !tanggal) {
+            if (noticeBox) noticeBox.classList.add('d-none');
+            return;
+        }
+
+        if (noticeBox) {
+            noticeBox.classList.remove('d-none', 'alert-warning', 'alert-success');
+            noticeBox.classList.add('alert-info');
+            noticeText.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memeriksa data hari kemarin untuk UPT ini...';
+        }
+
+        fetch(`{{ route('overstaying.previous-data') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.success && res.has_data && res.data) {
+                    document.getElementById('add_t_ai').value = res.data.tahanan_ai ?? 0;
+                    document.getElementById('add_t_aii').value = res.data.tahanan_aii ?? 0;
+                    document.getElementById('add_t_aiii').value = res.data.tahanan_aiii ?? 0;
+                    document.getElementById('add_t_aiv').value = res.data.tahanan_aiv ?? 0;
+                    document.getElementById('add_t_av').value = res.data.tahanan_av ?? 0;
+
+                    document.getElementById('add_o_ai').value = res.data.overstaying_ai ?? 0;
+                    document.getElementById('add_o_aii').value = res.data.overstaying_aii ?? 0;
+                    document.getElementById('add_o_aiii').value = res.data.overstaying_aiii ?? 0;
+                    document.getElementById('add_o_aiv').value = res.data.overstaying_aiv ?? 0;
+                    document.getElementById('add_o_av').value = res.data.overstaying_av ?? 0;
+
+                    const ketInput = document.querySelector('#modalAdd textarea[name="keterangan"]');
+                    if (ketInput && !ketInput.value.trim() && res.data.keterangan) {
+                        ketInput.value = res.data.keterangan;
+                    }
+
+                    updateJumlah('add');
+
+                    if (noticeBox) {
+                        noticeBox.classList.remove('d-none', 'alert-info', 'alert-warning');
+                        noticeBox.classList.add('alert-success');
+                        noticeText.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i> Data berhasil <strong>disalin otomatis dari hari kemarin (${res.formatted_date})</strong>. Silakan sesuaikan angka yang berubah saja.`;
+                    }
+                } else {
+                    resetFormInputsToZero(false);
+
+                    if (noticeBox) {
+                        noticeBox.classList.remove('d-none', 'alert-info', 'alert-success');
+                        noticeBox.classList.add('alert-warning');
+                        noticeText.innerHTML = `<i class="fas fa-exclamation-triangle text-warning me-1"></i> ${res.message || 'Data hari kemarin belum diinput untuk UPT ini. Silakan input dari 0.'}`;
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Error loading previous data:', err);
+                if (noticeBox) noticeBox.classList.add('d-none');
+            });
+    }
+
+    function resetFormInputsToZero(manual = true) {
+        ['add_t_ai', 'add_t_aii', 'add_t_aiii', 'add_t_aiv', 'add_t_av',
+         'add_o_ai', 'add_o_aii', 'add_o_aiii', 'add_o_aiv', 'add_o_av'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = 0;
+        });
+        updateJumlah('add');
+
+        if (manual && noticeBox) {
+            noticeBox.classList.remove('d-none', 'alert-info', 'alert-success');
+            noticeBox.classList.add('alert-warning');
+            noticeText.innerHTML = '<i class="fas fa-eraser me-1"></i> Semua input telah di-reset ke nilai 0.';
+        }
+    }
+
     const addUpt = document.getElementById('add_upt_id');
     const addTanggal = document.getElementById('add_tanggal');
-    if (addUpt) addUpt.addEventListener('change', () => checkDuplicateDate('add'));
-    if (addTanggal) addTanggal.addEventListener('change', () => checkDuplicateDate('add'));
+    if (addUpt) {
+        addUpt.addEventListener('change', () => {
+            loadPreviousData();
+            checkDuplicateDate('add');
+        });
+    }
+    if (addTanggal) {
+        addTanggal.addEventListener('change', () => {
+            loadPreviousData();
+            checkDuplicateDate('add');
+        });
+    }
+    if (btnResetZero) {
+        btnResetZero.addEventListener('click', () => resetFormInputsToZero(true));
+    }
+    if (btnReloadPrevious) {
+        btnReloadPrevious.addEventListener('click', loadPreviousData);
+    }
 
     const editUpt = document.getElementById('edit_upt_id');
     const editTanggal = document.getElementById('edit_tanggal');
@@ -583,7 +696,10 @@
                 btnConfirmUpdate.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Update';
             }
             updateJumlah('add');
-            checkDuplicateDate('add');
+            if (addUpt && addUpt.value) {
+                loadPreviousData();
+                checkDuplicateDate('add');
+            }
         });
     }
 

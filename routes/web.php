@@ -63,6 +63,7 @@ Route::middleware('auth')->group(function () {
     // Data Overstaying
     Route::get('/overstaying', [OverstayingController::class, 'index'])->name('overstaying.index');
     Route::get('/overstaying/check-exists', [OverstayingController::class, 'checkExists'])->name('overstaying.check-exists');
+    Route::get('/overstaying/previous-data', [OverstayingController::class, 'getPreviousData'])->name('overstaying.previous-data');
     Route::post('/overstaying', [OverstayingController::class, 'store'])->name('overstaying.store');
     Route::put('/overstaying/{id}', [OverstayingController::class, 'update'])->name('overstaying.update');
     Route::delete('/overstaying/{id}', [OverstayingController::class, 'destroy'])->name('overstaying.destroy');

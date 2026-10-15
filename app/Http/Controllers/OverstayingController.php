@@ -66,6 +66,64 @@ class OverstayingController extends Controller
         ));
     }
 
+    public function getPreviousData(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        if (! $user->hasAccess('overstaying')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $uptId = (int) $request->query('upt_id');
+        $rawTanggal = $request->query('tanggal', date('Y-m-d'));
+
+        if (! $uptId) {
+            return response()->json(['success' => false, 'has_data' => false, 'message' => 'Pilih UPT terlebih dahulu.']);
+        }
+
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            $tanggal = date('Y-m-d');
+        }
+
+        // Input data tidak ada hari libur: ambil tepat data hari kemarin (H-1)
+        $previousDate = date('Y-m-d', strtotime($tanggal.' - 1 day'));
+
+        $record = DataOverstaying::where('upt_id', $uptId)
+            ->where('tanggal', $previousDate)
+            ->first();
+
+        if (! $record) {
+            return response()->json([
+                'success' => true,
+                'has_data' => false,
+                'previous_date' => $previousDate,
+                'formatted_yesterday' => formatIndonesianDate($previousDate),
+                'message' => 'Data hari kemarin ('.formatIndonesianDate($previousDate).') belum diinput untuk UPT ini. Silakan input data hari kemarin terlebih dahulu atau input manual dari 0.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'has_data' => true,
+            'previous_date' => $previousDate,
+            'formatted_date' => formatIndonesianDate($previousDate),
+            'data' => [
+                'tahanan_ai' => (int) $record->tahanan_ai,
+                'tahanan_aii' => (int) $record->tahanan_aii,
+                'tahanan_aiii' => (int) $record->tahanan_aiii,
+                'tahanan_aiv' => (int) $record->tahanan_aiv,
+                'tahanan_av' => (int) $record->tahanan_av,
+                'overstaying_ai' => (int) $record->overstaying_ai,
+                'overstaying_aii' => (int) $record->overstaying_aii,
+                'overstaying_aiii' => (int) $record->overstaying_aiii,
+                'overstaying_aiv' => (int) $record->overstaying_aiv,
+                'overstaying_av' => (int) $record->overstaying_av,
+                'keterangan' => (string) ($record->keterangan ?? ''),
+            ],
+        ]);
+    }
+
     public function checkExists(Request $request): JsonResponse
     {
         $user = auth()->user();
