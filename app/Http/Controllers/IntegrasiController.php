@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\DataIntegrasi;
 use App\Models\Upt;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -73,14 +74,20 @@ class IntegrasiController extends Controller
         }
 
         $uptId = (int) $request->query('upt_id');
-        $tanggal = $request->query('tanggal');
+        $rawTanggal = $request->query('tanggal');
         $excludeId = (int) $request->query('exclude_id', 0);
 
-        if (! $uptId || ! $tanggal) {
+        if (! $uptId || ! $rawTanggal) {
             return response()->json(['exists' => false]);
         }
 
-        $query = DataIntegrasi::where('upt_id', $uptId)->whereDate('tanggal', $tanggal);
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = DataIntegrasi::where('upt_id', $uptId)->where('tanggal', $tanggal);
         if ($excludeId > 0) {
             $query->where('id', '!=', $excludeId);
         }
@@ -111,15 +118,21 @@ class IntegrasiController extends Controller
         }
 
         $uptId = (int) $request->input('upt_id');
-        $tanggal = $request->input('tanggal');
+        $rawTanggal = $request->input('tanggal');
         $forceUpdate = $request->boolean('force_update') || $request->input('force_update') === '1';
 
         if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            return back()->with('error', 'Format tanggal tidak valid.')->withInput();
+        }
+
         if (! $forceUpdate) {
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
                 'upt_id' => 'required|exists:upt,id',
                 'tanggal' => [
                     'required',
@@ -134,7 +147,7 @@ class IntegrasiController extends Controller
                 return back()->with('error', $validator->errors()->first())->withInput();
             }
         } else {
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
                 'upt_id' => 'required|exists:upt,id',
                 'tanggal' => 'required|date',
             ]);
@@ -147,39 +160,17 @@ class IntegrasiController extends Controller
         try {
             DB::beginTransaction();
 
-            $existing = DataIntegrasi::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->lockForUpdate()->first();
+            $existing = DataIntegrasi::where('upt_id', $uptId)->where('tanggal', $tanggal)->lockForUpdate()->first();
 
-            if ($existing) {
-                if (! $forceUpdate) {
-                    DB::rollBack();
+            if ($existing && ! $forceUpdate) {
+                DB::rollBack();
 
-                    return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
-                }
-
-                $existing->update([
-                    'usulan_pb' => (int) $request->input('usulan_pb', 0),
-                    'usulan_cb' => (int) $request->input('usulan_cb', 0),
-                    'usulan_cmb' => (int) $request->input('usulan_cmb', 0),
-                    'usulan_cmk' => (int) $request->input('usulan_cmk', 0),
-                    'usulan_asimilasi' => (int) $request->input('usulan_asimilasi', 0),
-                    'sk_terbit_pb' => (int) $request->input('sk_terbit_pb', 0),
-                    'sk_terbit_cb' => (int) $request->input('sk_terbit_cb', 0),
-                    'sk_terbit_cmb' => (int) $request->input('sk_terbit_cmb', 0),
-                    'sk_terbit_cmk' => (int) $request->input('sk_terbit_cmk', 0),
-                    'sk_terbit_asimilasi' => (int) $request->input('sk_terbit_asimilasi', 0),
-                    'keterangan' => $request->input('keterangan', ''),
-                ]);
-
-                DB::commit();
-
-                $upt = Upt::find($uptId);
-                ActivityLog::log('edit', 'integrasi', "Memperbarui data integrasi UPT {$upt->nama_upt} tanggal {$tanggal} via form input", ['upt_id' => $uptId, 'tanggal' => $tanggal]);
-
-                return back()->with('success', "Data integrasi untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.');
+                return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
             }
 
-            $data = DataIntegrasi::create([
-                'upt_id' => $uptId,
+            $isUpdate = (bool) $existing;
+
+            $payload = [
                 'usulan_pb' => (int) $request->input('usulan_pb', 0),
                 'usulan_cb' => (int) $request->input('usulan_cb', 0),
                 'usulan_cmb' => (int) $request->input('usulan_cmb', 0),
@@ -190,24 +181,41 @@ class IntegrasiController extends Controller
                 'sk_terbit_cmb' => (int) $request->input('sk_terbit_cmb', 0),
                 'sk_terbit_cmk' => (int) $request->input('sk_terbit_cmk', 0),
                 'sk_terbit_asimilasi' => (int) $request->input('sk_terbit_asimilasi', 0),
-                'tanggal' => $tanggal,
                 'keterangan' => $request->input('keterangan', ''),
-            ]);
+            ];
+
+            $data = DataIntegrasi::updateOrCreate(
+                [
+                    'upt_id' => $uptId,
+                    'tanggal' => $tanggal,
+                ],
+                $payload
+            );
 
             DB::commit();
 
             $upt = Upt::find($uptId);
-            ActivityLog::log('tambah', 'integrasi', "Menambahkan data integrasi UPT {$upt->nama_upt} tanggal {$tanggal}", ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+            $uptName = $upt?->nama_upt ?? 'UPT';
+            $action = $isUpdate ? 'edit' : 'tambah';
+            $logMsg = $isUpdate
+                ? "Memperbarui data integrasi UPT {$uptName} tanggal {$tanggal} via form input"
+                : "Menambahkan data integrasi UPT {$uptName} tanggal {$tanggal}";
 
-            return back()->with('success', 'Data integrasi berhasil ditambahkan.');
+            ActivityLog::log($action, 'integrasi', $logMsg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+
+            $successMsg = $isUpdate
+                ? "Data integrasi untuk UPT {$uptName} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
+                : 'Data integrasi berhasil ditambahkan.';
+
+            return back()->with('success', $successMsg);
         } catch (UniqueConstraintViolationException $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+            return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
         } catch (QueryException $e) {
             DB::rollBack();
             if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? null) == 1062) {
-                return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+                return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
             }
 
             return back()->with('error', 'Gagal menyimpan data integrasi: '.$e->getMessage())->withInput();
@@ -232,9 +240,15 @@ class IntegrasiController extends Controller
         }
 
         $uptId = (int) $request->input('upt_id');
-        $tanggal = $request->input('tanggal');
+        $rawTanggal = $request->input('tanggal');
 
-        $validator = Validator::make($request->all(), [
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            return back()->with('error', 'Format tanggal tidak valid.')->withInput();
+        }
+
+        $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
             'upt_id' => 'required|exists:upt,id',
             'tanggal' => [
                 'required',
@@ -251,7 +265,7 @@ class IntegrasiController extends Controller
             return back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        if (DataIntegrasi::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->where('id', '!=', $id)->exists()) {
+        if (DataIntegrasi::where('upt_id', $uptId)->where('tanggal', $tanggal)->where('id', '!=', $id)->exists()) {
             return back()->with('error', 'Data integrasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan pilih tanggal lain.')->withInput();
         }
 
@@ -311,4 +325,3 @@ class IntegrasiController extends Controller
         return back()->with('success', 'Data integrasi berhasil dihapus.');
     }
 }
-

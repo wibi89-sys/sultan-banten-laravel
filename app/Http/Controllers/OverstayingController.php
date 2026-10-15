@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\DataOverstaying;
 use App\Models\Upt;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -73,14 +74,20 @@ class OverstayingController extends Controller
         }
 
         $uptId = (int) $request->query('upt_id');
-        $tanggal = $request->query('tanggal');
+        $rawTanggal = $request->query('tanggal');
         $excludeId = (int) $request->query('exclude_id', 0);
 
-        if (! $uptId || ! $tanggal) {
+        if (! $uptId || ! $rawTanggal) {
             return response()->json(['exists' => false]);
         }
 
-        $query = DataOverstaying::where('upt_id', $uptId)->whereDate('tanggal', $tanggal);
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = DataOverstaying::where('upt_id', $uptId)->where('tanggal', $tanggal);
         if ($excludeId > 0) {
             $query->where('id', '!=', $excludeId);
         }
@@ -111,15 +118,21 @@ class OverstayingController extends Controller
         }
 
         $uptId = (int) $request->input('upt_id');
-        $tanggal = $request->input('tanggal');
+        $rawTanggal = $request->input('tanggal');
         $forceUpdate = $request->boolean('force_update') || $request->input('force_update') === '1';
 
         if (! $user->isAdmin() && $user->upt_id && $uptId !== (int) $user->upt_id) {
             abort(403, 'Akses ditolak. Anda hanya dapat menginput data untuk UPT Anda sendiri.');
         }
 
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            return back()->with('error', 'Format tanggal tidak valid.')->withInput();
+        }
+
         if (! $forceUpdate) {
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
                 'upt_id' => 'required|exists:upt,id',
                 'tanggal' => [
                     'required',
@@ -134,7 +147,7 @@ class OverstayingController extends Controller
                 return back()->with('error', $validator->errors()->first())->withInput();
             }
         } else {
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
                 'upt_id' => 'required|exists:upt,id',
                 'tanggal' => 'required|date',
             ]);
@@ -147,39 +160,17 @@ class OverstayingController extends Controller
         try {
             DB::beginTransaction();
 
-            $existing = DataOverstaying::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->lockForUpdate()->first();
+            $existing = DataOverstaying::where('upt_id', $uptId)->where('tanggal', $tanggal)->lockForUpdate()->first();
 
-            if ($existing) {
-                if (! $forceUpdate) {
-                    DB::rollBack();
+            if ($existing && ! $forceUpdate) {
+                DB::rollBack();
 
-                    return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
-                }
-
-                $existing->update([
-                    'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
-                    'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
-                    'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
-                    'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
-                    'tahanan_av' => (int) $request->input('tahanan_av', 0),
-                    'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
-                    'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
-                    'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
-                    'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
-                    'overstaying_av' => (int) $request->input('overstaying_av', 0),
-                    'keterangan' => $request->input('keterangan', ''),
-                ]);
-
-                DB::commit();
-
-                $upt = Upt::find($uptId);
-                ActivityLog::log('edit', 'overstaying', "Memperbarui data overstaying UPT {$upt->nama_upt} tanggal {$tanggal} via form input", ['upt_id' => $uptId, 'tanggal' => $tanggal]);
-
-                return back()->with('success', "Data overstaying untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.');
+                return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
             }
 
-            $data = DataOverstaying::create([
-                'upt_id' => $uptId,
+            $isUpdate = (bool) $existing;
+
+            $payload = [
                 'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
                 'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
                 'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
@@ -190,28 +181,45 @@ class OverstayingController extends Controller
                 'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
                 'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
                 'overstaying_av' => (int) $request->input('overstaying_av', 0),
-                'tanggal' => $tanggal,
                 'keterangan' => $request->input('keterangan', ''),
-            ]);
+            ];
+
+            $data = DataOverstaying::updateOrCreate(
+                [
+                    'upt_id' => $uptId,
+                    'tanggal' => $tanggal,
+                ],
+                $payload
+            );
 
             DB::commit();
+
+            $upt = Upt::find($uptId);
+            $uptName = $upt?->nama_upt ?? 'UPT';
+            $action = $isUpdate ? 'edit' : 'tambah';
+            $logMsg = $isUpdate
+                ? "Memperbarui data overstaying UPT {$uptName} tanggal {$tanggal} via form input"
+                : "Menambahkan data overstaying UPT {$uptName} tanggal {$tanggal}";
+
+            ActivityLog::log($action, 'overstaying', $logMsg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
+
+            $successMsg = $isUpdate
+                ? "Data overstaying untuk UPT {$uptName} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
+                : 'Data overstaying berhasil ditambahkan.';
+
+            return back()->with('success', $successMsg);
         } catch (UniqueConstraintViolationException $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+            return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
         } catch (QueryException $e) {
             DB::rollBack();
             if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? null) == 1062) {
-                return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+                return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
             }
 
             return back()->with('error', 'Gagal menyimpan data overstaying: '.$e->getMessage())->withInput();
         }
-
-        $upt = Upt::find($uptId);
-        ActivityLog::log('tambah', 'overstaying', "Menambahkan data overstaying UPT {$upt->nama_upt} tanggal {$tanggal}", ['upt_id' => $uptId, 'tanggal' => $tanggal]);
-
-        return back()->with('success', 'Data overstaying berhasil ditambahkan.');
     }
 
     public function update(Request $request, $id): RedirectResponse
@@ -232,9 +240,15 @@ class OverstayingController extends Controller
         }
 
         $uptId = (int) $request->input('upt_id');
-        $tanggal = $request->input('tanggal');
+        $rawTanggal = $request->input('tanggal');
 
-        $validator = Validator::make($request->all(), [
+        try {
+            $tanggal = Carbon::parse($rawTanggal)->format('Y-m-d');
+        } catch (\Exception) {
+            return back()->with('error', 'Format tanggal tidak valid.')->withInput();
+        }
+
+        $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
             'upt_id' => 'required|exists:upt,id',
             'tanggal' => [
                 'required',
@@ -251,7 +265,7 @@ class OverstayingController extends Controller
             return back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        if (DataOverstaying::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->where('id', '!=', $id)->exists()) {
+        if (DataOverstaying::where('upt_id', $uptId)->where('tanggal', $tanggal)->where('id', '!=', $id)->exists()) {
             return back()->with('error', 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan pilih tanggal lain atau gunakan data yang sudah ada.')->withInput();
         }
 

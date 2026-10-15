@@ -139,4 +139,46 @@ class OverstayingDuplicateTest extends TestCase
         // Clean up
         $record->delete();
     }
+
+    public function test_store_with_force_update_uses_update_or_create_and_prevents_duplicate(): void
+    {
+        if (! $this->admin || ! $this->upt) {
+            $this->markTestSkipped('Admin user or UPT not available.');
+        }
+
+        $testDate = '2026-11-25';
+        DataOverstaying::where('upt_id', $this->upt->id)->where('tanggal', $testDate)->delete();
+
+        // 1. Initial insert
+        $response1 = $this->actingAs($this->admin)->post('/overstaying', [
+            'upt_id' => $this->upt->id,
+            'tanggal' => $testDate,
+            'tahanan_ai' => 10,
+            'overstaying_ai' => 2,
+        ]);
+        $response1->assertSessionHas('success');
+
+        // 2. Duplicate with force_update=1 updates existing record and creates no duplicate
+        $response2 = $this->actingAs($this->admin)->post('/overstaying', [
+            'upt_id' => $this->upt->id,
+            'tanggal' => $testDate,
+            'tahanan_ai' => 35,
+            'overstaying_ai' => 8,
+            'force_update' => 1,
+        ]);
+        $response2->assertSessionHas('success');
+
+        $this->assertDatabaseHas('data_overstaying', [
+            'upt_id' => $this->upt->id,
+            'tanggal' => $testDate,
+            'tahanan_ai' => 35,
+            'overstaying_ai' => 8,
+        ]);
+
+        $count = DataOverstaying::where('upt_id', $this->upt->id)->where('tanggal', $testDate)->count();
+        $this->assertEquals(1, $count);
+
+        // Cleanup
+        DataOverstaying::where('upt_id', $this->upt->id)->where('tanggal', $testDate)->delete();
+    }
 }

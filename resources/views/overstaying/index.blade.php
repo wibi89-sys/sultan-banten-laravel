@@ -561,19 +561,45 @@
     if (editUpt) editUpt.addEventListener('change', () => checkDuplicateDate('edit'));
     if (editTanggal) editTanggal.addEventListener('change', () => checkDuplicateDate('edit'));
 
+    let isSubmittingAdd = false;
+    let isSubmittingEdit = false;
+
     const modalAddEl = document.getElementById('modalAdd');
+    const formAdd = document.getElementById('formAdd');
+    const submitBtn = document.getElementById('add_btn_submit');
+    const forceUpdateInput = document.getElementById('add_force_update');
+    const btnConfirmUpdate = document.getElementById('btnConfirmUpdateOverstaying');
+
     if (modalAddEl) {
         modalAddEl.addEventListener('show.bs.modal', function() {
-            document.getElementById('add_force_update').value = '0';
+            isSubmittingAdd = false;
+            if (forceUpdateInput) forceUpdateInput.value = '0';
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Simpan';
+            }
+            if (btnConfirmUpdate) {
+                btnConfirmUpdate.disabled = false;
+                btnConfirmUpdate.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Update';
+            }
             updateJumlah('add');
             checkDuplicateDate('add');
         });
     }
 
     // Intercept formAdd submit to check duplicate & show Update / Batal confirmation
-    document.getElementById('formAdd')?.addEventListener('submit', function(e) {
-        const forceUpdateInput = document.getElementById('add_force_update');
+    formAdd?.addEventListener('submit', function(e) {
+        if (isSubmittingAdd) {
+            e.preventDefault();
+            return false;
+        }
+
         if (forceUpdateInput && forceUpdateInput.value === '1') {
+            isSubmittingAdd = true;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
+            }
             return true;
         }
 
@@ -581,14 +607,15 @@
         const uptSelect = document.getElementById('add_upt_id');
         const tglInput = document.getElementById('add_tanggal');
         const uptId = uptSelect ? uptSelect.value : '';
-        const tanggal = tglInput ? tglInput.value : '';
+        const tanggal = tglInput ? tglInput.value.trim() : '';
 
         if (!uptId || !tanggal) {
+            isSubmittingAdd = true;
             this.submit();
             return;
         }
 
-        const submitBtn = document.getElementById('add_btn_submit');
+        isSubmittingAdd = true;
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memeriksa...';
@@ -597,12 +624,13 @@
         fetch(`{{ route('overstaying.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
             .then(res => res.json())
             .then(data => {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Simpan';
-                }
-
                 if (data.exists) {
+                    isSubmittingAdd = false;
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Simpan';
+                    }
+
                     const msgEl = document.getElementById('confirm_duplicate_overstaying_msg');
                     if (msgEl) {
                         msgEl.innerHTML = `Data overstaying untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
@@ -615,35 +643,57 @@
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
                     }
-                    document.getElementById('formAdd').submit();
+                    formAdd.submit();
                 }
             })
-            .catch(() => {
+            .catch(err => {
+                console.error('Check exists error:', err);
+                isSubmittingAdd = false;
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Simpan';
                 }
-                document.getElementById('formAdd').submit();
+                alert('Terjadi kendala saat memeriksa duplikasi. Silakan coba klik Simpan kembali.');
             });
     });
 
-    document.getElementById('btnConfirmUpdateOverstaying')?.addEventListener('click', function() {
+    btnConfirmUpdate?.addEventListener('click', function() {
+        if (isSubmittingAdd) return;
+        isSubmittingAdd = true;
+
+        btnConfirmUpdate.disabled = true;
+        btnConfirmUpdate.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
+
         const modalEl = document.getElementById('modalConfirmDuplicateOverstaying');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         if (modalInstance) modalInstance.hide();
 
-        const forceUpdateInput = document.getElementById('add_force_update');
         if (forceUpdateInput) forceUpdateInput.value = '1';
 
-        const submitBtn = document.getElementById('add_btn_submit');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengupdate...';
         }
-        document.getElementById('formAdd').submit();
+
+        formAdd.submit();
+    });
+
+    document.getElementById('modalConfirmDuplicateOverstaying')?.addEventListener('hidden.bs.modal', function() {
+        if (forceUpdateInput && forceUpdateInput.value !== '1') {
+            isSubmittingAdd = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Simpan';
+            }
+            if (btnConfirmUpdate) {
+                btnConfirmUpdate.disabled = false;
+                btnConfirmUpdate.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Update';
+            }
+        }
     });
 
     function editData(data) {
+        isSubmittingEdit = false;
         document.getElementById('formEdit').action = '/overstaying/' + data.id;
         document.getElementById('edit_id').value = data.id;
         document.getElementById('edit_upt_id').value = data.upt_id;
@@ -670,7 +720,10 @@
             editWarning.classList.remove('d-flex');
         }
         const editBtn = document.getElementById('edit_btn_submit');
-        if (editBtn) editBtn.disabled = false;
+        if (editBtn) {
+            editBtn.disabled = false;
+            editBtn.innerHTML = 'Simpan Perubahan';
+        }
 
         new bootstrap.Modal(document.getElementById('modalEdit')).show();
     }
@@ -679,16 +732,26 @@
     const formEditEl = document.getElementById('formEdit');
     if (formEditEl) {
         formEditEl.addEventListener('submit', function(e) {
+            if (isSubmittingEdit) {
+                e.preventDefault();
+                return false;
+            }
             const btn = formEditEl.querySelector('button[type="submit"]');
             if (btn) {
-                if (btn.disabled) {
-                    e.preventDefault();
-                    return false;
-                }
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
             }
+            isSubmittingEdit = true;
         });
     }
+
+    document.getElementById('modalEdit')?.addEventListener('hidden.bs.modal', function() {
+        isSubmittingEdit = false;
+        const btn = formEditEl?.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Simpan Perubahan';
+        }
+    });
 </script>
 @endpush
