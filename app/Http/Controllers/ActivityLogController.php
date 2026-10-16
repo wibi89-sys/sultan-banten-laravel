@@ -38,6 +38,7 @@ class ActivityLogController extends Controller
         'profil' => 'Profil',
         'wa' => 'WhatsApp',
         'wa_pimpinan' => 'WA Pimpinan',
+        'telram' => 'Kalkulator Telram',
         'system' => 'Sistem',
     ];
 

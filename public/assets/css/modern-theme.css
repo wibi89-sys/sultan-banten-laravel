@@ -133,6 +133,10 @@
     --gray-900: #ffffff;
 }
 
+[data-theme="dark"] .text-dark {
+    color: var(--text-primary) !important;
+}
+
 /* ============================================
    BASE STYLES
    ============================================ */

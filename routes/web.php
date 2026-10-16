@@ -13,6 +13,7 @@ use App\Http\Controllers\OverstayingController;
 use App\Http\Controllers\PenghuniController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelramController;
 use App\Http\Controllers\UptController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppController;
@@ -49,6 +50,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes (Must be logged in)
 Route::middleware('auth')->group(function () {
+    // Kalkulator Telram PAS (Terbuka untuk semua user)
+    Route::get('/telram', [TelramController::class, 'index'])->name('telram.index');
+    Route::post('/telram/calculate', [TelramController::class, 'calculate'])->name('telram.calculate');
+
     // Kroscek Data
     Route::get('/kroscek', [KroscekController::class, 'index'])->name('kroscek.index');
 

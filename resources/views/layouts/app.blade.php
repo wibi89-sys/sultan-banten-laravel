@@ -303,6 +303,10 @@
             </div>
             @endif
 
+            <a href="{{ route('telram.index') }}" class="{{ request()->routeIs('telram.*') ? 'active' : '' }}">
+                <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
+            </a>
+
             <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>
                 <span>Master Data</span>
