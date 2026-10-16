@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
-@section('page_title', 'Kalkulator Perkiraan Ekspirasi')
+@section('title', 'Kalkulator Telram - Sultan Banten')
+@section('page_title', 'Kalkulator Telram')
 
 @push('styles')
 <style>
