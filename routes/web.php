@@ -117,11 +117,13 @@ Route::middleware('auth')->group(function () {
 
     // WhatsApp Gateway Settings
     Route::get('/wa-settings', [WhatsAppController::class, 'settingsIndex'])->name('wa.settings');
+    Route::get('/wa-settings-index', [WhatsAppController::class, 'settingsIndex'])->name('wa.settings.index');
     Route::post('/wa-settings', [WhatsAppController::class, 'settingsUpdate'])->name('wa.settings.update');
     Route::post('/wa-settings/test', [WhatsAppController::class, 'settingsTest'])->name('wa.settings.test');
 
     // WhatsApp Scheduled Reports
     Route::get('/wa-schedule', [WhatsAppController::class, 'scheduleIndex'])->name('wa.schedule');
+    Route::get('/wa-schedule-index', [WhatsAppController::class, 'scheduleIndex'])->name('wa.schedule.index');
     Route::post('/wa-schedule', [WhatsAppController::class, 'scheduleStore'])->name('wa.schedule.store');
     Route::put('/wa-schedule/{id}', [WhatsAppController::class, 'scheduleUpdate'])->name('wa.schedule.update');
     Route::delete('/wa-schedule/{id}', [WhatsAppController::class, 'scheduleDestroy'])->name('wa.schedule.destroy');
@@ -131,6 +133,7 @@ Route::middleware('auth')->group(function () {
 
     // WhatsApp Pimpinan
     Route::get('/wa-pimpinan', [WhatsAppController::class, 'pimpinanIndex'])->name('wa.pimpinan');
+    Route::get('/wa-pimpinan-index', [WhatsAppController::class, 'pimpinanIndex'])->name('wa.pimpinan.index');
     Route::post('/wa-pimpinan', [WhatsAppController::class, 'pimpinanStore'])->name('wa.pimpinan.store');
     Route::put('/wa-pimpinan/{id}', [WhatsAppController::class, 'pimpinanUpdate'])->name('wa.pimpinan.update');
     Route::delete('/wa-pimpinan/{id}', [WhatsAppController::class, 'pimpinanDestroy'])->name('wa.pimpinan.destroy');
