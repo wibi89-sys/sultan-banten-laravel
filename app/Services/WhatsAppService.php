@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class WhatsAppService
 {
@@ -224,7 +225,7 @@ class WhatsAppService
         }
 
         $targetGroupId = trim((string) ($settings->group_id ?? ''));
-        if (empty($targetGroupId)) {
+        if (empty($targetGroupId) && Schema::hasTable('wa_groups')) {
             $defaultGroup = WaGroup::where('aktif', true)->where('is_default', true)->first()
                 ?? WaGroup::where('aktif', true)->first();
             $targetGroupId = trim((string) ($defaultGroup?->group_id ?? ''));

@@ -10,10 +10,53 @@ use App\Models\WaScheduledReport;
 use App\Models\WaSetting;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class WhatsAppController extends Controller
 {
+    /**
+     * Get active WhatsApp groups safely with auto-migration fallback.
+     */
+    protected function getActiveGroups()
+    {
+        if (! Schema::hasTable('wa_groups')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $e) {
+                Log::warning('Auto migrate wa_groups failed: '.$e->getMessage());
+            }
+        }
+
+        if (! Schema::hasTable('wa_groups')) {
+            return collect();
+        }
+
+        return WaGroup::where('aktif', true)->orderByDesc('is_default')->orderBy('nama_grup')->get();
+    }
+
+    /**
+     * Get all WhatsApp groups safely with auto-migration fallback.
+     */
+    protected function getAllGroups()
+    {
+        if (! Schema::hasTable('wa_groups')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $e) {
+                Log::warning('Auto migrate wa_groups failed: '.$e->getMessage());
+            }
+        }
+
+        if (! Schema::hasTable('wa_groups')) {
+            return collect();
+        }
+
+        return WaGroup::orderByDesc('is_default')->orderBy('nama_grup')->get();
+    }
+
     // =========================================================================
     // 1. GATEWAY & KONEKSI
     // =========================================================================
@@ -36,7 +79,7 @@ class WhatsAppController extends Controller
             ]);
         }
 
-        $groups = WaGroup::where('aktif', true)->orderBy('nama_grup')->get();
+        $groups = $this->getActiveGroups();
 
         return view('wa.gateway', compact('waSettings', 'groups'));
     }
@@ -158,7 +201,7 @@ class WhatsAppController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        $groups = WaGroup::orderByDesc('is_default')->orderBy('nama_grup')->get();
+        $groups = $this->getAllGroups();
         $pimpinanList = WaPimpinan::orderBy('urutan')->get();
         $operators = User::with('upt')
             ->where('role', 'operator')
@@ -173,6 +216,14 @@ class WhatsAppController extends Controller
         $user = auth()->user();
         if (! $user->hasAccess('wa_schedule') && ! $user->hasAccess('wa_settings')) {
             abort(403, 'Akses ditolak.');
+        }
+
+        if (! Schema::hasTable('wa_groups')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $e) {
+                return back()->with('error', 'Tabel wa_groups belum siap di database. Silakan jalankan `php artisan migrate --force`.');
+            }
         }
 
         $request->validate([
@@ -357,7 +408,7 @@ class WhatsAppController extends Controller
 
         $schedules = WaScheduledReport::orderByDesc('id')->get();
         $waSettings = WaSetting::getFirst();
-        $groups = WaGroup::where('aktif', true)->orderByDesc('is_default')->orderBy('nama_grup')->get();
+        $groups = $this->getActiveGroups();
         $groupedVariables = WhatsAppService::getGroupedTemplateVariables();
         $variables = WhatsAppService::getTemplateVariables();
         $defaultTemplate = WhatsAppService::getDefaultTemplate();
