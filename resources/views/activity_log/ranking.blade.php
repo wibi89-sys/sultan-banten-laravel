@@ -818,7 +818,7 @@
                                         <i class="fas fa-check me-1"></i>{{ $upt['count_modul_tepat'] }} Tepat
                                     </span>
                                     <span class="badge bg-warning-subtle text-warning" title="{{ $upt['count_modul_terlambat'] }} modul terlambat" style="font-size: 10px;">
-                                        <i class="fas fa-clock me-1"></i>{{ $upt['count_modul_terlambat'] }} Telat
+                                        <i class="fas fa-clock me-1"></i>{{ $upt['count_modul_terlambat'] }} Terlambat
                                     </span>
                                     <span class="badge bg-danger-subtle text-danger" title="{{ $upt['count_modul_kosong'] }} modul belum diisi" style="font-size: 10px;">
                                         <i class="fas fa-times me-1"></i>{{ $upt['count_modul_kosong'] }} Kosong
@@ -881,10 +881,10 @@
                     <div class="p-3 bg-light rounded-3 h-100 border">
                         <h6 class="fw-bold text-primary mb-2"><i class="fas fa-star me-1"></i>Komposisi 100 Poin Harian (5 Komponen @ 20 Poin):</h6>
                         <ul class="mb-0 ps-3 text-secondary">
-                            <li><strong>Data Penghuni:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Overstaying:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Integrasi:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Bebas Harian:</strong> Tepat Waktu = 20 Poin | Telat Hari-H = 10 Poin | Telat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Penghuni:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Overstaying:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Integrasi:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
+                            <li><strong>Data Bebas Harian:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
                             <li><strong>Kroscek Tahanan Sinkron:</strong> Sesuai Langsung = <strong>+20 Poin</strong> | Sesuai Hasil Perbaikan di jam Input = <strong>+20 Poin</strong> | Sesuai Hasil Perbaikan diluar jam input dihari yang sama = <strong>+10 Poin</strong> | Masih Selisih / Kosong / diperbaiki lewat hari = <strong>0 Poin</strong>.</li>
                         </ul>
                     </div>
@@ -936,7 +936,7 @@
                             <i class="fas fa-exclamation-triangle me-1"></i>Hanya Yang Selisih (<span id="countSelisihDays">0</span>)
                         </button>
                         <button type="button" class="btn btn-outline-warning" id="btnFilterTelat" onclick="filterDetailTable('telat')">
-                            <i class="fas fa-clock me-1"></i>Ada Telat/Kosong (<span id="countTelatDays">0</span>)
+                            <i class="fas fa-clock me-1"></i>Ada Terlambat/Kosong (<span id="countTelatDays">0</span>)
                         </button>
                     </div>
                     <small class="text-muted"><i class="fas fa-filter text-primary me-1"></i>Filter baris riwayat berdasarkan status</small>
@@ -1173,7 +1173,7 @@
                     return `<span class="badge bg-success-subtle text-success d-block py-1 mb-1"><i class="fas fa-check-circle me-1"></i>Tepat (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
                 } else if (mod.status === 'terlambat') {
                     const isSusulan = mod.poin === 5;
-                    const badgeLabel = isSusulan ? 'Susulan' : 'Telat';
+                    const badgeLabel = isSusulan ? 'Susulan' : 'Terlambat';
                     return `<span class="badge bg-warning-subtle text-warning d-block py-1 mb-1"><i class="fas fa-clock me-1"></i>${badgeLabel} (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
                 } else {
                     return `<span class="badge bg-danger-subtle text-danger d-block py-1 mb-1"><i class="fas fa-times-circle me-1"></i>Kosong (0)</span><small class="text-muted" style="font-size:10px;">-</small>`;
