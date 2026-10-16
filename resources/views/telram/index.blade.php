@@ -561,14 +561,26 @@
         const [y, m, d] = inputTgl.split('-').map(Number);
         const tglAwal = new Date(y, m - 1, d);
 
-        // Rumus Baku Ditjen PAS:
-        // 1 Bulan = 30 Hari, Tahun kalender aktual, -1 Hari
+        // Rumus Perhitungan Ekspirasi:
+        // 1. Dimulai dari tahun: jika ada tahun, tambah tahun di tanggal & bulan yang sama
+        // 2. Kemudian geser bulan: jika ada bulan, tambah bulan kalender lalu kurangi 1 hari
+        // 3. Kemudian geser hari: jika ada hari, tambah hari
         let tglEkspirasi = new Date(tglAwal);
-        tglEkspirasi.setFullYear(tglEkspirasi.getFullYear() + vThn);
-        tglEkspirasi.setDate(tglEkspirasi.getDate() + (vBln * 30) + vHri);
-        tglEkspirasi.setDate(tglEkspirasi.getDate() - 1);
 
-        // Total hari baku: 1 Tahun = 360 Hari
+        if (vThn > 0) {
+            tglEkspirasi = addYearsCalendar(tglEkspirasi, vThn);
+        }
+
+        if (vBln > 0) {
+            tglEkspirasi = addMonthsCalendar(tglEkspirasi, vBln);
+            tglEkspirasi.setDate(tglEkspirasi.getDate() - 1);
+        }
+
+        if (vHri > 0) {
+            tglEkspirasi.setDate(tglEkspirasi.getDate() + vHri);
+        }
+
+        // Total hari baku: 1 Tahun = 360 Hari, 1 Bulan = 30 Hari
         const totalHariVonis = (vThn * 360) + (vBln * 30) + vHri;
         const hari13 = Math.floor(totalHariVonis / 3);
         const hari12 = Math.floor(totalHariVonis / 2);
@@ -620,25 +632,33 @@
             return;
         }
 
-        // Reverse Rule: batas komputasi sebelum -1 hari
-        const tglEndCalc = new Date(tglEkspirasi);
-        tglEndCalc.setDate(tglEndCalc.getDate() + 1);
+        // 1. Tahun: Cari berapa tahun penuh yang bisa ditambahkan dari tglAwal
+        let vThn = 0;
+        while (addYearsCalendar(tglAwal, vThn + 1) <= tglEkspirasi) {
+            vThn++;
+        }
+        let curr = addYearsCalendar(tglAwal, vThn);
 
-        let vThn = tglEndCalc.getFullYear() - tglAwal.getFullYear();
-        let tempDate = new Date(tglAwal);
-        tempDate.setFullYear(tempDate.getFullYear() + vThn);
-
-        if (tempDate > tglEndCalc) {
-            vThn--;
-            tempDate = new Date(tglAwal);
-            tempDate.setFullYear(tempDate.getFullYear() + vThn);
+        // 2. Bulan: Dari posisi curr, cari berapa bulan yang bisa digeser
+        // Aturan bulan: setiap penambahan k bulan menggeser ke addMonthsCalendar - 1 hari
+        let vBln = 0;
+        while (true) {
+            let nextDate = addMonthsCalendar(curr, vBln + 1);
+            nextDate.setDate(nextDate.getDate() - 1);
+            if (nextDate <= tglEkspirasi) {
+                vBln++;
+            } else {
+                break;
+            }
+        }
+        if (vBln > 0) {
+            curr = addMonthsCalendar(curr, vBln);
+            curr.setDate(curr.getDate() - 1);
         }
 
-        const diffTime = Math.abs(tglEndCalc - tempDate);
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-        const vBln = Math.floor(diffDays / 30);
-        const vHri = diffDays % 30;
+        // 3. Sisa Hari
+        const diffMs = tglEkspirasi.getTime() - curr.getTime();
+        const vHri = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
         let parts = [];
         if (vThn > 0) parts.push(`${vThn} Tahun`);
@@ -675,6 +695,29 @@
         const res = new Date(d);
         res.setDate(res.getDate() + days);
         return res;
+    }
+
+    // Helper tambah bulan kalender tanpa day-overflow
+    function addMonthsCalendar(baseDate, months) {
+        const d = new Date(baseDate);
+        const originalDay = d.getDate();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + months);
+        const maxDays = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        d.setDate(Math.min(originalDay, maxDays));
+        return d;
+    }
+
+    // Helper tambah tahun kalender tanpa day-overflow
+    function addYearsCalendar(baseDate, years) {
+        const d = new Date(baseDate);
+        const originalDay = d.getDate();
+        const originalMonth = d.getMonth();
+        d.setFullYear(d.getFullYear() + years);
+        if (d.getMonth() !== originalMonth) {
+            d.setDate(0);
+        }
+        return d;
     }
 
     // Format Tanggal Indonesia Baku

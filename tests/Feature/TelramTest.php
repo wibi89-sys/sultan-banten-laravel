@@ -55,7 +55,7 @@ class TelramTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/telram/calculate', [
             'mode' => 'maju',
-            'tgl_awal' => '2024-01-01',
+            'tgl_awal' => '2026-01-01',
             'tahun' => 1,
             'bulan' => 0,
             'hari' => 0,
@@ -66,8 +66,8 @@ class TelramTest extends TestCase
             'success' => true,
             'data' => [
                 'mode' => 'maju',
-                'tgl_awal' => '2024-01-01',
-                'tgl_ekspirasi' => '2024-12-31',
+                'tgl_awal' => '2026-01-01',
+                'tgl_ekspirasi' => '2027-01-01',
                 'total_hari_vonis' => 360,
                 'lama_pidana_teks' => '1 Tahun',
             ],
@@ -80,8 +80,8 @@ class TelramTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/telram/calculate', [
             'mode' => 'mundur',
-            'tgl_awal' => '2024-01-01',
-            'tgl_ekspirasi' => '2024-12-31',
+            'tgl_awal' => '2026-01-01',
+            'tgl_ekspirasi' => '2027-01-01',
         ]);
 
         $response->assertStatus(200);
