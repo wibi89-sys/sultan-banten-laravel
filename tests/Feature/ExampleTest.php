@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Upt;
 use App\Models\User;
 use Tests\TestCase;
 
@@ -46,25 +47,77 @@ class ExampleTest extends TestCase
         $response->assertSee('Bebas Harian Input');
         $response->assertSee('Status & Jam Input 4 Modul Laporan', false);
         $response->assertSee('kroscek-table-grid');
+        $response->assertSee('Kelengkapan Detail per Tanggal (Per UPT)');
+        $response->assertSee('detailKroscekTableBody');
     }
 
-    public function test_operator_user_can_access_kroscek_mandiri(): void
+    public function test_admin_can_filter_kroscek_detail_per_tanggal(): void
+    {
+        $user = User::where('role', 'admin')->first() ?? User::first();
+        $upt = Upt::first();
+        $response = $this->actingAs($user)->get("/kroscek?tab=detail&detail_upt_id={$upt->id}&tanggal_mulai=2026-10-01&tanggal_akhir=2026-10-05");
+        $response->assertStatus(200);
+        $response->assertSee('Kelengkapan Pelaporan & Kroscek Harian per Tanggal (Detil Tiap UPT)', false);
+        $response->assertSee('detailKroscekTableBody');
+        $response->assertSee('Hari Kroscek Sinkron');
+        $response->assertSee('Hari 4/4 Lengkap');
+        $response->assertSee($upt->nama_upt);
+    }
+
+    public function test_operator_user_sees_restricted_detail_per_tanggal(): void
     {
         $operator = User::where('role', 'operator')->whereNotNull('upt_id')->first();
         if ($operator) {
+            $operatorUpt = Upt::find($operator->upt_id);
             $response = $this->actingAs($operator)->get('/kroscek');
             $response->assertStatus(200);
-            $response->assertSee('Verifikasi Mandiri');
-            $response->assertSee('Status & Jam Input 4 Modul Laporan Harian', false);
+            $response->assertSee('Kroscek Data & Kelengkapan Pelaporan Harian UPT', false);
+            $response->assertSee('Role Operator UPT');
+            $response->assertSee('detailKroscekTableBody');
+            $response->assertSee('Hari Kroscek Sinkron');
+            $response->assertSee('Hari 4/4 Lengkap');
+            $response->assertSee('UPT Anda');
+            $response->assertSee($operatorUpt->nama_upt);
+            $response->assertDontSee('Matriks 12 UPT (Monitoring Harian)');
         }
     }
 
-    public function test_authenticated_user_can_access_bebas_harian(): void
+    public function test_kroscek_modal_has_quick_action_buttons(): void
     {
-        $user = User::first();
-        $response = $this->actingAs($user)->get('/bebas-harian');
+        $user = User::where('role', 'admin')->first() ?? User::first();
+        $response = $this->actingAs($user)->get('/kroscek');
         $response->assertStatus(200);
-        $response->assertSee('Pencatatan Bebas Harian');
-        $response->assertSee('Input Bebas Hari Ini');
+        $response->assertSee('btnFixPenghuni');
+        $response->assertSee('btnFixOverstaying');
+        $response->assertSee('p_btn_input');
+        $response->assertSee('o_btn_input');
+        $response->assertSee('i_btn_input');
+        $response->assertSee('b_btn_input');
+    }
+
+    public function test_module_forms_support_date_prefill_and_auto_open_action(): void
+    {
+        $user = User::where('role', 'admin')->first() ?? User::first();
+        $testDate = '2026-10-12';
+
+        // 1. Penghuni
+        $resPenghuni = $this->actingAs($user)->get("/penghuni?tanggal={$testDate}&action=input");
+        $resPenghuni->assertStatus(200);
+        $resPenghuni->assertSee("value=\"{$testDate}\"", false);
+
+        // 2. Overstaying
+        $resOverstaying = $this->actingAs($user)->get("/overstaying?tanggal={$testDate}&action=input");
+        $resOverstaying->assertStatus(200);
+        $resOverstaying->assertSee("value=\"{$testDate}\"", false);
+
+        // 3. Integrasi
+        $resIntegrasi = $this->actingAs($user)->get("/integrasi?tanggal={$testDate}&action=input");
+        $resIntegrasi->assertStatus(200);
+        $resIntegrasi->assertSee("value=\"{$testDate}\"", false);
+
+        // 4. Bebas Harian
+        $resBebas = $this->actingAs($user)->get("/bebas-harian?tanggal={$testDate}&action=input");
+        $resBebas->assertStatus(200);
+        $resBebas->assertSee("value=\"{$testDate}\"", false);
     }
 }

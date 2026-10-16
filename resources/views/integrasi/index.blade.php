@@ -265,13 +265,13 @@
                             <select name="upt_id" id="add_upt_id" class="form-select form-select-sm" required>
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
-                                <option value="{{ $upt->id }}" {{ $userUptFilter == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
+                                <option value="{{ $upt->id }}" {{ (old('upt_id', request('upt_id', $userUptFilter)) == $upt->id) ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', request('tanggal', request('tanggal_mulai', date('Y-m-d')))) }}" required>
                         </div>
                     </div>
                     
@@ -676,5 +676,14 @@
             }
         });
     }
+
+    @if(request('action') === 'input' && $canInput)
+    document.addEventListener('DOMContentLoaded', function() {
+        const mEl = document.getElementById('modalAdd');
+        if (mEl) {
+            new bootstrap.Modal(mEl).show();
+        }
+    });
+    @endif
 </script>
 @endpush

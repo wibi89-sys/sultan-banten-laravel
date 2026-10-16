@@ -189,30 +189,79 @@ class OverstayingController extends Controller
             return back()->with('error', 'Format tanggal tidak valid.')->withInput();
         }
 
+        $validationData = array_merge([
+            'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
+            'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
+            'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
+            'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
+            'tahanan_av' => (int) $request->input('tahanan_av', 0),
+            'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
+            'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
+            'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
+            'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
+            'overstaying_av' => (int) $request->input('overstaying_av', 0),
+        ], $request->all(), [
+            'tanggal' => $tanggal,
+            'upt_id' => $uptId,
+            'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
+            'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
+            'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
+            'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
+            'tahanan_av' => (int) $request->input('tahanan_av', 0),
+            'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
+            'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
+            'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
+            'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
+            'overstaying_av' => (int) $request->input('overstaying_av', 0),
+        ]);
+
+        $rules = [
+            'upt_id' => 'required|exists:upt,id',
+            'tahanan_ai' => 'required|integer|min:0',
+            'tahanan_aii' => 'required|integer|min:0',
+            'tahanan_aiii' => 'required|integer|min:0',
+            'tahanan_aiv' => 'required|integer|min:0',
+            'tahanan_av' => 'required|integer|min:0',
+            'overstaying_ai' => 'required|integer|min:0|lte:tahanan_ai',
+            'overstaying_aii' => 'required|integer|min:0|lte:tahanan_aii',
+            'overstaying_aiii' => 'required|integer|min:0|lte:tahanan_aiii',
+            'overstaying_aiv' => 'required|integer|min:0|lte:tahanan_aiv',
+            'overstaying_av' => 'required|integer|min:0|lte:tahanan_av',
+        ];
+
+        $messages = [
+            'tanggal.unique' => 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.',
+            'overstaying_ai.lte' => 'Jumlah Overstaying AI (:input) tidak boleh melebihi jumlah Tahanan AI.',
+            'overstaying_aii.lte' => 'Jumlah Overstaying AII (:input) tidak boleh melebihi jumlah Tahanan AII.',
+            'overstaying_aiii.lte' => 'Jumlah Overstaying AIII (:input) tidak boleh melebihi jumlah Tahanan AIII.',
+            'overstaying_aiv.lte' => 'Jumlah Overstaying AIV (:input) tidak boleh melebihi jumlah Tahanan AIV.',
+            'overstaying_av.lte' => 'Jumlah Overstaying AV (:input) tidak boleh melebihi jumlah Tahanan AV.',
+            'overstaying_ai.min' => 'Jumlah Overstaying AI tidak boleh negatif.',
+            'overstaying_aii.min' => 'Jumlah Overstaying AII tidak boleh negatif.',
+            'overstaying_aiii.min' => 'Jumlah Overstaying AIII tidak boleh negatif.',
+            'overstaying_aiv.min' => 'Jumlah Overstaying AIV tidak boleh negatif.',
+            'overstaying_av.min' => 'Jumlah Overstaying AV tidak boleh negatif.',
+            'tahanan_ai.min' => 'Jumlah Tahanan AI tidak boleh negatif.',
+            'tahanan_aii.min' => 'Jumlah Tahanan AII tidak boleh negatif.',
+            'tahanan_aiii.min' => 'Jumlah Tahanan AIII tidak boleh negatif.',
+            'tahanan_aiv.min' => 'Jumlah Tahanan AIV tidak boleh negatif.',
+            'tahanan_av.min' => 'Jumlah Tahanan AV tidak boleh negatif.',
+        ];
+
         if (! $forceUpdate) {
-            $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
-                'upt_id' => 'required|exists:upt,id',
-                'tanggal' => [
-                    'required',
-                    'date',
-                    Rule::unique('data_overstaying', 'tanggal')->where(fn ($query) => $query->where('upt_id', $uptId)),
-                ],
-            ], [
-                'tanggal.unique' => 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.',
-            ]);
-
-            if ($validator->fails()) {
-                return back()->with('error', $validator->errors()->first())->withInput();
-            }
+            $rules['tanggal'] = [
+                'required',
+                'date',
+                Rule::unique('data_overstaying', 'tanggal')->where(fn ($query) => $query->where('upt_id', $uptId)),
+            ];
         } else {
-            $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
-                'upt_id' => 'required|exists:upt,id',
-                'tanggal' => 'required|date',
-            ]);
+            $rules['tanggal'] = 'required|date';
+        }
 
-            if ($validator->fails()) {
-                return back()->with('error', $validator->errors()->first())->withInput();
-            }
+        $validator = Validator::make($validationData, $rules, $messages);
+
+        if ($validator->fails()) {
+            return back()->with('error', $validator->errors()->first())->withInput();
         }
 
         try {
@@ -319,7 +368,33 @@ class OverstayingController extends Controller
             return back()->with('error', 'Format tanggal tidak valid.')->withInput();
         }
 
-        $validator = Validator::make(array_merge($request->all(), ['tanggal' => $tanggal]), [
+        $validationData = array_merge([
+            'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
+            'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
+            'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
+            'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
+            'tahanan_av' => (int) $request->input('tahanan_av', 0),
+            'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
+            'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
+            'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
+            'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
+            'overstaying_av' => (int) $request->input('overstaying_av', 0),
+        ], $request->all(), [
+            'tanggal' => $tanggal,
+            'upt_id' => $uptId,
+            'tahanan_ai' => (int) $request->input('tahanan_ai', 0),
+            'tahanan_aii' => (int) $request->input('tahanan_aii', 0),
+            'tahanan_aiii' => (int) $request->input('tahanan_aiii', 0),
+            'tahanan_aiv' => (int) $request->input('tahanan_aiv', 0),
+            'tahanan_av' => (int) $request->input('tahanan_av', 0),
+            'overstaying_ai' => (int) $request->input('overstaying_ai', 0),
+            'overstaying_aii' => (int) $request->input('overstaying_aii', 0),
+            'overstaying_aiii' => (int) $request->input('overstaying_aiii', 0),
+            'overstaying_aiv' => (int) $request->input('overstaying_aiv', 0),
+            'overstaying_av' => (int) $request->input('overstaying_av', 0),
+        ]);
+
+        $rules = [
             'upt_id' => 'required|exists:upt,id',
             'tanggal' => [
                 'required',
@@ -328,9 +403,38 @@ class OverstayingController extends Controller
                     ->where(fn ($query) => $query->where('upt_id', $uptId))
                     ->ignore($id),
             ],
-        ], [
+            'tahanan_ai' => 'required|integer|min:0',
+            'tahanan_aii' => 'required|integer|min:0',
+            'tahanan_aiii' => 'required|integer|min:0',
+            'tahanan_aiv' => 'required|integer|min:0',
+            'tahanan_av' => 'required|integer|min:0',
+            'overstaying_ai' => 'required|integer|min:0|lte:tahanan_ai',
+            'overstaying_aii' => 'required|integer|min:0|lte:tahanan_aii',
+            'overstaying_aiii' => 'required|integer|min:0|lte:tahanan_aiii',
+            'overstaying_aiv' => 'required|integer|min:0|lte:tahanan_aiv',
+            'overstaying_av' => 'required|integer|min:0|lte:tahanan_av',
+        ];
+
+        $messages = [
             'tanggal.unique' => 'Data overstaying untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.',
-        ]);
+            'overstaying_ai.lte' => 'Jumlah Overstaying AI (:input) tidak boleh melebihi jumlah Tahanan AI.',
+            'overstaying_aii.lte' => 'Jumlah Overstaying AII (:input) tidak boleh melebihi jumlah Tahanan AII.',
+            'overstaying_aiii.lte' => 'Jumlah Overstaying AIII (:input) tidak boleh melebihi jumlah Tahanan AIII.',
+            'overstaying_aiv.lte' => 'Jumlah Overstaying AIV (:input) tidak boleh melebihi jumlah Tahanan AIV.',
+            'overstaying_av.lte' => 'Jumlah Overstaying AV (:input) tidak boleh melebihi jumlah Tahanan AV.',
+            'overstaying_ai.min' => 'Jumlah Overstaying AI tidak boleh negatif.',
+            'overstaying_aii.min' => 'Jumlah Overstaying AII tidak boleh negatif.',
+            'overstaying_aiii.min' => 'Jumlah Overstaying AIII tidak boleh negatif.',
+            'overstaying_aiv.min' => 'Jumlah Overstaying AIV tidak boleh negatif.',
+            'overstaying_av.min' => 'Jumlah Overstaying AV tidak boleh negatif.',
+            'tahanan_ai.min' => 'Jumlah Tahanan AI tidak boleh negatif.',
+            'tahanan_aii.min' => 'Jumlah Tahanan AII tidak boleh negatif.',
+            'tahanan_aiii.min' => 'Jumlah Tahanan AIII tidak boleh negatif.',
+            'tahanan_aiv.min' => 'Jumlah Tahanan AIV tidak boleh negatif.',
+            'tahanan_av.min' => 'Jumlah Tahanan AV tidak boleh negatif.',
+        ];
+
+        $validator = Validator::make($validationData, $rules, $messages);
 
         if ($validator->fails()) {
             return back()->with('error', $validator->errors()->first())->withInput();

@@ -35,13 +35,19 @@ class ActivityLog extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public static function log(string $aksi, string $modul, string $deskripsi, $detail = null): static
-    {
+    public static function log(
+        string $aksi,
+        string $modul,
+        string $deskripsi,
+        $detail = null,
+        ?int $userId = null,
+        ?string $userName = null
+    ): static {
         $user = auth()->user();
 
         return static::create([
-            'user_id' => $user?->id,
-            'user_name' => $user?->nama_lengkap ?? $user?->username ?? 'Sistem',
+            'user_id' => $userId ?? $user?->id,
+            'user_name' => $userName ?? $user?->nama_lengkap ?? $user?->username ?? 'Sistem',
             'aksi' => $aksi,
             'modul' => $modul,
             'deskripsi' => $deskripsi,

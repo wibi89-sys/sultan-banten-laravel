@@ -255,13 +255,13 @@
                             <select name="upt_id" id="add_upt_id" class="form-select form-select-sm" required>
                                 <option value="">-- Pilih UPT --</option>
                                 @foreach ($uptList as $upt)
-                                <option value="{{ $upt->id }}" {{ (old('upt_id', $userUptFilter) == $upt->id) ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
+                                <option value="{{ $upt->id }}" {{ (old('upt_id', request('upt_id', $userUptFilter)) == $upt->id) ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', date('Y-m-d')) }}" required>
+                            <input type="date" name="tanggal" id="add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', request('tanggal', request('tanggal_mulai', date('Y-m-d')))) }}" required>
                         </div>
                     </div>
 
@@ -281,6 +281,15 @@
                         </div>
                     </div>
                     
+                    <!-- Overstaying Validation Warning -->
+                    <div id="add_overstay_warning" class="alert alert-danger py-2 px-3 small d-none align-items-center mb-3">
+                        <i class="fas fa-exclamation-triangle fs-5 me-2 flex-shrink-0"></i>
+                        <div>
+                            <strong>Peringatan Validasi Overstaying:</strong>
+                            <div id="add_overstay_message" class="mt-1"></div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <div class="category-header tahanan-header">
@@ -289,23 +298,23 @@
                             <div class="input-grid">
                                 <div>
                                     <label class="form-label small text-muted">AI</label>
-                                    <input type="number" name="tahanan_ai" id="add_t_ai" class="form-control form-control-sm" value="{{ old('tahanan_ai', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_ai" id="add_t_ai" class="form-control form-control-sm" value="{{ old('tahanan_ai', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AII</label>
-                                    <input type="number" name="tahanan_aii" id="add_t_aii" class="form-control form-control-sm" value="{{ old('tahanan_aii', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_aii" id="add_t_aii" class="form-control form-control-sm" value="{{ old('tahanan_aii', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIII</label>
-                                    <input type="number" name="tahanan_aiii" id="add_t_aiii" class="form-control form-control-sm" value="{{ old('tahanan_aiii', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_aiii" id="add_t_aiii" class="form-control form-control-sm" value="{{ old('tahanan_aiii', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIV</label>
-                                    <input type="number" name="tahanan_aiv" id="add_t_aiv" class="form-control form-control-sm" value="{{ old('tahanan_aiv', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_aiv" id="add_t_aiv" class="form-control form-control-sm" value="{{ old('tahanan_aiv', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AV</label>
-                                    <input type="number" name="tahanan_av" id="add_t_av" class="form-control form-control-sm" value="{{ old('tahanan_av', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="tahanan_av" id="add_t_av" class="form-control form-control-sm" value="{{ old('tahanan_av', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                             </div>
                             <div class="jumlah-box tahanan">
@@ -319,23 +328,23 @@
                             <div class="input-grid">
                                 <div>
                                     <label class="form-label small text-muted">AI</label>
-                                    <input type="number" name="overstaying_ai" id="add_o_ai" class="form-control form-control-sm" value="{{ old('overstaying_ai', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_ai" id="add_o_ai" class="form-control form-control-sm" value="{{ old('overstaying_ai', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AII</label>
-                                    <input type="number" name="overstaying_aii" id="add_o_aii" class="form-control form-control-sm" value="{{ old('overstaying_aii', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_aii" id="add_o_aii" class="form-control form-control-sm" value="{{ old('overstaying_aii', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIII</label>
-                                    <input type="number" name="overstaying_aiii" id="add_o_aiii" class="form-control form-control-sm" value="{{ old('overstaying_aiii', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_aiii" id="add_o_aiii" class="form-control form-control-sm" value="{{ old('overstaying_aiii', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIV</label>
-                                    <input type="number" name="overstaying_aiv" id="add_o_aiv" class="form-control form-control-sm" value="{{ old('overstaying_aiv', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_aiv" id="add_o_aiv" class="form-control form-control-sm" value="{{ old('overstaying_aiv', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AV</label>
-                                    <input type="number" name="overstaying_av" id="add_o_av" class="form-control form-control-sm" value="{{ old('overstaying_av', 0) }}" min="0" onchange="updateJumlah('add')">
+                                    <input type="number" name="overstaying_av" id="add_o_av" class="form-control form-control-sm" value="{{ old('overstaying_av', 0) }}" min="0" oninput="updateJumlah('add')" onchange="updateJumlah('add')">
                                 </div>
                             </div>
                             <div class="jumlah-box overstaying">
@@ -393,6 +402,15 @@
                         </div>
                     </div>
                     
+                    <!-- Overstaying Validation Warning -->
+                    <div id="edit_overstay_warning" class="alert alert-danger py-2 px-3 small d-none align-items-center mb-3">
+                        <i class="fas fa-exclamation-triangle fs-5 me-2 flex-shrink-0"></i>
+                        <div>
+                            <strong>Peringatan Validasi Overstaying:</strong>
+                            <div id="edit_overstay_message" class="mt-1"></div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <div class="category-header tahanan-header">
@@ -401,23 +419,23 @@
                             <div class="input-grid">
                                 <div>
                                     <label class="form-label small text-muted">AI</label>
-                                    <input type="number" name="tahanan_ai" id="edit_t_ai" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="tahanan_ai" id="edit_t_ai" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AII</label>
-                                    <input type="number" name="tahanan_aii" id="edit_t_aii" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="tahanan_aii" id="edit_t_aii" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIII</label>
-                                    <input type="number" name="tahanan_aiii" id="edit_t_aiii" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="tahanan_aiii" id="edit_t_aiii" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIV</label>
-                                    <input type="number" name="tahanan_aiv" id="edit_t_aiv" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="tahanan_aiv" id="edit_t_aiv" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AV</label>
-                                    <input type="number" name="tahanan_av" id="edit_t_av" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="tahanan_av" id="edit_t_av" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                             </div>
                             <div class="jumlah-box tahanan">
@@ -431,23 +449,23 @@
                             <div class="input-grid">
                                 <div>
                                     <label class="form-label small text-muted">AI</label>
-                                    <input type="number" name="overstaying_ai" id="edit_o_ai" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="overstaying_ai" id="edit_o_ai" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AII</label>
-                                    <input type="number" name="overstaying_aii" id="edit_o_aii" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="overstaying_aii" id="edit_o_aii" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIII</label>
-                                    <input type="number" name="overstaying_aiii" id="edit_o_aiii" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="overstaying_aiii" id="edit_o_aiii" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AIV</label>
-                                    <input type="number" name="overstaying_aiv" id="edit_o_aiv" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="overstaying_aiv" id="edit_o_aiv" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                                 <div>
                                     <label class="form-label small text-muted">AV</label>
-                                    <input type="number" name="overstaying_av" id="edit_o_av" class="form-control form-control-sm" min="0" onchange="updateJumlah('edit')">
+                                    <input type="number" name="overstaying_av" id="edit_o_av" class="form-control form-control-sm" min="0" oninput="updateJumlah('edit')" onchange="updateJumlah('edit')">
                                 </div>
                             </div>
                             <div class="jumlah-box overstaying">
@@ -504,23 +522,70 @@
 @push('scripts')
 <script>
     function updateJumlah(prefix) {
-        const t_ai = parseInt(document.getElementById(prefix + '_t_ai')?.value) || 0;
-        const t_aii = parseInt(document.getElementById(prefix + '_t_aii')?.value) || 0;
-        const t_aiii = parseInt(document.getElementById(prefix + '_t_aiii')?.value) || 0;
-        const t_aiv = parseInt(document.getElementById(prefix + '_t_aiv')?.value) || 0;
-        const t_av = parseInt(document.getElementById(prefix + '_t_av')?.value) || 0;
-        const totalTahanan = t_ai + t_aii + t_aiii + t_aiv + t_av;
+        const categories = [
+            { key: 'ai', label: 'AI' },
+            { key: 'aii', label: 'AII' },
+            { key: 'aiii', label: 'AIII' },
+            { key: 'aiv', label: 'AIV' },
+            { key: 'av', label: 'AV' }
+        ];
+
+        let totalTahanan = 0;
+        let totalOverstay = 0;
+        const validationErrors = [];
+
+        categories.forEach(cat => {
+            const tInput = document.getElementById(prefix + '_t_' + cat.key);
+            const oInput = document.getElementById(prefix + '_o_' + cat.key);
+
+            const tVal = Math.max(0, parseInt(tInput?.value) || 0);
+            const oVal = Math.max(0, parseInt(oInput?.value) || 0);
+
+            totalTahanan += tVal;
+            totalOverstay += oVal;
+
+            if (oInput) {
+                // Set batas maksimum atribut HTML5
+                oInput.max = tVal;
+
+                // Validasi logika: Overstaying tidak boleh melebihi Tahanan
+                if (oVal > tVal) {
+                    oInput.classList.add('is-invalid');
+                    validationErrors.push(`Overstaying <strong>${cat.label}</strong> (${oVal}) tidak boleh melebihi jumlah Tahanan <strong>${cat.label}</strong> (${tVal}).`);
+                } else {
+                    oInput.classList.remove('is-invalid');
+                }
+            }
+        });
+
         const tEl = document.getElementById(prefix + '_jumlah_tahanan');
         if (tEl) tEl.textContent = totalTahanan;
 
-        const o_ai = parseInt(document.getElementById(prefix + '_o_ai')?.value) || 0;
-        const o_aii = parseInt(document.getElementById(prefix + '_o_aii')?.value) || 0;
-        const o_aiii = parseInt(document.getElementById(prefix + '_o_aiii')?.value) || 0;
-        const o_aiv = parseInt(document.getElementById(prefix + '_o_aiv')?.value) || 0;
-        const o_av = parseInt(document.getElementById(prefix + '_o_av')?.value) || 0;
-        const totalOverstay = o_ai + o_aii + o_aiii + o_aiv + o_av;
         const oEl = document.getElementById(prefix + '_jumlah_overstay');
         if (oEl) oEl.textContent = totalOverstay;
+
+        // Kontrol tampilan peringatan validasi & status tombol submit
+        const warningBox = document.getElementById(prefix + '_overstay_warning');
+        const messageEl = document.getElementById(prefix + '_overstay_message');
+        const submitBtn = document.getElementById(prefix + '_btn_submit');
+
+        if (warningBox && messageEl) {
+            if (validationErrors.length > 0) {
+                messageEl.innerHTML = validationErrors.join('<br>');
+                warningBox.classList.remove('d-none');
+                warningBox.classList.add('d-flex');
+                if (submitBtn) submitBtn.disabled = true;
+            } else {
+                warningBox.classList.add('d-none');
+                warningBox.classList.remove('d-flex');
+                const isSubmitting = (prefix === 'add' ? isSubmittingAdd : isSubmittingEdit);
+                if (submitBtn && !isSubmitting) {
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        return validationErrors.length === 0;
     }
 
     let checkDuplicateTimeout = null;
@@ -705,6 +770,11 @@
 
     // Intercept formAdd submit to check duplicate & show Update / Batal confirmation
     formAdd?.addEventListener('submit', function(e) {
+        if (!updateJumlah('add')) {
+            e.preventDefault();
+            return false;
+        }
+
         if (isSubmittingAdd) {
             e.preventDefault();
             return false;
@@ -848,6 +918,11 @@
     const formEditEl = document.getElementById('formEdit');
     if (formEditEl) {
         formEditEl.addEventListener('submit', function(e) {
+            if (!updateJumlah('edit')) {
+                e.preventDefault();
+                return false;
+            }
+
             if (isSubmittingEdit) {
                 e.preventDefault();
                 return false;
@@ -869,5 +944,14 @@
             btn.innerHTML = 'Simpan Perubahan';
         }
     });
+
+    @if(request('action') === 'input' && $canInput)
+    document.addEventListener('DOMContentLoaded', function() {
+        const mEl = document.getElementById('modalAdd');
+        if (mEl) {
+            new bootstrap.Modal(mEl).show();
+        }
+    });
+    @endif
 </script>
 @endpush

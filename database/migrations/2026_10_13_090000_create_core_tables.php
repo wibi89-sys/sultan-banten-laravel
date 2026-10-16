@@ -58,7 +58,7 @@ return new class extends Migration
         if (! Schema::hasTable('activity_logs')) {
             Schema::create('activity_logs', function (Blueprint $table) {
                 $table->increments('id');
-                $table->integer('user_id')->index('idx_user_id');
+                $table->integer('user_id')->nullable()->index('idx_user_id');
                 $table->string('user_name', 100);
                 $table->enum('aksi', ['login', 'logout', 'tambah', 'edit', 'hapus', 'view', 'export', 'import', 'setting', 'error'])->index('idx_aksi');
                 $table->string('modul', 50)->index('idx_modul');

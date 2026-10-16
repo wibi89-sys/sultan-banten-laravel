@@ -214,14 +214,14 @@
                                 <select name="upt_id" id="bebas_add_upt_id" class="form-select" required>
                                     <option value="">-- Pilih UPT --</option>
                                     @foreach ($uptList as $upt)
-                                        <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
+                                        <option value="{{ $upt->id }}" {{ (old('upt_id', request('upt_id')) == $upt->id) ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
                                     @endforeach
                                 </select>
                             @endif
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tanggal Bebas <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" id="bebas_add_tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" id="bebas_add_tanggal" class="form-control" value="{{ old('tanggal', request('tanggal', request('tanggal_mulai', date('Y-m-d')))) }}" required>
                         </div>
                     </div>
 
@@ -697,5 +697,14 @@
             }
         });
     }
+
+    @if(request('action') === 'input' && $canInput)
+    document.addEventListener('DOMContentLoaded', function() {
+        const mEl = document.getElementById('modalTambah');
+        if (mEl) {
+            new bootstrap.Modal(mEl).show();
+        }
+    });
+    @endif
 </script>
 @endpush

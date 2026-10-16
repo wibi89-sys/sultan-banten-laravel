@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -38,7 +39,16 @@ class AuthController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        ActivityLog::log('error', 'auth', "Percobaan login gagal untuk username: {$request->username} (Laravel)");
+        $attemptedUser = User::where('username', $request->username)->first();
+
+        ActivityLog::log(
+            'error',
+            'auth',
+            "Percobaan login gagal untuk username: {$request->username} (Laravel)",
+            null,
+            $attemptedUser?->id,
+            $attemptedUser ? ($attemptedUser->nama_lengkap ?? $attemptedUser->username) : $request->username
+        );
 
         return back()->withErrors([
             'username' => 'Username atau password yang Anda masukkan salah.',
