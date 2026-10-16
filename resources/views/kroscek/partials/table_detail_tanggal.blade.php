@@ -348,7 +348,7 @@
 
 {{-- Cards Container (Tampilan Kartu Grid PC & Mobile - Detail per Tanggal) --}}
 <div id="detailCardsContainer" class="d-none mb-4">
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-3" id="detailCardsGrid">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 g-xl-4" id="detailCardsGrid">
         @forelse($detailKroscekList as $row)
             @php
                 $rowIsSinkron = ($row['status_kroscek'] === 'sinkron');

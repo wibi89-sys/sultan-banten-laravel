@@ -730,7 +730,7 @@
 
     <!-- Tampilan 2: Kartu Grid Responsif untuk PC & Mobile -->
     <div id="rankingCardsContainer" class="p-3 d-none">
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-3" id="rankingCardsGrid">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 g-xl-4" id="rankingCardsGrid">
             @forelse($rankingData['rankings'] as $upt)
                 @php
                     $rank = $upt['rank'];
