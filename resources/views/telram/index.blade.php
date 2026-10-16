@@ -4,6 +4,13 @@
 @section('page_title', 'Kalkulator Telram')
 
 @push('styles')
+<link rel="manifest" href="{{ asset('manifest.json') }}">
+<meta name="theme-color" content="#1e293b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Telram Ekspirasi">
+<link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
+<link rel="icon" type="image/svg+xml" href="{{ asset('icons/icon.svg') }}">
 <style>
     /* Card Styles for Telram */
     .telram-card {
@@ -218,7 +225,10 @@
                         <h4 class="fw-bold mb-0 text-white">Kalkulator Perkiraan Ekspirasi</h4>
                     </div>
                 </div>
-                <div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btnInstallPwa" class="btn btn-warning btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-sm d-none" onclick="installTelramPwa()" style="font-size: 12.5px;">
+                        <i class="fas fa-download me-1.5"></i> Install Aplikasi (PWA)
+                    </button>
                     <a href="{{ asset('telram-offline.html') }}" download="kalkulator-ekspirasi-offline.html" class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-sm" style="font-size: 12.5px;">
                         <i class="fas fa-download me-1.5 text-warning"></i> Unduh File Offline (.html)
                     </a>
@@ -747,5 +757,46 @@
 
         showToast(res.mode === 'maju' ? 'Kalkulasi Ekspirasi Selesai!' : 'Lama Pidana Berhasil Dihitung!', 'success');
     }
+
+    // PWA Service Worker & Install Prompt Handling
+    let deferredPromptTelram = null;
+
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((reg) => console.log('Telram ServiceWorker registered:', reg.scope))
+                .catch((err) => console.log('Telram ServiceWorker failed:', err));
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPromptTelram = e;
+        const btn = document.getElementById('btnInstallPwa');
+        if (btn) btn.classList.remove('d-none');
+    });
+
+    function installTelramPwa() {
+        if (!deferredPromptTelram) {
+            showToast('Aplikasi sudah terpasang atau browser Anda belum memicu prompt instalasi.', 'info');
+            return;
+        }
+        deferredPromptTelram.prompt();
+        deferredPromptTelram.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                showToast('Aplikasi Telram Ekspirasi berhasil di-install!', 'success');
+            }
+            deferredPromptTelram = null;
+            const btn = document.getElementById('btnInstallPwa');
+            if (btn) btn.classList.add('d-none');
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        deferredPromptTelram = null;
+        const btn = document.getElementById('btnInstallPwa');
+        if (btn) btn.classList.add('d-none');
+        showToast('Telram Ekspirasi berhasil terpasang di perangkat Anda!', 'success');
+    });
 </script>
 @endsection
