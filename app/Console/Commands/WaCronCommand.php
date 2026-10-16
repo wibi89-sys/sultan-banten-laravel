@@ -46,6 +46,20 @@ class WaCronCommand extends Command
 
         $result = WhatsAppService::runCron($action);
 
+        $logPath = storage_path('logs/cron-wa.log');
+        $logDir = dirname($logPath);
+        if (! is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+
+        $logLine = sprintf(
+            "[%s] ARTISAN WA:CRON - Action: %s - Result: %s\n",
+            now()->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+            $action,
+            json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+        @file_put_contents($logPath, $logLine, FILE_APPEND);
+
         if (! empty($result['success'])) {
             $this->info('Cron task completed successfully: '.json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         } else {

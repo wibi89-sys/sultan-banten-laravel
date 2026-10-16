@@ -40,9 +40,24 @@ if (PHP_SAPI === 'cli') {
     try {
         $result = WhatsAppService::runCron($action);
         echo '['.date('Y-m-d H:i:s').'] Result: '.json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
+
+        $logPath = __DIR__.'/storage/logs/cron-wa.log';
+        if (! is_dir(dirname($logPath))) {
+            @mkdir(dirname($logPath), 0755, true);
+        }
+        $logLine = sprintf(
+            "[%s] CRON-WA.PHP - Action: %s - Result: %s\n",
+            date('Y-m-d H:i:s'),
+            $action,
+            json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+        @file_put_contents($logPath, $logLine, FILE_APPEND);
+
         exit(! empty($result['success']) ? 0 : 1);
     } catch (Throwable $e) {
-        fwrite(STDERR, '['.date('Y-m-d H:i:s').'] Exception: '.$e->getMessage()."\n".$e->getTraceAsString()."\n");
+        $errorMsg = '['.date('Y-m-d H:i:s').'] Exception: '.$e->getMessage()."\n".$e->getTraceAsString()."\n";
+        fwrite(STDERR, $errorMsg);
+        @file_put_contents(__DIR__.'/storage/logs/cron-wa.log', $errorMsg, FILE_APPEND);
         exit(1);
     }
 } else {
