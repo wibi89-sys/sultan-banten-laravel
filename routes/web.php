@@ -115,15 +115,45 @@ Route::middleware('auth')->group(function () {
     Route::put('/pengumuman/{id}', [PengumumanController::class, 'update'])->name('pengumuman.update');
     Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
 
-    // WhatsApp Gateway Settings
-    Route::get('/wa-settings', [WhatsAppController::class, 'settingsIndex'])->name('wa.settings');
-    Route::get('/wa-settings-index', [WhatsAppController::class, 'settingsIndex'])->name('wa.settings.index');
-    Route::post('/wa-settings', [WhatsAppController::class, 'settingsUpdate'])->name('wa.settings.update');
-    Route::post('/wa-settings/test', [WhatsAppController::class, 'settingsTest'])->name('wa.settings.test');
+    // ==========================================
+    // Modul Otomatisasi WhatsApp Baru (Terstruktur)
+    // ==========================================
 
-    // WhatsApp Scheduled Reports
-    Route::get('/wa-schedule', [WhatsAppController::class, 'scheduleIndex'])->name('wa.schedule');
-    Route::get('/wa-schedule-index', [WhatsAppController::class, 'scheduleIndex'])->name('wa.schedule.index');
+    // 1. Gateway & Koneksi
+    Route::get('/wa/gateway', [WhatsAppController::class, 'gatewayIndex'])->name('wa.gateway');
+    Route::post('/wa/gateway', [WhatsAppController::class, 'gatewayUpdate'])->name('wa.gateway.update');
+    Route::post('/wa/gateway/test', [WhatsAppController::class, 'gatewayTest'])->name('wa.gateway.test');
+
+    // 2. Buku Kontak & Target Penerima
+    Route::get('/wa/contacts', [WhatsAppController::class, 'contactsIndex'])->name('wa.contacts');
+    Route::post('/wa/groups', [WhatsAppController::class, 'groupStore'])->name('wa.groups.store');
+    Route::put('/wa/groups/{id}', [WhatsAppController::class, 'groupUpdate'])->name('wa.groups.update');
+    Route::delete('/wa/groups/{id}', [WhatsAppController::class, 'groupDestroy'])->name('wa.groups.destroy');
+    Route::post('/wa/groups/{id}/toggle', [WhatsAppController::class, 'groupToggle'])->name('wa.groups.toggle');
+    Route::post('/wa/pimpinan', [WhatsAppController::class, 'pimpinanStore'])->name('wa.pimpinan.store');
+    Route::put('/wa/pimpinan/{id}', [WhatsAppController::class, 'pimpinanUpdate'])->name('wa.pimpinan.update');
+    Route::delete('/wa/pimpinan/{id}', [WhatsAppController::class, 'pimpinanDestroy'])->name('wa.pimpinan.destroy');
+
+    // 3. Jadwal & Template Pesan Terpadu
+    Route::get('/wa/schedules', [WhatsAppController::class, 'schedulesIndex'])->name('wa.schedules');
+    Route::post('/wa/schedules/builtin', [WhatsAppController::class, 'updateBuiltinSettings'])->name('wa.schedules.builtin.update');
+    Route::post('/wa/schedules', [WhatsAppController::class, 'scheduleStore'])->name('wa.schedules.store');
+    Route::put('/wa/schedules/{id}', [WhatsAppController::class, 'scheduleUpdate'])->name('wa.schedules.update');
+    Route::delete('/wa/schedules/{id}', [WhatsAppController::class, 'scheduleDestroy'])->name('wa.schedules.destroy');
+    Route::post('/wa/schedules/{id}/toggle', [WhatsAppController::class, 'scheduleToggle'])->name('wa.schedules.toggle');
+    Route::post('/wa/schedules/{id}/send-now', [WhatsAppController::class, 'scheduleSendNow'])->name('wa.schedules.sendNow');
+
+    // 4. Riwayat & Monitoring Log Terpadu
+    Route::get('/wa/logs', [WhatsAppController::class, 'logsIndex'])->name('wa.logs');
+
+    // Backward-Compatible Aliases (URL Lama Tetap Berfungsi)
+    Route::get('/wa-settings', [WhatsAppController::class, 'gatewayIndex'])->name('wa.settings');
+    Route::get('/wa-settings-index', [WhatsAppController::class, 'gatewayIndex'])->name('wa.settings.index');
+    Route::post('/wa-settings', [WhatsAppController::class, 'gatewayUpdate'])->name('wa.settings.update');
+    Route::post('/wa-settings/test', [WhatsAppController::class, 'gatewayTest'])->name('wa.settings.test');
+
+    Route::get('/wa-schedule', [WhatsAppController::class, 'schedulesIndex'])->name('wa.schedule');
+    Route::get('/wa-schedule-index', [WhatsAppController::class, 'schedulesIndex'])->name('wa.schedule.index');
     Route::post('/wa-schedule', [WhatsAppController::class, 'scheduleStore'])->name('wa.schedule.store');
     Route::put('/wa-schedule/{id}', [WhatsAppController::class, 'scheduleUpdate'])->name('wa.schedule.update');
     Route::delete('/wa-schedule/{id}', [WhatsAppController::class, 'scheduleDestroy'])->name('wa.schedule.destroy');
@@ -131,12 +161,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/wa-schedule/{id}/send-now', [WhatsAppController::class, 'scheduleSendNow'])->name('wa.schedule.sendNow');
     Route::post('/wa-schedule/{id}/send-now-alias', [WhatsAppController::class, 'scheduleSendNow'])->name('wa.schedule.send-now');
 
-    // WhatsApp Pimpinan
-    Route::get('/wa-pimpinan', [WhatsAppController::class, 'pimpinanIndex'])->name('wa.pimpinan');
-    Route::get('/wa-pimpinan-index', [WhatsAppController::class, 'pimpinanIndex'])->name('wa.pimpinan.index');
-    Route::post('/wa-pimpinan', [WhatsAppController::class, 'pimpinanStore'])->name('wa.pimpinan.store');
-    Route::put('/wa-pimpinan/{id}', [WhatsAppController::class, 'pimpinanUpdate'])->name('wa.pimpinan.update');
-    Route::delete('/wa-pimpinan/{id}', [WhatsAppController::class, 'pimpinanDestroy'])->name('wa.pimpinan.destroy');
+    Route::get('/wa-pimpinan', [WhatsAppController::class, 'contactsIndex'])->name('wa.pimpinan');
+    Route::get('/wa-pimpinan-index', [WhatsAppController::class, 'contactsIndex'])->name('wa.pimpinan.index');
 
     // Activity Log & Leaderboard
     Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');

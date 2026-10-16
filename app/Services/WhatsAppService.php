@@ -8,6 +8,7 @@ use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
 use App\Models\Upt;
 use App\Models\User;
+use App\Models\WaGroup;
 use App\Models\WaPimpinan;
 use App\Models\WaScheduledReport;
 use App\Models\WaSetting;
@@ -222,7 +223,14 @@ class WhatsAppService
             return ['success' => false, 'message' => 'Pengaturan WA belum aktif.'];
         }
 
-        if (empty($settings->group_id)) {
+        $targetGroupId = trim((string) ($settings->group_id ?? ''));
+        if (empty($targetGroupId)) {
+            $defaultGroup = WaGroup::where('aktif', true)->where('is_default', true)->first()
+                ?? WaGroup::where('aktif', true)->first();
+            $targetGroupId = trim((string) ($defaultGroup?->group_id ?? ''));
+        }
+
+        if (empty($targetGroupId)) {
             return ['success' => false, 'message' => 'Group ID belum diatur.'];
         }
 
@@ -309,12 +317,12 @@ class WhatsAppService
             $template
         );
 
-        $res = self::send($settings->group_id, $message);
+        $res = self::send($targetGroupId, $message);
 
         try {
             DB::table('wa_notification_logs')->insert([
                 'tipe' => 'reminder_siang',
-                'target' => $settings->group_id,
+                'target' => $targetGroupId,
                 'pesan' => $message,
                 'status' => $res['success'] ? 'success' : 'failed',
                 'jumlah_penerima' => 1,

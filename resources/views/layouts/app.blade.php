@@ -334,18 +334,31 @@
             
             @if($user->hasAccess('wa_settings') || $user->hasAccess('wa_schedule'))
             <div class="menu-parent {{ request()->routeIs('wa.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuWA">
-                <i class="fab fa-whatsapp"></i>
-                <span>Fitur WhatsApp</span>
+                <i class="fab fa-whatsapp text-success"></i>
+                <span>Otomatisasi WhatsApp</span>
                 <i class="fas fa-chevron-down arrow"></i>
             </div>
             <div class="collapse {{ request()->routeIs('wa.*') ? 'show' : '' }}" id="menuWA">
                 <div class="sidebar-submenu">
                     @if($user->hasAccess('wa_settings'))
-                    <a href="{{ route('wa.settings') }}" class="{{ request()->routeIs('wa.settings*') ? 'active' : '' }}"><i class="fas fa-cog"></i><span>Pengaturan WA</span></a>
+                    <a href="{{ route('wa.gateway') }}" class="{{ request()->routeIs('wa.gateway*') || request()->routeIs('wa.settings*') ? 'active' : '' }}">
+                        <i class="fas fa-plug text-primary"></i><span>1. Gateway &amp; Koneksi</span>
+                    </a>
+                    @endif
+                    @if($user->hasAccess('wa_schedule') || $user->hasAccess('wa_settings'))
+                    <a href="{{ route('wa.contacts') }}" class="{{ request()->routeIs('wa.contacts*') || request()->routeIs('wa.pimpinan*') || request()->routeIs('wa.groups*') ? 'active' : '' }}">
+                        <i class="fas fa-address-book text-info"></i><span>2. Kontak &amp; Target</span>
+                    </a>
                     @endif
                     @if($user->hasAccess('wa_schedule'))
-                    <a href="{{ route('wa.schedule') }}" class="{{ request()->routeIs('wa.schedule*') ? 'active' : '' }}"><i class="fas fa-clock"></i><span>Jadwal Laporan</span></a>
-                    <a href="{{ route('wa.pimpinan') }}" class="{{ request()->routeIs('wa.pimpinan*') ? 'active' : '' }}"><i class="fas fa-user-tie"></i><span>Daftar Pimpinan</span></a>
+                    <a href="{{ route('wa.schedules') }}" class="{{ request()->routeIs('wa.schedules*') || request()->routeIs('wa.schedule*') ? 'active' : '' }}">
+                        <i class="fas fa-clock text-warning"></i><span>3. Jadwal &amp; Template</span>
+                    </a>
+                    @endif
+                    @if($user->hasAccess('wa_settings') || $user->hasAccess('wa_schedule'))
+                    <a href="{{ route('wa.logs') }}" class="{{ request()->routeIs('wa.logs*') ? 'active' : '' }}">
+                        <i class="fas fa-history text-success"></i><span>4. Riwayat &amp; Log</span>
+                    </a>
                     @endif
                 </div>
             </div>
