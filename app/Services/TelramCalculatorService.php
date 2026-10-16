@@ -146,6 +146,61 @@ class TelramCalculatorService
     }
 
     /**
+     * Hitung Sisa Pidana (Cari Sisa Durasi dari Tanggal Perhitungan ke Tanggal Ekspirasi)
+     *
+     * @return array<string, mixed>
+     */
+    public function hitungSisaPidana(string $tglPerhitunganStr, string $tglEkspirasiStr): array
+    {
+        $tglPerhitungan = Carbon::parse($tglPerhitunganStr)->startOfDay();
+        $tglEkspirasi = Carbon::parse($tglEkspirasiStr)->startOfDay();
+
+        if ($tglEkspirasi->lt($tglPerhitungan)) {
+            throw new InvalidArgumentException('Tanggal ekspirasi tidak boleh mendahului tanggal perhitungan.');
+        }
+
+        // 1. Tahun: Cari berapa tahun penuh yang bisa ditambahkan dari tglPerhitungan
+        $vThn = 0;
+        while ($tglPerhitungan->copy()->addYearsNoOverflow($vThn + 1)->lte($tglEkspirasi)) {
+            $vThn++;
+        }
+        $curr = $tglPerhitungan->copy()->addYearsNoOverflow($vThn);
+
+        // 2. Sisa Hari dikonversi ke bulan (1 bulan = 30 hari) dan hari
+        $diffDays = (int) $curr->diffInDays($tglEkspirasi);
+        $vBln = (int) floor($diffDays / 30);
+        $vHri = (int) ($diffDays % 30);
+
+        $totalHariSisa = (int) $tglPerhitungan->diffInDays($tglEkspirasi);
+
+        $formatSisa = [];
+        if ($vThn > 0) {
+            $formatSisa[] = "{$vThn} Tahun";
+        }
+        if ($vBln > 0) {
+            $formatSisa[] = "{$vBln} Bulan";
+        }
+        if ($vHri > 0) {
+            $formatSisa[] = "{$vHri} Hari";
+        }
+
+        return [
+            'mode' => 'sisa',
+            'tgl_perhitungan' => $tglPerhitungan->toDateString(),
+            'tgl_ekspirasi' => $tglEkspirasi->toDateString(),
+            'sisa_pidana_teks' => implode(', ', $formatSisa) ?: '0 Hari (Bebas Hari Ini)',
+            'tahun' => $vThn,
+            'bulan' => $vBln,
+            'hari' => $vHri,
+            'total_hari_sisa' => $totalHariSisa,
+            'formatted' => [
+                'tgl_perhitungan' => self::formatTanggalIndonesia($tglPerhitungan),
+                'tgl_ekspirasi' => self::formatTanggalIndonesia($tglEkspirasi),
+            ],
+        ];
+    }
+
+    /**
      * Format Carbon date ke Bahasa Indonesia baku (contoh: 17 Agustus 2026)
      */
     public static function formatTanggalIndonesia(Carbon $date): string

@@ -168,4 +168,42 @@ class TelramCalculatorServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->service->hitungMundur('2026-05-10', '2026-05-01');
     }
+
+    public function test_hitung_sisa_pidana_normal(): void
+    {
+        // Dari 16 Oktober 2026 ke 20 Oktober 2027 (1 tahun 4 hari)
+        $result = $this->service->hitungSisaPidana('2026-10-16', '2027-10-20');
+
+        $this->assertEquals(1, $result['tahun']);
+        $this->assertEquals(0, $result['bulan']);
+        $this->assertEquals(4, $result['hari']);
+        $this->assertEquals('1 Tahun, 4 Hari', $result['sisa_pidana_teks']);
+    }
+
+    public function test_hitung_sisa_pidana_kombinasi(): void
+    {
+        // Dari 01/01/2026 ke 05/02/2027 (1 thn 1 bln 5 hari)
+        $result = $this->service->hitungSisaPidana('2026-01-01', '2027-02-05');
+
+        $this->assertEquals(1, $result['tahun']);
+        $this->assertEquals(1, $result['bulan']);
+        $this->assertEquals(5, $result['hari']);
+        $this->assertEquals('1 Tahun, 1 Bulan, 5 Hari', $result['sisa_pidana_teks']);
+    }
+
+    public function test_hitung_sisa_pidana_hari_yang_sama(): void
+    {
+        $result = $this->service->hitungSisaPidana('2026-10-16', '2026-10-16');
+
+        $this->assertEquals(0, $result['tahun']);
+        $this->assertEquals(0, $result['bulan']);
+        $this->assertEquals(0, $result['hari']);
+        $this->assertEquals('0 Hari (Bebas Hari Ini)', $result['sisa_pidana_teks']);
+    }
+
+    public function test_hitung_sisa_pidana_fails_when_ekspirasi_before_perhitungan(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->service->hitungSisaPidana('2026-10-20', '2026-10-16');
+    }
 }

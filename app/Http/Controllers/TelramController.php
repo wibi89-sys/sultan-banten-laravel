@@ -44,6 +44,16 @@ class TelramController extends Controller
                     $validated['tgl_awal'],
                     $validated['tgl_ekspirasi']
                 );
+            } elseif ($mode === 'sisa') {
+                $validated = $request->validate([
+                    'tgl_perhitungan' => 'required|date',
+                    'tgl_ekspirasi' => 'required|date|after_or_equal:tgl_perhitungan',
+                ]);
+
+                $result = $this->calculator->hitungSisaPidana(
+                    $validated['tgl_perhitungan'],
+                    $validated['tgl_ekspirasi']
+                );
             } else {
                 $validated = $request->validate([
                     'tgl_awal' => 'required|date',

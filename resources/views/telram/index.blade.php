@@ -259,12 +259,15 @@
                         <button type="button" id="btnModeMundur" onclick="setMode('mundur')" class="btn-mode-tab">
                             <i class="fas fa-history me-1 text-secondary"></i> Cari Lama Pidana
                         </button>
+                        <button type="button" id="btnModeSisa" onclick="setMode('sisa')" class="btn-mode-tab">
+                            <i class="fas fa-hourglass-half me-1 text-warning"></i> Hitung Sisa Pidana
+                        </button>
                     </div>
 
-                    <!-- Tanggal Mulai Penahanan -->
+                    <!-- Tanggal Mulai Penahanan / Per Tanggal -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 13px;">
+                            <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 13px;">
                                 Tgl. Mulai Penahanan <span class="text-danger">*</span>
                             </label>
                             <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="setTglAwalHariIni()" style="font-size: 11.5px;">
@@ -349,6 +352,23 @@
                         </h6>
                     </div>
                     <div class="card-body p-4">
+                        <!-- Mode Sisa Result Card (Dominant Highlight) -->
+                        <div id="boxHasilSisa" class="card border-0 shadow-sm mb-4 d-none" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-radius: 12px; position: relative; overflow: hidden;">
+                            <div class="card-body p-4 position-relative" style="z-index: 2;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-white text-success px-2.5 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
+                                            <i class="fas fa-hourglass-half me-1"></i> SISA MASA PIDANA
+                                        </span>
+                                        <h2 class="fw-black mb-0 text-white" id="resSisaPidana" style="font-weight: 800; font-size: 26px;">-</h2>
+                                    </div>
+                                    <div class="d-none d-sm-block text-white" style="font-size: 48px; opacity: 0.25;">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Mode Mundur Result Box: Lama Pidana -->
                         <div id="boxHasilPidana" class="card border-0 shadow-sm mb-3 d-none" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: white; border-radius: 12px;">
                             <div class="card-body p-3 px-4 d-flex justify-content-between align-items-center">
@@ -365,7 +385,7 @@
                         </div>
 
                         <!-- Ekspirasi Bebas Murni Card (Dominant Highlight) -->
-                        <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; border-radius: 12px; position: relative; overflow: hidden;">
+                        <div id="cardEkspirasi" class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; border-radius: 12px; position: relative; overflow: hidden;">
                             <div class="card-body p-4 position-relative" style="z-index: 2;">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -382,7 +402,7 @@
                         </div>
 
                         <!-- 3 Cards Grid (1/3, 1/2, 2/3 Masa Pidana) -->
-                        <div class="row g-3">
+                        <div id="rowFractionCards" class="row g-3">
                             <div class="col-md-4">
                                 <div class="card h-100 border-0 shadow-sm p-3 p-xl-4 text-center text-md-start fraction-card-blue">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -422,10 +442,10 @@
                         <div class="mt-4 p-3 summary-info-box">
                             <div class="row g-2 text-muted">
                                 <div class="col-sm-6">
-                                    <i class="fas fa-calendar-alt text-primary me-1"></i> Tgl. Ditahan: <strong class="telram-text-title" id="infoTglAwal">-</strong>
+                                    <i class="fas fa-calendar-alt text-primary me-1"></i> <span id="labelInfoTglAwal">Tgl. Ditahan:</span> <strong class="telram-text-title" id="infoTglAwal">-</strong>
                                 </div>
                                 <div class="col-sm-6">
-                                    <i class="fas fa-clock text-info me-1"></i> Total Hari Vonis: <strong class="telram-text-title" id="infoTotalHari">-</strong> hari
+                                    <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Total Hari Vonis:</span> <strong class="telram-text-title" id="infoTotalHari">-</strong> hari
                                 </div>
                             </div>
                         </div>
@@ -479,63 +499,74 @@
         }, 3200);
     }
 
-    // Switcher Mode: Maju vs Mundur
+    // Switcher Mode: Maju vs Mundur vs Sisa
     function setMode(mode) {
         currentMode = mode;
         const btnMaju = document.getElementById('btnModeMaju');
         const btnMundur = document.getElementById('btnModeMundur');
+        const btnSisa = document.getElementById('btnModeSisa');
         const sectionInputVonis = document.getElementById('sectionInputVonis');
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
         const boxHasilPidana = document.getElementById('boxHasilPidana');
+        const boxHasilSisa = document.getElementById('boxHasilSisa');
         const placeholderTitle = document.getElementById('placeholderTitle');
         const placeholderDesc = document.getElementById('placeholderDesc');
         const placeholderIcon = document.getElementById('placeholderIcon');
         const hasilHeaderTitle = document.getElementById('hasilHeaderTitle');
+        const labelTglAwal = document.getElementById('labelTglAwal');
+
+        btnMaju.classList.remove('active');
+        btnMundur.classList.remove('active');
+        if (btnSisa) btnSisa.classList.remove('active');
 
         if (mode === 'maju') {
             btnMaju.classList.add('active');
-            btnMundur.classList.remove('active');
-
             sectionInputVonis.classList.remove('d-none');
             sectionInputEkspirasi.classList.add('d-none');
             boxHasilPidana.classList.add('d-none');
+            if (boxHasilSisa) boxHasilSisa.classList.add('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
             btnHitung.innerHTML = '<i class="fas fa-calculator me-2"></i> HITUNG EKSPIRASI';
 
-            if (placeholderTitle) {
-                placeholderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
-            }
-            if (placeholderDesc) {
-                placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Lama Vonis Hukuman di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.';
-            }
-            if (placeholderIcon) {
-                placeholderIcon.className = 'fas fa-calendar-alt';
-            }
-            if (hasilHeaderTitle) {
-                hasilHeaderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
-            }
-        } else {
+            if (placeholderTitle) placeholderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
+            if (placeholderDesc) placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Lama Vonis Hukuman di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.';
+            if (placeholderIcon) placeholderIcon.className = 'fas fa-calendar-alt';
+            if (hasilHeaderTitle) hasilHeaderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
+        } else if (mode === 'mundur') {
             btnMundur.classList.add('active');
-            btnMaju.classList.remove('active');
-
             sectionInputVonis.classList.add('d-none');
             sectionInputEkspirasi.classList.remove('d-none');
             boxHasilPidana.classList.remove('d-none');
+            if (boxHasilSisa) boxHasilSisa.classList.add('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
             btnHitung.innerHTML = '<i class="fas fa-history me-2"></i> HITUNG LAMA PIDANA';
 
-            if (placeholderTitle) {
-                placeholderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
-            }
-            if (placeholderDesc) {
-                placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Tanggal Ekspirasi (Bebas Murni) di sebelah kiri, kemudian klik tombol <strong>"HITUNG LAMA PIDANA"</strong> untuk mencari durasi lama vonis hukuman secara otomatis.';
-            }
-            if (placeholderIcon) {
-                placeholderIcon.className = 'fas fa-hourglass-half';
-            }
-            if (hasilHeaderTitle) {
-                hasilHeaderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
+            if (placeholderTitle) placeholderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
+            if (placeholderDesc) placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Tanggal Ekspirasi (Bebas Murni) di sebelah kiri, kemudian klik tombol <strong>"HITUNG LAMA PIDANA"</strong> untuk mencari durasi lama vonis hukuman secara otomatis.';
+            if (placeholderIcon) placeholderIcon.className = 'fas fa-hourglass-half';
+            if (hasilHeaderTitle) hasilHeaderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
+        } else if (mode === 'sisa') {
+            if (btnSisa) btnSisa.classList.add('active');
+            sectionInputVonis.classList.add('d-none');
+            sectionInputEkspirasi.classList.remove('d-none');
+            boxHasilPidana.classList.add('d-none');
+            if (boxHasilSisa) boxHasilSisa.classList.remove('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
+
+            btnHitung.innerHTML = '<i class="fas fa-hourglass-half me-2"></i> HITUNG SISA PIDANA';
+
+            if (placeholderTitle) placeholderTitle.innerText = 'Hasil Perhitungan Sisa Pidana';
+            if (placeholderDesc) placeholderDesc.innerHTML = 'Tentukan Per Tanggal Perhitungan dan Tanggal Ekspirasi (Bebas Murni) di sebelah kiri, kemudian klik tombol <strong>"HITUNG SISA PIDANA"</strong> untuk melihat sisa masa pidana yang belum dijalani.';
+            if (placeholderIcon) placeholderIcon.className = 'fas fa-hourglass-half';
+            if (hasilHeaderTitle) hasilHeaderTitle.innerText = 'Hasil Perhitungan Sisa Pidana';
+
+            // Pastikan tgl awal terisi hari ini jika kosong
+            const tglAwalInput = document.getElementById('tglAwal');
+            if (tglAwalInput && !tglAwalInput.value) {
+                tglAwalInput.value = new Date().toISOString().split('T')[0];
             }
         }
 
@@ -578,11 +609,20 @@
             document.getElementById('vTahun').value = '2';
             document.getElementById('vBulan').value = '6';
             document.getElementById('vHari').value = '0';
-        } else {
+        } else if (currentMode === 'mundur') {
             // Contoh untuk mode mundur: Tgl Ekspirasi 2 tahun 6 bulan ke depan (180 hari)
             const futureDate = new Date(now);
             futureDate.setFullYear(futureDate.getFullYear() + 2);
             futureDate.setDate(futureDate.getDate() + 180);
+            const fY = futureDate.getFullYear();
+            const fM = String(futureDate.getMonth() + 1).padStart(2, '0');
+            const fD = String(futureDate.getDate()).padStart(2, '0');
+            document.getElementById('tglEkspirasiInput').value = `${fY}-${fM}-${fD}`;
+        } else if (currentMode === 'sisa') {
+            // Contoh untuk mode sisa: Tgl Ekspirasi 1 tahun 4 bulan ke depan (120 hari)
+            const futureDate = new Date(now);
+            futureDate.setFullYear(futureDate.getFullYear() + 1);
+            futureDate.setDate(futureDate.getDate() + 120);
             const fY = futureDate.getFullYear();
             const fM = String(futureDate.getMonth() + 1).padStart(2, '0');
             const fD = String(futureDate.getDate()).padStart(2, '0');
@@ -596,8 +636,10 @@
     function hitungSesuaiMode() {
         if (currentMode === 'maju') {
             hitungTelramMaju();
-        } else {
+        } else if (currentMode === 'mundur') {
             hitungTelramMundur();
+        } else if (currentMode === 'sisa') {
+            hitungTelramSisa();
         }
     }
 
@@ -733,6 +775,60 @@
         });
     }
 
+    // 3. Hitung Mode Sisa Pidana (Skenario A: Per Tanggal ke Tanggal Ekspirasi)
+    function hitungTelramSisa() {
+        const inputTglAwal = document.getElementById('tglAwal').value;
+        const inputTglEkspirasi = document.getElementById('tglEkspirasiInput').value;
+
+        if (!inputTglAwal || !inputTglEkspirasi) {
+            showToast('Harap tentukan Per Tanggal Perhitungan dan Tanggal Ekspirasi!', 'error');
+            return;
+        }
+
+        const [y1, m1, d1] = inputTglAwal.split('-').map(Number);
+        const tglPerhitungan = new Date(y1, m1 - 1, d1);
+
+        const [y2, m2, d2] = inputTglEkspirasi.split('-').map(Number);
+        const tglEkspirasi = new Date(y2, m2 - 1, d2);
+
+        if (tglEkspirasi < tglPerhitungan) {
+            showToast('Tgl Ekspirasi tidak boleh mendahului Per Tanggal Perhitungan (Ekspirasi telah lewat)!', 'error');
+            return;
+        }
+
+        // 1. Tahun Penuh Kalender
+        let vThn = 0;
+        while (addYearsCalendar(tglPerhitungan, vThn + 1) <= tglEkspirasi) {
+            vThn++;
+        }
+        let curr = addYearsCalendar(tglPerhitungan, vThn);
+
+        // 2. Sisa Hari dikonversi ke bulan (1 bulan = 30 hari) dan hari
+        const diffMs = tglEkspirasi.getTime() - curr.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const vBln = Math.floor(diffDays / 30);
+        const vHri = diffDays % 30;
+
+        let parts = [];
+        if (vThn > 0) parts.push(`${vThn} Tahun`);
+        if (vBln > 0) parts.push(`${vBln} Bulan`);
+        if (vHri > 0) parts.push(`${vHri} Hari`);
+        const sisaPidanaTeks = parts.join(', ') || '0 Hari (Bebas Hari Ini)';
+
+        const totalHariSisa = Math.round((tglEkspirasi.getTime() - tglPerhitungan.getTime()) / (1000 * 60 * 60 * 24));
+
+        renderHasil({
+            mode: 'sisa',
+            tglAwal: tglPerhitungan,
+            tglEkspirasi: tglEkspirasi,
+            vThn: vThn,
+            vBln: vBln,
+            vHri: vHri,
+            totalHariVonis: totalHariSisa,
+            sisaPidanaTeks: sisaPidanaTeks
+        });
+    }
+
     // Helper Penambahan Hari
     function addDays(d, days) {
         const res = new Date(d);
@@ -779,20 +875,53 @@
     function renderHasil(res) {
         lastResult = res;
 
-        // Update Hasil Cards
-        document.getElementById('resEkspirasi').innerText = formatDateIndo(res.tglEkspirasi);
-        document.getElementById('res13').innerText = formatDateIndo(res.tgl13);
-        document.getElementById('res12').innerText = formatDateIndo(res.tgl12);
-        document.getElementById('res23').innerText = formatDateIndo(res.tgl23);
+        const cardEkspirasi = document.getElementById('cardEkspirasi');
+        const rowFractionCards = document.getElementById('rowFractionCards');
+        const boxHasilPidana = document.getElementById('boxHasilPidana');
+        const boxHasilSisa = document.getElementById('boxHasilSisa');
+        const resSisaPidana = document.getElementById('resSisaPidana');
+        const labelInfoTglAwal = document.getElementById('labelInfoTglAwal');
+        const labelInfoTotalHari = document.getElementById('labelInfoTotalHari');
+        const hTitle = document.getElementById('hasilHeaderTitle');
 
-        if (res.mode === 'mundur') {
-            document.getElementById('boxHasilPidana').classList.remove('d-none');
+        if (res.mode === 'sisa') {
+            if (boxHasilSisa) boxHasilSisa.classList.remove('d-none');
+            if (resSisaPidana) resSisaPidana.innerText = res.sisaPidanaTeks;
+            if (boxHasilPidana) boxHasilPidana.classList.add('d-none');
+            if (cardEkspirasi) cardEkspirasi.classList.add('d-none');
+            if (rowFractionCards) rowFractionCards.classList.add('d-none');
+
+            if (labelInfoTglAwal) labelInfoTglAwal.innerText = 'Per Tanggal:';
+            if (labelInfoTotalHari) labelInfoTotalHari.innerText = 'Total Sisa Hari:';
+            if (hTitle) hTitle.innerText = 'Hasil Perhitungan Sisa Pidana';
+        } else if (res.mode === 'mundur') {
+            if (boxHasilSisa) boxHasilSisa.classList.add('d-none');
+            if (boxHasilPidana) boxHasilPidana.classList.remove('d-none');
             document.getElementById('resLamaPidana').innerText = res.lamaPidanaTeks;
-            const hTitle = document.getElementById('hasilHeaderTitle');
+            if (cardEkspirasi) cardEkspirasi.classList.remove('d-none');
+            if (rowFractionCards) rowFractionCards.classList.remove('d-none');
+
+            document.getElementById('resEkspirasi').innerText = formatDateIndo(res.tglEkspirasi);
+            document.getElementById('res13').innerText = formatDateIndo(res.tgl13);
+            document.getElementById('res12').innerText = formatDateIndo(res.tgl12);
+            document.getElementById('res23').innerText = formatDateIndo(res.tgl23);
+
+            if (labelInfoTglAwal) labelInfoTglAwal.innerText = 'Tgl. Ditahan:';
+            if (labelInfoTotalHari) labelInfoTotalHari.innerText = 'Total Hari Vonis:';
             if (hTitle) hTitle.innerText = 'Hasil Perhitungan Lama Pidana';
         } else {
-            document.getElementById('boxHasilPidana').classList.add('d-none');
-            const hTitle = document.getElementById('hasilHeaderTitle');
+            if (boxHasilSisa) boxHasilSisa.classList.add('d-none');
+            if (boxHasilPidana) boxHasilPidana.classList.add('d-none');
+            if (cardEkspirasi) cardEkspirasi.classList.remove('d-none');
+            if (rowFractionCards) rowFractionCards.classList.remove('d-none');
+
+            document.getElementById('resEkspirasi').innerText = formatDateIndo(res.tglEkspirasi);
+            document.getElementById('res13').innerText = formatDateIndo(res.tgl13);
+            document.getElementById('res12').innerText = formatDateIndo(res.tgl12);
+            document.getElementById('res23').innerText = formatDateIndo(res.tgl23);
+
+            if (labelInfoTglAwal) labelInfoTglAwal.innerText = 'Tgl. Ditahan:';
+            if (labelInfoTotalHari) labelInfoTotalHari.innerText = 'Total Hari Vonis:';
             if (hTitle) hTitle.innerText = 'Hasil Perhitungan Ekspirasi';
         }
 
@@ -804,7 +933,10 @@
         document.getElementById('placeholderSection').classList.add('d-none');
         document.getElementById('hasilSection').classList.remove('d-none');
 
-        showToast(res.mode === 'maju' ? 'Kalkulasi Ekspirasi Selesai!' : 'Lama Pidana Berhasil Dihitung!', 'success');
+        let msg = 'Kalkulasi Ekspirasi Selesai!';
+        if (res.mode === 'mundur') msg = 'Lama Pidana Berhasil Dihitung!';
+        if (res.mode === 'sisa') msg = 'Sisa Pidana Berhasil Dihitung!';
+        showToast(msg, 'success');
     }
 
     // PWA Service Worker & Install Prompt Handling
