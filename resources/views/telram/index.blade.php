@@ -326,10 +326,10 @@
             <div id="placeholderSection" class="card border-0 shadow-sm text-center p-5 placeholder-card">
                 <div class="py-4">
                     <div class="mb-3" style="width: 70px; height: 70px; border-radius: 50%; background: rgba(59, 130, 246, 0.1); display: inline-flex; align-items: center; justify-content: center; font-size: 30px; color: #3b82f6;">
-                        <i class="fas fa-calendar-alt"></i>
+                        <i class="fas fa-calendar-alt" id="placeholderIcon"></i>
                     </div>
-                    <h5 class="fw-bold telram-text-title mb-2">Hasil Perhitungan Ekspirasi</h5>
-                    <p class="text-muted mb-4 mx-auto" style="max-width: 420px; font-size: 13.5px;">
+                    <h5 class="fw-bold telram-text-title mb-2" id="placeholderTitle">Hasil Perhitungan Ekspirasi</h5>
+                    <p class="text-muted mb-4 mx-auto" id="placeholderDesc" style="max-width: 420px; font-size: 13.5px;">
                         Tentukan Tanggal Mulai Penahanan dan Lama Vonis Hukuman di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.
                     </p>
                     <div class="d-inline-flex gap-2">
@@ -345,7 +345,7 @@
                 <div class="card border-0 shadow-sm mb-4 telram-card">
                     <div class="card-header bg-transparent border-bottom p-3 px-4">
                         <h6 class="fw-bold mb-0 telram-text-title">
-                            <i class="fas fa-clipboard-check text-success me-2"></i>Hasil Perhitungan Ekspirasi
+                            <i class="fas fa-clipboard-check text-success me-2"></i><span id="hasilHeaderTitle">Hasil Perhitungan Ekspirasi</span>
                         </h6>
                     </div>
                     <div class="card-body p-4">
@@ -488,6 +488,10 @@
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
         const boxHasilPidana = document.getElementById('boxHasilPidana');
+        const placeholderTitle = document.getElementById('placeholderTitle');
+        const placeholderDesc = document.getElementById('placeholderDesc');
+        const placeholderIcon = document.getElementById('placeholderIcon');
+        const hasilHeaderTitle = document.getElementById('hasilHeaderTitle');
 
         if (mode === 'maju') {
             btnMaju.classList.add('active');
@@ -498,6 +502,19 @@
             boxHasilPidana.classList.add('d-none');
 
             btnHitung.innerHTML = '<i class="fas fa-calculator me-2"></i> HITUNG EKSPIRASI';
+
+            if (placeholderTitle) {
+                placeholderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
+            }
+            if (placeholderDesc) {
+                placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Lama Vonis Hukuman di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.';
+            }
+            if (placeholderIcon) {
+                placeholderIcon.className = 'fas fa-calendar-alt';
+            }
+            if (hasilHeaderTitle) {
+                hasilHeaderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
+            }
         } else {
             btnMundur.classList.add('active');
             btnMaju.classList.remove('active');
@@ -507,6 +524,25 @@
             boxHasilPidana.classList.remove('d-none');
 
             btnHitung.innerHTML = '<i class="fas fa-history me-2"></i> HITUNG LAMA PIDANA';
+
+            if (placeholderTitle) {
+                placeholderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
+            }
+            if (placeholderDesc) {
+                placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Tanggal Ekspirasi (Bebas Murni) di sebelah kiri, kemudian klik tombol <strong>"HITUNG LAMA PIDANA"</strong> untuk mencari durasi lama vonis hukuman secara otomatis.';
+            }
+            if (placeholderIcon) {
+                placeholderIcon.className = 'fas fa-hourglass-half';
+            }
+            if (hasilHeaderTitle) {
+                hasilHeaderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
+            }
+        }
+
+        // Jika hasil sebelumnya berasal dari mode yang berbeda, sembunyikan hasil dan tampilkan petunjuk placeholder yang sesuai mode ini
+        if (lastResult && lastResult.mode !== mode) {
+            document.getElementById('hasilSection').classList.add('d-none');
+            document.getElementById('placeholderSection').classList.remove('d-none');
         }
     }
 
@@ -532,17 +568,26 @@
 
     // Demo Data Contoh
     function demoSampleData() {
-        setMode('maju');
-        
         const now = new Date();
         const yyyy = now.getFullYear();
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
         document.getElementById('tglAwal').value = `${yyyy}-${mm}-${dd}`;
-        
-        document.getElementById('vTahun').value = '2';
-        document.getElementById('vBulan').value = '6';
-        document.getElementById('vHari').value = '0';
+
+        if (currentMode === 'maju') {
+            document.getElementById('vTahun').value = '2';
+            document.getElementById('vBulan').value = '6';
+            document.getElementById('vHari').value = '0';
+        } else {
+            // Contoh untuk mode mundur: Tgl Ekspirasi 2 tahun 6 bulan ke depan (180 hari)
+            const futureDate = new Date(now);
+            futureDate.setFullYear(futureDate.getFullYear() + 2);
+            futureDate.setDate(futureDate.getDate() + 180);
+            const fY = futureDate.getFullYear();
+            const fM = String(futureDate.getMonth() + 1).padStart(2, '0');
+            const fD = String(futureDate.getDate()).padStart(2, '0');
+            document.getElementById('tglEkspirasiInput').value = `${fY}-${fM}-${fD}`;
+        }
 
         hitungSesuaiMode();
     }
@@ -743,8 +788,12 @@
         if (res.mode === 'mundur') {
             document.getElementById('boxHasilPidana').classList.remove('d-none');
             document.getElementById('resLamaPidana').innerText = res.lamaPidanaTeks;
+            const hTitle = document.getElementById('hasilHeaderTitle');
+            if (hTitle) hTitle.innerText = 'Hasil Perhitungan Lama Pidana';
         } else {
             document.getElementById('boxHasilPidana').classList.add('d-none');
+            const hTitle = document.getElementById('hasilHeaderTitle');
+            if (hTitle) hTitle.innerText = 'Hasil Perhitungan Ekspirasi';
         }
 
         // Extra Info
