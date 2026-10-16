@@ -130,17 +130,17 @@
     </div>
 </div>
 
-{{-- Switcher Format Tampilan Khusus Mobile: Tabel Matriks vs Kartu Ringkas --}}
-<div class="d-flex d-md-none align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border">
+{{-- Switcher Format Tampilan: Tabel Matriks vs Kartu Grid (Aktif di PC & Mobile) --}}
+<div class="d-flex align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border">
     <span class="text-muted small ps-2 fw-semibold" style="font-size: 11.5px;">
         <i class="fas fa-sliders-h text-primary me-1"></i> Format Tampilan:
     </span>
     <div class="btn-group btn-group-sm" role="group">
-        <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowDetailTable">
+        <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowDetailTable" onclick="setKroscekDetailViewMode('table')">
             <i class="fas fa-table me-1"></i> Tabel
         </button>
-        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowDetailCards">
-            <i class="fas fa-th-large me-1"></i> Kartu
+        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowDetailCards" onclick="setKroscekDetailViewMode('cards')">
+            <i class="fas fa-th-large me-1"></i> Kartu Grid
         </button>
     </div>
 </div>
@@ -346,22 +346,24 @@
     </table>
 </div>
 
-{{-- Mobile Cards Container untuk Layar Ponsel (Detail per Tanggal) --}}
-<div id="detailCardsContainer" class="d-none d-md-none mb-4">
-    @forelse($detailKroscekList as $row)
-        @php
-            $rowIsSinkron = ($row['status_kroscek'] === 'sinkron');
-            $rowIsSelisih = ($row['status_kroscek'] === 'selisih');
-            $rowIsLengkap = $row['is_all_completed'];
-            $rowHasIssues = (!$rowIsSinkron || !$rowIsLengkap);
-        @endphp
-        <div class="card mb-3 shadow-sm border rounded-3 kroscek-mobile-card"
-             data-tanggal="{{ strtolower($row['tanggal']) }} {{ strtolower($row['hari']) }} {{ strtolower($row['tanggal_formatted']) }}"
-             data-sinkron="{{ $rowIsSinkron ? '1' : '0' }}"
-             data-selisih="{{ $rowIsSelisih ? '1' : '0' }}"
-             data-lengkap="{{ $rowIsLengkap ? '1' : '0' }}"
-             data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
-            <div class="card-body p-3">
+{{-- Cards Container (Tampilan Kartu Grid PC & Mobile - Detail per Tanggal) --}}
+<div id="detailCardsContainer" class="d-none mb-4">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-3" id="detailCardsGrid">
+        @forelse($detailKroscekList as $row)
+            @php
+                $rowIsSinkron = ($row['status_kroscek'] === 'sinkron');
+                $rowIsSelisih = ($row['status_kroscek'] === 'selisih');
+                $rowIsLengkap = $row['is_all_completed'];
+                $rowHasIssues = (!$rowIsSinkron || !$rowIsLengkap);
+            @endphp
+            <div class="col detail-card-col"
+                 data-tanggal="{{ strtolower($row['tanggal']) }} {{ strtolower($row['hari']) }} {{ strtolower($row['tanggal_formatted']) }}"
+                 data-sinkron="{{ $rowIsSinkron ? '1' : '0' }}"
+                 data-selisih="{{ $rowIsSelisih ? '1' : '0' }}"
+                 data-lengkap="{{ $rowIsLengkap ? '1' : '0' }}"
+                 data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
+                <div class="card h-100 shadow-sm border rounded-3 kroscek-mobile-card d-flex flex-column justify-content-between">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between">
                 {{-- Header Card: No, Tanggal, Status Badge --}}
                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
                     <div class="d-flex align-items-start gap-2">
@@ -479,19 +481,21 @@
                     </div>
                 </div>
 
-                {{-- Populasi & Tombol Aksi --}}
-                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                    <div>
-                        <div class="fw-bold text-dark" style="font-size: 12.5px;">{{ number_format($row['penghuni']['total_penghuni']) }} WBP</div>
-                        <div class="text-muted" style="font-size: 11px;">Bbs: {{ $row['bebas']['total_bebas'] }} · Ost: {{ $row['overstaying']['total_overstaying'] }}</div>
+                    {{-- Populasi & Tombol Aksi --}}
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 12.5px;">{{ number_format($row['penghuni']['total_penghuni']) }} WBP</div>
+                            <div class="text-muted" style="font-size: 11px;">Bbs: {{ $row['bebas']['total_bebas'] }} · Ost: {{ $row['overstaying']['total_overstaying'] }}</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 fw-medium rounded-pill shadow-xs" style="font-size: 11.5px;" onclick="showDetailModal({{ json_encode($row) }})">
+                            <i class="fas fa-eye me-1"></i> Rincian
+                        </button>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 fw-medium rounded-pill shadow-xs" style="font-size: 11.5px;" onclick="showDetailModal({{ json_encode($row) }})">
-                        <i class="fas fa-eye me-1"></i> Rincian
-                    </button>
                 </div>
             </div>
         </div>
     @empty
-        <div class="card p-4 text-center text-muted">Belum ada data pada rentang tanggal yang dipilih.</div>
+        <div class="col-12"><div class="card p-4 text-center text-muted">Belum ada data pada rentang tanggal yang dipilih.</div></div>
     @endforelse
+    </div>
 </div>

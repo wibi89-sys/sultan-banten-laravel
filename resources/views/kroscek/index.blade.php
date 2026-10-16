@@ -632,17 +632,17 @@
                 </div>
             </div>
 
-            {{-- Switcher Format Tampilan Khusus Mobile: Tabel Matriks vs Kartu Ringkas --}}
-            <div class="d-flex d-md-none align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border">
+            {{-- Switcher Format Tampilan: Tabel Matriks vs Kartu Grid (Aktif di PC & Mobile) --}}
+            <div class="d-flex align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border">
                 <span class="text-muted small ps-2 fw-semibold" style="font-size: 11.5px;">
                     <i class="fas fa-sliders-h text-primary me-1"></i> Format Tampilan:
                 </span>
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowTable">
+                    <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowTable" onclick="setKroscekViewMode('table')">
                         <i class="fas fa-table me-1"></i> Tabel
                     </button>
-                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowCards">
-                        <i class="fas fa-th-large me-1"></i> Kartu
+                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowCards" onclick="setKroscekViewMode('cards')">
+                        <i class="fas fa-th-large me-1"></i> Kartu Grid
                     </button>
                 </div>
             </div>
@@ -845,22 +845,24 @@
                 </table>
             </div>
 
-            {{-- Mobile Cards Container untuk Layar Ponsel --}}
-            <div id="kroscekCardsContainer" class="d-none d-md-none mb-4">
-                @forelse($kroscekList as $row)
-                    @php
-                        $rowIsSinkron = ($row['status_kroscek'] === 'sinkron');
-                        $rowIsSelisih = ($row['status_kroscek'] === 'selisih');
-                        $rowIsLengkap = $row['is_all_completed'];
-                        $rowHasIssues = (!$rowIsSinkron || !$rowIsLengkap);
-                    @endphp
-                    <div class="card mb-3 shadow-sm border rounded-3 kroscek-mobile-card"
-                         data-upt="{{ strtolower($row['nama_upt']) }}"
-                         data-sinkron="{{ $rowIsSinkron ? '1' : '0' }}"
-                         data-selisih="{{ $rowIsSelisih ? '1' : '0' }}"
-                         data-lengkap="{{ $rowIsLengkap ? '1' : '0' }}"
-                         data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
-                        <div class="card-body p-3">
+            {{-- Cards Container (Tampilan Kartu Grid PC & Mobile) --}}
+            <div id="kroscekCardsContainer" class="d-none mb-4">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-3" id="kroscekCardsGrid">
+                    @forelse($kroscekList as $row)
+                        @php
+                            $rowIsSinkron = ($row['status_kroscek'] === 'sinkron');
+                            $rowIsSelisih = ($row['status_kroscek'] === 'selisih');
+                            $rowIsLengkap = $row['is_all_completed'];
+                            $rowHasIssues = (!$rowIsSinkron || !$rowIsLengkap);
+                        @endphp
+                        <div class="col kroscek-card-col"
+                             data-upt="{{ strtolower($row['nama_upt']) }}"
+                             data-sinkron="{{ $rowIsSinkron ? '1' : '0' }}"
+                             data-selisih="{{ $rowIsSelisih ? '1' : '0' }}"
+                             data-lengkap="{{ $rowIsLengkap ? '1' : '0' }}"
+                             data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
+                            <div class="card h-100 shadow-sm border rounded-3 kroscek-mobile-card d-flex flex-column justify-content-between">
+                                <div class="card-body p-3 d-flex flex-column justify-content-between">
                             {{-- Header Card: No, UPT Name, Status Badge --}}
                             <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
                                 <div class="d-flex align-items-start gap-2">
@@ -977,20 +979,22 @@
                             </div>
 
                             {{-- Populasi & Tombol Aksi --}}
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <div>
-                                    <div class="fw-bold text-dark" style="font-size: 12.5px;">{{ number_format($row['penghuni']['total_penghuni']) }} WBP</div>
-                                    <div class="text-muted" style="font-size: 11px;">Bbs: {{ $row['bebas']['total_bebas'] }} · Ost: {{ $row['overstaying']['total_overstaying'] }}</div>
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                                        <div>
+                                            <div class="fw-bold text-dark" style="font-size: 12.5px;">{{ number_format($row['penghuni']['total_penghuni']) }} WBP</div>
+                                            <div class="text-muted" style="font-size: 11px;">Bbs: {{ $row['bebas']['total_bebas'] }} · Ost: {{ $row['overstaying']['total_overstaying'] }}</div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 fw-medium rounded-pill shadow-xs" style="font-size: 11.5px;" onclick="showDetailModal({{ json_encode($row) }})">
+                                            <i class="fas fa-eye me-1"></i> Rincian
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 fw-medium rounded-pill shadow-xs" style="font-size: 11.5px;" onclick="showDetailModal({{ json_encode($row) }})">
-                                    <i class="fas fa-eye me-1"></i> Rincian
-                                </button>
                             </div>
                         </div>
-                    </div>
-                @empty
-                    <div class="card p-4 text-center text-muted">Belum ada data UPT terdaftar.</div>
-                @endforelse
+                    @empty
+                        <div class="col-12"><div class="card p-4 text-center text-muted">Belum ada data UPT terdaftar.</div></div>
+                    @endforelse
+                </div>
             </div>
 
         </div>{{-- Penutup Tab 1 (#tab-harian-pane) --}}
@@ -1392,7 +1396,7 @@
     const searchInput = document.getElementById('searchUpt');
     const filterBtns = document.querySelectorAll('.btn-quick-filter');
     const tableRows = document.querySelectorAll('#kroscekTableBody tr[data-upt]');
-    const mobileCards = document.querySelectorAll('#kroscekCardsContainer .kroscek-mobile-card');
+    const mobileCards = document.querySelectorAll('#kroscekCardsContainer .kroscek-card-col');
 
     function applyAdminFilters() {
         const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -1434,28 +1438,57 @@
         });
     });
 
-    // Switcher Tampilan Mobile (Tabel vs Kartu)
-    const btnShowTable = document.getElementById('btnShowTable');
-    const btnShowCards = document.getElementById('btnShowCards');
-    const tableWrapper = document.getElementById('kroscekTableWrapper');
-    const scrollHint = document.getElementById('kroscekScrollHint');
-    const cardsContainer = document.getElementById('kroscekCardsContainer');
+    // Switcher Tampilan (PC & Mobile): Tabel vs Kartu Grid dengan Auto-save LocalStorage
+    const KROSCEK_VIEW_KEY = 'sultan_kroscek_view_mode';
 
-    btnShowTable?.addEventListener('click', function() {
-        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
-        if (btnShowCards) btnShowCards.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
-        tableWrapper?.classList.remove('d-none');
-        scrollHint?.classList.remove('d-none');
-        cardsContainer?.classList.add('d-none');
-    });
+    function setKroscekViewMode(mode, save = true) {
+        const btnShowTable = document.getElementById('btnShowTable');
+        const btnShowCards = document.getElementById('btnShowCards');
+        const tableWrapper = document.getElementById('kroscekTableWrapper');
+        const scrollHint = document.getElementById('kroscekScrollHint');
+        const cardsContainer = document.getElementById('kroscekCardsContainer');
 
-    btnShowCards?.addEventListener('click', function() {
-        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
-        if (btnShowTable) btnShowTable.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
-        tableWrapper?.classList.add('d-none');
-        scrollHint?.classList.add('d-none');
-        cardsContainer?.classList.remove('d-none');
-    });
+        if (mode === 'cards') {
+            btnShowCards?.classList.remove('btn-outline-secondary');
+            btnShowCards?.classList.add('btn-primary', 'active');
+            btnShowTable?.classList.remove('btn-primary', 'active');
+            btnShowTable?.classList.add('btn-outline-secondary');
+
+            tableWrapper?.classList.add('d-none');
+            scrollHint?.classList.add('d-none');
+            cardsContainer?.classList.remove('d-none');
+            if (save) {
+                try { localStorage.setItem(KROSCEK_VIEW_KEY, 'cards'); } catch(e) {}
+            }
+        } else {
+            btnShowTable?.classList.remove('btn-outline-secondary');
+            btnShowTable?.classList.add('btn-primary', 'active');
+            btnShowCards?.classList.remove('btn-primary', 'active');
+            btnShowCards?.classList.add('btn-outline-secondary');
+
+            tableWrapper?.classList.remove('d-none');
+            scrollHint?.classList.remove('d-none');
+            cardsContainer?.classList.add('d-none');
+            if (save) {
+                try { localStorage.setItem(KROSCEK_VIEW_KEY, 'table'); } catch(e) {}
+            }
+        }
+    }
+    window.setKroscekViewMode = setKroscekViewMode;
+
+    document.getElementById('btnShowTable')?.addEventListener('click', () => setKroscekViewMode('table'));
+    document.getElementById('btnShowCards')?.addEventListener('click', () => setKroscekViewMode('cards'));
+
+    try {
+        const savedKroscekMode = localStorage.getItem(KROSCEK_VIEW_KEY);
+        if (savedKroscekMode === 'cards') {
+            setKroscekViewMode('cards', false);
+        } else {
+            setKroscekViewMode('table', false);
+        }
+    } catch(e) {
+        setKroscekViewMode('table', false);
+    }
 
     // Modal Popup Detail UPT
     function showDetailModal(data) {
@@ -1696,7 +1729,7 @@
     const searchTanggalInput = document.getElementById('searchTanggal');
     const filterDetailBtns = document.querySelectorAll('.btn-quick-filter-detail');
     const detailTableRows = document.querySelectorAll('#detailKroscekTableBody tr[data-tanggal]');
-    const detailMobileCards = document.querySelectorAll('#detailCardsContainer .kroscek-mobile-card');
+    const detailMobileCards = document.querySelectorAll('#detailCardsContainer .detail-card-col');
 
     function applyDetailFilters() {
         const query = searchTanggalInput ? searchTanggalInput.value.toLowerCase().trim() : '';
@@ -1738,27 +1771,56 @@
         });
     });
 
-    // Switcher Tampilan Mobile untuk Tab 2 / Detail Tanggal
-    const btnShowDetailTable = document.getElementById('btnShowDetailTable');
-    const btnShowDetailCards = document.getElementById('btnShowDetailCards');
-    const detailTableWrapper = document.getElementById('detailTableWrapper');
-    const detailScrollHint = document.getElementById('detailScrollHint');
-    const detailCardsContainer = document.getElementById('detailCardsContainer');
+    // Switcher Tampilan (PC & Mobile) untuk Tab 2 / Detail Tanggal
+    const KROSCEK_DETAIL_VIEW_KEY = 'sultan_kroscek_detail_view_mode';
 
-    btnShowDetailTable?.addEventListener('click', function() {
-        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
-        if (btnShowDetailCards) btnShowDetailCards.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
-        detailTableWrapper?.classList.remove('d-none');
-        detailScrollHint?.classList.remove('d-none');
-        detailCardsContainer?.classList.add('d-none');
-    });
+    function setKroscekDetailViewMode(mode, save = true) {
+        const btnShowDetailTable = document.getElementById('btnShowDetailTable');
+        const btnShowDetailCards = document.getElementById('btnShowDetailCards');
+        const detailTableWrapper = document.getElementById('detailTableWrapper');
+        const detailScrollHint = document.getElementById('detailScrollHint');
+        const detailCardsContainer = document.getElementById('detailCardsContainer');
 
-    btnShowDetailCards?.addEventListener('click', function() {
-        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
-        if (btnShowDetailTable) btnShowDetailTable.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
-        detailTableWrapper?.classList.add('d-none');
-        detailScrollHint?.classList.add('d-none');
-        detailCardsContainer?.classList.remove('d-none');
-    });
+        if (mode === 'cards') {
+            btnShowDetailCards?.classList.remove('btn-outline-secondary');
+            btnShowDetailCards?.classList.add('btn-primary', 'active');
+            btnShowDetailTable?.classList.remove('btn-primary', 'active');
+            btnShowDetailTable?.classList.add('btn-outline-secondary');
+
+            detailTableWrapper?.classList.add('d-none');
+            detailScrollHint?.classList.add('d-none');
+            detailCardsContainer?.classList.remove('d-none');
+            if (save) {
+                try { localStorage.setItem(KROSCEK_DETAIL_VIEW_KEY, 'cards'); } catch(e) {}
+            }
+        } else {
+            btnShowDetailTable?.classList.remove('btn-outline-secondary');
+            btnShowDetailTable?.classList.add('btn-primary', 'active');
+            btnShowDetailCards?.classList.remove('btn-primary', 'active');
+            btnShowDetailCards?.classList.add('btn-outline-secondary');
+
+            detailTableWrapper?.classList.remove('d-none');
+            detailScrollHint?.classList.remove('d-none');
+            detailCardsContainer?.classList.add('d-none');
+            if (save) {
+                try { localStorage.setItem(KROSCEK_DETAIL_VIEW_KEY, 'table'); } catch(e) {}
+            }
+        }
+    }
+    window.setKroscekDetailViewMode = setKroscekDetailViewMode;
+
+    document.getElementById('btnShowDetailTable')?.addEventListener('click', () => setKroscekDetailViewMode('table'));
+    document.getElementById('btnShowDetailCards')?.addEventListener('click', () => setKroscekDetailViewMode('cards'));
+
+    try {
+        const savedDetailMode = localStorage.getItem(KROSCEK_DETAIL_VIEW_KEY);
+        if (savedDetailMode === 'cards') {
+            setKroscekDetailViewMode('cards', false);
+        } else {
+            setKroscekDetailViewMode('table', false);
+        }
+    } catch(e) {
+        setKroscekDetailViewMode('table', false);
+    }
 </script>
 @endpush
