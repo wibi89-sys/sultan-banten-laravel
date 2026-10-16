@@ -135,28 +135,28 @@
     <table class="table table-bordered table-hover align-middle mb-0 kroscek-table-grid">
         <thead>
             <tr class="text-center align-middle">
-                <th rowspan="2" class="text-center py-2" style="width: 3%;">No</th>
-                <th rowspan="2" class="text-start py-2" style="width: 17%;">Tanggal</th>
-                <th colspan="3" class="text-center py-2 th-group-kroscek">
+                <th rowspan="2" class="text-center" style="width: 32px;">No</th>
+                <th rowspan="2" class="text-start" style="width: 16%;">Tanggal</th>
+                <th colspan="3" class="text-center th-group-kroscek">
                     <i class="fas fa-balance-scale me-1"></i> Kroscek Tahanan
                 </th>
-                <th colspan="4" class="text-center py-2 th-group-modul">
+                <th colspan="4" class="text-center th-group-modul">
                     <i class="fas fa-clock me-1"></i> Status & Jam Input 4 Modul Laporan
                 </th>
-                <th rowspan="2" class="text-center py-2" style="width: 15%;">Populasi & Dinamika</th>
-                <th rowspan="2" class="text-center py-2" style="width: 7%;">Aksi</th>
+                <th rowspan="2" class="text-center" style="width: 13%;">Populasi & Dinamika</th>
+                <th rowspan="2" class="text-center" style="width: 6%;">Aksi</th>
             </tr>
             <tr class="text-center align-middle">
                 {{-- Sub-header Kroscek Tahanan --}}
-                <th class="py-2 small fw-bold th-sub-kroscek" style="width: 6.5%;">Penghuni</th>
-                <th class="py-2 small fw-bold th-sub-kroscek" style="width: 6.5%;">Overstaying</th>
-                <th class="py-2 small fw-bold th-sub-kroscek" style="width: 8%;">Status</th>
+                <th class="th-sub-kroscek" style="width: 5.5%;">Penghuni</th>
+                <th class="th-sub-kroscek" style="width: 5.5%;">Overstaying</th>
+                <th class="th-sub-kroscek" style="width: 7.5%;">Status</th>
                 
                 {{-- Sub-header 4 Modul Laporan --}}
-                <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Penghuni</th>
-                <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Overstaying</th>
-                <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Integrasi</th>
-                <th class="py-2 small fw-bold th-sub-modul" style="width: 8.5%;">Bebas Harian</th>
+                <th class="th-sub-modul" style="width: 7.5%;">Penghuni</th>
+                <th class="th-sub-modul" style="width: 7.5%;">Overstaying</th>
+                <th class="th-sub-modul" style="width: 7.5%;">Integrasi</th>
+                <th class="th-sub-modul" style="width: 7.5%;">Bebas Harian</th>
             </tr>
         </thead>
         <tbody id="detailKroscekTableBody">
@@ -174,21 +174,21 @@
                     data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
                     
                     {{-- No --}}
-                    <td class="text-center text-muted small fw-semibold">{{ $loop->iteration }}</td>
+                    <td class="text-center text-muted fw-semibold" style="font-size: 11px;">{{ $loop->iteration }}</td>
 
                     {{-- Tanggal (Menggantikan Kolom Nama UPT) --}}
                     <td class="text-start">
-                        <div class="fw-bold text-dark">
+                        <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.2;">
                             <i class="far fa-calendar-alt text-primary me-1 opacity-75"></i>
                             {{ $row['hari'] }}, {{ $row['tanggal_formatted'] }}
                         </div>
-                        <div class="mt-1">
+                        <div class="mt-0.5">
                             @if($rowIsLengkap)
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 10.5px;">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 9px; padding: 1px 5px;">
                                     <i class="fas fa-check-circle me-1"></i> 4/4 Lengkap
                                 </span>
                             @else
-                                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25" style="font-size: 10.5px;">
+                                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25" style="font-size: 9px; padding: 1px 5px;">
                                     <i class="fas fa-clock me-1"></i> {{ $row['completed_count'] }}/4 Terisi
                                 </span>
                             @endif
@@ -196,27 +196,27 @@
                     </td>
 
                     {{-- Kroscek Tahanan: Penghuni --}}
-                    <td class="text-center font-monospace fw-bold {{ $row['tahanan_penghuni'] !== null ? 'text-dark' : 'text-muted' }}">
+                    <td class="text-center font-monospace fw-bold {{ $row['tahanan_penghuni'] !== null ? 'text-dark' : 'text-muted' }}" style="font-size: 11.5px;">
                         {{ $row['tahanan_penghuni'] !== null ? number_format($row['tahanan_penghuni']) : '-' }}
                     </td>
 
                     {{-- Kroscek Tahanan: Overstaying --}}
-                    <td class="text-center font-monospace fw-bold {{ $row['tahanan_overstaying'] !== null ? 'text-dark' : 'text-muted' }}">
+                    <td class="text-center font-monospace fw-bold {{ $row['tahanan_overstaying'] !== null ? 'text-dark' : 'text-muted' }}" style="font-size: 11.5px;">
                         {{ $row['tahanan_overstaying'] !== null ? number_format($row['tahanan_overstaying']) : '-' }}
                     </td>
 
                     {{-- Kroscek Tahanan: Status --}}
                     <td class="text-center">
                         @if($rowIsSinkron)
-                            <span class="status-pill status-pill-success py-1 px-2" style="font-size: 11px;">
+                            <span class="status-pill status-pill-success">
                                 <i class="fas fa-check-circle"></i> Sinkron
                             </span>
                         @elseif($rowIsSelisih)
-                            <span class="status-pill status-pill-danger py-1 px-2" style="font-size: 11px;">
+                            <span class="status-pill status-pill-danger">
                                 <i class="fas fa-times-circle"></i> Selisih {{ $row['selisih'] }}
                             </span>
                         @else
-                            <span class="status-pill status-pill-secondary py-1 px-2" style="font-size: 11px;">
+                            <span class="status-pill status-pill-secondary">
                                 <i class="fas fa-minus-circle"></i> Belum
                             </span>
                         @endif
@@ -225,15 +225,15 @@
                     {{-- Modul 1: Penghuni --}}
                     <td class="text-center">
                         @if($row['penghuni']['exists'])
-                            <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['penghuni']['jam_str'] }} WIB</div>
+                            <div class="fw-bold text-dark font-monospace" style="font-size: 11px;">{{ $row['penghuni']['jam_str'] }}</div>
                             @if($row['penghuni']['is_tepat'])
-                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
+                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Tepat</span>
                             @else
-                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
+                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Terlambat</span>
                             @endif
                         @else
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
-                                <i class="fas fa-times me-1"></i>Belum
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">
+                                <i class="fas fa-times me-0.5"></i>Belum
                             </span>
                         @endif
                     </td>
@@ -241,15 +241,15 @@
                     {{-- Modul 2: Overstaying --}}
                     <td class="text-center">
                         @if($row['overstaying']['exists'])
-                            <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['overstaying']['jam_str'] }} WIB</div>
+                            <div class="fw-bold text-dark font-monospace" style="font-size: 11px;">{{ $row['overstaying']['jam_str'] }}</div>
                             @if($row['overstaying']['is_tepat'])
-                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
+                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Tepat</span>
                             @else
-                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
+                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Terlambat</span>
                             @endif
                         @else
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
-                                <i class="fas fa-times me-1"></i>Belum
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">
+                                <i class="fas fa-times me-0.5"></i>Belum
                             </span>
                         @endif
                     </td>
@@ -257,15 +257,15 @@
                     {{-- Modul 3: Integrasi --}}
                     <td class="text-center">
                         @if($row['integrasi']['exists'])
-                            <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['integrasi']['jam_str'] }} WIB</div>
+                            <div class="fw-bold text-dark font-monospace" style="font-size: 11px;">{{ $row['integrasi']['jam_str'] }}</div>
                             @if($row['integrasi']['is_tepat'])
-                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
+                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Tepat</span>
                             @else
-                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
+                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Terlambat</span>
                             @endif
                         @else
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
-                                <i class="fas fa-times me-1"></i>Belum
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">
+                                <i class="fas fa-times me-0.5"></i>Belum
                             </span>
                         @endif
                     </td>
@@ -273,32 +273,32 @@
                     {{-- Modul 4: Bebas Harian --}}
                     <td class="text-center">
                         @if($row['bebas']['exists'])
-                            <div class="fw-bold text-dark font-monospace" style="font-size: 12.5px;">{{ $row['bebas']['jam_str'] }} WIB</div>
+                            <div class="fw-bold text-dark font-monospace" style="font-size: 11px;">{{ $row['bebas']['jam_str'] }}</div>
                             @if($row['bebas']['is_tepat'])
-                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Tepat</span>
+                                <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Tepat</span>
                             @else
-                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 9.5px; padding: 1px 6px;">Terlambat</span>
+                                <span class="badge bg-warning bg-opacity-15 text-dark border border-warning border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">Terlambat</span>
                             @endif
                         @else
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 10px; padding: 2px 6px;">
-                                <i class="fas fa-times me-1"></i>Belum
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 8.5px; padding: 1px 4px;">
+                                <i class="fas fa-times me-0.5"></i>Belum
                             </span>
                         @endif
                     </td>
 
                     {{-- Populasi & Dinamika --}}
-                    <td class="text-center small">
-                        <div class="text-dark">
-                            Total: <strong>{{ number_format($row['penghuni']['total_penghuni']) }}</strong> WBP
+                    <td class="text-center" style="font-size: 11px; white-space: nowrap;">
+                        <div class="text-dark fw-bold">
+                            {{ number_format($row['penghuni']['total_penghuni']) }} <span class="fw-normal text-muted" style="font-size: 9.5px;">WBP</span>
                         </div>
-                        <div class="text-muted" style="font-size: 11px;">
-                            Bebas: <strong>{{ $row['bebas']['total_bebas'] }}</strong> | Overstay: <strong>{{ $row['overstaying']['total_overstaying'] }}</strong>
+                        <div class="text-muted" style="font-size: 10px;">
+                            Bbs: <strong>{{ $row['bebas']['total_bebas'] }}</strong> · Ost: <strong>{{ $row['overstaying']['total_overstaying'] }}</strong>
                         </div>
                     </td>
 
                     {{-- Aksi: Lihat Detail Modal --}}
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-primary px-2 py-1" onclick="showDetailModal({{ json_encode($row) }})" title="Lihat Rincian Lengkap Tanggal Ini">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2" style="font-size: 10.5px;" onclick="showDetailModal({{ json_encode($row) }})" title="Lihat Rincian Lengkap Tanggal Ini">
                             <i class="fas fa-eye me-1"></i> Rincian
                         </button>
                     </td>
