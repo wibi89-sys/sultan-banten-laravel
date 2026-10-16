@@ -30,7 +30,7 @@
                     </div>
                     <small class="text-muted d-block mb-2">Memanggil scheduler Laravel terpadu via crontab server hosting.</small>
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * cd {{ base_path() }} &amp;&amp; /usr/local/bin/php artisan schedule:run >> /dev/null 2>&amp;1" id="cmdCron1">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * cd /home/ditjenpa/sultan_app &amp;&amp; /usr/local/bin/php artisan schedule:run >> /dev/null 2>&amp;1" id="cmdCron1">
                         <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron1').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                     </div>
                     <small class="text-muted d-block mb-2">Mengeksekusi langsung command `wa:cron run` tanpa task scheduler.</small>
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * /usr/local/bin/php {{ base_path('artisan') }} wa:cron run >> /dev/null 2>&amp;1" id="cmdCron2">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * /usr/local/bin/php /home/ditjenpa/sultan_app/artisan wa:cron run >> /dev/null 2>&amp;1" id="cmdCron2">
                         <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron2').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
@@ -52,11 +52,11 @@
             <div class="col-md-6">
                 <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="small fw-bold text-warning"><i class="fas fa-link me-1"></i>Opsi 3: Script Bridge cron-wa.php (Kompatibel cPanel)</span>
+                        <span class="small fw-bold text-warning"><i class="fas fa-link me-1"></i>Opsi 3: Script Runner cron-wa.sh / cron-wa.php</span>
                     </div>
-                    <small class="text-muted d-block mb-2">Mengeksekusi file bridge `cron-wa.php run` di direktori proyek.</small>
+                    <small class="text-muted d-block mb-2">Mengeksekusi script runner dengan pencatatan log otomatis ke storage/logs/cron-wa.log.</small>
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * /usr/local/bin/php {{ base_path('cron-wa.php') }} run >> /dev/null 2>&amp;1" id="cmdCron3">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * /bin/bash /home/ditjenpa/sultan_app/cron-wa.sh run > /dev/null 2>&amp;1" id="cmdCron3">
                         <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron3').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
