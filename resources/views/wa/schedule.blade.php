@@ -250,17 +250,51 @@
 
 <!-- Available Variables Helper -->
 <div class="content-card mb-4">
-    <h6 class="fw-bold mb-3"><i class="fas fa-tags text-primary me-2"></i>Daftar Tag Variabel untuk Template Pesan</h6>
-    <div class="row g-2">
-        @foreach ($variables as $tag => $desc)
-        <div class="col-md-3 col-sm-6">
-            <div class="p-2 border rounded bg-light">
-                <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
-                <div class="small text-muted" style="font-size: 11px;">{{ $desc }}</div>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-1"><i class="fas fa-tags text-primary me-2"></i>Daftar Tag Variabel untuk Template Pesan</h6>
+            <small class="text-muted">Gunakan tag ini di dalam template pesan Anda. Nilai akan otomatis terisi data riil harian saat pesan dikirimkan.</small>
+        </div>
+        <span class="badge bg-light text-dark border px-3 py-2"><i class="fas fa-mouse-pointer me-1 text-primary"></i>Klik kotak tag untuk menyalin</span>
+    </div>
+
+    @if (isset($groupedVariables) && is_array($groupedVariables))
+        @foreach ($groupedVariables as $category => $items)
+        <div class="mb-4">
+            <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                <span class="fw-bold text-dark small">{{ $category }}</span>
+                <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size: 10px;">{{ count($items) }} variabel</span>
+            </div>
+            <div class="row g-2">
+                @foreach ($items as $tag => $desc)
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="p-2 border rounded bg-light h-100 d-flex flex-column justify-content-between shadow-sm-hover" style="cursor: pointer; transition: all 0.2s;" onclick="copyWaTag('{{ $tag }}')" title="Klik untuk salin tag &#123;{{ $tag }}&#125;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
+                            <i class="far fa-copy text-muted small"></i>
+                        </div>
+                        <div class="small text-muted mt-1" style="font-size: 11px; line-height: 1.3;">{{ $desc }}</div>
+                    </div>
+                </div>
+                @endforeach
             </div>
         </div>
         @endforeach
-    </div>
+    @else
+        <div class="row g-2">
+            @foreach ($variables as $tag => $desc)
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="p-2 border rounded bg-light h-100 d-flex flex-column justify-content-between shadow-sm-hover" style="cursor: pointer; transition: all 0.2s;" onclick="copyWaTag('{{ $tag }}')" title="Klik untuk salin tag &#123;{{ $tag }}&#125;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
+                        <i class="far fa-copy text-muted small"></i>
+                    </div>
+                    <div class="small text-muted mt-1" style="font-size: 11px; line-height: 1.3;">{{ $desc }}</div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    @endif
 </div>
 
 <!-- Modal Add Schedule -->
@@ -358,4 +392,49 @@
         </table>
     </div>
 </div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="copyToast" class="toast align-items-center text-bg-dark border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body py-2">
+                <i class="fas fa-check-circle text-success me-2"></i>Tag <code class="text-warning" id="copiedTagText"></code> disalin ke clipboard!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyWaTag(tag) {
+    const textToCopy = '{' + tag + '}';
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy);
+    } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Gagal menyalin: ', err);
+        }
+        document.body.removeChild(textarea);
+    }
+
+    const toastEl = document.getElementById('copyToast');
+    if (toastEl && typeof bootstrap !== 'undefined') {
+        const tagTextEl = document.getElementById('copiedTagText');
+        if (tagTextEl) {
+            tagTextEl.textContent = textToCopy;
+        }
+        const toast = new bootstrap.Toast(toastEl, { delay: 2000 });
+        toast.show();
+    }
+}
+</script>
 @endsection

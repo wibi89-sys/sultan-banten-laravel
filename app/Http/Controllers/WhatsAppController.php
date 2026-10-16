@@ -137,6 +137,7 @@ class WhatsAppController extends Controller
         }
 
         $schedules = WaScheduledReport::orderByDesc('id')->get();
+        $groupedVariables = WhatsAppService::getGroupedTemplateVariables();
         $variables = WhatsAppService::getTemplateVariables();
         $defaultTemplate = WhatsAppService::getDefaultTemplate();
 
@@ -147,7 +148,7 @@ class WhatsAppController extends Controller
             ->limit(20)
             ->get();
 
-        return view('wa.schedule', compact('schedules', 'variables', 'defaultTemplate', 'logs'));
+        return view('wa.schedule', compact('schedules', 'variables', 'groupedVariables', 'defaultTemplate', 'logs'));
     }
 
     public function scheduleStore(Request $request)

@@ -482,11 +482,18 @@ class WhatsAppService
                "• Isi Penghuni: {total_penghuni} orang\n".
                "• Persentase Hunian: {persen_hunian}%\n\n".
                "👥 *RINCIAN PENGHUNI:*\n".
-               "• Tahanan: {total_tahanan} orang\n".
-               "• Narapidana: {total_napi} orang\n".
+               "• Tahanan: {total_tahanan} orang (Dewasa: {tahanan_dewasa}, Anak: {tahanan_anak})\n".
+               "• Narapidana: {total_napi} orang (Dewasa: {napi_dewasa}, Anak: {napi_anak})\n".
                "• Overstaying: {total_overstaying} orang\n".
-               "• Integrasi (PB/CB/CMB): {total_integrasi} orang\n".
-               "• Bebas Harian: {total_bebas_harian} orang\n\n".
+               "• Integrasi: {total_integrasi} orang (Usulan: {total_usulan_integrasi}, SK Terbit: {total_sk_integrasi})\n\n".
+               "🕊️ *RINCIAN BEBAS HARIAN ({total_bebas_harian} orang):*\n".
+               "• Bebas Murni: {bebas_murni} orang\n".
+               "• Pembebasan Bersyarat (PB): {bebas_pb} orang\n".
+               "• Cuti Bersyarat (CB): {bebas_cb} orang\n".
+               "• Cuti Menjelang Bebas (CMB): {bebas_cmb} orang\n".
+               "• Asimilasi: {bebas_asimilasi} orang\n".
+               "• Bebas Demi Hukum (BDH): {bebas_bdh} orang\n".
+               "• Lainnya: {bebas_lainnya} orang\n\n".
                "⚖️ *KLASIFIKASI KHUSUS:*\n".
                "• Narkoba: {narkoba_total} orang\n".
                "• Tipikor: {tipikor} orang\n".
@@ -494,24 +501,76 @@ class WhatsAppService
                '_Laporan otomatis dari Sistem Sultan Banten Ditjenpas_';
     }
 
-    public static function getTemplateVariables(): array
+    public static function getGroupedTemplateVariables(): array
     {
         return [
-            'tanggal' => 'Tanggal laporan saat ini',
-            'waktu' => 'Jam pengiriman pesan',
-            'total_upt' => 'Total jumlah UPT aktif',
-            'total_kapasitas' => 'Total kapasitas seluruh UPT',
-            'total_penghuni' => 'Total penghuni aktual hari ini',
-            'persen_hunian' => 'Persentase tingkat hunian terhadap kapasitas',
-            'total_tahanan' => 'Total seluruh tahanan',
-            'total_napi' => 'Total seluruh narapidana',
-            'total_overstaying' => 'Total tahanan overstaying',
-            'total_integrasi' => 'Total usulan dan SK integrasi',
-            'total_bebas_harian' => 'Total bebas harian hari ini',
-            'narkoba_total' => 'Total kasus narkoba',
-            'tipikor' => 'Total kasus tipikor',
-            'teroris' => 'Total kasus terorisme',
+            '🕊️ Pembebasan Harian' => [
+                'total_bebas_harian' => 'Total seluruh warga binaan bebas hari ini (alias: {total_bebas}, {bebas})',
+                'bebas_murni' => 'Jumlah Bebas Murni hari ini',
+                'bebas_pb' => 'Jumlah Pembebasan Bersyarat / PB (alias: {pb})',
+                'bebas_cb' => 'Jumlah Cuti Bersyarat / CB (alias: {cb})',
+                'bebas_cmb' => 'Jumlah Cuti Menjelang Bebas / CMB (alias: {cmb})',
+                'bebas_asimilasi' => 'Jumlah Bebas Asimilasi (alias: {asimilasi})',
+                'bebas_bdh' => 'Jumlah Bebas Demi Hukum / BDH (alias: {bdh})',
+                'bebas_lainnya' => 'Jumlah Bebas Lainnya (alias: {lainnya})',
+            ],
+            '👥 Hunian & Penghuni' => [
+                'total_penghuni' => 'Total isi penghuni aktual seluruh UPT (alias: {isi}, {penghuni})',
+                'total_kapasitas' => 'Total kapasitas hunian seluruh UPT (alias: {kapasitas})',
+                'persen_hunian' => 'Persentase tingkat hunian terhadap kapasitas (%)',
+                'total_tahanan' => 'Total seluruh tahanan (alias: {tahanan})',
+                'tahanan_dewasa' => 'Rincian total tahanan dewasa',
+                'tahanan_anak' => 'Rincian total tahanan anak',
+                'total_napi' => 'Total seluruh narapidana (alias: {napi}, {narapidana})',
+                'napi_dewasa' => 'Rincian total narapidana dewasa',
+                'napi_anak' => 'Rincian total narapidana anak',
+            ],
+            '📑 Usulan & SK Integrasi' => [
+                'total_integrasi' => 'Total seluruh usulan dan SK integrasi hari ini',
+                'total_usulan_integrasi' => 'Total seluruh usulan integrasi (alias: {total_usulan})',
+                'total_sk_integrasi' => 'Total seluruh SK integrasi terbit hari ini (alias: {total_sk})',
+                'usulan_pb' => 'Jumlah usulan Pembebasan Bersyarat (PB)',
+                'sk_pb' => 'Jumlah SK terbit Pembebasan Bersyarat (PB)',
+                'usulan_cb' => 'Jumlah usulan Cuti Bersyarat (CB)',
+                'sk_cb' => 'Jumlah SK terbit Cuti Bersyarat (CB)',
+                'usulan_cmb' => 'Jumlah usulan Cuti Menjelang Bebas (CMB)',
+                'sk_cmb' => 'Jumlah SK terbit Cuti Menjelang Bebas (CMB)',
+                'usulan_cmk' => 'Jumlah usulan Cuti Mengunjungi Keluarga (CMK)',
+                'sk_cmk' => 'Jumlah SK terbit Cuti Mengunjungi Keluarga (CMK)',
+                'usulan_asimilasi' => 'Jumlah usulan Asimilasi',
+                'sk_asimilasi' => 'Jumlah SK terbit Asimilasi',
+            ],
+            '⏳ Overstaying Tahanan' => [
+                'total_overstaying' => 'Total seluruh tahanan overstaying (alias: {overstaying})',
+                'overstaying_ai' => 'Overstaying AI (Penyidik Kepolisian)',
+                'overstaying_aii' => 'Overstaying AII (Kejaksaan Negeri)',
+                'overstaying_aiii' => 'Overstaying AIII (Pengadilan Negeri)',
+                'overstaying_aiv' => 'Overstaying AIV (Pengadilan Tinggi)',
+                'overstaying_av' => 'Overstaying AV (Mahkamah Agung)',
+            ],
+            '⚖️ Kasus Pidana Khusus' => [
+                'narkoba_total' => 'Total kasus narkotika (bandar + pengguna) (alias: {narkoba})',
+                'tipikor' => 'Total kasus tindak pidana korupsi',
+                'teroris' => 'Total kasus terorisme',
+            ],
+            '📅 Informasi Umum & Waktu' => [
+                'tanggal' => 'Tanggal laporan hari ini (contoh: 16 Oktober 2026)',
+                'waktu' => 'Jam dan menit pengiriman pesan WIB (contoh: 16:00)',
+                'total_upt' => 'Total jumlah satuan kerja / UPT aktif',
+            ],
         ];
+    }
+
+    public static function getTemplateVariables(): array
+    {
+        $flat = [];
+        foreach (self::getGroupedTemplateVariables() as $group) {
+            foreach ($group as $tag => $desc) {
+                $flat[$tag] = $desc;
+            }
+        }
+
+        return $flat;
     }
 
     public static function formatTemplateMessage(string $template, array $data): string
@@ -533,24 +592,96 @@ class WhatsAppService
         $penghuni = DataPenghuni::where('tanggal', $tanggal)
             ->whereNotIn('klasifikasi_pidana', $excludeKlasifikasi)
             ->selectRaw('
-                COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan), 0) as tot_tahanan,
-                COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as tot_napi
+                COALESCE(SUM(tahanan_dewasa_laki), 0) as tah_dewasa_l,
+                COALESCE(SUM(tahanan_dewasa_perempuan), 0) as tah_dewasa_p,
+                COALESCE(SUM(tahanan_anak_laki), 0) as tah_anak_l,
+                COALESCE(SUM(tahanan_anak_perempuan), 0) as tah_anak_p,
+                COALESCE(SUM(narapidana_dewasa_laki), 0) as napi_dewasa_l,
+                COALESCE(SUM(narapidana_dewasa_perempuan), 0) as napi_dewasa_p,
+                COALESCE(SUM(narapidana_anak_laki), 0) as napi_anak_l,
+                COALESCE(SUM(narapidana_anak_perempuan), 0) as napi_anak_p
             ')
             ->first();
 
-        $totTahanan = (int) ($penghuni->tot_tahanan ?? 0);
-        $totNapi = (int) ($penghuni->tot_napi ?? 0);
+        $tahananDewasa = (int) (($penghuni->tah_dewasa_l ?? 0) + ($penghuni->tah_dewasa_p ?? 0));
+        $tahananAnak = (int) (($penghuni->tah_anak_l ?? 0) + ($penghuni->tah_anak_p ?? 0));
+        $totTahanan = $tahananDewasa + $tahananAnak;
+
+        $napiDewasa = (int) (($penghuni->napi_dewasa_l ?? 0) + ($penghuni->napi_dewasa_p ?? 0));
+        $napiAnak = (int) (($penghuni->napi_anak_l ?? 0) + ($penghuni->napi_anak_p ?? 0));
+        $totNapi = $napiDewasa + $napiAnak;
+
         $totPenghuni = $totTahanan + $totNapi;
         $persenHunian = $totalKapasitas > 0 ? round(($totPenghuni / $totalKapasitas) * 100, 1) : 0;
 
-        $totOverstaying = (int) DataOverstaying::where('tanggal', $tanggal)
-            ->sum(DB::raw('overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av'));
+        $overstayingAgg = DataOverstaying::where('tanggal', $tanggal)
+            ->selectRaw('
+                COALESCE(SUM(overstaying_ai), 0) as over_ai,
+                COALESCE(SUM(overstaying_aii), 0) as over_aii,
+                COALESCE(SUM(overstaying_aiii), 0) as over_aiii,
+                COALESCE(SUM(overstaying_aiv), 0) as over_aiv,
+                COALESCE(SUM(overstaying_av), 0) as over_av
+            ')
+            ->first();
 
-        $totIntegrasi = (int) DataIntegrasi::where('tanggal', $tanggal)
-            ->sum(DB::raw('usulan_pb + usulan_cb + usulan_cmb + usulan_cmk + usulan_asimilasi + sk_terbit_pb + sk_terbit_cb + sk_terbit_cmb + sk_terbit_cmk + sk_terbit_asimilasi'));
+        $overAi = (int) ($overstayingAgg->over_ai ?? 0);
+        $overAii = (int) ($overstayingAgg->over_aii ?? 0);
+        $overAiii = (int) ($overstayingAgg->over_aiii ?? 0);
+        $overAiv = (int) ($overstayingAgg->over_aiv ?? 0);
+        $overAv = (int) ($overstayingAgg->over_av ?? 0);
+        $totOverstaying = $overAi + $overAii + $overAiii + $overAiv + $overAv;
 
-        $totBebasHarian = (int) DataBebasHarian::where('tanggal', $tanggal)
-            ->sum(DB::raw('bebas_murni + pb + cb + cmb + asimilasi + bdh + lainnya'));
+        $integrasiAgg = DataIntegrasi::where('tanggal', $tanggal)
+            ->selectRaw('
+                COALESCE(SUM(usulan_pb), 0) as usulan_pb,
+                COALESCE(SUM(usulan_cb), 0) as usulan_cb,
+                COALESCE(SUM(usulan_cmb), 0) as usulan_cmb,
+                COALESCE(SUM(usulan_cmk), 0) as usulan_cmk,
+                COALESCE(SUM(usulan_asimilasi), 0) as usulan_asimilasi,
+                COALESCE(SUM(sk_terbit_pb), 0) as sk_pb,
+                COALESCE(SUM(sk_terbit_cb), 0) as sk_cb,
+                COALESCE(SUM(sk_terbit_cmb), 0) as sk_cmb,
+                COALESCE(SUM(sk_terbit_cmk), 0) as sk_cmk,
+                COALESCE(SUM(sk_terbit_asimilasi), 0) as sk_asimilasi
+            ')
+            ->first();
+
+        $usulanPb = (int) ($integrasiAgg->usulan_pb ?? 0);
+        $usulanCb = (int) ($integrasiAgg->usulan_cb ?? 0);
+        $usulanCmb = (int) ($integrasiAgg->usulan_cmb ?? 0);
+        $usulanCmk = (int) ($integrasiAgg->usulan_cmk ?? 0);
+        $usulanAsimilasi = (int) ($integrasiAgg->usulan_asimilasi ?? 0);
+        $totUsulan = $usulanPb + $usulanCb + $usulanCmb + $usulanCmk + $usulanAsimilasi;
+
+        $skPb = (int) ($integrasiAgg->sk_pb ?? 0);
+        $skCb = (int) ($integrasiAgg->sk_cb ?? 0);
+        $skCmb = (int) ($integrasiAgg->sk_cmb ?? 0);
+        $skCmk = (int) ($integrasiAgg->sk_cmk ?? 0);
+        $skAsimilasi = (int) ($integrasiAgg->sk_asimilasi ?? 0);
+        $totSk = $skPb + $skCb + $skCmb + $skCmk + $skAsimilasi;
+
+        $totIntegrasi = $totUsulan + $totSk;
+
+        $bebasAgg = DataBebasHarian::where('tanggal', $tanggal)
+            ->selectRaw('
+                COALESCE(SUM(bebas_murni), 0) as bebas_murni,
+                COALESCE(SUM(pb), 0) as bebas_pb,
+                COALESCE(SUM(cb), 0) as bebas_cb,
+                COALESCE(SUM(cmb), 0) as bebas_cmb,
+                COALESCE(SUM(asimilasi), 0) as bebas_asimilasi,
+                COALESCE(SUM(bdh), 0) as bebas_bdh,
+                COALESCE(SUM(lainnya), 0) as bebas_lainnya
+            ')
+            ->first();
+
+        $bebasMurni = (int) ($bebasAgg->bebas_murni ?? 0);
+        $bebasPb = (int) ($bebasAgg->bebas_pb ?? 0);
+        $bebasCb = (int) ($bebasAgg->bebas_cb ?? 0);
+        $bebasCmb = (int) ($bebasAgg->bebas_cmb ?? 0);
+        $bebasAsimilasi = (int) ($bebasAgg->bebas_asimilasi ?? 0);
+        $bebasBdh = (int) ($bebasAgg->bebas_bdh ?? 0);
+        $bebasLainnya = (int) ($bebasAgg->bebas_lainnya ?? 0);
+        $totBebasHarian = $bebasMurni + $bebasPb + $bebasCb + $bebasCmb + $bebasAsimilasi + $bebasBdh + $bebasLainnya;
 
         $narkoba = (int) DataPenghuni::where('tanggal', $tanggal)
             ->whereIn('klasifikasi_pidana', ['Narkoba Bandar', 'Narkoba Pengguna'])
@@ -565,18 +696,78 @@ class WhatsAppService
             ->sum(DB::raw('tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan + narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan'));
 
         return [
+            // Tanggal, Waktu & Satuan Kerja
             'tanggal' => formatIndonesianDate($tanggal),
-            'waktu' => date('H:i'),
+            'waktu' => now()->timezone('Asia/Jakarta')->format('H:i'),
             'total_upt' => $totalUpt,
+
+            // Hunian & Kapasitas
             'total_kapasitas' => $totalKapasitas,
+            'kapasitas' => $totalKapasitas,
             'total_penghuni' => $totPenghuni,
+            'penghuni' => $totPenghuni,
+            'isi' => $totPenghuni,
+            'total_isi' => $totPenghuni,
             'persen_hunian' => $persenHunian,
+
+            // Tahanan & Narapidana
             'total_tahanan' => $totTahanan,
+            'tahanan' => $totTahanan,
             'total_napi' => $totNapi,
+            'napi' => $totNapi,
+            'narapidana' => $totNapi,
+            'tahanan_dewasa' => $tahananDewasa,
+            'tahanan_anak' => $tahananAnak,
+            'napi_dewasa' => $napiDewasa,
+            'napi_anak' => $napiAnak,
+
+            // Overstaying
             'total_overstaying' => $totOverstaying,
+            'overstaying' => $totOverstaying,
+            'overstaying_ai' => $overAi,
+            'overstaying_aii' => $overAii,
+            'overstaying_aiii' => $overAiii,
+            'overstaying_aiv' => $overAiv,
+            'overstaying_av' => $overAv,
+
+            // Integrasi (Usulan & SK)
             'total_integrasi' => $totIntegrasi,
+            'total_usulan_integrasi' => $totUsulan,
+            'total_usulan' => $totUsulan,
+            'total_sk_integrasi' => $totSk,
+            'total_sk' => $totSk,
+            'usulan_pb' => $usulanPb,
+            'sk_pb' => $skPb,
+            'usulan_cb' => $usulanCb,
+            'sk_cb' => $skCb,
+            'usulan_cmb' => $usulanCmb,
+            'sk_cmb' => $skCmb,
+            'usulan_cmk' => $usulanCmk,
+            'sk_cmk' => $skCmk,
+            'usulan_asimilasi' => $usulanAsimilasi,
+            'sk_asimilasi' => $skAsimilasi,
+
+            // Bebas Harian & Rincian Jenis Bebas
             'total_bebas_harian' => $totBebasHarian,
+            'total_bebas' => $totBebasHarian,
+            'bebas' => $totBebasHarian,
+            'bebas_murni' => $bebasMurni,
+            'bebas_pb' => $bebasPb,
+            'pb' => $bebasPb,
+            'bebas_cb' => $bebasCb,
+            'cb' => $bebasCb,
+            'bebas_cmb' => $bebasCmb,
+            'cmb' => $bebasCmb,
+            'bebas_asimilasi' => $bebasAsimilasi,
+            'asimilasi' => $bebasAsimilasi,
+            'bebas_bdh' => $bebasBdh,
+            'bdh' => $bebasBdh,
+            'bebas_lainnya' => $bebasLainnya,
+            'lainnya' => $bebasLainnya,
+
+            // Klasifikasi Pidana Khusus
             'narkoba_total' => $narkoba,
+            'narkoba' => $narkoba,
             'tipikor' => $tipikor,
             'teroris' => $teroris,
         ];
