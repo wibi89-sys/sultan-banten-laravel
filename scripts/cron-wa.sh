@@ -17,6 +17,8 @@ if [ -f "$SCRIPT_DIR/artisan" ]; then
     PROJECT_DIR="$SCRIPT_DIR"
 elif [ -f "$SCRIPT_DIR/../artisan" ]; then
     PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+elif [ -d "/home/ditjenpa/sultan_app" ]; then
+    PROJECT_DIR="/home/ditjenpa/sultan_app"
 else
     PROJECT_DIR="/home/ditjenpa/sultan.ditjenpasbanten.com"
 fi
