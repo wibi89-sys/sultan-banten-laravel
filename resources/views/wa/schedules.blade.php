@@ -114,7 +114,7 @@
                     <h6 class="fw-bold mb-0 text-dark">
                         <i class="fas fa-clipboard-check text-info me-2"></i>2. Monitoring Siang (Rekap Progres UPT)
                     </h6>
-                    <small class="text-muted">Dikirim ke grup WhatsApp untuk memantau UPT yang belum melengkapi data.</small>
+                    <small class="text-muted">Dikirim ke grup WhatsApp untuk memantau UPT yang belum melengkapi data. <span class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Otomatis dilewati jika semua UPT sudah lengkap.</span></small>
                 </div>
                 <span class="badge bg-info-subtle text-info border px-2 py-1">Setiap Hari</span>
             </div>

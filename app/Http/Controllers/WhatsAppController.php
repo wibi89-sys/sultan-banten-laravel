@@ -119,6 +119,10 @@ class WhatsAppController extends Controller
         if ($action === 'send_afternoon') {
             $res = WhatsAppService::sendAfternoonReport();
 
+            if (! empty($res['skipped'])) {
+                return back()->with('success', 'ℹ️ '.($res['message'] ?? 'Semua UPT sudah lengkap, pengiriman dilewati.'));
+            }
+
             return $res['success']
                 ? back()->with('success', '✅ Laporan siang berhasil dikirim ke grup WhatsApp!')
                 : back()->with('error', '❌ Gagal mengirim laporan siang: '.($res['message'] ?? 'Error'));

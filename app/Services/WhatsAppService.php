@@ -273,41 +273,63 @@ class WhatsAppService
             }
         }
 
-        $listBelumInput = '';
-        if (empty($missingPenghuni) && empty($missingOverstaying) && empty($missingIntegrasi) && empty($missingBebasHarian)) {
-            $listBelumInput = '✅ *SEMUA UPT SUDAH MENGINPUT DATA LENGKAP*';
-        } else {
-            if (! empty($missingPenghuni)) {
-                $listBelumInput .= '🔴 *Belum Input Data Penghuni* ('.count($missingPenghuni)." UPT):\n";
-                foreach ($missingPenghuni as $name) {
-                    $listBelumInput .= "   • $name\n";
-                }
-                $listBelumInput .= "\n";
+        $totalBelum = count($missingPenghuni) + count($missingOverstaying) + count($missingIntegrasi) + count($missingBebasHarian);
+
+        // Jika semua UPT sudah lengkap menginput data, tidak perlu kirim ke grup WA
+        if ($totalBelum === 0) {
+            try {
+                DB::table('wa_notification_logs')->insert([
+                    'tipe' => 'reminder_siang',
+                    'target' => $targetGroupId,
+                    'pesan' => 'Semua UPT ('.count($allUPTs).' UPT) sudah lengkap menginput data harian (Penghuni, Overstaying, Integrasi, Bebas Harian). Pengiriman laporan siang ke grup dilewati.',
+                    'status' => 'success',
+                    'jumlah_penerima' => 0,
+                    'tanggal_kirim' => now(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Gagal mencatat log reminder_siang: '.$e->getMessage());
             }
-            if (! empty($missingOverstaying)) {
-                $listBelumInput .= '🔴 *Belum Input Data Overstaying* ('.count($missingOverstaying)." UPT):\n";
-                foreach ($missingOverstaying as $name) {
-                    $listBelumInput .= "   • $name\n";
-                }
-                $listBelumInput .= "\n";
-            }
-            if (! empty($missingIntegrasi)) {
-                $listBelumInput .= '🔴 *Belum Input Data Integrasi* ('.count($missingIntegrasi)." UPT):\n";
-                foreach ($missingIntegrasi as $name) {
-                    $listBelumInput .= "   • $name\n";
-                }
-                $listBelumInput .= "\n";
-            }
-            if (! empty($missingBebasHarian)) {
-                $listBelumInput .= '🔴 *Belum Input Bebas Harian* ('.count($missingBebasHarian)." UPT):\n";
-                foreach ($missingBebasHarian as $name) {
-                    $listBelumInput .= "   • $name\n";
-                }
-                $listBelumInput .= "\n";
-            }
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'message' => 'Semua UPT sudah lengkap mengisi data hari ini. Pengiriman laporan siang ke grup dilewati.',
+                'missing_penghuni' => 0,
+                'missing_overstaying' => 0,
+                'missing_integrasi' => 0,
+                'missing_bebas_harian' => 0,
+            ];
         }
 
-        $totalBelum = count($missingPenghuni) + count($missingOverstaying) + count($missingIntegrasi) + count($missingBebasHarian);
+        $listBelumInput = '';
+        if (! empty($missingPenghuni)) {
+            $listBelumInput .= '🔴 *Belum Input Data Penghuni* ('.count($missingPenghuni)." UPT):\n";
+            foreach ($missingPenghuni as $name) {
+                $listBelumInput .= "   • $name\n";
+            }
+            $listBelumInput .= "\n";
+        }
+        if (! empty($missingOverstaying)) {
+            $listBelumInput .= '🔴 *Belum Input Data Overstaying* ('.count($missingOverstaying)." UPT):\n";
+            foreach ($missingOverstaying as $name) {
+                $listBelumInput .= "   • $name\n";
+            }
+            $listBelumInput .= "\n";
+        }
+        if (! empty($missingIntegrasi)) {
+            $listBelumInput .= '🔴 *Belum Input Data Integrasi* ('.count($missingIntegrasi)." UPT):\n";
+            foreach ($missingIntegrasi as $name) {
+                $listBelumInput .= "   • $name\n";
+            }
+            $listBelumInput .= "\n";
+        }
+        if (! empty($missingBebasHarian)) {
+            $listBelumInput .= '🔴 *Belum Input Bebas Harian* ('.count($missingBebasHarian)." UPT):\n";
+            foreach ($missingBebasHarian as $name) {
+                $listBelumInput .= "   • $name\n";
+            }
+            $listBelumInput .= "\n";
+        }
 
         $template = $settings->template_siang ?: "📊 *LAPORAN MONITORING INPUT DATA*\nTanggal: {tanggal}\nWaktu: {waktu} WIB\n\n{list_belum_input}\n_Sultan Banten Ditjenpas_";
 
