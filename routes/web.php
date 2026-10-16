@@ -40,6 +40,18 @@ Route::get('/cron-wa', function (Request $request) {
     $action = $request->query('action', 'run');
     $result = WhatsAppService::runCron($action);
 
+    $logPath = storage_path('logs/cron-wa.log');
+    if (! is_dir(dirname($logPath))) {
+        @mkdir(dirname($logPath), 0755, true);
+    }
+    $logLine = sprintf(
+        "[%s] HTTP WEB /CRON-WA - Action: %s - Result: %s\n",
+        now()->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+        $action,
+        json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    );
+    @file_put_contents($logPath, $logLine, FILE_APPEND);
+
     return response()->json($result);
 })->middleware('throttle:30,1')->name('cron.wa');
 

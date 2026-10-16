@@ -4,7 +4,7 @@
  * Sultan Banten - WhatsApp Cron Automation Bridge
  *
  * This file allows running WhatsApp cron jobs via CLI:
- *   /usr/local/bin/php /home/ditjenpa/sultan.ditjenpasbanten.com/cron-wa.php run
+ *   /usr/local/bin/php /home/ditjenpa/sultan_app/cron-wa.php run
  *
  * Or via HTTP / Webhook:
  *   https://sultan.ditjenpasbanten.com/cron-wa?key=ditjenpas_banten_2026_secret&action=run

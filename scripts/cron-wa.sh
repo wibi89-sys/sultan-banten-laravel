@@ -8,7 +8,7 @@
 # dan mencatat hasil eksekusi ke storage/logs/cron-wa.log.
 #
 # Penggunaan di Crontab (eksekusi setiap menit):
-# * * * * * /bin/bash /home/ditjenpa/sultan.ditjenpasbanten.com/cron-wa.sh run > /dev/null 2>&1
+# * * * * * /bin/bash /home/ditjenpa/sultan_app/scripts/cron-wa.sh run > /dev/null 2>&1
 # ==============================================================================
 
 # 1. Tentukan direktori proyek
