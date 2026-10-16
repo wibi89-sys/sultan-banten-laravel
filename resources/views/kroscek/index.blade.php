@@ -559,7 +559,7 @@
 
                                 {{-- Nama UPT --}}
                                 <td class="text-start">
-                                    <div class="fw-semibold text-dark text-truncate" title="{{ $row['nama_upt'] }}" style="font-size: 12.5px; line-height: 1.3;">{{ $row['nama_upt'] }}</div>
+                                    <div class="fw-semibold text-dark" style="font-size: 12.5px; line-height: 1.35;">{{ $row['nama_upt'] }}</div>
                                     <div class="mt-1">
                                         @if($rowIsLengkap)
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 fw-medium" style="font-size: 10px; padding: 2px 7px;">

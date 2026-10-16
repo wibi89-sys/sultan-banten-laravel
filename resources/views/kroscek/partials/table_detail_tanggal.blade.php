@@ -191,7 +191,7 @@
 
                     {{-- Tanggal (Menggantikan Kolom Nama UPT) --}}
                     <td class="text-start">
-                        <div class="fw-semibold text-dark text-truncate" title="{{ $row['hari'] }}, {{ $row['tanggal_formatted'] }}" style="font-size: 12.5px; line-height: 1.3;">
+                        <div class="fw-semibold text-dark" style="font-size: 12.5px; line-height: 1.35;">
                             <i class="far fa-calendar-alt text-primary me-1 opacity-75"></i>
                             {{ $row['hari'] }}, {{ $row['tanggal_formatted'] }}
                         </div>
