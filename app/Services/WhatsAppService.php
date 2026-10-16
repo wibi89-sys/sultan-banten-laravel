@@ -646,6 +646,10 @@ class WhatsAppService
                 'total_penghuni' => 'Total isi penghuni aktual seluruh UPT (alias: {isi}, {penghuni})',
                 'total_kapasitas' => 'Total kapasitas hunian seluruh UPT (alias: {kapasitas})',
                 'persen_hunian' => 'Persentase tingkat hunian terhadap kapasitas (%)',
+                'over_kapasitas' => 'Jumlah selisih kelebihan penghuni di atas kapasitas (alias: {overkapasitas})',
+                'persen_over_kapasitas' => 'Persentase kelebihan kapasitas / overkapasitas (%) (alias: {persen_overkapasitas})',
+                'selisih_kapasitas' => 'Selisih matematis antara isi penghuni dan kapasitas',
+                'status_kapasitas' => 'Keterangan status kapasitas (Over Kapasitas +X orang atau Normal)',
                 'total_tahanan' => 'Total seluruh tahanan (alias: {tahanan})',
                 'tahanan_dewasa' => 'Rincian total tahanan dewasa',
                 'tahanan_anak' => 'Rincian total tahanan anak',
@@ -759,6 +763,12 @@ class WhatsAppService
 
         $totPenghuni = $totTahanan + $totNapi;
         $persenHunian = $totalKapasitas > 0 ? round(($totPenghuni / $totalKapasitas) * 100, 1) : 0;
+        $selisihKapasitas = $totPenghuni - $totalKapasitas;
+        $overKapasitas = max(0, $selisihKapasitas);
+        $persenOverKapasitas = $totalKapasitas > 0 ? max(0, round(($selisihKapasitas / $totalKapasitas) * 100, 1)) : 0;
+        $statusKapasitas = $totPenghuni > $totalKapasitas
+            ? "Over Kapasitas +{$overKapasitas} orang ({$persenOverKapasitas}%)"
+            : ($totPenghuni === $totalKapasitas ? 'Sesuai Kapasitas (100%)' : 'Di Bawah Kapasitas (Tersedia '.abs($selisihKapasitas).' tempat)');
 
         $overstayingAgg = DataOverstaying::where('tanggal', $tanggal)
             ->selectRaw('
@@ -855,6 +865,12 @@ class WhatsAppService
             'isi' => $totPenghuni,
             'total_isi' => $totPenghuni,
             'persen_hunian' => $persenHunian,
+            'over_kapasitas' => $overKapasitas,
+            'overkapasitas' => $overKapasitas,
+            'persen_over_kapasitas' => $persenOverKapasitas,
+            'persen_overkapasitas' => $persenOverKapasitas,
+            'selisih_kapasitas' => $selisihKapasitas,
+            'status_kapasitas' => $statusKapasitas,
 
             // Tahanan & Narapidana
             'total_tahanan' => $totTahanan,

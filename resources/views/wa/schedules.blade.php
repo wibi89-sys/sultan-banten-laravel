@@ -384,51 +384,68 @@
 
 <!-- ================================= BAGIAN 3: KATALOG TAG VARIABEL INTERAKTIF ================================= -->
 <div class="content-card mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-2 border-bottom" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#katalogTagCollapse" aria-expanded="false" aria-controls="katalogTagCollapse">
         <div>
-            <h6 class="fw-bold mb-1"><i class="fas fa-tags text-primary me-2"></i>Daftar Tag Variabel untuk Template Pesan</h6>
-            <small class="text-muted">Gunakan tag ini di dalam template pesan Anda. Nilai akan otomatis terisi data riil harian saat pesan dikirimkan.</small>
+            <h6 class="fw-bold mb-1">
+                <i class="fas fa-tags text-primary me-2"></i>Daftar Tag Variabel untuk Template Pesan
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2" style="font-size: 11px;">
+                    {{ isset($variables) ? count($variables) : '60+' }} Tag
+                </span>
+            </h6>
+            <small class="text-muted">Gunakan tag ini di dalam template pesan Anda. Klik untuk membuka atau menutup daftar lengkap.</small>
         </div>
-        <span class="badge bg-light text-primary border px-3 py-2"><i class="fas fa-mouse-pointer me-1"></i>Klik kotak tag untuk menyalin</span>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-light text-primary border px-3 py-2 d-none d-md-inline-block">
+                <i class="fas fa-mouse-pointer me-1"></i>Klik kotak tag untuk menyalin
+            </span>
+            <button class="btn btn-sm btn-outline-primary px-3" type="button" data-bs-toggle="collapse" data-bs-target="#katalogTagCollapse" aria-expanded="false" aria-controls="katalogTagCollapse">
+                <i class="fas fa-chevron-down me-1" id="iconKatalogTag"></i>
+                <span id="textKatalogTag">Buka Daftar Tag</span>
+            </button>
+        </div>
     </div>
 
-    @if (isset($groupedVariables) && is_array($groupedVariables))
-        @foreach ($groupedVariables as $category => $items)
-        <div class="mb-4">
-            <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
-                <span class="fw-bold text-dark small">{{ $category }}</span>
-                <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size: 10px;">{{ count($items) }} variabel</span>
-            </div>
-            <div class="row g-2">
-                @foreach ($items as $tag => $desc)
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="p-2 border rounded bg-light h-100 d-flex flex-column justify-content-between shadow-sm-hover" style="cursor: pointer; transition: all 0.2s;" onclick="copyWaTag('{{ $tag }}')" title="Klik untuk salin tag &#123;{{ $tag }}&#125;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
-                            <i class="far fa-copy text-muted small"></i>
+    <div class="collapse" id="katalogTagCollapse">
+        <div class="pt-3">
+            @if (isset($groupedVariables) && is_array($groupedVariables))
+                @foreach ($groupedVariables as $category => $items)
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                        <span class="fw-bold text-dark small">{{ $category }}</span>
+                        <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size: 10px;">{{ count($items) }} variabel</span>
+                    </div>
+                    <div class="row g-2">
+                        @foreach ($items as $tag => $desc)
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="p-2 border rounded bg-light h-100 d-flex flex-column justify-content-between shadow-sm-hover" style="cursor: pointer; transition: all 0.2s;" onclick="copyWaTag('{{ $tag }}')" title="Klik untuk salin tag &#123;{{ $tag }}&#125;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
+                                    <i class="far fa-copy text-muted small"></i>
+                                </div>
+                                <div class="small text-muted mt-1" style="font-size: 11px; line-height: 1.3;">{{ $desc }}</div>
+                            </div>
                         </div>
-                        <div class="small text-muted mt-1" style="font-size: 11px; line-height: 1.3;">{{ $desc }}</div>
+                        @endforeach
                     </div>
                 </div>
                 @endforeach
-            </div>
-        </div>
-        @endforeach
-    @else
-        <div class="row g-2">
-            @foreach ($variables as $tag => $desc)
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="p-2 border rounded bg-light h-100 d-flex flex-column justify-content-between shadow-sm-hover" style="cursor: pointer; transition: all 0.2s;" onclick="copyWaTag('{{ $tag }}')" title="Klik untuk salin tag &#123;{{ $tag }}&#125;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
-                        <i class="far fa-copy text-muted small"></i>
+            @else
+                <div class="row g-2">
+                    @foreach ($variables as $tag => $desc)
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="p-2 border rounded bg-light h-100 d-flex flex-column justify-content-between shadow-sm-hover" style="cursor: pointer; transition: all 0.2s;" onclick="copyWaTag('{{ $tag }}')" title="Klik untuk salin tag &#123;{{ $tag }}&#125;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <code class="fw-bold text-primary">&#123;{{ $tag }}&#125;</code>
+                                <i class="far fa-copy text-muted small"></i>
+                            </div>
+                            <div class="small text-muted mt-1" style="font-size: 11px; line-height: 1.3;">{{ $desc }}</div>
+                        </div>
                     </div>
-                    <div class="small text-muted mt-1" style="font-size: 11px; line-height: 1.3;">{{ $desc }}</div>
+                    @endforeach
                 </div>
-            </div>
-            @endforeach
+            @endif
         </div>
-    @endif
+    </div>
 </div>
 
 <!-- Modal Add Schedule -->
@@ -571,5 +588,23 @@ function copyWaTag(tag) {
         toast.show();
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const katalogTagEl = document.getElementById('katalogTagCollapse');
+    if (katalogTagEl) {
+        katalogTagEl.addEventListener('show.bs.collapse', function () {
+            const icon = document.getElementById('iconKatalogTag');
+            const text = document.getElementById('textKatalogTag');
+            if (icon) icon.className = 'fas fa-chevron-up me-1';
+            if (text) text.textContent = 'Tutup Daftar Tag';
+        });
+        katalogTagEl.addEventListener('hide.bs.collapse', function () {
+            const icon = document.getElementById('iconKatalogTag');
+            const text = document.getElementById('textKatalogTag');
+            if (icon) icon.className = 'fas fa-chevron-down me-1';
+            if (text) text.textContent = 'Buka Daftar Tag';
+        });
+    }
+});
 </script>
 @endsection
