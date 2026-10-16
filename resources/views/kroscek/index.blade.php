@@ -77,26 +77,39 @@
         border: 1px solid #e5e7eb;
     }
 
-    /* Tabel dengan Garis Batas Jelas & Ukuran Ringkas (Compact Layout) */
+    /* Tabel dengan Garis Batas Jelas, Fixed Layout, & Kolom Nomor Ramping */
     .kroscek-table-grid {
         border: 1.5px solid #94a3b8 !important;
         border-collapse: collapse !important;
         font-size: 11px !important;
         width: 100% !important;
+        min-width: 960px !important;
+        table-layout: fixed !important;
     }
     .kroscek-table-grid th, 
     .kroscek-table-grid td {
         border: 1px solid #cbd5e1 !important;
         vertical-align: middle;
-        padding: 4px 6px !important;
+        padding: 4px 5px !important;
         line-height: 1.25 !important;
     }
     .kroscek-table-grid thead th {
         border-bottom: 2px solid #64748b !important;
-        padding: 6px 4px !important;
+        padding: 6px 3px !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         letter-spacing: -0.2px;
+    }
+    .kroscek-table-grid col.col-no,
+    .kroscek-table-grid th.col-no,
+    .kroscek-table-grid td.col-no {
+        width: 36px !important;
+        max-width: 40px !important;
+        min-width: 32px !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+        text-align: center !important;
+        white-space: nowrap !important;
     }
     .th-group-kroscek {
         background-color: #e0e7ff !important;
@@ -486,30 +499,43 @@
             {{-- Tabel Terpadu 12 UPT Se-Banten dengan Garis Jelas dan Kolom Modul Terpisah --}}
             <div class="table-responsive rounded-3 shadow-sm mb-4">
                 <table class="table table-bordered table-hover align-middle mb-0 kroscek-table-grid">
+                    <colgroup>
+                        <col class="col-no" style="width: 36px;">
+                        <col style="width: 19%;">
+                        <col style="width: 6.5%;">
+                        <col style="width: 6.5%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 13.5%;">
+                        <col style="width: 6.5%;">
+                    </colgroup>
                     <thead>
                         <tr class="text-center align-middle">
-                            <th rowspan="2" class="text-center" style="width: 32px;">No</th>
-                            <th rowspan="2" class="text-start" style="width: 16%;">Nama UPT</th>
+                            <th rowspan="2" class="text-center col-no">No</th>
+                            <th rowspan="2" class="text-start">Nama UPT</th>
                             <th colspan="3" class="text-center th-group-kroscek">
                                 <i class="fas fa-balance-scale me-1"></i> Kroscek Tahanan
                             </th>
                             <th colspan="4" class="text-center th-group-modul">
                                 <i class="fas fa-clock me-1"></i> Status & Jam Input 4 Modul Laporan
                             </th>
-                            <th rowspan="2" class="text-center" style="width: 13%;">Populasi & Dinamika</th>
-                            <th rowspan="2" class="text-center" style="width: 6%;">Aksi</th>
+                            <th rowspan="2" class="text-center">Populasi & Dinamika</th>
+                            <th rowspan="2" class="text-center">Aksi</th>
                         </tr>
                         <tr class="text-center align-middle">
                             {{-- Sub-header Kroscek Tahanan --}}
-                            <th class="th-sub-kroscek" style="width: 5.5%;">Penghuni</th>
-                            <th class="th-sub-kroscek" style="width: 5.5%;">Overstaying</th>
-                            <th class="th-sub-kroscek" style="width: 7.5%;">Status</th>
+                            <th class="th-sub-kroscek">Penghuni</th>
+                            <th class="th-sub-kroscek">Overstaying</th>
+                            <th class="th-sub-kroscek">Status</th>
                             
                             {{-- Sub-header 4 Modul Laporan --}}
-                            <th class="th-sub-modul" style="width: 7.5%;">Penghuni</th>
-                            <th class="th-sub-modul" style="width: 7.5%;">Overstaying</th>
-                            <th class="th-sub-modul" style="width: 7.5%;">Integrasi</th>
-                            <th class="th-sub-modul" style="width: 7.5%;">Bebas Harian</th>
+                            <th class="th-sub-modul">Penghuni</th>
+                            <th class="th-sub-modul">Overstaying</th>
+                            <th class="th-sub-modul">Integrasi</th>
+                            <th class="th-sub-modul">Bebas Harian</th>
                         </tr>
                     </thead>
                     <tbody id="kroscekTableBody">
@@ -527,11 +553,11 @@
                                 data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
                                 
                                 {{-- No --}}
-                                <td class="text-center text-muted fw-semibold" style="font-size: 11px;">{{ $loop->iteration }}</td>
+                                <td class="text-center text-muted fw-semibold col-no" style="font-size: 11px;">{{ $loop->iteration }}</td>
 
                                 {{-- Nama UPT --}}
                                 <td class="text-start">
-                                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.2;">{{ $row['nama_upt'] }}</div>
+                                    <div class="fw-bold text-dark text-truncate" title="{{ $row['nama_upt'] }}" style="font-size: 11.5px; line-height: 1.2;">{{ $row['nama_upt'] }}</div>
                                     <div class="mt-0.5">
                                         @if($rowIsLengkap)
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 9px; padding: 1px 5px;">
