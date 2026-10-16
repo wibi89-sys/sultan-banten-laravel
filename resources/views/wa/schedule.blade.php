@@ -78,7 +78,7 @@
 
         <div class="mt-3 pt-3 border-top border-secondary text-secondary small d-flex align-items-center gap-2">
             <i class="fas fa-info-circle text-info"></i>
-            <span><strong>Catatan Penting:</strong> Pastikan toggle master <strong>&quot;Aktifkan Notifikasi WhatsApp&quot;</strong> di menu <a href="{{ route('wa.settings') }}" class="text-info text-decoration-underline">Pengaturan WA</a> dalam posisi <strong>Aktif</strong> dan API Key Fonnte terisi valid agar proses pengiriman berjalan lancar.</span>
+            <span><strong>Catatan Penting:</strong> Pastikan toggle master <strong>&quot;Aktifkan Notifikasi WhatsApp&quot;</strong> di menu <a href="{{ url('/wa-settings') }}" class="text-info text-decoration-underline">Pengaturan WA</a> dalam posisi <strong>Aktif</strong> dan API Key Fonnte terisi valid agar proses pengiriman berjalan lancar.</span>
         </div>
     </div>
 </div>
