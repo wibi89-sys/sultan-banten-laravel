@@ -45,6 +45,25 @@
         margin: 15px !important;
     }
 
+    @media (max-width: 767.98px) {
+        .content-card {
+            padding: 12px 10px !important;
+            margin: 8px 4px !important;
+        }
+        .kpi-card {
+            padding: 12px !important;
+        }
+        .btn-quick-filter,
+        .btn-quick-filter-detail {
+            font-size: 11px !important;
+            padding: 4px 10px !important;
+        }
+        #kroscekNavTabs .nav-link {
+            padding: 8px 12px !important;
+            font-size: 12.5px !important;
+        }
+    }
+
     /* Status Pill Badges Nyaman & Jelas */
     .status-pill {
         display: inline-flex;
@@ -84,6 +103,7 @@
         border-collapse: collapse !important;
         font-size: 12px !important;
         width: 100% !important;
+        min-width: 1060px !important;
         table-layout: fixed !important;
     }
     .kroscek-table-grid th, 
@@ -105,7 +125,7 @@
     .kroscek-table-grid td.col-no {
         width: 3.5% !important;
         max-width: 42px !important;
-        min-width: 30px !important;
+        min-width: 34px !important;
         padding-left: 2px !important;
         padding-right: 2px !important;
         text-align: center !important;
@@ -132,6 +152,29 @@
         font-weight: 500;
     }
 
+    /* Container Scrollable Tabel Kroscek */
+    .table-responsive-kroscek {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 10px;
+        background: #ffffff;
+    }
+    .table-responsive-kroscek::-webkit-scrollbar {
+        height: 7px;
+    }
+    .table-responsive-kroscek::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .table-responsive-kroscek::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .table-responsive-kroscek::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
     /* Filter Buttons */
     .btn-quick-filter,
     .btn-quick-filter-detail {
@@ -156,6 +199,97 @@
         color: #fff !important;
         border-color: #2563eb;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Mobile Card Styles */
+    .kroscek-mobile-card {
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 12px;
+        background: #ffffff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kroscek-mobile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+
+    .kroscek-table-grid td {
+        background-color: #ffffff;
+        color: #1e293b;
+    }
+    .kroscek-table-grid tbody tr:hover td {
+        background-color: #f8fafc;
+    }
+
+    [data-theme="dark"] .kpi-card,
+    [data-theme="dark"] .kroscek-card-box {
+        background: #1e293b;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] .kroscek-table-grid {
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] .kroscek-table-grid th,
+    [data-theme="dark"] .kroscek-table-grid td {
+        border-color: #334155 !important;
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] .kroscek-table-grid tbody tr:hover td {
+        background-color: #273549 !important;
+    }
+    [data-theme="dark"] .th-group-kroscek,
+    [data-theme="dark"] .th-group-modul {
+        background-color: #0f172a !important;
+        color: #93c5fd !important;
+    }
+    [data-theme="dark"] .th-sub-kroscek,
+    [data-theme="dark"] .th-sub-modul {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .kroscek-table-grid thead th {
+        border-bottom-color: #475569 !important;
+    }
+    [data-theme="dark"] .table-responsive-kroscek {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    [data-theme="dark"] .table-responsive-kroscek::-webkit-scrollbar-track {
+        background: #0f172a;
+    }
+    [data-theme="dark"] .table-responsive-kroscek::-webkit-scrollbar-thumb {
+        background: #475569;
+    }
+    [data-theme="dark"] .btn-quick-filter,
+    [data-theme="dark"] .btn-quick-filter-detail {
+        background-color: #1e293b;
+        border-color: #334155;
+        color: #cbd5e1;
+    }
+    [data-theme="dark"] .btn-quick-filter:hover,
+    [data-theme="dark"] .btn-quick-filter-detail:hover {
+        background-color: #334155;
+        color: #ffffff;
+    }
+    [data-theme="dark"] .btn-quick-filter.active,
+    [data-theme="dark"] .btn-quick-filter-detail.active {
+        background-color: #2563eb;
+        color: #ffffff !important;
+    }
+    [data-theme="dark"] .status-pill-secondary {
+        background-color: #334155;
+        color: #94a3b8;
+        border-color: #475569;
+    }
+    [data-theme="dark"] .kroscek-mobile-card {
+        background-color: #1e293b;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] .kroscek-mobile-card .bg-light {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
     }
 </style>
 @endpush
@@ -498,8 +632,29 @@
                 </div>
             </div>
 
+            {{-- Switcher Format Tampilan Khusus Mobile: Tabel Matriks vs Kartu Ringkas --}}
+            <div class="d-flex d-md-none align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border">
+                <span class="text-muted small ps-2 fw-semibold" style="font-size: 11.5px;">
+                    <i class="fas fa-sliders-h text-primary me-1"></i> Format Tampilan:
+                </span>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowTable">
+                        <i class="fas fa-table me-1"></i> Tabel
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowCards">
+                        <i class="fas fa-th-large me-1"></i> Kartu
+                    </button>
+                </div>
+            </div>
+
+            {{-- Petunjuk Geser Tabel pada Layar HP / Mobile --}}
+            <div class="d-md-none alert alert-light border py-2 px-3 mb-2 small text-muted d-flex align-items-center justify-content-between rounded-3 shadow-xs" id="kroscekScrollHint">
+                <span class="small fw-medium"><i class="fas fa-arrows-alt-h text-primary me-1"></i> Geser tabel ke samping untuk melihat detail modul & kroscek</span>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 10px;">11 Kolom</span>
+            </div>
+
             {{-- Tabel Terpadu 12 UPT Se-Banten dengan Garis Jelas dan Kolom Modul Terpisah --}}
-            <div class="table-responsive rounded-3 shadow-sm mb-4">
+            <div class="table-responsive table-responsive-kroscek shadow-sm mb-4" id="kroscekTableWrapper">
                 <table class="table table-bordered table-hover align-middle mb-0 kroscek-table-grid">
                     <colgroup>
                         <col class="col-no" style="width: 3.5%;">
@@ -688,6 +843,154 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Mobile Cards Container untuk Layar Ponsel --}}
+            <div id="kroscekCardsContainer" class="d-none d-md-none mb-4">
+                @forelse($kroscekList as $row)
+                    @php
+                        $rowIsSinkron = ($row['status_kroscek'] === 'sinkron');
+                        $rowIsSelisih = ($row['status_kroscek'] === 'selisih');
+                        $rowIsLengkap = $row['is_all_completed'];
+                        $rowHasIssues = (!$rowIsSinkron || !$rowIsLengkap);
+                    @endphp
+                    <div class="card mb-3 shadow-sm border rounded-3 kroscek-mobile-card"
+                         data-upt="{{ strtolower($row['nama_upt']) }}"
+                         data-sinkron="{{ $rowIsSinkron ? '1' : '0' }}"
+                         data-selisih="{{ $rowIsSelisih ? '1' : '0' }}"
+                         data-lengkap="{{ $rowIsLengkap ? '1' : '0' }}"
+                         data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
+                        <div class="card-body p-3">
+                            {{-- Header Card: No, UPT Name, Status Badge --}}
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
+                                <div class="d-flex align-items-start gap-2">
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border rounded-pill mt-0.5" style="font-size: 11px;">#{{ $loop->iteration }}</span>
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 13.5px; line-height: 1.35;">{{ $row['nama_upt'] }}</h6>
+                                        <div>
+                                            @if($rowIsLengkap)
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 fw-medium" style="font-size: 10px; padding: 2px 7px;">
+                                                    <i class="fas fa-check-circle me-1"></i> 4/4 Lengkap
+                                                </span>
+                                            @else
+                                                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 fw-medium" style="font-size: 10px; padding: 2px 7px;">
+                                                    <i class="fas fa-clock me-1"></i> {{ $row['completed_count'] }}/4 Terisi
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    @if($rowIsSinkron)
+                                        <span class="status-pill status-pill-success">
+                                            <i class="fas fa-check-circle"></i> Sinkron
+                                        </span>
+                                    @elseif($rowIsSelisih)
+                                        <span class="status-pill status-pill-danger">
+                                            <i class="fas fa-times-circle"></i> Selisih {{ $row['selisih'] }}
+                                        </span>
+                                    @else
+                                        <span class="status-pill status-pill-secondary">
+                                            <i class="fas fa-minus-circle"></i> Belum
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Kroscek Data Tahanan --}}
+                            <div class="bg-light p-2.5 rounded-3 mb-2.5 border">
+                                <div class="d-flex justify-content-between align-items-center small text-muted mb-1 pb-1 border-bottom">
+                                    <span class="fw-semibold text-dark"><i class="fas fa-balance-scale text-primary me-1"></i> Kroscek Tahanan:</span>
+                                    <span class="font-monospace fw-bold {{ $rowIsSinkron ? 'text-success' : ($rowIsSelisih ? 'text-danger' : 'text-muted') }}" style="font-size: 11.5px;">
+                                        {{ $rowIsSinkron ? 'SINKRON' : ($rowIsSelisih ? 'SELISIH '.$row['selisih'] : 'BELUM LENGKAP') }}
+                                    </span>
+                                </div>
+                                <div class="row text-center g-2 pt-1">
+                                    <div class="col-6 border-end">
+                                        <div class="text-muted" style="font-size: 11px;">Penghuni</div>
+                                        <div class="fw-bold font-monospace {{ $row['tahanan_penghuni'] !== null ? 'text-dark' : 'text-muted' }}" style="font-size: 14px;">
+                                            {{ $row['tahanan_penghuni'] !== null ? number_format($row['tahanan_penghuni']) : '-' }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted" style="font-size: 11px;">Overstaying</div>
+                                        <div class="fw-bold font-monospace {{ $row['tahanan_overstaying'] !== null ? 'text-dark' : 'text-muted' }}" style="font-size: 14px;">
+                                            {{ $row['tahanan_overstaying'] !== null ? number_format($row['tahanan_overstaying']) : '-' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Jam Input 4 Modul --}}
+                            <div class="mb-2.5">
+                                <div class="small fw-semibold text-muted mb-1.5"><i class="fas fa-clock text-primary me-1"></i> Jam Input 4 Modul:</div>
+                                <div class="row g-1.5 text-center">
+                                    <div class="col-3">
+                                        <div class="p-1.5 rounded-2 bg-light border">
+                                            <div class="text-muted" style="font-size: 10px;">Penghuni</div>
+                                            @if($row['penghuni']['exists'])
+                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['penghuni']['jam_str'] }}</div>
+                                                <span class="badge {{ $row['penghuni']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['penghuni']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['penghuni']['is_tepat'] ? 'Tepat' : 'Telat' }}</span>
+                                            @else
+                                                <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
+                                                <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25" style="font-size: 9px; padding: 1px 4px;">Belum</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="p-1.5 rounded-2 bg-light border">
+                                            <div class="text-muted" style="font-size: 10px;">Overstay</div>
+                                            @if($row['overstaying']['exists'])
+                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['overstaying']['jam_str'] }}</div>
+                                                <span class="badge {{ $row['overstaying']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['overstaying']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['overstaying']['is_tepat'] ? 'Tepat' : 'Telat' }}</span>
+                                            @else
+                                                <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
+                                                <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25" style="font-size: 9px; padding: 1px 4px;">Belum</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="p-1.5 rounded-2 bg-light border">
+                                            <div class="text-muted" style="font-size: 10px;">Integrasi</div>
+                                            @if($row['integrasi']['exists'])
+                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['integrasi']['jam_str'] }}</div>
+                                                <span class="badge {{ $row['integrasi']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['integrasi']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['integrasi']['is_tepat'] ? 'Tepat' : 'Telat' }}</span>
+                                            @else
+                                                <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
+                                                <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25" style="font-size: 9px; padding: 1px 4px;">Belum</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="p-1.5 rounded-2 bg-light border">
+                                            <div class="text-muted" style="font-size: 10px;">Bebas</div>
+                                            @if($row['bebas']['exists'])
+                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['bebas']['jam_str'] }}</div>
+                                                <span class="badge {{ $row['bebas']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['bebas']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['bebas']['is_tepat'] ? 'Tepat' : 'Telat' }}</span>
+                                            @else
+                                                <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
+                                                <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25" style="font-size: 9px; padding: 1px 4px;">Belum</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Populasi & Tombol Aksi --}}
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 12.5px;">{{ number_format($row['penghuni']['total_penghuni']) }} WBP</div>
+                                    <div class="text-muted" style="font-size: 11px;">Bbs: {{ $row['bebas']['total_bebas'] }} · Ost: {{ $row['overstaying']['total_overstaying'] }}</div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 fw-medium rounded-pill shadow-xs" style="font-size: 11.5px;" onclick="showDetailModal({{ json_encode($row) }})">
+                                    <i class="fas fa-eye me-1"></i> Rincian
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="card p-4 text-center text-muted">Belum ada data UPT terdaftar.</div>
+                @endforelse
             </div>
 
         </div>{{-- Penutup Tab 1 (#tab-harian-pane) --}}
@@ -1088,21 +1391,22 @@
     // Fitur Pencarian Realtime & Quick Filter untuk Admin (Matriks 12 UPT)
     const searchInput = document.getElementById('searchUpt');
     const filterBtns = document.querySelectorAll('.btn-quick-filter');
-    const tableRows = document.querySelectorAll('#kroscekTableBody tr');
+    const tableRows = document.querySelectorAll('#kroscekTableBody tr[data-upt]');
+    const mobileCards = document.querySelectorAll('#kroscekCardsContainer .kroscek-mobile-card');
 
     function applyAdminFilters() {
         const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const activeBtn = document.querySelector('.btn-quick-filter.active');
         const activeFilter = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
 
-        tableRows.forEach(row => {
-            const uptName = row.getAttribute('data-upt') || '';
-            const isSinkron = row.getAttribute('data-sinkron') === '1';
-            const isSelisih = row.getAttribute('data-selisih') === '1';
-            const isLengkap = row.getAttribute('data-lengkap') === '1';
-            const hasIssues = row.getAttribute('data-masalah') === '1';
+        const filterElement = (el) => {
+            const uptName = el.getAttribute('data-upt') || '';
+            const isSinkron = el.getAttribute('data-sinkron') === '1';
+            const isSelisih = el.getAttribute('data-selisih') === '1';
+            const isLengkap = el.getAttribute('data-lengkap') === '1';
+            const hasIssues = el.getAttribute('data-masalah') === '1';
 
-            const matchesSearch = uptName.includes(searchVal);
+            const matchesSearch = !searchVal || uptName.includes(searchVal);
             let matchesCategory = true;
 
             if (activeFilter === 'masalah') {
@@ -1113,8 +1417,11 @@
                 matchesCategory = isLengkap;
             }
 
-            row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
-        });
+            el.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+        };
+
+        tableRows.forEach(filterElement);
+        mobileCards.forEach(filterElement);
     }
 
     searchInput?.addEventListener('input', applyAdminFilters);
@@ -1125,6 +1432,29 @@
             this.classList.add('active');
             applyAdminFilters();
         });
+    });
+
+    // Switcher Tampilan Mobile (Tabel vs Kartu)
+    const btnShowTable = document.getElementById('btnShowTable');
+    const btnShowCards = document.getElementById('btnShowCards');
+    const tableWrapper = document.getElementById('kroscekTableWrapper');
+    const scrollHint = document.getElementById('kroscekScrollHint');
+    const cardsContainer = document.getElementById('kroscekCardsContainer');
+
+    btnShowTable?.addEventListener('click', function() {
+        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
+        if (btnShowCards) btnShowCards.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
+        tableWrapper?.classList.remove('d-none');
+        scrollHint?.classList.remove('d-none');
+        cardsContainer?.classList.add('d-none');
+    });
+
+    btnShowCards?.addEventListener('click', function() {
+        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
+        if (btnShowTable) btnShowTable.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
+        tableWrapper?.classList.add('d-none');
+        scrollHint?.classList.add('d-none');
+        cardsContainer?.classList.remove('d-none');
     });
 
     // Modal Popup Detail UPT
@@ -1366,18 +1696,19 @@
     const searchTanggalInput = document.getElementById('searchTanggal');
     const filterDetailBtns = document.querySelectorAll('.btn-quick-filter-detail');
     const detailTableRows = document.querySelectorAll('#detailKroscekTableBody tr[data-tanggal]');
+    const detailMobileCards = document.querySelectorAll('#detailCardsContainer .kroscek-mobile-card');
 
     function applyDetailFilters() {
         const query = searchTanggalInput ? searchTanggalInput.value.toLowerCase().trim() : '';
         const activeBtn = document.querySelector('.btn-quick-filter-detail.active');
         const activeFilter = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
 
-        detailTableRows.forEach(row => {
-            const tglData = row.getAttribute('data-tanggal') || '';
-            const isSinkron = row.getAttribute('data-sinkron') === '1';
-            const isSelisih = row.getAttribute('data-selisih') === '1';
-            const isLengkap = row.getAttribute('data-lengkap') === '1';
-            const hasIssues = row.getAttribute('data-masalah') === '1';
+        const filterElement = (el) => {
+            const tglData = el.getAttribute('data-tanggal') || '';
+            const isSinkron = el.getAttribute('data-sinkron') === '1';
+            const isSelisih = el.getAttribute('data-selisih') === '1';
+            const isLengkap = el.getAttribute('data-lengkap') === '1';
+            const hasIssues = el.getAttribute('data-masalah') === '1';
 
             const matchesSearch = !query || tglData.includes(query);
             let matchesCategory = true;
@@ -1390,8 +1721,11 @@
                 matchesCategory = isLengkap;
             }
 
-            row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
-        });
+            el.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+        };
+
+        detailTableRows.forEach(filterElement);
+        detailMobileCards.forEach(filterElement);
     }
 
     searchTanggalInput?.addEventListener('input', applyDetailFilters);
@@ -1402,6 +1736,29 @@
             this.classList.add('active');
             applyDetailFilters();
         });
+    });
+
+    // Switcher Tampilan Mobile untuk Tab 2 / Detail Tanggal
+    const btnShowDetailTable = document.getElementById('btnShowDetailTable');
+    const btnShowDetailCards = document.getElementById('btnShowDetailCards');
+    const detailTableWrapper = document.getElementById('detailTableWrapper');
+    const detailScrollHint = document.getElementById('detailScrollHint');
+    const detailCardsContainer = document.getElementById('detailCardsContainer');
+
+    btnShowDetailTable?.addEventListener('click', function() {
+        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
+        if (btnShowDetailCards) btnShowDetailCards.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
+        detailTableWrapper?.classList.remove('d-none');
+        detailScrollHint?.classList.remove('d-none');
+        detailCardsContainer?.classList.add('d-none');
+    });
+
+    btnShowDetailCards?.addEventListener('click', function() {
+        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
+        if (btnShowDetailTable) btnShowDetailTable.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
+        detailTableWrapper?.classList.add('d-none');
+        detailScrollHint?.classList.add('d-none');
+        detailCardsContainer?.classList.remove('d-none');
     });
 </script>
 @endpush
