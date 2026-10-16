@@ -354,10 +354,7 @@
                                         <span class="badge bg-white text-danger px-2.5 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
                                             <i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS MURNI
                                         </span>
-                                        <h2 class="fw-black mb-1 text-white" id="resEkspirasi" style="font-weight: 800; font-size: 26px;">-</h2>
-                                        <p class="mb-0 text-white-50" style="font-size: 12.5px;">
-                                            Tanggal berakhirnya masa pidana narapidana di Lapas/Rutan.
-                                        </p>
+                                        <h2 class="fw-black mb-0 text-white" id="resEkspirasi" style="font-weight: 800; font-size: 26px;">-</h2>
                                     </div>
                                     <div class="d-none d-sm-block text-white" style="font-size: 48px; opacity: 0.25;">
                                         <i class="fas fa-calendar-check"></i>
