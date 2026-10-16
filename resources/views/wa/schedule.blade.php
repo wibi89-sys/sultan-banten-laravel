@@ -6,6 +6,83 @@
 @endsection
 
 @section('content')
+<!-- Cron Jobs Configuration Guide -->
+<div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f8fafc; border-radius: 12px;">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
+                    <i class="fas fa-terminal fa-lg"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-white">Panduan Otomatisasi Cron Jobs Server (cPanel / VPS)</h6>
+                    <small class="text-secondary">Agar pengiriman laporan terjadwal &amp; reminder WA harian berjalan otomatis tepat waktu</small>
+                </div>
+            </div>
+            <span class="badge bg-primary px-3 py-2 rounded-pill"><i class="fas fa-clock me-1"></i>Frekuensi: Tiap Menit (* * * * *)</span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-bold text-info"><i class="fas fa-star me-1"></i>Opsi 1: Standar Laravel Scheduler (Rekomendasi Utama)</span>
+                    </div>
+                    <small class="text-muted d-block mb-2">Memanggil scheduler Laravel terpadu via crontab server hosting.</small>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * cd /home/ditjenpa/sultan.ditjenpasbanten.com &amp;&amp; /usr/local/bin/php artisan schedule:run >> /dev/null 2>&amp;1" id="cmdCron1">
+                        <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron1').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-bold text-success"><i class="fas fa-bolt me-1"></i>Opsi 2: Langsung Command Artisan wa:cron</span>
+                    </div>
+                    <small class="text-muted d-block mb-2">Mengeksekusi langsung command `wa:cron run` tanpa task scheduler.</small>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * /usr/local/bin/php /home/ditjenpa/sultan.ditjenpasbanten.com/artisan wa:cron run >> /dev/null 2>&amp;1" id="cmdCron2">
+                        <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron2').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-bold text-warning"><i class="fas fa-link me-1"></i>Opsi 3: Script Bridge cron-wa.php (Kompatibel cPanel)</span>
+                    </div>
+                    <small class="text-muted d-block mb-2">Cocok jika crontab server Anda sudah terlanjur mengarah ke `cron-wa.php run`.</small>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * /usr/local/bin/php /home/ditjenpa/sultan.ditjenpasbanten.com/cron-wa.php run >> /dev/null 2>&amp;1" id="cmdCron3">
+                        <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron3').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-bold text-danger"><i class="fas fa-globe me-1"></i>Opsi 4: Web Cron / cURL URL</span>
+                    </div>
+                    <small class="text-muted d-block mb-2">Picu otomatis via HTTP URL (dengan parameter rahasia key &amp; action).</small>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control font-monospace bg-dark text-warning border-secondary" readonly value="* * * * * curl -s &quot;{{ url('/cron-wa') }}?key=ditjenpas_banten_2026_secret&amp;action=run&quot; > /dev/null 2>&amp;1" id="cmdCron4">
+                        <button class="btn btn-outline-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cmdCron4').value); alert('Perintah disalin ke clipboard!');"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-top border-secondary text-secondary small d-flex align-items-center gap-2">
+            <i class="fas fa-info-circle text-info"></i>
+            <span><strong>Catatan Penting:</strong> Pastikan toggle master <strong>&quot;Aktifkan Notifikasi WhatsApp&quot;</strong> di menu <a href="{{ route('wa.settings.index') }}" class="text-info text-decoration-underline">Pengaturan WA</a> dalam posisi <strong>Aktif</strong> dan API Key Fonnte terisi valid agar proses pengiriman berjalan lancar.</span>
+        </div>
+    </div>
+</div>
+
 <div class="content-card mb-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
@@ -39,7 +116,22 @@
                     <td class="fw-semibold">{{ $s->nama_laporan }}</td>
                     <td><code>{{ $s->group_id }}</code></td>
                     <td><span class="badge bg-light text-dark border">{{ substr($s->jam_kirim, 0, 5) }} WIB</span></td>
-                    <td><span class="badge bg-info text-dark">{{ ucfirst($s->hari) }}</span></td>
+                    <td>
+                        @php
+                            $hariLabels = [
+                                'daily' => 'Setiap Hari',
+                                'weekdays' => 'Hari Kerja (Sen-Jum)',
+                                'monday' => 'Senin Saja',
+                                'tuesday' => 'Selasa Saja',
+                                'wednesday' => 'Rabu Saja',
+                                'thursday' => 'Kamis Saja',
+                                'friday' => 'Jumat Saja',
+                                'saturday' => 'Sabtu Saja',
+                                'sunday' => 'Minggu Saja',
+                            ];
+                        @endphp
+                        <span class="badge bg-info text-dark">{{ $hariLabels[strtolower($s->hari)] ?? ucfirst($s->hari) }}</span>
+                    </td>
                     <td>
                         @if($s->kirim_ke_pimpinan)
                             <span class="badge bg-success"><i class="fas fa-check me-1"></i>Ya</span>
@@ -118,7 +210,12 @@
                                                         <option value="daily" {{ $s->hari === 'daily' ? 'selected' : '' }}>Setiap Hari (Daily)</option>
                                                         <option value="weekdays" {{ $s->hari === 'weekdays' ? 'selected' : '' }}>Hari Kerja (Senin-Jumat)</option>
                                                         <option value="monday" {{ $s->hari === 'monday' ? 'selected' : '' }}>Senin Saja</option>
+                                                        <option value="tuesday" {{ $s->hari === 'tuesday' ? 'selected' : '' }}>Selasa Saja</option>
+                                                        <option value="wednesday" {{ $s->hari === 'wednesday' ? 'selected' : '' }}>Rabu Saja</option>
+                                                        <option value="thursday" {{ $s->hari === 'thursday' ? 'selected' : '' }}>Kamis Saja</option>
                                                         <option value="friday" {{ $s->hari === 'friday' ? 'selected' : '' }}>Jumat Saja</option>
+                                                        <option value="saturday" {{ $s->hari === 'saturday' ? 'selected' : '' }}>Sabtu Saja</option>
+                                                        <option value="sunday" {{ $s->hari === 'sunday' ? 'selected' : '' }}>Minggu Saja</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -204,7 +301,12 @@
                                 <option value="daily">Setiap Hari (Daily)</option>
                                 <option value="weekdays">Hari Kerja (Senin-Jumat)</option>
                                 <option value="monday">Senin Saja</option>
+                                <option value="tuesday">Selasa Saja</option>
+                                <option value="wednesday">Rabu Saja</option>
+                                <option value="thursday">Kamis Saja</option>
                                 <option value="friday">Jumat Saja</option>
+                                <option value="saturday">Sabtu Saja</option>
+                                <option value="sunday">Minggu Saja</option>
                             </select>
                         </div>
                     </div>

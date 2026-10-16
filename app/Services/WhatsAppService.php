@@ -6,7 +6,6 @@ use App\Models\DataBebasHarian;
 use App\Models\DataIntegrasi;
 use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
-use App\Models\Instansi;
 use App\Models\Upt;
 use App\Models\User;
 use App\Models\WaPimpinan;
@@ -20,15 +19,15 @@ class WhatsAppService
     {
         $settings = WaSetting::getFirst();
 
-        if (!$settings || empty($settings->api_key) || empty($settings->aktif)) {
+        if (! $settings || empty($settings->api_key) || empty($settings->aktif)) {
             return [
                 'success' => false,
-                'message' => 'Notifikasi WhatsApp belum dikonfigurasi atau sedang nonaktif.'
+                'message' => 'Notifikasi WhatsApp belum dikonfigurasi atau sedang nonaktif.',
             ];
         }
 
         $isGroup = preg_match('/[a-zA-Z]/', $target);
-        if (!$isGroup) {
+        if (! $isGroup) {
             $target = preg_replace('/^0/', '62', $target);
             $target = preg_replace('/[^0-9]/', '', $target);
         }
@@ -50,8 +49,8 @@ class WhatsAppService
                     'countryCode' => '62',
                 ]),
                 CURLOPT_HTTPHEADER => [
-                    'Authorization: ' . $apiKey,
-                    'Content-Type: application/x-www-form-urlencoded'
+                    'Authorization: '.$apiKey,
+                    'Content-Type: application/x-www-form-urlencoded',
                 ],
                 CURLOPT_TIMEOUT => 30,
             ]);
@@ -65,8 +64,8 @@ class WhatsAppService
                     'message' => $message,
                 ]),
                 CURLOPT_HTTPHEADER => [
-                    'Authorization: ' . $apiKey,
-                    'Content-Type: application/json'
+                    'Authorization: '.$apiKey,
+                    'Content-Type: application/json',
                 ],
                 CURLOPT_TIMEOUT => 30,
             ]);
@@ -77,7 +76,7 @@ class WhatsAppService
         $error = curl_error($ch);
         curl_close($ch);
 
-        $success = ($httpCode >= 200 && $httpCode < 300) && !$error;
+        $success = ($httpCode >= 200 && $httpCode < 300) && ! $error;
         $responseData = json_decode($response, true);
         $actualMessage = 'Pesan berhasil dikirim.';
 
@@ -103,11 +102,11 @@ class WhatsAppService
     public static function sendMorningReminder(): array
     {
         $settings = WaSetting::getFirst();
-        if (!$settings || empty($settings->api_key) || empty($settings->aktif)) {
+        if (! $settings || empty($settings->api_key) || empty($settings->aktif)) {
             return [
                 'success' => false,
                 'message' => 'Pengaturan WA belum aktif.',
-                'sent' => 0
+                'sent' => 0,
             ];
         }
 
@@ -137,13 +136,22 @@ class WhatsAppService
             $uptId = $op->upt_id;
             $missing = [];
 
-            if (!in_array($uptId, $donePenghuni)) $missing[] = 'Data Penghuni';
-            if (!in_array($uptId, $doneOverstaying)) $missing[] = 'Data Overstaying';
-            if (!in_array($uptId, $doneIntegrasi)) $missing[] = 'Data Integrasi';
-            if (!in_array($uptId, $doneBebasHarian)) $missing[] = 'Data Bebas Harian';
+            if (! in_array($uptId, $donePenghuni)) {
+                $missing[] = 'Data Penghuni';
+            }
+            if (! in_array($uptId, $doneOverstaying)) {
+                $missing[] = 'Data Overstaying';
+            }
+            if (! in_array($uptId, $doneIntegrasi)) {
+                $missing[] = 'Data Integrasi';
+            }
+            if (! in_array($uptId, $doneBebasHarian)) {
+                $missing[] = 'Data Bebas Harian';
+            }
 
             if (empty($missing)) {
                 $skipped++;
+
                 continue;
             }
 
@@ -166,7 +174,7 @@ class WhatsAppService
             $responses[] = [
                 'name' => $op->nama_lengkap,
                 'upt' => $op->upt?->nama_upt ?? '-',
-                'status' => $res['success'] ? 'success' : 'failed'
+                'status' => $res['success'] ? 'success' : 'failed',
             ];
         }
 
@@ -179,7 +187,8 @@ class WhatsAppService
                 'jumlah_penerima' => $sent,
                 'tanggal_kirim' => now(),
             ]);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
         return [
             'success' => true,
@@ -187,14 +196,14 @@ class WhatsAppService
             'sent' => $sent,
             'failed' => $failed,
             'skipped' => $skipped,
-            'details' => $responses
+            'details' => $responses,
         ];
     }
 
     public static function sendAfternoonReport(): array
     {
         $settings = WaSetting::getFirst();
-        if (!$settings || empty($settings->api_key) || empty($settings->aktif)) {
+        if (! $settings || empty($settings->api_key) || empty($settings->aktif)) {
             return ['success' => false, 'message' => 'Pengaturan WA belum aktif.'];
         }
 
@@ -216,34 +225,50 @@ class WhatsAppService
         $missingBebasHarian = [];
 
         foreach ($allUPTs as $upt) {
-            if (!in_array($upt->id, $penghuniUPTs)) $missingPenghuni[] = $upt->nama_upt;
-            if (!in_array($upt->id, $overstayingUPTs)) $missingOverstaying[] = $upt->nama_upt;
-            if (!in_array($upt->id, $integrasiUPTs)) $missingIntegrasi[] = $upt->nama_upt;
-            if (!in_array($upt->id, $bebasHarianUPTs)) $missingBebasHarian[] = $upt->nama_upt;
+            if (! in_array($upt->id, $penghuniUPTs)) {
+                $missingPenghuni[] = $upt->nama_upt;
+            }
+            if (! in_array($upt->id, $overstayingUPTs)) {
+                $missingOverstaying[] = $upt->nama_upt;
+            }
+            if (! in_array($upt->id, $integrasiUPTs)) {
+                $missingIntegrasi[] = $upt->nama_upt;
+            }
+            if (! in_array($upt->id, $bebasHarianUPTs)) {
+                $missingBebasHarian[] = $upt->nama_upt;
+            }
         }
 
-        $listBelumInput = "";
+        $listBelumInput = '';
         if (empty($missingPenghuni) && empty($missingOverstaying) && empty($missingIntegrasi) && empty($missingBebasHarian)) {
-            $listBelumInput = "✅ *SEMUA UPT SUDAH MENGINPUT DATA LENGKAP*";
+            $listBelumInput = '✅ *SEMUA UPT SUDAH MENGINPUT DATA LENGKAP*';
         } else {
-            if (!empty($missingPenghuni)) {
-                $listBelumInput .= "🔴 *Belum Input Data Penghuni* (" . count($missingPenghuni) . " UPT):\n";
-                foreach ($missingPenghuni as $name) $listBelumInput .= "   • $name\n";
+            if (! empty($missingPenghuni)) {
+                $listBelumInput .= '🔴 *Belum Input Data Penghuni* ('.count($missingPenghuni)." UPT):\n";
+                foreach ($missingPenghuni as $name) {
+                    $listBelumInput .= "   • $name\n";
+                }
                 $listBelumInput .= "\n";
             }
-            if (!empty($missingOverstaying)) {
-                $listBelumInput .= "🔴 *Belum Input Data Overstaying* (" . count($missingOverstaying) . " UPT):\n";
-                foreach ($missingOverstaying as $name) $listBelumInput .= "   • $name\n";
+            if (! empty($missingOverstaying)) {
+                $listBelumInput .= '🔴 *Belum Input Data Overstaying* ('.count($missingOverstaying)." UPT):\n";
+                foreach ($missingOverstaying as $name) {
+                    $listBelumInput .= "   • $name\n";
+                }
                 $listBelumInput .= "\n";
             }
-            if (!empty($missingIntegrasi)) {
-                $listBelumInput .= "🔴 *Belum Input Data Integrasi* (" . count($missingIntegrasi) . " UPT):\n";
-                foreach ($missingIntegrasi as $name) $listBelumInput .= "   • $name\n";
+            if (! empty($missingIntegrasi)) {
+                $listBelumInput .= '🔴 *Belum Input Data Integrasi* ('.count($missingIntegrasi)." UPT):\n";
+                foreach ($missingIntegrasi as $name) {
+                    $listBelumInput .= "   • $name\n";
+                }
                 $listBelumInput .= "\n";
             }
-            if (!empty($missingBebasHarian)) {
-                $listBelumInput .= "🔴 *Belum Input Bebas Harian* (" . count($missingBebasHarian) . " UPT):\n";
-                foreach ($missingBebasHarian as $name) $listBelumInput .= "   • $name\n";
+            if (! empty($missingBebasHarian)) {
+                $listBelumInput .= '🔴 *Belum Input Bebas Harian* ('.count($missingBebasHarian)." UPT):\n";
+                foreach ($missingBebasHarian as $name) {
+                    $listBelumInput .= "   • $name\n";
+                }
                 $listBelumInput .= "\n";
             }
         }
@@ -269,7 +294,8 @@ class WhatsAppService
                 'jumlah_penerima' => 1,
                 'tanggal_kirim' => now(),
             ]);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
         return [
             'success' => $res['success'],
@@ -284,7 +310,7 @@ class WhatsAppService
     public static function sendScheduledReport(int $scheduleId): array
     {
         $schedule = WaScheduledReport::find($scheduleId);
-        if (!$schedule) {
+        if (! $schedule) {
             return ['success' => false, 'message' => 'Jadwal laporan tidak ditemukan.'];
         }
 
@@ -295,7 +321,7 @@ class WhatsAppService
         $message = self::formatTemplateMessage($template, $comprehensiveData);
 
         $res = ['success' => true];
-        if (!empty($schedule->group_id) && $schedule->group_id !== '-') {
+        if (! empty($schedule->group_id) && $schedule->group_id !== '-') {
             $res = self::send($schedule->group_id, $message);
         }
 
@@ -311,12 +337,13 @@ class WhatsAppService
                 'response' => $res['message'] ?? ($res['response'] ?? null),
                 'tanggal_kirim' => now(),
             ]);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
-        if (!empty($schedule->kirim_ke_pimpinan) && $res['success']) {
+        if (! empty($schedule->kirim_ke_pimpinan) && $res['success']) {
             $pimpinanList = WaPimpinan::where('aktif', 1)->orderBy('urutan')->get();
             foreach ($pimpinanList as $pimpinan) {
-                if (!empty($pimpinan->no_wa)) {
+                if (! empty($pimpinan->no_wa)) {
                     self::send($pimpinan->no_wa, $message);
                 }
             }
@@ -327,10 +354,22 @@ class WhatsAppService
 
     public static function processScheduledReports(): array
     {
-        $today = date('Y-m-d');
-        $currentTime = date('H:i:s');
-        $currentDayNum = date('w');
+        $now = now()->timezone('Asia/Jakarta');
+        $today = $now->format('Y-m-d');
+        $currentTime = $now->format('H:i:s');
+        $currentDayNum = (int) $now->format('w'); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
         $isWeekday = ($currentDayNum >= 1 && $currentDayNum <= 5);
+        $currentDayName = strtolower($now->format('l')); // 'monday', 'friday', etc.
+        $dayNameIndo = match ($currentDayNum) {
+            0 => 'minggu',
+            1 => 'senin',
+            2 => 'selasa',
+            3 => 'rabu',
+            4 => 'kamis',
+            5 => 'jumat',
+            6 => 'sabtu',
+            default => '',
+        };
 
         $schedules = WaScheduledReport::where('aktif', 1)
             ->where('jam_kirim', '<=', $currentTime)
@@ -342,13 +381,15 @@ class WhatsAppService
         $results = [];
         foreach ($schedules as $s) {
             $shouldSend = false;
-            $hari = $s->hari;
+            $hari = strtolower(trim((string) $s->hari));
 
-            if ($hari === 'daily') {
+            if ($hari === 'daily' || $hari === 'setiap hari' || $hari === '*') {
                 $shouldSend = true;
-            } elseif ($hari === 'weekdays' && $isWeekday) {
+            } elseif (($hari === 'weekdays' || $hari === 'hari kerja') && $isWeekday) {
                 $shouldSend = true;
-            } elseif ((string)$hari === (string)$currentDayNum) {
+            } elseif ($hari === $currentDayName || $hari === $dayNameIndo) {
+                $shouldSend = true;
+            } elseif ((string) $hari === (string) $currentDayNum) {
                 $shouldSend = true;
             }
 
@@ -369,7 +410,7 @@ class WhatsAppService
     public static function runCron(string $action = 'run'): array
     {
         $settings = WaSetting::getFirst();
-        if (!$settings || empty($settings->aktif)) {
+        if (! $settings || empty($settings->aktif)) {
             return ['success' => false, 'message' => 'WhatsApp notifications are disabled'];
         }
 
@@ -380,17 +421,19 @@ class WhatsAppService
                 return self::sendAfternoonReport();
             case 'scheduled':
                 $scheduledResults = self::processScheduledReports();
+
                 return [
                     'success' => true,
-                    'message' => 'Processed ' . count($scheduledResults) . ' schedules',
+                    'message' => 'Processed '.count($scheduledResults).' schedules',
                     'details' => $scheduledResults,
                 ];
             case 'run':
             default:
                 $morning = ['status' => 'skipped'];
                 $afternoon = ['status' => 'skipped'];
-                $today = date('Y-m-d');
-                $currentTime = date('H:i');
+                $now = now()->timezone('Asia/Jakarta');
+                $today = $now->format('Y-m-d');
+                $currentTime = $now->format('H:i');
 
                 $morningTime = substr($settings->jam_reminder_pagi ?? '07:30', 0, 5);
                 if ($currentTime >= $morningTime) {
@@ -423,25 +466,25 @@ class WhatsAppService
 
     public static function getDefaultTemplate(): string
     {
-        return "📊 *LAPORAN TERPADU HARIAN (SULTAN BANTEN)*\n" .
-               "📅 Tanggal: {tanggal}\n" .
-               "⏰ Waktu: {waktu} WIB\n\n" .
-               "🏢 *RINGKASAN TOTAL:*\n" .
-               "• Total UPT: {total_upt} UPT\n" .
-               "• Kapasitas: {total_kapasitas} orang\n" .
-               "• Isi Penghuni: {total_penghuni} orang\n" .
-               "• Persentase Hunian: {persen_hunian}%\n\n" .
-               "👥 *RINCIAN PENGHUNI:*\n" .
-               "• Tahanan: {total_tahanan} orang\n" .
-               "• Narapidana: {total_napi} orang\n" .
-               "• Overstaying: {total_overstaying} orang\n" .
-               "• Integrasi (PB/CB/CMB): {total_integrasi} orang\n" .
-               "• Bebas Harian: {total_bebas_harian} orang\n\n" .
-               "⚖️ *KLASIFIKASI KHUSUS:*\n" .
-               "• Narkoba: {narkoba_total} orang\n" .
-               "• Tipikor: {tipikor} orang\n" .
-               "• Teroris: {teroris} orang\n\n" .
-               "_Laporan otomatis dari Sistem Sultan Banten Ditjenpas_";
+        return "📊 *LAPORAN TERPADU HARIAN (SULTAN BANTEN)*\n".
+               "📅 Tanggal: {tanggal}\n".
+               "⏰ Waktu: {waktu} WIB\n\n".
+               "🏢 *RINGKASAN TOTAL:*\n".
+               "• Total UPT: {total_upt} UPT\n".
+               "• Kapasitas: {total_kapasitas} orang\n".
+               "• Isi Penghuni: {total_penghuni} orang\n".
+               "• Persentase Hunian: {persen_hunian}%\n\n".
+               "👥 *RINCIAN PENGHUNI:*\n".
+               "• Tahanan: {total_tahanan} orang\n".
+               "• Narapidana: {total_napi} orang\n".
+               "• Overstaying: {total_overstaying} orang\n".
+               "• Integrasi (PB/CB/CMB): {total_integrasi} orang\n".
+               "• Bebas Harian: {total_bebas_harian} orang\n\n".
+               "⚖️ *KLASIFIKASI KHUSUS:*\n".
+               "• Narkoba: {narkoba_total} orang\n".
+               "• Tipikor: {tipikor} orang\n".
+               "• Teroris: {teroris} orang\n\n".
+               '_Laporan otomatis dari Sistem Sultan Banten Ditjenpas_';
     }
 
     public static function getTemplateVariables(): array
@@ -467,8 +510,9 @@ class WhatsAppService
     public static function formatTemplateMessage(string $template, array $data): string
     {
         foreach ($data as $var => $value) {
-            $template = str_replace('{' . $var . '}', (string)$value, $template);
+            $template = str_replace('{'.$var.'}', (string) $value, $template);
         }
+
         return $template;
     }
 
