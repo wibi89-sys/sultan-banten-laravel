@@ -36,6 +36,16 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('1 Bulan', $result['lama_pidana_teks']);
     }
 
+    public function test_hitung_maju_1_bulan_september(): void
+    {
+        // 20/09/2026 Vonis 1 bulan (30 hari) -> ekspirasi 20/10/2026 (September 30 hari)
+        $result = $this->service->hitungMaju('2026-09-20', 0, 1, 0);
+
+        $this->assertEquals('2026-10-20', $result['tgl_ekspirasi']);
+        $this->assertEquals(30, $result['total_hari_vonis']);
+        $this->assertEquals('1 Bulan', $result['lama_pidana_teks']);
+    }
+
     public function test_hitung_maju_1_tahun(): void
     {
         // 01/01/2026 Vonis 1 tahun -> ekspirasi 01/01/2027 (di tanggal & bulan yang sama)
@@ -48,10 +58,20 @@ class TelramCalculatorServiceTest extends TestCase
 
     public function test_hitung_maju_kombinasi_tahun_dan_bulan(): void
     {
-        // 01/01/2026 Vonis 1 tahun 1 bulan -> 01/01/2027 geser 1 bulan (-1 hari) = 31/01/2027
+        // 01/01/2026 Vonis 1 tahun 1 bulan -> 01/01/2027 + 30 hari = 31/01/2027
         $result = $this->service->hitungMaju('2026-01-01', 1, 1, 0);
 
         $this->assertEquals('2027-01-31', $result['tgl_ekspirasi']);
+        $this->assertEquals(390, $result['total_hari_vonis']);
+        $this->assertEquals('1 Tahun, 1 Bulan', $result['lama_pidana_teks']);
+    }
+
+    public function test_hitung_maju_kombinasi_september(): void
+    {
+        // 20/09/2026 Vonis 1 tahun 1 bulan -> 20/09/2027 + 30 hari = 20/10/2027
+        $result = $this->service->hitungMaju('2026-09-20', 1, 1, 0);
+
+        $this->assertEquals('2027-10-20', $result['tgl_ekspirasi']);
         $this->assertEquals(390, $result['total_hari_vonis']);
         $this->assertEquals('1 Tahun, 1 Bulan', $result['lama_pidana_teks']);
     }
@@ -66,27 +86,9 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('1 Tahun, 1 Bulan, 5 Hari', $result['lama_pidana_teks']);
     }
 
-    public function test_kabisat_februari_2024_dan_2028(): void
-    {
-        // 2024 adalah tahun kabisat (Februari ada 29 hari)
-        // 01/02/2024 vonis 1 bulan -> ekspirasi 29/02/2024
-        $resKabisat = $this->service->hitungMaju('2024-02-01', 0, 1, 0);
-        $this->assertEquals('2024-02-29', $resKabisat['tgl_ekspirasi']);
-
-        // 2026 adalah tahun normal (Februari ada 28 hari)
-        // 01/02/2026 vonis 1 bulan -> ekspirasi 28/02/2026
-        $resNormal = $this->service->hitungMaju('2026-02-01', 0, 1, 0);
-        $this->assertEquals('2026-02-28', $resNormal['tgl_ekspirasi']);
-
-        // 2028 adalah tahun kabisat berikutnya
-        // 01/02/2028 vonis 1 bulan -> ekspirasi 29/02/2028
-        $resKabisat2028 = $this->service->hitungMaju('2028-02-01', 0, 1, 0);
-        $this->assertEquals('2028-02-29', $resKabisat2028['tgl_ekspirasi']);
-    }
-
     public function test_kabisat_ditahan_pada_29_februari(): void
     {
-        // Ditahan pada 29 Februari 2024
+        // Ditahan pada 29 Februari 2024 (kabisat)
         // Vonis 1 hari -> 01/03/2024
         $res1Hari = $this->service->hitungMaju('2024-02-29', 0, 0, 1);
         $this->assertEquals('2024-03-01', $res1Hari['tgl_ekspirasi']);
@@ -102,11 +104,6 @@ class TelramCalculatorServiceTest extends TestCase
 
     public function test_kabisat_mode_mundur(): void
     {
-        // Mundur dari 29/02/2024 ke 01/02/2024 -> 1 Bulan
-        $res1 = $this->service->hitungMundur('2024-02-01', '2024-02-29');
-        $this->assertEquals(1, $res1['bulan']);
-        $this->assertEquals(0, $res1['hari']);
-
         // Mundur dari 28/02/2025 ke 29/02/2024 -> 1 Tahun
         $res2 = $this->service->hitungMundur('2024-02-29', '2025-02-28');
         $this->assertEquals(1, $res2['tahun']);

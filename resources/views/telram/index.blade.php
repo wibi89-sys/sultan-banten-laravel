@@ -563,21 +563,16 @@
 
         // Rumus Perhitungan Ekspirasi:
         // 1. Dimulai dari tahun: jika ada tahun, tambah tahun di tanggal & bulan yang sama
-        // 2. Kemudian geser bulan: jika ada bulan, tambah bulan kalender lalu kurangi 1 hari
-        // 3. Kemudian geser hari: jika ada hari, tambah hari
+        // 2. Kemudian geser bulan dan hari: 1 bulan = 30 hari kalender aktual
         let tglEkspirasi = new Date(tglAwal);
 
         if (vThn > 0) {
             tglEkspirasi = addYearsCalendar(tglEkspirasi, vThn);
         }
 
-        if (vBln > 0) {
-            tglEkspirasi = addMonthsCalendar(tglEkspirasi, vBln);
-            tglEkspirasi.setDate(tglEkspirasi.getDate() - 1);
-        }
-
-        if (vHri > 0) {
-            tglEkspirasi.setDate(tglEkspirasi.getDate() + vHri);
+        const sisaHari = (vBln * 30) + vHri;
+        if (sisaHari > 0) {
+            tglEkspirasi.setDate(tglEkspirasi.getDate() + sisaHari);
         }
 
         // Total hari baku: 1 Tahun = 360 Hari, 1 Bulan = 30 Hari
@@ -632,33 +627,18 @@
             return;
         }
 
-        // 1. Tahun: Cari berapa tahun penuh yang bisa ditambahkan dari tglAwal
+        // 1. Tahun: Cari berapa tahun penuh yang bisa ditambahkan dari tglAwal di tanggal & bulan yang sama
         let vThn = 0;
         while (addYearsCalendar(tglAwal, vThn + 1) <= tglEkspirasi) {
             vThn++;
         }
         let curr = addYearsCalendar(tglAwal, vThn);
 
-        // 2. Bulan: Dari posisi curr, cari berapa bulan yang bisa digeser
-        // Aturan bulan: setiap penambahan k bulan menggeser ke addMonthsCalendar - 1 hari
-        let vBln = 0;
-        while (true) {
-            let nextDate = addMonthsCalendar(curr, vBln + 1);
-            nextDate.setDate(nextDate.getDate() - 1);
-            if (nextDate <= tglEkspirasi) {
-                vBln++;
-            } else {
-                break;
-            }
-        }
-        if (vBln > 0) {
-            curr = addMonthsCalendar(curr, vBln);
-            curr.setDate(curr.getDate() - 1);
-        }
-
-        // 3. Sisa Hari
+        // 2. Sisa Hari dikonversi ke bulan (1 bulan = 30 hari) dan hari
         const diffMs = tglEkspirasi.getTime() - curr.getTime();
-        const vHri = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const vBln = Math.floor(diffDays / 30);
+        const vHri = diffDays % 30;
 
         let parts = [];
         if (vThn > 0) parts.push(`${vThn} Tahun`);
