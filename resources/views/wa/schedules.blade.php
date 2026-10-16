@@ -75,7 +75,7 @@
                 @csrf
                 <input type="hidden" name="type" value="morning">
                 
-                <div class="row g-2 mb-3 align-items-center">
+                <div class="row g-2 mb-2 align-items-center">
                     <div class="col-sm-5">
                         <label class="form-label small fw-semibold mb-0">Jam Kirim Otomatis</label>
                     </div>
@@ -86,11 +86,50 @@
                     </div>
                 </div>
 
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-sm-5">
+                        <label class="form-label small fw-semibold mb-0">
+                            Jeda Antar Kontak
+                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 10px;">Anti-Spam</span>
+                        </label>
+                    </div>
+                    <div class="col-sm-7">
+                        <div class="input-group input-group-sm">
+                            <input type="number" name="jeda_kirim" class="form-control" min="1" max="30"
+                                value="{{ $waSettings->jeda_kirim ?? 4 }}" required>
+                            <span class="input-group-text">detik</span>
+                        </div>
+                        <small class="text-muted" style="font-size: 11px;">Jeda acak (&plusmn;1 dtk) antar operator agar aman dari banned WA.</small>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-5">
+                        <label class="form-label small fw-semibold mb-0">
+                            Variasi Salam <code>{salam}</code>
+                        </label>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="text" name="daftar_salam" class="form-control form-control-sm"
+                            value="{{ $waSettings->daftar_salam ?? 'Selamat pagi, Semangat pagi, Yth., Halo Rekan, Salam hangat' }}"
+                            placeholder="Contoh: Selamat pagi, Semangat pagi, Yth.">
+                        <small class="text-muted" style="font-size: 11px;">Diacak otomatis untuk tag <code>{salam}</code>. Pisahkan koma.</small>
+                    </div>
+                </div>
+
                 <div class="mb-3">
-                    <label class="form-label small fw-semibold">Template Pesan Pengingat</label>
-                    <textarea name="template_pagi" class="form-control form-control-sm font-monospace" rows="4" required>{{ $waSettings->template_pagi ?: "🌅 *PENGINGAT INPUT DATA*\n\nYth. {nama}\nUPT: {upt}\n\n⚠️ *Belum Input:* {list_missing}\n\nMohon segera lengkapi data hari ini.\n⏰ Batas waktu: Pukul {jam_mulai} - {jam_selesai} WIB\n\n_Sultan Banten Ditjenpas_" }}</textarea>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label small fw-semibold mb-0">Template Pesan Pengingat</label>
+                        <span class="badge bg-light text-primary border" style="font-size: 10px;" title="Mendukung Spintax acak">
+                            <i class="fas fa-magic me-1"></i>Spintax Support
+                        </span>
+                    </div>
+                    <textarea name="template_pagi" class="form-control form-control-sm font-monospace" rows="4" required>{{ $waSettings->template_pagi ?: "🌅 *PENGINGAT INPUT DATA*\n\n{salam} {nama}\nUPT: {upt}\n\n⚠️ *Belum Input:* {list_missing}\n\nMohon segera lengkapi data hari ini.\n⏰ Batas waktu: Pukul {jam_mulai} - {jam_selesai} WIB\n\n_Sultan Banten Ditjenpas_" }}</textarea>
                     <div class="small text-muted mt-1" style="font-size: 11px;">
-                        Variabel khusus: <code>{nama}</code>, <code>{upt}</code>, <code>{jam_mulai}</code>, <code>{jam_selesai}</code>, <code>{list_missing}</code>
+                        Variabel: <code>{salam}</code>, <code>{nama}</code>, <code>{upt}</code>, <code>{jam_mulai}</code>, <code>{jam_selesai}</code>, <code>{list_missing}</code>
+                        <div class="text-primary mt-1">
+                            <i class="fas fa-info-circle me-1"></i>Tersedia fitur Spintax acak: <code>{Opsi 1|Opsi 2|Opsi 3}</code> untuk variasi kalimat di bagian mana saja.
+                        </div>
                     </div>
                 </div>
 

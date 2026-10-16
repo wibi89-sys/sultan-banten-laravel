@@ -101,6 +101,9 @@ class WhatsAppController extends Controller
         $waSettings->api_url = trim($request->input('api_url', 'https://api.fonnte.com/send'));
         $waSettings->sender_number = trim($request->input('sender_number', ''));
         $waSettings->aktif = $request->has('aktif');
+        if ($request->has('jeda_kirim')) {
+            $waSettings->jeda_kirim = max(1, min(30, (int) $request->input('jeda_kirim', 4)));
+        }
         $waSettings->save();
 
         ActivityLog::log('setting', 'wa_gateway', 'Memperbarui konfigurasi gateway WhatsApp');
@@ -436,11 +439,13 @@ class WhatsAppController extends Controller
 
         if ($type === 'morning') {
             $setting->jam_reminder_pagi = $request->input('jam_reminder_pagi', '07:30');
+            $setting->jeda_kirim = max(1, min(30, (int) $request->input('jeda_kirim', 4)));
+            $setting->daftar_salam = trim((string) $request->input('daftar_salam', 'Selamat pagi, Semangat pagi, Yth., Halo Rekan, Salam hangat'));
             $setting->template_pagi = $request->input('template_pagi', '');
             $setting->save();
-            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui aturan reminder pagi');
+            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui aturan reminder pagi & anti-spam');
 
-            return back()->with('success', 'Aturan pengingat pagi berhasil diperbarui!');
+            return back()->with('success', 'Aturan pengingat pagi & anti-spam berhasil diperbarui!');
         }
 
         if ($type === 'afternoon') {

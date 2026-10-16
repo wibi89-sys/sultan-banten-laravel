@@ -53,6 +53,7 @@ class WhatsAppService
                     'target' => $target,
                     'message' => $message,
                     'countryCode' => '62',
+                    'delay' => '2',
                 ]),
                 CURLOPT_HTTPHEADER => [
                     'Authorization: '.$apiKey,
@@ -149,6 +150,13 @@ class WhatsAppService
         $skipped = 0;
         $responses = [];
 
+        $rawSalam = trim((string) ($settings->daftar_salam ?? ''));
+        $salamList = array_values(array_filter(array_map('trim', explode(',', $rawSalam ?: 'Selamat pagi, Semangat pagi, Yth., Halo Rekan, Salam hangat'))));
+        $delayBase = (int) ($settings->jeda_kirim ?? 4);
+        if ($delayBase < 1) {
+            $delayBase = 1;
+        }
+
         foreach ($operators as $op) {
             $uptId = $op->upt_id;
             $missing = [];
@@ -172,14 +180,26 @@ class WhatsAppService
                 continue;
             }
 
+            // Anti-Spam: Beri jeda acak manusiawi (jitter: delayBase +/- 1 detik) antar pengiriman pesan ke operator
+            if ($sent > 0 || $failed > 0) {
+                $jitter = random_int(max(1, $delayBase - 1), $delayBase + 2);
+                sleep($jitter);
+            }
+
             $missingText = implode(', ', $missing);
-            $template = $settings->template_pagi ?: "🌅 *PENGINGAT INPUT DATA*\n\nYth. {nama}\nUPT: {upt}\n\n⚠️ *Belum Input:* {list_missing}\n\nMohon segera lengkapi data hari ini.\n⏰ Batas waktu: Pukul {jam_mulai} - {jam_selesai} WIB\n\n_Sultan Banten Ditjenpas_";
+            $template = $settings->template_pagi ?: "🌅 *PENGINGAT INPUT DATA*\n\n{salam} {nama}\nUPT: {upt}\n\n⚠️ *Belum Input:* {list_missing}\n\nMohon segera lengkapi data hari ini.\n⏰ Batas waktu: Pukul {jam_mulai} - {jam_selesai} WIB\n\n_Sultan Banten Ditjenpas_";
+
+            // Pilih salam pembuka acak untuk nomor operator ini
+            $randomSalam = ! empty($salamList) ? $salamList[array_rand($salamList)] : 'Selamat pagi';
 
             $message = str_replace(
-                ['{nama}', '{upt}', '{jam_mulai}', '{jam_selesai}', '{list_missing}'],
-                [$op->nama_lengkap, $op->upt?->nama_upt ?? '-', $jamMulai, $jamSelesai, $missingText],
+                ['{nama}', '{upt}', '{jam_mulai}', '{jam_selesai}', '{list_missing}', '{salam}'],
+                [$op->nama_lengkap, $op->upt?->nama_upt ?? '-', $jamMulai, $jamSelesai, $missingText, $randomSalam],
                 $template
             );
+
+            // Terapkan spintax acak {opsi1|opsi2|opsi3} jika ada di template
+            $message = self::parseSpintax($message);
 
             $res = self::send($op->no_wa, $message);
             if ($res['success']) {
@@ -341,6 +361,8 @@ class WhatsAppService
             $template
         );
 
+        $message = self::parseSpintax($message);
+
         $res = self::send($targetGroupId, $message);
 
         try {
@@ -407,9 +429,21 @@ class WhatsAppService
 
         if (! empty($schedule->kirim_ke_pimpinan) && $res['success']) {
             $pimpinanList = WaPimpinan::where('aktif', 1)->orderBy('urutan')->get();
+            $pimpinanSent = 0;
+            $settings = WaSetting::getFirst();
+            $delayBase = (int) ($settings?->jeda_kirim ?? 4);
+            if ($delayBase < 1) {
+                $delayBase = 1;
+            }
+
             foreach ($pimpinanList as $pimpinan) {
                 if (! empty($pimpinan->no_wa)) {
+                    if ($pimpinanSent > 0) {
+                        $jitter = random_int(max(1, $delayBase - 1), $delayBase + 2);
+                        sleep($jitter);
+                    }
                     self::send($pimpinan->no_wa, $message);
+                    $pimpinanSent++;
                 }
             }
         }
@@ -651,6 +685,7 @@ class WhatsAppService
                 'tanggal' => 'Tanggal laporan hari ini (contoh: 16 Oktober 2026)',
                 'waktu' => 'Jam dan menit pengiriman pesan WIB (contoh: 16:00)',
                 'total_upt' => 'Total jumlah satuan kerja / UPT aktif',
+                'salam' => 'Salam pembuka acak (Selamat pagi, Semangat pagi, Yth., Halo Rekan, dsb)',
             ],
         ];
     }
@@ -673,7 +708,24 @@ class WhatsAppService
             $template = str_replace('{'.$var.'}', (string) $value, $template);
         }
 
-        return $template;
+        return self::parseSpintax($template);
+    }
+
+    /**
+     * Parse spintax format {option1|option2|option3} into a random option.
+     * Preserves normal template variables like {nama}, {upt}, etc.
+     */
+    public static function parseSpintax(string $text): string
+    {
+        while (preg_match('/\{([^{}]*\|[^{}]*)\}/', $text)) {
+            $text = (string) preg_replace_callback('/\{([^{}]*\|[^{}]*)\}/', function ($matches) {
+                $options = explode('|', $matches[1]);
+
+                return trim($options[array_rand($options)]);
+            }, $text);
+        }
+
+        return $text;
     }
 
     public static function getComprehensiveReportData(string $tanggal): array

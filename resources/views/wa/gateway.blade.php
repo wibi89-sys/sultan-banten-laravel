@@ -111,12 +111,26 @@
                     <small class="text-muted" style="font-size: 11px;">Token otentikasi resmi yang didapatkan dari dashboard Fonnte.</small>
                 </div>
 
-                <div class="mb-4">
-                    <label for="api_url" class="form-label small fw-semibold">Endpoint API URL <span class="text-danger">*</span></label>
-                    <input type="text" name="api_url" id="api_url" class="form-control form-control-sm font-monospace"
-                        value="{{ $waSettings->api_url ?? 'https://api.fonnte.com/send' }}"
-                        placeholder="https://api.fonnte.com/send" aria-label="API URL Endpoint">
-                    <small class="text-muted" style="font-size: 11px;">Default Fonnte: <code>https://api.fonnte.com/send</code></small>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-7">
+                        <label for="api_url" class="form-label small fw-semibold">Endpoint API URL <span class="text-danger">*</span></label>
+                        <input type="text" name="api_url" id="api_url" class="form-control form-control-sm font-monospace"
+                            value="{{ $waSettings->api_url ?? 'https://api.fonnte.com/send' }}"
+                            placeholder="https://api.fonnte.com/send" aria-label="API URL Endpoint">
+                        <small class="text-muted" style="font-size: 11px;">Default Fonnte: <code>https://api.fonnte.com/send</code></small>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="jeda_kirim" class="form-label small fw-semibold">
+                            Jeda Antar Kontak
+                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 10px;">Anti-Spam</span>
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" name="jeda_kirim" id="jeda_kirim" class="form-control" min="1" max="30"
+                                value="{{ $waSettings->jeda_kirim ?? 4 }}" required>
+                            <span class="input-group-text">detik</span>
+                        </div>
+                        <small class="text-muted" style="font-size: 11px;">Jeda acak (&plusmn;1 dtk) per nomor.</small>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 border-top pt-3">

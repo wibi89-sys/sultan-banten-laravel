@@ -19,6 +19,8 @@ class WaSetting extends Model
         'jam_reminder_pagi',
         'jam_reminder_siang',
         'aktif',
+        'jeda_kirim',
+        'daftar_salam',
         'template_pagi',
         'template_siang',
     ];
