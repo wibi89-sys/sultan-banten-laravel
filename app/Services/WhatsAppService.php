@@ -11,7 +11,10 @@ use App\Models\User;
 use App\Models\WaPimpinan;
 use App\Models\WaScheduledReport;
 use App\Models\WaSetting;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
@@ -110,7 +113,18 @@ class WhatsAppService
             ];
         }
 
-        $today = date('Y-m-d');
+        $today = now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $cacheKey = 'wa_reminder_pagi_sent_'.$today;
+        if (Cache::has($cacheKey)) {
+            return [
+                'success' => true,
+                'message' => 'Reminder pagi sudah pernah terkirim hari ini (cached).',
+                'sent' => 0,
+            ];
+        }
+
+        // Lock early to prevent duplicate concurrent runs
+        Cache::put($cacheKey, true, now()->addDays(2));
 
         $donePenghuni = DataPenghuni::where('tanggal', $today)->distinct()->pluck('upt_id')->toArray();
         $doneOverstaying = DataOverstaying::where('tanggal', $today)->distinct()->pluck('upt_id')->toArray();
@@ -183,11 +197,12 @@ class WhatsAppService
                 'tipe' => 'reminder_pagi',
                 'target' => 'operator belum input',
                 'pesan' => "Smart reminder sent to {$sent} operators. {$skipped} operators skipped (already input).",
-                'status' => $failed > 0 ? 'partial' : 'success',
+                'status' => $sent > 0 ? 'success' : ($failed > 0 ? 'failed' : 'success'),
                 'jumlah_penerima' => $sent,
                 'tanggal_kirim' => now(),
             ]);
         } catch (\Exception $e) {
+            Log::error('Gagal mencatat log reminder_pagi: '.$e->getMessage());
         }
 
         return [
@@ -211,7 +226,18 @@ class WhatsAppService
             return ['success' => false, 'message' => 'Group ID belum diatur.'];
         }
 
-        $today = date('Y-m-d');
+        $today = now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $cacheKey = 'wa_reminder_siang_sent_'.$today;
+        if (Cache::has($cacheKey)) {
+            return [
+                'success' => true,
+                'message' => 'Laporan siang sudah pernah terkirim hari ini (cached).',
+            ];
+        }
+
+        // Lock early to prevent duplicate sending
+        Cache::put($cacheKey, true, now()->addDays(2));
+
         $allUPTs = Upt::orderBy('nama_upt')->get();
 
         $penghuniUPTs = DataPenghuni::where('tanggal', $today)->distinct()->pluck('upt_id')->toArray();
@@ -279,7 +305,7 @@ class WhatsAppService
 
         $message = str_replace(
             ['{tanggal}', '{waktu}', '{list_belum_input}', '{total_belum}'],
-            [formatIndonesianDate($today), date('H:i'), trim($listBelumInput), $totalBelum],
+            [formatIndonesianDate($today), now()->timezone('Asia/Jakarta')->format('H:i'), trim($listBelumInput), $totalBelum],
             $template
         );
 
@@ -287,7 +313,7 @@ class WhatsAppService
 
         try {
             DB::table('wa_notification_logs')->insert([
-                'tipe' => 'laporan_siang',
+                'tipe' => 'reminder_siang',
                 'target' => $settings->group_id,
                 'pesan' => $message,
                 'status' => $res['success'] ? 'success' : 'failed',
@@ -295,6 +321,7 @@ class WhatsAppService
                 'tanggal_kirim' => now(),
             ]);
         } catch (\Exception $e) {
+            Log::error('Gagal mencatat log reminder_siang: '.$e->getMessage());
         }
 
         return [
@@ -314,7 +341,16 @@ class WhatsAppService
             return ['success' => false, 'message' => 'Jadwal laporan tidak ditemukan.'];
         }
 
-        $today = date('Y-m-d');
+        $today = now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $cacheKey = "wa_schedule_sent_{$scheduleId}_{$today}";
+        if (Cache::has($cacheKey)) {
+            return ['success' => true, 'message' => 'Jadwal laporan ini sudah pernah terkirim hari ini (cached).'];
+        }
+
+        // Lock early and update last_sent immediately to avoid infinite repeat loops
+        Cache::put($cacheKey, true, now()->addDays(2));
+        $schedule->update(['last_sent' => now()->timezone('Asia/Jakarta')]);
+
         $comprehensiveData = self::getComprehensiveReportData($today);
 
         $template = $schedule->template_pesan ?: self::getDefaultTemplate();
@@ -323,10 +359,6 @@ class WhatsAppService
         $res = ['success' => true];
         if (! empty($schedule->group_id) && $schedule->group_id !== '-') {
             $res = self::send($schedule->group_id, $message);
-        }
-
-        if ($res['success']) {
-            $schedule->update(['last_sent' => now()]);
         }
 
         try {
@@ -338,6 +370,7 @@ class WhatsAppService
                 'tanggal_kirim' => now(),
             ]);
         } catch (\Exception $e) {
+            Log::error('Gagal mencatat log wa_scheduled_report_logs: '.$e->getMessage());
         }
 
         if (! empty($schedule->kirim_ke_pimpinan) && $res['success']) {
@@ -373,10 +406,21 @@ class WhatsAppService
 
         $schedules = WaScheduledReport::where('aktif', 1)
             ->where('jam_kirim', '<=', $currentTime)
-            ->where(function ($q) use ($today) {
-                $q->whereNull('last_sent')->orWhereDate('last_sent', '<', $today);
-            })
-            ->get();
+            ->get()
+            ->filter(function ($s) use ($today) {
+                // Skip if already sent today in cache
+                if (Cache::has("wa_schedule_sent_{$s->id}_{$today}")) {
+                    return false;
+                }
+
+                if (empty($s->last_sent)) {
+                    return true;
+                }
+
+                $lastSentDate = Carbon::parse($s->last_sent)->timezone('Asia/Jakarta')->format('Y-m-d');
+
+                return $lastSentDate < $today;
+            });
 
         $results = [];
         foreach ($schedules as $s) {
@@ -442,22 +486,40 @@ class WhatsAppService
                 $today = $now->format('Y-m-d');
                 $currentTime = $now->format('H:i');
 
+                // 1. Morning Reminder (HANYA dijalankan pada jendela pagi: jam_reminder_pagi s/d 11:30 WIB)
                 $morningTime = substr($settings->jam_reminder_pagi ?? '07:30', 0, 5);
-                if ($currentTime >= $morningTime) {
-                    $sentToday = DB::table('wa_notification_logs')
+                if ($currentTime >= $morningTime && $currentTime <= '11:30') {
+                    $morningSentCache = Cache::has('wa_reminder_pagi_sent_'.$today);
+                    $morningSentDb = DB::table('wa_notification_logs')
                         ->where('tipe', 'reminder_pagi')
                         ->whereDate('tanggal_kirim', $today)
-                        ->count();
-                    $morning = $sentToday === 0 ? self::sendMorningReminder() : ['status' => 'already_sent'];
+                        ->exists();
+
+                    if (! $morningSentCache && ! $morningSentDb) {
+                        $morning = self::sendMorningReminder();
+                    } else {
+                        $morning = ['status' => 'already_sent'];
+                    }
+                } else {
+                    $morning = ['status' => 'outside_morning_window'];
                 }
 
+                // 2. Afternoon Report (HANYA dijalankan pada jendela siang/sore: jam_reminder_siang s/d 17:30 WIB)
                 $afternoonTime = substr($settings->jam_reminder_siang ?? '12:00', 0, 5);
-                if ($currentTime >= $afternoonTime) {
-                    $sentToday = DB::table('wa_notification_logs')
-                        ->where('tipe', 'laporan_siang')
+                if ($currentTime >= $afternoonTime && $currentTime <= '17:30') {
+                    $afternoonSentCache = Cache::has('wa_reminder_siang_sent_'.$today);
+                    $afternoonSentDb = DB::table('wa_notification_logs')
+                        ->whereIn('tipe', ['reminder_siang', 'laporan_siang'])
                         ->whereDate('tanggal_kirim', $today)
-                        ->count();
-                    $afternoon = $sentToday === 0 ? self::sendAfternoonReport() : ['status' => 'already_sent'];
+                        ->exists();
+
+                    if (! $afternoonSentCache && ! $afternoonSentDb) {
+                        $afternoon = self::sendAfternoonReport();
+                    } else {
+                        $afternoon = ['status' => 'already_sent'];
+                    }
+                } else {
+                    $afternoon = ['status' => 'outside_afternoon_window'];
                 }
 
                 $scheduledResults = self::processScheduledReports();
