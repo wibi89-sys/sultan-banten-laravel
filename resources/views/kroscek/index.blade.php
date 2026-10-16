@@ -769,13 +769,16 @@
                         <div>
                             <strong id="detailKroscekTitle"></strong>
                             <div class="small" id="detailKroscekDesc"></div>
-                            <div id="detailKroscekActions" class="mt-2 d-none flex-wrap gap-2">
+                            <div id="detailKroscekActions" class="mt-2 d-none flex-wrap gap-2 align-items-center">
                                 <a href="#" id="btnFixPenghuni" class="btn btn-sm btn-danger py-1 px-2.5 shadow-sm fw-semibold" style="font-size: 11.5px;">
                                     <i class="fas fa-users me-1"></i> Periksa Form Penghuni
                                 </a>
                                 <a href="#" id="btnFixOverstaying" class="btn btn-sm btn-danger py-1 px-2.5 shadow-sm fw-semibold" style="font-size: 11.5px;">
                                     <i class="fas fa-clock me-1"></i> Periksa Form Overstaying
                                 </a>
+                                <span id="selisih_lock_notice" class="badge bg-light text-danger border border-danger-subtle py-1 px-2.5 fw-normal d-none align-self-center" style="font-size: 11px;">
+                                    <i class="fas fa-lock me-1"></i> Akses Terbatas: Hubungi Petugas Terkait / Admin UPT
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -831,13 +834,16 @@
                             <div class="small text-muted">
                                 <i class="fas fa-info-circle me-1 text-primary"></i> Waktu Input: <strong id="det_p_waktu">-</strong>
                             </div>
-                            <div id="p_action_container">
+                            <div id="p_action_container" class="d-flex align-items-center gap-2 flex-wrap">
                                 <a href="#" id="p_btn_input" class="btn btn-sm btn-primary fw-semibold d-none">
                                     <i class="fas fa-plus me-1"></i> Input Data Tanggal Ini
                                 </a>
                                 <a href="#" id="p_btn_manage" class="btn btn-sm btn-outline-primary fw-semibold d-none">
                                     <i class="fas fa-external-link-alt me-1"></i> Buka / Kelola Form Penghuni
                                 </a>
+                                <div id="p_lock_notice" class="badge bg-secondary bg-opacity-75 py-1.5 px-2.5 text-wrap fw-normal d-none" style="font-size: 11px;">
+                                    <i class="fas fa-lock me-1"></i> <span id="p_lock_text">Akses Terbatas</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -887,13 +893,16 @@
                             <div class="small text-muted">
                                 <i class="fas fa-info-circle me-1 text-primary"></i> Waktu Input: <strong id="det_o_waktu">-</strong>
                             </div>
-                            <div id="o_action_container">
+                            <div id="o_action_container" class="d-flex align-items-center gap-2 flex-wrap">
                                 <a href="#" id="o_btn_input" class="btn btn-sm btn-primary fw-semibold d-none">
                                     <i class="fas fa-plus me-1"></i> Input Data Tanggal Ini
                                 </a>
                                 <a href="#" id="o_btn_manage" class="btn btn-sm btn-outline-primary fw-semibold d-none">
                                     <i class="fas fa-external-link-alt me-1"></i> Buka / Kelola Form Overstaying
                                 </a>
+                                <div id="o_lock_notice" class="badge bg-secondary bg-opacity-75 py-1.5 px-2.5 text-wrap fw-normal d-none" style="font-size: 11px;">
+                                    <i class="fas fa-lock me-1"></i> <span id="o_lock_text">Akses Terbatas</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -943,13 +952,16 @@
                             <div class="small text-muted">
                                 <i class="fas fa-info-circle me-1 text-primary"></i> Waktu Input: <strong id="det_i_waktu">-</strong>
                             </div>
-                            <div id="i_action_container">
+                            <div id="i_action_container" class="d-flex align-items-center gap-2 flex-wrap">
                                 <a href="#" id="i_btn_input" class="btn btn-sm btn-primary fw-semibold d-none">
                                     <i class="fas fa-plus me-1"></i> Input Data Tanggal Ini
                                 </a>
                                 <a href="#" id="i_btn_manage" class="btn btn-sm btn-outline-primary fw-semibold d-none">
                                     <i class="fas fa-external-link-alt me-1"></i> Buka / Kelola Form Integrasi
                                 </a>
+                                <div id="i_lock_notice" class="badge bg-secondary bg-opacity-75 py-1.5 px-2.5 text-wrap fw-normal d-none" style="font-size: 11px;">
+                                    <i class="fas fa-lock me-1"></i> <span id="i_lock_text">Akses Terbatas</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -994,13 +1006,16 @@
                             <div class="small text-muted">
                                 <i class="fas fa-info-circle me-1 text-primary"></i> Waktu Input: <strong id="det_b_waktu">-</strong>
                             </div>
-                            <div id="b_action_container">
+                            <div id="b_action_container" class="d-flex align-items-center gap-2 flex-wrap">
                                 <a href="#" id="b_btn_input" class="btn btn-sm btn-primary fw-semibold d-none">
                                     <i class="fas fa-plus me-1"></i> Input Data Tanggal Ini
                                 </a>
                                 <a href="#" id="b_btn_manage" class="btn btn-sm btn-outline-primary fw-semibold d-none">
                                     <i class="fas fa-external-link-alt me-1"></i> Buka / Kelola Form Bebas Harian
                                 </a>
+                                <div id="b_lock_notice" class="badge bg-secondary bg-opacity-75 py-1.5 px-2.5 text-wrap fw-normal d-none" style="font-size: 11px;">
+                                    <i class="fas fa-lock me-1"></i> <span id="b_lock_text">Akses Terbatas</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1016,6 +1031,18 @@
 
 @push('scripts')
 <script>
+    // Konfigurasi Hak Akses User yang Sedang Login
+    const currentUser = {
+        isAdmin: {{ auth()->user()->isAdmin() ? 'true' : 'false' }},
+        uptId: {{ (int) (auth()->user()->upt_id ?? 0) }},
+        permissions: {
+            penghuni: {{ auth()->user()->hasAccess('penghuni') ? 'true' : 'false' }},
+            overstaying: {{ auth()->user()->hasAccess('overstaying') ? 'true' : 'false' }},
+            integrasi: {{ auth()->user()->hasAccess('integrasi') ? 'true' : 'false' }},
+            bebas_harian: {{ auth()->user()->hasAccess('bebas_harian') ? 'true' : 'false' }}
+        }
+    };
+
     // Fitur Pencarian Realtime & Quick Filter untuk Admin (Matriks 12 UPT)
     const searchInput = document.getElementById('searchUpt');
     const filterBtns = document.querySelectorAll('.btn-quick-filter');
@@ -1150,94 +1177,140 @@
 
         // Quick Actions & Dynamic URLs
         const tgl = data.tanggal;
-        const uptId = data.upt_id;
+        const uptId = parseInt(data.upt_id);
+        const canManageUpt = currentUser.isAdmin || (currentUser.uptId === uptId);
 
         // Quick Action Perbaikan Selisih Tahanan
         const detailKroscekActions = document.getElementById('detailKroscekActions');
         const btnFixPenghuni = document.getElementById('btnFixPenghuni');
         const btnFixOverstaying = document.getElementById('btnFixOverstaying');
+        const selisihLockNotice = document.getElementById('selisih_lock_notice');
 
         if (data.status_kroscek === 'selisih') {
             detailKroscekActions.classList.remove('d-none');
             detailKroscekActions.classList.add('d-flex');
-            btnFixPenghuni.href = `{{ url('/penghuni') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
-            btnFixOverstaying.href = `{{ url('/overstaying') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
+
+            const canFixPenghuni = canManageUpt && currentUser.permissions.penghuni;
+            const canFixOverstaying = canManageUpt && currentUser.permissions.overstaying;
+
+            if (canFixPenghuni) {
+                btnFixPenghuni.classList.remove('d-none');
+                btnFixPenghuni.href = `{{ url('/penghuni') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
+            } else {
+                btnFixPenghuni.classList.add('d-none');
+            }
+
+            if (canFixOverstaying) {
+                btnFixOverstaying.classList.remove('d-none');
+                btnFixOverstaying.href = `{{ url('/overstaying') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
+            } else {
+                btnFixOverstaying.classList.add('d-none');
+            }
+
+            if (selisihLockNotice) {
+                if (!canFixPenghuni && !canFixOverstaying) {
+                    selisihLockNotice.classList.remove('d-none');
+                    selisihLockNotice.innerHTML = !canManageUpt
+                        ? '<i class="fas fa-lock me-1"></i> Data UPT Lain (Hanya Baca)'
+                        : '<i class="fas fa-lock me-1"></i> Akses Terbatas: Anda tidak memiliki izin kelola form Penghuni / Overstaying';
+                } else {
+                    selisihLockNotice.classList.add('d-none');
+                }
+            }
         } else {
             detailKroscekActions.classList.add('d-none');
             detailKroscekActions.classList.remove('d-flex');
         }
 
-        // Tab 1: Penghuni Action Buttons
-        const pNotif = document.getElementById('p_notif_belum');
-        const pBtnInput = document.getElementById('p_btn_input');
-        const pBtnManage = document.getElementById('p_btn_manage');
-        if (data.penghuni.exists) {
-            pNotif.classList.add('d-none');
-            pNotif.classList.remove('d-flex');
-            pBtnInput.classList.add('d-none');
-            pBtnManage.classList.remove('d-none');
-            pBtnManage.href = `{{ url('/penghuni') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
-        } else {
-            pNotif.classList.remove('d-none');
-            pNotif.classList.add('d-flex');
-            pBtnInput.classList.remove('d-none');
-            pBtnManage.classList.add('d-none');
-            pBtnInput.href = `{{ url('/penghuni') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&tanggal=${tgl}&upt_id=${uptId}&action=input`;
+        // Helper untuk memperbarui aksi tab modul dengan izin akses
+        function updateTabActions(modulKey, exists, urlBase, notifEl, btnInput, btnManage, lockEl, lockTextEl, moduleName) {
+            const hasModulePerm = currentUser.permissions[modulKey];
+            const canManage = canManageUpt && hasModulePerm;
+
+            if (exists) {
+                notifEl.classList.add('d-none');
+                notifEl.classList.remove('d-flex');
+            } else {
+                notifEl.classList.remove('d-none');
+                notifEl.classList.add('d-flex');
+            }
+
+            if (canManage) {
+                if (lockEl) lockEl.classList.add('d-none');
+                if (exists) {
+                    btnInput.classList.add('d-none');
+                    btnManage.classList.remove('d-none');
+                    btnManage.href = `${urlBase}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
+                } else {
+                    btnInput.classList.remove('d-none');
+                    btnManage.classList.add('d-none');
+                    btnInput.href = `${urlBase}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&tanggal=${tgl}&upt_id=${uptId}&action=input`;
+                }
+            } else {
+                btnInput.classList.add('d-none');
+                btnManage.classList.add('d-none');
+                if (lockEl && lockTextEl) {
+                    lockEl.classList.remove('d-none');
+                    if (!canManageUpt) {
+                        lockTextEl.innerText = 'Data UPT Lain (Hanya Baca)';
+                    } else {
+                        lockTextEl.innerText = `Akses Terbatas: Anda tidak memiliki izin kelola modul ${moduleName}`;
+                    }
+                }
+            }
         }
+
+        // Tab 1: Penghuni Action Buttons
+        updateTabActions(
+            'penghuni',
+            data.penghuni.exists,
+            `{{ url('/penghuni') }}`,
+            document.getElementById('p_notif_belum'),
+            document.getElementById('p_btn_input'),
+            document.getElementById('p_btn_manage'),
+            document.getElementById('p_lock_notice'),
+            document.getElementById('p_lock_text'),
+            'Penghuni'
+        );
 
         // Tab 2: Overstaying Action Buttons
-        const oNotif = document.getElementById('o_notif_belum');
-        const oBtnInput = document.getElementById('o_btn_input');
-        const oBtnManage = document.getElementById('o_btn_manage');
-        if (data.overstaying.exists) {
-            oNotif.classList.add('d-none');
-            oNotif.classList.remove('d-flex');
-            oBtnInput.classList.add('d-none');
-            oBtnManage.classList.remove('d-none');
-            oBtnManage.href = `{{ url('/overstaying') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
-        } else {
-            oNotif.classList.remove('d-none');
-            oNotif.classList.add('d-flex');
-            oBtnInput.classList.remove('d-none');
-            oBtnManage.classList.add('d-none');
-            oBtnInput.href = `{{ url('/overstaying') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&tanggal=${tgl}&upt_id=${uptId}&action=input`;
-        }
+        updateTabActions(
+            'overstaying',
+            data.overstaying.exists,
+            `{{ url('/overstaying') }}`,
+            document.getElementById('o_notif_belum'),
+            document.getElementById('o_btn_input'),
+            document.getElementById('o_btn_manage'),
+            document.getElementById('o_lock_notice'),
+            document.getElementById('o_lock_text'),
+            'Overstaying'
+        );
 
         // Tab 3: Integrasi Action Buttons
-        const iNotif = document.getElementById('i_notif_belum');
-        const iBtnInput = document.getElementById('i_btn_input');
-        const iBtnManage = document.getElementById('i_btn_manage');
-        if (data.integrasi.exists) {
-            iNotif.classList.add('d-none');
-            iNotif.classList.remove('d-flex');
-            iBtnInput.classList.add('d-none');
-            iBtnManage.classList.remove('d-none');
-            iBtnManage.href = `{{ url('/integrasi') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
-        } else {
-            iNotif.classList.remove('d-none');
-            iNotif.classList.add('d-flex');
-            iBtnInput.classList.remove('d-none');
-            iBtnManage.classList.add('d-none');
-            iBtnInput.href = `{{ url('/integrasi') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&tanggal=${tgl}&upt_id=${uptId}&action=input`;
-        }
+        updateTabActions(
+            'integrasi',
+            data.integrasi.exists,
+            `{{ url('/integrasi') }}`,
+            document.getElementById('i_notif_belum'),
+            document.getElementById('i_btn_input'),
+            document.getElementById('i_btn_manage'),
+            document.getElementById('i_lock_notice'),
+            document.getElementById('i_lock_text'),
+            'Integrasi'
+        );
 
         // Tab 4: Bebas Harian Action Buttons
-        const bNotif = document.getElementById('b_notif_belum');
-        const bBtnInput = document.getElementById('b_btn_input');
-        const bBtnManage = document.getElementById('b_btn_manage');
-        if (data.bebas.exists) {
-            bNotif.classList.add('d-none');
-            bNotif.classList.remove('d-flex');
-            bBtnInput.classList.add('d-none');
-            bBtnManage.classList.remove('d-none');
-            bBtnManage.href = `{{ url('/bebas-harian') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&upt_id=${uptId}`;
-        } else {
-            bNotif.classList.remove('d-none');
-            bNotif.classList.add('d-flex');
-            bBtnInput.classList.remove('d-none');
-            bBtnManage.classList.add('d-none');
-            bBtnInput.href = `{{ url('/bebas-harian') }}?tanggal_mulai=${tgl}&tanggal_sampai=${tgl}&tanggal=${tgl}&upt_id=${uptId}&action=input`;
-        }
+        updateTabActions(
+            'bebas_harian',
+            data.bebas.exists,
+            `{{ url('/bebas-harian') }}`,
+            document.getElementById('b_notif_belum'),
+            document.getElementById('b_btn_input'),
+            document.getElementById('b_btn_manage'),
+            document.getElementById('b_lock_notice'),
+            document.getElementById('b_lock_text'),
+            'Bebas Harian'
+        );
 
         // Trigger Tab 1 Active
         const firstTab = new bootstrap.Tab(document.getElementById('tab-p-btn'));
