@@ -409,6 +409,13 @@ class WhatsAppService
 
     public static function runCron(string $action = 'run'): array
     {
+        if ($action === 'status') {
+            return [
+                'success' => true,
+                'status' => self::getStatus(),
+            ];
+        }
+
         $settings = WaSetting::getFirst();
         if (! $settings || empty($settings->aktif)) {
             return ['success' => false, 'message' => 'WhatsApp notifications are disabled'];
@@ -572,6 +579,49 @@ class WhatsAppService
             'narkoba_total' => $narkoba,
             'tipikor' => $tipikor,
             'teroris' => $teroris,
+        ];
+    }
+
+    public static function getStatus(): array
+    {
+        $settings = WaSetting::getFirst();
+        $now = now()->timezone('Asia/Jakarta');
+        $schedules = WaScheduledReport::orderBy('jam_kirim')->get();
+        $pimpinanCount = WaPimpinan::where('aktif', 1)->count();
+        $operatorCount = User::where('role', 'operator')->whereNotNull('no_wa')->where('no_wa', '!=', '')->count();
+
+        return [
+            'waktu_server_wib' => $now->format('Y-m-d H:i:s').' WIB',
+            'hari_ini' => $now->format('l').' ('.match ((int) $now->format('w')) {
+                0 => 'Minggu',
+                1 => 'Senin',
+                2 => 'Selasa',
+                3 => 'Rabu',
+                4 => 'Kamis',
+                5 => 'Jumat',
+                6 => 'Sabtu',
+                default => '',
+            }.')',
+            'notifikasi_aktif' => (bool) ($settings?->aktif),
+            'gateway' => $settings?->gateway_name ?? 'fonnte',
+            'api_url' => $settings?->api_url ?? 'https://api.fonnte.com/send',
+            'api_key_terisi' => ! empty($settings?->api_key),
+            'group_id_target' => $settings?->group_id ?: '-',
+            'jam_reminder_pagi' => substr($settings?->jam_reminder_pagi ?? '07:30', 0, 5).' WIB',
+            'jam_reminder_siang' => substr($settings?->jam_reminder_siang ?? '12:00', 0, 5).' WIB',
+            'total_jadwal' => $schedules->count(),
+            'jadwal_aktif' => $schedules->where('aktif', 1)->count(),
+            'total_pimpinan_aktif' => $pimpinanCount,
+            'total_operator_wa_siap' => $operatorCount,
+            'daftar_jadwal' => $schedules->map(fn ($s) => [
+                'id' => $s->id,
+                'nama' => $s->nama_laporan,
+                'jam' => substr($s->jam_kirim, 0, 5).' WIB',
+                'hari' => $s->hari,
+                'status' => $s->aktif ? 'Aktif' : 'Nonaktif',
+                'target' => $s->group_id,
+                'terakhir_kirim' => $s->last_sent?->format('Y-m-d H:i:s') ?? '-',
+            ])->toArray(),
         ];
     }
 }
