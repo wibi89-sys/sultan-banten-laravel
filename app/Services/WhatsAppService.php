@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class WhatsAppService
 {
@@ -870,9 +871,133 @@ class WhatsAppService
     {
         $settings = WaSetting::getFirst();
         $now = now()->timezone('Asia/Jakarta');
+        $today = $now->format('Y-m-d');
+        $currentTime = $now->format('H:i');
+
+        $isMasterAktif = (bool) ($settings?->aktif);
+
+        // Terakhir kirim Reminder Pagi
+        $lastMorning = DB::table('wa_notification_logs')
+            ->where('tipe', 'reminder_pagi')
+            ->orderByDesc('tanggal_kirim')
+            ->first();
+
+        $morningSentToday = Cache::has('wa_reminder_pagi_sent_'.$today) || DB::table('wa_notification_logs')
+            ->where('tipe', 'reminder_pagi')
+            ->whereDate('tanggal_kirim', $today)
+            ->exists();
+
+        $morningTodayLog = DB::table('wa_notification_logs')
+            ->where('tipe', 'reminder_pagi')
+            ->whereDate('tanggal_kirim', $today)
+            ->first();
+
+        // Terakhir kirim Monitoring Siang
+        $lastAfternoon = DB::table('wa_notification_logs')
+            ->whereIn('tipe', ['reminder_siang', 'laporan_siang'])
+            ->orderByDesc('tanggal_kirim')
+            ->first();
+
+        $afternoonSentToday = Cache::has('wa_reminder_siang_sent_'.$today) || DB::table('wa_notification_logs')
+            ->whereIn('tipe', ['reminder_siang', 'laporan_siang'])
+            ->whereDate('tanggal_kirim', $today)
+            ->exists();
+
+        $afternoonTodayLog = DB::table('wa_notification_logs')
+            ->whereIn('tipe', ['reminder_siang', 'laporan_siang'])
+            ->whereDate('tanggal_kirim', $today)
+            ->first();
+
         $schedules = WaScheduledReport::orderBy('jam_kirim')->get();
         $pimpinanCount = WaPimpinan::where('aktif', 1)->count();
         $operatorCount = User::where('role', 'operator')->whereNotNull('no_wa')->where('no_wa', '!=', '')->count();
+
+        $jamPagi = substr($settings?->jam_reminder_pagi ?? '07:30', 0, 5);
+        $jamSiang = substr($settings?->jam_reminder_siang ?? '12:00', 0, 5);
+
+        // Keterangan status hari ini untuk Reminder Pagi
+        if ($morningSentToday) {
+            $morningStatusHariIni = '✅ Sudah Diproses ('.($morningTodayLog ? date('H:i', strtotime($morningTodayLog->tanggal_kirim)).' WIB' : 'Hari Ini').')';
+        } elseif (! $isMasterAktif) {
+            $morningStatusHariIni = '⏸️ Master Nonaktif';
+        } elseif ($currentTime < $jamPagi) {
+            $morningStatusHariIni = '⏳ Menunggu Jam '.$jamPagi.' WIB';
+        } elseif ($currentTime > '11:30') {
+            $morningStatusHariIni = '⚠️ Lewat Jendela Pagi (11:30)';
+        } else {
+            $morningStatusHariIni = '🚀 Siap Terkirim';
+        }
+
+        // Keterangan status hari ini untuk Monitoring Siang
+        if ($afternoonSentToday) {
+            $isSkipped = ($afternoonTodayLog && $afternoonTodayLog->jumlah_penerima === 0);
+            $afternoonStatusHariIni = $isSkipped
+                ? '✅ Dilewati (Semua UPT Lengkap)'
+                : '✅ Sudah Terkirim ('.($afternoonTodayLog ? date('H:i', strtotime($afternoonTodayLog->tanggal_kirim)).' WIB' : 'Hari Ini').')';
+        } elseif (! $isMasterAktif) {
+            $afternoonStatusHariIni = '⏸️ Master Nonaktif';
+        } elseif ($currentTime < $jamSiang) {
+            $afternoonStatusHariIni = '⏳ Menunggu Jam '.$jamSiang.' WIB';
+        } elseif ($currentTime > '17:30') {
+            $afternoonStatusHariIni = '⚠️ Lewat Jendela Siang (17:30)';
+        } else {
+            $afternoonStatusHariIni = '🚀 Siap Terkirim';
+        }
+
+        // Target grup display
+        $targetGrupDisplay = $settings?->group_id ?: '-';
+        if (Schema::hasTable('wa_groups')) {
+            $grp = WaGroup::where('group_id', $targetGrupDisplay)->first();
+            if ($grp) {
+                $targetGrupDisplay = "{$grp->nama_grup} ({$grp->group_id})";
+            }
+        }
+
+        $daftarJadwal = [
+            [
+                'id' => 'SYS-1',
+                'nama' => 'Reminder Pagi (Pengingat Operator)',
+                'jam' => $jamPagi.' WIB',
+                'frekuensi' => 'Setiap Hari',
+                'status' => $isMasterAktif ? 'Aktif' : 'Nonaktif',
+                'target' => 'Operator Belum Input',
+                'status_hari_ini' => $morningStatusHariIni,
+                'terakhir_kirim' => $lastMorning?->tanggal_kirim ? date('Y-m-d H:i:s', strtotime($lastMorning->tanggal_kirim)) : '-',
+            ],
+            [
+                'id' => 'SYS-2',
+                'nama' => 'Monitoring Siang (Rekap Progres UPT)',
+                'jam' => $jamSiang.' WIB',
+                'frekuensi' => 'Setiap Hari',
+                'status' => $isMasterAktif ? 'Aktif' : 'Nonaktif',
+                'target' => Str::limit($targetGrupDisplay, 28),
+                'status_hari_ini' => $afternoonStatusHariIni,
+                'terakhir_kirim' => $lastAfternoon?->tanggal_kirim ? date('Y-m-d H:i:s', strtotime($lastAfternoon->tanggal_kirim)) : '-',
+            ],
+        ];
+
+        foreach ($schedules as $s) {
+            $schedSentToday = Cache::has("wa_schedule_sent_{$s->id}_{$today}")
+                || ($s->last_sent && Carbon::parse($s->last_sent)->timezone('Asia/Jakarta')->format('Y-m-d') === $today);
+
+            $schedStatusHariIni = $schedSentToday
+                ? '✅ Sudah Terkirim ('.($s->last_sent ? $s->last_sent->timezone('Asia/Jakarta')->format('H:i').' WIB' : 'Hari Ini').')'
+                : ($s->aktif ? '⏳ Menunggu Jadwal' : '⏸️ Nonaktif');
+
+            $daftarJadwal[] = [
+                'id' => (string) $s->id,
+                'nama' => $s->nama_laporan,
+                'jam' => substr($s->jam_kirim, 0, 5).' WIB',
+                'frekuensi' => $s->hari ?: 'daily',
+                'status' => ($isMasterAktif && $s->aktif) ? 'Aktif' : 'Nonaktif',
+                'target' => Str::limit($s->group_id ?: '-', 28),
+                'status_hari_ini' => $schedStatusHariIni,
+                'terakhir_kirim' => $s->last_sent ? $s->last_sent->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') : '-',
+            ];
+        }
+
+        $totalJadwalSemua = count($daftarJadwal);
+        $totalAktifSemua = count(array_filter($daftarJadwal, fn ($j) => $j['status'] === 'Aktif'));
 
         return [
             'waktu_server_wib' => $now->format('Y-m-d H:i:s').' WIB',
@@ -886,26 +1011,18 @@ class WhatsAppService
                 6 => 'Sabtu',
                 default => '',
             }.')',
-            'notifikasi_aktif' => (bool) ($settings?->aktif),
+            'notifikasi_aktif' => $isMasterAktif,
             'gateway' => $settings?->gateway_name ?? 'fonnte',
             'api_url' => $settings?->api_url ?? 'https://api.fonnte.com/send',
             'api_key_terisi' => ! empty($settings?->api_key),
-            'group_id_target' => $settings?->group_id ?: '-',
-            'jam_reminder_pagi' => substr($settings?->jam_reminder_pagi ?? '07:30', 0, 5).' WIB',
-            'jam_reminder_siang' => substr($settings?->jam_reminder_siang ?? '12:00', 0, 5).' WIB',
-            'total_jadwal' => $schedules->count(),
-            'jadwal_aktif' => $schedules->where('aktif', 1)->count(),
+            'group_id_target' => $targetGrupDisplay,
+            'jam_reminder_pagi' => $jamPagi.' WIB',
+            'jam_reminder_siang' => $jamSiang.' WIB',
+            'total_jadwal' => $totalJadwalSemua,
+            'jadwal_aktif' => $totalAktifSemua,
             'total_pimpinan_aktif' => $pimpinanCount,
             'total_operator_wa_siap' => $operatorCount,
-            'daftar_jadwal' => $schedules->map(fn ($s) => [
-                'id' => $s->id,
-                'nama' => $s->nama_laporan,
-                'jam' => substr($s->jam_kirim, 0, 5).' WIB',
-                'hari' => $s->hari,
-                'status' => $s->aktif ? 'Aktif' : 'Nonaktif',
-                'target' => $s->group_id,
-                'terakhir_kirim' => $s->last_sent?->format('Y-m-d H:i:s') ?? '-',
-            ])->toArray(),
+            'daftar_jadwal' => $daftarJadwal,
         ];
     }
 }
