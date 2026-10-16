@@ -555,7 +555,7 @@
         </span>
     </div>
 
-    <!-- Toolbar: Pencarian Realtime & Switcher Format Tampilan Mobile -->
+    <!-- Toolbar: Pencarian Realtime & Switcher Format Tampilan (PC & Mobile) -->
     <div class="px-3 pt-3 pb-2 border-bottom">
         <div class="row g-2 align-items-center justify-content-between">
             <div class="col-12 col-md-5">
@@ -567,13 +567,16 @@
                 </div>
             </div>
             <div class="col-12 col-md-auto d-flex align-items-center justify-content-between justify-content-md-end gap-2">
-                {{-- Switcher Format Tampilan Khusus Mobile: Tabel vs Kartu --}}
-                <div class="d-flex d-md-none align-items-center gap-1 p-1 bg-light rounded-pill border">
-                    <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowRankingTable">
+                {{-- Switcher Format Tampilan: Tabel vs Kartu Grid (Aktif di PC & Mobile) --}}
+                <div class="d-flex align-items-center gap-1 p-1 bg-light rounded-pill border">
+                    <span class="small text-muted fw-semibold ps-2 pe-1 d-none d-md-inline" style="font-size: 11px;">
+                        <i class="fas fa-sliders-h text-primary me-1"></i>Format:
+                    </span>
+                    <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowRankingTable" onclick="setLeaderboardViewMode('table')">
                         <i class="fas fa-table me-1"></i> Tabel
                     </button>
-                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowRankingCards">
-                        <i class="fas fa-th-large me-1"></i> Kartu
+                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowRankingCards" onclick="setLeaderboardViewMode('cards')">
+                        <i class="fas fa-th-large me-1"></i> Kartu Grid
                     </button>
                 </div>
             </div>
@@ -725,133 +728,139 @@
         </table>
     </div>
 
-    <!-- Tampilan 2: Kartu Ringkas Responsif Khusus Mobile -->
-    <div id="rankingCardsContainer" class="p-3 d-none d-md-none">
-        @forelse($rankingData['rankings'] as $upt)
-            @php
-                $rank = $upt['rank'];
-                $isWorst = !empty($upt['is_worst']);
-                $rankPillClass = match($rank) {
-                    1 => 'rank-pill-1',
-                    2 => 'rank-pill-2',
-                    3 => 'rank-pill-3',
-                    default => ($isWorst ? 'rank-pill-worst' : 'rank-pill-other'),
-                };
-                $medalIcon = match($rank) {
-                    1 => '🥇',
-                    2 => '🥈',
-                    3 => '🥉',
-                    default => ($isWorst ? '⚠️ ' . $rank : '#' . $rank),
-                };
-                $badgeColor = $upt['persentase_kepatuhan'] >= 85 ? 'success' : ($upt['persentase_kepatuhan'] >= 60 ? 'warning' : 'danger');
-            @endphp
-            <div class="ranking-mobile-card mb-3 p-3 shadow-xs {{ $isWorst ? 'border-danger border-2' : '' }}" data-upt="{{ strtolower($upt['nama_upt']) }}">
-                <!-- Card Header: Rank, Nama UPT, Evaluasi Badge & Tombol Detail -->
-                <div class="d-flex align-items-start justify-content-between gap-2 mb-2 pb-2 border-bottom">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="rank-pill {{ $rankPillClass }} fs-6">{{ $medalIcon }}</span>
+    <!-- Tampilan 2: Kartu Grid Responsif untuk PC & Mobile -->
+    <div id="rankingCardsContainer" class="p-3 d-none">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-3" id="rankingCardsGrid">
+            @forelse($rankingData['rankings'] as $upt)
+                @php
+                    $rank = $upt['rank'];
+                    $isWorst = !empty($upt['is_worst']);
+                    $rankPillClass = match($rank) {
+                        1 => 'rank-pill-1',
+                        2 => 'rank-pill-2',
+                        3 => 'rank-pill-3',
+                        default => ($isWorst ? 'rank-pill-worst' : 'rank-pill-other'),
+                    };
+                    $medalIcon = match($rank) {
+                        1 => '🥇',
+                        2 => '🥈',
+                        3 => '🥉',
+                        default => ($isWorst ? '⚠️ ' . $rank : '#' . $rank),
+                    };
+                    $badgeColor = $upt['persentase_kepatuhan'] >= 85 ? 'success' : ($upt['persentase_kepatuhan'] >= 60 ? 'warning' : 'danger');
+                @endphp
+                <div class="col ranking-card-col" data-upt="{{ strtolower($upt['nama_upt']) }}">
+                    <div class="ranking-mobile-card h-100 p-3 shadow-xs d-flex flex-column justify-content-between {{ $isWorst ? 'border-danger border-2' : '' }}">
                         <div>
-                            <h6 class="fw-bold mb-0 text-dark">{{ $upt['nama_upt'] }}</h6>
-                            @if($isWorst)
-                                <span class="badge bg-danger text-white shadow-sm mt-1" style="font-size: 10px;">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>Terendah / Perlu Evaluasi
-                                </span>
-                            @endif
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold flex-shrink-0" onclick="showDetailModal({{ json_encode($upt) }})">
-                        <i class="fas fa-calendar-alt me-1"></i> Detail
-                    </button>
-                </div>
-
-                <!-- Card Metrics: Total Poin & Kepatuhan -->
-                <div class="row g-2 mb-2">
-                    <div class="col-7">
-                        <div class="p-2 bg-light rounded-3 h-100 border border-light-subtle">
-                            <small class="text-muted d-block fw-semibold" style="font-size: 10px;">TOTAL POIN</small>
-                            <div class="d-flex align-items-baseline gap-1">
-                                <span class="fs-6 fw-bold text-primary">{{ number_format($upt['total_points']) }}</span>
-                                <span class="text-muted small" style="font-size: 11px;">/ {{ number_format($upt['max_points']) }}</span>
-                            </div>
-                            <div class="custom-progress mt-1">
-                                <div class="bg-primary h-100" style="width: {{ $upt['persentase_kepatuhan'] }}%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-5">
-                        <div class="p-2 bg-light rounded-3 h-100 border border-light-subtle text-center d-flex flex-column justify-content-center">
-                            <small class="text-muted d-block fw-semibold" style="font-size: 10px;">KEPATUHAN</small>
-                            <span class="badge bg-{{ $badgeColor }}-subtle text-{{ $badgeColor }} border border-{{ $badgeColor }}-subtle px-2 py-1 fw-bold fs-7 mt-1">
-                                {{ $upt['persentase_kepatuhan'] }}%
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Jam Input & Hari Sempurna -->
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-2 pt-1 small">
-                    <span class="text-muted" style="font-size: 11px;">
-                        <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
-                    </span>
-                    @if($upt['count_hari_sempurna'] > 0)
-                        <span class="badge bg-warning-subtle text-warning" style="font-size: 10.5px;">
-                            <i class="fas fa-star me-1"></i>{{ $upt['count_hari_sempurna'] }}x Hari Sempurna (100)
-                        </span>
-                    @endif
-                </div>
-
-                <!-- Status Ketepatan Modul & Kroscek Tahanan -->
-                <div class="p-2 bg-light rounded-3 border border-light-subtle">
-                    <div class="d-flex align-items-center justify-content-between mb-1.5 pb-1 border-bottom">
-                        <span class="text-muted small fw-medium" style="font-size: 11px;">
-                            <i class="fas fa-cubes text-secondary me-1"></i>4 Modul Harian:
-                        </span>
-                        <div class="d-flex gap-1">
-                            <span class="badge bg-success-subtle text-success" title="{{ $upt['count_modul_tepat'] }} modul tepat waktu">
-                                <i class="fas fa-check me-1"></i>{{ $upt['count_modul_tepat'] }} Tepat
-                            </span>
-                            <span class="badge bg-warning-subtle text-warning" title="{{ $upt['count_modul_terlambat'] }} modul terlambat">
-                                <i class="fas fa-clock me-1"></i>{{ $upt['count_modul_terlambat'] }} Telat
-                            </span>
-                            <span class="badge bg-danger-subtle text-danger" title="{{ $upt['count_modul_kosong'] }} modul belum diisi">
-                                <i class="fas fa-times me-1"></i>{{ $upt['count_modul_kosong'] }} Kosong
-                            </span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1">
-                        <span class="text-muted small fw-medium" style="font-size: 11px;">
-                            <i class="fas fa-clipboard-check text-info me-1"></i>Kroscek Tahanan:
-                        </span>
-                        <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
-                            <span class="badge bg-success-subtle text-success py-1 px-2" style="font-size: 10.5px;">
-                                <i class="fas fa-check-double me-1"></i>{{ $upt['count_kroscek_sesuai'] }}x Sinkron
-                            </span>
-                            @if(!empty($upt['count_kroscek_perbaikan']) && $upt['count_kroscek_perbaikan'] > 0)
-                                <span class="badge bg-warning-subtle text-dark border border-warning-subtle py-1 px-1.5 small" style="font-size: 10px;">
-                                    <i class="fas fa-wrench text-warning me-1"></i>{{ $upt['count_kroscek_perbaikan'] }}x Edit
-                                </span>
-                            @endif
-                            @if($upt['count_kroscek_selisih'] > 0)
-                                <button type="button" 
-                                        class="btn btn-danger btn-sm py-0 px-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-1 btn-selisih-interactive text-white" 
-                                        style="font-size: 10.5px; font-weight: 600;"
-                                        onclick="showSelisihDatesModal({{ json_encode($upt['nama_upt']) }}, {{ json_encode($upt['selisih_dates']) }})" 
-                                        title="Klik untuk melihat tanggal selisih">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <span>{{ $upt['count_kroscek_selisih'] }}x Selisih</span>
-                                    <i class="fas fa-calendar-alt ms-1" style="font-size: 9px;"></i>
+                            <!-- Card Header: Rank, Nama UPT, Evaluasi Badge & Tombol Detail -->
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-2 pb-2 border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="rank-pill {{ $rankPillClass }} fs-6">{{ $medalIcon }}</span>
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark" style="font-size: 13.5px; line-height: 1.35;">{{ $upt['nama_upt'] }}</h6>
+                                        @if($isWorst)
+                                            <span class="badge bg-danger text-white shadow-sm mt-1" style="font-size: 10px;">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Terendah / Perlu Evaluasi
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-semibold flex-shrink-0" style="font-size: 11px;" onclick="showDetailModal({{ json_encode($upt) }})">
+                                    <i class="fas fa-calendar-alt me-1"></i> Detail
                                 </button>
-                            @endif
+                            </div>
+
+                            <!-- Card Metrics: Total Poin & Kepatuhan -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-7">
+                                    <div class="p-2 bg-light rounded-3 h-100 border border-light-subtle">
+                                        <small class="text-muted d-block fw-semibold" style="font-size: 10px;">TOTAL POIN</small>
+                                        <div class="d-flex align-items-baseline gap-1">
+                                            <span class="fs-6 fw-bold text-primary">{{ number_format($upt['total_points']) }}</span>
+                                            <span class="text-muted small" style="font-size: 11px;">/ {{ number_format($upt['max_points']) }}</span>
+                                        </div>
+                                        <div class="custom-progress mt-1">
+                                            <div class="bg-primary h-100" style="width: {{ $upt['persentase_kepatuhan'] }}%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-5">
+                                    <div class="p-2 bg-light rounded-3 h-100 border border-light-subtle text-center d-flex flex-column justify-content-center">
+                                        <small class="text-muted d-block fw-semibold" style="font-size: 10px;">KEPATUHAN</small>
+                                        <span class="badge bg-{{ $badgeColor }}-subtle text-{{ $badgeColor }} border border-{{ $badgeColor }}-subtle px-2 py-1 fw-bold fs-7 mt-1">
+                                            {{ $upt['persentase_kepatuhan'] }}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Jam Input & Hari Sempurna -->
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-2 pt-1 small">
+                                <span class="text-muted" style="font-size: 11px;">
+                                    <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
+                                </span>
+                                @if($upt['count_hari_sempurna'] > 0)
+                                    <span class="badge bg-warning-subtle text-warning" style="font-size: 10.5px;">
+                                        <i class="fas fa-star me-1"></i>{{ $upt['count_hari_sempurna'] }}x Sempurna
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Status Ketepatan Modul & Kroscek Tahanan -->
+                        <div class="p-2 bg-light rounded-3 border border-light-subtle mt-1">
+                            <div class="d-flex align-items-center justify-content-between mb-1.5 pb-1 border-bottom">
+                                <span class="text-muted small fw-medium" style="font-size: 10.5px;">
+                                    <i class="fas fa-cubes text-secondary me-1"></i>4 Modul Harian:
+                                </span>
+                                <div class="d-flex gap-1">
+                                    <span class="badge bg-success-subtle text-success" title="{{ $upt['count_modul_tepat'] }} modul tepat waktu" style="font-size: 10px;">
+                                        <i class="fas fa-check me-1"></i>{{ $upt['count_modul_tepat'] }} Tepat
+                                    </span>
+                                    <span class="badge bg-warning-subtle text-warning" title="{{ $upt['count_modul_terlambat'] }} modul terlambat" style="font-size: 10px;">
+                                        <i class="fas fa-clock me-1"></i>{{ $upt['count_modul_terlambat'] }} Telat
+                                    </span>
+                                    <span class="badge bg-danger-subtle text-danger" title="{{ $upt['count_modul_kosong'] }} modul belum diisi" style="font-size: 10px;">
+                                        <i class="fas fa-times me-1"></i>{{ $upt['count_modul_kosong'] }} Kosong
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between pt-1">
+                                <span class="text-muted small fw-medium" style="font-size: 10.5px;">
+                                    <i class="fas fa-clipboard-check text-info me-1"></i>Kroscek:
+                                </span>
+                                <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
+                                    <span class="badge bg-success-subtle text-success py-1 px-1.5" style="font-size: 10px;">
+                                        <i class="fas fa-check-double me-1"></i>{{ $upt['count_kroscek_sesuai'] }}x
+                                    </span>
+                                    @if(!empty($upt['count_kroscek_perbaikan']) && $upt['count_kroscek_perbaikan'] > 0)
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle py-1 px-1.5 small" style="font-size: 10px;">
+                                            <i class="fas fa-wrench text-warning me-1"></i>{{ $upt['count_kroscek_perbaikan'] }}x Edit
+                                        </span>
+                                    @endif
+                                    @if($upt['count_kroscek_selisih'] > 0)
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm py-0 px-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-1 btn-selisih-interactive text-white" 
+                                                style="font-size: 10px; font-weight: 600;"
+                                                onclick="showSelisihDatesModal({{ json_encode($upt['nama_upt']) }}, {{ json_encode($upt['selisih_dates']) }})" 
+                                                title="Klik untuk melihat tanggal selisih">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>{{ $upt['count_kroscek_selisih'] }}x Selisih</span>
+                                            <i class="fas fa-calendar-alt ms-1" style="font-size: 8px;"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        @empty
-            <div class="text-center py-4 text-muted">
-                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                Tidak ada data untuk periode ini.
-            </div>
-        @endforelse
+            @empty
+                <div class="col-12 text-center py-4 text-muted">
+                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                    Tidak ada data untuk periode ini.
+                </div>
+            @endforelse
+        </div>
     </div>
 </div>
 
@@ -1221,7 +1230,12 @@
     // Fitur Pencarian Realtime & Switcher Format Tampilan untuk Klasemen UPT
     const searchLeaderboardInput = document.getElementById('searchLeaderboard');
     const leaderboardTableRows = document.querySelectorAll('#rankingTableWrapper tbody tr[data-upt]');
-    const leaderboardMobileCards = document.querySelectorAll('#rankingCardsContainer .ranking-mobile-card[data-upt]');
+    const leaderboardCardCols = document.querySelectorAll('#rankingCardsContainer .ranking-card-col[data-upt]');
+    const btnShowRankingTable = document.getElementById('btnShowRankingTable');
+    const btnShowRankingCards = document.getElementById('btnShowRankingCards');
+    const rankingTableWrapper = document.getElementById('rankingTableWrapper');
+    const rankingScrollHint = document.getElementById('rankingScrollHint');
+    const rankingCardsContainer = document.getElementById('rankingCardsContainer');
 
     function applyLeaderboardFilter() {
         const query = searchLeaderboardInput ? searchLeaderboardInput.value.toLowerCase().trim() : '';
@@ -1236,32 +1250,56 @@
         };
 
         leaderboardTableRows.forEach(filterItem);
-        leaderboardMobileCards.forEach(filterItem);
+        leaderboardCardCols.forEach(filterItem);
     }
 
     searchLeaderboardInput?.addEventListener('input', applyLeaderboardFilter);
 
-    // Switcher Tampilan Mobile: Tabel vs Kartu
-    const btnShowRankingTable = document.getElementById('btnShowRankingTable');
-    const btnShowRankingCards = document.getElementById('btnShowRankingCards');
-    const rankingTableWrapper = document.getElementById('rankingTableWrapper');
-    const rankingScrollHint = document.getElementById('rankingScrollHint');
-    const rankingCardsContainer = document.getElementById('rankingCardsContainer');
+    // Switcher Tampilan (PC & Mobile): Tabel vs Kartu Grid dengan Auto-save LocalStorage
+    const LEADERBOARD_VIEW_KEY = 'sultan_leaderboard_view_mode';
 
-    btnShowRankingTable?.addEventListener('click', function() {
-        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
-        if (btnShowRankingCards) btnShowRankingCards.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
-        rankingTableWrapper?.classList.remove('d-none');
-        rankingScrollHint?.classList.remove('d-none');
-        rankingCardsContainer?.classList.add('d-none');
-    });
+    function setLeaderboardViewMode(mode, save = true) {
+        if (mode === 'cards') {
+            btnShowRankingCards?.classList.remove('btn-outline-secondary');
+            btnShowRankingCards?.classList.add('btn-primary', 'active');
+            btnShowRankingTable?.classList.remove('btn-primary', 'active');
+            btnShowRankingTable?.classList.add('btn-outline-secondary');
 
-    btnShowRankingCards?.addEventListener('click', function() {
-        this.className = 'btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active';
-        if (btnShowRankingTable) btnShowRankingTable.className = 'btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold';
-        rankingTableWrapper?.classList.add('d-none');
-        rankingScrollHint?.classList.add('d-none');
-        rankingCardsContainer?.classList.remove('d-none');
-    });
+            rankingTableWrapper?.classList.add('d-none');
+            rankingScrollHint?.classList.add('d-none');
+            rankingCardsContainer?.classList.remove('d-none');
+            if (save) {
+                try { localStorage.setItem(LEADERBOARD_VIEW_KEY, 'cards'); } catch(e) {}
+            }
+        } else {
+            btnShowRankingTable?.classList.remove('btn-outline-secondary');
+            btnShowRankingTable?.classList.add('btn-primary', 'active');
+            btnShowRankingCards?.classList.remove('btn-primary', 'active');
+            btnShowRankingCards?.classList.add('btn-outline-secondary');
+
+            rankingTableWrapper?.classList.remove('d-none');
+            rankingScrollHint?.classList.remove('d-none');
+            rankingCardsContainer?.classList.add('d-none');
+            if (save) {
+                try { localStorage.setItem(LEADERBOARD_VIEW_KEY, 'table'); } catch(e) {}
+            }
+        }
+    }
+    window.setLeaderboardViewMode = setLeaderboardViewMode;
+
+    btnShowRankingTable?.addEventListener('click', () => setLeaderboardViewMode('table'));
+    btnShowRankingCards?.addEventListener('click', () => setLeaderboardViewMode('cards'));
+
+    // Muat preferensi tampilan tersimpan dari localStorage saat halaman dimuat
+    try {
+        const savedViewMode = localStorage.getItem(LEADERBOARD_VIEW_KEY);
+        if (savedViewMode === 'cards') {
+            setLeaderboardViewMode('cards', false);
+        } else {
+            setLeaderboardViewMode('table', false);
+        }
+    } catch(e) {
+        setLeaderboardViewMode('table', false);
+    }
 </script>
 @endpush
