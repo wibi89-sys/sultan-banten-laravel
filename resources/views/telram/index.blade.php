@@ -945,8 +945,30 @@
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
-                .then((reg) => console.log('Telram ServiceWorker registered:', reg.scope))
+                .then((reg) => {
+                    console.log('Telram ServiceWorker registered:', reg.scope);
+                    reg.update();
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        if (installingWorker) {
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showToast('Versi baru ditemukan! Memperbarui...', 'info');
+                                    setTimeout(() => window.location.reload(), 1200);
+                                }
+                            };
+                        }
+                    };
+                })
                 .catch((err) => console.log('Telram ServiceWorker failed:', err));
+        });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
         });
     }
 

@@ -669,6 +669,12 @@
                 </svg>
                 <span>Install Aplikasi</span>
             </button>
+            <button type="button" class="theme-toggle-btn" onclick="perbaruiAplikasi()" id="btnSyncApp" title="Perbarui Aplikasi & Sinkronkan Fitur Terbaru">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+                <span>Update</span>
+            </button>
             <button type="button" class="theme-toggle-btn" onclick="toggleTheme()" id="btnThemeToggle">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon">
                     <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
@@ -1378,9 +1384,61 @@
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
-                .then((reg) => console.log('ServiceWorker registered:', reg.scope))
+                .then((reg) => {
+                    console.log('ServiceWorker registered:', reg.scope);
+                    // Selalu periksa pembaruan Service Worker
+                    reg.update();
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        if (installingWorker) {
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showToast('Versi baru ditemukan! Memperbarui aplikasi...', 'info');
+                                    setTimeout(() => window.location.reload(), 1200);
+                                }
+                            };
+                        }
+                    };
+                })
                 .catch((err) => console.log('ServiceWorker registration failed:', err));
         });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    }
+
+    async function perbaruiAplikasi() {
+        showToast('Memeriksa pembaruan...', 'info');
+        if ('serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let reg of registrations) {
+                    await reg.update();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        if ('caches' in window) {
+            try {
+                const keys = await caches.keys();
+                for (let key of keys) {
+                    if (key !== 'telram-ekspirasi-v2') {
+                        await caches.delete(key);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        setTimeout(() => {
+            window.location.reload(true);
+        }, 600);
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
