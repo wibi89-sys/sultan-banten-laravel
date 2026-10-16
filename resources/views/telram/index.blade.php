@@ -208,12 +208,19 @@
     <!-- Header Card -->
     <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 14px;">
         <div class="card-body p-3 px-4">
-            <div class="d-flex align-items-center gap-3">
-                <div style="width: 46px; height: 46px; border-radius: 11px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.2);">
-                    <i class="fas fa-calculator text-warning"></i>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 46px; height: 46px; border-radius: 11px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.2);">
+                        <i class="fas fa-calculator text-warning"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-white">Kalkulator Perkiraan Ekspirasi</h4>
+                    </div>
                 </div>
                 <div>
-                    <h4 class="fw-bold mb-0 text-white">Kalkulator Perkiraan Ekspirasi</h4>
+                    <a href="{{ asset('telram-offline.html') }}" download="kalkulator-ekspirasi-offline.html" class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-sm" style="font-size: 12.5px;">
+                        <i class="fas fa-download me-1.5 text-warning"></i> Unduh File Offline (.html)
+                    </a>
                 </div>
             </div>
         </div>
