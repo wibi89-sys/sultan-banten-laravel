@@ -252,4 +252,128 @@ class UptRankingServiceTest extends TestCase
         $this->assertEquals(20, $result['poin']);
         $this->assertFalse($result['is_perbaikan']);
     }
+
+    public function test_evaluate_module_returns_correct_timing_types(): void
+    {
+        $deadline = Carbon::parse('2026-10-15 11:00:00');
+
+        // Hari-H tepat
+        $resHariH = UptRankingService::evaluateModule(['created_at' => '2026-10-15 08:30:00'], $deadline, '2026-10-15');
+        $this->assertEquals('hari_h_tepat', $resHariH['timing_type']);
+        $this->assertTrue($resHariH['is_hari_h']);
+
+        // H-1 pre-input
+        $resH1 = UptRankingService::evaluateModule(['created_at' => '2026-10-14 18:00:00'], $deadline, '2026-10-15');
+        $this->assertEquals('h_minus_1', $resH1['timing_type']);
+        $this->assertFalse($resH1['is_hari_h']);
+
+        // Hari-H telat
+        $resTelatHariH = UptRankingService::evaluateModule(['created_at' => '2026-10-15 13:00:00'], $deadline, '2026-10-15');
+        $this->assertEquals('hari_h_telat', $resTelatHariH['timing_type']);
+        $this->assertTrue($resTelatHariH['is_hari_h']);
+
+        // Susulan lewat hari
+        $resSusulan = UptRankingService::evaluateModule(['created_at' => '2026-10-16 09:00:00'], $deadline, '2026-10-15');
+        $this->assertEquals('susulan', $resSusulan['timing_type']);
+        $this->assertFalse($resSusulan['is_hari_h']);
+    }
+
+    public function test_tie_breaker_prioritizes_hari_h_tepat_over_h_minus_1_when_points_are_equal(): void
+    {
+        $rankings = [
+            [
+                'nama_upt' => 'Lapas B (Banyak H-1)',
+                'total_points' => 2000,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_input_hari_h_tepat' => 60,
+                'count_input_h_minus_1' => 20,
+                'count_input_hari_h_telat' => 0,
+                'count_input_susulan' => 0,
+                'avg_minutes_hari_h' => 510,
+            ],
+            [
+                'nama_upt' => 'Lapas A (Konsisten Hari-H)',
+                'total_points' => 2000,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_input_hari_h_tepat' => 80,
+                'count_input_h_minus_1' => 0,
+                'count_input_hari_h_telat' => 0,
+                'count_input_susulan' => 0,
+                'avg_minutes_hari_h' => 510,
+            ],
+        ];
+
+        UptRankingService::sortRankings($rankings);
+
+        $this->assertEquals('Lapas A (Konsisten Hari-H)', $rankings[0]['nama_upt']);
+        $this->assertEquals('Lapas B (Banyak H-1)', $rankings[1]['nama_upt']);
+    }
+
+    public function test_tie_breaker_prioritizes_earlier_average_time_on_hari_h(): void
+    {
+        $rankings = [
+            [
+                'nama_upt' => 'Lapas Siang (10:30 WIB)',
+                'total_points' => 2000,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_input_hari_h_tepat' => 80,
+                'count_input_h_minus_1' => 0,
+                'count_input_hari_h_telat' => 0,
+                'count_input_susulan' => 0,
+                'avg_minutes_hari_h' => 630, // 10:30 WIB
+            ],
+            [
+                'nama_upt' => 'Lapas Pagi (08:15 WIB)',
+                'total_points' => 2000,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_input_hari_h_tepat' => 80,
+                'count_input_h_minus_1' => 0,
+                'count_input_hari_h_telat' => 0,
+                'count_input_susulan' => 0,
+                'avg_minutes_hari_h' => 495, // 08:15 WIB
+            ],
+        ];
+
+        UptRankingService::sortRankings($rankings);
+
+        $this->assertEquals('Lapas Pagi (08:15 WIB)', $rankings[0]['nama_upt']);
+        $this->assertEquals('Lapas Siang (10:30 WIB)', $rankings[1]['nama_upt']);
+    }
+
+    public function test_tie_breaker_prioritizes_h_minus_1_over_late_inputs_when_points_equal(): void
+    {
+        $rankings = [
+            [
+                'nama_upt' => 'Lapas Telat (Ada Keterlambatan)',
+                'total_points' => 1500,
+                'count_hari_sempurna' => 15,
+                'count_kroscek_sesuai' => 15,
+                'count_input_hari_h_tepat' => 50,
+                'count_input_h_minus_1' => 0,
+                'count_input_hari_h_telat' => 10,
+                'count_input_susulan' => 0,
+                'avg_minutes_hari_h' => 510,
+            ],
+            [
+                'nama_upt' => 'Lapas Pre-Input (Input H-1 Lebih Awal)',
+                'total_points' => 1500,
+                'count_hari_sempurna' => 15,
+                'count_kroscek_sesuai' => 15,
+                'count_input_hari_h_tepat' => 50,
+                'count_input_h_minus_1' => 10,
+                'count_input_hari_h_telat' => 0,
+                'count_input_susulan' => 0,
+                'avg_minutes_hari_h' => 510,
+            ],
+        ];
+
+        UptRankingService::sortRankings($rankings);
+
+        $this->assertEquals('Lapas Pre-Input (Input H-1 Lebih Awal)', $rankings[0]['nama_upt']);
+        $this->assertEquals('Lapas Telat (Ada Keterlambatan)', $rankings[1]['nama_upt']);
+    }
 }

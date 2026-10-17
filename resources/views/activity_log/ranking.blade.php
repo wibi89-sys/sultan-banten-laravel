@@ -260,7 +260,7 @@
 
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill small">
-            <i class="fas fa-clock me-1"></i> Batas Waktu: <strong>{{ $rankingData['period']['jam_selesai'] }} WIB</strong>
+            <i class="fas fa-clock me-1"></i> Jam Input: <strong>{{ $rankingData['period']['jam_mulai'] ?? '08:00' }} - {{ $rankingData['period']['jam_selesai'] }} WIB</strong>
         </span>
         <a href="{{ route('activity-log.ranking.excel', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
            class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm"
@@ -639,9 +639,14 @@
                                 @endif
                             </div>
                             <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
-                                <small class="text-muted" style="font-size: 11px;">
+                                <small class="text-muted" style="font-size: 11px;" title="Rata-rata jam input pada Hari-H: {{ $upt['rata_rata_jam_input'] }} ({{ $upt['count_input_hari_h_tepat'] ?? 0 }}x Hari-H tepat)">
                                     <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
                                 </small>
+                                @if(($upt['count_input_h_minus_1'] ?? 0) > 0)
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 10px;" title="{{ $upt['count_input_h_minus_1'] }} modul diinput sore/malam H-1">
+                                        <i class="fas fa-history me-1"></i>{{ $upt['count_input_h_minus_1'] }}x H-1
+                                    </span>
+                                @endif
                                 @if($upt['count_hari_sempurna'] > 0)
                                     <span class="badge bg-warning-subtle text-warning" style="font-size: 10px;">
                                         <i class="fas fa-star me-1"></i>{{ $upt['count_hari_sempurna'] }}x Hari Sempurna (100 Poin)
@@ -796,9 +801,16 @@
 
                             <!-- Jam Input & Hari Sempurna -->
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-2 pt-1 small">
-                                <span class="text-muted" style="font-size: 11px;">
-                                    <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
-                                </span>
+                                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                    <span class="text-muted" style="font-size: 11px;">
+                                        <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
+                                    </span>
+                                    @if(($upt['count_input_h_minus_1'] ?? 0) > 0)
+                                        <span class="badge bg-info-subtle text-info" style="font-size: 9.5px;">
+                                            {{ $upt['count_input_h_minus_1'] }}x H-1
+                                        </span>
+                                    @endif
+                                </div>
                                 @if($upt['count_hari_sempurna'] > 0)
                                     <span class="badge bg-warning-subtle text-warning" style="font-size: 10.5px;">
                                         <i class="fas fa-star me-1"></i>{{ $upt['count_hari_sempurna'] }}x Sempurna
@@ -891,8 +903,17 @@
                 </div>
                 <div class="col-md-6">
                     <div class="p-3 bg-light rounded-3 h-100 border">
-                        <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-1"></i>Aturan Khusus Lapangan:</h6>
+                        <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-1"></i>Aturan Khusus &amp; Penentu Juara (Tie-Breaker):</h6>
                         <ul class="mb-0 ps-3 text-secondary">
+                            <li><strong>Kriteria Penentu Juara (Jika Poin Sama):</strong> Apabila dua UPT atau lebih memperoleh total poin yang sama, peringkat diurutkan berdasarkan:
+                                <ol class="ps-3 mt-1 mb-1 small text-dark">
+                                    <li>Jumlah Hari Sempurna (100 Poin) &amp; Kroscek Sesuai</li>
+                                    <li><strong>Konsistensi Jam Hari-H:</strong> Terbanyak modul diinput tepat waktu pada jam setting instansi Hari-H ({{ $rankingData['period']['jam_mulai'] ?? '08:00' }} - {{ $rankingData['period']['jam_selesai'] }} WIB)</li>
+                                    <li><strong>Rata-rata Jam Input:</strong> UPT dengan rata-rata waktu input Hari-H paling awal/mendekati jam mulai</li>
+                                    <li><strong>Pendekatan Hari Sebelumnya:</strong> Input H-1 (data siap lebih awal) lebih diutamakan daripada input terlambat</li>
+                                    <li>Minim keterlambatan pada Hari-H dan susulan lewat hari</li>
+                                </ol>
+                            </li>
                             <li><strong>Input H-1 (Pre-Input):</strong> Pengisian sore hari H-1 untuk tanggal esok hari dihitung <strong>Tepat Waktu (20 Poin Penuh)</strong> karena data sudah siap sebelum deadline.</li>
                             <li><strong>Input Lebih Dari Jam Batas (Hari-H):</strong> Pengisian lewat pukul {{ $rankingData['period']['jam_selesai'] }} WIB pada hari yang sama (hari-H) mendapat <strong>10 Poin</strong> per modul.</li>
                             <li><strong>Input Terlambat Melewati Hari:</strong> Pengisian terlambat yang baru diinput setelah melewati hari-H (hari berikutnya / susulan) mendapat <strong>5 Poin</strong> per modul.</li>

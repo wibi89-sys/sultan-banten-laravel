@@ -47,6 +47,10 @@ class UptRankingService
 
         // Ambil batas jam instansi
         $instansi = Instansi::getFirst();
+        $jamMulaiStr = substr($instansi->jam_mulai ?? '08:00:00', 0, 8);
+        if (strlen($jamMulaiStr) === 5) {
+            $jamMulaiStr .= ':00';
+        }
         $jamSelesaiStr = substr($instansi->jam_selesai ?? '11:00:00', 0, 8);
         if (strlen($jamSelesaiStr) === 5) {
             $jamSelesaiStr .= ':00';
@@ -74,6 +78,7 @@ class UptRankingService
                     'effective_end_date' => $effectiveEnd->format('Y-m-d'),
                     'total_days' => 0,
                     'max_points' => 0,
+                    'jam_mulai' => substr($jamMulaiStr, 0, 5),
                     'jam_selesai' => substr($jamSelesaiStr, 0, 5),
                 ],
                 'rankings' => [],
@@ -215,11 +220,55 @@ class UptRankingService
             $countKroscekPerbaikan = 0;
             $countKroscekSelisih = 0;
             $countKroscekKosong = 0;
-            $inputTimeMinutesSum = 0;
-            $inputTimeCount = 0;
+
+            // Tracking waktu input & kriteria penentu juara (tie-breaker)
+            $countInputHariHTepat = 0;
+            $countInputHMinus1 = 0;
+            $countInputHariHTelat = 0;
+            $countInputSusulan = 0;
+
+            $inputTimeMinutesHariHSum = 0;
+            $inputTimeCountHariH = 0;
+            $inputTimeMinutesAllSum = 0;
+            $inputTimeCountAll = 0;
 
             $dailyBreakdown = [];
             $selisihDates = [];
+
+            $trackModuleTiming = function ($score) use (
+                &$countInputHariHTepat,
+                &$countInputHMinus1,
+                &$countInputHariHTelat,
+                &$countInputSusulan,
+                &$inputTimeMinutesHariHSum,
+                &$inputTimeCountHariH,
+                &$inputTimeMinutesAllSum,
+                &$inputTimeCountAll
+            ) {
+                $type = $score['timing_type'] ?? null;
+                if ($type === 'hari_h_tepat') {
+                    $countInputHariHTepat++;
+                    if ($score['jam_menit'] !== null) {
+                        $inputTimeMinutesHariHSum += $score['jam_menit'];
+                        $inputTimeCountHariH++;
+                    }
+                } elseif ($type === 'h_minus_1') {
+                    $countInputHMinus1++;
+                } elseif ($type === 'hari_h_telat') {
+                    $countInputHariHTelat++;
+                    if ($score['jam_menit'] !== null) {
+                        $inputTimeMinutesHariHSum += $score['jam_menit'];
+                        $inputTimeCountHariH++;
+                    }
+                } elseif ($type === 'susulan') {
+                    $countInputSusulan++;
+                }
+
+                if ($score['jam_menit'] !== null) {
+                    $inputTimeMinutesAllSum += $score['jam_menit'];
+                    $inputTimeCountAll++;
+                }
+            };
 
             foreach ($dateList as $tgl) {
                 $deadline = Carbon::parse($tgl.' '.$jamSelesaiStr);
@@ -239,10 +288,7 @@ class UptRankingService
                 } else {
                     $countModulKosong++;
                 }
-                if ($pScore['jam_menit'] !== null) {
-                    $inputTimeMinutesSum += $pScore['jam_menit'];
-                    $inputTimeCount++;
-                }
+                $trackModuleTiming($pScore);
 
                 // Modul 2: Overstaying
                 $oData = $overstayingMap[$uptId][$tgl] ?? null;
@@ -255,10 +301,7 @@ class UptRankingService
                 } else {
                     $countModulKosong++;
                 }
-                if ($oScore['jam_menit'] !== null) {
-                    $inputTimeMinutesSum += $oScore['jam_menit'];
-                    $inputTimeCount++;
-                }
+                $trackModuleTiming($oScore);
 
                 // Modul 3: Integrasi
                 $iData = $integrasiMap[$uptId][$tgl] ?? null;
@@ -271,10 +314,7 @@ class UptRankingService
                 } else {
                     $countModulKosong++;
                 }
-                if ($iScore['jam_menit'] !== null) {
-                    $inputTimeMinutesSum += $iScore['jam_menit'];
-                    $inputTimeCount++;
-                }
+                $trackModuleTiming($iScore);
 
                 // Modul 4: Bebas Harian
                 $bData = $bebasMap[$uptId][$tgl] ?? null;
@@ -287,10 +327,7 @@ class UptRankingService
                 } else {
                     $countModulKosong++;
                 }
-                if ($bScore['jam_menit'] !== null) {
-                    $inputTimeMinutesSum += $bScore['jam_menit'];
-                    $inputTimeCount++;
-                }
+                $trackModuleTiming($bScore);
 
                 // Komponen 5: Kroscek Tahanan (Penghuni vs Overstaying)
                 $hasEditLog = isset($editLogMap[$uptId][$tgl]);
@@ -339,10 +376,20 @@ class UptRankingService
                 ];
             }
 
-            $avgMinutes = $inputTimeCount > 0 ? (int) round($inputTimeMinutesSum / $inputTimeCount) : null;
-            $avgTimeString = $avgMinutes !== null
-                ? sprintf('%02d:%02d WIB', floor($avgMinutes / 60), $avgMinutes % 60)
-                : '-';
+            $avgMinutesHariH = $inputTimeCountHariH > 0
+                ? (int) round($inputTimeMinutesHariHSum / $inputTimeCountHariH)
+                : null;
+            $avgMinutesAll = $inputTimeCountAll > 0
+                ? (int) round($inputTimeMinutesAllSum / $inputTimeCountAll)
+                : null;
+
+            if ($avgMinutesHariH !== null) {
+                $avgTimeString = sprintf('%02d:%02d WIB', floor($avgMinutesHariH / 60), $avgMinutesHariH % 60);
+            } elseif ($avgMinutesAll !== null) {
+                $avgTimeString = sprintf('%02d:%02d WIB (H-1/Susulan)', floor($avgMinutesAll / 60), $avgMinutesAll % 60);
+            } else {
+                $avgTimeString = '-';
+            }
 
             $compliancePct = $maxPointsPerUpt > 0
                 ? round(($totalPoints / $maxPointsPerUpt) * 100, 1)
@@ -358,6 +405,11 @@ class UptRankingService
                 'count_modul_tepat' => $countModulTepat,
                 'count_modul_terlambat' => $countModulTerlambat,
                 'count_modul_kosong' => $countModulKosong,
+                'count_input_hari_h_tepat' => $countInputHariHTepat,
+                'count_input_h_minus_1' => $countInputHMinus1,
+                'count_input_hari_h_telat' => $countInputHariHTelat,
+                'count_input_susulan' => $countInputSusulan,
+                'avg_minutes_hari_h' => $avgMinutesHariH ?? ($avgMinutesAll ?? PHP_INT_MAX),
                 'count_kroscek_sesuai' => $countKroscekSesuai,
                 'count_kroscek_perbaikan' => $countKroscekPerbaikan,
                 'count_kroscek_selisih' => $countKroscekSelisih,
@@ -368,20 +420,8 @@ class UptRankingService
             ];
         }
 
-        // Urutkan ranking: Total Poin desc, Persentase desc, Hari Sempurna desc, Nama UPT asc
-        usort($rankings, function ($a, $b) {
-            if ($a['total_points'] !== $b['total_points']) {
-                return $b['total_points'] <=> $a['total_points'];
-            }
-            if ($a['count_hari_sempurna'] !== $b['count_hari_sempurna']) {
-                return $b['count_hari_sempurna'] <=> $a['count_hari_sempurna'];
-            }
-            if ($a['count_kroscek_sesuai'] !== $b['count_kroscek_sesuai']) {
-                return $b['count_kroscek_sesuai'] <=> $a['count_kroscek_sesuai'];
-            }
-
-            return strcmp($a['nama_upt'], $b['nama_upt']);
-        });
+        // Urutkan ranking dengan prioritas poin, kroscek, dan tie-breaker ketepatan waktu
+        self::sortRankings($rankings);
 
         // Berikan nomor peringkat dan tandai yang terburuk (peringkat paling bawah)
         $totalRanked = count($rankings);
@@ -402,6 +442,7 @@ class UptRankingService
                 'effective_end_date' => $effectiveEnd->format('Y-m-d'),
                 'total_days' => $totalDays,
                 'max_points' => $maxPointsPerUpt,
+                'jam_mulai' => substr($jamMulaiStr, 0, 5),
                 'jam_selesai' => substr($jamSelesaiStr, 0, 5),
             ],
             'rankings' => $rankings,
@@ -416,6 +457,74 @@ class UptRankingService
     }
 
     /**
+     * Urutkan ranking berdasarkan kriteria poin, kepatuhan, kroscek, dan tie-breaker ketepatan waktu.
+     *
+     * Prioritas:
+     * 1. Total Poin (desc)
+     * 2. Persentase Kepatuhan (desc)
+     * 3. Jumlah Hari Sempurna (desc)
+     * 4. Jumlah Kroscek Sesuai (desc)
+     * 5. Tie-Breaker Ketepatan Waktu:
+     *    a. Prioritas konsistensi input tepat waktu pada jam setting Hari-H (desc)
+     *    b. Rata-rata jam input Hari-H paling awal/mendekati jam setting (asc)
+     *    c. Hari sebelumnya (H-1) lebih diutamakan daripada keterlambatan (desc H-1)
+     *    d. Minim keterlambatan pada Hari-H (asc)
+     *    e. Minim keterlambatan susulan lewat hari (asc)
+     * 6. Nama UPT alfabetis (asc)
+     */
+    public static function sortRankings(array &$rankings): void
+    {
+        usort($rankings, function ($a, $b) {
+            if ($a['total_points'] !== $b['total_points']) {
+                return $b['total_points'] <=> $a['total_points'];
+            }
+            if ($a['count_hari_sempurna'] !== $b['count_hari_sempurna']) {
+                return $b['count_hari_sempurna'] <=> $a['count_hari_sempurna'];
+            }
+            if ($a['count_kroscek_sesuai'] !== $b['count_kroscek_sesuai']) {
+                return $b['count_kroscek_sesuai'] <=> $a['count_kroscek_sesuai'];
+            }
+
+            // 5a. Prioritas konsistensi input tepat waktu pada jam setting Hari-H
+            $aHariHTepat = $a['count_input_hari_h_tepat'] ?? 0;
+            $bHariHTepat = $b['count_input_hari_h_tepat'] ?? 0;
+            if ($aHariHTepat !== $bHariHTepat) {
+                return $bHariHTepat <=> $aHariHTepat;
+            }
+
+            // 5b. Rata-rata jam input Hari-H paling awal/mendekati jam setting
+            $aAvg = $a['avg_minutes_hari_h'] ?? PHP_INT_MAX;
+            $bAvg = $b['avg_minutes_hari_h'] ?? PHP_INT_MAX;
+            if ($aAvg !== $bAvg) {
+                return $aAvg <=> $bAvg;
+            }
+
+            // 5c. Pendekatan hari sebelumnya (H-1) lebih diutamakan daripada keterlambatan
+            $aH1 = $a['count_input_h_minus_1'] ?? 0;
+            $bH1 = $b['count_input_h_minus_1'] ?? 0;
+            if ($aH1 !== $bH1) {
+                return $bH1 <=> $aH1;
+            }
+
+            // 5d. Minim keterlambatan pada Hari-H
+            $aTelat = $a['count_input_hari_h_telat'] ?? 0;
+            $bTelat = $b['count_input_hari_h_telat'] ?? 0;
+            if ($aTelat !== $bTelat) {
+                return $aTelat <=> $bTelat;
+            }
+
+            // 5e. Minim keterlambatan susulan lewat hari
+            $aSusulan = $a['count_input_susulan'] ?? 0;
+            $bSusulan = $b['count_input_susulan'] ?? 0;
+            if ($aSusulan !== $bSusulan) {
+                return $aSusulan <=> $bSusulan;
+            }
+
+            return strcmp($a['nama_upt'], $b['nama_upt']);
+        });
+    }
+
+    /**
      * Evaluasi ketepatan waktu suatu modul berdasarkan created_at vs deadline
      */
     public static function evaluateModule(?array $data, Carbon $deadline, string $tanggalLaporan): array
@@ -427,6 +536,8 @@ class UptRankingService
                 'jam_str' => '-',
                 'jam_menit' => null,
                 'keterangan' => 'Belum Input',
+                'timing_type' => 'kosong',
+                'is_hari_h' => false,
             ];
         }
 
@@ -449,12 +560,16 @@ class UptRankingService
 
         // Jika dibuat sebelum atau tepat pada deadline (termasuk H-1 sore)
         if ($createdAt->lte($deadline)) {
+            $isSameDay = ($createdDate === $tanggalLaporan);
+
             return [
                 'status' => 'tepat',
                 'poin' => 20,
                 'jam_str' => $createdAt->format('H:i'),
                 'jam_menit' => $jamMenit,
                 'keterangan' => $ket,
+                'timing_type' => $isSameDay ? 'hari_h_tepat' : 'h_minus_1',
+                'is_hari_h' => $isSameDay,
             ];
         }
 
@@ -466,6 +581,8 @@ class UptRankingService
                 'jam_str' => $createdAt->format('H:i'),
                 'jam_menit' => $jamMenit,
                 'keterangan' => $ket,
+                'timing_type' => 'hari_h_telat',
+                'is_hari_h' => true,
             ];
         }
 
@@ -476,6 +593,8 @@ class UptRankingService
             'jam_str' => $createdAt->format('H:i'),
             'jam_menit' => $jamMenit,
             'keterangan' => $ket,
+            'timing_type' => 'susulan',
+            'is_hari_h' => false,
         ];
     }
 
