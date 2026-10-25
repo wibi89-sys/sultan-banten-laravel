@@ -1,5 +1,6 @@
 <?php
-//============================================================+
+
+// ============================================================+
 // File name   : example_2d_png.php
 // Version     : 1.0.000
 // Begin       : 2011-07-21
@@ -29,28 +30,30 @@
 //
 // Description : Example for tcpdf_barcodes_2d.php class
 //
-//============================================================+
+// ============================================================+
 
 /**
  * @file
  * Example for tcpdf_barcodes_2d.php class
- * @package com.tecnick.tcpdf
+ *
  * @author Nicola Asuni
+ *
  * @version 1.0.009
+ *
  * @group barcode
  * @group qrcode
  * @group png
  */
 
 // include 2D barcode class (search for installation path)
-require_once(dirname(__FILE__).'/tcpdf_barcodes_2d_include.php');
+require_once dirname(__FILE__).'/tcpdf_barcodes_2d_include.php';
 
 // set the barcode content and type
 $barcodeobj = new TCPDF2DBarcode('http://www.tcpdf.org', 'QRCODE,H');
 
 // output the barcode as PNG image
-$barcodeobj->getBarcodePNG(6, 6, array(0,0,0));
+$barcodeobj->getBarcodePNG(6, 6, [0, 0, 0]);
 
-//============================================================+
+// ============================================================+
 // END OF FILE
-//============================================================+
+// ============================================================+

@@ -188,6 +188,12 @@
                         </div>
                         <div class="col-6 col-md-4 access-checkbox">
                             <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="akses_sidang_tpp" id="add_ak_sidang" checked>
+                                <label class="form-check-label" for="add_ak_sidang">Sidang TPP</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 access-checkbox">
+                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="akses_laporan" id="add_ak_lap" checked>
                                 <label class="form-check-label" for="add_ak_lap">Cetak Laporan</label>
                             </div>
@@ -303,6 +309,12 @@
                         </div>
                         <div class="col-6 col-md-4 access-checkbox">
                             <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="akses_sidang_tpp" id="edit_ak_sidang">
+                                <label class="form-check-label" for="edit_ak_sidang">Sidang TPP</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 access-checkbox">
+                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="akses_laporan" id="edit_ak_lap">
                                 <label class="form-check-label" for="edit_ak_lap">Cetak Laporan</label>
                             </div>
@@ -352,6 +364,9 @@
         document.getElementById('edit_ak_over').checked = !!u.akses_overstaying;
         document.getElementById('edit_ak_integ').checked = !!u.akses_integrasi;
         document.getElementById('edit_ak_bebas').checked = !!u.akses_bebas_harian;
+        if (document.getElementById('edit_ak_sidang')) {
+            document.getElementById('edit_ak_sidang').checked = !!u.akses_sidang_tpp;
+        }
         document.getElementById('edit_ak_lap').checked = !!u.akses_laporan;
         document.getElementById('edit_ak_upt').checked = !!u.akses_upt;
         document.getElementById('edit_ak_user').checked = !!u.akses_user;

@@ -132,10 +132,8 @@
                 <span class="badge bg-primary">{{ ucfirst($user->role) }}</span>
             </div>
             
-            @if(!empty($user->upt?->nama_upt))
-            <div class="info-label">UPT</div>
-            <div class="info-value">{{ $user->upt->nama_upt }}</div>
-            @endif
+            <div class="info-label">Satuan Kerja / Instansi</div>
+            <div class="info-value">{{ $user->upt?->nama_upt ?? ($instansi->nama_instansi ?? 'Kantor Wilayah') }}</div>
 
             @if(!empty($user->no_wa))
             <div class="info-label">Nomor WhatsApp</div>

@@ -1,5 +1,6 @@
 <?php
-//============================================================+
+
+// ============================================================+
 // File name   : example_067.php
 // Begin       : 2022-01-07
 // Last Update : 2022-01-07
@@ -14,21 +15,24 @@
 //               Tecnick.com LTD
 //               www.tecnick.com
 //               info@tecnick.com
-//============================================================+
+// ============================================================+
 
 /**
  * Creates an example PDF TEST document using TCPDF
- * @package com.tecnick.tcpdf
+ *
  * @abstract TCPDF - Example: HTML tables and table headers
+ *
  * @author Nicola Asuni
+ *
  * @since 2009-03-20
+ *
  * @group html
  * @group table
  * @group pdf
  */
 
 // Include the main TCPDF library (search for installation path).
-require_once('tcpdf_include.php');
+require_once 'tcpdf_include.php';
 
 // create new PDF document
 $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -44,8 +48,8 @@ $pdf->setKeywords('TCPDF, PDF, example, test, guide');
 $pdf->setHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE.' 067', PDF_HEADER_STRING);
 
 // set header and footer fonts
-$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+$pdf->setHeaderFont([PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN]);
+$pdf->setFooterFont([PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA]);
 
 // set default monospaced font
 $pdf->setDefaultMonospacedFont(PDF_FONT_MONOSPACED);
@@ -56,15 +60,15 @@ $pdf->setHeaderMargin(PDF_MARGIN_HEADER);
 $pdf->setFooterMargin(PDF_MARGIN_FOOTER);
 
 // set auto page breaks
-$pdf->setAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+$pdf->setAutoPageBreak(true, PDF_MARGIN_BOTTOM);
 
 // set image scale factor
 $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
 // set some language-dependent strings (optional)
 if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
-	require_once(dirname(__FILE__).'/lang/eng.php');
-	$pdf->setLanguageArray($l);
+    require_once dirname(__FILE__).'/lang/eng.php';
+    $pdf->setLanguageArray($l);
 }
 
 // ---------------------------------------------------------
@@ -81,7 +85,7 @@ $pdf->setFont('helvetica', '', 8);
 
 // -----------------------------------------------------------------------------
 
-$tbl = <<<EOD
+$tbl = <<<'EOD'
 <table cellspacing="0" cellpadding="1" style="border: 1px dotted red;">
     <tr>
         <td rowspan="3">COL 1 - ROW 1<br />COLSPAN 3</td>
@@ -103,7 +107,7 @@ $pdf->writeHTML($tbl, true, false, false, false, '');
 
 // -----------------------------------------------------------------------------
 
-$tbl = <<<EOD
+$tbl = <<<'EOD'
 <table cellspacing="0" cellpadding="1" style="border: 1px dashed blue !important;">
     <tr>
         <td rowspan="3">COL 1 - ROW 1<br />COLSPAN 3</td>
@@ -125,7 +129,7 @@ $pdf->writeHTML($tbl, true, false, false, false, '');
 
 // -----------------------------------------------------------------------------
 
-$tbl = <<<EOD
+$tbl = <<<'EOD'
 <table cellspacing="0" cellpadding="1" style="border: 1px hair black !important;">
     <tr>
         <td rowspan="3">COL 1 - ROW 1<br />COLSPAN 3</td>
@@ -147,7 +151,7 @@ $pdf->writeHTML($tbl, true, false, false, false, '');
 
 // -----------------------------------------------------------------------------
 
-$tbl = <<<EOD
+$tbl = <<<'EOD'
 <table cellspacing="0" cellpadding="1" style="border: dashed green">
     <tr>
 			<td rowspan="3">COL 1 - ROW 1<br />COLSPAN 3</td>
@@ -169,7 +173,7 @@ $pdf->writeHTML($tbl, true, false, false, false, '');
 
 // -----------------------------------------------------------------------------
 
-$tbl = <<<EOD
+$tbl = <<<'EOD'
 <table cellspacing="0" cellpadding="1" style="border: solid yellow !important">
     <tr>
         <td rowspan="3">COL 1 - ROW 1<br />COLSPAN 3</td>
@@ -194,7 +198,7 @@ $pdf->writeHTML($tbl, true, false, false, false, '');
 // At medium thickness, which is what you get with only one
 //  setting for style, everything looks the same.
 // Included just for completeness.
-$tbl = <<<EOD
+$tbl = <<<'EOD'
 <table cellspacing="0" cellpadding="1" style="border: dashed">
     <tr>
         <td rowspan="3">COL 1 - ROW 1<br />COLSPAN 3</td>
@@ -215,9 +219,9 @@ EOD;
 $pdf->writeHTML($tbl, true, false, false, false, '');
 // -----------------------------------------------------------------------------
 
-//Close and output PDF document
+// Close and output PDF document
 $pdf->Output('example_067.pdf', 'I');
 
-//============================================================+
+// ============================================================+
 // END OF FILE
-//============================================================+
+// ============================================================+

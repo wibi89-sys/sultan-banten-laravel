@@ -25,6 +25,7 @@ class User extends Authenticatable
         'akses_overstaying',
         'akses_integrasi',
         'akses_bebas_harian',
+        'akses_sidang_tpp',
         'akses_upt',
         'akses_user',
         'akses_instansi',
@@ -49,6 +50,7 @@ class User extends Authenticatable
             'akses_overstaying' => 'boolean',
             'akses_integrasi' => 'boolean',
             'akses_bebas_harian' => 'boolean',
+            'akses_sidang_tpp' => 'boolean',
             'akses_upt' => 'boolean',
             'akses_user' => 'boolean',
             'akses_instansi' => 'boolean',
@@ -81,7 +83,8 @@ class User extends Authenticatable
             return true;
         }
 
-        $property = 'akses_' . $menu;
+        $property = 'akses_'.$menu;
+
         return (bool) ($this->{$property} ?? false);
     }
 
@@ -91,11 +94,11 @@ class User extends Authenticatable
         $initial = strtoupper(substr($name, 0, 1));
         $fontSize = (int) floor($size * 0.45);
 
-        if (!empty($this->foto) && file_exists(public_path($this->foto))) {
-            return '<img src="' . asset($this->foto) . '" alt="' . $name . '" style="width: ' . $size . 'px; height: ' . $size . 'px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        if (! empty($this->foto) && file_exists(public_path($this->foto))) {
+            return '<img src="'.asset($this->foto).'" alt="'.$name.'" style="width: '.$size.'px; height: '.$size.'px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         }
 
-        return '<div style="width: ' . $size . 'px; height: ' . $size . 'px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: ' . $fontSize . 'px; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-shadow: 0 1px 2px rgba(0,0,0,0.2);">' . $initial . '</div>';
+        return '<div style="width: '.$size.'px; height: '.$size.'px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: '.$fontSize.'px; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-shadow: 0 1px 2px rgba(0,0,0,0.2);">'.$initial.'</div>';
     }
 
     public function getUserUptFilter(): ?int
@@ -103,6 +106,7 @@ class User extends Authenticatable
         if ($this->isAdmin()) {
             return null;
         }
+
         return $this->upt_id ? (int) $this->upt_id : null;
     }
 }

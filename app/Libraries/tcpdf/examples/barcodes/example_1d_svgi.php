@@ -1,5 +1,6 @@
 <?php
-//============================================================+
+
+// ============================================================+
 // File name   : example_1d_svgi.php
 // Version     : 1.0.000
 // Begin       : 2011-07-21
@@ -29,14 +30,16 @@
 //
 // Description : Example for tcpdf_barcodes_1d.php class
 //
-//============================================================+
+// ============================================================+
 
 /**
  * @file
  * Example for tcpdf_barcodes_1d.php class
- * @package com.tecnick.tcpdf
+ *
  * @author Nicola Asuni
+ *
  * @version 1.0.000
+ *
  * @group barcode
  * @group 1d
  * @group svg
@@ -44,7 +47,7 @@
  */
 
 // include 1D barcode class (search for installation path)
-require_once(dirname(__FILE__).'/tcpdf_barcodes_1d_include.php');
+require_once dirname(__FILE__).'/tcpdf_barcodes_1d_include.php';
 
 // set the barcode content and type
 $barcodeobj = new TCPDFBarcode('http://www.tcpdf.org', 'C128');
@@ -52,6 +55,6 @@ $barcodeobj = new TCPDFBarcode('http://www.tcpdf.org', 'C128');
 // output the barcode as SVG inline code
 echo $barcodeobj->getBarcodeSVGcode(2, 40, 'black');
 
-//============================================================+
+// ============================================================+
 // END OF FILE
-//============================================================+
+// ============================================================+

@@ -13,6 +13,7 @@ use App\Http\Controllers\OverstayingController;
 use App\Http\Controllers\PenghuniController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SidangTppController;
 use App\Http\Controllers\TelramController;
 use App\Http\Controllers\UptController;
 use App\Http\Controllers\UserController;
@@ -99,6 +100,38 @@ Route::middleware('auth')->group(function () {
     Route::post('/bebas-harian', [BebasHarianController::class, 'store'])->name('bebas-harian.store');
     Route::put('/bebas-harian', [BebasHarianController::class, 'update'])->name('bebas-harian.update');
     Route::delete('/bebas-harian', [BebasHarianController::class, 'destroy'])->name('bebas-harian.destroy');
+
+    // Sidang TPP (Sesuai SE Dirjenpas No: PAS-38.OT.02.02 Tahun 2026)
+    Route::prefix('sidang-tpp')->name('sidang-tpp.')->group(function () {
+        // Anak Menu 1: Jadwal & Undangan Daring
+        Route::get('/', [SidangTppController::class, 'index'])->name('index');
+        Route::get('/create', [SidangTppController::class, 'create'])->name('create');
+        Route::post('/', [SidangTppController::class, 'store'])->name('store');
+        Route::post('/preview-excel', [SidangTppController::class, 'previewExcel'])->name('preview-excel');
+        Route::get('/download-template', [SidangTppController::class, 'downloadTemplate'])->name('download-template');
+        Route::get('/{id}', [SidangTppController::class, 'show'])->whereNumber('id')->name('show');
+        Route::delete('/{id}', [SidangTppController::class, 'destroy'])->whereNumber('id')->name('destroy');
+        Route::get('/{id}/download/{type}', [SidangTppController::class, 'downloadFile'])->whereNumber('id')->name('download-file');
+
+        // CRUD Peserta Sidang
+        Route::post('/{id}/peserta', [SidangTppController::class, 'pesertaStore'])->whereNumber('id')->name('peserta.store');
+        Route::put('/{id}/peserta/{peserta_id}', [SidangTppController::class, 'pesertaUpdate'])->whereNumber('id')->name('peserta.update');
+        Route::delete('/{id}/peserta/{peserta_id}', [SidangTppController::class, 'pesertaDestroy'])->whereNumber('id')->name('peserta.destroy');
+
+        // Anak Menu 2: Hasil Sidang UPT
+        Route::get('/hasil', [SidangTppController::class, 'hasilIndex'])->name('hasil');
+        Route::post('/{id}/hasil', [SidangTppController::class, 'hasilUpdate'])->whereNumber('id')->name('hasil.update');
+
+        // Anak Menu 3: Verifikasi & TTD Kanwil (Bintorwasdal)
+        Route::get('/kanwil', [SidangTppController::class, 'kanwilIndex'])->name('kanwil');
+        Route::post('/{id}/kanwil-verifikasi', [SidangTppController::class, 'kanwilVerifikasi'])->whereNumber('id')->name('kanwil.verifikasi');
+        Route::post('/{id}/upload-laporan-kanwil', [SidangTppController::class, 'uploadLaporanKanwil'])->whereNumber('id')->name('kanwil.upload-laporan');
+        Route::get('/{id}/download-laporan-kanwil', [SidangTppController::class, 'downloadLaporanKanwil'])->whereNumber('id')->name('download-laporan-kanwil');
+
+        // Anak Menu 4: Rekap & Download Dokumen
+        Route::get('/rekapitulasi', [SidangTppController::class, 'rekapitulasiIndex'])->name('rekapitulasi');
+        Route::get('/export-excel', [SidangTppController::class, 'exportExcel'])->name('export-excel');
+    });
 
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');

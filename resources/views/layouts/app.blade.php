@@ -220,6 +220,81 @@
                 left: 0 !important;
             }
         }
+
+        /* Topbar & Dropdown Stacking Context Fix */
+        .topbar {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1050 !important;
+        }
+
+        /* Topbar User Dropdown Styles (matches screenshot design) */
+        .user-dropdown-toggle {
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 24px;
+            transition: all 0.2s ease;
+        }
+        .user-dropdown-toggle:hover, .user-dropdown-toggle:focus {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .topbar-user-menu {
+            border-radius: 18px !important;
+            box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.08) !important;
+            border: 1px solid rgba(0, 0, 0, 0.06) !important;
+            min-width: 260px !important;
+            padding: 18px 20px 14px 20px !important;
+            z-index: 1060 !important;
+        }
+        .topbar-user-menu .dropdown-item {
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+        .topbar-user-menu .dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+        .topbar-user-menu .dropdown-item.text-danger:hover {
+            background-color: #fef2f2;
+            color: #dc2626 !important;
+        }
+        [data-theme="dark"] .user-dropdown-toggle {
+            color: #f1f5f9 !important;
+        }
+        [data-theme="dark"] .user-dropdown-toggle .profile-name-text {
+            color: #f1f5f9;
+        }
+        [data-theme="dark"] .user-dropdown-toggle:hover, [data-theme="dark"] .user-dropdown-toggle:focus {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        [data-theme="dark"] .topbar-user-menu {
+            background-color: #1e293b !important;
+            color: #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5) !important;
+        }
+        [data-theme="dark"] .topbar-user-menu .dropdown-item {
+            color: #cbd5e1;
+        }
+        [data-theme="dark"] .topbar-user-menu .dropdown-item:hover {
+            background-color: #334155;
+            color: #ffffff;
+        }
+        [data-theme="dark"] .topbar-user-menu .dropdown-item.text-danger:hover {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #f87171 !important;
+        }
+        [data-theme="dark"] .topbar-user-menu .text-dark {
+            color: #f8fafc !important;
+        }
+        [data-theme="dark"] .topbar-user-menu .text-muted {
+            color: #94a3b8 !important;
+        }
+        [data-theme="dark"] .topbar-user-menu hr {
+            border-color: #334155 !important;
+        }
     </style>
     @stack('styles')
 </head>
@@ -281,6 +356,30 @@
                     @endif
                     <a href="{{ route('kroscek.index') }}" class="{{ request()->routeIs('kroscek.*') ? 'active' : '' }}">
                         <i class="fas fa-check-double"></i><span>Kroscek Data</span>
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            @if($user->hasAccess('sidang_tpp'))
+            <div class="menu-parent {{ request()->routeIs('sidang-tpp.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuSidangTPP">
+                <i class="fas fa-gavel"></i>
+                <span>Sidang TPP</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="collapse {{ request()->routeIs('sidang-tpp.*') ? 'show' : '' }}" id="menuSidangTPP">
+                <div class="sidebar-submenu">
+                    <a href="{{ route('sidang-tpp.index') }}" class="{{ request()->routeIs('sidang-tpp.index') || request()->routeIs('sidang-tpp.create') || request()->routeIs('sidang-tpp.show') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-alt"></i><span>1. Jadwal &amp; Undangan</span>
+                    </a>
+                    <a href="{{ route('sidang-tpp.hasil') }}" class="{{ request()->routeIs('sidang-tpp.hasil*') ? 'active' : '' }}">
+                        <i class="fas fa-clipboard-check"></i><span>2. Hasil Sidang UPT</span>
+                    </a>
+                    <a href="{{ route('sidang-tpp.kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
+                        <i class="fas fa-stamp"></i><span>3. Verifikasi &amp; TTD Kanwil</span>
+                    </a>
+                    <a href="{{ route('sidang-tpp.rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
+                        <i class="fas fa-file-download"></i><span>4. Rekap &amp; Download Dokumen</span>
                     </a>
                 </div>
             </div>
@@ -422,9 +521,36 @@
                 </div>
 
                 @if($user)
-                <div class="me-2">{!! $user->getAvatarHtml(32) !!}</div>
-                <span class="d-none d-sm-inline me-2 fw-semibold">{{ $user->nama_lengkap ?? $user->username }}</span>
-                <span class="badge bg-primary px-2.5 py-1.5">{{ ucfirst($user->role) }}</span>
+                <div class="dropdown">
+                    <a href="javascript:void(0)" class="d-flex align-items-center text-decoration-none dropdown-toggle user-dropdown-toggle text-dark" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="me-2">{!! $user->getAvatarHtml(32) !!}</div>
+                        <span class="d-none d-sm-inline me-2 fw-semibold profile-name-text">{{ $user->nama_lengkap ?? $user->username }}</span>
+                        <span class="badge rounded-pill text-white px-2.5 py-1 me-1" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); font-size: 11px; font-weight: 600;">{{ ucfirst($user->role) }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end topbar-user-menu shadow-lg border-0 mt-2" aria-labelledby="userProfileDropdown">
+                        <li class="mb-2">
+                            <div class="fw-bold text-dark text-truncate" style="font-size: 15px; letter-spacing: -0.2px;">{{ $user->nama_lengkap ?? $user->username }}</div>
+                            <div class="text-muted text-truncate mt-1 mb-2" style="font-size: 12px; font-weight: 500;">{{ $user->upt?->nama_upt ?? ($instansi->nama_instansi ?? 'Kantor Wilayah') }}</div>
+                            <span class="badge rounded-pill px-2.5 py-1" style="background-color: #dbeafe; color: #1e40af; font-size: 11px; font-weight: 700;">{{ ucfirst($user->role) }}</span>
+                        </li>
+                        <li><hr class="my-2" style="border-color: #f1f5f9; opacity: 1;"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="{{ route('profile.index') }}">
+                                <i class="fas fa-user-circle me-2 text-primary" style="font-size: 16px;"></i>
+                                <span>Profil Saya</span>
+                            </a>
+                        </li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST" id="topbarLogoutForm">
+                                @csrf
+                                <button type="submit" class="dropdown-item text-danger d-flex align-items-center w-100 border-0 bg-transparent">
+                                    <i class="fas fa-sign-out-alt me-2 text-danger" style="font-size: 15px;"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
                 @else
                 <a href="{{ route('login') }}" class="btn btn-login-public">
                     <i class="fas fa-sign-in-alt me-1"></i> Login

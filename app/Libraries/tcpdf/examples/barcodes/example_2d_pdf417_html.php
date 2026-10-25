@@ -1,5 +1,6 @@
 <?php
-//============================================================+
+
+// ============================================================+
 // File name   : example_2d_html.php
 // Version     : 1.0.000
 // Begin       : 2011-07-21
@@ -29,14 +30,16 @@
 //
 // Description : Example for tcpdf_barcodes_2d.php class
 //
-//============================================================+
+// ============================================================+
 
 /**
  * @file
  * Example for tcpdf_barcodes_2d.php class
- * @package com.tecnick.tcpdf
+ *
  * @author Nicola Asuni
+ *
  * @version 1.0.009
+ *
  * @group barcode
  * @group pdf417
  * @group html
@@ -44,7 +47,7 @@
  */
 
 // include 2D barcode class (search for installation path)
-require_once(dirname(__FILE__).'/tcpdf_barcodes_2d_include.php');
+require_once dirname(__FILE__).'/tcpdf_barcodes_2d_include.php';
 
 // set the barcode content and type
 $barcodeobj = new TCPDF2DBarcode('http://www.tcpdf.org', 'PDF417');
@@ -52,6 +55,6 @@ $barcodeobj = new TCPDF2DBarcode('http://www.tcpdf.org', 'PDF417');
 // output the barcode as HTML object
 echo $barcodeobj->getBarcodeHTML(4, 4, 'black');
 
-//============================================================+
+// ============================================================+
 // END OF FILE
-//============================================================+
+// ============================================================+
