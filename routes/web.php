@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\ApiController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BebasHarianController;
 use App\Http\Controllers\DashboardController;
@@ -25,11 +24,6 @@ use Illuminate\Support\Facades\Route;
 // Public Routes (Dashboard is public like in native PHP)
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-// Public API endpoint with throttle
-Route::get('/api/stats', [ApiController::class, 'stats'])
-    ->middleware('throttle:60,1')
-    ->name('api.stats');
 
 // Public Cron WhatsApp endpoint with throttle & secure key check
 Route::get('/cron-wa', function (Request $request) {

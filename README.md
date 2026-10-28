@@ -103,7 +103,6 @@ php artisan key:generate
    DB_PASSWORD=password_userdb_anda
 
    CRON_SECRET_KEY=kunci_acak_rahasia_cron_anda
-   API_SECRET_KEY=kunci_acak_rahasia_api_anda
    ```
    *(Tekan `Ctrl+O` lalu `Enter` untuk menyimpan, dan `Ctrl+X` untuk keluar dari nano).*
 
@@ -229,9 +228,8 @@ php artisan key:generate
    DB_USERNAME=username_userdb
    DB_PASSWORD=password_database_anda
 
-   # Kunci rahasia untuk scheduler WA & API (minimal 16-32 karakter acak)
+   # Kunci rahasia untuk scheduler webhook WA (minimal 16-32 karakter acak)
    CRON_SECRET_KEY=kunci_acak_rahasia_cron_anda
-   API_SECRET_KEY=kunci_acak_rahasia_api_anda
    ```
    *(Tekan `Ctrl+O` lalu `Enter` untuk menyimpan, lalu `Ctrl+X` untuk keluar).*
 
@@ -402,7 +400,6 @@ DB_USERNAME=sultan_user
 DB_PASSWORD=PasswordSangatKuat_123!
 
 CRON_SECRET_KEY=masukkan_kunci_acak_rahasia_32_karakter
-API_SECRET_KEY=masukkan_api_key_rahasia_32_karakter
 ```
 
 Generate application key & jalankan migrasi database:
