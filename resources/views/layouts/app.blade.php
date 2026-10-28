@@ -369,16 +369,16 @@
             </div>
             <div class="collapse {{ request()->routeIs('sidang-tpp.*') ? 'show' : '' }}" id="menuSidangTPP">
                 <div class="sidebar-submenu">
-                    <a href="{{ route('sidang-tpp.index') }}" class="{{ request()->routeIs('sidang-tpp.index') || request()->routeIs('sidang-tpp.create') || request()->routeIs('sidang-tpp.show') ? 'active' : '' }}">
+                    <a href="{{ Route::has('sidang-tpp.index') ? route('sidang-tpp.index') : url('/sidang-tpp') }}" class="{{ request()->routeIs('sidang-tpp.index') || request()->routeIs('sidang-tpp.create') || request()->routeIs('sidang-tpp.show') ? 'active' : '' }}">
                         <i class="fas fa-calendar-alt"></i><span>1. Jadwal &amp; Undangan</span>
                     </a>
-                    <a href="{{ route('sidang-tpp.hasil') }}" class="{{ request()->routeIs('sidang-tpp.hasil*') ? 'active' : '' }}">
+                    <a href="{{ Route::has('sidang-tpp.hasil') ? route('sidang-tpp.hasil') : url('/sidang-tpp/hasil') }}" class="{{ request()->routeIs('sidang-tpp.hasil*') ? 'active' : '' }}">
                         <i class="fas fa-clipboard-check"></i><span>2. Hasil Sidang UPT</span>
                     </a>
-                    <a href="{{ route('sidang-tpp.kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
+                    <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
                         <i class="fas fa-stamp"></i><span>3. Verifikasi &amp; TTD Kanwil</span>
                     </a>
-                    <a href="{{ route('sidang-tpp.rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
+                    <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
                         <i class="fas fa-file-download"></i><span>4. Rekap &amp; Download Dokumen</span>
                     </a>
                 </div>
