@@ -63,32 +63,47 @@
                 </div>
             </div>
 
-            <!-- Visual Step Flow -->
+            <!-- Visual Step Flow (4 Tahap) -->
             <div class="row text-center mt-4 g-2">
-                <div class="col-4">
-                    <div class="p-2 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25">
+                <div class="col-6 col-md-3">
+                    <div class="p-2 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 h-100">
                         <i class="fas fa-file-upload fa-lg text-success mb-1"></i>
                         <div class="small fw-bold text-success">1. Pengajuan UPT</div>
-                        <small class="text-muted d-block" style="font-size: 11px;">Berkas diunggah</small>
+                        <small class="text-muted d-block" style="font-size: 11px;">Berkas &amp; Data Perkara</small>
                     </div>
                 </div>
-                <div class="col-4">
-                    <div class="p-2 rounded-3 {{ in_array($mutasi->status, ['disetujui', 'selesai']) ? 'bg-success bg-opacity-10 border border-success border-opacity-25' : ($mutasi->status === 'ditolak' ? 'bg-danger bg-opacity-10 border border-danger border-opacity-25' : 'bg-warning bg-opacity-10 border border-warning border-opacity-25') }}">
+                <div class="col-6 col-md-3">
+                    <div class="p-2 rounded-3 {{ in_array($mutasi->status, ['disetujui', 'selesai']) ? 'bg-success bg-opacity-10 border border-success border-opacity-25' : ($mutasi->status === 'ditolak' ? 'bg-danger bg-opacity-10 border border-danger border-opacity-25' : 'bg-warning bg-opacity-10 border border-warning border-opacity-25') }} h-100">
                         <i class="fas fa-stamp fa-lg {{ in_array($mutasi->status, ['disetujui', 'selesai']) ? 'text-success' : ($mutasi->status === 'ditolak' ? 'text-danger' : 'text-warning') }} mb-1"></i>
                         <div class="small fw-bold {{ in_array($mutasi->status, ['disetujui', 'selesai']) ? 'text-success' : ($mutasi->status === 'ditolak' ? 'text-danger' : 'text-warning') }}">
                             2. Penetapan Kanwil
                         </div>
                         <small class="text-muted d-block" style="font-size: 11px;">
-                            {{ $mutasi->uptTujuan ? $mutasi->uptTujuan->nama_upt : 'Menunggu Penetapan' }}
+                            {{ $mutasi->uptTujuan ? $mutasi->uptTujuan->nama_upt : 'Penetapan UPT Tujuan' }}
                         </small>
                     </div>
                 </div>
-                <div class="col-4">
-                    <div class="p-2 rounded-3 {{ $mutasi->status === 'selesai' ? 'bg-success bg-opacity-10 border border-success border-opacity-25' : 'bg-light border text-muted' }}">
-                        <i class="fas fa-handshake fa-lg {{ $mutasi->status === 'selesai' ? 'text-success' : 'text-muted' }} mb-1"></i>
-                        <div class="small fw-bold {{ $mutasi->status === 'selesai' ? 'text-success' : 'text-muted' }}">3. Serah Terima (BAST)</div>
+                <div class="col-6 col-md-3">
+                    @php
+                        $hasPelaporan = $mutasi->hasLaporanPemindahan() || $mutasi->hasLaporanPenerimaan();
+                        $fullPelaporan = $mutasi->hasLaporanPemindahan() && $mutasi->hasLaporanPenerimaan();
+                    @endphp
+                    <div class="p-2 rounded-3 {{ $fullPelaporan ? 'bg-success bg-opacity-10 border border-success border-opacity-25' : ($hasPelaporan ? 'bg-info bg-opacity-10 border border-info border-opacity-25' : 'bg-light border text-muted') }} h-100">
+                        <i class="fas fa-truck-moving fa-lg {{ $fullPelaporan ? 'text-success' : ($hasPelaporan ? 'text-info' : 'text-muted') }} mb-1"></i>
+                        <div class="small fw-bold {{ $fullPelaporan ? 'text-success' : ($hasPelaporan ? 'text-info' : 'text-muted') }}">
+                            3. Laporan Pemindahan
+                        </div>
                         <small class="text-muted d-block" style="font-size: 11px;">
-                            {{ $mutasi->status === 'selesai' ? 'Pelaksanaan Tuntas' : 'Menunggu Eksekusi' }}
+                            {{ $fullPelaporan ? 'Kedua UPT Lengkap' : ($hasPelaporan ? 'Sebagian Diunggah' : 'UPT Asal &amp; Tujuan') }}
+                        </small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-2 rounded-3 {{ $mutasi->hasBast() ? 'bg-success bg-opacity-10 border border-success border-opacity-25' : 'bg-light border text-muted' }} h-100">
+                        <i class="fas fa-handshake fa-lg {{ $mutasi->hasBast() ? 'text-success' : 'text-muted' }} mb-1"></i>
+                        <div class="small fw-bold {{ $mutasi->hasBast() ? 'text-success' : 'text-muted' }}">4. BA Serah Terima</div>
+                        <small class="text-muted d-block" style="font-size: 11px;">
+                            {{ $mutasi->hasBast() ? 'BAST Tuntas' : 'Menunggu BAST' }}
                         </small>
                     </div>
                 </div>
@@ -423,55 +438,182 @@
             </div>
             @endif
 
-            <!-- SEKSI BAST (SERAH TERIMA) -->
+            <!-- SEKSI 4: LAPORAN PEMINDAHAN, PENERIMAAN, DAN BAST -->
             @if(in_array($mutasi->status, ['disetujui', 'selesai']))
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
+
+            <!-- 4A. LAPORAN PEMINDAHAN (UPT PENGUSUL) -->
+            <div class="card border-0 shadow-sm rounded-3 mb-3 border-start border-primary border-4">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-file-signature me-2 text-primary"></i>Berita Acara Serah Terima (BAST)</h6>
-                    @if($mutasi->status === 'selesai')
-                    <span class="badge bg-success">Tuntas</span>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-truck-departure me-2 text-primary"></i>1. Laporan Pemindahan</h6>
+                        <small class="text-muted">Diunggah oleh UPT Pengusul: <strong>{{ $mutasi->uptAsal?->nama_upt ?? '-' }}</strong></small>
+                    </div>
+                    @if($mutasi->hasLaporanPemindahan())
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                    @else
+                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
                     @endif
                 </div>
                 <div class="card-body">
-                    @if($mutasi->status === 'selesai')
-                    <div class="p-3 bg-light rounded-3 border mb-3">
-                        <div class="small text-muted">Tanggal Pelaksanaan Serah Terima:</div>
-                        <div class="fw-bold text-dark mb-2">{{ $mutasi->tanggal_pelaksanaan ? $mutasi->tanggal_pelaksanaan->format('d F Y') : '-' }}</div>
-
-                        @if($mutasi->catatan_pelaksanaan)
-                        <div class="small text-muted">Catatan Pelaksanaan:</div>
-                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_pelaksanaan }}</div>
+                    @if($mutasi->hasLaporanPemindahan())
+                    <div class="p-2.5 bg-light rounded-3 border mb-2">
+                        <div class="small text-muted">Tanggal Keberangkatan / Pemindahan:</div>
+                        <div class="fw-bold text-dark mb-1">{{ $mutasi->tanggal_pemindahan ? $mutasi->tanggal_pemindahan->format('d F Y') : '-' }}</div>
+                        @if($mutasi->catatan_pemindahan)
+                        <div class="small text-muted">Catatan Pengawalan/Pemindahan:</div>
+                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_pemindahan }}</div>
                         @endif
-
-                        @if($mutasi->file_bast)
-                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bast']) }}" class="btn btn-outline-success btn-sm w-100" target="_blank">
-                            <i class="fas fa-download me-1"></i> Unduh Berkas BAST (PDF/Gambar)
+                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'laporan_pemindahan']) }}" class="btn btn-outline-primary btn-sm w-100" target="_blank">
+                            <i class="fas fa-download me-1"></i> Unduh Berkas Laporan Pemindahan
                         </a>
-                        @endif
                     </div>
-                    @else
-                    <!-- Form Upload BAST bagi UPT Terkait -->
-                    <p class="text-muted small mb-3">Setelah proses pemindahan fisik narapidana dilaksanakan dan tiba di UPT Penerima, unggah Berita Acara Serah Terima (BAST) untuk menutup alur mutasi:</p>
-                    <form action="{{ route('mutasi.bast.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                    @endif
+
+                    @if(! $mutasi->hasLaporanPemindahan() && (auth()->user()->isAdmin() || auth()->user()->upt_id === $mutasi->upt_asal_id))
+                    <form action="{{ route('mutasi.laporan-pemindahan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">Tanggal Pelaksanaan Pemindahan <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_pelaksanaan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Tanggal Keberangkatan Pemindahan <span class="text-danger">*</span></label>
+                            <input type="date" name="tanggal_pemindahan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">Upload Scan BAST Resmi <span class="text-danger">*</span></label>
-                            <input type="file" name="file_bast" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Upload Laporan Pemindahan Resmi (PDF/Gambar) <span class="text-danger">*</span></label>
+                            <input type="file" name="file_laporan_pemindahan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">Catatan Pelaksanaan</label>
-                            <textarea name="catatan_pelaksanaan" class="form-control form-control-sm" rows="2" placeholder="Catatan kondisi WBP saat tiba, serah terima berkas, dsb..."></textarea>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Catatan Pengawalan / Pengeluaran</label>
+                            <textarea name="catatan_pemindahan" class="form-control form-control-sm" rows="2" placeholder="Catatan personel pengawal, kondisi pengeluaran, dsb..."></textarea>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-sm fw-bold">
-                                <i class="fas fa-check-circle me-1"></i> Unggah BAST &amp; Tandai Selesai
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold">
+                                <i class="fas fa-upload me-1"></i> Unggah Laporan Pemindahan
                             </button>
                         </div>
                     </form>
+                    @elseif(! $mutasi->hasLaporanPemindahan())
+                    <p class="small text-muted mb-0 fst-italic">Menunggu laporan pengawalan dan pemindahan resmi diunggah oleh pihak UPT Pengusul ({{ $mutasi->uptAsal?->nama_upt }}).</p>
+                    @endif
+                </div>
+            </div>
+
+            <!-- 4B. LAPORAN PENERIMAAN (UPT PENERIMA) -->
+            <div class="card border-0 shadow-sm rounded-3 mb-3 border-start border-info border-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-building me-2 text-info"></i>2. Laporan Penerimaan</h6>
+                        <small class="text-muted">Diunggah oleh UPT Penerima: <strong>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</strong></small>
+                    </div>
+                    @if($mutasi->hasLaporanPenerimaan())
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                    @else
+                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if($mutasi->hasLaporanPenerimaan())
+                    <div class="p-2.5 bg-light rounded-3 border mb-2">
+                        <div class="small text-muted">Tanggal Penerimaan WBP:</div>
+                        <div class="fw-bold text-dark mb-1">{{ $mutasi->tanggal_penerimaan ? $mutasi->tanggal_penerimaan->format('d F Y') : '-' }}</div>
+                        @if($mutasi->catatan_penerimaan)
+                        <div class="small text-muted">Catatan Pemeriksaan &amp; Penerimaan:</div>
+                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_penerimaan }}</div>
+                        @endif
+                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'laporan_penerimaan']) }}" class="btn btn-outline-info btn-sm w-100" target="_blank">
+                            <i class="fas fa-download me-1"></i> Unduh Berkas Laporan Penerimaan
+                        </a>
+                    </div>
+                    @endif
+
+                    @if(! $mutasi->hasLaporanPenerimaan() && (auth()->user()->isAdmin() || auth()->user()->upt_id === $mutasi->upt_tujuan_id))
+                    <form action="{{ route('mutasi.laporan-penerimaan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Tanggal Penerimaan di UPT Tujuan <span class="text-danger">*</span></label>
+                            <input type="date" name="tanggal_penerimaan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Upload Laporan Penerimaan Resmi (PDF/Gambar) <span class="text-danger">*</span></label>
+                            <input type="file" name="file_laporan_penerimaan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Catatan Hasil Pemeriksaan &amp; Kamar Hunian</label>
+                            <textarea name="catatan_penerimaan" class="form-control form-control-sm" rows="2" placeholder="Catatan kondisi kesehatan WBP saat tiba, kelengkapan berkas fisik, penempatan blok hunian..."></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-info btn-sm text-white fw-bold">
+                                <i class="fas fa-upload me-1"></i> Unggah Laporan Penerimaan
+                            </button>
+                        </div>
+                    </form>
+                    @elseif(! $mutasi->hasLaporanPenerimaan())
+                    <p class="small text-muted mb-0 fst-italic">Menunggu laporan penerimaan dan pemeriksaan fisik diunggah oleh pihak UPT Penerima ({{ $mutasi->uptTujuan?->nama_upt }}).</p>
+                    @endif
+                </div>
+            </div>
+
+            <!-- 4C. BERITA ACARA SERAH TERIMA (BAST BERSAMA) -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4 border-start border-success border-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-file-signature me-2 text-success"></i>3. Berita Acara Serah Terima (BAST)</h6>
+                        <small class="text-muted">Dokumen bersama yang ditandatangani kedua UPT</small>
+                    </div>
+                    @if($mutasi->hasBast())
+                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Tuntas</span>
+                    @else
+                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if($mutasi->hasBast())
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="small text-muted">Nomor BAST:</div>
+                        <div class="fw-bold font-monospace text-dark mb-1">{{ $mutasi->nomor_bast ?: '-' }}</div>
+
+                        <div class="small text-muted">Tanggal Pelaksanaan BAST:</div>
+                        <div class="fw-bold text-dark mb-1">{{ $mutasi->tanggal_bast ? $mutasi->tanggal_bast->format('d F Y') : ($mutasi->tanggal_pelaksanaan ? $mutasi->tanggal_pelaksanaan->format('d F Y') : '-') }}</div>
+
+                        @if($mutasi->catatan_pelaksanaan)
+                        <div class="small text-muted">Catatan Serah Terima:</div>
+                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_pelaksanaan }}</div>
+                        @endif
+
+                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bast']) }}" class="btn btn-outline-success btn-sm w-100" target="_blank">
+                            <i class="fas fa-download me-1"></i> Unduh Berkas Scan BAST Resmi
+                        </a>
+                    </div>
+                    @endif
+
+                    @if(! $mutasi->hasBast() && (auth()->user()->isAdmin() || in_array(auth()->user()->upt_id, [$mutasi->upt_asal_id, $mutasi->upt_tujuan_id], true)))
+                    <p class="text-muted small mb-3">Unggah scan Berita Acara Serah Terima (BAST) fisik yang telah ditandatangani oleh pejabat UPT Pengusul dan UPT Penerima:</p>
+                    <form action="{{ route('mutasi.bast.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Nomor BAST Resmi <span class="text-danger">*</span></label>
+                                <input type="text" name="nomor_bast" class="form-control form-control-sm font-monospace" placeholder="No. BAST" value="{{ old('nomor_bast') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Tanggal BAST <span class="text-danger">*</span></label>
+                                <input type="date" name="tanggal_bast" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Upload Scan BAST Resmi (PDF/Gambar) <span class="text-danger">*</span></label>
+                            <input type="file" name="file_bast" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Catatan Tambahan Pelaksanaan</label>
+                            <textarea name="catatan_pelaksanaan" class="form-control form-control-sm" rows="2" placeholder="Catatan kondisi serah terima barang dan narapidana..."></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-sm fw-bold">
+                                <i class="fas fa-check-circle me-1"></i> Unggah BAST &amp; Selesaikan Rangkaian Mutasi
+                            </button>
+                        </div>
+                    </form>
+                    @elseif(! $mutasi->hasBast())
+                    <p class="small text-muted mb-0 fst-italic">Menunggu dokumen Berita Acara Serah Terima (BAST) fisik diunggah oleh pihak UPT terkait.</p>
                     @endif
                 </div>
             </div>

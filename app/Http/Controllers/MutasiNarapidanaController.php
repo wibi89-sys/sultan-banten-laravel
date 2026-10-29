@@ -279,6 +279,104 @@ class MutasiNarapidanaController extends Controller
             ->with('success', 'Keputusan verifikasi dan penentuan UPT Tujuan berhasil disimpan dan didistribusikan.');
     }
 
+    public function laporanPemindahanStore(Request $request, int $id): RedirectResponse
+    {
+        $this->checkAccess();
+        $user = auth()->user();
+
+        $mutasi = MutasiNarapidana::findOrFail($id);
+
+        if (! in_array($mutasi->status, ['disetujui', 'selesai'], true)) {
+            return back()->with('error', 'Laporan Pemindahan hanya dapat diunggah setelah ada persetujuan Kanwil.');
+        }
+
+        // Hanya UPT Pengusul atau Admin
+        if ($user->isOperator() && $user->upt_id && $user->upt_id !== $mutasi->upt_asal_id) {
+            abort(403, 'Hanya UPT Pengusul yang berhak mengunggah Laporan Pemindahan.');
+        }
+
+        $validated = $request->validate([
+            'tanggal_pemindahan' => 'required|date',
+            'file_laporan_pemindahan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'catatan_pemindahan' => 'nullable|string|max:1000',
+        ], [
+            'file_laporan_pemindahan.required' => 'Berkas Laporan Pemindahan wajib diunggah.',
+        ]);
+
+        $filePath = $this->handleUpload($request, 'file_laporan_pemindahan', 'laporan_pemindahan');
+
+        $update = [
+            'tanggal_pemindahan' => $validated['tanggal_pemindahan'],
+            'file_laporan_pemindahan' => $filePath,
+            'catatan_pemindahan' => $validated['catatan_pemindahan'] ?? null,
+        ];
+
+        if ($mutasi->hasBast() && $mutasi->hasLaporanPenerimaan()) {
+            $update['status'] = 'selesai';
+        }
+
+        $mutasi->update($update);
+
+        ActivityLog::log(
+            'laporan_pemindahan',
+            'mutasi',
+            "Mengunggah Laporan Pemindahan Narapidana oleh UPT Pengusul No: {$mutasi->nomor_surat}",
+            $mutasi->toArray()
+        );
+
+        return redirect()->route('mutasi.show', $mutasi->id)
+            ->with('success', 'Laporan Pemindahan dari UPT Pengusul berhasil diunggah.');
+    }
+
+    public function laporanPenerimaanStore(Request $request, int $id): RedirectResponse
+    {
+        $this->checkAccess();
+        $user = auth()->user();
+
+        $mutasi = MutasiNarapidana::findOrFail($id);
+
+        if (! in_array($mutasi->status, ['disetujui', 'selesai'], true)) {
+            return back()->with('error', 'Laporan Penerimaan hanya dapat diunggah setelah ada persetujuan Kanwil.');
+        }
+
+        // Hanya UPT Penerima atau Admin
+        if ($user->isOperator() && $user->upt_id && $user->upt_id !== $mutasi->upt_tujuan_id) {
+            abort(403, 'Hanya UPT Penerima yang berhak mengunggah Laporan Penerimaan.');
+        }
+
+        $validated = $request->validate([
+            'tanggal_penerimaan' => 'required|date',
+            'file_laporan_penerimaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'catatan_penerimaan' => 'nullable|string|max:1000',
+        ], [
+            'file_laporan_penerimaan.required' => 'Berkas Laporan Penerimaan wajib diunggah.',
+        ]);
+
+        $filePath = $this->handleUpload($request, 'file_laporan_penerimaan', 'laporan_penerimaan');
+
+        $update = [
+            'tanggal_penerimaan' => $validated['tanggal_penerimaan'],
+            'file_laporan_penerimaan' => $filePath,
+            'catatan_penerimaan' => $validated['catatan_penerimaan'] ?? null,
+        ];
+
+        if ($mutasi->hasBast() && $mutasi->hasLaporanPemindahan()) {
+            $update['status'] = 'selesai';
+        }
+
+        $mutasi->update($update);
+
+        ActivityLog::log(
+            'laporan_penerimaan',
+            'mutasi',
+            "Mengunggah Laporan Penerimaan Narapidana oleh UPT Penerima No: {$mutasi->nomor_surat}",
+            $mutasi->toArray()
+        );
+
+        return redirect()->route('mutasi.show', $mutasi->id)
+            ->with('success', 'Laporan Penerimaan dari UPT Penerima berhasil diunggah.');
+    }
+
     public function bastStore(Request $request, int $id): RedirectResponse
     {
         $this->checkAccess();
@@ -286,7 +384,7 @@ class MutasiNarapidanaController extends Controller
 
         $mutasi = MutasiNarapidana::findOrFail($id);
 
-        if ($mutasi->status !== 'disetujui') {
+        if (! in_array($mutasi->status, ['disetujui', 'selesai'], true)) {
             return back()->with('error', 'Hanya usulan yang telah disetujui yang dapat melampirkan BAST.');
         }
 
@@ -296,16 +394,22 @@ class MutasiNarapidanaController extends Controller
         }
 
         $validated = $request->validate([
-            'tanggal_pelaksanaan' => 'required|date',
+            'nomor_bast' => 'required|string|max:100',
+            'tanggal_bast' => 'required|date',
             'file_bast' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'catatan_pelaksanaan' => 'nullable|string|max:1000',
+        ], [
+            'nomor_bast.required' => 'Nomor Berita Acara Serah Terima (BAST) wajib diisi.',
+            'file_bast.required' => 'Scan Berita Acara Serah Terima (BAST) fisik wajib diunggah.',
         ]);
 
         $fileBast = $this->handleUpload($request, 'file_bast', 'bast');
 
         $mutasi->update([
             'status' => 'selesai',
-            'tanggal_pelaksanaan' => $validated['tanggal_pelaksanaan'],
+            'nomor_bast' => $validated['nomor_bast'],
+            'tanggal_bast' => $validated['tanggal_bast'],
+            'tanggal_pelaksanaan' => $validated['tanggal_bast'],
             'file_bast' => $fileBast,
             'catatan_pelaksanaan' => $validated['catatan_pelaksanaan'] ?? null,
         ]);
@@ -343,6 +447,8 @@ class MutasiNarapidanaController extends Controller
             'reg_f' => $mutasi->file_reg_f,
             'lampiran_wbp' => $mutasi->file_lampiran_wbp,
             'persetujuan_kanwil' => $mutasi->file_persetujuan_kanwil,
+            'laporan_pemindahan' => $mutasi->file_laporan_pemindahan,
+            'laporan_penerimaan' => $mutasi->file_laporan_penerimaan,
             'bast' => $mutasi->file_bast,
             default => null,
         };

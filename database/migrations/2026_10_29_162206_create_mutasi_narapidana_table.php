@@ -49,7 +49,19 @@ return new class extends Migration
                 $table->unsignedInteger('diverifikasi_oleh')->nullable();
                 $table->timestamp('tanggal_verifikasi')->nullable();
 
-                // Pelaksanaan & BAST
+                // Laporan Pemindahan (UPT Pengusul/Asal)
+                $table->string('file_laporan_pemindahan', 255)->nullable();
+                $table->date('tanggal_pemindahan')->nullable();
+                $table->text('catatan_pemindahan')->nullable();
+
+                // Laporan Penerimaan (UPT Penerima/Tujuan)
+                $table->string('file_laporan_penerimaan', 255)->nullable();
+                $table->date('tanggal_penerimaan')->nullable();
+                $table->text('catatan_penerimaan')->nullable();
+
+                // Berita Acara Serah Terima (BAST Bersama)
+                $table->string('nomor_bast', 100)->nullable();
+                $table->date('tanggal_bast')->nullable();
                 $table->date('tanggal_pelaksanaan')->nullable();
                 $table->string('file_bast', 255)->nullable();
                 $table->text('catatan_pelaksanaan')->nullable();

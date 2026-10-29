@@ -243,6 +243,16 @@
                                     <i class="fas fa-stamp"></i>
                                 </a>
                                 @endif
+                                @if($m->file_laporan_pemindahan)
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan']) }}" class="btn btn-outline-primary btn-sm py-0 px-1.5" title="Unduh Laporan Pemindahan (UPT Pengusul)" target="_blank">
+                                    <i class="fas fa-truck-departure"></i>
+                                </a>
+                                @endif
+                                @if($m->file_laporan_penerimaan)
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan']) }}" class="btn btn-outline-info btn-sm py-0 px-1.5" title="Unduh Laporan Penerimaan (UPT Penerima)" target="_blank">
+                                    <i class="fas fa-building"></i>
+                                </a>
+                                @endif
                                 @if($m->file_bast)
                                 <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast']) }}" class="btn btn-info btn-sm py-0 px-1.5 text-white" title="Unduh BAST Serah Terima" target="_blank">
                                     <i class="fas fa-file-signature"></i>

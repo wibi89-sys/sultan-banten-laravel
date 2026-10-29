@@ -39,6 +39,14 @@ class MutasiNarapidana extends Model
         'total_disetujui',
         'diverifikasi_oleh',
         'tanggal_verifikasi',
+        'file_laporan_pemindahan',
+        'tanggal_pemindahan',
+        'catatan_pemindahan',
+        'file_laporan_penerimaan',
+        'tanggal_penerimaan',
+        'catatan_penerimaan',
+        'nomor_bast',
+        'tanggal_bast',
         'tanggal_pelaksanaan',
         'file_bast',
         'catatan_pelaksanaan',
@@ -50,6 +58,9 @@ class MutasiNarapidana extends Model
         return [
             'tanggal_surat' => 'date',
             'tanggal_surat_kanwil' => 'date',
+            'tanggal_pemindahan' => 'date',
+            'tanggal_penerimaan' => 'date',
+            'tanggal_bast' => 'date',
             'tanggal_pelaksanaan' => 'date',
             'tanggal_verifikasi' => 'datetime',
             'jumlah_narkotika' => 'integer',
@@ -115,5 +126,20 @@ class MutasiNarapidana extends Model
             'Overkapasitas' => 'badge-warning bg-warning text-dark',
             default => 'badge-secondary bg-secondary',
         };
+    }
+
+    public function hasLaporanPemindahan(): bool
+    {
+        return ! empty($this->file_laporan_pemindahan);
+    }
+
+    public function hasLaporanPenerimaan(): bool
+    {
+        return ! empty($this->file_laporan_penerimaan);
+    }
+
+    public function hasBast(): bool
+    {
+        return ! empty($this->file_bast);
     }
 }
