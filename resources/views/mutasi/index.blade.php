@@ -68,14 +68,14 @@
             <div class="card stat-card-mutasi bg-white border-start border-warning border-4 p-3">
                 <div class="text-muted small fw-semibold text-uppercase">Menunggu Kanwil</div>
                 <div class="fs-4 fw-bold text-warning mt-1">{{ number_format($stats['menunggu']) }} <span class="fs-6 fw-normal text-muted">Usulan</span></div>
-                <div class="small text-muted mt-1"><i class="fas fa-hourglass-half me-1"></i>Perlu Telaah/SK</div>
+                <div class="small text-muted mt-1"><i class="fas fa-hourglass-half me-1"></i>Perlu Telaah Kanwil</div>
                 <i class="fas fa-stamp stat-icon text-warning"></i>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="card stat-card-mutasi bg-white border-start border-info border-4 p-3">
                 <div class="text-muted small fw-semibold text-uppercase">Disetujui Kanwil</div>
-                <div class="fs-4 fw-bold text-info mt-1">{{ number_format($stats['disetujui']) }} <span class="fs-6 fw-normal text-muted">SK Terbit</span></div>
+                <div class="fs-4 fw-bold text-info mt-1">{{ number_format($stats['disetujui']) }} <span class="fs-6 fw-normal text-muted">Surat Terbit</span></div>
                 <div class="small text-muted mt-1"><i class="fas fa-truck-moving me-1"></i>Siap Pemindahan</div>
                 <i class="fas fa-check-double stat-icon text-info"></i>
             </div>
@@ -210,7 +210,7 @@
                             @if($m->uptTujuan)
                                 <div class="fw-bold text-success"><i class="fas fa-building me-1"></i>{{ $m->uptTujuan->nama_upt }}</div>
                                 @if($m->nomor_surat_kanwil)
-                                <small class="text-muted font-monospace d-block" style="font-size: 11px;">SK: {{ $m->nomor_surat_kanwil }}</small>
+                                <small class="text-muted font-monospace d-block" style="font-size: 11px;">Persetujuan: {{ $m->nomor_surat_kanwil }}</small>
                                 @endif
                                 @if($m->total_disetujui !== null)
                                 <small class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Disetujui: {{ $m->total_disetujui }} orang</small>

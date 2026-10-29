@@ -269,10 +269,39 @@
 
         <!-- RIGHT COLUMN: PENETAPAN KANWIL & SERAH TERIMA -->
         <div class="col-lg-5">
-            <!-- STATUS PENETAPAN KANWIL -->
+            @php
+                $userUptId = auth()->user()->upt_id !== null ? (int) auth()->user()->upt_id : null;
+                $isKanwilOrAdmin = auth()->user()->isAdmin() || empty(auth()->user()->upt_id);
+                $isPengusul = $userUptId !== null && $userUptId === (int) $mutasi->upt_asal_id;
+                $isPenerima = $userUptId !== null && $userUptId === (int) $mutasi->upt_tujuan_id;
+
+                $canUploadPemindahan = $isKanwilOrAdmin || $isPengusul;
+                $canUploadPenerimaan = $isKanwilOrAdmin || $isPenerima;
+                $canUploadBast = $isKanwilOrAdmin || $isPengusul || $isPenerima;
+            @endphp
+
+            @if(in_array($mutasi->status, ['disetujui', 'selesai']))
+                @if($isPengusul)
+                <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-3">
+                    <i class="fas fa-truck-departure fa-lg me-2 text-primary"></i>
+                    <div class="small">
+                        <strong>Perhatian UPT Pengusul (Pengirim):</strong> Kantor Wilayah telah menyetujui mutasi dan menunjuk <strong>{{ $mutasi->uptTujuan?->nama_upt }}</strong> sebagai UPT Penerima. Silakan unduh <strong>Surat Persetujuan Kanwil</strong> di bawah dan unggah <strong>Laporan Pemindahan</strong> setelah narapidana diberangkatkan.
+                    </div>
+                </div>
+                @elseif($isPenerima)
+                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-3">
+                    <i class="fas fa-building fa-lg me-2 text-success"></i>
+                    <div class="small">
+                        <strong>Pemberitahuan UPT Penerima (Tujuan):</strong> UPT Anda telah ditunjuk sebagai penerima mutasi dari <strong>{{ $mutasi->uptAsal?->nama_upt }}</strong>. Silakan unduh <strong>Surat Persetujuan Kanwil</strong> di bawah untuk memverifikasi kuota WBP, dan unggah <strong>Laporan Penerimaan</strong> saat narapidana tiba.
+                    </div>
+                </div>
+                @endif
+            @endif
+
+            <!-- STATUS SURAT PERSETUJUAN KANWIL -->
             <div class="card border-0 shadow-sm rounded-3 mb-4 {{ in_array($mutasi->status, ['disetujui', 'selesai']) ? 'border-start border-success border-4' : '' }}">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-stamp me-2 text-success"></i>Penetapan Kantor Wilayah</h6>
+                    <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-stamp me-2 text-success"></i>Surat Persetujuan Kantor Wilayah</h6>
                     <span class="badge {{ $mutasi->status_badge_class }}">{{ $mutasi->status_label }}</span>
                 </div>
                 <div class="card-body">
@@ -280,8 +309,8 @@
                     <div class="p-3 bg-success bg-opacity-10 rounded-3 mb-3 border border-success border-opacity-25">
                         <small class="text-muted d-block mb-1">UPT Penerima Ditunjuk:</small>
                         <h5 class="fw-bold text-success mb-1"><i class="fas fa-building me-1"></i>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</h5>
-                        <small class="text-muted d-block">Nomor SK Kanwil: <strong class="font-monospace text-dark">{{ $mutasi->nomor_surat_kanwil }}</strong></small>
-                        <small class="text-muted d-block">Tanggal: {{ $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d F Y') : '-' }}</small>
+                        <small class="text-muted d-block">Nomor Surat Persetujuan: <strong class="font-monospace text-dark">{{ $mutasi->nomor_surat_kanwil }}</strong></small>
+                        <small class="text-muted d-block">Tanggal Surat: {{ $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d F Y') : '-' }}</small>
                     </div>
 
                     <!-- Kuota yang Disetujui -->
@@ -387,8 +416,8 @@
 
                             <div class="row g-2 mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor Surat SK Kanwil <span class="text-danger">*</span></label>
-                                    <input type="text" name="nomor_surat_kanwil" class="form-control form-control-sm font-monospace" placeholder="No. SK Persetujuan" value="{{ old('nomor_surat_kanwil', $mutasi->nomor_surat_kanwil) }}">
+                                    <label class="form-label small fw-semibold">Nomor Surat Persetujuan Kanwil <span class="text-danger">*</span></label>
+                                    <input type="text" name="nomor_surat_kanwil" class="form-control form-control-sm font-monospace" placeholder="Nomor Surat Persetujuan Kanwil" value="{{ old('nomor_surat_kanwil', $mutasi->nomor_surat_kanwil) }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-semibold">Tanggal Surat Kanwil <span class="text-danger">*</span></label>
@@ -446,13 +475,18 @@
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-truck-departure me-2 text-primary"></i>1. Laporan Pemindahan</h6>
-                        <small class="text-muted">Diunggah oleh UPT Pengusul: <strong>{{ $mutasi->uptAsal?->nama_upt ?? '-' }}</strong></small>
+                        <small class="text-muted">Wajib diunggah UPT Pengusul (Pengirim): <strong>{{ $mutasi->uptAsal?->nama_upt ?? '-' }}</strong></small>
                     </div>
-                    @if($mutasi->hasLaporanPemindahan())
-                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
-                    @else
-                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
-                    @endif
+                    <div>
+                        @if($isPengusul && ! $mutasi->hasLaporanPemindahan())
+                        <span class="badge bg-primary me-1"><i class="fas fa-arrow-circle-right me-1"></i>Tindakan UPT Anda</span>
+                        @endif
+                        @if($mutasi->hasLaporanPemindahan())
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                        @else
+                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                        @endif
+                    </div>
                 </div>
                 <div class="card-body">
                     @if($mutasi->hasLaporanPemindahan())
@@ -469,7 +503,7 @@
                     </div>
                     @endif
 
-                    @if(! $mutasi->hasLaporanPemindahan() && (auth()->user()->isAdmin() || auth()->user()->upt_id === $mutasi->upt_asal_id))
+                    @if(! $mutasi->hasLaporanPemindahan() && $canUploadPemindahan)
                     <form action="{{ route('mutasi.laporan-pemindahan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-2">
@@ -491,7 +525,7 @@
                         </div>
                     </form>
                     @elseif(! $mutasi->hasLaporanPemindahan())
-                    <p class="small text-muted mb-0 fst-italic">Menunggu laporan pengawalan dan pemindahan resmi diunggah oleh pihak UPT Pengusul ({{ $mutasi->uptAsal?->nama_upt }}).</p>
+                    <p class="small text-muted mb-0 fst-italic">Menunggu laporan pengawalan dan pemindahan resmi diunggah oleh pihak UPT Pengusul / Pengirim ({{ $mutasi->uptAsal?->nama_upt }}).</p>
                     @endif
                 </div>
             </div>
@@ -501,13 +535,18 @@
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-building me-2 text-info"></i>2. Laporan Penerimaan</h6>
-                        <small class="text-muted">Diunggah oleh UPT Penerima: <strong>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</strong></small>
+                        <small class="text-muted">Wajib diunggah UPT Penerima (Tujuan): <strong>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</strong></small>
                     </div>
-                    @if($mutasi->hasLaporanPenerimaan())
-                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
-                    @else
-                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
-                    @endif
+                    <div>
+                        @if($isPenerima && ! $mutasi->hasLaporanPenerimaan())
+                        <span class="badge bg-info text-white me-1"><i class="fas fa-arrow-circle-right me-1"></i>Tindakan UPT Anda</span>
+                        @endif
+                        @if($mutasi->hasLaporanPenerimaan())
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                        @else
+                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                        @endif
+                    </div>
                 </div>
                 <div class="card-body">
                     @if($mutasi->hasLaporanPenerimaan())
@@ -524,7 +563,7 @@
                     </div>
                     @endif
 
-                    @if(! $mutasi->hasLaporanPenerimaan() && (auth()->user()->isAdmin() || auth()->user()->upt_id === $mutasi->upt_tujuan_id))
+                    @if(! $mutasi->hasLaporanPenerimaan() && $canUploadPenerimaan)
                     <form action="{{ route('mutasi.laporan-penerimaan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-2">
@@ -584,7 +623,7 @@
                     </div>
                     @endif
 
-                    @if(! $mutasi->hasBast() && (auth()->user()->isAdmin() || in_array(auth()->user()->upt_id, [$mutasi->upt_asal_id, $mutasi->upt_tujuan_id], true)))
+                    @if(! $mutasi->hasBast() && $canUploadBast)
                     <p class="text-muted small mb-3">Unggah scan Berita Acara Serah Terima (BAST) fisik yang telah ditandatangani oleh pejabat UPT Pengusul dan UPT Penerima:</p>
                     <form action="{{ route('mutasi.bast.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
