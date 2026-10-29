@@ -133,6 +133,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [MutasiNarapidanaController::class, 'index'])->name('index');
         Route::get('/create', [MutasiNarapidanaController::class, 'create'])->name('create');
         Route::post('/', [MutasiNarapidanaController::class, 'store'])->name('store');
+        Route::get('/kanwil', [MutasiNarapidanaController::class, 'kanwil'])->name('kanwil');
+        Route::get('/pelaksanaan', [MutasiNarapidanaController::class, 'pelaksanaan'])->name('pelaksanaan');
         Route::get('/rekapitulasi', [MutasiNarapidanaController::class, 'rekapitulasi'])->name('rekapitulasi');
         Route::get('/export-excel', [MutasiNarapidanaController::class, 'exportExcel'])->name('export-excel');
         Route::get('/{id}', [MutasiNarapidanaController::class, 'show'])->whereNumber('id')->name('show');

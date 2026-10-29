@@ -656,6 +656,48 @@
                     @endif
                 </div>
             </div>
+            @else
+            <!-- SEKSI 4 (TERKUNCI / MENUNGGU PERSETUJUAN KANWIL) -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4 border-start border-secondary border-4">
+                <div class="card-header bg-light py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-bold text-muted"><i class="fas fa-lock me-2"></i>Tahap 4: Laporan Pemindahan, Penerimaan &amp; BAST</h6>
+                        <small class="text-muted">Akan terbuka otomatis setelah Kantor Wilayah menerbitkan Surat Persetujuan</small>
+                    </div>
+                    <span class="badge bg-secondary"><i class="fas fa-hourglass-start me-1"></i>Belum Aktif</span>
+                </div>
+                <div class="card-body py-4 text-center">
+                    <div class="mb-3">
+                        <span class="rounded-circle bg-secondary bg-opacity-10 p-3 d-inline-flex text-secondary">
+                            <i class="fas fa-truck-loading fa-2x"></i>
+                        </span>
+                    </div>
+                    <h6 class="fw-bold text-dark">Tahap Pelaporan Pemindahan Masih Menunggu Persetujuan Kanwil</h6>
+                    <p class="small text-muted mb-3 mx-auto" style="max-width: 480px;">
+                        Setelah Kantor Wilayah menyetujui usulan dan menetapkan UPT Penerima, formulir pelaporan ini akan otomatis aktif bagi:
+                    </p>
+                    <div class="row g-2 text-start small justify-content-center">
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded bg-white h-100 shadow-sm">
+                                <div class="fw-bold text-primary mb-1"><i class="fas fa-truck-departure me-1"></i>1. UPT Pengusul</div>
+                                <span class="text-muted" style="font-size: 11px;">Mengunggah <strong>Laporan Pemindahan</strong> saat narapidana diberangkatkan.</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded bg-white h-100 shadow-sm">
+                                <div class="fw-bold text-info mb-1"><i class="fas fa-building me-1"></i>2. UPT Penerima</div>
+                                <span class="text-muted" style="font-size: 11px;">Mengunggah <strong>Laporan Penerimaan</strong> fisik &amp; penempatan kamar hunian.</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded bg-white h-100 shadow-sm">
+                                <div class="fw-bold text-success mb-1"><i class="fas fa-file-signature me-1"></i>3. Dokumen BAST</div>
+                                <span class="text-muted" style="font-size: 11px;">Melampirkan <strong>Berita Acara Serah Terima</strong> bersama kedua UPT.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             @endif
         </div>
     </div>

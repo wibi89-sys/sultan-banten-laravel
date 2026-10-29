@@ -399,8 +399,14 @@
                     <a href="{{ Route::has('mutasi.create') ? route('mutasi.create') : url('/mutasi/create') }}" class="{{ request()->routeIs('mutasi.create') ? 'active' : '' }}">
                         <i class="fas fa-plus-circle"></i><span>2. Buat Usulan Baru</span>
                     </a>
+                    <a href="{{ Route::has('mutasi.kanwil') ? route('mutasi.kanwil') : url('/mutasi/kanwil') }}" class="{{ request()->routeIs('mutasi.kanwil*') ? 'active' : '' }}">
+                        <i class="fas fa-stamp"></i><span>3. Persetujuan Kanwil</span>
+                    </a>
+                    <a href="{{ Route::has('mutasi.pelaksanaan') ? route('mutasi.pelaksanaan') : url('/mutasi/pelaksanaan') }}" class="{{ request()->routeIs('mutasi.pelaksanaan*') ? 'active' : '' }}">
+                        <i class="fas fa-truck-moving"></i><span>4. Laporan Pemindahan &amp; BAST</span>
+                    </a>
                     <a href="{{ Route::has('mutasi.rekapitulasi') ? route('mutasi.rekapitulasi') : url('/mutasi/rekapitulasi') }}" class="{{ request()->routeIs('mutasi.rekapitulasi*') ? 'active' : '' }}">
-                        <i class="fas fa-chart-pie"></i><span>3. Rekapitulasi &amp; Ekspor</span>
+                        <i class="fas fa-chart-pie"></i><span>5. Rekapitulasi &amp; Ekspor</span>
                     </a>
                 </div>
             </div>

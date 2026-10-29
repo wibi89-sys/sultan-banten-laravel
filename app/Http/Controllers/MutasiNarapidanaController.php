@@ -525,6 +525,119 @@ class MutasiNarapidanaController extends Controller
         return redirect()->route('mutasi.index')->with('success', 'Berkas usulan mutasi berhasil dihapus.');
     }
 
+    public function kanwil(Request $request): View
+    {
+        $this->checkAccess();
+        $user = auth()->user();
+
+        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'creator', 'verifikator'])
+            ->latest('tanggal_surat');
+
+        // Scoping per UPT jika operator
+        if ($user->isOperator() && $user->upt_id) {
+            $query->where(function ($q) use ($user) {
+                $q->where('upt_asal_id', $user->upt_id)
+                    ->orWhere('upt_tujuan_id', $user->upt_id);
+            });
+        } elseif ($request->filled('upt_id')) {
+            $uptId = (int) $request->input('upt_id');
+            $query->where(function ($q) use ($uptId) {
+                $q->where('upt_asal_id', $uptId)
+                    ->orWhere('upt_tujuan_id', $uptId);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_surat', 'like', "%{$search}%")
+                    ->orWhere('nomor_surat_kanwil', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%");
+            });
+        }
+
+        $mutasiList = $query->paginate(15)->withQueryString();
+
+        $statQuery = MutasiNarapidana::query();
+        if ($user->isOperator() && $user->upt_id) {
+            $statQuery->where(function ($q) use ($user) {
+                $q->where('upt_asal_id', $user->upt_id)
+                    ->orWhere('upt_tujuan_id', $user->upt_id);
+            });
+        }
+
+        $stats = [
+            'perlu_telaah' => (clone $statQuery)->whereIn('status', ['diajukan', 'perlu_perbaikan'])->count(),
+            'disetujui' => (clone $statQuery)->where('status', 'disetujui')->count(),
+            'ditolak' => (clone $statQuery)->where('status', 'ditolak')->count(),
+            'total' => (clone $statQuery)->count(),
+        ];
+
+        $uptList = Upt::orderBy('nama_upt')->get();
+
+        return view('mutasi.kanwil', compact('mutasiList', 'stats', 'uptList', 'user'));
+    }
+
+    public function pelaksanaan(Request $request): View
+    {
+        $this->checkAccess();
+        $user = auth()->user();
+
+        // Menampilkan usulan yang telah disetujui Kanwil atau berstatus selesai
+        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'creator', 'verifikator'])
+            ->whereIn('status', ['disetujui', 'selesai'])
+            ->latest('tanggal_surat_kanwil');
+
+        // Scoping per UPT jika operator
+        if ($user->isOperator() && $user->upt_id) {
+            $query->where(function ($q) use ($user) {
+                $q->where('upt_asal_id', $user->upt_id)
+                    ->orWhere('upt_tujuan_id', $user->upt_id);
+            });
+        } elseif ($request->filled('upt_id')) {
+            $uptId = (int) $request->input('upt_id');
+            $query->where(function ($q) use ($uptId) {
+                $q->where('upt_asal_id', $uptId)
+                    ->orWhere('upt_tujuan_id', $uptId);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_surat', 'like', "%{$search}%")
+                    ->orWhere('nomor_surat_kanwil', 'like', "%{$search}%")
+                    ->orWhere('nomor_bast', 'like', "%{$search}%");
+            });
+        }
+
+        $mutasiList = $query->paginate(15)->withQueryString();
+
+        $statQuery = MutasiNarapidana::whereIn('status', ['disetujui', 'selesai']);
+        if ($user->isOperator() && $user->upt_id) {
+            $statQuery->where(function ($q) use ($user) {
+                $q->where('upt_asal_id', $user->upt_id)
+                    ->orWhere('upt_tujuan_id', $user->upt_id);
+            });
+        }
+
+        $stats = [
+            'total_disetujui' => (clone $statQuery)->count(),
+            'belum_pemindahan' => (clone $statQuery)->whereNull('file_laporan_pemindahan')->count(),
+            'belum_penerimaan' => (clone $statQuery)->whereNull('file_laporan_penerimaan')->count(),
+            'belum_bast' => (clone $statQuery)->whereNull('file_bast')->count(),
+            'tuntas' => (clone $statQuery)->where('status', 'selesai')->count(),
+        ];
+
+        $uptList = Upt::orderBy('nama_upt')->get();
+
+        return view('mutasi.pelaksanaan', compact('mutasiList', 'stats', 'uptList', 'user'));
+    }
+
     public function rekapitulasi(Request $request): View
     {
         $this->checkAccess();

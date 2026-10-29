@@ -131,4 +131,18 @@ class MutasiNarapidanaTest extends TestCase
 
         $this->assertTrue($testUser->fresh()->akses_mutasi);
     }
+
+    public function test_kanwil_page_renders_successfully(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('mutasi.kanwil'));
+        $response->assertStatus(200);
+        $response->assertSee('Persetujuan &amp; Penetapan Kanwil');
+    }
+
+    public function test_pelaksanaan_page_renders_successfully(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('mutasi.pelaksanaan'));
+        $response->assertStatus(200);
+        $response->assertSee('Laporan Pemindahan &amp; BAST');
+    }
 }
