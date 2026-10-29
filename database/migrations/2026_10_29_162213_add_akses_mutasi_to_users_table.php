@@ -13,7 +13,11 @@ return new class extends Migration
     {
         if (Schema::hasTable('users') && ! Schema::hasColumn('users', 'akses_mutasi')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->boolean('akses_mutasi')->default(false)->after('akses_sidang_tpp');
+                if (Schema::hasColumn('users', 'akses_sidang_tpp')) {
+                    $table->boolean('akses_mutasi')->default(false)->after('akses_sidang_tpp');
+                } else {
+                    $table->boolean('akses_mutasi')->default(false);
+                }
             });
         }
     }

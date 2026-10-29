@@ -46,7 +46,7 @@ return new class extends Migration
                 $table->integer('jumlah_disetujui_pidum')->nullable();
                 $table->integer('jumlah_disetujui_korupsi')->nullable();
                 $table->integer('total_disetujui')->nullable();
-                $table->unsignedInteger('diverifikasi_oleh')->nullable();
+                $table->unsignedBigInteger('diverifikasi_oleh')->nullable();
                 $table->timestamp('tanggal_verifikasi')->nullable();
 
                 // Laporan Pemindahan (UPT Pengusul/Asal)
@@ -66,18 +66,24 @@ return new class extends Migration
                 $table->string('file_bast', 255)->nullable();
                 $table->text('catatan_pelaksanaan')->nullable();
 
-                $table->unsignedInteger('created_by')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
                 $table->timestamps();
-
-                $table->foreign('upt_asal_id')->references('id')->on('upt')->onDelete('cascade');
-                $table->foreign('upt_tujuan_id')->references('id')->on('upt')->onDelete('set null');
-                $table->foreign('diverifikasi_oleh')->references('id')->on('users')->onDelete('set null');
-                $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
 
                 $table->index(['status', 'tanggal_surat']);
                 $table->index('upt_asal_id');
                 $table->index('upt_tujuan_id');
             });
+
+            try {
+                Schema::table('mutasi_narapidana', function (Blueprint $table) {
+                    $table->foreign('upt_asal_id')->references('id')->on('upt')->onDelete('cascade');
+                    $table->foreign('upt_tujuan_id')->references('id')->on('upt')->onDelete('set null');
+                    $table->foreign('diverifikasi_oleh')->references('id')->on('users')->onDelete('set null');
+                    $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+                });
+            } catch (Throwable $e) {
+                // Ignore constraint error if existing tables lack compatible indexes
+            }
         }
     }
 

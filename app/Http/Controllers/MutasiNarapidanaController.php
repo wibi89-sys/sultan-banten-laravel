@@ -8,15 +8,31 @@ use App\Models\Upt;
 use App\Services\WhatsAppService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MutasiNarapidanaController extends Controller
 {
+    private function ensureTableExists(): void
+    {
+        if (! Schema::hasTable('mutasi_narapidana') || ! Schema::hasColumn('mutasi_narapidana', 'file_laporan_pemindahan')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $e) {
+                Log::warning('Auto migrate mutasi error: '.$e->getMessage());
+            }
+        }
+    }
+
     private function checkAccess(): void
     {
+        $this->ensureTableExists();
+
         $user = auth()->user();
         if (! $user || ! $user->hasAccess('mutasi')) {
             abort(403, 'Anda tidak memiliki hak akses ke modul Mutasi Narapidana.');
@@ -191,7 +207,7 @@ class MutasiNarapidanaController extends Controller
 
         // Proteksi jika operator mencoba membuka mutasi UPT lain
         if ($user->isOperator() && $user->upt_id) {
-            $allowed = ($mutasi->upt_asal_id === $user->upt_id || $mutasi->upt_tujuan_id === $user->upt_id);
+            $allowed = ((int) $mutasi->upt_asal_id === (int) $user->upt_id || (int) $mutasi->upt_tujuan_id === (int) $user->upt_id);
             if (! $allowed) {
                 abort(403, 'Anda tidak berhak melihat data mutasi UPT lain.');
             }
@@ -291,7 +307,7 @@ class MutasiNarapidanaController extends Controller
         }
 
         // Hanya UPT Pengusul atau Admin
-        if ($user->isOperator() && $user->upt_id && $user->upt_id !== $mutasi->upt_asal_id) {
+        if ($user->isOperator() && $user->upt_id && (int) $user->upt_id !== (int) $mutasi->upt_asal_id) {
             abort(403, 'Hanya UPT Pengusul yang berhak mengunggah Laporan Pemindahan.');
         }
 
@@ -340,7 +356,7 @@ class MutasiNarapidanaController extends Controller
         }
 
         // Hanya UPT Penerima atau Admin
-        if ($user->isOperator() && $user->upt_id && $user->upt_id !== $mutasi->upt_tujuan_id) {
+        if ($user->isOperator() && $user->upt_id && (int) $user->upt_id !== (int) $mutasi->upt_tujuan_id) {
             abort(403, 'Hanya UPT Penerima yang berhak mengunggah Laporan Penerimaan.');
         }
 
@@ -389,7 +405,7 @@ class MutasiNarapidanaController extends Controller
         }
 
         // Hanya UPT terkait atau admin
-        if ($user->isOperator() && $user->upt_id && ! in_array($user->upt_id, [$mutasi->upt_asal_id, $mutasi->upt_tujuan_id], true)) {
+        if ($user->isOperator() && $user->upt_id && ! in_array((int) $user->upt_id, [(int) $mutasi->upt_asal_id, (int) $mutasi->upt_tujuan_id], true)) {
             abort(403);
         }
 
@@ -434,7 +450,7 @@ class MutasiNarapidanaController extends Controller
 
         // Cek izin akses berkas
         if ($user->isOperator() && $user->upt_id) {
-            $allowed = ($mutasi->upt_asal_id === $user->upt_id || $mutasi->upt_tujuan_id === $user->upt_id);
+            $allowed = ((int) $mutasi->upt_asal_id === (int) $user->upt_id || (int) $mutasi->upt_tujuan_id === (int) $user->upt_id);
             if (! $allowed) {
                 abort(403, 'Anda tidak berhak mengunduh berkas ini.');
             }

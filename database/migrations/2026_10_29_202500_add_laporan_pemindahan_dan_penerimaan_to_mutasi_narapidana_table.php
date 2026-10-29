@@ -14,30 +14,30 @@ return new class extends Migration
         if (Schema::hasTable('mutasi_narapidana')) {
             Schema::table('mutasi_narapidana', function (Blueprint $table) {
                 if (! Schema::hasColumn('mutasi_narapidana', 'file_laporan_pemindahan')) {
-                    $table->string('file_laporan_pemindahan', 255)->nullable()->after('tanggal_verifikasi');
+                    $table->string('file_laporan_pemindahan', 255)->nullable();
                 }
                 if (! Schema::hasColumn('mutasi_narapidana', 'tanggal_pemindahan')) {
-                    $table->date('tanggal_pemindahan')->nullable()->after('file_laporan_pemindahan');
+                    $table->date('tanggal_pemindahan')->nullable();
                 }
                 if (! Schema::hasColumn('mutasi_narapidana', 'catatan_pemindahan')) {
-                    $table->text('catatan_pemindahan')->nullable()->after('tanggal_pemindahan');
+                    $table->text('catatan_pemindahan')->nullable();
                 }
 
                 if (! Schema::hasColumn('mutasi_narapidana', 'file_laporan_penerimaan')) {
-                    $table->string('file_laporan_penerimaan', 255)->nullable()->after('catatan_pemindahan');
+                    $table->string('file_laporan_penerimaan', 255)->nullable();
                 }
                 if (! Schema::hasColumn('mutasi_narapidana', 'tanggal_penerimaan')) {
-                    $table->date('tanggal_penerimaan')->nullable()->after('file_laporan_penerimaan');
+                    $table->date('tanggal_penerimaan')->nullable();
                 }
                 if (! Schema::hasColumn('mutasi_narapidana', 'catatan_penerimaan')) {
-                    $table->text('catatan_penerimaan')->nullable()->after('tanggal_penerimaan');
+                    $table->text('catatan_penerimaan')->nullable();
                 }
 
                 if (! Schema::hasColumn('mutasi_narapidana', 'nomor_bast')) {
-                    $table->string('nomor_bast', 100)->nullable()->after('catatan_penerimaan');
+                    $table->string('nomor_bast', 100)->nullable();
                 }
                 if (! Schema::hasColumn('mutasi_narapidana', 'tanggal_bast')) {
-                    $table->date('tanggal_bast')->nullable()->after('nomor_bast');
+                    $table->date('tanggal_bast')->nullable();
                 }
             });
         }

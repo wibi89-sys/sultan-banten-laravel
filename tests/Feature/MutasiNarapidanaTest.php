@@ -84,4 +84,45 @@ class MutasiNarapidanaTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
+
+    public function test_operator_without_mutasi_access_is_forbidden(): void
+    {
+        $restrictedOperator = User::factory()->create([
+            'role' => 'operator',
+            'upt_id' => $this->uptAsal->id,
+            'akses_mutasi' => false,
+        ]);
+
+        $response = $this->actingAs($restrictedOperator)->get(route('mutasi.index'));
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_can_grant_mutasi_to_all_operators(): void
+    {
+        $operatorWithoutAccess = User::factory()->create([
+            'role' => 'operator',
+            'upt_id' => $this->uptAsal->id,
+            'akses_mutasi' => false,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('users.grant-mutasi-all'));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertTrue($operatorWithoutAccess->fresh()->akses_mutasi);
+    }
+
+    public function test_grant_mutasi_artisan_command(): void
+    {
+        $testUser = User::factory()->create([
+            'role' => 'operator',
+            'upt_id' => $this->uptAsal->id,
+            'akses_mutasi' => false,
+        ]);
+
+        $this->artisan('users:grant-mutasi', ['username' => $testUser->username])
+            ->assertExitCode(0);
+
+        $this->assertTrue($testUser->fresh()->akses_mutasi);
+    }
 }

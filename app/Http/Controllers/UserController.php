@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
@@ -30,8 +31,32 @@ class UserController extends Controller
         'akses_activity_log',
     ];
 
+    private function ensurePermissionColumns(): void
+    {
+        if (! Schema::hasTable('users')) {
+            return;
+        }
+
+        try {
+            $existingColumns = Schema::getColumnListing('users');
+            $missing = array_diff($this->permissionFields, $existingColumns);
+
+            if (! empty($missing)) {
+                Schema::table('users', function ($table) use ($missing) {
+                    foreach ($missing as $col) {
+                        $table->boolean($col)->default(false);
+                    }
+                });
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Auto add permission columns error: '.$e->getMessage());
+        }
+    }
+
     public function index()
     {
+        $this->ensurePermissionColumns();
+
         $user = auth()->user();
         if (! $user->hasAccess('user')) {
             abort(403);
@@ -45,6 +70,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensurePermissionColumns();
+
         $user = auth()->user();
         if (! $user->hasAccess('user')) {
             abort(403);
@@ -81,6 +108,8 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->ensurePermissionColumns();
+
         $user = auth()->user();
         if (! $user->hasAccess('user')) {
             abort(403);
@@ -116,6 +145,21 @@ class UserController extends Controller
         ActivityLog::log('edit', 'user', "Mengubah data user: {$targetUser->nama_lengkap}", $targetUser->toArray());
 
         return back()->with('success', 'Data user berhasil diperbarui.');
+    }
+
+    public function grantMutasiAll()
+    {
+        $user = auth()->user();
+        if (! $user->hasAccess('user')) {
+            abort(403);
+        }
+
+        $this->ensurePermissionColumns();
+
+        User::where('role', 'operator')->update(['akses_mutasi' => true]);
+        ActivityLog::log('edit', 'user', 'Memberikan hak akses Mutasi Narapidana ke seluruh akun operator UPT.');
+
+        return back()->with('success', 'Hak akses modul Mutasi Narapidana berhasil diberikan ke seluruh akun Operator UPT.');
     }
 
     public function destroy($id)
