@@ -6,6 +6,7 @@ use App\Models\DataBebasHarian;
 use App\Models\DataIntegrasi;
 use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
+use App\Models\MutasiNarapidana;
 use App\Models\Upt;
 use App\Models\User;
 use App\Models\WaGroup;
@@ -1092,5 +1093,75 @@ class WhatsAppService
             'total_operator_wa_siap' => $operatorCount,
             'daftar_jadwal' => $daftarJadwal,
         ];
+    }
+
+    public static function notifyNewMutasiUsulan(MutasiNarapidana $mutasi): array
+    {
+        try {
+            $defaultGroup = WaGroup::where('aktif', true)->where('is_default', true)->first()
+                ?? WaGroup::where('aktif', true)->first();
+
+            if (! $defaultGroup || empty($defaultGroup->group_id)) {
+                return ['success' => false, 'message' => 'Grup WhatsApp aktif tidak ditemukan'];
+            }
+
+            $uptAsal = $mutasi->uptAsal?->nama_upt ?? 'UPT Pemohon';
+            $tglSurat = $mutasi->tanggal_surat ? $mutasi->tanggal_surat->format('d/m/Y') : '-';
+
+            $msg = "📬 *USULAN MUTASI NARAPIDANA BARU*\n\n";
+            $msg .= "UPT Pemohon: *{$uptAsal}*\n";
+            $msg .= "No. Surat: {$mutasi->nomor_surat}\n";
+            $msg .= "Tanggal Surat: {$tglSurat}\n";
+            $msg .= "Kategori: *{$mutasi->kategori_mutasi}*\n\n";
+            $msg .= "👥 *Rincian Jumlah Narapidana Diusulkan:*\n";
+            $msg .= "• Narkotika: {$mutasi->jumlah_narkotika} orang\n";
+            $msg .= "• Pidana Umum: {$mutasi->jumlah_pidum} orang\n";
+            $msg .= "• Korupsi (Tipikor): {$mutasi->jumlah_korupsi} orang\n";
+            $msg .= "👉 *Total Usulan: {$mutasi->total_usulan} orang*\n\n";
+            if ($mutasi->keterangan) {
+                $msg .= "Keterangan: {$mutasi->keterangan}\n\n";
+            }
+            $msg .= "_Mohon kesediaan Tim Kanwil Kemenkumham Banten untuk menelaah berkas persyaratan dan menetapkan UPT Tujuan._\n";
+            $msg .= '_Sultan Banten Ditjenpas_';
+
+            return self::send($defaultGroup->group_id, $msg);
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public static function notifyMutasiDisetujui(MutasiNarapidana $mutasi): array
+    {
+        try {
+            $defaultGroup = WaGroup::where('aktif', true)->where('is_default', true)->first()
+                ?? WaGroup::where('aktif', true)->first();
+
+            if (! $defaultGroup || empty($defaultGroup->group_id)) {
+                return ['success' => false, 'message' => 'Grup WhatsApp aktif tidak ditemukan'];
+            }
+
+            $uptAsal = $mutasi->uptAsal?->nama_upt ?? 'UPT Pemohon';
+            $uptTujuan = $mutasi->uptTujuan?->nama_upt ?? 'UPT Tujuan';
+            $tglSuratKanwil = $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d/m/Y') : date('d/m/Y');
+
+            $msg = "✅ *SURAT PERSETUJUAN MUTASI KANWIL TERBIT*\n\n";
+            $msg .= "UPT Pemohon: *{$uptAsal}*\n";
+            $msg .= "UPT Penerima Ditunjuk: *{$uptTujuan}*\n";
+            $msg .= "No. Surat Kanwil: {$mutasi->nomor_surat_kanwil}\n";
+            $msg .= "Tanggal: {$tglSuratKanwil}\n\n";
+            $msg .= "👥 *Total WBP Disetujui: {$mutasi->total_disetujui} orang*\n";
+            $msg .= "• Narkotika: {$mutasi->jumlah_disetujui_narkotika} orang\n";
+            $msg .= "• Pidana Umum: {$mutasi->jumlah_disetujui_pidum} orang\n";
+            $msg .= "• Korupsi: {$mutasi->jumlah_disetujui_korupsi} orang\n\n";
+            if ($mutasi->catatan_kanwil) {
+                $msg .= "Catatan Kanwil: {$mutasi->catatan_kanwil}\n\n";
+            }
+            $msg .= "_Surat Persetujuan resmi sudah dapat diunduh di aplikasi Sultan Banten oleh UPT Pemohon dan UPT Penerima._\n";
+            $msg .= '_Sultan Banten Ditjenpas_';
+
+            return self::send($defaultGroup->group_id, $msg);
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 }

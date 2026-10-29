@@ -19,6 +19,7 @@ class UserController extends Controller
         'akses_integrasi',
         'akses_bebas_harian',
         'akses_sidang_tpp',
+        'akses_mutasi',
         'akses_upt',
         'akses_user',
         'akses_instansi',

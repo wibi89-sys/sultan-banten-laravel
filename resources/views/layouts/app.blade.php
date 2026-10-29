@@ -385,6 +385,27 @@
             </div>
             @endif
 
+            @if($user->hasAccess('mutasi'))
+            <div class="menu-parent {{ request()->routeIs('mutasi.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMutasi">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Mutasi Narapidana</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="collapse {{ request()->routeIs('mutasi.*') ? 'show' : '' }}" id="menuMutasi">
+                <div class="sidebar-submenu">
+                    <a href="{{ Route::has('mutasi.index') ? route('mutasi.index') : url('/mutasi') }}" class="{{ request()->routeIs('mutasi.index') || request()->routeIs('mutasi.show') ? 'active' : '' }}">
+                        <i class="fas fa-list-alt"></i><span>1. Daftar Usulan Mutasi</span>
+                    </a>
+                    <a href="{{ Route::has('mutasi.create') ? route('mutasi.create') : url('/mutasi/create') }}" class="{{ request()->routeIs('mutasi.create') ? 'active' : '' }}">
+                        <i class="fas fa-plus-circle"></i><span>2. Buat Usulan Baru</span>
+                    </a>
+                    <a href="{{ Route::has('mutasi.rekapitulasi') ? route('mutasi.rekapitulasi') : url('/mutasi/rekapitulasi') }}" class="{{ request()->routeIs('mutasi.rekapitulasi*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-pie"></i><span>3. Rekapitulasi &amp; Ekspor</span>
+                    </a>
+                </div>
+            </div>
+            @endif
+
             @if($user->hasAccess('laporan'))
             <div class="menu-parent {{ request()->routeIs('laporan.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuLaporan">
                 <i class="fas fa-print"></i>

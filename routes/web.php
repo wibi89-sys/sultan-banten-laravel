@@ -8,6 +8,7 @@ use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\IntegrasiController;
 use App\Http\Controllers\KroscekController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\MutasiNarapidanaController;
 use App\Http\Controllers\OverstayingController;
 use App\Http\Controllers\PenghuniController;
 use App\Http\Controllers\PengumumanController;
@@ -125,6 +126,20 @@ Route::middleware('auth')->group(function () {
         // Anak Menu 4: Rekap & Download Dokumen
         Route::get('/rekapitulasi', [SidangTppController::class, 'rekapitulasiIndex'])->name('rekapitulasi');
         Route::get('/export-excel', [SidangTppController::class, 'exportExcel'])->name('export-excel');
+    });
+
+    // Mutasi Narapidana Antar-UPT Wilayah Banten
+    Route::prefix('mutasi')->name('mutasi.')->group(function () {
+        Route::get('/', [MutasiNarapidanaController::class, 'index'])->name('index');
+        Route::get('/create', [MutasiNarapidanaController::class, 'create'])->name('create');
+        Route::post('/', [MutasiNarapidanaController::class, 'store'])->name('store');
+        Route::get('/rekapitulasi', [MutasiNarapidanaController::class, 'rekapitulasi'])->name('rekapitulasi');
+        Route::get('/export-excel', [MutasiNarapidanaController::class, 'exportExcel'])->name('export-excel');
+        Route::get('/{id}', [MutasiNarapidanaController::class, 'show'])->whereNumber('id')->name('show');
+        Route::post('/{id}/verifikasi', [MutasiNarapidanaController::class, 'verifikasi'])->whereNumber('id')->name('verifikasi');
+        Route::post('/{id}/bast', [MutasiNarapidanaController::class, 'bastStore'])->whereNumber('id')->name('bast.store');
+        Route::get('/{id}/download/{type}', [MutasiNarapidanaController::class, 'downloadFile'])->whereNumber('id')->name('download-file');
+        Route::delete('/{id}', [MutasiNarapidanaController::class, 'destroy'])->whereNumber('id')->name('destroy');
     });
 
     // Laporan

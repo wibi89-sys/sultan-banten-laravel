@@ -77,6 +77,8 @@
                                 @if($u->akses_overstaying)<span class="badge bg-light text-dark border">Overstay</span>@endif
                                 @if($u->akses_integrasi)<span class="badge bg-light text-dark border">Integrasi</span>@endif
                                 @if($u->akses_bebas_harian)<span class="badge bg-light text-dark border">Bebas</span>@endif
+                                @if($u->akses_sidang_tpp)<span class="badge bg-light text-dark border">Sidang TPP</span>@endif
+                                @if($u->akses_mutasi)<span class="badge bg-light text-dark border">Mutasi</span>@endif
                                 @if($u->akses_laporan)<span class="badge bg-light text-dark border">Laporan</span>@endif
                             </div>
                         @endif
@@ -190,6 +192,12 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="akses_sidang_tpp" id="add_ak_sidang" checked>
                                 <label class="form-check-label" for="add_ak_sidang">Sidang TPP</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 access-checkbox">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="akses_mutasi" id="add_ak_mutasi" checked>
+                                <label class="form-check-label" for="add_ak_mutasi">Mutasi Narapidana</label>
                             </div>
                         </div>
                         <div class="col-6 col-md-4 access-checkbox">
@@ -315,6 +323,12 @@
                         </div>
                         <div class="col-6 col-md-4 access-checkbox">
                             <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="akses_mutasi" id="edit_ak_mutasi">
+                                <label class="form-check-label" for="edit_ak_mutasi">Mutasi Narapidana</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 access-checkbox">
+                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="akses_laporan" id="edit_ak_lap">
                                 <label class="form-check-label" for="edit_ak_lap">Cetak Laporan</label>
                             </div>
@@ -366,6 +380,9 @@
         document.getElementById('edit_ak_bebas').checked = !!u.akses_bebas_harian;
         if (document.getElementById('edit_ak_sidang')) {
             document.getElementById('edit_ak_sidang').checked = !!u.akses_sidang_tpp;
+        }
+        if (document.getElementById('edit_ak_mutasi')) {
+            document.getElementById('edit_ak_mutasi').checked = !!u.akses_mutasi;
         }
         document.getElementById('edit_ak_lap').checked = !!u.akses_laporan;
         document.getElementById('edit_ak_upt').checked = !!u.akses_upt;
