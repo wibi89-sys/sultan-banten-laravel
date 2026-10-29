@@ -97,19 +97,25 @@ class MutasiNarapidanaTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_admin_can_grant_mutasi_to_all_operators(): void
+    public function test_admin_can_grant_mutasi_access_to_user(): void
     {
         $operatorWithoutAccess = User::factory()->create([
             'role' => 'operator',
+            'nama_lengkap' => 'Operator Test',
             'upt_id' => $this->uptAsal->id,
             'akses_mutasi' => false,
         ]);
 
-        $response = $this->actingAs($this->admin)->post(route('users.grant-mutasi-all'));
+        $response = $this->actingAs($this->admin)->put(route('users.update', $operatorWithoutAccess->id), [
+            'nama_lengkap' => $operatorWithoutAccess->nama_lengkap,
+            'role' => 'operator',
+            'upt_id' => $this->uptAsal->id,
+            'akses_mutasi' => 'on',
+        ]);
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertTrue($operatorWithoutAccess->fresh()->akses_mutasi);
+        $this->assertTrue((bool) $operatorWithoutAccess->fresh()->akses_mutasi);
     }
 
     public function test_grant_mutasi_artisan_command(): void

@@ -23,22 +23,14 @@
 
 @section('content')
 <div class="content-card">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <div>
             <h5 class="mb-1 fw-bold"><i class="fas fa-users-cog text-primary me-2"></i>Daftar Pengguna Sistem</h5>
             <p class="text-muted small mb-0">Kelola akun pengguna, peran, hak akses menu, dan penetapan UPT</p>
         </div>
-        <div class="d-flex gap-2">
-            <form action="{{ route('users.grant-mutasi-all') }}" method="POST" onsubmit="return confirm('Beri hak akses modul Mutasi Narapidana ke SEMUA pengguna dengan peran Operator UPT?')">
-                @csrf
-                <button type="submit" class="btn btn-outline-success btn-sm px-3" title="Beri hak akses Mutasi Narapidana ke seluruh akun Operator UPT sekaligus">
-                    <i class="fas fa-exchange-alt me-1"></i> Aktifkan Mutasi Semua UPT
-                </button>
-            </form>
-            <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAdd">
-                <i class="fas fa-user-plus me-1"></i> Tambah User
-            </button>
-        </div>
+        <button class="btn btn-primary btn-sm px-3 mt-2 mt-md-0" data-bs-toggle="modal" data-bs-target="#modalAdd">
+            <i class="fas fa-user-plus me-1"></i> Tambah User
+        </button>
     </div>
 
     <div class="table-responsive">

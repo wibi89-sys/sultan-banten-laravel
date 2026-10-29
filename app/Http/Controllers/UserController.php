@@ -147,21 +147,6 @@ class UserController extends Controller
         return back()->with('success', 'Data user berhasil diperbarui.');
     }
 
-    public function grantMutasiAll()
-    {
-        $user = auth()->user();
-        if (! $user->hasAccess('user')) {
-            abort(403);
-        }
-
-        $this->ensurePermissionColumns();
-
-        User::where('role', 'operator')->update(['akses_mutasi' => true]);
-        ActivityLog::log('edit', 'user', 'Memberikan hak akses Mutasi Narapidana ke seluruh akun operator UPT.');
-
-        return back()->with('success', 'Hak akses modul Mutasi Narapidana berhasil diberikan ke seluruh akun Operator UPT.');
-    }
-
     public function destroy($id)
     {
         $user = auth()->user();
