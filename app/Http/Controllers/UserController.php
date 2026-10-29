@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Upt;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
@@ -63,8 +65,11 @@ class UserController extends Controller
             'upt_id' => $request->filled('upt_id') ? (int) $request->input('upt_id') : null,
         ];
 
+        $userColumns = Schema::getColumnListing('users');
         foreach ($this->permissionFields as $field) {
-            $data[$field] = $request->has($field);
+            if (in_array($field, $userColumns, true)) {
+                $data[$field] = $request->has($field);
+            }
         }
 
         $newUser = User::create($data);
@@ -99,8 +104,11 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->input('password'));
         }
 
+        $userColumns = Schema::getColumnListing('users');
         foreach ($this->permissionFields as $field) {
-            $data[$field] = $request->has($field);
+            if (in_array($field, $userColumns, true)) {
+                $data[$field] = $request->has($field);
+            }
         }
 
         $targetUser->update($data);
@@ -121,11 +129,15 @@ class UserController extends Controller
         }
 
         $targetUser = User::findOrFail($id);
-        $old = $targetUser->toArray();
-        $targetUser->delete();
 
-        ActivityLog::log('hapus', 'user', "Menghapus user: {$targetUser->username}", $old);
+        try {
+            $old = $targetUser->toArray();
+            $targetUser->delete();
+            ActivityLog::log('hapus', 'user', "Menghapus user: {$targetUser->username}", $old);
 
-        return back()->with('success', 'User berhasil dihapus.');
+            return back()->with('success', 'User berhasil dihapus.');
+        } catch (QueryException $e) {
+            return back()->with('error', 'Tidak dapat menghapus user ini karena masih memiliki relasi data terkait di sistem.');
+        }
     }
 }
