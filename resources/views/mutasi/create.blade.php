@@ -64,11 +64,18 @@
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Kategori Usulan Mutasi <span class="text-danger">*</span></label>
                         <select name="kategori_mutasi" id="kategoriMutasi" class="form-select form-select-sm" required>
-                            <option value="Pembinaan" {{ old('kategori_mutasi') == 'Pembinaan' ? 'selected' : '' }}>Pembinaan Lanjutan (Revitalisasi / Tahapan Pembinaan)</option>
-                            <option value="Keamanan" {{ old('kategori_mutasi') == 'Keamanan' ? 'selected' : '' }}>Keamanan &amp; Ketertiban (Kamtib / High-Risk / Pemisahan Jaringan)</option>
-                            <option value="Overkapasitas" {{ old('kategori_mutasi') == 'Overkapasitas' ? 'selected' : '' }}>Pengurangan Overkapasitas Akut</option>
+                            <option value="Pembinaan" {{ old('kategori_mutasi', 'Pembinaan') == 'Pembinaan' ? 'selected' : '' }}>Pembinaan</option>
+                            <option value="Keamanan" {{ old('kategori_mutasi') == 'Keamanan' ? 'selected' : '' }}>Keamanan</option>
+                            <option value="Overkapasitas" {{ old('kategori_mutasi') == 'Overkapasitas' ? 'selected' : '' }}>Overkapasitas</option>
                             <option value="Lainnya" {{ old('kategori_mutasi') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                         </select>
+                        <div id="divKategoriLainnya" class="mt-2 {{ old('kategori_mutasi') == 'Lainnya' ? '' : 'd-none' }}">
+                            <label class="form-label small fw-semibold text-primary">
+                                <i class="fas fa-pen me-1"></i>Sebutkan Kategori Mutasi <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="kategori_lainnya" id="kategoriLainnya" class="form-control form-control-sm" placeholder="Contoh: Perawatan Medis / Rujukan RS" value="{{ old('kategori_lainnya') }}" maxlength="100" {{ old('kategori_mutasi') == 'Lainnya' ? 'required' : '' }}>
+                            <small class="text-muted" style="font-size: 11px;">Ketik rincian kategori usulan mutasi secara manual.</small>
+                        </div>
                         <div id="alertBapNotice" class="alert alert-warning py-1 px-2 mt-2 small d-none">
                             <i class="fas fa-shield-alt me-1"></i><strong>Perhatian:</strong> Untuk kategori <strong>Keamanan</strong>, Berita Acara Pemeriksaan (BAP) wajib dilampirkan.
                         </div>
@@ -202,6 +209,8 @@
         const inputKorupsi = document.getElementById('jumlahKorupsi');
         const badgeTotal = document.getElementById('badgeTotalUsulan');
         const selectKategori = document.getElementById('kategoriMutasi');
+        const divKategoriLainnya = document.getElementById('divKategoriLainnya');
+        const inputKategoriLainnya = document.getElementById('kategoriLainnya');
         const alertBap = document.getElementById('alertBapNotice');
         const reqStarBap = document.getElementById('reqStarBap');
         const inputBap = document.getElementById('inputFileBap');
@@ -220,7 +229,7 @@
             }
         }
 
-        function checkKategori() {
+        function checkKategori(focusInput = false) {
             if (selectKategori.value === 'Keamanan') {
                 alertBap.classList.remove('d-none');
                 reqStarBap.style.display = 'inline';
@@ -230,15 +239,28 @@
                 reqStarBap.style.display = 'none';
                 inputBap.removeAttribute('required');
             }
+
+            if (selectKategori.value === 'Lainnya') {
+                divKategoriLainnya.classList.remove('d-none');
+                inputKategoriLainnya.setAttribute('required', 'required');
+                if (focusInput) {
+                    inputKategoriLainnya.focus();
+                }
+            } else {
+                divKategoriLainnya.classList.add('d-none');
+                inputKategoriLainnya.removeAttribute('required');
+            }
         }
 
         inputNarkotika.addEventListener('input', updateTotal);
         inputPidum.addEventListener('input', updateTotal);
         inputKorupsi.addEventListener('input', updateTotal);
-        selectKategori.addEventListener('change', checkKategori);
+        selectKategori.addEventListener('change', function () {
+            checkKategori(true);
+        });
 
         updateTotal();
-        checkKategori();
+        checkKategori(false);
     });
 </script>
 @endpush

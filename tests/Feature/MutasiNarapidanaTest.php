@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Upt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class MutasiNarapidanaTest extends TestCase
@@ -136,13 +137,71 @@ class MutasiNarapidanaTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get(route('mutasi.kanwil'));
         $response->assertStatus(200);
-        $response->assertSee('Persetujuan &amp; Penetapan Kanwil');
+        $response->assertSee('Persetujuan &amp; Penetapan Kanwil', false);
     }
 
     public function test_pelaksanaan_page_renders_successfully(): void
     {
         $response = $this->actingAs($this->admin)->get(route('mutasi.pelaksanaan'));
         $response->assertStatus(200);
-        $response->assertSee('Laporan Pemindahan &amp; BAST');
+        $response->assertSee('Laporan Pemindahan &amp; BAST', false);
+    }
+
+    public function test_create_page_displays_clean_categories_and_manual_input_field(): void
+    {
+        $response = $this->actingAs($this->operator)->get(route('mutasi.create'));
+        $response->assertStatus(200);
+        $response->assertSee('<option value="Pembinaan"', false);
+        $response->assertSee('Pembinaan</option>', false);
+        $response->assertSee('Keamanan</option>', false);
+        $response->assertSee('Overkapasitas</option>', false);
+        $response->assertSee('Lainnya</option>', false);
+        $response->assertDontSee('Pembinaan Lanjutan (Revitalisasi', false);
+        $response->assertSee('id="divKategoriLainnya"', false);
+        $response->assertSee('name="kategori_lainnya"', false);
+    }
+
+    public function test_user_can_submit_usulan_mutasi_with_custom_category(): void
+    {
+        $file = UploadedFile::fake()->create('surat_usulan.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->operator)->post(route('mutasi.store'), [
+            'nomor_surat' => 'TEST/MUTASI/'.uniqid(),
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Lainnya',
+            'kategori_lainnya' => 'Rujukan Medis & Kesehatan RSUD',
+            'keterangan' => 'Mutasi rujukan perawatan medis intensif',
+            'jumlah_narkotika' => 1,
+            'jumlah_pidum' => 0,
+            'jumlah_korupsi' => 0,
+            'file_surat_usulan' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('mutasi_narapidana', [
+            'kategori_mutasi' => 'Lainnya: Rujukan Medis & Kesehatan RSUD',
+            'jumlah_narkotika' => 1,
+            'total_usulan' => 1,
+        ]);
+    }
+
+    public function test_submitting_kategori_lainnya_without_text_fails_validation(): void
+    {
+        $file = UploadedFile::fake()->create('surat_usulan.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->operator)->post(route('mutasi.store'), [
+            'nomor_surat' => 'TEST/MUTASI/'.uniqid(),
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Lainnya',
+            'kategori_lainnya' => '',
+            'jumlah_narkotika' => 1,
+            'jumlah_pidum' => 0,
+            'jumlah_korupsi' => 0,
+            'file_surat_usulan' => $file,
+        ]);
+
+        $response->assertSessionHasErrors(['kategori_lainnya']);
     }
 }

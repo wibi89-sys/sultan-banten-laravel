@@ -65,7 +65,15 @@ class MutasiNarapidanaController extends Controller
         }
 
         if ($request->filled('kategori')) {
-            $query->where('kategori_mutasi', $request->input('kategori'));
+            $kategoriFilter = $request->input('kategori');
+            if ($kategoriFilter === 'Lainnya') {
+                $query->where(function ($q) {
+                    $q->where('kategori_mutasi', 'like', 'Lainnya%')
+                        ->orWhereNotIn('kategori_mutasi', ['Pembinaan', 'Keamanan', 'Overkapasitas']);
+                });
+            } else {
+                $query->where('kategori_mutasi', $kategoriFilter);
+            }
         }
 
         if ($request->filled('tahun')) {
@@ -128,6 +136,9 @@ class MutasiNarapidanaController extends Controller
             'tanggal_surat' => 'required|date',
             'upt_asal_id' => 'required|exists:upt,id',
             'kategori_mutasi' => 'required|in:Pembinaan,Keamanan,Overkapasitas,Lainnya',
+            'kategori_lainnya' => $request->input('kategori_mutasi') === 'Lainnya'
+                ? 'required|string|max:100'
+                : 'nullable|string|max:100',
             'keterangan' => 'nullable|string|max:1000',
             'jumlah_narkotika' => 'required|integer|min:0',
             'jumlah_pidum' => 'required|integer|min:0',
@@ -140,6 +151,7 @@ class MutasiNarapidanaController extends Controller
             'file_reg_f' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'file_lampiran_wbp' => 'nullable|file|mimes:pdf,xls,xlsx,csv|max:10240',
         ], [
+            'kategori_lainnya.required' => 'Mohon sebutkan kategori lainnya secara manual.',
             'file_bap.required' => 'Untuk kategori Keamanan, Berita Acara Pemeriksaan (BAP) wajib dilampirkan.',
             'file_surat_usulan.required' => 'Surat Pengusulan resmi dari UPT wajib diunggah.',
         ]);
@@ -165,11 +177,19 @@ class MutasiNarapidanaController extends Controller
         $fileRegF = $this->handleUpload($request, 'file_reg_f', 'reg_f');
         $fileLampiranWbp = $this->handleUpload($request, 'file_lampiran_wbp', 'lampiran_wbp');
 
+        $kategoriFinal = $validated['kategori_mutasi'];
+        if ($kategoriFinal === 'Lainnya' && $request->filled('kategori_lainnya')) {
+            $inputManual = trim($request->input('kategori_lainnya'));
+            $kategoriFinal = str_starts_with(strtolower($inputManual), 'lainnya')
+                ? $inputManual
+                : 'Lainnya: '.$inputManual;
+        }
+
         $mutasi = MutasiNarapidana::create([
             'nomor_surat' => $validated['nomor_surat'],
             'tanggal_surat' => $validated['tanggal_surat'],
             'upt_asal_id' => $validated['upt_asal_id'],
-            'kategori_mutasi' => $validated['kategori_mutasi'],
+            'kategori_mutasi' => $kategoriFinal,
             'keterangan' => $validated['keterangan'] ?? null,
             'jumlah_narkotika' => (int) $validated['jumlah_narkotika'],
             'jumlah_pidum' => (int) $validated['jumlah_pidum'],
@@ -262,7 +282,7 @@ class MutasiNarapidanaController extends Controller
         ];
 
         if ($validated['status'] === 'disetujui') {
-            $totalDisetujui = (int) $validated['jumlah_disetujui_narkotika'] + (int) $validated['jumlah_pidum'] + (int) $validated['jumlah_korupsi'];
+            $totalDisetujui = (int) $validated['jumlah_disetujui_narkotika'] + (int) $validated['jumlah_disetujui_pidum'] + (int) $validated['jumlah_disetujui_korupsi'];
 
             $filePersetujuan = $this->handleUpload($request, 'file_persetujuan_kanwil', 'persetujuan_kanwil');
             if ($filePersetujuan) {
@@ -686,7 +706,7 @@ class MutasiNarapidanaController extends Controller
             'Pembinaan' => $mutasiAll->where('kategori_mutasi', 'Pembinaan')->sum('total_usulan'),
             'Keamanan' => $mutasiAll->where('kategori_mutasi', 'Keamanan')->sum('total_usulan'),
             'Overkapasitas' => $mutasiAll->where('kategori_mutasi', 'Overkapasitas')->sum('total_usulan'),
-            'Lainnya' => $mutasiAll->where('kategori_mutasi', 'Lainnya')->sum('total_usulan'),
+            'Lainnya' => $mutasiAll->reject(fn ($m) => in_array($m->kategori_mutasi, ['Pembinaan', 'Keamanan', 'Overkapasitas'], true))->sum('total_usulan'),
         ];
 
         return view('mutasi.rekapitulasi', compact(
