@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\MutasiNarapidana;
 use App\Models\Upt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -203,5 +204,154 @@ class MutasiNarapidanaTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors(['kategori_lainnya']);
+    }
+
+    public function test_kanwil_can_approve_mutasi_to_multiple_upt_destinations(): void
+    {
+        $uptTujuan2 = Upt::whereNotIn('id', [$this->uptAsal->id, $this->uptTujuan->id])->first() ?? Upt::create([
+            'nama_upt' => 'Lapas Pemuda Tangerang Test',
+            'kapasitas' => 300,
+        ]);
+
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'USUL/MULTI/'.uniqid(),
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Overkapasitas',
+            'jumlah_narkotika' => 30,
+            'jumlah_pidum' => 20,
+            'jumlah_korupsi' => 0,
+            'total_usulan' => 50,
+            'status' => 'diajukan',
+            'created_by' => $this->operator->id,
+        ]);
+
+        $pdfKanwil = UploadedFile::fake()->create('persetujuan_kanwil.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->admin)->post(route('mutasi.verifikasi', $mutasi->id), [
+            'status' => 'disetujui',
+            'nomor_surat_kanwil' => 'W.12.PAS-PK.01.05-MULTI-101',
+            'tanggal_surat_kanwil' => now()->toDateString(),
+            'file_persetujuan_kanwil' => $pdfKanwil,
+            'alokasi' => [
+                [
+                    'upt_tujuan_id' => $this->uptTujuan->id,
+                    'jumlah_narkotika' => 20,
+                    'jumlah_pidum' => 10,
+                    'jumlah_korupsi' => 0,
+                ],
+                [
+                    'upt_tujuan_id' => $uptTujuan2->id,
+                    'jumlah_narkotika' => 10,
+                    'jumlah_pidum' => 10,
+                    'jumlah_korupsi' => 0,
+                ],
+            ],
+            'catatan_kanwil' => 'Disetujui 30 orang ke UPT 1 dan 20 orang ke UPT 2',
+        ]);
+
+        $response->assertRedirect(route('mutasi.show', $mutasi->id));
+
+        $mutasi->refresh();
+        $this->assertEquals('disetujui', $mutasi->status);
+        $this->assertEquals(50, $mutasi->total_disetujui);
+        $this->assertCount(2, $mutasi->tujuans);
+
+        $tujuan1 = $mutasi->tujuans->firstWhere('upt_tujuan_id', $this->uptTujuan->id);
+        $tujuan2 = $mutasi->tujuans->firstWhere('upt_tujuan_id', $uptTujuan2->id);
+
+        $this->assertNotNull($tujuan1);
+        $this->assertEquals(30, $tujuan1->total_disetujui);
+        $this->assertNotNull($tujuan2);
+        $this->assertEquals(20, $tujuan2->total_disetujui);
+    }
+
+    public function test_multi_destination_execution_flow_completes_when_all_bast_uploaded(): void
+    {
+        $uptTujuan2 = Upt::whereNotIn('id', [$this->uptAsal->id, $this->uptTujuan->id])->first() ?? Upt::create([
+            'nama_upt' => 'Lapas Pemuda Test 2',
+            'kapasitas' => 300,
+        ]);
+
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'USUL/FLOW/'.uniqid(),
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Pembinaan',
+            'jumlah_narkotika' => 30,
+            'jumlah_pidum' => 20,
+            'jumlah_korupsi' => 0,
+            'total_usulan' => 50,
+            'status' => 'diajukan',
+            'created_by' => $this->operator->id,
+        ]);
+
+        $pdfKanwil = UploadedFile::fake()->create('persetujuan.pdf', 100, 'application/pdf');
+
+        $this->actingAs($this->admin)->post(route('mutasi.verifikasi', $mutasi->id), [
+            'status' => 'disetujui',
+            'nomor_surat_kanwil' => 'W.12.PAS-FLOW-99',
+            'tanggal_surat_kanwil' => now()->toDateString(),
+            'file_persetujuan_kanwil' => $pdfKanwil,
+            'alokasi' => [
+                [
+                    'upt_tujuan_id' => $this->uptTujuan->id,
+                    'jumlah_narkotika' => 20,
+                    'jumlah_pidum' => 10,
+                    'jumlah_korupsi' => 0,
+                ],
+                [
+                    'upt_tujuan_id' => $uptTujuan2->id,
+                    'jumlah_narkotika' => 10,
+                    'jumlah_pidum' => 10,
+                    'jumlah_korupsi' => 0,
+                ],
+            ],
+        ]);
+
+        $mutasi->refresh();
+        $this->assertCount(2, $mutasi->tujuans);
+        $tj1 = $mutasi->tujuans->firstWhere('upt_tujuan_id', $this->uptTujuan->id);
+        $tj2 = $mutasi->tujuans->firstWhere('upt_tujuan_id', $uptTujuan2->id);
+
+        // 1. Upload Laporan Pemindahan Rute 1
+        $fileP1 = UploadedFile::fake()->create('pemindahan1.pdf', 100, 'application/pdf');
+        $this->actingAs($this->operator)->post(route('mutasi.laporan-pemindahan.store', $mutasi->id), [
+            'tujuan_id' => $tj1->id,
+            'tanggal_pemindahan' => now()->toDateString(),
+            'file_laporan_pemindahan' => $fileP1,
+        ])->assertRedirect();
+
+        // 2. Upload BAST Rute 1
+        $fileB1 = UploadedFile::fake()->create('bast1.pdf', 100, 'application/pdf');
+        $this->actingAs($this->admin)->post(route('mutasi.bast.store', $mutasi->id), [
+            'tujuan_id' => $tj1->id,
+            'nomor_bast' => 'BAST/01/'.uniqid(),
+            'tanggal_bast' => now()->toDateString(),
+            'file_bast' => $fileB1,
+        ])->assertRedirect();
+
+        $tj1->refresh();
+        $mutasi->refresh();
+        $this->assertEquals('selesai', $tj1->status);
+        // Status induk belum selesai karena rute 2 masih aktif
+        $this->assertEquals('disetujui', $mutasi->status);
+        $this->assertStringContainsString('Sebagian Selesai', $mutasi->status_label);
+
+        // 3. Upload BAST Rute 2
+        $fileB2 = UploadedFile::fake()->create('bast2.pdf', 100, 'application/pdf');
+        $this->actingAs($this->admin)->post(route('mutasi.bast.store', $mutasi->id), [
+            'tujuan_id' => $tj2->id,
+            'nomor_bast' => 'BAST/02/'.uniqid(),
+            'tanggal_bast' => now()->toDateString(),
+            'file_bast' => $fileB2,
+        ])->assertRedirect();
+
+        $tj2->refresh();
+        $mutasi->refresh();
+        $this->assertEquals('selesai', $tj2->status);
+        // Sekarang seluruh rute selesai, sehingga status induk menjadi selesai
+        $this->assertEquals('selesai', $mutasi->status);
+        $this->assertEquals('Selesai (BAST Terbit)', $mutasi->status_label);
     }
 }

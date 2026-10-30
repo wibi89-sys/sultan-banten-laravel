@@ -45,10 +45,13 @@ class ActivityLog extends Model
     ): static {
         $user = auth()->user();
 
+        $allowedAksi = ['login', 'logout', 'tambah', 'edit', 'hapus', 'view', 'export', 'import', 'setting', 'error'];
+        $cleanAksi = in_array(strtolower($aksi), $allowedAksi, true) ? strtolower($aksi) : 'edit';
+
         return static::create([
             'user_id' => $userId ?? $user?->id,
             'user_name' => $userName ?? $user?->nama_lengkap ?? $user?->username ?? 'Sistem',
-            'aksi' => $aksi,
+            'aksi' => $cleanAksi,
             'modul' => $modul,
             'deskripsi' => $deskripsi,
             'detail' => is_string($detail) ? (json_decode($detail, true) ?: $detail) : $detail,

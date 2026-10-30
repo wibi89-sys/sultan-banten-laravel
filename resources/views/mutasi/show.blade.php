@@ -79,7 +79,7 @@
                             2. Penetapan Kanwil
                         </div>
                         <small class="text-muted d-block" style="font-size: 11px;">
-                            {{ $mutasi->uptTujuan ? $mutasi->uptTujuan->nama_upt : 'Penetapan UPT Tujuan' }}
+                            {{ $mutasi->daftar_tujuan_text !== '-' ? $mutasi->daftar_tujuan_text : 'Penetapan UPT Tujuan' }}
                         </small>
                     </div>
                 </div>
@@ -273,7 +273,8 @@
                 $userUptId = auth()->user()->upt_id !== null ? (int) auth()->user()->upt_id : null;
                 $isKanwilOrAdmin = auth()->user()->isAdmin() || empty(auth()->user()->upt_id);
                 $isPengusul = $userUptId !== null && $userUptId === (int) $mutasi->upt_asal_id;
-                $isPenerima = $userUptId !== null && $userUptId === (int) $mutasi->upt_tujuan_id;
+                $isPenerima = $userUptId !== null && ($userUptId === (int) $mutasi->upt_tujuan_id || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId));
+                $userTujuan = $userUptId !== null ? $mutasi->tujuans->firstWhere('upt_tujuan_id', $userUptId) : null;
 
                 $canUploadPemindahan = $isKanwilOrAdmin || $isPengusul;
                 $canUploadPenerimaan = $isKanwilOrAdmin || $isPenerima;
@@ -285,14 +286,14 @@
                 <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-3">
                     <i class="fas fa-truck-departure fa-lg me-2 text-primary"></i>
                     <div class="small">
-                        <strong>Perhatian UPT Pengusul (Pengirim):</strong> Kantor Wilayah telah menyetujui mutasi dan menunjuk <strong>{{ $mutasi->uptTujuan?->nama_upt }}</strong> sebagai UPT Penerima. Silakan unduh <strong>Surat Persetujuan Kanwil</strong> di bawah dan unggah <strong>Laporan Pemindahan</strong> setelah narapidana diberangkatkan.
+                        <strong>Perhatian UPT Pengusul:</strong> Kantor Wilayah telah menyetujui mutasi narapidana ke: <strong>{{ $mutasi->daftar_tujuan_text }}</strong>. Silakan unduh Surat Persetujuan Kanwil di bawah dan unggah Laporan Pemindahan serta BAST untuk masing-masing rute tujuan.
                     </div>
                 </div>
                 @elseif($isPenerima)
                 <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-3">
                     <i class="fas fa-building fa-lg me-2 text-success"></i>
                     <div class="small">
-                        <strong>Pemberitahuan UPT Penerima (Tujuan):</strong> UPT Anda telah ditunjuk sebagai penerima mutasi dari <strong>{{ $mutasi->uptAsal?->nama_upt }}</strong>. Silakan unduh <strong>Surat Persetujuan Kanwil</strong> di bawah untuk memverifikasi kuota WBP, dan unggah <strong>Laporan Penerimaan</strong> saat narapidana tiba.
+                        <strong>Pemberitahuan UPT Penerima:</strong> UPT Anda telah ditunjuk sebagai penerima mutasi dari <strong>{{ $mutasi->uptAsal?->nama_upt }}</strong>@if($userTujuan) dengan alokasi <strong>{{ $userTujuan->total_disetujui }} WBP</strong>@endif. Silakan unduh Surat Persetujuan Kanwil dan unggah Laporan Penerimaan saat narapidana tiba.
                     </div>
                 </div>
                 @endif
@@ -306,56 +307,95 @@
                 </div>
                 <div class="card-body">
                     @if(in_array($mutasi->status, ['disetujui', 'selesai']))
-                    <div class="p-3 bg-success bg-opacity-10 rounded-3 mb-3 border border-success border-opacity-25">
-                        <small class="text-muted d-block mb-1">UPT Penerima Ditunjuk:</small>
-                        <h5 class="fw-bold text-success mb-1"><i class="fas fa-building me-1"></i>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</h5>
-                        <small class="text-muted d-block">Nomor Surat Persetujuan: <strong class="font-monospace text-dark">{{ $mutasi->nomor_surat_kanwil }}</strong></small>
-                        <small class="text-muted d-block">Tanggal Surat: {{ $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d F Y') : '-' }}</small>
-                    </div>
+                        @if($mutasi->tujuans->count() > 1)
+                        <!-- Multi UPT Tujuan Card -->
+                        <div class="p-3 bg-success bg-opacity-10 rounded-3 mb-3 border border-success border-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted fw-bold"><i class="fas fa-sitemap me-1 text-success"></i>Distribusi {{ $mutasi->tujuans->count() }} UPT Penerima:</small>
+                                <span class="badge bg-success fs-7">Total: {{ $mutasi->total_disetujui }} WBP</span>
+                            </div>
+                            <small class="text-muted d-block">Nomor Surat Persetujuan: <strong class="font-monospace text-dark">{{ $mutasi->nomor_surat_kanwil }}</strong></small>
+                            <small class="text-muted d-block mb-3">Tanggal Surat: {{ $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d F Y') : '-' }}</small>
 
-                    <!-- Kuota yang Disetujui -->
-                    <div class="mb-3">
-                        <span class="small fw-semibold text-muted d-block mb-2">Total WBP Disetujui Kanwil:</span>
-                        <div class="d-flex gap-2 text-center">
-                            <div class="border rounded p-1.5 flex-fill bg-light small">
-                                <div style="font-size: 10px;" class="text-danger fw-bold">Narkotika</div>
-                                <div class="fw-bold">{{ $mutasi->jumlah_disetujui_narkotika ?? 0 }}</div>
-                            </div>
-                            <div class="border rounded p-1.5 flex-fill bg-light small">
-                                <div style="font-size: 10px;" class="text-primary fw-bold">Pidum</div>
-                                <div class="fw-bold">{{ $mutasi->jumlah_disetujui_pidum ?? 0 }}</div>
-                            </div>
-                            <div class="border rounded p-1.5 flex-fill bg-light small">
-                                <div style="font-size: 10px;" class="text-warning text-dark fw-bold">Korupsi</div>
-                                <div class="fw-bold">{{ $mutasi->jumlah_disetujui_korupsi ?? 0 }}</div>
-                            </div>
-                            <div class="border rounded p-1.5 flex-fill bg-success bg-opacity-25 text-success small">
-                                <div style="font-size: 10px;" class="fw-bold">Total</div>
-                                <div class="fw-bold">{{ $mutasi->total_disetujui }}</div>
+                            <div class="list-group list-group-flush border rounded-3 overflow-hidden shadow-sm">
+                                @foreach($mutasi->tujuans as $idx => $tj)
+                                <div class="list-group-item bg-white p-2.5">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small text-dark">
+                                            <span class="badge bg-primary me-1">{{ $idx + 1 }}</span>
+                                            {{ $tj->uptTujuan?->nama_upt ?? '-' }}
+                                        </span>
+                                        <span class="badge bg-primary fs-7">{{ $tj->total_disetujui }} WBP</span>
+                                    </div>
+                                    <div class="d-flex gap-2 text-center" style="font-size: 10px;">
+                                        <span class="text-danger fw-semibold"><i class="fas fa-pills me-0.5"></i>Narkotika: {{ $tj->jumlah_disetujui_narkotika }}</span>
+                                        <span class="text-muted">|</span>
+                                        <span class="text-primary fw-semibold"><i class="fas fa-gavel me-0.5"></i>Pidum: {{ $tj->jumlah_disetujui_pidum }}</span>
+                                        <span class="text-muted">|</span>
+                                        <span class="text-dark fw-semibold"><i class="fas fa-balance-scale me-0.5"></i>Korupsi: {{ $tj->jumlah_disetujui_korupsi }}</span>
+                                        @if($tj->isSelesai())
+                                        <span class="ms-auto badge bg-success text-white" style="font-size: 9px;"><i class="fas fa-check me-0.5"></i>BAST Terbit</span>
+                                        @else
+                                        <span class="ms-auto badge bg-warning text-dark" style="font-size: 9px;"><i class="fas fa-clock me-0.5"></i>Proses Pelaksanaan</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                         </div>
-                    </div>
-
-                    @if($mutasi->catatan_kanwil)
-                    <div class="mb-3">
-                        <small class="text-muted d-block">Catatan / Disposisi Kanwil:</small>
-                        <div class="p-2 bg-light rounded small text-secondary mt-1 border">
-                            {{ $mutasi->catatan_kanwil }}
+                        @else
+                        <!-- Single UPT Tujuan Card -->
+                        <div class="p-3 bg-success bg-opacity-10 rounded-3 mb-3 border border-success border-opacity-25">
+                            <small class="text-muted d-block mb-1">UPT Penerima Ditunjuk:</small>
+                            <h5 class="fw-bold text-success mb-1"><i class="fas fa-building me-1"></i>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</h5>
+                            <small class="text-muted d-block">Nomor Surat Persetujuan: <strong class="font-monospace text-dark">{{ $mutasi->nomor_surat_kanwil }}</strong></small>
+                            <small class="text-muted d-block">Tanggal Surat: {{ $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d F Y') : '-' }}</small>
                         </div>
-                    </div>
-                    @endif
 
-                    @if($mutasi->file_persetujuan_kanwil)
-                    <div class="d-grid mb-2">
-                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}" class="btn btn-success btn-sm shadow-sm" target="_blank">
-                            <i class="fas fa-file-pdf me-1"></i> Unduh Surat Persetujuan Kanwil (PDF)
-                        </a>
-                    </div>
-                    @endif
+                        <!-- Kuota yang Disetujui -->
+                        <div class="mb-3">
+                            <span class="small fw-semibold text-muted d-block mb-2">Total WBP Disetujui Kanwil:</span>
+                            <div class="d-flex gap-2 text-center">
+                                <div class="border rounded p-1.5 flex-fill bg-light small">
+                                    <div style="font-size: 10px;" class="text-danger fw-bold">Narkotika</div>
+                                    <div class="fw-bold">{{ $mutasi->jumlah_disetujui_narkotika ?? 0 }}</div>
+                                </div>
+                                <div class="border rounded p-1.5 flex-fill bg-light small">
+                                    <div style="font-size: 10px;" class="text-primary fw-bold">Pidum</div>
+                                    <div class="fw-bold">{{ $mutasi->jumlah_disetujui_pidum ?? 0 }}</div>
+                                </div>
+                                <div class="border rounded p-1.5 flex-fill bg-light small">
+                                    <div style="font-size: 10px;" class="text-warning text-dark fw-bold">Korupsi</div>
+                                    <div class="fw-bold">{{ $mutasi->jumlah_disetujui_korupsi ?? 0 }}</div>
+                                </div>
+                                <div class="border rounded p-1.5 flex-fill bg-success bg-opacity-25 text-success small">
+                                    <div style="font-size: 10px;" class="fw-bold">Total</div>
+                                    <div class="fw-bold">{{ $mutasi->total_disetujui }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
 
-                    <small class="text-muted d-block text-end" style="font-size: 10px;">
-                        Diverifikasi oleh: {{ $mutasi->verifikator?->nama_lengkap ?? 'Tim Kanwil' }} pada {{ $mutasi->tanggal_verifikasi ? $mutasi->tanggal_verifikasi->format('d/m/Y H:i') : '-' }}
-                    </small>
+                        @if($mutasi->catatan_kanwil)
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Catatan / Disposisi Kanwil:</small>
+                            <div class="p-2 bg-light rounded small text-secondary mt-1 border">
+                                {{ $mutasi->catatan_kanwil }}
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($mutasi->file_persetujuan_kanwil)
+                        <div class="d-grid mb-2">
+                            <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}" class="btn btn-success btn-sm shadow-sm" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i> Unduh Surat Persetujuan Kanwil (PDF)
+                            </a>
+                        </div>
+                        @endif
+
+                        <small class="text-muted d-block text-end" style="font-size: 10px;">
+                            Diverifikasi oleh: {{ $mutasi->verifikator?->nama_lengkap ?? 'Tim Kanwil' }} pada {{ $mutasi->tanggal_verifikasi ? $mutasi->tanggal_verifikasi->format('d/m/Y H:i') : '-' }}
+                        </small>
 
                     @elseif($mutasi->status === 'ditolak')
                     <div class="alert alert-danger mb-0">
@@ -400,20 +440,6 @@
 
                         <!-- Bagian Jika Disetujui -->
                         <div id="sectionDisetujui">
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Tetapkan UPT Penerima (Tujuan) <span class="text-danger">*</span></label>
-                                <select name="upt_tujuan_id" id="selectUptTujuan" class="form-select form-select-sm">
-                                    <option value="">-- Pilih UPT Penerima --</option>
-                                    @foreach($uptList as $u)
-                                    @if($u->id !== $mutasi->upt_asal_id)
-                                    <option value="{{ $u->id }}" {{ $mutasi->upt_tujuan_id == $u->id ? 'selected' : '' }}>
-                                        {{ $u->nama_upt }} (Kapasitas: {{ $u->kapasitas }})
-                                    </option>
-                                    @endif
-                                    @endforeach
-                                </select>
-                            </div>
-
                             <div class="row g-2 mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-semibold">Nomor Surat Persetujuan Kanwil <span class="text-danger">*</span></label>
@@ -425,20 +451,93 @@
                                 </div>
                             </div>
 
+                            <!-- Multi UPT Tujuan Allocation Repeater -->
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold">Rincian Narapidana yang Disetujui</label>
-                                <div class="row g-2">
-                                    <div class="col-4">
-                                        <label class="small text-danger fw-bold" style="font-size: 10px;">Narkotika</label>
-                                        <input type="number" min="0" name="jumlah_disetujui_narkotika" class="form-control form-control-sm text-center" value="{{ old('jumlah_disetujui_narkotika', $mutasi->jumlah_disetujui_narkotika ?? $mutasi->jumlah_narkotika) }}">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-bold mb-0 text-dark">
+                                        <i class="fas fa-sitemap me-1 text-primary"></i>Distribusi UPT Tujuan &amp; Alokasi Kuota <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" class="btn btn-outline-primary btn-sm py-0.5 px-2" id="btnTambahAlokasi" style="font-size: 11px;">
+                                        <i class="fas fa-plus me-1"></i> Tambah UPT Tujuan
+                                    </button>
+                                </div>
+                                <p class="text-muted" style="font-size: 11px; margin-bottom: 8px;">
+                                    Tentukan 1 atau beberapa UPT Penerima beserta rincian narapidana per perkara:
+                                </p>
+
+                                <div id="alokasiContainer">
+                                    @php
+                                        $initialAlokasi = old('alokasi');
+                                        if (empty($initialAlokasi)) {
+                                            if ($mutasi->tujuans->isNotEmpty()) {
+                                                $initialAlokasi = $mutasi->tujuans->map(fn($t) => [
+                                                    'upt_tujuan_id' => $t->upt_tujuan_id,
+                                                    'jumlah_narkotika' => $t->jumlah_disetujui_narkotika,
+                                                    'jumlah_pidum' => $t->jumlah_disetujui_pidum,
+                                                    'jumlah_korupsi' => $t->jumlah_disetujui_korupsi,
+                                                ])->toArray();
+                                            } else {
+                                                $initialAlokasi = [
+                                                    [
+                                                        'upt_tujuan_id' => $mutasi->upt_tujuan_id,
+                                                        'jumlah_narkotika' => $mutasi->jumlah_disetujui_narkotika ?? $mutasi->jumlah_narkotika,
+                                                        'jumlah_pidum' => $mutasi->jumlah_disetujui_pidum ?? $mutasi->jumlah_pidum,
+                                                        'jumlah_korupsi' => $mutasi->jumlah_disetujui_korupsi ?? $mutasi->jumlah_korupsi,
+                                                    ]
+                                                ];
+                                            }
+                                        }
+                                    @endphp
+
+                                    @foreach($initialAlokasi as $index => $alok)
+                                    <div class="card border rounded-3 p-2.5 mb-2 alokasi-item bg-light shadow-none" data-index="{{ $index }}">
+                                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                            <span class="fw-bold small text-primary alokasi-title">
+                                                <i class="fas fa-building me-1"></i>UPT Penerima #{{ $index + 1 }}
+                                            </span>
+                                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1.5 btn-hapus-alokasi" style="font-size: 10px;" title="Hapus UPT Tujuan">
+                                                <i class="fas fa-times me-0.5"></i> Hapus
+                                            </button>
+                                        </div>
+                                        <div class="mb-2">
+                                            <select name="alokasi[{{ $index }}][upt_tujuan_id]" class="form-select form-select-sm select-upt-tujuan" required>
+                                                <option value="">-- Pilih UPT Penerima --</option>
+                                                @foreach($uptList as $u)
+                                                @if($u->id !== $mutasi->upt_asal_id)
+                                                <option value="{{ $u->id }}" {{ (isset($alok['upt_tujuan_id']) && $alok['upt_tujuan_id'] == $u->id) ? 'selected' : '' }}>
+                                                    {{ $u->nama_upt }} (Kapasitas: {{ $u->kapasitas }})
+                                                </option>
+                                                @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="row g-1 text-center">
+                                            <div class="col-4">
+                                                <label class="small text-danger fw-bold" style="font-size: 9px;">Narkotika</label>
+                                                <input type="number" min="0" name="alokasi[{{ $index }}][jumlah_narkotika]" class="form-control form-control-sm text-center input-kuota input-narkotika" value="{{ $alok['jumlah_narkotika'] ?? 0 }}">
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="small text-primary fw-bold" style="font-size: 9px;">Pidum</label>
+                                                <input type="number" min="0" name="alokasi[{{ $index }}][jumlah_pidum]" class="form-control form-control-sm text-center input-kuota input-pidum" value="{{ $alok['jumlah_pidum'] ?? 0 }}">
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="small text-warning text-dark fw-bold" style="font-size: 9px;">Korupsi</label>
+                                                <input type="number" min="0" name="alokasi[{{ $index }}][jumlah_korupsi]" class="form-control form-control-sm text-center input-kuota input-korupsi" value="{{ $alok['jumlah_korupsi'] ?? 0 }}">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top" style="font-size: 11px;">
+                                            <span class="text-muted">Subtotal UPT Ini:</span>
+                                            <span class="badge bg-secondary badge-subtotal">0 Orang</span>
+                                        </div>
                                     </div>
-                                    <div class="col-4">
-                                        <label class="small text-primary fw-bold" style="font-size: 10px;">Pidum</label>
-                                        <input type="number" min="0" name="jumlah_disetujui_pidum" class="form-control form-control-sm text-center" value="{{ old('jumlah_disetujui_pidum', $mutasi->jumlah_disetujui_pidum ?? $mutasi->jumlah_pidum) }}">
-                                    </div>
-                                    <div class="col-4">
-                                        <label class="small text-warning text-dark fw-bold" style="font-size: 10px;">Korupsi</label>
-                                        <input type="number" min="0" name="jumlah_disetujui_korupsi" class="form-control form-control-sm text-center" value="{{ old('jumlah_disetujui_korupsi', $mutasi->jumlah_disetujui_korupsi ?? $mutasi->jumlah_korupsi) }}">
+                                    @endforeach
+                                </div>
+
+                                <div class="p-2 border rounded-3 bg-white mt-2 d-flex justify-content-between align-items-center small">
+                                    <span class="text-muted">Target Usulan UPT: <strong>{{ $mutasi->total_usulan }} WBP</strong></span>
+                                    <div>
+                                        <span class="text-muted me-1">Total Alokasi:</span>
+                                        <span id="badgeGrandTotal" class="badge bg-primary fs-7">0 WBP</span>
                                     </div>
                                 </div>
                             </div>
@@ -458,7 +557,7 @@
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-sm fw-bold">
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold shadow-sm">
                                 <i class="fas fa-save me-1"></i> Simpan Penetapan &amp; Distribusikan
                             </button>
                         </div>
@@ -470,192 +569,231 @@
             <!-- SEKSI 4: LAPORAN PEMINDAHAN, PENERIMAAN, DAN BAST -->
             @if(in_array($mutasi->status, ['disetujui', 'selesai']))
 
-            <!-- 4A. LAPORAN PEMINDAHAN (UPT PENGUSUL) -->
-            <div class="card border-0 shadow-sm rounded-3 mb-3 border-start border-primary border-4">
-                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-truck-departure me-2 text-primary"></i>1. Laporan Pemindahan</h6>
-                        <small class="text-muted">Wajib diunggah UPT Pengusul (Pengirim): <strong>{{ $mutasi->uptAsal?->nama_upt ?? '-' }}</strong></small>
-                    </div>
-                    <div>
-                        @if($isPengusul && ! $mutasi->hasLaporanPemindahan())
-                        <span class="badge bg-primary me-1"><i class="fas fa-arrow-circle-right me-1"></i>Tindakan UPT Anda</span>
-                        @endif
-                        @if($mutasi->hasLaporanPemindahan())
-                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
-                        @else
-                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
-                        @endif
-                    </div>
-                </div>
-                <div class="card-body">
-                    @if($mutasi->hasLaporanPemindahan())
-                    <div class="p-2.5 bg-light rounded-3 border mb-2">
-                        <div class="small text-muted">Tanggal Keberangkatan / Pemindahan:</div>
-                        <div class="fw-bold text-dark mb-1">{{ $mutasi->tanggal_pemindahan ? $mutasi->tanggal_pemindahan->format('d F Y') : '-' }}</div>
-                        @if($mutasi->catatan_pemindahan)
-                        <div class="small text-muted">Catatan Pengawalan/Pemindahan:</div>
-                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_pemindahan }}</div>
-                        @endif
-                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'laporan_pemindahan']) }}" class="btn btn-outline-primary btn-sm w-100" target="_blank">
-                            <i class="fas fa-download me-1"></i> Unduh Berkas Laporan Pemindahan
-                        </a>
-                    </div>
-                    @endif
+                @php
+                    $listTujuanPelaksanaan = $mutasi->tujuans->isNotEmpty()
+                        ? $mutasi->tujuans
+                        : collect([ (object)[
+                            'id' => null,
+                            'upt_tujuan_id' => $mutasi->upt_tujuan_id,
+                            'uptTujuan' => $mutasi->uptTujuan,
+                            'total_disetujui' => $mutasi->total_disetujui,
+                            'jumlah_disetujui_narkotika' => $mutasi->jumlah_disetujui_narkotika,
+                            'jumlah_disetujui_pidum' => $mutasi->jumlah_disetujui_pidum,
+                            'jumlah_disetujui_korupsi' => $mutasi->jumlah_disetujui_korupsi,
+                            'file_laporan_pemindahan' => $mutasi->file_laporan_pemindahan,
+                            'tanggal_pemindahan' => $mutasi->tanggal_pemindahan,
+                            'catatan_pelaksanaan' => $mutasi->catatan_pelaksanaan ?? $mutasi->catatan_pemindahan,
+                            'file_laporan_penerimaan' => $mutasi->file_laporan_penerimaan,
+                            'tanggal_penerimaan' => $mutasi->tanggal_penerimaan,
+                            'file_bast' => $mutasi->file_bast,
+                            'nomor_bast' => $mutasi->nomor_bast,
+                            'tanggal_bast' => $mutasi->tanggal_bast,
+                            'isSelesai' => fn() => $mutasi->status === 'selesai' || !empty($mutasi->file_bast),
+                            'hasLaporanPemindahan' => fn() => !empty($mutasi->file_laporan_pemindahan),
+                            'hasLaporanPenerimaan' => fn() => !empty($mutasi->file_laporan_penerimaan),
+                            'hasBast' => fn() => !empty($mutasi->file_bast),
+                        ]]);
+                @endphp
 
-                    @if(! $mutasi->hasLaporanPemindahan() && $canUploadPemindahan)
-                    <form action="{{ route('mutasi.laporan-pemindahan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Tanggal Keberangkatan Pemindahan <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_pemindahan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Upload Laporan Pemindahan Resmi (PDF/Gambar) <span class="text-danger">*</span></label>
-                            <input type="file" name="file_laporan_pemindahan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Catatan Pengawalan / Pengeluaran</label>
-                            <textarea name="catatan_pemindahan" class="form-control form-control-sm" rows="2" placeholder="Catatan personel pengawal, kondisi pengeluaran, dsb..."></textarea>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-sm fw-bold">
-                                <i class="fas fa-upload me-1"></i> Unggah Laporan Pemindahan
-                            </button>
-                        </div>
-                    </form>
-                    @elseif(! $mutasi->hasLaporanPemindahan())
-                    <p class="small text-muted mb-0 fst-italic">Menunggu laporan pengawalan dan pemindahan resmi diunggah oleh pihak UPT Pengusul / Pengirim ({{ $mutasi->uptAsal?->nama_upt }}).</p>
-                    @endif
-                </div>
-            </div>
+                @foreach($listTujuanPelaksanaan as $tIndex => $target)
+                    @php
+                        $targetUptId = (int) $target->upt_tujuan_id;
+                        $hasPemindahan = is_callable([$target, 'hasLaporanPemindahan']) ? $target->hasLaporanPemindahan() : !empty($target->file_laporan_pemindahan);
+                        $hasPenerimaan = is_callable([$target, 'hasLaporanPenerimaan']) ? $target->hasLaporanPenerimaan() : !empty($target->file_laporan_penerimaan);
+                        $hasBastItem = is_callable([$target, 'hasBast']) ? $target->hasBast() : !empty($target->file_bast);
+                        $targetSelesai = is_callable([$target, 'isSelesai']) ? $target->isSelesai() : ($hasBastItem || $target->status === 'selesai');
 
-            <!-- 4B. LAPORAN PENERIMAAN (UPT PENERIMA) -->
-            <div class="card border-0 shadow-sm rounded-3 mb-3 border-start border-info border-4">
-                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-building me-2 text-info"></i>2. Laporan Penerimaan</h6>
-                        <small class="text-muted">Wajib diunggah UPT Penerima (Tujuan): <strong>{{ $mutasi->uptTujuan?->nama_upt ?? '-' }}</strong></small>
-                    </div>
-                    <div>
-                        @if($isPenerima && ! $mutasi->hasLaporanPenerimaan())
-                        <span class="badge bg-info text-white me-1"><i class="fas fa-arrow-circle-right me-1"></i>Tindakan UPT Anda</span>
-                        @endif
-                        @if($mutasi->hasLaporanPenerimaan())
-                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
-                        @else
-                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
-                        @endif
-                    </div>
-                </div>
-                <div class="card-body">
-                    @if($mutasi->hasLaporanPenerimaan())
-                    <div class="p-2.5 bg-light rounded-3 border mb-2">
-                        <div class="small text-muted">Tanggal Penerimaan WBP:</div>
-                        <div class="fw-bold text-dark mb-1">{{ $mutasi->tanggal_penerimaan ? $mutasi->tanggal_penerimaan->format('d F Y') : '-' }}</div>
-                        @if($mutasi->catatan_penerimaan)
-                        <div class="small text-muted">Catatan Pemeriksaan &amp; Penerimaan:</div>
-                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_penerimaan }}</div>
-                        @endif
-                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'laporan_penerimaan']) }}" class="btn btn-outline-info btn-sm w-100" target="_blank">
-                            <i class="fas fa-download me-1"></i> Unduh Berkas Laporan Penerimaan
-                        </a>
-                    </div>
-                    @endif
+                        $canUploadPenerimaanThis = $isKanwilOrAdmin || ($userUptId !== null && $userUptId === $targetUptId);
+                        $canUploadBastThis = $isKanwilOrAdmin || $isPengusul || ($userUptId !== null && $userUptId === $targetUptId);
+                    @endphp
 
-                    @if(! $mutasi->hasLaporanPenerimaan() && $canUploadPenerimaan)
-                    <form action="{{ route('mutasi.laporan-penerimaan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Tanggal Penerimaan di UPT Tujuan <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_penerimaan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Upload Laporan Penerimaan Resmi (PDF/Gambar) <span class="text-danger">*</span></label>
-                            <input type="file" name="file_laporan_penerimaan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Catatan Hasil Pemeriksaan &amp; Kamar Hunian</label>
-                            <textarea name="catatan_penerimaan" class="form-control form-control-sm" rows="2" placeholder="Catatan kondisi kesehatan WBP saat tiba, kelengkapan berkas fisik, penempatan blok hunian..."></textarea>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-info btn-sm text-white fw-bold">
-                                <i class="fas fa-upload me-1"></i> Unggah Laporan Penerimaan
-                            </button>
-                        </div>
-                    </form>
-                    @elseif(! $mutasi->hasLaporanPenerimaan())
-                    <p class="small text-muted mb-0 fst-italic">Menunggu laporan penerimaan dan pemeriksaan fisik diunggah oleh pihak UPT Penerima ({{ $mutasi->uptTujuan?->nama_upt }}).</p>
-                    @endif
-                </div>
-            </div>
-
-            <!-- 4C. BERITA ACARA SERAH TERIMA (BAST BERSAMA) -->
-            <div class="card border-0 shadow-sm rounded-3 mb-4 border-start border-success border-4">
-                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-file-signature me-2 text-success"></i>3. Berita Acara Serah Terima (BAST)</h6>
-                        <small class="text-muted">Dokumen bersama yang ditandatangani kedua UPT</small>
-                    </div>
-                    @if($mutasi->hasBast())
-                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Tuntas</span>
-                    @else
-                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>
-                    @endif
-                </div>
-                <div class="card-body">
-                    @if($mutasi->hasBast())
-                    <div class="p-3 bg-light rounded-3 border mb-3">
-                        <div class="small text-muted">Nomor BAST:</div>
-                        <div class="fw-bold font-monospace text-dark mb-1">{{ $mutasi->nomor_bast ?: '-' }}</div>
-
-                        <div class="small text-muted">Tanggal Pelaksanaan BAST:</div>
-                        <div class="fw-bold text-dark mb-1">{{ $mutasi->tanggal_bast ? $mutasi->tanggal_bast->format('d F Y') : ($mutasi->tanggal_pelaksanaan ? $mutasi->tanggal_pelaksanaan->format('d F Y') : '-') }}</div>
-
-                        @if($mutasi->catatan_pelaksanaan)
-                        <div class="small text-muted">Catatan Serah Terima:</div>
-                        <div class="small text-secondary mb-2">{{ $mutasi->catatan_pelaksanaan }}</div>
-                        @endif
-
-                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bast']) }}" class="btn btn-outline-success btn-sm w-100" target="_blank">
-                            <i class="fas fa-download me-1"></i> Unduh Berkas Scan BAST Resmi
-                        </a>
-                    </div>
-                    @endif
-
-                    @if(! $mutasi->hasBast() && $canUploadBast)
-                    <p class="text-muted small mb-3">Unggah scan Berita Acara Serah Terima (BAST) fisik yang telah ditandatangani oleh pejabat UPT Pengusul dan UPT Penerima:</p>
-                    <form action="{{ route('mutasi.bast.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold">Nomor BAST Resmi <span class="text-danger">*</span></label>
-                                <input type="text" name="nomor_bast" class="form-control form-control-sm font-monospace" placeholder="No. BAST" value="{{ old('nomor_bast') }}" required>
+                    <div class="card border-0 shadow-sm rounded-3 mb-4 border-start border-4 {{ $targetSelesai ? 'border-success' : 'border-primary' }}">
+                        <div class="card-header bg-white py-2.5 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">
+                                    <i class="fas fa-route me-1.5 text-primary"></i>
+                                    @if($listTujuanPelaksanaan->count() > 1)
+                                        Rute #{{ $tIndex + 1 }}:
+                                    @else
+                                        Pelaksanaan Mutasi:
+                                    @endif
+                                    {{ $mutasi->uptAsal?->nama_upt }} ➔ {{ $target->uptTujuan?->nama_upt ?? '-' }}
+                                </h6>
+                                <small class="text-muted">Kuota: <strong>{{ $target->total_disetujui }} WBP</strong> (Narkotika: {{ $target->jumlah_disetujui_narkotika }}, Pidum: {{ $target->jumlah_disetujui_pidum }}, Korupsi: {{ $target->jumlah_disetujui_korupsi }})</small>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold">Tanggal BAST <span class="text-danger">*</span></label>
-                                <input type="date" name="tanggal_bast" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                            <div>
+                                @if($targetSelesai)
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Selesai</span>
+                                @else
+                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Dalam Proses</span>
+                                @endif
                             </div>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold">Upload Scan BAST Resmi (PDF/Gambar) <span class="text-danger">*</span></label>
-                            <input type="file" name="file_bast" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <div class="card-body">
+
+                            <!-- SUB-CARD 1: LAPORAN PEMINDAHAN (UPT PENGUSUL) -->
+                            <div class="border rounded-3 p-3 mb-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <span class="fw-bold text-primary small"><i class="fas fa-truck-departure me-1"></i>1. Laporan Pemindahan</span>
+                                        <small class="text-muted d-block" style="font-size: 11px;">Oleh UPT Pengusul: <strong>{{ $mutasi->uptAsal?->nama_upt }}</strong></small>
+                                    </div>
+                                    @if($hasPemindahan)
+                                    <span class="badge bg-success" style="font-size: 10px;"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                                    @else
+                                    <span class="badge bg-warning text-dark" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                                    @endif
+                                </div>
+
+                                @if($hasPemindahan)
+                                <div class="p-2 bg-white rounded border mb-2 small">
+                                    <div class="text-muted" style="font-size: 11px;">Tanggal Keberangkatan:</div>
+                                    <div class="fw-bold mb-1">{{ $target->tanggal_pemindahan ? \Carbon\Carbon::parse($target->tanggal_pemindahan)->format('d F Y') : '-' }}</div>
+                                    @if(!empty($target->catatan_pelaksanaan) || !empty($target->catatan_pemindahan))
+                                    <div class="text-muted" style="font-size: 11px;">Catatan:</div>
+                                    <div class="text-secondary">{{ $target->catatan_pelaksanaan ?? $target->catatan_pemindahan }}</div>
+                                    @endif
+                                </div>
+                                <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_pemindahan', 'tujuan_id' => $target->id])) }}" class="btn btn-outline-primary btn-sm w-100" target="_blank" style="font-size: 11px;">
+                                    <i class="fas fa-download me-1"></i> Unduh Laporan Pemindahan
+                                </a>
+                                @elseif($canUploadPemindahan)
+                                <form action="{{ route('mutasi.laporan-pemindahan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    @if(!empty($target->id))
+                                    <input type="hidden" name="tujuan_id" value="{{ $target->id }}">
+                                    @endif
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Tanggal Pemindahan <span class="text-danger">*</span></label>
+                                        <input type="date" name="tanggal_pemindahan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Upload Laporan Pemindahan (PDF/Gambar) <span class="text-danger">*</span></label>
+                                        <input type="file" name="file_laporan_pemindahan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Catatan Pengawalan</label>
+                                        <textarea name="catatan_pemindahan" class="form-control form-control-sm" rows="1" placeholder="Catatan personel pengawal..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                                        <i class="fas fa-upload me-1"></i> Unggah Laporan Pemindahan Rute Ini
+                                    </button>
+                                </form>
+                                @else
+                                <p class="small text-muted mb-0 fst-italic">Menunggu laporan pengawalan diunggah oleh pihak {{ $mutasi->uptAsal?->nama_upt }}.</p>
+                                @endif
+                            </div>
+
+                            <!-- SUB-CARD 2: LAPORAN PENERIMAAN (UPT PENERIMA) -->
+                            <div class="border rounded-3 p-3 mb-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <span class="fw-bold text-info small"><i class="fas fa-building me-1"></i>2. Laporan Penerimaan</span>
+                                        <small class="text-muted d-block" style="font-size: 11px;">Oleh UPT Penerima: <strong>{{ $target->uptTujuan?->nama_upt }}</strong></small>
+                                    </div>
+                                    @if($hasPenerimaan)
+                                    <span class="badge bg-success" style="font-size: 10px;"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                                    @else
+                                    <span class="badge bg-warning text-dark" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                                    @endif
+                                </div>
+
+                                @if($hasPenerimaan)
+                                <div class="p-2 bg-white rounded border mb-2 small">
+                                    <div class="text-muted" style="font-size: 11px;">Tanggal Penerimaan:</div>
+                                    <div class="fw-bold mb-1">{{ $target->tanggal_penerimaan ? \Carbon\Carbon::parse($target->tanggal_penerimaan)->format('d F Y') : '-' }}</div>
+                                    @if(!empty($target->catatan_penerimaan))
+                                    <div class="text-muted" style="font-size: 11px;">Catatan:</div>
+                                    <div class="text-secondary">{{ $target->catatan_penerimaan }}</div>
+                                    @endif
+                                </div>
+                                <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_penerimaan', 'tujuan_id' => $target->id])) }}" class="btn btn-outline-info btn-sm w-100" target="_blank" style="font-size: 11px;">
+                                    <i class="fas fa-download me-1"></i> Unduh Laporan Penerimaan
+                                </a>
+                                @elseif($canUploadPenerimaanThis)
+                                <form action="{{ route('mutasi.laporan-penerimaan.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    @if(!empty($target->id))
+                                    <input type="hidden" name="tujuan_id" value="{{ $target->id }}">
+                                    @endif
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Tanggal Penerimaan <span class="text-danger">*</span></label>
+                                        <input type="date" name="tanggal_penerimaan" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Upload Laporan Penerimaan (PDF/Gambar) <span class="text-danger">*</span></label>
+                                        <input type="file" name="file_laporan_penerimaan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Catatan Kamar Hunian / Kondisi</label>
+                                        <textarea name="catatan_penerimaan" class="form-control form-control-sm" rows="1" placeholder="Catatan penempatan kamar hunian..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-info btn-sm w-100 text-white fw-bold">
+                                        <i class="fas fa-upload me-1"></i> Unggah Laporan Penerimaan UPT Ini
+                                    </button>
+                                </form>
+                                @else
+                                <p class="small text-muted mb-0 fst-italic">Menunggu laporan penerimaan diunggah oleh pihak {{ $target->uptTujuan?->nama_upt }}.</p>
+                                @endif
+                            </div>
+
+                            <!-- SUB-CARD 3: BAST (SERAH TERIMA) -->
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <span class="fw-bold text-success small"><i class="fas fa-file-signature me-1"></i>3. Berita Acara Serah Terima (BAST)</span>
+                                        <small class="text-muted d-block" style="font-size: 11px;">Dokumen bersama fisik serah terima kedua UPT</small>
+                                    </div>
+                                    @if($hasBastItem)
+                                    <span class="badge bg-success" style="font-size: 10px;"><i class="fas fa-check-circle me-1"></i>Tuntas</span>
+                                    @else
+                                    <span class="badge bg-warning text-dark" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Menunggu</span>
+                                    @endif
+                                </div>
+
+                                @if($hasBastItem)
+                                <div class="p-2 bg-white rounded border mb-2 small">
+                                    <div class="text-muted" style="font-size: 11px;">Nomor BAST:</div>
+                                    <div class="fw-bold font-monospace mb-1">{{ $target->nomor_bast ?: '-' }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">Tanggal BAST:</div>
+                                    <div class="fw-bold mb-1">{{ $target->tanggal_bast ? \Carbon\Carbon::parse($target->tanggal_bast)->format('d F Y') : '-' }}</div>
+                                </div>
+                                <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'bast', 'tujuan_id' => $target->id])) }}" class="btn btn-outline-success btn-sm w-100" target="_blank" style="font-size: 11px;">
+                                    <i class="fas fa-download me-1"></i> Unduh Berkas Scan BAST
+                                </a>
+                                @elseif($canUploadBastThis)
+                                <form action="{{ route('mutasi.bast.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    @if(!empty($target->id))
+                                    <input type="hidden" name="tujuan_id" value="{{ $target->id }}">
+                                    @endif
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-semibold">Nomor BAST <span class="text-danger">*</span></label>
+                                            <input type="text" name="nomor_bast" class="form-control form-control-sm font-monospace" placeholder="No. BAST" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-semibold">Tanggal BAST <span class="text-danger">*</span></label>
+                                            <input type="date" name="tanggal_bast" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold">Upload Scan BAST (PDF/Gambar) <span class="text-danger">*</span></label>
+                                        <input type="file" name="file_bast" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                                        <i class="fas fa-check-circle me-1"></i> Unggah BAST &amp; Tuntaskan Rute Ini
+                                    </button>
+                                </form>
+                                @else
+                                <p class="small text-muted mb-0 fst-italic">Menunggu dokumen BAST fisik diunggah oleh pihak UPT terkait.</p>
+                                @endif
+                            </div>
+
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">Catatan Tambahan Pelaksanaan</label>
-                            <textarea name="catatan_pelaksanaan" class="form-control form-control-sm" rows="2" placeholder="Catatan kondisi serah terima barang dan narapidana..."></textarea>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-sm fw-bold">
-                                <i class="fas fa-check-circle me-1"></i> Unggah BAST &amp; Selesaikan Rangkaian Mutasi
-                            </button>
-                        </div>
-                    </form>
-                    @elseif(! $mutasi->hasBast())
-                    <p class="small text-muted mb-0 fst-italic">Menunggu dokumen Berita Acara Serah Terima (BAST) fisik diunggah oleh pihak UPT terkait.</p>
-                    @endif
-                </div>
-            </div>
+                    </div>
+                @endforeach
+
             @else
             <!-- SEKSI 4 (TERKUNCI / MENUNGGU PERSETUJUAN KANWIL) -->
             <div class="card border-0 shadow-sm rounded-3 mb-4 border-start border-secondary border-4">
@@ -674,28 +812,8 @@
                     </div>
                     <h6 class="fw-bold text-dark">Tahap Pelaporan Pemindahan Masih Menunggu Persetujuan Kanwil</h6>
                     <p class="small text-muted mb-3 mx-auto" style="max-width: 480px;">
-                        Setelah Kantor Wilayah menyetujui usulan dan menetapkan UPT Penerima, formulir pelaporan ini akan otomatis aktif bagi:
+                        Setelah Kantor Wilayah menyetujui usulan dan menetapkan UPT Penerima, formulir pelaporan rute ini akan otomatis aktif bagi masing-masing UPT terkait.
                     </p>
-                    <div class="row g-2 text-start small justify-content-center">
-                        <div class="col-md-4">
-                            <div class="p-2 border rounded bg-white h-100 shadow-sm">
-                                <div class="fw-bold text-primary mb-1"><i class="fas fa-truck-departure me-1"></i>1. UPT Pengusul</div>
-                                <span class="text-muted" style="font-size: 11px;">Mengunggah <strong>Laporan Pemindahan</strong> saat narapidana diberangkatkan.</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-2 border rounded bg-white h-100 shadow-sm">
-                                <div class="fw-bold text-info mb-1"><i class="fas fa-building me-1"></i>2. UPT Penerima</div>
-                                <span class="text-muted" style="font-size: 11px;">Mengunggah <strong>Laporan Penerimaan</strong> fisik &amp; penempatan kamar hunian.</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-2 border rounded bg-white h-100 shadow-sm">
-                                <div class="fw-bold text-success mb-1"><i class="fas fa-file-signature me-1"></i>3. Dokumen BAST</div>
-                                <span class="text-muted" style="font-size: 11px;">Melampirkan <strong>Berita Acara Serah Terima</strong> bersama kedua UPT.</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             @endif
@@ -709,22 +827,146 @@
     document.addEventListener('DOMContentLoaded', function () {
         const selectStatus = document.getElementById('selectStatusVerifikasi');
         const sectionDisetujui = document.getElementById('sectionDisetujui');
-        const selectUptTujuan = document.getElementById('selectUptTujuan');
+        const btnTambahAlokasi = document.getElementById('btnTambahAlokasi');
+        const alokasiContainer = document.getElementById('alokasiContainer');
+        const badgeGrandTotal = document.getElementById('badgeGrandTotal');
+        const targetTotalWbp = {{ (int) $mutasi->total_usulan }};
+
+        // Opsi UPT Penerima dalam bentuk array JSON
+        const uptOptions = [
+            @foreach($uptList as $u)
+                @if($u->id !== $mutasi->upt_asal_id)
+                { id: {{ $u->id }}, name: "{{ addslashes($u->nama_upt) }}", kapasitas: {{ (int) $u->kapasitas }} },
+                @endif
+            @endforeach
+        ];
+
+        function recalculateTotals() {
+            let grandTotal = 0;
+            const items = document.querySelectorAll('.alokasi-item');
+
+            items.forEach((item, idx) => {
+                // Update title numbering
+                const title = item.querySelector('.alokasi-title');
+                if (title) {
+                    title.innerHTML = '<i class="fas fa-building me-1"></i>UPT Penerima #' + (idx + 1);
+                }
+
+                const narkotika = parseInt(item.querySelector('.input-narkotika')?.value) || 0;
+                const pidum = parseInt(item.querySelector('.input-pidum')?.value) || 0;
+                const korupsi = parseInt(item.querySelector('.input-korupsi')?.value) || 0;
+                const subtotal = narkotika + pidum + korupsi;
+
+                const badgeSubtotal = item.querySelector('.badge-subtotal');
+                if (badgeSubtotal) {
+                    badgeSubtotal.textContent = subtotal + ' Orang';
+                    badgeSubtotal.className = subtotal > 0 ? 'badge bg-primary badge-subtotal' : 'badge bg-secondary badge-subtotal';
+                }
+
+                grandTotal += subtotal;
+            });
+
+            if (badgeGrandTotal) {
+                badgeGrandTotal.textContent = grandTotal + ' WBP';
+                if (grandTotal === targetTotalWbp) {
+                    badgeGrandTotal.className = 'badge bg-success fs-7';
+                } else if (grandTotal > targetTotalWbp) {
+                    badgeGrandTotal.className = 'badge bg-danger fs-7';
+                } else {
+                    badgeGrandTotal.className = 'badge bg-warning text-dark fs-7';
+                }
+            }
+        }
+
+        function createNewAlokasiRow(index) {
+            let optionsHtml = '<option value="">-- Pilih UPT Penerima --</option>';
+            uptOptions.forEach(u => {
+                optionsHtml += `<option value="${u.id}">${u.name} (Kapasitas: ${u.kapasitas})</option>`;
+            });
+
+            const div = document.createElement('div');
+            div.className = 'card border rounded-3 p-2.5 mb-2 alokasi-item bg-light shadow-none';
+            div.dataset.index = index;
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                    <span class="fw-bold small text-primary alokasi-title">
+                        <i class="fas fa-building me-1"></i>UPT Penerima #${index + 1}
+                    </span>
+                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1.5 btn-hapus-alokasi" style="font-size: 10px;" title="Hapus UPT Tujuan">
+                        <i class="fas fa-times me-0.5"></i> Hapus
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <select name="alokasi[${index}][upt_tujuan_id]" class="form-select form-select-sm select-upt-tujuan" required>
+                        ${optionsHtml}
+                    </select>
+                </div>
+                <div class="row g-1 text-center">
+                    <div class="col-4">
+                        <label class="small text-danger fw-bold" style="font-size: 9px;">Narkotika</label>
+                        <input type="number" min="0" name="alokasi[${index}][jumlah_narkotika]" class="form-control form-control-sm text-center input-kuota input-narkotika" value="0">
+                    </div>
+                    <div class="col-4">
+                        <label class="small text-primary fw-bold" style="font-size: 9px;">Pidum</label>
+                        <input type="number" min="0" name="alokasi[${index}][jumlah_pidum]" class="form-control form-control-sm text-center input-kuota input-pidum" value="0">
+                    </div>
+                    <div class="col-4">
+                        <label class="small text-warning text-dark fw-bold" style="font-size: 9px;">Korupsi</label>
+                        <input type="number" min="0" name="alokasi[${index}][jumlah_korupsi]" class="form-control form-control-sm text-center input-kuota input-korupsi" value="0">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top" style="font-size: 11px;">
+                    <span class="text-muted">Subtotal UPT Ini:</span>
+                    <span class="badge bg-secondary badge-subtotal">0 Orang</span>
+                </div>
+            `;
+
+            return div;
+        }
+
+        if (btnTambahAlokasi && alokasiContainer) {
+            btnTambahAlokasi.addEventListener('click', function () {
+                const currentRows = alokasiContainer.querySelectorAll('.alokasi-item');
+                const nextIndex = currentRows.length;
+                const newRow = createNewAlokasiRow(nextIndex);
+                alokasiContainer.appendChild(newRow);
+                recalculateTotals();
+            });
+
+            alokasiContainer.addEventListener('click', function (e) {
+                const btnHapus = e.target.closest('.btn-hapus-alokasi');
+                if (btnHapus) {
+                    const allItems = alokasiContainer.querySelectorAll('.alokasi-item');
+                    if (allItems.length <= 1) {
+                        alert('Minimal harus ada 1 UPT Penerima yang ditetapkan.');
+                        return;
+                    }
+                    btnHapus.closest('.alokasi-item').remove();
+                    recalculateTotals();
+                }
+            });
+
+            alokasiContainer.addEventListener('input', function (e) {
+                if (e.target.classList.contains('input-kuota')) {
+                    recalculateTotals();
+                }
+            });
+        }
 
         if (selectStatus && sectionDisetujui) {
             function toggleVerifikasi() {
                 if (selectStatus.value === 'disetujui') {
                     sectionDisetujui.style.display = 'block';
-                    if (selectUptTujuan) selectUptTujuan.setAttribute('required', 'required');
                 } else {
                     sectionDisetujui.style.display = 'none';
-                    if (selectUptTujuan) selectUptTujuan.removeAttribute('required');
                 }
             }
 
             selectStatus.addEventListener('change', toggleVerifikasi);
             toggleVerifikasi();
         }
+
+        recalculateTotals();
     });
 </script>
 @endpush

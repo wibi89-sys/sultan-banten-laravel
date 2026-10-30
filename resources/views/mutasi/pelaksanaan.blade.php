@@ -157,7 +157,7 @@
                                 </div>
                                 <div>
                                     <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 10px;">UPT Penerima / Tujuan</span>
-                                    <div class="fw-semibold text-dark">{{ $m->uptTujuan?->nama_upt ?? '-' }}</div>
+                                    <div class="fw-semibold text-dark small" style="line-height: 1.3;">{{ $m->daftar_tujuan_text }}</div>
                                 </div>
                             </td>
                             <td>

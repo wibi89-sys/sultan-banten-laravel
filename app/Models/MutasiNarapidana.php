@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MutasiNarapidana extends Model
 {
@@ -84,6 +85,43 @@ class MutasiNarapidana extends Model
         return $this->belongsTo(Upt::class, 'upt_tujuan_id');
     }
 
+    public function tujuans(): HasMany
+    {
+        return $this->hasMany(MutasiNarapidanaTujuan::class, 'mutasi_id');
+    }
+
+    public function isMultiTujuan(): bool
+    {
+        return $this->tujuans->count() > 1;
+    }
+
+    public function getDaftarTujuanTextAttribute(): string
+    {
+        if ($this->tujuans->isNotEmpty()) {
+            return $this->tujuans->map(function ($t) {
+                $nama = $t->uptTujuan?->nama_upt ?? 'UPT';
+
+                return "{$nama} ({$t->total_disetujui} Orang)";
+            })->implode(', ');
+        }
+
+        return $this->uptTujuan?->nama_upt ?? '-';
+    }
+
+    public function isUserRelated(User $user): bool
+    {
+        if ($user->isAdmin() || empty($user->upt_id)) {
+            return true;
+        }
+
+        $uptId = (int) $user->upt_id;
+        if ((int) $this->upt_asal_id === $uptId || (int) $this->upt_tujuan_id === $uptId) {
+            return true;
+        }
+
+        return $this->tujuans->contains('upt_tujuan_id', $uptId);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -96,6 +134,13 @@ class MutasiNarapidana extends Model
 
     public function getStatusLabelAttribute(): string
     {
+        if ($this->status === 'disetujui' && $this->tujuans->count() > 1) {
+            $selesaiCount = $this->tujuans->filter(fn ($t) => $t->isSelesai())->count();
+            if ($selesaiCount > 0 && $selesaiCount < $this->tujuans->count()) {
+                return "Sebagian Selesai ({$selesaiCount}/{$this->tujuans->count()} BAST)";
+            }
+        }
+
         return match ($this->status) {
             'diajukan' => 'Menunggu Verifikasi Kanwil',
             'disetujui' => 'Disetujui Kanwil',
@@ -128,18 +173,36 @@ class MutasiNarapidana extends Model
         };
     }
 
-    public function hasLaporanPemindahan(): bool
+    public function hasLaporanPemindahan(?int $tujuanId = null): bool
     {
-        return ! empty($this->file_laporan_pemindahan);
+        if ($tujuanId) {
+            $t = $this->tujuans->firstWhere('id', $tujuanId);
+
+            return $t ? $t->hasLaporanPemindahan() : false;
+        }
+
+        return ! empty($this->file_laporan_pemindahan) || $this->tujuans->contains(fn ($t) => $t->hasLaporanPemindahan());
     }
 
-    public function hasLaporanPenerimaan(): bool
+    public function hasLaporanPenerimaan(?int $tujuanId = null): bool
     {
-        return ! empty($this->file_laporan_penerimaan);
+        if ($tujuanId) {
+            $t = $this->tujuans->firstWhere('id', $tujuanId);
+
+            return $t ? $t->hasLaporanPenerimaan() : false;
+        }
+
+        return ! empty($this->file_laporan_penerimaan) || $this->tujuans->contains(fn ($t) => $t->hasLaporanPenerimaan());
     }
 
-    public function hasBast(): bool
+    public function hasBast(?int $tujuanId = null): bool
     {
-        return ! empty($this->file_bast);
+        if ($tujuanId) {
+            $t = $this->tujuans->firstWhere('id', $tujuanId);
+
+            return $t ? $t->hasBast() : false;
+        }
+
+        return ! empty($this->file_bast) || $this->tujuans->contains(fn ($t) => $t->hasBast());
     }
 }

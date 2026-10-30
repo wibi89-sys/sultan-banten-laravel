@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\MutasiNarapidana;
+use App\Models\MutasiNarapidanaTujuan;
 use App\Models\Upt;
 use App\Services\WhatsAppService;
 use Illuminate\Http\RedirectResponse;
@@ -44,19 +45,21 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'creator'])->latest('tanggal_surat');
+        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan', 'creator'])->latest('tanggal_surat');
 
         // Scoping per UPT jika operator
         if ($user->isOperator() && $user->upt_id) {
             $query->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         } elseif ($request->filled('upt_id')) {
             $uptId = (int) $request->input('upt_id');
             $query->where(function ($q) use ($uptId) {
                 $q->where('upt_asal_id', $uptId)
-                    ->orWhere('upt_tujuan_id', $uptId);
+                    ->orWhere('upt_tujuan_id', $uptId)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $uptId));
             });
         }
 
@@ -96,7 +99,8 @@ class MutasiNarapidanaController extends Controller
         if ($user->isOperator() && $user->upt_id) {
             $statQuery->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         }
 
@@ -223,12 +227,11 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $mutasi = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'creator', 'verifikator'])->findOrFail($id);
+        $mutasi = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan', 'creator', 'verifikator'])->findOrFail($id);
 
         // Proteksi jika operator mencoba membuka mutasi UPT lain
         if ($user->isOperator() && $user->upt_id) {
-            $allowed = ((int) $mutasi->upt_asal_id === (int) $user->upt_id || (int) $mutasi->upt_tujuan_id === (int) $user->upt_id);
-            if (! $allowed) {
+            if (! $mutasi->isUserRelated($user)) {
                 abort(403, 'Anda tidak berhak melihat data mutasi UPT lain.');
             }
         }
@@ -248,7 +251,7 @@ class MutasiNarapidanaController extends Controller
             abort(403, 'Hanya Tim Kantor Wilayah / Administrator yang berhak memberikan penetapan persetujuan.');
         }
 
-        $mutasi = MutasiNarapidana::findOrFail($id);
+        $mutasi = MutasiNarapidana::with('tujuans')->findOrFail($id);
 
         $rules = [
             'status' => 'required|in:disetujui,ditolak,perlu_perbaikan',
@@ -256,20 +259,36 @@ class MutasiNarapidanaController extends Controller
         ];
 
         if ($request->input('status') === 'disetujui') {
-            $rules['upt_tujuan_id'] = 'required|exists:upt,id|different:upt_asal_id';
+            // Normalisasi jika dikirim format single upt_tujuan_id
+            if (! $request->has('alokasi') && $request->filled('upt_tujuan_id')) {
+                $request->merge([
+                    'alokasi' => [
+                        [
+                            'upt_tujuan_id' => $request->input('upt_tujuan_id'),
+                            'jumlah_narkotika' => $request->input('jumlah_disetujui_narkotika', 0),
+                            'jumlah_pidum' => $request->input('jumlah_disetujui_pidum', 0),
+                            'jumlah_korupsi' => $request->input('jumlah_disetujui_korupsi', 0),
+                        ],
+                    ],
+                ]);
+            }
+
+            $rules['alokasi'] = 'required|array|min:1';
+            $rules['alokasi.*.upt_tujuan_id'] = 'required|exists:upt,id';
+            $rules['alokasi.*.jumlah_narkotika'] = 'required|integer|min:0';
+            $rules['alokasi.*.jumlah_pidum'] = 'required|integer|min:0';
+            $rules['alokasi.*.jumlah_korupsi'] = 'required|integer|min:0';
             $rules['nomor_surat_kanwil'] = 'required|string|max:100';
             $rules['tanggal_surat_kanwil'] = 'required|date';
             $rules['file_persetujuan_kanwil'] = empty($mutasi->file_persetujuan_kanwil)
                 ? 'required|file|mimes:pdf|max:10240'
                 : 'nullable|file|mimes:pdf|max:10240';
-            $rules['jumlah_disetujui_narkotika'] = 'required|integer|min:0';
-            $rules['jumlah_disetujui_pidum'] = 'required|integer|min:0';
-            $rules['jumlah_disetujui_korupsi'] = 'required|integer|min:0';
         }
 
         $validated = $request->validate($rules, [
-            'upt_tujuan_id.required' => 'UPT Penerima (Tujuan) wajib ditentukan oleh Kanwil.',
-            'upt_tujuan_id.different' => 'UPT Penerima tidak boleh sama dengan UPT Pengusul.',
+            'alokasi.required' => 'Minimal 1 UPT Penerima (Tujuan) wajib ditentukan oleh Kanwil.',
+            'alokasi.*.upt_tujuan_id.required' => 'Pilih UPT Penerima yang valid.',
+            'alokasi.*.upt_tujuan_id.exists' => 'UPT Penerima tidak ditemukan.',
             'nomor_surat_kanwil.required' => 'Nomor Surat Persetujuan Kanwil wajib diisi.',
             'file_persetujuan_kanwil.required' => 'Scan Surat Persetujuan Kanwil resmi (PDF) wajib diunggah.',
         ]);
@@ -282,23 +301,86 @@ class MutasiNarapidanaController extends Controller
         ];
 
         if ($validated['status'] === 'disetujui') {
-            $totalDisetujui = (int) $validated['jumlah_disetujui_narkotika'] + (int) $validated['jumlah_disetujui_pidum'] + (int) $validated['jumlah_disetujui_korupsi'];
+            $alokasiList = $validated['alokasi'];
+            $selectedUptIds = [];
+            $totalDisetujuiNarkotika = 0;
+            $totalDisetujuiPidum = 0;
+            $totalDisetujuiKorupsi = 0;
+            $grandTotalDisetujui = 0;
+
+            foreach ($alokasiList as $idx => $alok) {
+                $uptTujuanId = (int) $alok['upt_tujuan_id'];
+                if ($uptTujuanId === (int) $mutasi->upt_asal_id) {
+                    return back()->withInput()->withErrors([
+                        "alokasi.{$idx}.upt_tujuan_id" => 'UPT Penerima tidak boleh sama dengan UPT Pengusul.',
+                    ]);
+                }
+                if (in_array($uptTujuanId, $selectedUptIds, true)) {
+                    return back()->withInput()->withErrors([
+                        "alokasi.{$idx}.upt_tujuan_id" => 'Terdapat duplikasi UPT Penerima dalam alokasi tujuan.',
+                    ]);
+                }
+                $selectedUptIds[] = $uptTujuanId;
+
+                $subtotal = (int) $alok['jumlah_narkotika'] + (int) $alok['jumlah_pidum'] + (int) $alok['jumlah_korupsi'];
+                if ($subtotal <= 0) {
+                    return back()->withInput()->withErrors([
+                        "alokasi.{$idx}.subtotal" => 'Alokasi narapidana untuk masing-masing UPT tujuan minimal 1 orang.',
+                    ]);
+                }
+
+                $totalDisetujuiNarkotika += (int) $alok['jumlah_narkotika'];
+                $totalDisetujuiPidum += (int) $alok['jumlah_pidum'];
+                $totalDisetujuiKorupsi += (int) $alok['jumlah_korupsi'];
+                $grandTotalDisetujui += $subtotal;
+            }
 
             $filePersetujuan = $this->handleUpload($request, 'file_persetujuan_kanwil', 'persetujuan_kanwil');
             if ($filePersetujuan) {
                 $updateData['file_persetujuan_kanwil'] = $filePersetujuan;
             }
 
-            $updateData['upt_tujuan_id'] = (int) $validated['upt_tujuan_id'];
+            $updateData['upt_tujuan_id'] = $selectedUptIds[0] ?? null;
             $updateData['nomor_surat_kanwil'] = $validated['nomor_surat_kanwil'];
             $updateData['tanggal_surat_kanwil'] = $validated['tanggal_surat_kanwil'];
-            $updateData['jumlah_disetujui_narkotika'] = (int) $validated['jumlah_disetujui_narkotika'];
-            $updateData['jumlah_disetujui_pidum'] = (int) $validated['jumlah_disetujui_pidum'];
-            $updateData['jumlah_disetujui_korupsi'] = (int) $validated['jumlah_disetujui_korupsi'];
-            $updateData['total_disetujui'] = $totalDisetujui;
+            $updateData['jumlah_disetujui_narkotika'] = $totalDisetujuiNarkotika;
+            $updateData['jumlah_disetujui_pidum'] = $totalDisetujuiPidum;
+            $updateData['jumlah_disetujui_korupsi'] = $totalDisetujuiKorupsi;
+            $updateData['total_disetujui'] = $grandTotalDisetujui;
         }
 
         $mutasi->update($updateData);
+
+        if ($validated['status'] === 'disetujui') {
+            // Re-sync tabel mutasi_narapidana_tujuan
+            $existingTujuans = MutasiNarapidanaTujuan::where('mutasi_id', $mutasi->id)->get()->keyBy('upt_tujuan_id');
+            MutasiNarapidanaTujuan::where('mutasi_id', $mutasi->id)->delete();
+
+            foreach ($validated['alokasi'] as $alok) {
+                $targetUptId = (int) $alok['upt_tujuan_id'];
+                $subtotal = (int) $alok['jumlah_narkotika'] + (int) $alok['jumlah_pidum'] + (int) $alok['jumlah_korupsi'];
+                $old = $existingTujuans->get($targetUptId);
+
+                MutasiNarapidanaTujuan::create([
+                    'mutasi_id' => $mutasi->id,
+                    'upt_tujuan_id' => $targetUptId,
+                    'jumlah_disetujui_narkotika' => (int) $alok['jumlah_narkotika'],
+                    'jumlah_disetujui_pidum' => (int) $alok['jumlah_pidum'],
+                    'jumlah_disetujui_korupsi' => (int) $alok['jumlah_korupsi'],
+                    'total_disetujui' => $subtotal,
+                    'file_laporan_pemindahan' => $old?->file_laporan_pemindahan,
+                    'tanggal_pemindahan' => $old?->tanggal_pemindahan,
+                    'file_laporan_penerimaan' => $old?->file_laporan_penerimaan,
+                    'tanggal_penerimaan' => $old?->tanggal_penerimaan,
+                    'file_bast' => $old?->file_bast,
+                    'nomor_bast' => $old?->nomor_bast,
+                    'tanggal_bast' => $old?->tanggal_bast,
+                    'tanggal_pelaksanaan' => $old?->tanggal_pelaksanaan,
+                    'catatan_pelaksanaan' => $old?->catatan_pelaksanaan,
+                    'status' => $old?->status ?? 'disetujui',
+                ]);
+            }
+        }
 
         ActivityLog::log(
             'verifikasi',
@@ -320,7 +402,7 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $mutasi = MutasiNarapidana::findOrFail($id);
+        $mutasi = MutasiNarapidana::with('tujuans')->findOrFail($id);
 
         if (! in_array($mutasi->status, ['disetujui', 'selesai'], true)) {
             return back()->with('error', 'Laporan Pemindahan hanya dapat diunggah setelah ada persetujuan Kanwil.');
@@ -332,6 +414,7 @@ class MutasiNarapidanaController extends Controller
         }
 
         $validated = $request->validate([
+            'tujuan_id' => 'nullable|exists:mutasi_narapidana_tujuan,id',
             'tanggal_pemindahan' => 'required|date',
             'file_laporan_pemindahan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'catatan_pemindahan' => 'nullable|string|max:1000',
@@ -341,13 +424,35 @@ class MutasiNarapidanaController extends Controller
 
         $filePath = $this->handleUpload($request, 'file_laporan_pemindahan', 'laporan_pemindahan');
 
+        // Jika tujuan_id diberikan, update record spesifik
+        $tujuan = null;
+        if ($request->filled('tujuan_id')) {
+            $tujuan = $mutasi->tujuans->firstWhere('id', (int) $request->input('tujuan_id'));
+        } elseif ($mutasi->tujuans->count() === 1) {
+            $tujuan = $mutasi->tujuans->first();
+        }
+
+        if ($tujuan) {
+            $tujuan->update([
+                'tanggal_pemindahan' => $validated['tanggal_pemindahan'],
+                'file_laporan_pemindahan' => $filePath,
+                'catatan_pelaksanaan' => $validated['catatan_pemindahan'] ?? $tujuan->catatan_pelaksanaan,
+            ]);
+            if ($tujuan->hasBast() && $tujuan->hasLaporanPenerimaan()) {
+                $tujuan->update(['status' => 'selesai']);
+            }
+        }
+
         $update = [
             'tanggal_pemindahan' => $validated['tanggal_pemindahan'],
             'file_laporan_pemindahan' => $filePath,
             'catatan_pemindahan' => $validated['catatan_pemindahan'] ?? null,
         ];
 
-        if ($mutasi->hasBast() && $mutasi->hasLaporanPenerimaan()) {
+        // Jika semua tujuan sudah selesai, selesaikan mutasi induk
+        if ($mutasi->tujuans->isNotEmpty() && $mutasi->tujuans->every(fn ($t) => $t->isSelesai())) {
+            $update['status'] = 'selesai';
+        } elseif ($mutasi->hasBast() && $mutasi->hasLaporanPenerimaan()) {
             $update['status'] = 'selesai';
         }
 
@@ -356,7 +461,7 @@ class MutasiNarapidanaController extends Controller
         ActivityLog::log(
             'laporan_pemindahan',
             'mutasi',
-            "Mengunggah Laporan Pemindahan Narapidana oleh UPT Pengusul No: {$mutasi->nomor_surat}",
+            "Mengunggah Laporan Pemindahan Narapidana oleh UPT Pengusul No: {$mutasi->nomor_surat}".($tujuan ? " (Rute: {$tujuan->uptTujuan?->nama_upt})" : ''),
             $mutasi->toArray()
         );
 
@@ -369,18 +474,33 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $mutasi = MutasiNarapidana::findOrFail($id);
+        $mutasi = MutasiNarapidana::with(['tujuans.uptTujuan'])->findOrFail($id);
 
         if (! in_array($mutasi->status, ['disetujui', 'selesai'], true)) {
             return back()->with('error', 'Laporan Penerimaan hanya dapat diunggah setelah ada persetujuan Kanwil.');
         }
 
-        // Hanya UPT Penerima atau Admin
-        if ($user->isOperator() && $user->upt_id && (int) $user->upt_id !== (int) $mutasi->upt_tujuan_id) {
-            abort(403, 'Hanya UPT Penerima yang berhak mengunggah Laporan Penerimaan.');
+        // Cari tujuan yang relevan
+        $tujuan = null;
+        if ($request->filled('tujuan_id')) {
+            $tujuan = $mutasi->tujuans->firstWhere('id', (int) $request->input('tujuan_id'));
+        } elseif ($user->isOperator() && $user->upt_id) {
+            $tujuan = $mutasi->tujuans->firstWhere('upt_tujuan_id', (int) $user->upt_id);
+        } elseif ($mutasi->tujuans->count() === 1) {
+            $tujuan = $mutasi->tujuans->first();
+        }
+
+        // Hak akses: hanya UPT Penerima terkait atau Admin/Kanwil
+        if ($user->isOperator() && $user->upt_id) {
+            $userUptId = (int) $user->upt_id;
+            $isTarget = ($tujuan && (int) $tujuan->upt_tujuan_id === $userUptId) || (int) $mutasi->upt_tujuan_id === $userUptId;
+            if (! $isTarget) {
+                abort(403, 'Hanya UPT Penerima yang berhak mengunggah Laporan Penerimaan.');
+            }
         }
 
         $validated = $request->validate([
+            'tujuan_id' => 'nullable|exists:mutasi_narapidana_tujuan,id',
             'tanggal_penerimaan' => 'required|date',
             'file_laporan_penerimaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'catatan_penerimaan' => 'nullable|string|max:1000',
@@ -390,13 +510,26 @@ class MutasiNarapidanaController extends Controller
 
         $filePath = $this->handleUpload($request, 'file_laporan_penerimaan', 'laporan_penerimaan');
 
+        if ($tujuan) {
+            $tujuan->update([
+                'tanggal_penerimaan' => $validated['tanggal_penerimaan'],
+                'file_laporan_penerimaan' => $filePath,
+                'catatan_pelaksanaan' => $validated['catatan_penerimaan'] ?? $tujuan->catatan_pelaksanaan,
+            ]);
+            if ($tujuan->hasBast() && $tujuan->hasLaporanPemindahan()) {
+                $tujuan->update(['status' => 'selesai']);
+            }
+        }
+
         $update = [
             'tanggal_penerimaan' => $validated['tanggal_penerimaan'],
             'file_laporan_penerimaan' => $filePath,
             'catatan_penerimaan' => $validated['catatan_penerimaan'] ?? null,
         ];
 
-        if ($mutasi->hasBast() && $mutasi->hasLaporanPemindahan()) {
+        if ($mutasi->tujuans->isNotEmpty() && $mutasi->tujuans->every(fn ($t) => $t->isSelesai())) {
+            $update['status'] = 'selesai';
+        } elseif ($mutasi->hasBast() && $mutasi->hasLaporanPemindahan()) {
             $update['status'] = 'selesai';
         }
 
@@ -405,7 +538,7 @@ class MutasiNarapidanaController extends Controller
         ActivityLog::log(
             'laporan_penerimaan',
             'mutasi',
-            "Mengunggah Laporan Penerimaan Narapidana oleh UPT Penerima No: {$mutasi->nomor_surat}",
+            "Mengunggah Laporan Penerimaan Narapidana oleh UPT Penerima No: {$mutasi->nomor_surat}".($tujuan ? " ({$tujuan->uptTujuan?->nama_upt})" : ''),
             $mutasi->toArray()
         );
 
@@ -418,18 +551,37 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $mutasi = MutasiNarapidana::findOrFail($id);
+        $mutasi = MutasiNarapidana::with(['tujuans.uptTujuan'])->findOrFail($id);
 
         if (! in_array($mutasi->status, ['disetujui', 'selesai'], true)) {
             return back()->with('error', 'Hanya usulan yang telah disetujui yang dapat melampirkan BAST.');
         }
 
-        // Hanya UPT terkait atau admin
-        if ($user->isOperator() && $user->upt_id && ! in_array((int) $user->upt_id, [(int) $mutasi->upt_asal_id, (int) $mutasi->upt_tujuan_id], true)) {
-            abort(403);
+        // Cari tujuan yang relevan
+        $tujuan = null;
+        if ($request->filled('tujuan_id')) {
+            $tujuan = $mutasi->tujuans->firstWhere('id', (int) $request->input('tujuan_id'));
+        } elseif ($user->isOperator() && $user->upt_id) {
+            $tujuan = $mutasi->tujuans->firstWhere('upt_tujuan_id', (int) $user->upt_id);
+        } elseif ($mutasi->tujuans->count() === 1) {
+            $tujuan = $mutasi->tujuans->first();
+        }
+
+        // Validasi hak akses
+        if ($user->isOperator() && $user->upt_id) {
+            $userUptId = (int) $user->upt_id;
+            $allowed = ($userUptId === (int) $mutasi->upt_asal_id)
+                || ($tujuan && $userUptId === (int) $tujuan->upt_tujuan_id)
+                || ($userUptId === (int) $mutasi->upt_tujuan_id)
+                || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId);
+
+            if (! $allowed) {
+                abort(403, 'Anda tidak berhak mengunggah BAST untuk rute mutasi ini.');
+            }
         }
 
         $validated = $request->validate([
+            'tujuan_id' => 'nullable|exists:mutasi_narapidana_tujuan,id',
             'nomor_bast' => 'required|string|max:100',
             'tanggal_bast' => 'required|date',
             'file_bast' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
@@ -441,53 +593,87 @@ class MutasiNarapidanaController extends Controller
 
         $fileBast = $this->handleUpload($request, 'file_bast', 'bast');
 
-        $mutasi->update([
-            'status' => 'selesai',
+        if ($tujuan) {
+            $tujuan->update([
+                'status' => 'selesai',
+                'nomor_bast' => $validated['nomor_bast'],
+                'tanggal_bast' => $validated['tanggal_bast'],
+                'tanggal_pelaksanaan' => $validated['tanggal_bast'],
+                'file_bast' => $fileBast,
+                'catatan_pelaksanaan' => $validated['catatan_pelaksanaan'] ?? null,
+            ]);
+        }
+
+        $allTujuansFinished = $mutasi->tujuans->isNotEmpty()
+            ? $mutasi->tujuans->every(fn ($t) => $t->isSelesai())
+            : true;
+
+        $update = [
             'nomor_bast' => $validated['nomor_bast'],
             'tanggal_bast' => $validated['tanggal_bast'],
             'tanggal_pelaksanaan' => $validated['tanggal_bast'],
             'file_bast' => $fileBast,
             'catatan_pelaksanaan' => $validated['catatan_pelaksanaan'] ?? null,
-        ]);
+        ];
+
+        if ($allTujuansFinished) {
+            $update['status'] = 'selesai';
+        }
+
+        $mutasi->update($update);
 
         ActivityLog::log(
             'selesai',
             'mutasi',
-            "Mengunggah BAST pemindahan mutasi No: {$mutasi->nomor_surat} - Status: Selesai",
+            "Mengunggah BAST pemindahan mutasi No: {$mutasi->nomor_surat}".($tujuan ? " (Rute: {$tujuan->uptTujuan?->nama_upt})" : '').' - Status: Selesai',
             $mutasi->toArray()
         );
 
         return redirect()->route('mutasi.show', $mutasi->id)
-            ->with('success', 'Berita Acara Serah Terima (BAST) berhasil diunggah. Proses pemindahan telah selesai.');
+            ->with('success', 'Berita Acara Serah Terima (BAST) berhasil diunggah.');
     }
 
-    public function downloadFile(int $id, string $type): BinaryFileResponse
+    public function downloadFile(Request $request, int $id, string $type): BinaryFileResponse
     {
         $this->checkAccess();
         $user = auth()->user();
 
-        $mutasi = MutasiNarapidana::findOrFail($id);
+        $mutasi = MutasiNarapidana::with('tujuans')->findOrFail($id);
 
         // Cek izin akses berkas
         if ($user->isOperator() && $user->upt_id) {
-            $allowed = ((int) $mutasi->upt_asal_id === (int) $user->upt_id || (int) $mutasi->upt_tujuan_id === (int) $user->upt_id);
-            if (! $allowed) {
+            if (! $mutasi->isUserRelated($user)) {
                 abort(403, 'Anda tidak berhak mengunduh berkas ini.');
             }
         }
 
-        $relativePath = match ($type) {
-            'surat_usulan' => $mutasi->file_surat_usulan,
-            'asesmen' => $mutasi->file_asesmen,
-            'bap' => $mutasi->file_bap,
-            'reg_f' => $mutasi->file_reg_f,
-            'lampiran_wbp' => $mutasi->file_lampiran_wbp,
-            'persetujuan_kanwil' => $mutasi->file_persetujuan_kanwil,
-            'laporan_pemindahan' => $mutasi->file_laporan_pemindahan,
-            'laporan_penerimaan' => $mutasi->file_laporan_penerimaan,
-            'bast' => $mutasi->file_bast,
-            default => null,
-        };
+        $relativePath = null;
+        if ($request->filled('tujuan_id') && in_array($type, ['laporan_pemindahan', 'laporan_penerimaan', 'bast'], true)) {
+            $tujuan = $mutasi->tujuans->firstWhere('id', (int) $request->input('tujuan_id'));
+            if ($tujuan) {
+                $relativePath = match ($type) {
+                    'laporan_pemindahan' => $tujuan->file_laporan_pemindahan,
+                    'laporan_penerimaan' => $tujuan->file_laporan_penerimaan,
+                    'bast' => $tujuan->file_bast,
+                    default => null,
+                };
+            }
+        }
+
+        if (empty($relativePath)) {
+            $relativePath = match ($type) {
+                'surat_usulan' => $mutasi->file_surat_usulan,
+                'asesmen' => $mutasi->file_asesmen,
+                'bap' => $mutasi->file_bap,
+                'reg_f' => $mutasi->file_reg_f,
+                'lampiran_wbp' => $mutasi->file_lampiran_wbp,
+                'persetujuan_kanwil' => $mutasi->file_persetujuan_kanwil,
+                'laporan_pemindahan' => $mutasi->file_laporan_pemindahan,
+                'laporan_penerimaan' => $mutasi->file_laporan_penerimaan,
+                'bast' => $mutasi->file_bast,
+                default => null,
+            };
+        }
 
         if (empty($relativePath) || ! File::exists(public_path($relativePath))) {
             abort(404, 'Berkas yang diminta tidak ditemukan di server.');
@@ -550,20 +736,22 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'creator', 'verifikator'])
+        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan', 'creator', 'verifikator'])
             ->latest('tanggal_surat');
 
         // Scoping per UPT jika operator
         if ($user->isOperator() && $user->upt_id) {
             $query->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         } elseif ($request->filled('upt_id')) {
             $uptId = (int) $request->input('upt_id');
             $query->where(function ($q) use ($uptId) {
                 $q->where('upt_asal_id', $uptId)
-                    ->orWhere('upt_tujuan_id', $uptId);
+                    ->orWhere('upt_tujuan_id', $uptId)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $uptId));
             });
         }
 
@@ -586,7 +774,8 @@ class MutasiNarapidanaController extends Controller
         if ($user->isOperator() && $user->upt_id) {
             $statQuery->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         }
 
@@ -608,7 +797,7 @@ class MutasiNarapidanaController extends Controller
         $user = auth()->user();
 
         // Menampilkan usulan yang telah disetujui Kanwil atau berstatus selesai
-        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'creator', 'verifikator'])
+        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan', 'creator', 'verifikator'])
             ->whereIn('status', ['disetujui', 'selesai'])
             ->latest('tanggal_surat_kanwil');
 
@@ -616,13 +805,15 @@ class MutasiNarapidanaController extends Controller
         if ($user->isOperator() && $user->upt_id) {
             $query->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         } elseif ($request->filled('upt_id')) {
             $uptId = (int) $request->input('upt_id');
             $query->where(function ($q) use ($uptId) {
                 $q->where('upt_asal_id', $uptId)
-                    ->orWhere('upt_tujuan_id', $uptId);
+                    ->orWhere('upt_tujuan_id', $uptId)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $uptId));
             });
         }
 
@@ -641,7 +832,8 @@ class MutasiNarapidanaController extends Controller
         if ($user->isOperator() && $user->upt_id) {
             $statQuery->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         }
 
@@ -665,13 +857,14 @@ class MutasiNarapidanaController extends Controller
 
         $tahun = (int) $request->input('tahun', date('Y'));
 
-        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan'])
+        $query = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
             ->whereYear('tanggal_surat', $tahun);
 
         if ($user->isOperator() && $user->upt_id) {
             $query->where(function ($q) use ($user) {
                 $q->where('upt_asal_id', $user->upt_id)
-                    ->orWhere('upt_tujuan_id', $user->upt_id);
+                    ->orWhere('upt_tujuan_id', $user->upt_id)
+                    ->orWhereHas('tujuans', fn ($tq) => $tq->where('upt_tujuan_id', $user->upt_id));
             });
         }
 
@@ -688,7 +881,14 @@ class MutasiNarapidanaController extends Controller
         // Rekap per UPT Asal (Pengusul / Arus Keluar)
         $rekapUpt = Upt::orderBy('nama_upt')->get()->map(function ($upt) use ($mutasiAll) {
             $keluar = $mutasiAll->where('upt_asal_id', $upt->id);
-            $masuk = $mutasiAll->where('upt_tujuan_id', $upt->id)->whereIn('status', ['disetujui', 'selesai']);
+            $masukWbp = $mutasiAll->whereIn('status', ['disetujui', 'selesai'])
+                ->flatMap->tujuans
+                ->where('upt_tujuan_id', $upt->id)
+                ->sum('total_disetujui');
+
+            if ($masukWbp === 0) {
+                $masukWbp = $mutasiAll->where('upt_tujuan_id', $upt->id)->whereIn('status', ['disetujui', 'selesai'])->sum('total_disetujui');
+            }
 
             return [
                 'upt' => $upt,
@@ -697,7 +897,7 @@ class MutasiNarapidanaController extends Controller
                 'keluar_narkotika' => $keluar->sum('jumlah_narkotika'),
                 'keluar_pidum' => $keluar->sum('jumlah_pidum'),
                 'keluar_korupsi' => $keluar->sum('jumlah_korupsi'),
-                'masuk_wbp' => $masuk->sum('total_disetujui'),
+                'masuk_wbp' => $masukWbp,
             ];
         });
 
@@ -727,7 +927,7 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $tahun = (int) $request->input('tahun', date('Y'));
 
-        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan'])
+        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
             ->whereYear('tanggal_surat', $tahun)
             ->latest('tanggal_surat')
             ->get();
@@ -768,7 +968,7 @@ class MutasiNarapidanaController extends Controller
                     $m->jumlah_korupsi,
                     $m->total_usulan,
                     $m->status_label,
-                    $m->uptTujuan?->nama_upt ?? '-',
+                    $m->daftar_tujuan_text,
                     $m->nomor_surat_kanwil ?? '-',
                     $m->tanggal_surat_kanwil ? $m->tanggal_surat_kanwil->format('Y-m-d') : '',
                     $m->total_disetujui ?? 0,

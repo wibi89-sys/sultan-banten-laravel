@@ -207,7 +207,17 @@
                             </div>
                         </td>
                         <td>
-                            @if($m->uptTujuan)
+                            @if($m->tujuans->count() > 1)
+                                <div class="fw-bold text-success mb-0.5">
+                                    <i class="fas fa-sitemap me-1"></i>{{ $m->tujuans->count() }} UPT Penerima
+                                </div>
+                                <div class="small text-muted" style="font-size: 11px; line-height: 1.3;">
+                                    {{ $m->daftar_tujuan_text }}
+                                </div>
+                                @if($m->total_disetujui !== null)
+                                <small class="text-success fw-semibold d-block mt-0.5"><i class="fas fa-check-circle me-1"></i>Total: {{ $m->total_disetujui }} WBP</small>
+                                @endif
+                            @elseif($m->uptTujuan)
                                 <div class="fw-bold text-success"><i class="fas fa-building me-1"></i>{{ $m->uptTujuan->nama_upt }}</div>
                                 @if($m->nomor_surat_kanwil)
                                 <small class="text-muted font-monospace d-block" style="font-size: 11px;">Persetujuan: {{ $m->nomor_surat_kanwil }}</small>
