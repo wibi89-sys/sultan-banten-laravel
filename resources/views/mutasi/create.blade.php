@@ -39,17 +39,8 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">UPT Pengusul (Pemohon) <span class="text-danger">*</span></label>
-                        @if($user->isOperator() && $user->upt_id)
-                            <input type="text" class="form-control form-control-sm bg-light" value="{{ $user->upt?->nama_upt }}" readonly>
-                            <input type="hidden" name="upt_asal_id" value="{{ $user->upt_id }}">
-                        @else
-                            <select name="upt_asal_id" class="form-select form-select-sm" required>
-                                <option value="">-- Pilih UPT Pengusul --</option>
-                                @foreach($uptList as $u)
-                                <option value="{{ $u->id }}" {{ old('upt_asal_id') == $u->id ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
-                                @endforeach
-                            </select>
-                        @endif
+                        <input type="text" class="form-control form-control-sm bg-light" value="{{ $user->upt?->nama_upt }}" readonly>
+                        <input type="hidden" name="upt_asal_id" value="{{ $user->upt_id }}">
                     </div>
 
                     <div class="col-md-6">

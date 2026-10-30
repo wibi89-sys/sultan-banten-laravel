@@ -99,9 +99,11 @@
                     <small class="text-muted">Data permohonan persetujuan dan penetapan pemindahan narapidana se-Wilayah Banten</small>
                 </div>
                 <div class="d-flex gap-2">
+                    @if(! empty(auth()->user()->upt_id))
                     <a href="{{ route('mutasi.create') }}" class="btn btn-primary btn-sm px-3 shadow-sm">
                         <i class="fas fa-plus-circle me-1"></i> Buat Usulan Baru
                     </a>
+                    @endif
                     <a href="{{ route('mutasi.rekapitulasi') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm">
                         <i class="fas fa-chart-pie me-1"></i> Rekapitulasi Mutasi
                     </a>

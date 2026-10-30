@@ -77,6 +77,39 @@ class MutasiNarapidanaTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('mutasi.index'));
         $response->assertStatus(200);
         $response->assertSee('Mutasi Narapidana Antar-UPT Wilayah Banten');
+        $response->assertDontSee('Buat Usulan Baru');
+    }
+
+    public function test_operator_sees_buat_usulan_baru_button(): void
+    {
+        $response = $this->actingAs($this->operator)->get(route('mutasi.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Buat Usulan Baru');
+    }
+
+    public function test_kanwil_user_cannot_access_create_page(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('mutasi.create'));
+        $response->assertRedirect(route('mutasi.index'));
+        $response->assertSessionHas('error');
+    }
+
+    public function test_kanwil_user_cannot_submit_usulan_mutasi(): void
+    {
+        $file = UploadedFile::fake()->create('surat_usulan.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->admin)->post(route('mutasi.store'), [
+            'nomor_surat' => 'TEST/KANWIL/'.uniqid(),
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Pembinaan',
+            'jumlah_narkotika' => 1,
+            'jumlah_pidum' => 0,
+            'jumlah_korupsi' => 0,
+            'file_surat_usulan' => $file,
+        ]);
+
+        $response->assertStatus(403);
     }
 
     public function test_authenticated_user_can_access_create_page(): void

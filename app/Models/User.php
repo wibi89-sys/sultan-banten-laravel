@@ -79,6 +79,11 @@ class User extends Authenticatable
         return $this->role === 'operator';
     }
 
+    public function isKanwil(): bool
+    {
+        return empty($this->upt_id);
+    }
+
     public function hasAccess(string $menu): bool
     {
         if ($this->isAdmin()) {

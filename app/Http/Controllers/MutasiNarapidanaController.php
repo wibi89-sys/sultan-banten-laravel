@@ -120,10 +120,16 @@ class MutasiNarapidanaController extends Controller
         return view('mutasi.index', compact('mutasiList', 'stats', 'uptList'));
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
         $this->checkAccess();
         $user = auth()->user();
+
+        // Kanwil hanya memantau dan memberikan persetujuan, kewenangan mengusulkan hanya dimiliki oleh UPT
+        if ($user->isKanwil()) {
+            return redirect()->route('mutasi.index')
+                ->with('error', 'Kewenangan membuat usulan mutasi narapidana hanya dimiliki oleh operator UPT Pemasyarakatan. Akun Kantor Wilayah bertindak sebagai pemantau dan verifikator penetapan persetujuan.');
+        }
 
         $uptList = Upt::orderBy('nama_upt')->get();
 
@@ -134,6 +140,11 @@ class MutasiNarapidanaController extends Controller
     {
         $this->checkAccess();
         $user = auth()->user();
+
+        // Kanwil hanya memantau dan memberikan persetujuan, kewenangan mengusulkan hanya dimiliki oleh UPT
+        if ($user->isKanwil()) {
+            abort(403, 'Akses ditolak. Kewenangan membuat usulan mutasi narapidana hanya dimiliki oleh operator UPT Pemasyarakatan.');
+        }
 
         $validated = $request->validate([
             'nomor_surat' => 'required|string|max:100',
@@ -160,10 +171,8 @@ class MutasiNarapidanaController extends Controller
             'file_surat_usulan.required' => 'Surat Pengusulan resmi dari UPT wajib diunggah.',
         ]);
 
-        // Jika operator, paksa UPT asal sesuai penempatan user
-        if ($user->isOperator() && $user->upt_id) {
-            $validated['upt_asal_id'] = $user->upt_id;
-        }
+        // Paksa UPT asal sesuai penempatan user UPT
+        $validated['upt_asal_id'] = $user->upt_id;
 
         $totalUsulan = (int) $validated['jumlah_narkotika'] + (int) $validated['jumlah_pidum'] + (int) $validated['jumlah_korupsi'];
         if ($totalUsulan <= 0) {
