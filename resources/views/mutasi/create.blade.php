@@ -27,15 +27,6 @@
     </div>
     @endif
 
-    <!-- Info Box: Ketentuan Alur Kanwil -->
-    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 d-flex align-items-center mb-3 shadow-sm" role="alert">
-        <i class="fas fa-info-circle fa-2x text-primary me-3 flex-shrink-0"></i>
-        <div class="small">
-            <strong class="text-primary d-block mb-1">Ketentuan Penetapan UPT Tujuan Mutasi:</strong>
-            UPT Pemohon mengajukan data surat, rincian jumlah narapidana per perkara, dan kelengkapan berkas pendukung. <strong>Penetapan UPT Penerima (Tujuan) dan kuota persetujuan sepenuhnya ditentukan oleh Kantor Wilayah</strong> berdasarkan analisis kapasitas riil dan pertimbangan keamanan se-Banten.
-        </div>
-    </div>
-
     <form action="{{ route('mutasi.store') }}" method="POST" enctype="multipart/form-data" id="formMutasi">
         @csrf
 
