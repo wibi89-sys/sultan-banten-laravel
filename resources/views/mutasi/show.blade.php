@@ -252,11 +252,11 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
                             <div>
                                 <i class="fas fa-users-cog text-info me-2"></i>
-                                <span class="fw-semibold small">5. Lampiran Daftar Nominatif WBP</span>
+                                <span class="fw-semibold small">5. Daftar Wargabinaan yang diusulkan</span>
                             </div>
                             @if($mutasi->file_lampiran_wbp)
                             <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp']) }}" class="btn btn-outline-primary btn-sm py-0.5 px-2.5" target="_blank">
-                                <i class="fas fa-download me-1"></i> Unduh Nominatif
+                                <i class="fas fa-download me-1"></i> Unduh Berkas
                             </a>
                             @else
                             <span class="badge bg-light text-muted border">Tidak Dilampirkan</span>
