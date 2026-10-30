@@ -24,8 +24,8 @@ class InstansiController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('instansi')) {
-            abort(403);
+        if (! $user->canManage('instansi')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Pengaturan Instansi.');
         }
 
         $request->validate([

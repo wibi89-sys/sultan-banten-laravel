@@ -44,7 +44,7 @@ class UserController extends Controller
             if (! empty($missing)) {
                 Schema::table('users', function ($table) use ($missing) {
                     foreach ($missing as $col) {
-                        $table->boolean($col)->default(false);
+                        $table->string($col, 10)->default('none');
                     }
                 });
             }
@@ -58,7 +58,7 @@ class UserController extends Controller
         $this->ensurePermissionColumns();
 
         $user = auth()->user();
-        if (! $user->hasAccess('user')) {
+        if (! $user->canView('user')) {
             abort(403);
         }
 
@@ -73,8 +73,8 @@ class UserController extends Controller
         $this->ensurePermissionColumns();
 
         $user = auth()->user();
-        if (! $user->hasAccess('user')) {
-            abort(403);
+        if (! $user->canManage('user')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Manajemen User.');
         }
 
         $request->validate([
@@ -96,7 +96,24 @@ class UserController extends Controller
         $userColumns = Schema::getColumnListing('users');
         foreach ($this->permissionFields as $field) {
             if (in_array($field, $userColumns, true)) {
-                $data[$field] = $request->has($field);
+                $val = $request->input($field, 'none');
+                if ($val === 'on' || $val === '1' || $val === true) {
+                    $val = 'full';
+                } elseif (! in_array($val, ['none', 'view', 'full'], true)) {
+                    $val = 'none';
+                }
+
+                // Jika role viewer, batasi maksimal hanya 'view'
+                if ($data['role'] === 'viewer' && $val === 'full') {
+                    $val = 'view';
+                }
+
+                // Jika role admin, otomatis 'full'
+                if ($data['role'] === 'admin') {
+                    $val = 'full';
+                }
+
+                $data[$field] = $val;
             }
         }
 
@@ -111,8 +128,8 @@ class UserController extends Controller
         $this->ensurePermissionColumns();
 
         $user = auth()->user();
-        if (! $user->hasAccess('user')) {
-            abort(403);
+        if (! $user->canManage('user')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Manajemen User.');
         }
 
         $targetUser = User::findOrFail($id);
@@ -137,7 +154,24 @@ class UserController extends Controller
         $userColumns = Schema::getColumnListing('users');
         foreach ($this->permissionFields as $field) {
             if (in_array($field, $userColumns, true)) {
-                $data[$field] = $request->has($field);
+                $val = $request->input($field, 'none');
+                if ($val === 'on' || $val === '1' || $val === true) {
+                    $val = 'full';
+                } elseif (! in_array($val, ['none', 'view', 'full'], true)) {
+                    $val = 'none';
+                }
+
+                // Jika role viewer, batasi maksimal hanya 'view'
+                if ($data['role'] === 'viewer' && $val === 'full') {
+                    $val = 'view';
+                }
+
+                // Jika role admin, otomatis 'full'
+                if ($data['role'] === 'admin') {
+                    $val = 'full';
+                }
+
+                $data[$field] = $val;
             }
         }
 
@@ -150,8 +184,8 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('user')) {
-            abort(403);
+        if (! $user->canManage('user')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Manajemen User.');
         }
 
         if ($id == $user->id) {

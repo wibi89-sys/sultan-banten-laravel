@@ -396,7 +396,7 @@
                     <a href="{{ Route::has('mutasi.index') ? route('mutasi.index') : url('/mutasi') }}" class="{{ request()->routeIs('mutasi.index') || request()->routeIs('mutasi.show') ? 'active' : '' }}">
                         <i class="fas fa-list-alt"></i><span>1. Daftar Usulan Mutasi</span>
                     </a>
-                    @if(! empty($user->upt_id))
+                    @if($user->canManage('mutasi') && ! empty($user->upt_id))
                     <a href="{{ Route::has('mutasi.create') ? route('mutasi.create') : url('/mutasi/create') }}" class="{{ request()->routeIs('mutasi.create') ? 'active' : '' }}">
                         <i class="fas fa-plus-circle"></i><span>2. Buat Usulan Baru</span>
                     </a>

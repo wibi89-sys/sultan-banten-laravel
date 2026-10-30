@@ -98,11 +98,15 @@
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-list-ul me-2 text-primary"></i>Daftar Berkas Usulan Mutasi Narapidana</h5>
                     <small class="text-muted">Data permohonan persetujuan dan penetapan pemindahan narapidana se-Wilayah Banten</small>
                 </div>
-                <div class="d-flex gap-2">
-                    @if(! empty(auth()->user()->upt_id))
+                <div class="d-flex gap-2 align-items-center">
+                    @if(auth()->user()->canManage('mutasi') && ! empty(auth()->user()->upt_id))
                     <a href="{{ route('mutasi.create') }}" class="btn btn-primary btn-sm px-3 shadow-sm">
                         <i class="fas fa-plus-circle me-1"></i> Buat Usulan Baru
                     </a>
+                    @elseif(! auth()->user()->canManage('mutasi'))
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 py-1.5 px-2.5">
+                        <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                    </span>
                     @endif
                     <a href="{{ route('mutasi.rekapitulasi') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm">
                         <i class="fas fa-chart-pie me-1"></i> Rekapitulasi Mutasi

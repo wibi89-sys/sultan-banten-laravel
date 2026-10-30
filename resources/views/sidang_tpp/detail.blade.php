@@ -291,7 +291,7 @@
     <!-- Tabel Daftar Usulan Warga Binaan -->
     @php
         $currentUser = auth()->user();
-        $canManagePeserta = !empty($currentUser->upt_id) && ((int) $currentUser->upt_id === (int) $sidang->upt_id) && $sidang->status_sidang !== 'selesai_ttd_kakanwil';
+        $canManagePeserta = $currentUser->canManage('sidang_tpp') && !empty($currentUser->upt_id) && ((int) $currentUser->upt_id === (int) $sidang->upt_id) && $sidang->status_sidang !== 'selesai_ttd_kakanwil';
     @endphp
 
     <!-- Tabel Daftar Usulan Warga Binaan -->
@@ -303,6 +303,10 @@
                 <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="bukaModalTambahPesertaDetail()">
                     <i class="fas fa-user-plus me-1"></i>Tambah Peserta Sidang
                 </button>
+                @elseif(!empty($currentUser->upt_id))
+                <span class="badge bg-secondary py-1 px-2 small">
+                    <i class="fas fa-eye me-1"></i>Mode Lihat Saja
+                </span>
                 @elseif(empty($currentUser->upt_id))
                 <span class="badge bg-light text-secondary border py-1 px-2 small">
                     <i class="fas fa-shield-alt text-primary me-1"></i>Akses Kanwil: Pengawas &amp; Verifikator (Read Only)

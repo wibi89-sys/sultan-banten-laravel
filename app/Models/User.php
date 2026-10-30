@@ -46,21 +46,6 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            'akses_dashboard' => 'boolean',
-            'akses_penghuni' => 'boolean',
-            'akses_overstaying' => 'boolean',
-            'akses_integrasi' => 'boolean',
-            'akses_bebas_harian' => 'boolean',
-            'akses_sidang_tpp' => 'boolean',
-            'akses_mutasi' => 'boolean',
-            'akses_upt' => 'boolean',
-            'akses_user' => 'boolean',
-            'akses_instansi' => 'boolean',
-            'akses_laporan' => 'boolean',
-            'akses_pengumuman' => 'boolean',
-            'akses_wa_settings' => 'boolean',
-            'akses_wa_schedule' => 'boolean',
-            'akses_activity_log' => 'boolean',
         ];
     }
 
@@ -79,20 +64,72 @@ class User extends Authenticatable
         return $this->role === 'operator';
     }
 
+    public function isViewer(): bool
+    {
+        return $this->role === 'viewer';
+    }
+
     public function isKanwil(): bool
     {
         return empty($this->upt_id);
     }
 
-    public function hasAccess(string $menu): bool
+    /**
+     * Dapatkan level akses modul: 'none', 'view' (lihat saja), atau 'full' (akses penuh).
+     */
+    public function getAccessLevel(string $menu): string
+    {
+        if ($this->isAdmin()) {
+            return 'full';
+        }
+
+        $property = 'akses_'.$menu;
+        $val = $this->{$property} ?? 'none';
+
+        if ($val === true || $val === 1 || $val === '1' || $val === 'full') {
+            return $this->isViewer() ? 'view' : 'full';
+        }
+
+        if ($val === 'view' || $val === 'lihat') {
+            return 'view';
+        }
+
+        return 'none';
+    }
+
+    /**
+     * Cek apakah user memiliki akses ke modul tertentu.
+     * $requiredLevel: 'view' (default) atau 'full'
+     */
+    public function hasAccess(string $menu, string $requiredLevel = 'view'): bool
     {
         if ($this->isAdmin()) {
             return true;
         }
 
-        $property = 'akses_'.$menu;
+        $level = $this->getAccessLevel($menu);
 
-        return (bool) ($this->{$property} ?? false);
+        if ($requiredLevel === 'full') {
+            return $level === 'full';
+        }
+
+        return $level === 'view' || $level === 'full';
+    }
+
+    /**
+     * Apakah user boleh melihat (view/read-only) modul ini?
+     */
+    public function canView(string $menu): bool
+    {
+        return $this->hasAccess($menu, 'view');
+    }
+
+    /**
+     * Apakah user memiliki hak penuh (create, update, delete) pada modul ini?
+     */
+    public function canManage(string $menu): bool
+    {
+        return $this->hasAccess($menu, 'full');
     }
 
     public function getAvatarHtml(int $size = 32): string

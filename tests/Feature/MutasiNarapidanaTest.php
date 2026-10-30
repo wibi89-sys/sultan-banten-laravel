@@ -173,13 +173,14 @@ class MutasiNarapidanaTest extends TestCase
         $testUser = User::factory()->create([
             'role' => 'operator',
             'upt_id' => $this->uptAsal->id,
-            'akses_mutasi' => false,
+            'akses_mutasi' => 'none',
         ]);
 
         $this->artisan('users:grant-mutasi', ['username' => $testUser->username])
             ->assertExitCode(0);
 
-        $this->assertTrue($testUser->fresh()->akses_mutasi);
+        $this->assertEquals('full', $testUser->fresh()->akses_mutasi);
+        $this->assertTrue($testUser->fresh()->canManage('mutasi'));
     }
 
     public function test_kanwil_page_renders_successfully(): void

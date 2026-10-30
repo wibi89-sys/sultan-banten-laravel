@@ -220,9 +220,15 @@
             </h5>
             <small class="text-muted">Pengiriman laporan komprehensif harian (penghuni, overstaying, integrasi, rincian bebas harian) ke grup dan pimpinan.</small>
         </div>
+        @if(auth()->user()->canManage('wa_schedule'))
         <button type="button" class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAddSchedule">
             <i class="fas fa-plus-circle me-1"></i>Tambah Jadwal Laporan
         </button>
+        @else
+        <span class="badge bg-secondary px-3 py-2">
+            <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+        </span>
+        @endif
     </div>
 
     <div class="table-responsive">
@@ -275,14 +281,19 @@
                     </td>
                     <td class="small text-muted">{{ $s->last_sent ? $s->last_sent->format('d/m/Y H:i') : '-' }}</td>
                     <td class="text-center">
+                        @if(auth()->user()->canManage('wa_schedule'))
                         <form action="{{ route('wa.schedule.toggle', $s->id) }}" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-xs py-0 px-2 badge {{ $s->aktif ? 'bg-success' : 'bg-secondary' }}" style="border:none;" title="Klik untuk ubah status">
                                 {{ $s->aktif ? 'Aktif' : 'Nonaktif' }}
                             </button>
                         </form>
+                        @else
+                        <span class="badge {{ $s->aktif ? 'bg-success' : 'bg-secondary' }}">{{ $s->aktif ? 'Aktif' : 'Nonaktif' }}</span>
+                        @endif
                     </td>
                     <td class="text-center">
+                        @if(auth()->user()->canManage('wa_schedule'))
                         <div class="btn-group btn-group-sm">
                             <!-- Send Now -->
                             <form action="{{ route('wa.schedule.sendNow', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirim laporan ini sekarang?');">
@@ -304,6 +315,9 @@
                                 </button>
                             </form>
                         </div>
+                        @else
+                        <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
+                        @endif
 
                         <!-- Modal Edit Schedule -->
                         <div class="modal fade" id="modalEdit{{ $s->id }}" tabindex="-1">

@@ -23,8 +23,8 @@ class UptController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('upt')) {
-            abort(403);
+        if (! $user->canManage('upt')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data UPT.');
         }
 
         $request->validate([
@@ -48,8 +48,8 @@ class UptController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('upt')) {
-            abort(403);
+        if (! $user->canManage('upt')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data UPT.');
         }
 
         $upt = Upt::findOrFail($id);
@@ -75,8 +75,8 @@ class UptController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('upt')) {
-            abort(403);
+        if (! $user->canManage('upt')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data UPT.');
         }
 
         $upt = Upt::findOrFail($id);

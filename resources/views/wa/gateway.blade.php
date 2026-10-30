@@ -134,9 +134,15 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    @if(auth()->user()->canManage('wa_settings'))
                     <button type="submit" class="btn btn-primary btn-sm px-4">
                         <i class="fas fa-save me-1"></i>Simpan Konfigurasi Gateway
                     </button>
+                    @else
+                    <button type="button" class="btn btn-secondary btn-sm px-4" disabled>
+                        <i class="fas fa-lock me-1"></i> Mode Lihat Saja
+                    </button>
+                    @endif
                 </div>
             </form>
         </div>
@@ -188,9 +194,15 @@
                     <input type="text" name="test_message" class="form-control form-control-sm"
                         value="📢 *TEST KONEKSI GRUP* - Sistem Sultan Banten Ditjenpas terhubung sukses." required aria-label="Pesan Test Grup">
                 </div>
+                @if(auth()->user()->canManage('wa_settings'))
                 <button type="submit" class="btn btn-outline-success btn-sm w-100">
                     <i class="fas fa-bullhorn me-1"></i>Kirim Pesan Uji Coba ke Grup
                 </button>
+                @else
+                <button type="button" class="btn btn-outline-secondary btn-sm w-100" disabled>
+                    <i class="fas fa-lock me-1"></i> Uji Coba Non-Aktif (Mode Lihat Saja)
+                </button>
+                @endif
             </form>
         </div>
 

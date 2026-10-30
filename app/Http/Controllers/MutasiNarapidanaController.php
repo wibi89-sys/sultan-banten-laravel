@@ -30,13 +30,16 @@ class MutasiNarapidanaController extends Controller
         }
     }
 
-    private function checkAccess(): void
+    private function checkAccess(string $requiredLevel = 'view'): void
     {
         $this->ensureTableExists();
 
         $user = auth()->user();
-        if (! $user || ! $user->hasAccess('mutasi')) {
-            abort(403, 'Anda tidak memiliki hak akses ke modul Mutasi Narapidana.');
+        if (! $user || ! $user->hasAccess('mutasi', $requiredLevel)) {
+            $msg = $requiredLevel === 'full'
+                ? 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Mutasi Narapidana.'
+                : 'Anda tidak memiliki hak akses ke modul Mutasi Narapidana.';
+            abort(403, $msg);
         }
     }
 
@@ -122,7 +125,7 @@ class MutasiNarapidanaController extends Controller
 
     public function create(): View|RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Kanwil hanya memantau dan memberikan persetujuan, kewenangan mengusulkan hanya dimiliki oleh UPT
@@ -138,7 +141,7 @@ class MutasiNarapidanaController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Kanwil hanya memantau dan memberikan persetujuan, kewenangan mengusulkan hanya dimiliki oleh UPT
@@ -252,7 +255,7 @@ class MutasiNarapidanaController extends Controller
 
     public function verifikasi(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Hanya Kanwil / Admin yang berwenang memverifikasi
@@ -408,7 +411,7 @@ class MutasiNarapidanaController extends Controller
 
     public function laporanPemindahanStore(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         $mutasi = MutasiNarapidana::with('tujuans')->findOrFail($id);
@@ -480,7 +483,7 @@ class MutasiNarapidanaController extends Controller
 
     public function laporanPenerimaanStore(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         $mutasi = MutasiNarapidana::with(['tujuans.uptTujuan'])->findOrFail($id);
@@ -557,7 +560,7 @@ class MutasiNarapidanaController extends Controller
 
     public function bastStore(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         $mutasi = MutasiNarapidana::with(['tujuans.uptTujuan'])->findOrFail($id);
@@ -698,7 +701,7 @@ class MutasiNarapidanaController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         $mutasi = MutasiNarapidana::findOrFail($id);

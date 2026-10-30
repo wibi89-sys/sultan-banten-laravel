@@ -87,8 +87,8 @@ class WhatsAppController extends Controller
     public function gatewayUpdate(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_settings')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $waSettings = WaSetting::getFirst();
@@ -114,8 +114,8 @@ class WhatsAppController extends Controller
     public function gatewayTest(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_settings')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $action = $request->input('action');
@@ -217,8 +217,8 @@ class WhatsAppController extends Controller
     public function groupStore(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule') && ! $user->hasAccess('wa_settings')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule') && ! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         if (! Schema::hasTable('wa_groups')) {
@@ -262,8 +262,8 @@ class WhatsAppController extends Controller
     public function groupUpdate(Request $request, $id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule') && ! $user->hasAccess('wa_settings')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule') && ! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $group = WaGroup::findOrFail($id);
@@ -333,8 +333,8 @@ class WhatsAppController extends Controller
     public function pimpinanStore(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule') && ! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $request->validate([
@@ -358,8 +358,8 @@ class WhatsAppController extends Controller
     public function pimpinanUpdate(Request $request, $id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule') && ! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $pimpinan = WaPimpinan::findOrFail($id);
@@ -385,8 +385,8 @@ class WhatsAppController extends Controller
     public function pimpinanDestroy($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule') && ! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $pimpinan = WaPimpinan::findOrFail($id);
@@ -427,8 +427,8 @@ class WhatsAppController extends Controller
     public function updateBuiltinSettings(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $type = $request->input('type');
@@ -466,8 +466,8 @@ class WhatsAppController extends Controller
     public function scheduleStore(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $request->validate([
@@ -493,8 +493,8 @@ class WhatsAppController extends Controller
     public function scheduleUpdate(Request $request, $id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $schedule = WaScheduledReport::findOrFail($id);
@@ -521,8 +521,8 @@ class WhatsAppController extends Controller
     public function scheduleDestroy($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $schedule = WaScheduledReport::findOrFail($id);
@@ -537,8 +537,8 @@ class WhatsAppController extends Controller
     public function scheduleToggle($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $schedule = WaScheduledReport::findOrFail($id);
@@ -553,8 +553,8 @@ class WhatsAppController extends Controller
     public function scheduleSendNow($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('wa_schedule')) {
-            abort(403, 'Akses ditolak.');
+        if (! $user->canManage('wa_schedule')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only).');
         }
 
         $res = WhatsAppService::sendScheduledReport($id);

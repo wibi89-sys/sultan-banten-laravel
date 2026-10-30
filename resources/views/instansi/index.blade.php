@@ -12,6 +12,13 @@
         <p class="text-muted small mb-0">Ubah identitas instansi, batas jam input harian, running text pengumuman, dan aset logo/stempel</p>
     </div>
 
+    @if(!auth()->user()->canManage('instansi'))
+    <div class="alert alert-secondary d-flex align-items-center mb-3 py-2">
+        <i class="fas fa-lock me-2 text-secondary"></i>
+        <span>Anda memiliki hak akses <strong>Lihat Saja</strong> pada modul Pengaturan Instansi. Data tidak dapat diubah.</span>
+    </div>
+    @endif
+
     <form method="POST" action="{{ route('instansi.update') }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
@@ -173,9 +180,15 @@
         </div>
 
         <div class="d-flex justify-content-end mt-4">
+            @if(auth()->user()->canManage('instansi'))
             <button type="submit" class="btn btn-primary px-4">
                 <i class="fas fa-save me-1"></i> Simpan Pengaturan
             </button>
+            @else
+            <button type="button" class="btn btn-secondary px-4" disabled>
+                <i class="fas fa-lock me-1"></i> Mode Lihat Saja
+            </button>
+            @endif
         </div>
     </form>
 </div>

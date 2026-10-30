@@ -12,9 +12,15 @@
             <h5 class="mb-1 fw-bold"><i class="fas fa-bullhorn text-primary me-2"></i>Daftar Pengumuman & Berita</h5>
             <p class="text-muted small mb-0">Kelola pengumuman untuk marquee bar, banner pop-up, dan notifikasi wilayah</p>
         </div>
+        @if(auth()->user()->canManage('pengumuman'))
         <button class="btn btn-primary btn-sm px-3 mt-2 mt-md-0" data-bs-toggle="modal" data-bs-target="#modalAdd">
             <i class="fas fa-plus me-1"></i> Tambah Pengumuman
         </button>
+        @else
+        <span class="badge bg-secondary px-3 py-2 mt-2 mt-md-0">
+            <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+        </span>
+        @endif
     </div>
 
     <!-- Filter Form -->
@@ -102,6 +108,7 @@
                         @endif
                     </td>
                     <td class="text-center">
+                        @if(auth()->user()->canManage('pengumuman'))
                         <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($p) }})" title="Edit" aria-label="Edit Pengumuman {{ $p->judul }}">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -112,6 +119,9 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @else
+                        <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
+                        @endif
                     </td>
                 </tr>
                 @empty

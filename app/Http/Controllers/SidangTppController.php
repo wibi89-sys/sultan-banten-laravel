@@ -23,11 +23,14 @@ class SidangTppController extends Controller
     /**
      * Pastikan user memiliki hak akses menu Sidang TPP.
      */
-    protected function checkAccess(): void
+    protected function checkAccess(string $requiredLevel = 'view'): void
     {
         $user = auth()->user();
-        if (! $user || ! $user->hasAccess('sidang_tpp')) {
-            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses fitur Sidang TPP.');
+        if (! $user || ! $user->hasAccess('sidang_tpp', $requiredLevel)) {
+            $msg = $requiredLevel === 'full'
+                ? 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Sidang TPP.'
+                : 'Akses ditolak. Anda tidak memiliki izin untuk mengakses fitur Sidang TPP.';
+            abort(403, $msg);
         }
     }
 
@@ -93,7 +96,7 @@ class SidangTppController extends Controller
      */
     public function create(): View|RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Kanwil hanya memantau, kewenangan mendaftarkan jadwal sidang sepenuhnya milik UPT
@@ -113,7 +116,7 @@ class SidangTppController extends Controller
      */
     public function previewExcel(Request $request): JsonResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
 
         $request->validate([
             'file_excel' => 'required|file|max:10240',
@@ -148,7 +151,7 @@ class SidangTppController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Kanwil hanya melihat, semua kewenangan pendaftaran sidang milik user UPT
@@ -380,7 +383,7 @@ class SidangTppController extends Controller
      */
     public function hasilUpdate(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         $sidang = SidangTpp::with('usulan')->findOrFail($id);
@@ -507,7 +510,7 @@ class SidangTppController extends Controller
      */
     public function kanwilVerifikasi(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Hanya role Kanwil (tanpa upt_id) yang berwenang memverifikasi
@@ -587,7 +590,7 @@ class SidangTppController extends Controller
      */
     public function uploadLaporanKanwil(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         // Hanya akun Kanwil (tanpa upt_id) yang berwenang mengunggah laporan hasil sidang Ka. Kanwil
@@ -763,7 +766,7 @@ class SidangTppController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
 
         $sidang = SidangTpp::findOrFail($id);
@@ -875,7 +878,7 @@ class SidangTppController extends Controller
      */
     public function pesertaStore(Request $request, int $id): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
         $sidang = SidangTpp::findOrFail($id);
 
@@ -929,7 +932,7 @@ class SidangTppController extends Controller
      */
     public function pesertaUpdate(Request $request, int $id, int $pesertaId): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
         $sidang = SidangTpp::findOrFail($id);
         $usulan = $sidang->usulan()->findOrFail($pesertaId);
@@ -983,7 +986,7 @@ class SidangTppController extends Controller
      */
     public function pesertaDestroy(int $id, int $pesertaId): RedirectResponse
     {
-        $this->checkAccess();
+        $this->checkAccess('full');
         $user = auth()->user();
         $sidang = SidangTpp::findOrFail($id);
         $usulan = $sidang->usulan()->findOrFail($pesertaId);

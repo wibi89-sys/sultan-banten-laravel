@@ -79,9 +79,15 @@
                     <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-2"></i>Target Grup WhatsApp</h6>
                     <small class="text-muted">Kelola ID grup WhatsApp untuk tujuan pengiriman laporan monitoring dan terpadu.</small>
                 </div>
+                @if(auth()->user()->canManage('wa_settings'))
                 <button type="button" class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAddGroup">
                     <i class="fas fa-plus me-1"></i>Tambah Grup Baru
                 </button>
+                @else
+                <span class="badge bg-secondary px-3 py-2">
+                    <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                </span>
+                @endif
             </div>
 
             <div class="table-responsive">
@@ -119,6 +125,7 @@
                                 </form>
                             </td>
                             <td class="text-center">
+                                @if(auth()->user()->canManage('wa_settings'))
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditGroup{{ $grp->id }}" title="Edit">
                                         <i class="fas fa-edit"></i>
@@ -131,6 +138,9 @@
                                         </button>
                                     </form>
                                 </div>
+                                @else
+                                <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
+                                @endif
 
                                 <!-- Modal Edit Group -->
                                 <div class="modal fade" id="modalEditGroup{{ $grp->id }}" tabindex="-1">
@@ -195,9 +205,15 @@
                     <h6 class="fw-bold mb-1"><i class="fas fa-user-tie text-success me-2"></i>Daftar Kontak Pimpinan</h6>
                     <small class="text-muted">Pimpinan yang menerima kiriman laporan harian otomatis via nomor WhatsApp pribadi.</small>
                 </div>
+                @if(auth()->user()->canManage('wa_settings'))
                 <button type="button" class="btn btn-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAddPimpinan">
                     <i class="fas fa-plus me-1"></i>Tambah Pimpinan
                 </button>
+                @else
+                <span class="badge bg-secondary px-3 py-2">
+                    <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                </span>
+                @endif
             </div>
 
             <div class="table-responsive">
@@ -229,6 +245,7 @@
                                 </span>
                             </td>
                             <td class="text-center">
+                                @if(auth()->user()->canManage('wa_settings'))
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditPimpinan{{ $p->id }}" title="Edit">
                                         <i class="fas fa-edit"></i>
@@ -241,6 +258,9 @@
                                         </button>
                                     </form>
                                 </div>
+                                @else
+                                <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
+                                @endif
 
                                 <!-- Modal Edit Pimpinan -->
                                 <div class="modal fade" id="modalEditPimpinan{{ $p->id }}" tabindex="-1">

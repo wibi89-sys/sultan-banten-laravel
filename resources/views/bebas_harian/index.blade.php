@@ -54,15 +54,21 @@
             <p class="text-muted mb-0 small">Pencatatan harian WBP / Tahanan bebas (Bebas Murni, PB, CB, CMB, Asimilasi, BDH, Lainnya)</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            @if($timeRestriction['active'] && !$canInput)
-            <span class="badge bg-warning text-dark px-3 py-2">
-                <i class="fas fa-clock me-1"></i>
-                Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
-            </span>
+            @if(auth()->user()->canManage('bebas_harian'))
+                @if($timeRestriction['active'] && !$canInput)
+                <span class="badge bg-warning text-dark px-3 py-2">
+                    <i class="fas fa-clock me-1"></i>
+                    Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
+                </span>
+                @endif
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambah" {{ !$canInput ? 'disabled' : '' }}>
+                    <i class="fas fa-plus me-1"></i> Input Bebas Hari Ini
+                </button>
+            @else
+                <span class="badge bg-secondary px-3 py-2">
+                    <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                </span>
             @endif
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambah" {{ !$canInput ? 'disabled' : '' }}>
-                <i class="fas fa-plus me-1"></i> Input Bebas Hari Ini
-            </button>
         </div>
     </div>
 
@@ -150,6 +156,7 @@
                                 </td>
                                 <td><small class="text-muted">{{ $row->keterangan ?? '-' }}</small></td>
                                 <td class="text-center">
+                                    @if(auth()->user()->canManage('bebas_harian'))
                                     <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data" aria-label="Edit Data Bebas Harian {{ $row->nama_upt }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -162,6 +169,9 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    @else
+                                    <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

@@ -147,8 +147,8 @@ class BebasHarianController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('bebas_harian')) {
-            abort(403);
+        if (! $user->canManage('bebas_harian')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas Harian.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -235,8 +235,8 @@ class BebasHarianController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('bebas_harian')) {
-            abort(403);
+        if (! $user->canManage('bebas_harian')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas Harian.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -303,8 +303,8 @@ class BebasHarianController extends Controller
     public function destroy(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('bebas_harian')) {
-            abort(403);
+        if (! $user->canManage('bebas_harian')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas Harian.');
         }
 
         $timeCheck = isInputTimeAllowed();

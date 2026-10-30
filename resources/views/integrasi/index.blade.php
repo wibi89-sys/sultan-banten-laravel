@@ -65,15 +65,21 @@
             <p class="text-muted small mb-0">Monitoring data usulan dan SK terbit Pembebasan Bersyarat (PB), Cuti Bersyarat (CB), CMB, CMK, dan Asimilasi</p>
         </div>
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            @if($timeRestriction['active'] && !$canInput)
-            <span class="badge bg-warning text-dark px-3 py-2">
-                <i class="fas fa-clock me-1"></i>
-                Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
-            </span>
+            @if(auth()->user()->canManage('integrasi'))
+                @if($timeRestriction['active'] && !$canInput)
+                <span class="badge bg-warning text-dark px-3 py-2">
+                    <i class="fas fa-clock me-1"></i>
+                    Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
+                </span>
+                @endif
+                <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAdd" {{ !$canInput ? 'disabled' : '' }}>
+                    <i class="fas fa-plus me-1"></i> Tambah Data
+                </button>
+            @else
+                <span class="badge bg-secondary px-3 py-2">
+                    <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                </span>
             @endif
-            <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAdd" {{ !$canInput ? 'disabled' : '' }}>
-                <i class="fas fa-plus me-1"></i> Tambah Data
-            </button>
         </div>
     </div>
     
@@ -194,6 +200,7 @@
                             @endif
                         </td>
                         <td class="text-center">
+                            @if(auth()->user()->canManage('integrasi'))
                             <button class="btn btn-warning btn-sm py-0 px-1.5" onclick="editData({{ json_encode($data) }})" title="Edit" aria-label="Edit Data Integrasi {{ $data->upt->nama_upt ?? '' }}">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -204,6 +211,9 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
+                            @else
+                            <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
+                            @endif
                         </td>
                     </tr>
                 @empty

@@ -166,8 +166,8 @@ class OverstayingController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('overstaying')) {
-            abort(403);
+        if (! $user->canManage('overstaying')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Overstaying.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -345,8 +345,8 @@ class OverstayingController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('overstaying')) {
-            abort(403);
+        if (! $user->canManage('overstaying')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Overstaying.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -494,8 +494,8 @@ class OverstayingController extends Controller
     public function destroy($id): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('overstaying')) {
-            abort(403);
+        if (! $user->canManage('overstaying')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Overstaying.');
         }
 
         $timeCheck = isInputTimeAllowed();

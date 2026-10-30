@@ -65,15 +65,21 @@
             <p class="text-muted small mb-0">Monitoring data tahanan dan overstaying kategori AI sampai AV</p>
         </div>
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            @if($timeRestriction['active'] && !$canInput)
-            <span class="badge bg-warning text-dark px-3 py-2">
-                <i class="fas fa-clock me-1"></i>
-                Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
-            </span>
+            @if(auth()->user()->canManage('overstaying'))
+                @if($timeRestriction['active'] && !$canInput)
+                <span class="badge bg-warning text-dark px-3 py-2">
+                    <i class="fas fa-clock me-1"></i>
+                    Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
+                </span>
+                @endif
+                <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAdd" {{ !$canInput ? 'disabled' : '' }}>
+                    <i class="fas fa-plus me-1"></i> Tambah Data
+                </button>
+            @else
+                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2.5 py-1.5">
+                    <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                </span>
             @endif
-            <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAdd" {{ !$canInput ? 'disabled' : '' }}>
-                <i class="fas fa-plus me-1"></i> Tambah Data
-            </button>
         </div>
     </div>
     

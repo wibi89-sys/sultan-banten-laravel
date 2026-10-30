@@ -205,8 +205,8 @@ class PenghuniController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('penghuni')) {
-            abort(403);
+        if (! $user->canManage('penghuni')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Penghuni.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -322,8 +322,8 @@ class PenghuniController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('penghuni')) {
-            abort(403);
+        if (! $user->canManage('penghuni')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Penghuni.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -389,8 +389,8 @@ class PenghuniController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('penghuni')) {
-            abort(403);
+        if (! $user->canManage('penghuni')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Penghuni.');
         }
 
         $timeCheck = isInputTimeAllowed();

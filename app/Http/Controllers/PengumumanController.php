@@ -42,8 +42,8 @@ class PengumumanController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('pengumuman')) {
-            abort(403);
+        if (! $user->canManage('pengumuman')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Pengumuman.');
         }
 
         $request->validate([
@@ -91,8 +91,8 @@ class PengumumanController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('pengumuman')) {
-            abort(403);
+        if (! $user->canManage('pengumuman')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Pengumuman.');
         }
 
         $p = Pengumuman::findOrFail($id);
@@ -152,8 +152,8 @@ class PengumumanController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (! $user->hasAccess('pengumuman')) {
-            abort(403);
+        if (! $user->canManage('pengumuman')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Pengumuman.');
         }
 
         $p = Pengumuman::findOrFail($id);

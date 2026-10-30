@@ -108,8 +108,8 @@ class IntegrasiController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('integrasi')) {
-            abort(403);
+        if (! $user->canManage('integrasi')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Integrasi.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -225,8 +225,8 @@ class IntegrasiController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('integrasi')) {
-            abort(403);
+        if (! $user->canManage('integrasi')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Integrasi.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -303,8 +303,8 @@ class IntegrasiController extends Controller
     public function destroy($id): RedirectResponse
     {
         $user = auth()->user();
-        if (! $user->hasAccess('integrasi')) {
-            abort(403);
+        if (! $user->canManage('integrasi')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Data Integrasi.');
         }
 
         $timeCheck = isInputTimeAllowed();

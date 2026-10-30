@@ -37,7 +37,7 @@ class GrantMutasiAccessCommand extends Command
         if (! Schema::hasColumn('users', 'akses_mutasi')) {
             $this->info('Menambahkan kolom akses_mutasi pada tabel users...');
             Schema::table('users', function ($table) {
-                $table->boolean('akses_mutasi')->default(false);
+                $table->string('akses_mutasi', 10)->default('none');
             });
             $this->info('Kolom akses_mutasi berhasil ditambahkan.');
         }
@@ -52,13 +52,13 @@ class GrantMutasiAccessCommand extends Command
                 return self::FAILURE;
             }
 
-            $user->update(['akses_mutasi' => true]);
+            $user->update(['akses_mutasi' => 'full']);
             $this->info("Akses Mutasi Narapidana berhasil diberikan ke user: {$user->nama_lengkap} ({$user->username}).");
 
             return self::SUCCESS;
         }
 
-        $count = User::where('role', 'operator')->update(['akses_mutasi' => true]);
+        $count = User::where('role', 'operator')->update(['akses_mutasi' => 'full']);
         $this->info("Berhasil mengaktifkan akses Mutasi Narapidana untuk {$count} akun Operator UPT.");
 
         return self::SUCCESS;

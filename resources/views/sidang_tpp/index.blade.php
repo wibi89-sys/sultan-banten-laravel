@@ -111,10 +111,14 @@
                     <p class="text-muted small mb-0">Implementasi Bintorwasdal sesuai Surat Edaran Direktur Jenderal Pemasyarakatan No: PAS-38.OT.02.02 Tahun 2026</p>
                 </div>
                 <div class="d-flex gap-2">
-                    @if(!empty(auth()->user()->upt_id))
+                    @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id))
                     <a href="{{ route('sidang-tpp.create') }}" class="btn btn-primary btn-sm px-3 shadow-sm" id="btnJadwalkanSidang">
                         <i class="fas fa-plus-circle me-1"></i>Jadwalkan Sidang Baru
                     </a>
+                    @elseif(!empty(auth()->user()->upt_id))
+                    <span class="badge bg-secondary py-2 px-3 small d-flex align-items-center">
+                        <i class="fas fa-eye me-1"></i>Mode Lihat Saja
+                    </span>
                     @else
                     <span class="badge bg-light text-muted border py-2 px-3 small d-flex align-items-center">
                         <i class="fas fa-eye me-1 text-primary"></i>Mode Monitoring Kanwil
@@ -245,7 +249,7 @@
                                 <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-outline-info" title="Detail Lengkap Sidang">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                @if(!empty(auth()->user()->upt_id) && auth()->user()->upt_id == $s->upt_id && !in_array($s->status_verifikasi_kanwil, ['sesuai', 'terverifikasi']))
+                                @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id) && auth()->user()->upt_id == $s->upt_id && !in_array($s->status_verifikasi_kanwil, ['sesuai', 'terverifikasi']))
                                 <form action="{{ route('sidang-tpp.destroy', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda sidang ini? Seluruh data usulan dan berkas terkait akan terhapus.');">
                                     @csrf
                                     @method('DELETE')
@@ -263,7 +267,7 @@
                             <i class="fas fa-gavel fa-3x mb-3 text-secondary opacity-50"></i>
                             <h6>Belum Ada Data Sidang TPP</h6>
                             <p class="small mb-3">Jadwalkan sidang TPP UPT dengan mengunggah undangan ke Kanwil &amp; menginput/impor usulan Warga Binaan via Excel.</p>
-                            @if(!empty(auth()->user()->upt_id))
+                            @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id))
                             <a href="{{ route('sidang-tpp.create') }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-plus-circle me-1"></i>Mulai Daftarkan Sidang
                             </a>

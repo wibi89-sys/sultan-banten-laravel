@@ -5,6 +5,26 @@
     <i class="fas fa-user-cog me-2"></i>Manajemen User
 @endsection
 
+@php
+    $moduleList = [
+        'penghuni' => ['label' => 'Data Penghuni (Lapas/Rutan)', 'icon' => 'fas fa-users'],
+        'overstaying' => ['label' => 'Data Overstaying Tahanan', 'icon' => 'fas fa-clock'],
+        'integrasi' => ['label' => 'Data Integrasi (PB, CB, CMB)', 'icon' => 'fas fa-user-check'],
+        'bebas_harian' => ['label' => 'Bebas Harian', 'icon' => 'fas fa-door-open'],
+        'sidang_tpp' => ['label' => 'Sidang TPP', 'icon' => 'fas fa-gavel'],
+        'mutasi' => ['label' => 'Mutasi Narapidana Antar-UPT', 'icon' => 'fas fa-exchange-alt'],
+        'dashboard' => ['label' => 'Dashboard & Statistik', 'icon' => 'fas fa-chart-line'],
+        'laporan' => ['label' => 'Cetak Laporan & Rekapitulasi', 'icon' => 'fas fa-print'],
+        'activity_log' => ['label' => 'Log Aktivitas Pengguna', 'icon' => 'fas fa-history'],
+        'upt' => ['label' => 'Master Data UPT', 'icon' => 'fas fa-building'],
+        'user' => ['label' => 'Manajemen User & Hak Akses', 'icon' => 'fas fa-user-shield'],
+        'instansi' => ['label' => 'Pengaturan Instansi & KOP', 'icon' => 'fas fa-cogs'],
+        'pengumuman' => ['label' => 'Pengumuman Internal', 'icon' => 'fas fa-bullhorn'],
+        'wa_settings' => ['label' => 'WhatsApp Gateway & Kontak', 'icon' => 'fab fa-whatsapp'],
+        'wa_schedule' => ['label' => 'WhatsApp Jadwal & Template Pesan', 'icon' => 'fas fa-calendar-alt'],
+    ];
+@endphp
+
 @push('styles')
 <style>
     .role-badge {
@@ -16,8 +36,8 @@
     .role-admin { background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%); color: white; }
     .role-operator { background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%); color: white; }
     .role-viewer { background: #64748b; color: white; }
-    .access-checkbox { margin-bottom: 6px; }
-    .access-checkbox .form-check-label { font-size: 12px; }
+    .perm-table th, .perm-table td { vertical-align: middle; }
+    .perm-table tbody tr:hover { background-color: rgba(14, 165, 233, 0.04); }
 </style>
 @endpush
 
@@ -26,23 +46,29 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <div>
             <h5 class="mb-1 fw-bold"><i class="fas fa-users-cog text-primary me-2"></i>Daftar Pengguna Sistem</h5>
-            <p class="text-muted small mb-0">Kelola akun pengguna, peran, hak akses menu, dan penetapan UPT</p>
+            <p class="text-muted small mb-0">Kelola akun pengguna, peran, tingkat hak akses per modul (Lihat Saja vs Akses Penuh), dan penetapan UPT</p>
         </div>
-        <button class="btn btn-primary btn-sm px-3 mt-2 mt-md-0" data-bs-toggle="modal" data-bs-target="#modalAdd">
+        @if(auth()->user()->canManage('user'))
+        <button class="btn btn-primary btn-sm px-3 mt-2 mt-md-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAdd">
             <i class="fas fa-user-plus me-1"></i> Tambah User
         </button>
+        @else
+        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1">
+            <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+        </span>
+        @endif
     </div>
 
     <div class="table-responsive">
         <table class="table table-hover align-middle table-sm mb-0">
             <thead class="bg-primary bg-opacity-10">
                 <tr>
-                    <th class="text-center" width="5%">No</th>
-                    <th width="22%">Nama & Username</th>
-                    <th width="12%">No. WA</th>
-                    <th class="text-center" width="10%">Role</th>
-                    <th width="20%">UPT Terkait</th>
-                    <th width="21%">Hak Akses Ringkas</th>
+                    <th class="text-center" width="4%">No</th>
+                    <th width="20%">Nama & Username</th>
+                    <th width="11%">No. WA</th>
+                    <th class="text-center" width="9%">Role</th>
+                    <th width="16%">UPT Terkait</th>
+                    <th width="30%">Tingkat Hak Akses per Modul</th>
                     <th class="text-center" width="10%">Aksi</th>
                 </tr>
             </thead>
@@ -70,20 +96,34 @@
                     </td>
                     <td class="small">
                         @if($u->isAdmin())
-                            <span class="badge bg-success bg-opacity-25 text-success">Akses Penuh (Admin)</span>
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 py-1 px-2">
+                                <i class="fas fa-shield-alt me-1"></i>Akses Penuh Seluruh Modul (Admin)
+                            </span>
                         @else
                             <div class="d-flex flex-wrap gap-1">
-                                @if($u->akses_penghuni)<span class="badge bg-light text-dark border">Penghuni</span>@endif
-                                @if($u->akses_overstaying)<span class="badge bg-light text-dark border">Overstay</span>@endif
-                                @if($u->akses_integrasi)<span class="badge bg-light text-dark border">Integrasi</span>@endif
-                                @if($u->akses_bebas_harian)<span class="badge bg-light text-dark border">Bebas</span>@endif
-                                @if($u->akses_sidang_tpp)<span class="badge bg-light text-dark border">Sidang TPP</span>@endif
-                                @if($u->akses_mutasi)<span class="badge bg-light text-dark border">Mutasi</span>@endif
-                                @if($u->akses_laporan)<span class="badge bg-light text-dark border">Laporan</span>@endif
+                                @php $hasAny = false; @endphp
+                                @foreach($moduleList as $modKey => $modInfo)
+                                    @php $lvl = $u->getAccessLevel($modKey); @endphp
+                                    @if($lvl === 'full')
+                                        @php $hasAny = true; @endphp
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-0.5 px-1.5" title="{{ $modInfo['label'] }}: Akses Penuh (Kelola & Edit)">
+                                            <i class="{{ $modInfo['icon'] }} me-1" style="font-size: 9px;"></i>{{ Str::limit($modInfo['label'], 16) }}
+                                        </span>
+                                    @elseif($lvl === 'view')
+                                        @php $hasAny = true; @endphp
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 py-0.5 px-1.5" title="{{ $modInfo['label'] }}: Lihat Saja (Read-Only)">
+                                            <i class="fas fa-eye me-1" style="font-size: 9px;"></i>{{ Str::limit($modInfo['label'], 16) }}
+                                        </span>
+                                    @endif
+                                @endforeach
+                                @if(! $hasAny)
+                                    <span class="text-muted fst-italic" style="font-size: 11px;">Tidak ada hak akses</span>
+                                @endif
                             </div>
                         @endif
                     </td>
                     <td class="text-center">
+                        @if(auth()->user()->canManage('user'))
                         <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($u) }})" title="Edit" aria-label="Edit User {{ $u->username }}">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -95,6 +135,9 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endif
+                        @else
+                        <span class="text-muted small fst-italic">-</span>
                         @endif
                     </td>
                 </tr>
@@ -110,7 +153,7 @@
 
 <!-- Modal Add -->
 <div class="modal fade" id="modalAdd" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
                 <h5 class="modal-title fs-6"><i class="fas fa-user-plus me-2"></i>Tambah Pengguna Baru</h5>
@@ -138,9 +181,9 @@
                         </div>
                         <div class="col-md-6">
                             <label for="add_role" class="form-label small fw-semibold">Role <span class="text-danger">*</span></label>
-                            <select name="role" id="add_role" class="form-select form-select-sm" required aria-label="Role Pengguna">
+                            <select name="role" id="add_role" class="form-select form-select-sm" required onchange="onRoleChange('add')">
                                 <option value="operator">Operator UPT</option>
-                                <option value="viewer">Viewer (Hanya Lihat)</option>
+                                <option value="viewer">Viewer (Pengawas / Hanya Lihat)</option>
                                 <option value="admin">Administrator Wilayah</option>
                             </select>
                         </div>
@@ -156,79 +199,71 @@
                         </div>
                     </div>
 
-                    <h6 class="small fw-bold text-primary border-bottom pb-1 mb-2">Hak Akses Modul</h6>
-                    <div class="row">
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_dashboard" id="add_ak_dash" checked>
-                                <label class="form-check-label" for="add_ak_dash">Dashboard</label>
+                    <div id="add_admin_notice" class="alert alert-info py-2 px-3 small d-none mb-3">
+                        <i class="fas fa-info-circle me-1"></i><strong>Catatan:</strong> Akun Administrator Wilayah secara otomatis memiliki hak <strong>Akses Penuh</strong> pada seluruh modul sistem.
+                    </div>
+
+                    <!-- MATRIKS HAK AKSES MODUL -->
+                    <div class="card border border-light-subtle rounded-3 mb-2 shadow-none bg-light bg-opacity-25">
+                        <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
+                            <div>
+                                <span class="fw-bold small text-dark"><i class="fas fa-sliders-h me-1 text-primary"></i>Tingkat Hak Akses per Modul</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Pilih antara: <strong>Tidak Ada</strong>, <strong>Lihat Saja</strong> (Read-Only), atau <strong>Akses Penuh</strong> (Kelola, Tambah &amp; Edit)</small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 11px;" onclick="setMatrixPermissions('add', 'full')">
+                                    <i class="fas fa-check-double me-1"></i>Semua Penuh
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm py-0 px-2" style="font-size: 11px;" onclick="setMatrixPermissions('add', 'view')">
+                                    <i class="fas fa-eye me-1"></i>Semua Lihat
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 11px;" onclick="setMatrixPermissions('add', 'none')">
+                                    <i class="fas fa-times me-1"></i>Kosongkan
+                                </button>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_penghuni" id="add_ak_peng" checked>
-                                <label class="form-check-label" for="add_ak_peng">Data Penghuni</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_overstaying" id="add_ak_over" checked>
-                                <label class="form-check-label" for="add_ak_over">Data Overstaying</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_integrasi" id="add_ak_integ" checked>
-                                <label class="form-check-label" for="add_ak_integ">Data Integrasi</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_bebas_harian" id="add_ak_bebas" checked>
-                                <label class="form-check-label" for="add_ak_bebas">Bebas Harian</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_sidang_tpp" id="add_ak_sidang" checked>
-                                <label class="form-check-label" for="add_ak_sidang">Sidang TPP</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_mutasi" id="add_ak_mutasi" checked>
-                                <label class="form-check-label" for="add_ak_mutasi">Mutasi Narapidana</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_laporan" id="add_ak_lap" checked>
-                                <label class="form-check-label" for="add_ak_lap">Cetak Laporan</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_upt" id="add_ak_upt">
-                                <label class="form-check-label" for="add_ak_upt">Master Data UPT</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_user" id="add_ak_user">
-                                <label class="form-check-label" for="add_ak_user">Manajemen User</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_instansi" id="add_ak_inst">
-                                <label class="form-check-label" for="add_ak_inst">Pengaturan Instansi</label>
-                            </div>
+                        <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+                            <table class="table table-sm table-hover align-middle mb-0 perm-table" style="font-size: 12px;">
+                                <thead class="bg-light sticky-top shadow-sm" style="z-index: 1;">
+                                    <tr>
+                                        <th width="46%" class="ps-3">Nama Modul</th>
+                                        <th class="text-center" width="18%"><span class="badge bg-secondary bg-opacity-10 text-secondary border">Tidak Ada</span></th>
+                                        <th class="text-center" width="18%"><span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><i class="fas fa-eye me-1"></i>Lihat Saja</span></th>
+                                        <th class="text-center" width="18%"><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="fas fa-check me-1"></i>Akses Penuh</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($moduleList as $modKey => $modInfo)
+                                    <tr>
+                                        <td class="ps-3 py-1.5">
+                                            <i class="{{ $modInfo['icon'] }} me-2 text-secondary" style="width: 16px;"></i>
+                                            <span class="fw-semibold text-dark">{{ $modInfo['label'] }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-inline-block mb-0">
+                                                <input class="form-check-input" type="radio" name="akses_{{ $modKey }}" id="add_akses_{{ $modKey }}_none" value="none">
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-inline-block mb-0">
+                                                <input class="form-check-input" type="radio" name="akses_{{ $modKey }}" id="add_akses_{{ $modKey }}_view" value="view">
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-inline-block mb-0">
+                                                <input class="form-check-input" type="radio" name="akses_{{ $modKey }}" id="add_akses_{{ $modKey }}_full" value="full" checked>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Simpan User</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm">Simpan User</button>
                 </div>
             </form>
         </div>
@@ -237,10 +272,10 @@
 
 <!-- Modal Edit -->
 <div class="modal fade" id="modalEdit" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 bg-warning text-dark">
-                <h5 class="modal-title fs-6"><i class="fas fa-user-edit me-2"></i>Edit Pengguna</h5>
+                <h5 class="modal-title fs-6"><i class="fas fa-user-edit me-2"></i>Edit Pengguna &amp; Hak Akses</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" id="formEdit">
@@ -254,7 +289,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="edit_username" class="form-label small fw-semibold">Username</label>
-                            <input type="text" id="edit_username" class="form-control form-control-sm" readonly disabled aria-label="Username">
+                            <input type="text" id="edit_username" class="form-control form-control-sm bg-light" readonly disabled aria-label="Username">
                         </div>
                         <div class="col-md-6">
                             <label for="edit_password" class="form-label small fw-semibold">Password Baru (Opsional)</label>
@@ -266,9 +301,9 @@
                         </div>
                         <div class="col-md-6">
                             <label for="edit_role" class="form-label small fw-semibold">Role <span class="text-danger">*</span></label>
-                            <select name="role" id="edit_role" class="form-select form-select-sm" required aria-label="Role Pengguna">
+                            <select name="role" id="edit_role" class="form-select form-select-sm" required onchange="onRoleChange('edit')">
                                 <option value="operator">Operator UPT</option>
-                                <option value="viewer">Viewer (Hanya Lihat)</option>
+                                <option value="viewer">Viewer (Pengawas / Hanya Lihat)</option>
                                 <option value="admin">Administrator Wilayah</option>
                             </select>
                         </div>
@@ -280,82 +315,75 @@
                                 <option value="{{ $upt->id }}">{{ $upt->nama_upt }}</option>
                                 @endforeach
                             </select>
+                            <small class="text-muted" style="font-size: 11px;">Kosongkan jika admin/operator wilayah</small>
                         </div>
                     </div>
 
-                    <h6 class="small fw-bold text-primary border-bottom pb-1 mb-2">Hak Akses Modul</h6>
-                    <div class="row">
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_dashboard" id="edit_ak_dash">
-                                <label class="form-check-label" for="edit_ak_dash">Dashboard</label>
+                    <div id="edit_admin_notice" class="alert alert-info py-2 px-3 small d-none mb-3">
+                        <i class="fas fa-info-circle me-1"></i><strong>Catatan:</strong> Akun Administrator Wilayah secara otomatis memiliki hak <strong>Akses Penuh</strong> pada seluruh modul sistem.
+                    </div>
+
+                    <!-- MATRIKS HAK AKSES MODUL -->
+                    <div class="card border border-light-subtle rounded-3 mb-2 shadow-none bg-light bg-opacity-25">
+                        <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
+                            <div>
+                                <span class="fw-bold small text-dark"><i class="fas fa-sliders-h me-1 text-primary"></i>Tingkat Hak Akses per Modul</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Pilih antara: <strong>Tidak Ada</strong>, <strong>Lihat Saja</strong> (Read-Only), atau <strong>Akses Penuh</strong> (Kelola, Tambah &amp; Edit)</small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 11px;" onclick="setMatrixPermissions('edit', 'full')">
+                                    <i class="fas fa-check-double me-1"></i>Semua Penuh
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm py-0 px-2" style="font-size: 11px;" onclick="setMatrixPermissions('edit', 'view')">
+                                    <i class="fas fa-eye me-1"></i>Semua Lihat
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 11px;" onclick="setMatrixPermissions('edit', 'none')">
+                                    <i class="fas fa-times me-1"></i>Kosongkan
+                                </button>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_penghuni" id="edit_ak_peng">
-                                <label class="form-check-label" for="edit_ak_peng">Data Penghuni</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_overstaying" id="edit_ak_over">
-                                <label class="form-check-label" for="edit_ak_over">Data Overstaying</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_integrasi" id="edit_ak_integ">
-                                <label class="form-check-label" for="edit_ak_integ">Data Integrasi</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_bebas_harian" id="edit_ak_bebas">
-                                <label class="form-check-label" for="edit_ak_bebas">Bebas Harian</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_sidang_tpp" id="edit_ak_sidang">
-                                <label class="form-check-label" for="edit_ak_sidang">Sidang TPP</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_mutasi" id="edit_ak_mutasi">
-                                <label class="form-check-label" for="edit_ak_mutasi">Mutasi Narapidana</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_laporan" id="edit_ak_lap">
-                                <label class="form-check-label" for="edit_ak_lap">Cetak Laporan</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_upt" id="edit_ak_upt">
-                                <label class="form-check-label" for="edit_ak_upt">Master Data UPT</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_user" id="edit_ak_user">
-                                <label class="form-check-label" for="edit_ak_user">Manajemen User</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 access-checkbox">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="akses_instansi" id="edit_ak_inst">
-                                <label class="form-check-label" for="edit_ak_inst">Pengaturan Instansi</label>
-                            </div>
+                        <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+                            <table class="table table-sm table-hover align-middle mb-0 perm-table" style="font-size: 12px;">
+                                <thead class="bg-light sticky-top shadow-sm" style="z-index: 1;">
+                                    <tr>
+                                        <th width="46%" class="ps-3">Nama Modul</th>
+                                        <th class="text-center" width="18%"><span class="badge bg-secondary bg-opacity-10 text-secondary border">Tidak Ada</span></th>
+                                        <th class="text-center" width="18%"><span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><i class="fas fa-eye me-1"></i>Lihat Saja</span></th>
+                                        <th class="text-center" width="18%"><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="fas fa-check me-1"></i>Akses Penuh</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($moduleList as $modKey => $modInfo)
+                                    <tr>
+                                        <td class="ps-3 py-1.5">
+                                            <i class="{{ $modInfo['icon'] }} me-2 text-secondary" style="width: 16px;"></i>
+                                            <span class="fw-semibold text-dark">{{ $modInfo['label'] }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-inline-block mb-0">
+                                                <input class="form-check-input" type="radio" name="akses_{{ $modKey }}" id="edit_akses_{{ $modKey }}_none" value="none">
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-inline-block mb-0">
+                                                <input class="form-check-input" type="radio" name="akses_{{ $modKey }}" id="edit_akses_{{ $modKey }}_view" value="view">
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-inline-block mb-0">
+                                                <input class="form-check-input" type="radio" name="akses_{{ $modKey }}" id="edit_akses_{{ $modKey }}_full" value="full">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Simpan Perubahan</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -365,6 +393,31 @@
 
 @push('scripts')
 <script>
+    const allModuleKeys = @json(array_keys($moduleList));
+
+    function setMatrixPermissions(prefix, level) {
+        allModuleKeys.forEach(field => {
+            const radio = document.getElementById(`${prefix}_akses_${field}_${level}`);
+            if (radio) {
+                radio.checked = true;
+            }
+        });
+    }
+
+    function onRoleChange(prefix) {
+        const role = document.getElementById(`${prefix}_role`).value;
+        const alertNotice = document.getElementById(`${prefix}_admin_notice`);
+        if (role === 'admin') {
+            if (alertNotice) alertNotice.classList.remove('d-none');
+            setMatrixPermissions(prefix, 'full');
+        } else {
+            if (alertNotice) alertNotice.classList.add('d-none');
+            if (role === 'viewer') {
+                setMatrixPermissions(prefix, 'view');
+            }
+        }
+    }
+
     function editData(u) {
         document.getElementById('formEdit').action = '/users/' + u.id;
         document.getElementById('edit_nama_lengkap').value = u.nama_lengkap;
@@ -373,22 +426,28 @@
         document.getElementById('edit_role').value = u.role;
         document.getElementById('edit_upt_id').value = u.upt_id || '';
 
-        document.getElementById('edit_ak_dash').checked = !!u.akses_dashboard;
-        document.getElementById('edit_ak_peng').checked = !!u.akses_penghuni;
-        document.getElementById('edit_ak_over').checked = !!u.akses_overstaying;
-        document.getElementById('edit_ak_integ').checked = !!u.akses_integrasi;
-        document.getElementById('edit_ak_bebas').checked = !!u.akses_bebas_harian;
-        if (document.getElementById('edit_ak_sidang')) {
-            document.getElementById('edit_ak_sidang').checked = !!u.akses_sidang_tpp;
-        }
-        if (document.getElementById('edit_ak_mutasi')) {
-            document.getElementById('edit_ak_mutasi').checked = !!u.akses_mutasi;
-        }
-        document.getElementById('edit_ak_lap').checked = !!u.akses_laporan;
-        document.getElementById('edit_ak_upt').checked = !!u.akses_upt;
-        document.getElementById('edit_ak_user').checked = !!u.akses_user;
-        document.getElementById('edit_ak_inst').checked = !!u.akses_instansi;
+        allModuleKeys.forEach(field => {
+            let val = u['akses_' + field];
+            if (val === true || val === 1 || val === '1' || val === 'full') {
+                val = 'full';
+            } else if (val === 'view' || val === 'lihat') {
+                val = 'view';
+            } else {
+                val = 'none';
+            }
 
+            // Jika user viewer, batasi maksimal hanya view
+            if (u.role === 'viewer' && val === 'full') {
+                val = 'view';
+            }
+
+            const radio = document.getElementById(`edit_akses_${field}_${val}`);
+            if (radio) {
+                radio.checked = true;
+            }
+        });
+
+        onRoleChange('edit');
         new bootstrap.Modal(document.getElementById('modalEdit')).show();
     }
 </script>
