@@ -13,7 +13,6 @@
         'bebas_harian' => ['label' => 'Bebas Harian', 'icon' => 'fas fa-door-open'],
         'sidang_tpp' => ['label' => 'Sidang TPP', 'icon' => 'fas fa-gavel'],
         'mutasi' => ['label' => 'Mutasi Narapidana Antar-UPT', 'icon' => 'fas fa-exchange-alt'],
-        'dashboard' => ['label' => 'Dashboard & Statistik', 'icon' => 'fas fa-chart-line'],
         'laporan' => ['label' => 'Cetak Laporan & Rekapitulasi', 'icon' => 'fas fa-print'],
         'activity_log' => ['label' => 'Log Aktivitas Pengguna', 'icon' => 'fas fa-history'],
         'upt' => ['label' => 'Master Data UPT', 'icon' => 'fas fa-building'],
@@ -203,6 +202,11 @@
                         <i class="fas fa-info-circle me-1"></i><strong>Catatan:</strong> Akun Administrator Wilayah secara otomatis memiliki hak <strong>Akses Penuh</strong> pada seluruh modul sistem.
                     </div>
 
+                    <div class="alert alert-light border py-1.5 px-3 small mb-3 d-flex align-items-center" style="font-size: 11.5px;">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        <span><strong>Catatan:</strong> Menu <strong>Dashboard &amp; Statistik</strong> bersifat terbuka otomatis untuk seluruh pengguna/publik sehingga tidak memerlukan konfigurasi hak akses.</span>
+                    </div>
+
                     <!-- MATRIKS HAK AKSES MODUL -->
                     <div class="card border border-light-subtle rounded-3 mb-2 shadow-none bg-light bg-opacity-25">
                         <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
@@ -321,6 +325,11 @@
 
                     <div id="edit_admin_notice" class="alert alert-info py-2 px-3 small d-none mb-3">
                         <i class="fas fa-info-circle me-1"></i><strong>Catatan:</strong> Akun Administrator Wilayah secara otomatis memiliki hak <strong>Akses Penuh</strong> pada seluruh modul sistem.
+                    </div>
+
+                    <div class="alert alert-light border py-1.5 px-3 small mb-3 d-flex align-items-center" style="font-size: 11.5px;">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        <span><strong>Catatan:</strong> Menu <strong>Dashboard &amp; Statistik</strong> bersifat terbuka otomatis untuk seluruh pengguna/publik sehingga tidak memerlukan konfigurasi hak akses.</span>
                     </div>
 
                     <!-- MATRIKS HAK AKSES MODUL -->

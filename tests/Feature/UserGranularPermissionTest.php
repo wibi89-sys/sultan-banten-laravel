@@ -60,6 +60,24 @@ class UserGranularPermissionTest extends TestCase
         $this->assertEquals('none', $operator->getAccessLevel('mutasi'));
         $this->assertFalse($operator->canView('mutasi'));
         $this->assertFalse($operator->canManage('mutasi'));
+
+        // Dashboard: always automatically accessible
+        $this->assertEquals('view', $operator->getAccessLevel('dashboard'));
+        $this->assertTrue($operator->canView('dashboard'));
+        $this->assertTrue($operator->hasAccess('dashboard'));
+    }
+
+    public function test_dashboard_is_always_accessible_to_any_user(): void
+    {
+        $operator = new User([
+            'role' => 'operator',
+        ]);
+        $this->assertTrue($operator->hasAccess('dashboard'));
+        $this->assertTrue($operator->canView('dashboard'));
+        $this->assertEquals('view', $operator->getAccessLevel('dashboard'));
+
+        $response = $this->actingAs($operator)->get('/dashboard');
+        $response->assertStatus(200);
     }
 
     public function test_view_only_user_can_access_penghuni_index_but_cannot_create(): void

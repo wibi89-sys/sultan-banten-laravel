@@ -83,6 +83,11 @@ class User extends Authenticatable
             return 'full';
         }
 
+        // Dashboard bersifat terbuka otomatis untuk semua pengguna
+        if ($menu === 'dashboard') {
+            return 'view';
+        }
+
         $property = 'akses_'.$menu;
         $val = $this->{$property} ?? 'none';
 
@@ -103,7 +108,7 @@ class User extends Authenticatable
      */
     public function hasAccess(string $menu, string $requiredLevel = 'view'): bool
     {
-        if ($this->isAdmin()) {
+        if ($this->isAdmin() || $menu === 'dashboard') {
             return true;
         }
 

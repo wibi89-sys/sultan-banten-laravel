@@ -117,6 +117,9 @@ class UserController extends Controller
             }
         }
 
+        // Dashboard selalu terbuka otomatis untuk semua pengguna
+        $data['akses_dashboard'] = ($data['role'] === 'admin') ? 'full' : 'view';
+
         $newUser = User::create($data);
         ActivityLog::log('tambah', 'user', "Menambahkan user baru: {$newUser->nama_lengkap} ({$newUser->username})", $newUser->toArray());
 
@@ -174,6 +177,9 @@ class UserController extends Controller
                 $data[$field] = $val;
             }
         }
+
+        // Dashboard selalu terbuka otomatis untuk semua pengguna
+        $data['akses_dashboard'] = ($data['role'] === 'admin') ? 'full' : 'view';
 
         $targetUser->update($data);
         ActivityLog::log('edit', 'user', "Mengubah data user: {$targetUser->nama_lengkap}", $targetUser->toArray());
