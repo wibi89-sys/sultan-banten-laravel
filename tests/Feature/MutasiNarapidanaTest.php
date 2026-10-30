@@ -7,6 +7,7 @@ use App\Models\Upt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 class MutasiNarapidanaTest extends TestCase
@@ -49,6 +50,20 @@ class MutasiNarapidanaTest extends TestCase
             'upt_id' => $this->uptAsal->id,
             'akses_mutasi' => true,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        $uploadDir = public_path('uploads/mutasi');
+        if (File::exists($uploadDir)) {
+            foreach (File::files($uploadDir) as $file) {
+                if ($file->getFilename() !== '.gitkeep') {
+                    File::delete($file->getRealPath());
+                }
+            }
+        }
+
+        parent::tearDown();
     }
 
     public function test_unauthenticated_user_is_redirected_to_login(): void

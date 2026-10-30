@@ -18,6 +18,8 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/public/uploads/mutasi/*
+!/public/uploads/mutasi/.gitkeep
 /storage/*.key
 /storage/pail
 /vendor
