@@ -89,6 +89,34 @@ class PdfReportUptTest extends TestCase
         $response->assertHeader('Content-Type', 'application/pdf');
     }
 
+    public function test_admin_can_generate_single_upt_penghuni_pdf_report(): void
+    {
+        $upt = Upt::first();
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'upt_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/laporan/pdf?type=penghuni&upt_id='.$upt->id.'&tanggal_mulai='.date('Y-m-01').'&tanggal_akhir='.date('Y-m-d'));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_admin_can_generate_single_upt_overstaying_pdf_report(): void
+    {
+        $upt = Upt::first();
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'upt_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/laporan/pdf?type=overstaying&upt_id='.$upt->id.'&tanggal_mulai='.date('Y-m-01').'&tanggal_akhir='.date('Y-m-d'));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
     public function test_kroscek_detail_pdf_generation(): void
     {
         $upt = Upt::first();

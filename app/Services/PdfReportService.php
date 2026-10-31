@@ -239,8 +239,10 @@ class PdfReportService
             $pdf->SetFillColor(220, 220, 220);
             $pdf->SetTextColor(0, 0, 0);
 
+            $col2Title = $uptId ? 'Hari / Tanggal' : 'Unit Pelaksana Teknis';
+
             $pdf->Cell($widths[0], 8, 'No', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 8, 'Unit Pelaksana Teknis', 1, 0, 'C', true);
+            $pdf->Cell($widths[1], 8, $col2Title, 1, 0, 'C', true);
             $pdf->Cell($widths[2], 8, 'Kapasitas', 1, 0, 'C', true);
             $pdf->Cell($widths[3], 8, 'Tahanan', 1, 0, 'C', true);
             $pdf->Cell($widths[4], 8, 'Narapidana', 1, 0, 'C', true);
@@ -292,7 +294,7 @@ class PdfReportService
                 $persen = $kap > 0 ? round((($tot - $kap) / $kap) * 100, 1) : 0;
                 $tingkat = $kap > 0 ? round(($tot / $kap) * 100, 1) : 0;
 
-                $textUPT = $r->nama_upt;
+                $textUPT = $uptId ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
                 $numLines = $pdf->getNumLines($textUPT, $widths[1]);
                 $rowH = max(7, $numLines * 3.8);
 
@@ -348,8 +350,10 @@ class PdfReportService
             $pdf->SetFillColor(220, 220, 220);
             $pdf->SetTextColor(0, 0, 0);
 
+            $col2Title = $uptId ? 'HARI / TANGGAL' : 'NAMA UPT';
+
             $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 7, 'NAMA UPT', 1, 0, 'C', true);
+            $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
             $pdf->Cell($widths[2], 7, 'BM', 1, 0, 'C', true);
             $pdf->Cell($widths[3], 7, 'PB', 1, 0, 'C', true);
             $pdf->Cell($widths[4], 7, 'CB', 1, 0, 'C', true);
@@ -413,7 +417,7 @@ class PdfReportService
                 $tLain += $lain;
                 $gTotal += $sub;
 
-                $textUPT = $r->nama_upt;
+                $textUPT = $uptId ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
                 $textKet = trim(($r->keterangan ?? '').(! empty($r->rincian_lainnya) ? ' ('.$r->rincian_lainnya.')' : ''));
                 if (empty($textKet)) {
                     $textKet = '-';
@@ -470,8 +474,10 @@ class PdfReportService
             $pdf->SetFillColor(220, 220, 220);
             $pdf->SetTextColor(0, 0, 0);
 
+            $col2Title = $uptId ? 'HARI / TANGGAL' : 'NAMA UPT';
+
             $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 7, 'NAMA UPT', 1, 0, 'C', true);
+            $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
             $pdf->Cell($widths[2], 7, 'AI', 1, 0, 'C', true);
             $pdf->Cell($widths[3], 7, 'AII', 1, 0, 'C', true);
             $pdf->Cell($widths[4], 7, 'AIII', 1, 0, 'C', true);
@@ -508,7 +514,7 @@ class PdfReportService
                 $tAV += $r->overstaying_av;
                 $gTotal += $sub;
 
-                $textUPT = $r->nama_upt;
+                $textUPT = $uptId ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
                 $textKet = ! empty($r->keterangan) ? $r->keterangan : 'Nihil';
 
                 $nUPT = $pdf->getNumLines($textUPT, $widths[1]);
