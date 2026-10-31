@@ -26,7 +26,22 @@ class UptRankingServiceTest extends TestCase
 
         $this->assertEquals('tepat', $result['status']);
         $this->assertEquals(20, $result['poin']);
-        $this->assertEquals('08:30 WIB', $result['keterangan']);
+        $this->assertEquals('silver', $result['medal']);
+        $this->assertStringContainsString('08:30 WIB', $result['keterangan']);
+    }
+
+    public function test_evaluate_module_golden_hour_returns_twenty_points_and_gold_medal(): void
+    {
+        $deadline = Carbon::parse('2026-10-15 11:00:00');
+        $data = ['created_at' => '2026-10-15 07:15:00'];
+        $result = UptRankingService::evaluateModule($data, $deadline, '2026-10-15');
+
+        $this->assertEquals('tepat', $result['status']);
+        $this->assertEquals(20, $result['poin']);
+        $this->assertEquals('gold', $result['medal']);
+        $this->assertEquals('golden_hour', $result['timing_type']);
+        $this->assertStringContainsString('07:15 WIB', $result['keterangan']);
+        $this->assertStringContainsString('Pagi Prima', $result['keterangan']);
     }
 
     public function test_evaluate_module_pre_input_h_minus_1_returns_twenty_points(): void
@@ -37,6 +52,7 @@ class UptRankingServiceTest extends TestCase
 
         $this->assertEquals('tepat', $result['status']);
         $this->assertEquals(20, $result['poin']);
+        $this->assertNull($result['medal']);
         $this->assertStringContainsString('H-1', $result['keterangan']);
     }
 
@@ -48,7 +64,8 @@ class UptRankingServiceTest extends TestCase
 
         $this->assertEquals('terlambat', $result['status']);
         $this->assertEquals(10, $result['poin']);
-        $this->assertEquals('14:00 WIB', $result['keterangan']);
+        $this->assertNull($result['medal']);
+        $this->assertStringContainsString('14:00 WIB', $result['keterangan']);
     }
 
     public function test_evaluate_module_late_past_day_returns_five_points(): void
@@ -375,5 +392,42 @@ class UptRankingServiceTest extends TestCase
 
         $this->assertEquals('Lapas Pre-Input (Input H-1 Lebih Awal)', $rankings[0]['nama_upt']);
         $this->assertEquals('Lapas Telat (Ada Keterlambatan)', $rankings[1]['nama_upt']);
+    }
+
+    public function test_tie_breaker_prioritizes_gold_medals_when_points_are_equal(): void
+    {
+        $rankings = [
+            [
+                'nama_upt' => 'Lapas Perak (Banyak Jam Kerja)',
+                'total_points' => 2000,
+                'count_gold' => 10,
+                'count_silver' => 70,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+            ],
+            [
+                'nama_upt' => 'Lapas Emas (Rajin Pagi < 08.00 WIB)',
+                'total_points' => 2000,
+                'count_gold' => 60,
+                'count_silver' => 20,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+            ],
+            [
+                'nama_upt' => 'Lapas H-1 (Tanpa Medali)',
+                'total_points' => 2000,
+                'count_gold' => 0,
+                'count_silver' => 0,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_input_h_minus_1' => 80,
+            ],
+        ];
+
+        UptRankingService::sortRankings($rankings);
+
+        $this->assertEquals('Lapas Emas (Rajin Pagi < 08.00 WIB)', $rankings[0]['nama_upt']);
+        $this->assertEquals('Lapas Perak (Banyak Jam Kerja)', $rankings[1]['nama_upt']);
+        $this->assertEquals('Lapas H-1 (Tanpa Medali)', $rankings[2]['nama_upt']);
     }
 }

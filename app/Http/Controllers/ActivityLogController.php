@@ -218,6 +218,8 @@ class ActivityLogController extends Controller
             echo '<th style="padding: 8px;">Total Poin</th>';
             echo '<th style="padding: 8px;">Maksimal Poin</th>';
             echo '<th style="padding: 8px;">Kepatuhan (%)</th>';
+            echo '<th style="padding: 8px;">Medali Emas (Pagi &lt; 08.00)</th>';
+            echo '<th style="padding: 8px;">Medali Perak (Jam Kerja)</th>';
             echo '<th style="padding: 8px;">Hari Sempurna (100 Poin)</th>';
             echo '<th style="padding: 8px;">Modul Tepat Waktu</th>';
             echo '<th style="padding: 8px;">Modul Terlambat</th>';
@@ -245,6 +247,8 @@ class ActivityLogController extends Controller
                 echo '<td align="center" style="font-weight: bold; color: #1e3a8a;">'.number_format($row['total_points']).'</td>';
                 echo '<td align="center">'.number_format($row['max_points']).'</td>';
                 echo '<td align="center" style="font-weight: bold;">'.$row['persentase_kepatuhan'].'%</td>';
+                echo '<td align="center" style="font-weight: bold; color: #b45309;">'.($row['count_gold'] ?? 0).' Gold</td>';
+                echo '<td align="center" style="font-weight: bold; color: #64748b;">'.($row['count_silver'] ?? 0).' Silver</td>';
                 echo '<td align="center">'.$row['count_hari_sempurna'].' Hari</td>';
                 echo '<td align="center" style="color: #047857;">'.$row['count_modul_tepat'].'</td>';
                 echo '<td align="center" style="color: #b45309;">'.$row['count_modul_terlambat'].'</td>';

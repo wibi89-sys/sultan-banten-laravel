@@ -226,6 +226,8 @@ class UptRankingService
             $countInputHMinus1 = 0;
             $countInputHariHTelat = 0;
             $countInputSusulan = 0;
+            $countGold = 0;
+            $countSilver = 0;
 
             $inputTimeMinutesHariHSum = 0;
             $inputTimeCountHariH = 0;
@@ -240,13 +242,23 @@ class UptRankingService
                 &$countInputHMinus1,
                 &$countInputHariHTelat,
                 &$countInputSusulan,
+                &$countGold,
+                &$countSilver,
                 &$inputTimeMinutesHariHSum,
                 &$inputTimeCountHariH,
                 &$inputTimeMinutesAllSum,
                 &$inputTimeCountAll
             ) {
+                if (! empty($score['medal'])) {
+                    if ($score['medal'] === 'gold') {
+                        $countGold++;
+                    } elseif ($score['medal'] === 'silver') {
+                        $countSilver++;
+                    }
+                }
+
                 $type = $score['timing_type'] ?? null;
-                if ($type === 'hari_h_tepat') {
+                if ($type === 'golden_hour' || $type === 'hari_h_tepat') {
                     $countInputHariHTepat++;
                     if ($score['jam_menit'] !== null) {
                         $inputTimeMinutesHariHSum += $score['jam_menit'];
@@ -401,6 +413,8 @@ class UptRankingService
                 'total_points' => $totalPoints,
                 'max_points' => $maxPointsPerUpt,
                 'persentase_kepatuhan' => $compliancePct,
+                'count_gold' => $countGold,
+                'count_silver' => $countSilver,
                 'count_hari_sempurna' => $countHariSempurna,
                 'count_modul_tepat' => $countModulTepat,
                 'count_modul_terlambat' => $countModulTerlambat,
@@ -457,63 +471,81 @@ class UptRankingService
     }
 
     /**
-     * Urutkan ranking berdasarkan kriteria poin, kepatuhan, kroscek, dan tie-breaker ketepatan waktu.
+     * Urutkan ranking berdasarkan kriteria poin, medali golden hours, kepatuhan, kroscek, dan tie-breaker.
      *
-     * Prioritas:
-     * 1. Total Poin (desc)
-     * 2. Persentase Kepatuhan (desc)
-     * 3. Jumlah Hari Sempurna (desc)
-     * 4. Jumlah Kroscek Sesuai (desc)
-     * 5. Tie-Breaker Ketepatan Waktu:
-     *    a. Prioritas konsistensi input tepat waktu pada jam setting Hari-H (desc)
-     *    b. Rata-rata jam input Hari-H paling awal/mendekati jam setting (asc)
-     *    c. Hari sebelumnya (H-1) lebih diutamakan daripada keterlambatan (desc H-1)
-     *    d. Minim keterlambatan pada Hari-H (asc)
-     *    e. Minim keterlambatan susulan lewat hari (asc)
-     * 6. Nama UPT alfabetis (asc)
+     * Prioritas Penentu Juara:
+     * 1. Total Poin Tertinggi (desc)
+     * 2. Jumlah Medali Emas (Gold) / Pagi Hari-H < 08.00 WIB (desc)
+     * 3. Jumlah Medali Perak (Silver) / Jam Kerja Hari-H 08.00 - 11.00 WIB (desc)
+     * 4. Jumlah Hari Sempurna (100 Poin) (desc)
+     * 5. Jumlah Kroscek Sesuai (desc)
+     * 6. Rata-rata Jam Input Hari-H paling awal (asc)
+     * 7. Hari Sebelumnya (H-1) lebih diutamakan daripada keterlambatan (desc H-1)
+     * 8. Minim keterlambatan pada Hari-H (asc)
+     * 9. Minim keterlambatan susulan lewat hari (asc)
+     * 10. Nama UPT alfabetis (asc)
      */
     public static function sortRankings(array &$rankings): void
     {
         usort($rankings, function ($a, $b) {
+            // 1. Total Poin Tertinggi
             if ($a['total_points'] !== $b['total_points']) {
                 return $b['total_points'] <=> $a['total_points'];
             }
-            if ($a['count_hari_sempurna'] !== $b['count_hari_sempurna']) {
-                return $b['count_hari_sempurna'] <=> $a['count_hari_sempurna'];
-            }
-            if ($a['count_kroscek_sesuai'] !== $b['count_kroscek_sesuai']) {
-                return $b['count_kroscek_sesuai'] <=> $a['count_kroscek_sesuai'];
+
+            // 2. PRIORITAS UTAMA: Jumlah Medali Emas (Gold) - Input Hari-H sebelum 08.00 WIB
+            $aGold = $a['count_gold'] ?? 0;
+            $bGold = $b['count_gold'] ?? 0;
+            if ($aGold !== $bGold) {
+                return $bGold <=> $aGold;
             }
 
-            // 5a. Prioritas konsistensi input tepat waktu pada jam setting Hari-H
+            // 3. PRIORITAS KEDUA: Jumlah Medali Perak (Silver) - Input Hari-H jam kerja 08.00 - 11.00 WIB
+            $aSilver = $a['count_silver'] ?? 0;
+            $bSilver = $b['count_silver'] ?? 0;
+            if ($aSilver !== $bSilver) {
+                return $bSilver <=> $aSilver;
+            }
+
+            // 4. Konsistensi Hari-H Tepat Waktu (Total input tepat di Hari-H)
             $aHariHTepat = $a['count_input_hari_h_tepat'] ?? 0;
             $bHariHTepat = $b['count_input_hari_h_tepat'] ?? 0;
             if ($aHariHTepat !== $bHariHTepat) {
                 return $bHariHTepat <=> $aHariHTepat;
             }
 
-            // 5b. Rata-rata jam input Hari-H paling awal/mendekati jam setting
+            // 5. Jumlah Hari Sempurna (100 Poin)
+            if ($a['count_hari_sempurna'] !== $b['count_hari_sempurna']) {
+                return $b['count_hari_sempurna'] <=> $a['count_hari_sempurna'];
+            }
+
+            // 6. Jumlah Kroscek Sesuai
+            if ($a['count_kroscek_sesuai'] !== $b['count_kroscek_sesuai']) {
+                return $b['count_kroscek_sesuai'] <=> $a['count_kroscek_sesuai'];
+            }
+
+            // 7. Rata-rata jam input Hari-H paling awal
             $aAvg = $a['avg_minutes_hari_h'] ?? PHP_INT_MAX;
             $bAvg = $b['avg_minutes_hari_h'] ?? PHP_INT_MAX;
             if ($aAvg !== $bAvg) {
                 return $aAvg <=> $bAvg;
             }
 
-            // 5c. Pendekatan hari sebelumnya (H-1) lebih diutamakan daripada keterlambatan
+            // 8. Pendekatan hari sebelumnya (H-1) lebih diutamakan daripada keterlambatan
             $aH1 = $a['count_input_h_minus_1'] ?? 0;
             $bH1 = $b['count_input_h_minus_1'] ?? 0;
             if ($aH1 !== $bH1) {
                 return $bH1 <=> $aH1;
             }
 
-            // 5d. Minim keterlambatan pada Hari-H
+            // 9. Minim keterlambatan pada Hari-H
             $aTelat = $a['count_input_hari_h_telat'] ?? 0;
             $bTelat = $b['count_input_hari_h_telat'] ?? 0;
             if ($aTelat !== $bTelat) {
                 return $aTelat <=> $bTelat;
             }
 
-            // 5e. Minim keterlambatan susulan lewat hari
+            // 10. Minim keterlambatan susulan lewat hari
             $aSusulan = $a['count_input_susulan'] ?? 0;
             $bSusulan = $b['count_input_susulan'] ?? 0;
             if ($aSusulan !== $bSusulan) {
@@ -533,11 +565,14 @@ class UptRankingService
             return [
                 'status' => 'kosong',
                 'poin' => 0,
+                'medal' => null,
                 'jam_str' => '-',
                 'jam_menit' => null,
                 'keterangan' => 'Belum Input',
                 'timing_type' => 'kosong',
                 'is_hari_h' => false,
+                'is_golden' => false,
+                'is_silver' => false,
             ];
         }
 
@@ -548,53 +583,80 @@ class UptRankingService
         $targetDate = Carbon::parse($tanggalLaporan)->startOfDay();
         $sourceDate = $createdAt->copy()->startOfDay();
 
+        // 1. Dibuat pada Hari-H (Same Day)
         if ($createdDate === $tanggalLaporan) {
-            $ket = $createdAt->format('H:i').' WIB';
-        } elseif ($createdDate < $tanggalLaporan) {
-            $daysDiff = abs((int) $targetDate->diffInDays($sourceDate));
-            $ket = 'H-'.$daysDiff.' ('.$createdAt->format('d/m H:i').')';
-        } else {
-            $daysDiff = abs((int) $sourceDate->diffInDays($targetDate));
-            $ket = 'Susulan H+'.$daysDiff.' ('.$createdAt->format('d/m H:i').')';
-        }
+            $jamStr = $createdAt->format('H:i');
+            $ket = $jamStr.' WIB';
 
-        // Jika dibuat sebelum atau tepat pada deadline (termasuk H-1 sore)
-        if ($createdAt->lte($deadline)) {
-            $isSameDay = ($createdDate === $tanggalLaporan);
+            // Dibuat sebelum atau tepat pada deadline jam kerja (<= 11:00 WIB)
+            if ($createdAt->lte($deadline)) {
+                // Golden Hours: Diinput pagi hari sebelum jam 08.00 WIB (< 08.00 WIB) -> Medali Emas
+                $isGolden = ($createdAt->hour < 8);
 
-            return [
-                'status' => 'tepat',
-                'poin' => 20,
-                'jam_str' => $createdAt->format('H:i'),
-                'jam_menit' => $jamMenit,
-                'keterangan' => $ket,
-                'timing_type' => $isSameDay ? 'hari_h_tepat' : 'h_minus_1',
-                'is_hari_h' => $isSameDay,
-            ];
-        }
+                return [
+                    'status' => 'tepat',
+                    'poin' => 20,
+                    'medal' => $isGolden ? 'gold' : 'silver',
+                    'jam_str' => $jamStr,
+                    'jam_menit' => $jamMenit,
+                    'keterangan' => $isGolden ? "{$ket} (Pagi Prima)" : "{$ket} (Jam Kerja)",
+                    'timing_type' => $isGolden ? 'golden_hour' : 'hari_h_tepat',
+                    'is_hari_h' => true,
+                    'is_golden' => $isGolden,
+                    'is_silver' => ! $isGolden,
+                ];
+            }
 
-        // Jika melewati batas jam tapi masih diinput pada hari-H
-        if ($createdDate === $tanggalLaporan) {
+            // Melewati batas jam kerja di Hari-H (lewat jam 11:00 WIB s/d 23:59) -> Penurunan Poin ke 10
             return [
                 'status' => 'terlambat',
                 'poin' => 10,
-                'jam_str' => $createdAt->format('H:i'),
+                'medal' => null,
+                'jam_str' => $jamStr,
                 'jam_menit' => $jamMenit,
-                'keterangan' => $ket,
+                'keterangan' => "{$ket} (Terlambat Hari-H)",
                 'timing_type' => 'hari_h_telat',
                 'is_hari_h' => true,
+                'is_golden' => false,
+                'is_silver' => false,
             ];
         }
 
-        // Jika terlambat dan baru diinput setelah melewati hari-H (hari berikutnya / susulan)
+        // 2. Dibuat sebelum Hari-H (H-1, H-2, dst)
+        if ($createdDate < $tanggalLaporan) {
+            $daysDiff = abs((int) $targetDate->diffInDays($sourceDate));
+            $ket = 'H-'.$daysDiff.' ('.$createdAt->format('d/m H:i').')';
+
+            // Poin tetap 20 Penuh (penurunan poin hanya jika terlewat jam kerja), tapi TANPA MEDALI
+            return [
+                'status' => 'tepat',
+                'poin' => 20,
+                'medal' => null,
+                'jam_str' => $createdAt->format('d/m H:i'),
+                'jam_menit' => $jamMenit,
+                'keterangan' => $ket.' (Persiapan Maju)',
+                'timing_type' => 'h_minus_1',
+                'is_hari_h' => false,
+                'is_golden' => false,
+                'is_silver' => false,
+            ];
+        }
+
+        // 3. Susulan setelah hari-H lewat (H+1, H+2 dst) -> Penurunan Poin ke 5
+        $daysDiff = abs((int) $sourceDate->diffInDays($targetDate));
+        $ket = 'Susulan H+'.$daysDiff.' ('.$createdAt->format('d/m H:i').')';
+
         return [
             'status' => 'terlambat',
             'poin' => 5,
-            'jam_str' => $createdAt->format('H:i'),
+            'medal' => null,
+            'jam_str' => $createdAt->format('d/m H:i'),
             'jam_menit' => $jamMenit,
             'keterangan' => $ket,
             'timing_type' => 'susulan',
             'is_hari_h' => false,
+            'is_golden' => false,
+            'is_silver' => false,
         ];
     }
 

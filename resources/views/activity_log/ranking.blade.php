@@ -458,6 +458,10 @@
             <span class="badge bg-secondary-subtle text-secondary mb-2 fw-bold">Peringkat 2</span>
             <h6 class="fw-bold mb-2 lh-sm text-break" style="min-height: 38px;" title="{{ $top2['nama_upt'] }}">{{ $top2['nama_upt'] }}</h6>
             <div class="fs-4 fw-extrabold text-secondary">{{ number_format($top2['total_points']) }} <small class="fs-7 text-muted">Poin</small></div>
+            <div class="d-flex justify-content-center gap-1 mt-1">
+                <span class="badge bg-warning text-dark border border-warning" title="{{ $top2['count_gold'] ?? 0 }} modul diinput pada Golden Hours (< 08.00 WIB)">🥇 {{ $top2['count_gold'] ?? 0 }} Gold</span>
+                <span class="badge bg-light text-secondary border" title="{{ $top2['count_silver'] ?? 0 }} modul diinput pada Jam Kerja (08.00 - 11.00 WIB)">🥈 {{ $top2['count_silver'] ?? 0 }} Silver</span>
+            </div>
             <div class="text-muted small mt-2">
                 <span class="badge bg-light text-dark border me-1">{{ $top2['persentase_kepatuhan'] }}% Kepatuhan</span>
                 <span class="badge bg-success-subtle text-success"><i class="fas fa-check-double me-1"></i>{{ $top2['count_kroscek_sesuai'] }}x Sinkron</span>
@@ -475,6 +479,10 @@
             <span class="badge bg-warning text-dark mb-2 fw-bold px-3 py-1"><i class="fas fa-star me-1"></i>Peringkat 1 (Juara)</span>
             <h5 class="fw-bold mb-2 lh-sm text-break text-warning" style="min-height: 44px;" title="{{ $top1['nama_upt'] }}">{{ $top1['nama_upt'] }}</h5>
             <div class="fs-3 fw-bolder text-warning">{{ number_format($top1['total_points']) }} <small class="fs-6 text-muted">Poin</small></div>
+            <div class="d-flex justify-content-center gap-1 mt-1">
+                <span class="badge bg-warning text-dark border border-warning shadow-sm fw-bold" title="{{ $top1['count_gold'] ?? 0 }} modul diinput pada Golden Hours (< 08.00 WIB)">🥇 {{ $top1['count_gold'] ?? 0 }} Gold</span>
+                <span class="badge bg-light text-secondary border shadow-sm" title="{{ $top1['count_silver'] ?? 0 }} modul diinput pada Jam Kerja (08.00 - 11.00 WIB)">🥈 {{ $top1['count_silver'] ?? 0 }} Silver</span>
+            </div>
             <div class="text-muted small mt-2">
                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle me-1 fw-bold">{{ $top1['persentase_kepatuhan'] }}% Kepatuhan</span>
                 <span class="badge bg-success-subtle text-success fw-bold"><i class="fas fa-check-double me-1"></i>{{ $top1['count_kroscek_sesuai'] }}x Sinkron</span>
@@ -492,6 +500,10 @@
             <span class="badge bg-danger-subtle text-danger mb-2 fw-bold">Peringkat 3</span>
             <h6 class="fw-bold mb-2 lh-sm text-break" style="min-height: 38px;" title="{{ $top3['nama_upt'] }}">{{ $top3['nama_upt'] }}</h6>
             <div class="fs-4 fw-extrabold text-danger">{{ number_format($top3['total_points']) }} <small class="fs-7 text-muted">Poin</small></div>
+            <div class="d-flex justify-content-center gap-1 mt-1">
+                <span class="badge bg-warning text-dark border border-warning" title="{{ $top3['count_gold'] ?? 0 }} modul diinput pada Golden Hours (< 08.00 WIB)">🥇 {{ $top3['count_gold'] ?? 0 }} Gold</span>
+                <span class="badge bg-light text-secondary border" title="{{ $top3['count_silver'] ?? 0 }} modul diinput pada Jam Kerja (08.00 - 11.00 WIB)">🥈 {{ $top3['count_silver'] ?? 0 }} Silver</span>
+            </div>
             <div class="text-muted small mt-2">
                 <span class="badge bg-light text-dark border me-1">{{ $top3['persentase_kepatuhan'] }}% Kepatuhan</span>
                 <span class="badge bg-success-subtle text-success"><i class="fas fa-check-double me-1"></i>{{ $top3['count_kroscek_sesuai'] }}x Sinkron</span>
@@ -638,18 +650,24 @@
                                     </span>
                                 @endif
                             </div>
-                            <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                            <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                                <span class="badge bg-warning bg-opacity-25 text-dark border border-warning" style="font-size: 10px;" title="{{ $upt['count_gold'] ?? 0 }} modul diinput pada Golden Hours (pagi hari-H sebelum jam 08.00 WIB)">
+                                    🥇 <strong>{{ $upt['count_gold'] ?? 0 }}</strong> Gold
+                                </span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border" style="font-size: 10px;" title="{{ $upt['count_silver'] ?? 0 }} modul diinput pada Jam Kerja (hari-H jam 08.00 - 11.00 WIB)">
+                                    🥈 <strong>{{ $upt['count_silver'] ?? 0 }}</strong> Silver
+                                </span>
                                 <small class="text-muted" style="font-size: 11px;" title="Rata-rata jam input pada Hari-H: {{ $upt['rata_rata_jam_input'] }} ({{ $upt['count_input_hari_h_tepat'] ?? 0 }}x Hari-H tepat)">
                                     <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
                                 </small>
                                 @if(($upt['count_input_h_minus_1'] ?? 0) > 0)
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 10px;" title="{{ $upt['count_input_h_minus_1'] }} modul diinput sore/malam H-1">
-                                        <i class="fas fa-history me-1"></i>{{ $upt['count_input_h_minus_1'] }}x H-1
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 10px;" title="{{ $upt['count_input_h_minus_1'] }} modul diinput sebelum hari-H (H-1/H-2)">
+                                        <i class="fas fa-history me-1"></i>{{ $upt['count_input_h_minus_1'] }}x Maju (H-1)
                                     </span>
                                 @endif
                                 @if($upt['count_hari_sempurna'] > 0)
                                     <span class="badge bg-warning-subtle text-warning" style="font-size: 10px;">
-                                        <i class="fas fa-star me-1"></i>{{ $upt['count_hari_sempurna'] }}x Hari Sempurna (100 Poin)
+                                        <i class="fas fa-star me-1"></i>{{ $upt['count_hari_sempurna'] }}x Hari Sempurna
                                     </span>
                                 @endif
                             </div>
@@ -802,12 +820,18 @@
                             <!-- Jam Input & Hari Sempurna -->
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-2 pt-1 small">
                                 <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                    <span class="badge bg-warning bg-opacity-25 text-dark border border-warning" style="font-size: 10px;">
+                                        🥇 <strong>{{ $upt['count_gold'] ?? 0 }}</strong> Gold
+                                    </span>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border" style="font-size: 10px;">
+                                        🥈 <strong>{{ $upt['count_silver'] ?? 0 }}</strong> Silver
+                                    </span>
                                     <span class="text-muted" style="font-size: 11px;">
-                                        <i class="fas fa-clock text-primary me-1"></i>Rata-rata: <strong>{{ $upt['rata_rata_jam_input'] }}</strong>
+                                        <i class="fas fa-clock text-primary me-1"></i><strong>{{ $upt['rata_rata_jam_input'] }}</strong>
                                     </span>
                                     @if(($upt['count_input_h_minus_1'] ?? 0) > 0)
                                         <span class="badge bg-info-subtle text-info" style="font-size: 9.5px;">
-                                            {{ $upt['count_input_h_minus_1'] }}x H-1
+                                            {{ $upt['count_input_h_minus_1'] }}x Maju
                                         </span>
                                     @endif
                                 </div>
@@ -891,27 +915,34 @@
             <div class="row g-3 small">
                 <div class="col-md-6">
                     <div class="p-3 bg-light rounded-3 h-100 border">
-                        <h6 class="fw-bold text-primary mb-2"><i class="fas fa-star me-1"></i>Komposisi 100 Poin Harian (5 Komponen @ 20 Poin):</h6>
+                        <h6 class="fw-bold text-primary mb-2"><i class="fas fa-star me-1"></i>Komposisi 100 Poin Harian &amp; Sistem Medali:</h6>
                         <ul class="mb-0 ps-3 text-secondary">
-                            <li><strong>Data Penghuni:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Overstaying:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Integrasi:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Data Bebas Harian:</strong> Tepat Waktu = 20 Poin | Terlambat Hari-H = 10 Poin | Terlambat Lewat Hari = 5 Poin | Kosong = 0 Poin</li>
-                            <li><strong>Kroscek Tahanan Sinkron:</strong> Sesuai Langsung = <strong>+20 Poin</strong> | Sesuai Hasil Perbaikan di jam Input = <strong>+20 Poin</strong> | Sesuai Hasil Perbaikan diluar jam input dihari yang sama = <strong>+10 Poin</strong> | Masih Selisih / Kosong / diperbaiki lewat hari = <strong>0 Poin</strong>.</li>
+                            <li><strong>4 Modul Laporan Harian (Penghuni, Overstaying, Integrasi, Bebas):</strong>
+                                <ul class="ps-3 mt-1 mb-1 small text-dark">
+                                    <li><strong>Golden Hours (&lt; 08.00 WIB Hari-H):</strong> <strong>20 Poin Penuh</strong> + 🥇 <strong>Medali Emas (Gold)</strong>.</li>
+                                    <li><strong>Jam Kerja (08.00 – 11.00 WIB Hari-H):</strong> <strong>20 Poin Penuh</strong> + 🥈 <strong>Medali Perak (Silver)</strong>.</li>
+                                    <li><strong>Persiapan Maju (H-1, H-2 dst):</strong> <strong>20 Poin Penuh</strong> (Tanpa Medali).</li>
+                                    <li><strong>Terlambat Hari-H (Lewat 11.00 s/d 23.59 WIB):</strong> <strong>10 Poin</strong> (Pengurangan poin).</li>
+                                    <li><strong>Susulan Hari Berikutnya (H+1 dst):</strong> <strong>5 Poin</strong>.</li>
+                                    <li><strong>Kosong / Belum Lapor:</strong> <strong>0 Poin</strong>.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Kroscek Tahanan Sinkron (Penghuni vs Overstaying):</strong> Sesuai Langsung = <strong>+20 Poin</strong> | Sesuai Perbaikan di Jam Kerja = <strong>+20 Poin</strong> | Sesuai Perbaikan di Luar Jam Hari-H = <strong>+10 Poin</strong> | Masih Selisih / Kosong / Diperbaiki Lewat Hari = <strong>0 Poin</strong>.</li>
                         </ul>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="p-3 bg-light rounded-3 h-100 border">
-                        <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-1"></i>Aturan Khusus &amp; Penentu Juara (Tie-Breaker):</h6>
+                        <h6 class="fw-bold text-success mb-2"><i class="fas fa-trophy me-1"></i>Prioritas Penentu Juara (Tie-Breaker):</h6>
                         <ul class="mb-0 ps-3 text-secondary">
-                            <li><strong>Kriteria Penentu Juara (Jika Poin Sama):</strong> Apabila dua UPT atau lebih memperoleh total poin yang sama, peringkat diurutkan berdasarkan:
+                            <li><strong>Kriteria Penentu Juara (Jika Total Poin Sama):</strong> Apabila dua UPT atau lebih memperoleh total poin yang sama, pemenang ditentukan berdasarkan:
                                 <ol class="ps-3 mt-1 mb-1 small text-dark">
-                                    <li>Jumlah Hari Sempurna (100 Poin) &amp; Kroscek Sesuai</li>
-                                    <li><strong>Konsistensi Jam Hari-H:</strong> Terbanyak modul diinput tepat waktu pada jam setting instansi Hari-H ({{ $rankingData['period']['jam_mulai'] ?? '08:00' }} - {{ $rankingData['period']['jam_selesai'] }} WIB)</li>
-                                    <li><strong>Rata-rata Jam Input:</strong> UPT dengan rata-rata waktu input Hari-H paling awal/mendekati jam mulai</li>
-                                    <li><strong>Pendekatan Hari Sebelumnya:</strong> Input H-1 (data siap lebih awal) lebih diutamakan daripada input terlambat</li>
-                                    <li>Minim keterlambatan pada Hari-H dan susulan lewat hari</li>
+                                    <li>🥇 <strong>Jumlah Medali Emas (Gold) Terbanyak:</strong> UPT dengan frekuensi input sebelum jam 08.00 WIB terbanyak langsung unggul di puncak peringkat!</li>
+                                    <li>🥈 <strong>Jumlah Medali Perak (Silver) Terbanyak:</strong> Frekuensi input pada jam kerja 08.00 - 11.00 WIB di Hari-H.</li>
+                                    <li><strong>Hari Sempurna (100 Poin Penuh) &amp; Kroscek Sesuai.</strong></li>
+                                    <li><strong>Rata-rata Jam Input Hari-H:</strong> UPT dengan rata-rata jam apel pagi paling awal.</li>
+                                    <li><strong>Pengisian Maju (H-1):</strong> Lebih diutamakan daripada keterlambatan.</li>
+                                    <li>Minim keterlambatan Hari-H dan susulan.</li>
                                 </ol>
                             </li>
                             <li><strong>Input H-1 (Pre-Input):</strong> Pengisian sore hari H-1 untuk tanggal esok hari dihitung <strong>Tepat Waktu (20 Poin Penuh)</strong> karena data sudah siap sebelum deadline.</li>
@@ -1117,30 +1148,40 @@
 
         // Summary Mini Cards
         const summaryHtml = `
-            <div class="col-md-3 col-6">
+            <div class="col-md-2 col-4">
                 <div class="p-2 border rounded bg-light">
                     <small class="text-muted d-block" style="font-size: 11px;">Total Poin</small>
-                    <strong class="text-primary fs-6">${Number(upt.total_points).toLocaleString()} / ${Number(upt.max_points).toLocaleString()}</strong>
+                    <strong class="text-primary fs-6">${Number(upt.total_points).toLocaleString()}</strong>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-2 col-4">
+                <div class="p-2 border rounded bg-warning bg-opacity-10 border-warning">
+                    <small class="text-dark d-block" style="font-size: 11px;">Medali Emas</small>
+                    <strong class="text-dark fs-6">🥇 ${upt.count_gold || 0} Gold</strong>
+                </div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="p-2 border rounded bg-light">
+                    <small class="text-secondary d-block" style="font-size: 11px;">Medali Perak</small>
+                    <strong class="text-secondary fs-6">🥈 ${upt.count_silver || 0} Silver</strong>
+                </div>
+            </div>
+            <div class="col-md-2 col-4">
                 <div class="p-2 border rounded bg-light">
                     <small class="text-muted d-block" style="font-size: 11px;">Kepatuhan</small>
                     <strong class="text-success fs-6">${upt.persentase_kepatuhan}%</strong>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-2 col-4">
                 <div class="p-2 border rounded bg-light">
-                    <small class="text-muted d-block" style="font-size: 11px;">Hari 100 Poin</small>
-                    <strong class="text-warning fs-6">${upt.count_hari_sempurna} Hari Sempurna</strong>
+                    <small class="text-muted d-block" style="font-size: 11px;">100 Poin</small>
+                    <strong class="text-warning fs-6">${upt.count_hari_sempurna} Hari</strong>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-2 col-4">
                 <div class="p-2 border rounded bg-light ${upt.count_kroscek_selisih > 0 ? 'border-danger' : ''}">
-                    <small class="text-muted d-block" style="font-size: 11px;">Kroscek Tahanan</small>
+                    <small class="text-muted d-block" style="font-size: 11px;">Kroscek</small>
                     <strong class="text-success fs-6">${upt.count_kroscek_sesuai}x Sesuai</strong>
-                    ${(upt.count_kroscek_perbaikan || 0) > 0 ? `<span class="badge bg-warning-subtle text-dark border border-warning-subtle ms-1" title="${upt.count_kroscek_perbaikan}x hasil edit/perbaikan">${upt.count_kroscek_perbaikan}x Edit</span>` : ''}
-                    ${upt.count_kroscek_selisih > 0 ? `<span class="badge bg-danger ms-1">${upt.count_kroscek_selisih}x Selisih</span>` : ''}
                 </div>
             </div>
         `;
@@ -1203,7 +1244,13 @@
                     return `<span class="badge bg-secondary-subtle text-muted d-block py-1 mb-1">-</span>`;
                 }
                 if (mod.status === 'tepat') {
-                    return `<span class="badge bg-success-subtle text-success d-block py-1 mb-1"><i class="fas fa-check-circle me-1"></i>Tepat (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
+                    if (mod.medal === 'gold') {
+                        return `<span class="badge bg-warning text-dark border border-warning d-block py-1 mb-1 shadow-sm" title="Golden Hours (< 08.00 WIB)"><i class="fas fa-medal text-warning me-1"></i>🥇 Pagi Prima (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
+                    } else if (mod.medal === 'silver') {
+                        return `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-block py-1 mb-1" title="Jam Kerja Hari-H (08.00 - 11.00 WIB)"><i class="fas fa-medal text-secondary me-1"></i>🥈 Jam Kerja (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
+                    } else {
+                        return `<span class="badge bg-info-subtle text-info border border-info-subtle d-block py-1 mb-1" title="Persiapan Maju Sebelum Hari-H"><i class="fas fa-history me-1"></i>Tepat (${mod.poin})</span><small class="text-muted" style="font-size:10px;">${mod.keterangan}</small>`;
+                    }
                 } else if (mod.status === 'terlambat') {
                     const isSusulan = mod.poin === 5;
                     const badgeLabel = isSusulan ? 'Susulan' : 'Terlambat';
