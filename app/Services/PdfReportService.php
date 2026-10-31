@@ -330,7 +330,7 @@ class PdfReportService
                 $pdf->SetFont('helvetica', '', 8);
             }
 
-            if ($tanggalMulai === $tanggalAkhir && ! empty($tanggalMulai)) {
+            if (! $uptId && $tanggalMulai === $tanggalAkhir && ! empty($tanggalMulai)) {
                 $totPersen = $gKapasitas > 0 ? round((($gTotal - $gKapasitas) / $gKapasitas) * 100, 1) : 0;
                 $totHunian = $gKapasitas > 0 ? round(($gTotal / $gKapasitas) * 100, 1) : 0;
 
@@ -471,23 +471,25 @@ class PdfReportService
                 $pdf->MultiCell($widths[10], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
             }
 
-            if ($pdf->GetY() + 6 > 265) {
-                $pdf->AddPage();
-                $renderTableHeader();
-            }
+            if (! $uptId) {
+                if ($pdf->GetY() + 6 > 265) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
+                }
 
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL', 1, 0, 'C', true);
-            $pdf->Cell($widths[2], 6, $tBm, 1, 0, 'C', true);
-            $pdf->Cell($widths[3], 6, $tPb, 1, 0, 'C', true);
-            $pdf->Cell($widths[4], 6, $tCb, 1, 0, 'C', true);
-            $pdf->Cell($widths[5], 6, $tCmb, 1, 0, 'C', true);
-            $pdf->Cell($widths[6], 6, $tAsim, 1, 0, 'C', true);
-            $pdf->Cell($widths[7], 6, $tBdh, 1, 0, 'C', true);
-            $pdf->Cell($widths[8], 6, $tLain, 1, 0, 'C', true);
-            $pdf->Cell($widths[9], 6, $gTotal, 1, 0, 'C', true);
-            $pdf->Cell($widths[10], 6, '', 1, 1, 'C', true);
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetFillColor(220, 220, 220);
+                $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL', 1, 0, 'C', true);
+                $pdf->Cell($widths[2], 6, $tBm, 1, 0, 'C', true);
+                $pdf->Cell($widths[3], 6, $tPb, 1, 0, 'C', true);
+                $pdf->Cell($widths[4], 6, $tCb, 1, 0, 'C', true);
+                $pdf->Cell($widths[5], 6, $tCmb, 1, 0, 'C', true);
+                $pdf->Cell($widths[6], 6, $tAsim, 1, 0, 'C', true);
+                $pdf->Cell($widths[7], 6, $tBdh, 1, 0, 'C', true);
+                $pdf->Cell($widths[8], 6, $tLain, 1, 0, 'C', true);
+                $pdf->Cell($widths[9], 6, $gTotal, 1, 0, 'C', true);
+                $pdf->Cell($widths[10], 6, '', 1, 1, 'C', true);
+            }
 
             self::renderSignature($pdf, $instansi, $signData);
 
@@ -578,21 +580,23 @@ class PdfReportService
                 $pdf->MultiCell($widths[8], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
             }
 
-            if ($pdf->GetY() + 6 > 265) {
-                $pdf->AddPage();
-                $renderTableHeader();
-            }
+            if (! $uptId) {
+                if ($pdf->GetY() + 6 > 265) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
+                }
 
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL', 1, 0, 'C', true);
-            $pdf->Cell($widths[2], 6, $tAI, 1, 0, 'C', true);
-            $pdf->Cell($widths[3], 6, $tAII, 1, 0, 'C', true);
-            $pdf->Cell($widths[4], 6, $tAIII, 1, 0, 'C', true);
-            $pdf->Cell($widths[5], 6, $tAIV, 1, 0, 'C', true);
-            $pdf->Cell($widths[6], 6, $tAV, 1, 0, 'C', true);
-            $pdf->Cell($widths[7], 6, $gTotal, 1, 0, 'C', true);
-            $pdf->Cell($widths[8], 6, '', 1, 1, 'C', true);
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetFillColor(220, 220, 220);
+                $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL', 1, 0, 'C', true);
+                $pdf->Cell($widths[2], 6, $tAI, 1, 0, 'C', true);
+                $pdf->Cell($widths[3], 6, $tAII, 1, 0, 'C', true);
+                $pdf->Cell($widths[4], 6, $tAIII, 1, 0, 'C', true);
+                $pdf->Cell($widths[5], 6, $tAIV, 1, 0, 'C', true);
+                $pdf->Cell($widths[6], 6, $tAV, 1, 0, 'C', true);
+                $pdf->Cell($widths[7], 6, $gTotal, 1, 0, 'C', true);
+                $pdf->Cell($widths[8], 6, '', 1, 1, 'C', true);
+            }
 
             self::renderSignature($pdf, $instansi, $signData);
 
@@ -710,23 +714,25 @@ class PdfReportService
                     $pdf->Cell($widths[8], 6, number_format($int), 1, 1, 'C');
                 }
 
-                if ($pdf->GetY() + 7 > 180) {
-                    $pdf->AddPage();
-                    $renderTableHeader();
-                }
+                if (! $uptId) {
+                    if ($pdf->GetY() + 7 > 180) {
+                        $pdf->AddPage();
+                        $renderTableHeader();
+                    }
 
-                $pdf->SetFont('helvetica', 'B', 8);
-                $pdf->SetFillColor(52, 73, 94);
-                $pdf->SetTextColor(255, 255, 255);
-                $pdf->Cell($widths[0] + $widths[1], 7, 'TOTAL', 1, 0, 'C', true);
-                $pdf->Cell($widths[2], 7, number_format($gKap), 1, 0, 'C', true);
-                $pdf->Cell($widths[3], 7, number_format($gTah), 1, 0, 'C', true);
-                $pdf->Cell($widths[4], 7, number_format($gNapi ?? $gNap), 1, 0, 'C', true);
-                $pdf->Cell($widths[5], 7, number_format($gTot), 1, 0, 'C', true);
-                $totPersen = $gKap > 0 ? round(($gTot / $gKap) * 100, 1) : 0;
-                $pdf->Cell($widths[6], 7, $totPersen.'%', 1, 0, 'C', true);
-                $pdf->Cell($widths[7], 7, number_format($gOvs), 1, 0, 'C', true);
-                $pdf->Cell($widths[8], 7, number_format($gInt), 1, 1, 'C', true);
+                    $pdf->SetFont('helvetica', 'B', 8);
+                    $pdf->SetFillColor(52, 73, 94);
+                    $pdf->SetTextColor(255, 255, 255);
+                    $pdf->Cell($widths[0] + $widths[1], 7, 'TOTAL', 1, 0, 'C', true);
+                    $pdf->Cell($widths[2], 7, number_format($gKap), 1, 0, 'C', true);
+                    $pdf->Cell($widths[3], 7, number_format($gTah), 1, 0, 'C', true);
+                    $pdf->Cell($widths[4], 7, number_format($gNapi ?? $gNap), 1, 0, 'C', true);
+                    $pdf->Cell($widths[5], 7, number_format($gTot), 1, 0, 'C', true);
+                    $totPersen = $gKap > 0 ? round(($gTot / $gKap) * 100, 1) : 0;
+                    $pdf->Cell($widths[6], 7, $totPersen.'%', 1, 0, 'C', true);
+                    $pdf->Cell($widths[7], 7, number_format($gOvs), 1, 0, 'C', true);
+                    $pdf->Cell($widths[8], 7, number_format($gInt), 1, 1, 'C', true);
+                }
 
                 self::renderSignature($pdf, $instansi, $signData, 'L');
 
@@ -807,16 +813,18 @@ class PdfReportService
                     $pdf->Cell($widths[13], 5.5, $totRow, 1, 1, 'C');
                 }
 
-                if ($pdf->GetY() + 6 > 180) {
-                    $pdf->AddPage();
-                    $renderTableHeader();
-                }
+                if (! $uptId) {
+                    if ($pdf->GetY() + 6 > 180) {
+                        $pdf->AddPage();
+                        $renderTableHeader();
+                    }
 
-                $pdf->SetFont('helvetica', 'B', 7);
-                $pdf->SetFillColor(52, 73, 94);
-                $pdf->SetTextColor(255, 255, 255);
-                $pdf->Cell(array_sum(array_slice($widths, 0, 13)), 6, 'TOTAL', 1, 0, 'C', true);
-                $pdf->Cell($widths[13], 6, $grandTotal, 1, 1, 'C', true);
+                    $pdf->SetFont('helvetica', 'B', 7);
+                    $pdf->SetFillColor(52, 73, 94);
+                    $pdf->SetTextColor(255, 255, 255);
+                    $pdf->Cell(array_sum(array_slice($widths, 0, 13)), 6, 'TOTAL', 1, 0, 'C', true);
+                    $pdf->Cell($widths[13], 6, $grandTotal, 1, 1, 'C', true);
+                }
 
                 self::renderSignature($pdf, $instansi, $signData, 'L');
             }
