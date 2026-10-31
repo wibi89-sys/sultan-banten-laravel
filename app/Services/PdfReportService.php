@@ -235,23 +235,27 @@ class PdfReportService
             $pdf->Ln(2);
 
             $widths = [10, 65, 18, 18, 20, 20, 20, 19];
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->SetTextColor(0, 0, 0);
-
             $col2Title = $uptId ? 'Hari / Tanggal' : 'Unit Pelaksana Teknis';
 
-            $pdf->Cell($widths[0], 8, 'No', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 8, $col2Title, 1, 0, 'C', true);
-            $pdf->Cell($widths[2], 8, 'Kapasitas', 1, 0, 'C', true);
-            $pdf->Cell($widths[3], 8, 'Tahanan', 1, 0, 'C', true);
-            $pdf->Cell($widths[4], 8, 'Narapidana', 1, 0, 'C', true);
-            $pdf->Cell($widths[5], 8, 'Total', 1, 0, 'C', true);
+            $renderTableHeader = function () use ($pdf, $widths, $col2Title) {
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetFillColor(220, 220, 220);
+                $pdf->SetTextColor(0, 0, 0);
 
-            $x = $pdf->GetX();
-            $y = $pdf->GetY();
-            $pdf->MultiCell($widths[6], 8, "Tingkat\nHunian", 1, 'C', true, 0, $x, $y, true, 0, false, true, 8, 'M');
-            $pdf->Cell($widths[7], 8, '% Over', 1, 1, 'C', true);
+                $pdf->Cell($widths[0], 8, 'No', 1, 0, 'C', true);
+                $pdf->Cell($widths[1], 8, $col2Title, 1, 0, 'C', true);
+                $pdf->Cell($widths[2], 8, 'Kapasitas', 1, 0, 'C', true);
+                $pdf->Cell($widths[3], 8, 'Tahanan', 1, 0, 'C', true);
+                $pdf->Cell($widths[4], 8, 'Narapidana', 1, 0, 'C', true);
+                $pdf->Cell($widths[5], 8, 'Total', 1, 0, 'C', true);
+
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
+                $pdf->MultiCell($widths[6], 8, "Tingkat\nHunian", 1, 'C', true, 0, $x, $y, true, 0, false, true, 8, 'M');
+                $pdf->Cell($widths[7], 8, '% Over', 1, 1, 'C', true);
+            };
+
+            $renderTableHeader();
 
             // Fetch data
             $exclude = ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup'];
@@ -298,6 +302,12 @@ class PdfReportService
                 $numLines = $pdf->getNumLines($textUPT, $widths[1]);
                 $rowH = max(7, $numLines * 3.8);
 
+                if ($pdf->GetY() + $rowH > 265) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
+                    $pdf->SetFont('helvetica', '', 8);
+                }
+
                 $pdf->Cell($widths[0], $rowH, $no++, 1, 0, 'C');
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
@@ -324,6 +334,11 @@ class PdfReportService
                 $totPersen = $gKapasitas > 0 ? round((($gTotal - $gKapasitas) / $gKapasitas) * 100, 1) : 0;
                 $totHunian = $gKapasitas > 0 ? round(($gTotal / $gKapasitas) * 100, 1) : 0;
 
+                if ($pdf->GetY() + 7 > 265) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
+                }
+
                 $pdf->SetFont('helvetica', 'B', 8);
                 $pdf->SetFillColor(220, 220, 220);
                 $pdf->Cell($widths[0] + $widths[1], 7, 'TOTAL', 1, 0, 'C', true);
@@ -346,23 +361,27 @@ class PdfReportService
             $pdf->Ln(2);
 
             $widths = [8, 42, 12, 12, 12, 12, 12, 12, 14, 14, 40];
-            $pdf->SetFont('helvetica', 'B', 7.5);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->SetTextColor(0, 0, 0);
-
             $col2Title = $uptId ? 'HARI / TANGGAL' : 'NAMA UPT';
 
-            $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
-            $pdf->Cell($widths[2], 7, 'BM', 1, 0, 'C', true);
-            $pdf->Cell($widths[3], 7, 'PB', 1, 0, 'C', true);
-            $pdf->Cell($widths[4], 7, 'CB', 1, 0, 'C', true);
-            $pdf->Cell($widths[5], 7, 'CMB', 1, 0, 'C', true);
-            $pdf->Cell($widths[6], 7, 'ASIM', 1, 0, 'C', true);
-            $pdf->Cell($widths[7], 7, 'BDH', 1, 0, 'C', true);
-            $pdf->Cell($widths[8], 7, 'LAINNYA', 1, 0, 'C', true);
-            $pdf->Cell($widths[9], 7, 'TOTAL', 1, 0, 'C', true);
-            $pdf->Cell($widths[10], 7, 'KETERANGAN', 1, 1, 'C', true);
+            $renderTableHeader = function () use ($pdf, $widths, $col2Title) {
+                $pdf->SetFont('helvetica', 'B', 7.5);
+                $pdf->SetFillColor(220, 220, 220);
+                $pdf->SetTextColor(0, 0, 0);
+
+                $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
+                $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
+                $pdf->Cell($widths[2], 7, 'BM', 1, 0, 'C', true);
+                $pdf->Cell($widths[3], 7, 'PB', 1, 0, 'C', true);
+                $pdf->Cell($widths[4], 7, 'CB', 1, 0, 'C', true);
+                $pdf->Cell($widths[5], 7, 'CMB', 1, 0, 'C', true);
+                $pdf->Cell($widths[6], 7, 'ASIM', 1, 0, 'C', true);
+                $pdf->Cell($widths[7], 7, 'BDH', 1, 0, 'C', true);
+                $pdf->Cell($widths[8], 7, 'LAINNYA', 1, 0, 'C', true);
+                $pdf->Cell($widths[9], 7, 'TOTAL', 1, 0, 'C', true);
+                $pdf->Cell($widths[10], 7, 'KETERANGAN', 1, 1, 'C', true);
+            };
+
+            $renderTableHeader();
 
             $q = DB::table('data_bebas_harian as dbh')->join('upt as u', 'dbh.upt_id', '=', 'u.id');
             if ($uptId) {
@@ -427,6 +446,12 @@ class PdfReportService
                 $nKet = $pdf->getNumLines($textKet, $widths[10]);
                 $rowH = max(6, max($nUPT, $nKet) * 4.5);
 
+                if ($pdf->GetY() + $rowH > 265) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
+                    $pdf->SetFont('helvetica', '', 7.5);
+                }
+
                 $pdf->Cell($widths[0], $rowH, $no++, 1, 0, 'C');
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
@@ -444,6 +469,11 @@ class PdfReportService
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
                 $pdf->MultiCell($widths[10], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
+            }
+
+            if ($pdf->GetY() + 6 > 265) {
+                $pdf->AddPage();
+                $renderTableHeader();
             }
 
             $pdf->SetFont('helvetica', 'B', 8);
@@ -470,21 +500,25 @@ class PdfReportService
             $pdf->Ln(2);
 
             $widths = [8, 55, 13, 13, 13, 13, 13, 15, 47];
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->SetTextColor(0, 0, 0);
-
             $col2Title = $uptId ? 'HARI / TANGGAL' : 'NAMA UPT';
 
-            $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
-            $pdf->Cell($widths[2], 7, 'AI', 1, 0, 'C', true);
-            $pdf->Cell($widths[3], 7, 'AII', 1, 0, 'C', true);
-            $pdf->Cell($widths[4], 7, 'AIII', 1, 0, 'C', true);
-            $pdf->Cell($widths[5], 7, 'AIV', 1, 0, 'C', true);
-            $pdf->Cell($widths[6], 7, 'AV', 1, 0, 'C', true);
-            $pdf->Cell($widths[7], 7, 'TOTAL', 1, 0, 'C', true);
-            $pdf->Cell($widths[8], 7, 'KETERANGAN', 1, 1, 'C', true);
+            $renderTableHeader = function () use ($pdf, $widths, $col2Title) {
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetFillColor(220, 220, 220);
+                $pdf->SetTextColor(0, 0, 0);
+
+                $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
+                $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
+                $pdf->Cell($widths[2], 7, 'AI', 1, 0, 'C', true);
+                $pdf->Cell($widths[3], 7, 'AII', 1, 0, 'C', true);
+                $pdf->Cell($widths[4], 7, 'AIII', 1, 0, 'C', true);
+                $pdf->Cell($widths[5], 7, 'AIV', 1, 0, 'C', true);
+                $pdf->Cell($widths[6], 7, 'AV', 1, 0, 'C', true);
+                $pdf->Cell($widths[7], 7, 'TOTAL', 1, 0, 'C', true);
+                $pdf->Cell($widths[8], 7, 'KETERANGAN', 1, 1, 'C', true);
+            };
+
+            $renderTableHeader();
 
             $q = DB::table('data_overstaying as do')->join('upt as u', 'do.upt_id', '=', 'u.id');
             if ($uptId) {
@@ -521,6 +555,12 @@ class PdfReportService
                 $nKet = $pdf->getNumLines($textKet, $widths[8]);
                 $rowH = max(6, max($nUPT, $nKet) * 4);
 
+                if ($pdf->GetY() + $rowH > 265) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
+                    $pdf->SetFont('helvetica', '', 8);
+                }
+
                 $pdf->Cell($widths[0], $rowH, $no++, 1, 0, 'C');
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
@@ -536,6 +576,11 @@ class PdfReportService
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
                 $pdf->MultiCell($widths[8], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
+            }
+
+            if ($pdf->GetY() + 6 > 265) {
+                $pdf->AddPage();
+                $renderTableHeader();
             }
 
             $pdf->SetFont('helvetica', 'B', 8);
@@ -564,13 +609,18 @@ class PdfReportService
                 $headers = ['No', 'UPT', 'Kapasitas', 'Tahanan', 'Narapidana', 'Total', '% Kapasitas', 'Overstaying', 'Integrasi'];
                 $widths = [10, 85, 24, 24, 24, 24, 24, 24, 24];
 
-                $pdf->SetFont('helvetica', 'B', 8);
-                $pdf->SetFillColor(52, 73, 94);
-                $pdf->SetTextColor(255, 255, 255);
-                foreach ($headers as $i => $h) {
-                    $pdf->Cell($widths[$i], 7, $h, 1, 0, 'C', true);
-                }
-                $pdf->Ln();
+                $renderTableHeader = function () use ($pdf, $headers, $widths) {
+                    $pdf->SetFont('helvetica', 'B', 8);
+                    $pdf->SetFillColor(52, 73, 94);
+                    $pdf->SetTextColor(255, 255, 255);
+                    foreach ($headers as $i => $h) {
+                        $pdf->Cell($widths[$i], 7, $h, 1, 0, 'C', true);
+                    }
+                    $pdf->Ln();
+                    $pdf->SetTextColor(0, 0, 0);
+                };
+
+                $renderTableHeader();
 
                 $uptQuery = Upt::orderBy('nama_upt');
                 if ($uptId) {
@@ -643,6 +693,12 @@ class PdfReportService
                     $gOvs += $ovs;
                     $gInt += $int;
 
+                    if ($pdf->GetY() + 6 > 180) {
+                        $pdf->AddPage();
+                        $renderTableHeader();
+                        $pdf->SetFont('helvetica', '', 8);
+                    }
+
                     $pdf->Cell($widths[0], 6, $no++, 1, 0, 'C');
                     $pdf->Cell($widths[1], 6, $u->nama_upt, 1, 0, 'L');
                     $pdf->Cell($widths[2], 6, number_format($kap), 1, 0, 'C');
@@ -652,6 +708,11 @@ class PdfReportService
                     $pdf->Cell($widths[6], 6, $persen.'%', 1, 0, 'C');
                     $pdf->Cell($widths[7], 6, number_format($ovs), 1, 0, 'C');
                     $pdf->Cell($widths[8], 6, number_format($int), 1, 1, 'C');
+                }
+
+                if ($pdf->GetY() + 7 > 180) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
                 }
 
                 $pdf->SetFont('helvetica', 'B', 8);
@@ -672,32 +733,38 @@ class PdfReportService
             } elseif ($reportType === 'integrasi') {
                 $widths = [8, 65, 18, 13, 13, 13, 13, 14, 13, 13, 13, 13, 14, 15];
 
-                // Header row 1
-                $pdf->SetFont('helvetica', 'B', 7);
-                $pdf->SetFillColor(52, 73, 94);
-                $pdf->SetTextColor(255, 255, 255);
+                $renderTableHeader = function () use ($pdf, $widths) {
+                    // Header row 1
+                    $pdf->SetFont('helvetica', 'B', 7);
+                    $pdf->SetFillColor(52, 73, 94);
+                    $pdf->SetTextColor(255, 255, 255);
 
-                $pdf->Cell($widths[0], 12, 'No', 1, 0, 'C', true);
-                $pdf->Cell($widths[1], 12, 'UPT', 1, 0, 'C', true);
-                $pdf->Cell($widths[2], 12, 'Tanggal', 1, 0, 'C', true);
-                $pdf->Cell(66, 6, 'Usulan', 1, 0, 'C', true);
-                $pdf->Cell(66, 6, 'SK Terbit', 1, 0, 'C', true);
-                $pdf->Cell($widths[13], 12, 'Total', 1, 1, 'C', true);
+                    $pdf->Cell($widths[0], 12, 'No', 1, 0, 'C', true);
+                    $pdf->Cell($widths[1], 12, 'UPT', 1, 0, 'C', true);
+                    $pdf->Cell($widths[2], 12, 'Tanggal', 1, 0, 'C', true);
+                    $pdf->Cell(66, 6, 'Usulan', 1, 0, 'C', true);
+                    $pdf->Cell(66, 6, 'SK Terbit', 1, 0, 'C', true);
+                    $pdf->Cell($widths[13], 12, 'Total', 1, 1, 'C', true);
 
-                // Header row 2
-                $pdf->Cell(array_sum(array_slice($widths, 0, 3)), 0, '', 0, 0);
-                $pdf->SetFillColor(66, 87, 108);
-                $pdf->Cell($widths[3], 6, 'PB', 1, 0, 'C', true);
-                $pdf->Cell($widths[4], 6, 'CB', 1, 0, 'C', true);
-                $pdf->Cell($widths[5], 6, 'CMB', 1, 0, 'C', true);
-                $pdf->Cell($widths[6], 6, 'CMK', 1, 0, 'C', true);
-                $pdf->Cell($widths[7], 6, 'Asim', 1, 0, 'C', true);
-                $pdf->Cell($widths[8], 6, 'PB', 1, 0, 'C', true);
-                $pdf->Cell($widths[9], 6, 'CB', 1, 0, 'C', true);
-                $pdf->Cell($widths[10], 6, 'CMB', 1, 0, 'C', true);
-                $pdf->Cell($widths[11], 6, 'CMK', 1, 0, 'C', true);
-                $pdf->Cell($widths[12], 6, 'Asim', 1, 0, 'C', true);
-                $pdf->Cell($widths[13], 0, '', 0, 1);
+                    // Header row 2
+                    $pdf->Cell(array_sum(array_slice($widths, 0, 3)), 0, '', 0, 0);
+                    $pdf->SetFillColor(66, 87, 108);
+                    $pdf->Cell($widths[3], 6, 'PB', 1, 0, 'C', true);
+                    $pdf->Cell($widths[4], 6, 'CB', 1, 0, 'C', true);
+                    $pdf->Cell($widths[5], 6, 'CMB', 1, 0, 'C', true);
+                    $pdf->Cell($widths[6], 6, 'CMK', 1, 0, 'C', true);
+                    $pdf->Cell($widths[7], 6, 'Asim', 1, 0, 'C', true);
+                    $pdf->Cell($widths[8], 6, 'PB', 1, 0, 'C', true);
+                    $pdf->Cell($widths[9], 6, 'CB', 1, 0, 'C', true);
+                    $pdf->Cell($widths[10], 6, 'CMB', 1, 0, 'C', true);
+                    $pdf->Cell($widths[11], 6, 'CMK', 1, 0, 'C', true);
+                    $pdf->Cell($widths[12], 6, 'Asim', 1, 0, 'C', true);
+                    $pdf->Cell($widths[13], 0, '', 0, 1);
+
+                    $pdf->SetTextColor(0, 0, 0);
+                };
+
+                $renderTableHeader();
 
                 $q = DataIntegrasi::with('upt')->orderBy('tanggal', 'desc');
                 if ($uptId) {
@@ -718,6 +785,12 @@ class PdfReportService
                             + (int) $r->sk_terbit_pb + (int) $r->sk_terbit_cb + (int) $r->sk_terbit_cmb + (int) $r->sk_terbit_cmk + (int) $r->sk_terbit_asimilasi;
                     $grandTotal += $totRow;
 
+                    if ($pdf->GetY() + 5.5 > 180) {
+                        $pdf->AddPage();
+                        $renderTableHeader();
+                        $pdf->SetFont('helvetica', '', 7);
+                    }
+
                     $pdf->Cell($widths[0], 5.5, $no++, 1, 0, 'C');
                     $pdf->Cell($widths[1], 5.5, $r->upt?->nama_upt ?? '-', 1, 0, 'L');
                     $pdf->Cell($widths[2], 5.5, $r->tanggal ? date('d/m/Y', strtotime($r->tanggal)) : '-', 1, 0, 'C');
@@ -732,6 +805,11 @@ class PdfReportService
                     $pdf->Cell($widths[11], 5.5, (int) $r->sk_terbit_cmk, 1, 0, 'C');
                     $pdf->Cell($widths[12], 5.5, (int) $r->sk_terbit_asimilasi, 1, 0, 'C');
                     $pdf->Cell($widths[13], 5.5, $totRow, 1, 1, 'C');
+                }
+
+                if ($pdf->GetY() + 6 > 180) {
+                    $pdf->AddPage();
+                    $renderTableHeader();
                 }
 
                 $pdf->SetFont('helvetica', 'B', 7);
@@ -777,6 +855,11 @@ class PdfReportService
         $jabatanTtd = $signData['jabatan_ttd'] ?? 'Kepala Bidang Pelayanan dan Pembinaan';
         $namaTtd = $signData['nama_ttd'] ?? 'Surya Dharma';
         $tglTtd = function_exists('formatIndonesianDate') ? formatIndonesianDate(date('Y-m-d'), false) : date('d/m/Y');
+
+        $maxSigY = ($orientation === 'L') ? 145 : 225;
+        if ($pdf->GetY() > $maxSigY) {
+            $pdf->AddPage();
+        }
 
         $sigX = ($orientation === 'L') ? 215 : 130;
         $pdf->SetTextColor(0, 0, 0);
@@ -1495,6 +1578,11 @@ class PdfReportService
         }
 
         // 7. Tabel Footer (Total Akumulasi)
+        if ($pdf->GetY() + 6 > 175) {
+            $pdf->AddPage();
+            $renderTableHeader();
+        }
+
         $pdf->SetFont('helvetica', 'B', 7);
         $pdf->SetFillColor(52, 73, 94);
         $pdf->SetTextColor(255, 255, 255);

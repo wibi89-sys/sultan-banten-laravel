@@ -157,6 +157,22 @@ class PdfReportUptTest extends TestCase
         $response->assertHeader('Content-Type', 'application/pdf');
     }
 
+    public function test_admin_can_generate_rekapitulasi_and_integrasi_pdf(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'upt_id' => null,
+        ]);
+
+        $resRekap = $this->actingAs($admin)->get('/laporan/pdf?type=rekapitulasi&tanggal_mulai=2026-01-01&tanggal_akhir=2026-10-31');
+        $resRekap->assertStatus(200);
+        $resRekap->assertHeader('Content-Type', 'application/pdf');
+
+        $resIntegrasi = $this->actingAs($admin)->get('/laporan/pdf?type=integrasi&tanggal_mulai=2026-01-01&tanggal_akhir=2026-10-31');
+        $resIntegrasi->assertStatus(200);
+        $resIntegrasi->assertHeader('Content-Type', 'application/pdf');
+    }
+
     public function test_h_tag_calculation_relative_to_report_date(): void
     {
         $hSameDay = KroscekController::calculateHTagInfo('2026-10-31', Carbon::parse('2026-10-31 07:45:00'));
