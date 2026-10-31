@@ -115,7 +115,32 @@
             </div>
         </div>
         
-        <!-- Pengaturan Format Dokumen & Penandatangan (PDF) -->
+        @if($userUptFilter)
+        <!-- Format Dokumen Cetak UPT -->
+        <input type="hidden" name="show_qrcode" value="1">
+        <input type="hidden" name="mode" value="upt">
+        <div class="card border-0 shadow-sm mt-4" style="background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                        <i class="fas fa-file-invoice fa-lg"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="mb-0 fw-bold text-dark">Format Cetak Laporan Satuan Kerja (UPT)</h6>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">
+                                <i class="fas fa-check-circle me-1"></i>Format Bersih & Mandiri
+                            </span>
+                        </div>
+                        <p class="mb-0 text-muted small">
+                            Laporan dicetak khusus untuk <strong>{{ auth()->user()->upt?->nama_upt ?? 'UPT' }}</strong> dalam format bersih (tanpa Kop Surat Kantor Wilayah dan tanpa bagian tanda tangan Kanwil). Keabsahan cetakan diverifikasi langsung melalui <strong>QR Code Sistem SULTAN BANTEN</strong> pada footer dokumen.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @else
+        <!-- Pengaturan Format Dokumen & Penandatangan (PDF Kanwil) -->
         <div class="card border-0 shadow-sm mt-4" style="background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
             <div class="card-header bg-transparent py-3 border-bottom">
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -131,7 +156,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <!-- 3 Toggle Switches Utama -->
+                <!-- 3 Toggle Switches Utama & Pilihan Format -->
                 <div class="row g-3 p-3 rounded mb-3" style="background-color: var(--bs-tertiary-bg, #f8fafc); border: 1px dashed var(--border-color, #cbd5e1); border-radius: 10px;">
                     <!-- 1. Tanda Tangan -->
                     <div class="col-md-4">
@@ -221,6 +246,7 @@
                 </div>
             </div>
         </div>
+        @endif
         
         <hr class="my-4">
         
@@ -242,7 +268,9 @@
 @push('scripts')
 <script>
     function toggleSignatureOptions() {
-        const isTtdChecked = document.getElementById('show_ttd').checked;
+        const ttdEl = document.getElementById('show_ttd');
+        if (!ttdEl) return;
+        const isTtdChecked = ttdEl.checked;
         const container = document.getElementById('signatureDetailsContainer');
         if (container) {
             container.style.opacity = isTtdChecked ? '1' : '0.4';
@@ -270,11 +298,13 @@
         const uptSelect = document.getElementById('upt_id');
         if (uptSelect) uptSelect.value = '';
         
-        document.getElementById('show_ttd').checked = true;
-        document.getElementById('show_stempel').checked = true;
-        document.getElementById('show_qrcode').checked = true;
-        document.getElementById('show_ttd_image').checked = true;
-        toggleSignatureOptions();
+        if (document.getElementById('show_ttd')) {
+            document.getElementById('show_ttd').checked = true;
+            document.getElementById('show_stempel').checked = true;
+            document.getElementById('show_qrcode').checked = true;
+            document.getElementById('show_ttd_image').checked = true;
+            toggleSignatureOptions();
+        }
 
         if (document.getElementById('jabatan_ttd')) {
             document.getElementById('tempat_ttd').value = 'Serang';

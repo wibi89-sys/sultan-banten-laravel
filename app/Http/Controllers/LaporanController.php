@@ -63,13 +63,16 @@ class LaporanController extends Controller
         $tanggalMulai = $request->query('tanggal_mulai', date('Y-m-01'));
         $tanggalAkhir = $request->query('tanggal_akhir', date('Y-m-t'));
 
+        $isUpt = ($userUptFilter !== null) || ($request->query('mode') === 'upt');
+
         $signData = [
+            'is_upt' => $isUpt,
             'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
             'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
             'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
-            'show_ttd' => $request->query('show_ttd', '1') === '1',
-            'show_ttd_image' => $request->query('show_ttd_image', '1') === '1',
-            'show_stempel' => $request->query('show_stempel', '1') === '1',
+            'show_ttd' => ! $isUpt && ($request->query('show_ttd', '1') === '1'),
+            'show_ttd_image' => ! $isUpt && ($request->query('show_ttd_image', '1') === '1'),
+            'show_stempel' => ! $isUpt && ($request->query('show_stempel', '1') === '1'),
             'show_qrcode' => $request->query('show_qrcode', '1') === '1',
         ];
 

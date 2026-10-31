@@ -70,8 +70,25 @@ class PdfReportService
         $pdf->SetAutoPageBreak(true, 25);
         $pdf->AddPage();
 
+        $isUpt = ! empty($signData['is_upt']) || ($user && $user->getUserUptFilter() !== null);
+        $uptModel = $uptId ? Upt::find($uptId) : null;
+
         // Header / Kop
-        if (in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian'])) {
+        if ($isUpt) {
+            // Mode UPT: Tanpa Kop Kanwil, langsung judul laporan & nama Satker UPT
+            $pdf->Ln(2);
+            $pdf->SetFont('helvetica', 'B', 12);
+            $pdf->Cell(0, 6, $reportTitles[$reportType] ?? 'LAPORAN', 0, 1, 'C');
+            if ($uptModel) {
+                $pdf->SetFont('helvetica', 'B', 10.5);
+                $pdf->Cell(0, 5, strtoupper($uptModel->nama_upt), 0, 1, 'C');
+            }
+            $pdf->Ln(1);
+            $pdf->SetLineWidth(0.4);
+            $lineEnd = in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian']) ? 200 : 287;
+            $pdf->Line(10, $pdf->GetY(), $lineEnd, $pdf->GetY());
+            $pdf->Ln(4);
+        } elseif (in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian'])) {
             $logoKop = null;
             if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
                 $logoKop = public_path($instansi->logo_kop);
@@ -652,6 +669,11 @@ class PdfReportService
 
     private static function renderSignature($pdf, $instansi, $signData, $orientation = 'P')
     {
+        // Mode UPT: Nonaktifkan semua part tanda tangan (tempat, tanggal, jabatan, nama, ttd, dan stempel)
+        if (! empty($signData['is_upt'])) {
+            return;
+        }
+
         $showTtd = ! isset($signData['show_ttd']) || (bool) $signData['show_ttd'];
         if (! $showTtd) {
             return;
@@ -742,47 +764,18 @@ class PdfReportService
         $pdf->SetAutoPageBreak(true, 25);
         $pdf->AddPage();
 
-        // 1. KOP Resmi Instansi (Landscape)
-        $logoKop = null;
-        if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
-            $logoKop = public_path($instansi->logo_kop);
-        } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
-            $logoKop = public_path($instansi->logo);
-        }
-
-        if ($logoKop) {
-            $pdf->Image($logoKop, 15, 10, 22);
-        }
-
-        $wKop = 230;
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
-        $pdf->SetFont('helvetica', '', 8.5);
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
+        // 1. Header Dokumen UPT (Bersih Tanpa Kop Kanwil)
+        $namaUpt = $data['upt']->nama_upt ?? 'UPT Pemasyarakatan';
 
         $pdf->Ln(2);
-        $pdf->SetLineWidth(0.6);
-        $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
-        $pdf->SetLineWidth(0.2);
-        $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
-        $pdf->Ln(3);
-
-        // 2. Judul Dokumen & Subtitle
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(0, 5, 'LAPORAN KELENGKAPAN PELAPORAN & KROSCEK HARIAN PER TANGGAL', 0, 1, 'C');
-        $pdf->SetFont('helvetica', 'B', 9.5);
-        $namaUpt = $data['upt']->nama_upt ?? 'UPT Pemasyarakatan';
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 6, 'LAPORAN KELENGKAPAN PELAPORAN & KROSCEK HARIAN PER TANGGAL', 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'B', 10.5);
         $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
         $pdf->Ln(1);
+        $pdf->SetLineWidth(0.4);
+        $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+        $pdf->Ln(3);
 
         // 3. Metadata Periode & Filter Info
         $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($data['tanggal_mulai'], false) : $data['tanggal_mulai'];
@@ -979,10 +972,13 @@ class PdfReportService
         }
 
         // 7. Signature Block
-        if ($pdf->GetY() > 145) {
-            $pdf->AddPage();
+        // Catatan: Untuk laporan UPT, bagian tanda tangan dinonaktifkan sepenuhnya sesuai arahan
+        if (empty($signData['is_upt']) && ! empty($signData['show_ttd'])) {
+            if ($pdf->GetY() > 145) {
+                $pdf->AddPage();
+            }
+            self::renderSignature($pdf, $instansi, $signData, 'L');
         }
-        self::renderSignature($pdf, $instansi, $signData, 'L');
 
         // Output PDF
         $cleanUpt = Str::slug($namaUpt);
