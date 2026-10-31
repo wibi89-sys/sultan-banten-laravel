@@ -393,14 +393,17 @@ class KroscekController extends Controller
 
         $data = self::getDetailKroscekData($selectedDetailUptId, $detailTanggalMulai, $detailTanggalAkhir, $sort);
 
+        $isKanwil = $user && $user->isKanwil();
+        $isUpt = ! $isKanwil;
+
         $signData = [
-            'is_upt' => true,
+            'is_upt' => $isUpt,
             'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
             'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
             'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
-            'show_ttd' => false,
-            'show_ttd_image' => false,
-            'show_stempel' => false,
+            'show_ttd' => ! $isUpt && ($request->query('show_ttd', '1') === '1'),
+            'show_ttd_image' => ! $isUpt && ($request->query('show_ttd_image', '1') === '1'),
+            'show_stempel' => ! $isUpt && ($request->query('show_stempel', '1') === '1'),
             'show_qrcode' => $request->query('show_qrcode', '1') === '1',
         ];
 

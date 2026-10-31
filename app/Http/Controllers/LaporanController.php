@@ -44,6 +44,7 @@ class LaporanController extends Controller
             'reportTitles' => $this->reportTitles,
             'uptList' => $uptList,
             'userUptFilter' => $userUptFilter,
+            'isKanwil' => $user->isKanwil(),
             'defaultStartDate' => $defaultStartDate,
             'defaultEndDate' => $defaultEndDate,
             'instansi' => $instansi,
@@ -59,11 +60,11 @@ class LaporanController extends Controller
 
         $reportType = $request->query('type', 'penghuni');
         $userUptFilter = $user->getUserUptFilter();
+        $isKanwil = $user->isKanwil();
+        $isUpt = ! $isKanwil || ($request->query('mode') === 'upt');
         $uptId = $userUptFilter ?: ($request->query('upt_id') ? (int) $request->query('upt_id') : null);
         $tanggalMulai = $request->query('tanggal_mulai', date('Y-m-01'));
         $tanggalAkhir = $request->query('tanggal_akhir', date('Y-m-t'));
-
-        $isUpt = ($userUptFilter !== null) || ($request->query('mode') === 'upt');
 
         $signData = [
             'is_upt' => $isUpt,

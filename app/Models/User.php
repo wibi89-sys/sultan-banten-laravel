@@ -81,7 +81,7 @@ class User extends Authenticatable
 
     public function isKanwil(): bool
     {
-        return empty($this->upt_id) || $this->role === 'operator_wilayah';
+        return $this->isAdmin() || $this->role === 'operator_wilayah' || empty($this->upt_id);
     }
 
     /**

@@ -71,4 +71,30 @@ class PdfReportUptTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
     }
+
+    public function test_admin_kanwil_can_generate_laporan_pdf(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'upt_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/laporan/pdf?type=penghuni&show_ttd=1&show_stempel=1');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_admin_kanwil_can_generate_kroscek_detail_pdf(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'upt_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/kroscek/detail-pdf?sort=asc&show_ttd=1');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
 }

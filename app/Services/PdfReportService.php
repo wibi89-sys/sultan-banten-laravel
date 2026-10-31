@@ -70,7 +70,11 @@ class PdfReportService
         $pdf->SetAutoPageBreak(true, 25);
         $pdf->AddPage();
 
-        $isUpt = ! empty($signData['is_upt']) || ($user && $user->getUserUptFilter() !== null);
+        $isKanwil = $user ? $user->isKanwil() : false;
+        $isUpt = ! $isKanwil || ! empty($signData['is_upt']);
+        if ($isKanwil) {
+            $isUpt = false;
+        }
         $uptModel = $uptId ? Upt::find($uptId) : null;
 
         // Header / Kop
@@ -127,16 +131,45 @@ class PdfReportService
             $pdf->Cell(0, 6, 'UPT PEMASYARAKATAN KANTOR WILAYAH BANTEN', 0, 1, 'C');
             $pdf->Ln(2);
         } else {
-            $pdf->SetFont('helvetica', 'B', 14);
-            $pdf->Cell(0, 8, strtoupper($instansi?->nama_instansi ?? 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN'), 0, 1, 'C');
-            if (! empty($instansi?->alamat)) {
-                $pdf->SetFont('helvetica', '', 9);
-                $pdf->Cell(0, 5, $instansi->alamat, 0, 1, 'C');
+            // Mode Kanwil Landscape (Integrasi & Rekapitulasi)
+            $logoKop = null;
+            if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+                $logoKop = public_path($instansi->logo_kop);
+            } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+                $logoKop = public_path($instansi->logo);
             }
-            $pdf->Ln(4);
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 7, $reportTitles[$reportType] ?? 'Laporan', 0, 1, 'C');
+
+            if ($logoKop) {
+                $pdf->Image($logoKop, 15, 10, 22);
+            }
+
+            $wKop = 230;
+            $pdf->SetFont('helvetica', '', 10);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', '', 8.5);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
+
             $pdf->Ln(2);
+            $pdf->SetLineWidth(0.6);
+            $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+            $pdf->SetLineWidth(0.2);
+            $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
+            $pdf->Ln(3);
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->Cell(0, 5, $reportTitles[$reportType] ?? 'LAPORAN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 9.5);
+            $pdf->Cell(0, 5, 'UPT PEMASYARAKATAN KANTOR WILAYAH BANTEN', 0, 1, 'C');
+            $pdf->Ln(1);
         }
 
         // Fetch Data & Draw Table
@@ -764,18 +797,66 @@ class PdfReportService
         $pdf->SetAutoPageBreak(true, 25);
         $pdf->AddPage();
 
-        // 1. Header Dokumen UPT (Bersih Tanpa Kop Kanwil)
+        $isKanwil = $user ? $user->isKanwil() : false;
+        $isUpt = ! $isKanwil || ! empty($signData['is_upt']);
+        if ($isKanwil) {
+            $isUpt = false;
+        }
+
         $namaUpt = $data['upt']->nama_upt ?? 'UPT Pemasyarakatan';
 
-        $pdf->Ln(2);
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(0, 6, 'LAPORAN KELENGKAPAN PELAPORAN & KROSCEK HARIAN PER TANGGAL', 0, 1, 'C');
-        $pdf->SetFont('helvetica', 'B', 10.5);
-        $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
-        $pdf->Ln(1);
-        $pdf->SetLineWidth(0.4);
-        $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
-        $pdf->Ln(3);
+        if ($isUpt) {
+            // 1. Header Dokumen UPT (Bersih Tanpa Kop Kanwil)
+            $pdf->Ln(2);
+            $pdf->SetFont('helvetica', 'B', 12);
+            $pdf->Cell(0, 6, 'LAPORAN KELENGKAPAN PELAPORAN & KROSCEK HARIAN PER TANGGAL', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 10.5);
+            $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
+            $pdf->Ln(1);
+            $pdf->SetLineWidth(0.4);
+            $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+            $pdf->Ln(3);
+        } else {
+            // 1. KOP Resmi Instansi Kantor Wilayah (Landscape)
+            $logoKop = null;
+            if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+                $logoKop = public_path($instansi->logo_kop);
+            } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+                $logoKop = public_path($instansi->logo);
+            }
+
+            if ($logoKop) {
+                $pdf->Image($logoKop, 15, 10, 22);
+            }
+
+            $wKop = 230;
+            $pdf->SetFont('helvetica', '', 10);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', '', 8.5);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
+
+            $pdf->Ln(2);
+            $pdf->SetLineWidth(0.6);
+            $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+            $pdf->SetLineWidth(0.2);
+            $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
+            $pdf->Ln(3);
+
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->Cell(0, 5, 'LAPORAN KELENGKAPAN PELAPORAN & KROSCEK HARIAN PER TANGGAL', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 9.5);
+            $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
+            $pdf->Ln(1);
+        }
 
         // 3. Metadata Periode & Filter Info
         $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($data['tanggal_mulai'], false) : $data['tanggal_mulai'];
@@ -972,8 +1053,8 @@ class PdfReportService
         }
 
         // 7. Signature Block
-        // Catatan: Untuk laporan UPT, bagian tanda tangan dinonaktifkan sepenuhnya sesuai arahan
-        if (empty($signData['is_upt']) && ! empty($signData['show_ttd'])) {
+        // Mode Kanwil: sertakan tanda tangan lengkap. Mode UPT: dinonaktifkan
+        if (! $isUpt && ! empty($signData['show_ttd'])) {
             if ($pdf->GetY() > 145) {
                 $pdf->AddPage();
             }

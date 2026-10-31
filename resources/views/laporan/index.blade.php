@@ -86,7 +86,7 @@
         <input type="hidden" name="type" value="{{ $reportType }}">
         
         <div class="row g-3">
-            @if(!$userUptFilter)
+            @if($isKanwil)
             <div class="col-md-4">
                 <label for="upt_id" class="form-label fw-semibold small">Pilih UPT</label>
                 <select name="upt_id" id="upt_id" class="form-select" aria-label="Pilih UPT">
@@ -115,7 +115,7 @@
             </div>
         </div>
         
-        @if($userUptFilter)
+        @if(!$isKanwil)
         <!-- Format Dokumen Cetak UPT -->
         <input type="hidden" name="show_qrcode" value="1">
         <input type="hidden" name="mode" value="upt">
