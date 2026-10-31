@@ -48,7 +48,7 @@ class PdfReportService
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
-                    $qrText = "✅ Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
+                    $qrText = "Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
                     $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
                     $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
                 }
@@ -782,7 +782,7 @@ class PdfReportService
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
-                    $qrText = "✅ Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
+                    $qrText = "Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
                     $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
                     $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
                 }
@@ -1004,7 +1004,7 @@ class PdfReportService
             // 6. Modul 1: Penghuni
             $pdf->SetFont('helvetica', '', 6.5);
             if ($r['penghuni']['exists']) {
-                $hTag = ! empty($r['penghuni']['h_tag']) ? ' • '.$r['penghuni']['h_tag'] : '';
+                $hTag = ! empty($r['penghuni']['h_tag']) ? ' - '.$r['penghuni']['h_tag'] : '';
                 $txt = $r['penghuni']['jam_str'].($r['penghuni']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['penghuni']['is_tepat'] ? 22 : 180, $r['penghuni']['is_tepat'] ? 101 : 83, $r['penghuni']['is_tepat'] ? 52 : 9);
             } else {
@@ -1016,7 +1016,7 @@ class PdfReportService
 
             // 7. Modul 2: Overstaying
             if ($r['overstaying']['exists']) {
-                $hTag = ! empty($r['overstaying']['h_tag']) ? ' • '.$r['overstaying']['h_tag'] : '';
+                $hTag = ! empty($r['overstaying']['h_tag']) ? ' - '.$r['overstaying']['h_tag'] : '';
                 $txt = $r['overstaying']['jam_str'].($r['overstaying']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['overstaying']['is_tepat'] ? 22 : 180, $r['overstaying']['is_tepat'] ? 101 : 83, $r['overstaying']['is_tepat'] ? 52 : 9);
             } else {
@@ -1028,7 +1028,7 @@ class PdfReportService
 
             // 8. Modul 3: Integrasi
             if ($r['integrasi']['exists']) {
-                $hTag = ! empty($r['integrasi']['h_tag']) ? ' • '.$r['integrasi']['h_tag'] : '';
+                $hTag = ! empty($r['integrasi']['h_tag']) ? ' - '.$r['integrasi']['h_tag'] : '';
                 $txt = $r['integrasi']['jam_str'].($r['integrasi']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['integrasi']['is_tepat'] ? 22 : 180, $r['integrasi']['is_tepat'] ? 101 : 83, $r['integrasi']['is_tepat'] ? 52 : 9);
             } else {
@@ -1040,7 +1040,7 @@ class PdfReportService
 
             // 9. Modul 4: Bebas Harian
             if ($r['bebas']['exists']) {
-                $hTag = ! empty($r['bebas']['h_tag']) ? ' • '.$r['bebas']['h_tag'] : '';
+                $hTag = ! empty($r['bebas']['h_tag']) ? ' - '.$r['bebas']['h_tag'] : '';
                 $txt = $r['bebas']['jam_str'].($r['bebas']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['bebas']['is_tepat'] ? 22 : 180, $r['bebas']['is_tepat'] ? 101 : 83, $r['bebas']['is_tepat'] ? 52 : 9);
             } else {
@@ -1123,7 +1123,7 @@ class PdfReportService
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
-                    $qrText = "✅ Dokumen Sah & Valid\nLampiran Bukti Poin & Medali UPT\nSULTAN BANTEN @Ditjenpas Banten";
+                    $qrText = "Dokumen Sah & Valid\nLampiran Bukti Poin & Medali UPT\nSULTAN BANTEN @Ditjenpas Banten";
                     $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
                     $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
                 }
@@ -1222,7 +1222,7 @@ class PdfReportService
         // Box 2: Medali Disiplin
         $pdf->SetFillColor(254, 243, 199);
         $pdf->SetTextColor(180, 83, 9);
-        $pdf->Cell($kpiWidth, 5.5, "Medali: 🥇 {$uptData['count_gold']} Gold (<08.00) • 🥈 {$uptData['count_silver']} Silver (08-11)", 1, 0, 'C', true);
+        $pdf->Cell($kpiWidth, 5.5, "Medali: {$uptData['count_gold']} Gold (<08.00) | {$uptData['count_silver']} Silver (08-11)", 1, 0, 'C', true);
 
         // Box 3: Hari Sempurna
         $pdf->SetFillColor(240, 253, 244);
@@ -1302,9 +1302,9 @@ class PdfReportService
 
                     $medalSymbol = '';
                     if (! empty($m['is_golden'])) {
-                        $medalSymbol = ' 🥇';
+                        $medalSymbol = ' Gold';
                     } elseif (! empty($m['is_silver'])) {
-                        $medalSymbol = ' 🥈';
+                        $medalSymbol = ' Silver';
                     }
 
                     $text = ($m['jam_str'] ?? '-').$timingTag.' ('.$m['poin'].'p'.$medalSymbol.')';
@@ -1336,13 +1336,13 @@ class PdfReportService
 
             if ($kStatus === 'sesuai') {
                 $pdf->SetTextColor(22, 101, 52);
-                $kText = "P: {$tP} | O: {$tO} • Sinkron ({$k['poin']}p)";
+                $kText = "P: {$tP} | O: {$tO} - Sinkron ({$k['poin']}p)";
             } elseif (in_array($kStatus, ['sesuai_perbaikan_jam_input', 'sesuai_perbaikan', 'sesuai_perbaikan_luar_jam', 'sesuai_perbaikan_lewat_hari'])) {
                 $pdf->SetTextColor(180, 83, 9);
-                $kText = "P: {$tP} | O: {$tO} • Edit ({$k['poin']}p)";
+                $kText = "P: {$tP} | O: {$tO} - Edit ({$k['poin']}p)";
             } elseif ($kStatus === 'selisih') {
                 $pdf->SetTextColor(185, 28, 28);
-                $kText = "P: {$tP} | O: {$tO} • Selisih {$k['selisih']} (0p)";
+                $kText = "P: {$tP} | O: {$tO} - Selisih {$k['selisih']} (0p)";
             } else {
                 $pdf->SetTextColor(100, 116, 139);
                 $kText = 'Belum Lengkap (0p)';
@@ -1372,19 +1372,19 @@ class PdfReportService
             $pdf->SetFont('helvetica', 'B', 6.5);
             if ($dayPts === 100 && $hasGold) {
                 $pdf->SetTextColor(180, 83, 9);
-                $statusText = '🥇 Sempurna';
+                $statusText = 'Sempurna (Gold)';
             } elseif ($dayPts === 100) {
                 $pdf->SetTextColor(22, 101, 52);
-                $statusText = '🥈 100 Poin';
+                $statusText = '100 Poin (Silver)';
             } elseif ($kStatus === 'selisih') {
                 $pdf->SetTextColor(185, 28, 28);
-                $statusText = '⚠️ Selisih';
+                $statusText = 'Selisih';
             } elseif (($row['penghuni']['status'] ?? '') === 'terlambat' || ($row['overstaying']['status'] ?? '') === 'terlambat' || ($row['integrasi']['status'] ?? '') === 'terlambat' || ($row['bebas']['status'] ?? '') === 'terlambat') {
                 $pdf->SetTextColor(180, 83, 9);
-                $statusText = '⏰ Terlambat';
+                $statusText = 'Terlambat';
             } elseif (($row['penghuni']['status'] ?? '') === 'kosong' || ($row['overstaying']['status'] ?? '') === 'kosong' || ($row['integrasi']['status'] ?? '') === 'kosong' || ($row['bebas']['status'] ?? '') === 'kosong') {
                 $pdf->SetTextColor(185, 28, 28);
-                $statusText = '❌ Belum Lapor';
+                $statusText = 'Belum Lapor';
             } else {
                 $pdf->SetTextColor(51, 65, 85);
                 $statusText = 'Tepat Waktu';
@@ -1411,7 +1411,7 @@ class PdfReportService
         $pdf->Ln(1.5);
         $pdf->SetFont('helvetica', 'I', 6.2);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(0, 3.5, '* Keterangan Nilai: 5 Komponen dievaluasi per hari (maksimal 20 poin/komponen, total 100 poin/hari). 🥇 Gold: Input Golden Hours (< 08.00 WIB) | 🥈 Silver: Jam Kerja (08.00 - 11.00 WIB) | [H-1]: Lapor Awal | [H+1]: Susulan.', 0, 1, 'L');
+        $pdf->Cell(0, 3.5, '* Keterangan Nilai: 5 Komponen dievaluasi per hari (maksimal 20 poin/komponen, total 100 poin/hari). Gold: Input Golden Hours (< 08.00 WIB) | Silver: Jam Kerja (08.00 - 11.00 WIB) | [H-1]: Lapor Awal | [H+1]: Susulan.', 0, 1, 'L');
         $pdf->Cell(0, 3.2, '  Kroscek Tahanan: Sinkron langsung = 20 Poin, Perbaikan jam kerja = 18 Poin, Perbaikan hari-H = 12 Poin, Perbaikan susulan = 8 Poin, Selisih = 0 Poin.', 0, 1, 'L');
         $pdf->SetTextColor(0, 0, 0);
 
