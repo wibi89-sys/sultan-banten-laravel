@@ -430,4 +430,73 @@ class UptRankingServiceTest extends TestCase
         $this->assertEquals('Lapas Perak (Banyak Jam Kerja)', $rankings[1]['nama_upt']);
         $this->assertEquals('Lapas H-1 (Tanpa Medali)', $rankings[2]['nama_upt']);
     }
+
+    public function test_tie_breaker_prioritizes_sesuai_langsung_over_perbaikan_when_points_and_medals_are_equal(): void
+    {
+        $rankings = [
+            [
+                'nama_upt' => 'Lapas B (Banyak Perbaikan Data)',
+                'total_points' => 2000,
+                'count_gold' => 20,
+                'count_silver' => 60,
+                'count_input_hari_h_tepat' => 80,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_kroscek_sesuai_langsung' => 15,
+                'count_kroscek_perbaikan' => 5, // 5 hari sempat salah data & diedit
+                'avg_minutes_hari_h' => 450, // Datang lebih awal tapi data sempat salah
+            ],
+            [
+                'nama_upt' => 'Lapas A (Murni Sesuai Langsung Tanpa Edit)',
+                'total_points' => 2000,
+                'count_gold' => 20,
+                'count_silver' => 60,
+                'count_input_hari_h_tepat' => 80,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_kroscek_sesuai_langsung' => 20,
+                'count_kroscek_perbaikan' => 0, // 0 hari salah data, 100% murni sejak input pertama
+                'avg_minutes_hari_h' => 460,
+            ],
+        ];
+
+        UptRankingService::sortRankings($rankings);
+
+        // Lapas A harus juara 1 karena data langsung akurat/murni sejak pertama input
+        $this->assertEquals('Lapas A (Murni Sesuai Langsung Tanpa Edit)', $rankings[0]['nama_upt']);
+        $this->assertEquals('Lapas B (Banyak Perbaikan Data)', $rankings[1]['nama_upt']);
+    }
+
+    public function test_tie_breaker_prioritizes_fewer_data_corrections_when_points_are_equal(): void
+    {
+        $rankings = [
+            [
+                'nama_upt' => 'Lapas Koreksi Banyak (4x Edit)',
+                'total_points' => 2000,
+                'count_gold' => 20,
+                'count_silver' => 60,
+                'count_input_hari_h_tepat' => 80,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_kroscek_sesuai_langsung' => 16,
+                'count_kroscek_perbaikan' => 4,
+            ],
+            [
+                'nama_upt' => 'Lapas Koreksi Sedikit (1x Edit)',
+                'total_points' => 2000,
+                'count_gold' => 20,
+                'count_silver' => 60,
+                'count_input_hari_h_tepat' => 80,
+                'count_hari_sempurna' => 20,
+                'count_kroscek_sesuai' => 20,
+                'count_kroscek_sesuai_langsung' => 19,
+                'count_kroscek_perbaikan' => 1,
+            ],
+        ];
+
+        UptRankingService::sortRankings($rankings);
+
+        $this->assertEquals('Lapas Koreksi Sedikit (1x Edit)', $rankings[0]['nama_upt']);
+        $this->assertEquals('Lapas Koreksi Banyak (4x Edit)', $rankings[1]['nama_upt']);
+    }
 }

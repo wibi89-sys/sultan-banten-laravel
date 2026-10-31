@@ -217,6 +217,7 @@ class UptRankingService
             $countModulTerlambat = 0;
             $countModulKosong = 0;
             $countKroscekSesuai = 0;
+            $countKroscekSesuaiLangsung = 0;
             $countKroscekPerbaikan = 0;
             $countKroscekSelisih = 0;
             $countKroscekKosong = 0;
@@ -348,6 +349,7 @@ class UptRankingService
 
                 if ($kroscekScore['status'] === 'sesuai') {
                     $countKroscekSesuai++;
+                    $countKroscekSesuaiLangsung++;
                 } elseif ($kroscekScore['status'] === 'sesuai_perbaikan_jam_input') {
                     $countKroscekSesuai++;
                     $countKroscekPerbaikan++;
@@ -425,6 +427,7 @@ class UptRankingService
                 'count_input_susulan' => $countInputSusulan,
                 'avg_minutes_hari_h' => $avgMinutesHariH ?? ($avgMinutesAll ?? PHP_INT_MAX),
                 'count_kroscek_sesuai' => $countKroscekSesuai,
+                'count_kroscek_sesuai_langsung' => $countKroscekSesuaiLangsung,
                 'count_kroscek_perbaikan' => $countKroscekPerbaikan,
                 'count_kroscek_selisih' => $countKroscekSelisih,
                 'count_kroscek_kosong' => $countKroscekKosong,
@@ -477,13 +480,17 @@ class UptRankingService
      * 1. Total Poin Tertinggi (desc)
      * 2. Jumlah Medali Emas (Gold) / Pagi Hari-H < 08.00 WIB (desc)
      * 3. Jumlah Medali Perak (Silver) / Jam Kerja Hari-H 08.00 - 11.00 WIB (desc)
-     * 4. Jumlah Hari Sempurna (100 Poin) (desc)
-     * 5. Jumlah Kroscek Sesuai (desc)
-     * 6. Rata-rata Jam Input Hari-H paling awal (asc)
-     * 7. Hari Sebelumnya (H-1) lebih diutamakan daripada keterlambatan (desc H-1)
-     * 8. Minim keterlambatan pada Hari-H (asc)
-     * 9. Minim keterlambatan susulan lewat hari (asc)
-     * 10. Nama UPT alfabetis (asc)
+     * 4. Konsistensi Hari-H Tepat Waktu (desc)
+     * 5. Jumlah Hari Sempurna (100 Poin) (desc)
+     * 6. Kroscek Sinkron & Kemurnian Data:
+     *    a. Total Kroscek Sesuai (desc)
+     *    b. Prioritas Sesuai Langsung / Murni sejak input awal tanpa perbaikan (desc)
+     *    c. Minim Riwayat Perbaikan Data / Koreksi (asc)
+     * 7. Rata-rata Jam Input Hari-H paling awal (asc)
+     * 8. Hari Sebelumnya (H-1) lebih diutamakan daripada keterlambatan (desc H-1)
+     * 9. Minim keterlambatan pada Hari-H (asc)
+     * 10. Minim keterlambatan susulan lewat hari (asc)
+     * 11. Nama UPT alfabetis (asc)
      */
     public static function sortRankings(array &$rankings): void
     {
@@ -519,9 +526,24 @@ class UptRankingService
                 return $b['count_hari_sempurna'] <=> $a['count_hari_sempurna'];
             }
 
-            // 6. Jumlah Kroscek Sesuai
+            // 6. Kroscek Sinkron & Kemurnian Data
+            // 6a. Total Kroscek Sesuai (desc)
             if ($a['count_kroscek_sesuai'] !== $b['count_kroscek_sesuai']) {
                 return $b['count_kroscek_sesuai'] <=> $a['count_kroscek_sesuai'];
+            }
+
+            // 6b. Prioritas Kroscek Sesuai Langsung (Murni sejak input pertama tanpa perbaikan) (desc)
+            $aLangsung = $a['count_kroscek_sesuai_langsung'] ?? (($a['count_kroscek_sesuai'] ?? 0) - ($a['count_kroscek_perbaikan'] ?? 0));
+            $bLangsung = $b['count_kroscek_sesuai_langsung'] ?? (($b['count_kroscek_sesuai'] ?? 0) - ($b['count_kroscek_perbaikan'] ?? 0));
+            if ($aLangsung !== $bLangsung) {
+                return $bLangsung <=> $aLangsung;
+            }
+
+            // 6c. Minim Riwayat Perbaikan Data (Semakin sedikit perbaikan/koreksi, data semakin akurat) (asc)
+            $aPerbaikan = $a['count_kroscek_perbaikan'] ?? 0;
+            $bPerbaikan = $b['count_kroscek_perbaikan'] ?? 0;
+            if ($aPerbaikan !== $bPerbaikan) {
+                return $aPerbaikan <=> $bPerbaikan;
             }
 
             // 7. Rata-rata jam input Hari-H paling awal

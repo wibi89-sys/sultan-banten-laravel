@@ -710,7 +710,7 @@
                         <!-- Kroscek Tahanan -->
                         <td class="text-center">
                             <div class="d-flex justify-content-center align-items-center gap-1 flex-wrap">
-                                <span class="badge bg-success-subtle text-success py-1 px-2" title="{{ $upt['count_kroscek_sesuai'] }} hari sinkron/sesuai">
+                                <span class="badge bg-success-subtle text-success py-1 px-2" title="{{ $upt['count_kroscek_sesuai'] }} hari sinkron/sesuai ({{ $upt['count_kroscek_sesuai_langsung'] ?? ($upt['count_kroscek_sesuai'] - ($upt['count_kroscek_perbaikan'] ?? 0)) }} murni langsung)">
                                     <i class="fas fa-check-double me-1"></i>{{ $upt['count_kroscek_sesuai'] }}x
                                 </span>
                                 @if(!empty($upt['count_kroscek_perbaikan']) && $upt['count_kroscek_perbaikan'] > 0)
@@ -939,7 +939,10 @@
                                 <ol class="ps-3 mt-1 mb-1 small text-dark">
                                     <li>🥇 <strong>Jumlah Medali Emas (Gold) Terbanyak:</strong> UPT dengan frekuensi input sebelum jam 08.00 WIB terbanyak langsung unggul di puncak peringkat!</li>
                                     <li>🥈 <strong>Jumlah Medali Perak (Silver) Terbanyak:</strong> Frekuensi input pada jam kerja 08.00 - 11.00 WIB di Hari-H.</li>
-                                    <li><strong>Hari Sempurna (100 Poin Penuh) &amp; Kroscek Sesuai.</strong></li>
+                                    <li><strong>Konsistensi Hari-H Tepat Waktu:</strong> Total frekuensi pengisian modul tepat waktu di Hari-H.</li>
+                                    <li><strong>Hari Sempurna:</strong> Jumlah hari dengan capaian 100 Poin penuh.</li>
+                                    <li><strong>Kroscek Sesuai Langsung (Murni Tanpa Edit):</strong> UPT dengan data sinkron akurat sejak pengiriman awal lebih unggul dibanding data yang membutuhkan perbaikan.</li>
+                                    <li><strong>Minim Riwayat Perbaikan Data:</strong> UPT dengan frekuensi koreksi/edit data paling sedikit lebih diprioritaskan.</li>
                                     <li><strong>Rata-rata Jam Input Hari-H:</strong> UPT dengan rata-rata jam apel pagi paling awal.</li>
                                     <li><strong>Pengisian Maju (H-1):</strong> Lebih diutamakan daripada keterlambatan.</li>
                                     <li>Minim keterlambatan Hari-H dan susulan.</li>
@@ -948,7 +951,15 @@
                             <li><strong>Input H-1 (Pre-Input):</strong> Pengisian sore hari H-1 untuk tanggal esok hari dihitung <strong>Tepat Waktu (20 Poin Penuh)</strong> karena data sudah siap sebelum deadline.</li>
                             <li><strong>Input Lebih Dari Jam Batas (Hari-H):</strong> Pengisian lewat pukul {{ $rankingData['period']['jam_selesai'] }} WIB pada hari yang sama (hari-H) mendapat <strong>10 Poin</strong> per modul.</li>
                             <li><strong>Input Terlambat Melewati Hari:</strong> Pengisian terlambat yang baru diinput setelah melewati hari-H (hari berikutnya / susulan) mendapat <strong>5 Poin</strong> per modul.</li>
-                            <li><strong>Perbaikan Selisih Kroscek Tahanan:</strong> Jika data kroscek awalnya terdapat selisih lalu diperbaiki hingga sinkron di jam input (sebelum batas jam {{ $rankingData['period']['jam_selesai'] }} WIB), UPT memperoleh <strong>+20 Poin</strong> penuh. Jika diperbaiki di luar batas jam input namun masih di hari yang sama (hari-H), mendapat <strong>+10 Poin</strong>. Jika baru diperbaiki melewati hari-H (hari berikutnya / susulan) atau masih berselisih / kosong, mendapat <strong>0 Poin</strong>.</li>
+                            <li><strong>Perbaikan Data Kroscek Tahanan:</strong>
+                                <ul class="ps-3 mt-1 mb-1">
+                                    <li><strong>Sesuai Langsung:</strong> Data tahanan sinkron murni sejak awal = <strong>+20 Poin</strong> (prioritas tie-breaker tertinggi).</li>
+                                    <li><strong>Sesuai Hasil Perbaikan di Jam Input:</strong> Data selisih diperbaiki hingga sinkron sebelum batas jam {{ $rankingData['period']['jam_selesai'] }} WIB = <strong>+20 Poin</strong>.</li>
+                                    <li><strong>Sesuai Hasil Perbaikan di Luar Jam Hari-H:</strong> Diperbaiki setelah batas jam input s/d 23:59 WIB di hari yang sama = <strong>+10 Poin</strong>.</li>
+                                    <li><strong>Perbaikan Lewat Hari / Masih Selisih:</strong> Diperbaiki di hari berikutnya (susulan) atau belum sinkron = <strong>0 Poin</strong>.</li>
+                                    <li><strong>Pengaruh di Perangkingan:</strong> Jika total poin dan medali sama, UPT dengan data <strong>Sesuai Langsung</strong> dan <strong>minim perbaikan data</strong> menang atas UPT yang sering melakukan perbaikan data.</li>
+                                </ul>
+                            </li>
                             <li><strong>Input Pagi lalu di-Edit Sore:</strong> Ketepatan waktu dinilai dari waktu pembuatan awal (<code>created_at</code>), sehingga data yang diedit tetap <strong>Tepat Waktu</strong>.</li>
                             <li><strong>Operasional 7 Hari Seminggu:</strong> Setiap hari tanpa hari libur dihitung wajib lapor sesuai standar operasional Lapas/Rutan Ditjenpas.</li>
                         </ul>
