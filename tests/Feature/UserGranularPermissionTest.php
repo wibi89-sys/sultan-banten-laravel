@@ -316,4 +316,38 @@ class UserGranularPermissionTest extends TestCase
         $this->assertEquals('none', $user->akses_penghuni);
         $this->assertEquals('full', $user->akses_laporan);
     }
+
+    public function test_user_index_search_and_filters(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin found');
+        }
+
+        $uniqueSearchKey = 'specialkey_'.uniqid();
+        $searchableUser = User::factory()->create([
+            'nama_lengkap' => 'Target User '.$uniqueSearchKey,
+            'username' => 'search_'.$uniqueSearchKey,
+            'role' => 'operator_wilayah',
+            'upt_id' => null,
+            'no_wa' => '081299998888',
+        ]);
+
+        // 1. Search by keyword
+        $searchResponse = $this->actingAs($admin)->get("/users?search={$uniqueSearchKey}");
+        $searchResponse->assertStatus(200);
+        $searchResponse->assertSee($searchableUser->nama_lengkap);
+        $searchResponse->assertSee($searchableUser->username);
+
+        // 2. Filter by role operator_wilayah
+        $roleResponse = $this->actingAs($admin)->get('/users?role=operator_wilayah');
+        $roleResponse->assertStatus(200);
+        $roleResponse->assertSee('Operator Wilayah');
+
+        // 3. Filter by non-matching search should not display user
+        $emptySearchResponse = $this->actingAs($admin)->get('/users?search=non_existent_random_key_xyz987');
+        $emptySearchResponse->assertStatus(200);
+        $emptySearchResponse->assertDontSee($searchableUser->nama_lengkap);
+        $emptySearchResponse->assertSee('Tidak ditemukan pengguna yang cocok');
+    }
 }

@@ -59,6 +59,71 @@
         @endif
     </div>
 
+    <!-- Filter & Pencarian Pengguna -->
+    <div class="card border-0 shadow-sm rounded-3 mb-3 bg-light">
+        <div class="card-body p-2 p-md-3">
+            <form action="{{ route('users.index') }}" method="GET" id="filterForm">
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-md-5">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white border-end-0 text-muted">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" name="search" id="userSearchInput" class="form-control border-start-0 ps-0" placeholder="Cari nama, username, atau no. WA..." value="{{ request('search') }}" autocomplete="off">
+                            @if(request('search'))
+                                <a href="{{ route('users.index', request()->except('search')) }}" class="btn btn-outline-secondary border bg-white" title="Hapus teks pencarian"><i class="fas fa-times"></i></a>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <select name="role" id="userRoleSelect" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+                            <option value="">-- Semua Role --</option>
+                            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Administrator Wilayah</option>
+                            <option value="operator_wilayah" {{ request('role') == 'operator_wilayah' ? 'selected' : '' }}>Operator Wilayah</option>
+                            <option value="operator" {{ request('role') == 'operator' ? 'selected' : '' }}>Operator UPT</option>
+                            <option value="viewer" {{ request('role') == 'viewer' ? 'selected' : '' }}>Viewer</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <select name="upt_id" id="userUptSelect" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+                            <option value="">-- Semua Penugasan / UPT --</option>
+                            <option value="kanwil" {{ request('upt_id') == 'kanwil' ? 'selected' : '' }}>🏛️ Kantor Wilayah (Semua UPT)</option>
+                            @foreach ($uptList as $upt)
+                                <option value="{{ $upt->id }}" {{ request('upt_id') == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-1 d-flex gap-1 justify-content-end">
+                        <button type="submit" class="btn btn-primary btn-sm flex-fill" title="Terapkan Filter">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        @if(request()->hasAny(['search', 'role', 'upt_id']))
+                        <a href="{{ route('users.index') }}" class="btn btn-outline-secondary btn-sm" title="Reset Semua Filter">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Info Jumlah & Live Search Note -->
+    <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+        <div class="small text-muted">
+            Menampilkan <strong id="userCountDisplay" class="text-dark">{{ count($users) }}</strong> pengguna
+            @if(request()->hasAny(['search', 'role', 'upt_id']))
+                <span class="badge bg-warning bg-opacity-25 text-dark border border-warning ms-1">Filter Aktif</span>
+            @endif
+        </div>
+        <div class="small text-muted d-none d-md-block">
+            <i class="fas fa-info-circle me-1 text-primary"></i>Ketik langsung di kolom pencarian untuk menyaring daftar secara instan
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle table-sm mb-0">
             <thead class="bg-primary bg-opacity-10">
@@ -74,14 +139,14 @@
             </thead>
             <tbody>
                 @forelse ($users as $u)
-                <tr>
-                    <td class="text-center text-muted">{{ $loop->iteration }}</td>
+                <tr data-user-row="true" data-search="{{ strtolower($u->nama_lengkap . ' ' . $u->username . ' ' . ($u->no_wa ?? '') . ' ' . $u->role . ' ' . ($u->upt?->nama_upt ?? 'Kanwil Semua UPT')) }}">
+                    <td class="text-center text-muted row-number">{{ $loop->iteration }}</td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="me-2">{!! $u->getAvatarHtml(32) !!}</div>
                             <div>
-                                <div class="fw-bold text-dark">{{ $u->nama_lengkap }}</div>
-                                <small class="text-muted"><i class="fas fa-user small me-1"></i>{{ $u->username }}</small>
+                                <div class="fw-bold text-dark user-nama">{{ $u->nama_lengkap }}</div>
+                                <small class="text-muted"><i class="fas fa-user small me-1"></i><span class="user-username">{{ $u->username }}</span></small>
                             </div>
                         </div>
                     </td>
@@ -153,11 +218,69 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted">Belum ada pengguna terdaftar.</td>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        @if(request()->hasAny(['search', 'role', 'upt_id']))
+                            <div class="py-2">
+                                <i class="fas fa-search-minus text-secondary fs-4 d-block mb-2"></i>
+                                <strong>Tidak ditemukan pengguna yang cocok</strong> dengan kriteria filter pencarian.<br>
+                                <a href="{{ route('users.index') }}" class="btn btn-outline-primary btn-sm mt-2">
+                                    <i class="fas fa-undo me-1"></i> Reset Filter
+                                </a>
+                            </div>
+                        @else
+                            Belum ada pengguna terdaftar.
+                        @endif
+                    </td>
                 </tr>
                 @endforelse
+                <tr id="noSearchMatchRow" style="display: none;">
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fas fa-search-minus text-secondary fs-4 d-block mb-2"></i>
+                        <strong>Tidak ditemukan pengguna yang cocok</strong> dengan kata kunci pencarian Anda.
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('userSearchInput');
+        const tableRows = document.querySelectorAll('table tbody tr[data-user-row]');
+        const countDisplay = document.getElementById('userCountDisplay');
+        const noDataRow = document.getElementById('noSearchMatchRow');
+
+        if (searchInput && tableRows.length > 0) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                tableRows.forEach(row => {
+                    const searchText = (row.getAttribute('data-search') || '').toLowerCase();
+                    if (!query || searchText.includes(query)) {
+                        row.style.display = '';
+                        visibleCount++;
+                        const numEl = row.querySelector('.row-number');
+                        if (numEl) {
+                            numEl.textContent = visibleCount;
+                        }
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (countDisplay) {
+                    countDisplay.textContent = visibleCount;
+                }
+
+                if (noDataRow) {
+                    noDataRow.style.display = (visibleCount === 0) ? '' : 'none';
+                }
+            });
+        }
+    });
+</script>
+@endpush

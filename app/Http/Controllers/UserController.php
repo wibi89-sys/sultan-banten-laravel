@@ -83,7 +83,7 @@ class UserController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->ensurePermissionColumns();
 
@@ -92,7 +92,31 @@ class UserController extends Controller
             abort(403);
         }
 
-        $users = User::with('upt')->orderBy('username')->get();
+        $query = User::with('upt')->orderBy('username');
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%")
+                    ->orWhere('no_wa', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->input('role'));
+        }
+
+        if ($request->filled('upt_id')) {
+            $uptId = $request->input('upt_id');
+            if ($uptId === 'kanwil') {
+                $query->whereNull('upt_id');
+            } else {
+                $query->where('upt_id', (int) $uptId);
+            }
+        }
+
+        $users = $query->get();
         $uptList = Upt::orderBy('nama_upt')->get();
 
         return view('users.index', compact('users', 'uptList'));
