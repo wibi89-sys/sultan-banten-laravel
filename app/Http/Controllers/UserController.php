@@ -7,6 +7,7 @@ use App\Models\Upt;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -38,18 +39,42 @@ class UserController extends Controller
         }
 
         try {
-            $existingColumns = Schema::getColumnListing('users');
-            $missing = array_diff($this->permissionFields, $existingColumns);
+            if (DB::getDriverName() === 'sqlite') {
+                $existingColumns = Schema::getColumnListing('users');
+                $missing = array_diff($this->permissionFields, $existingColumns);
+                if (! empty($missing)) {
+                    Schema::table('users', function ($table) use ($missing) {
+                        foreach ($missing as $col) {
+                            $table->string($col, 10)->default('none');
+                        }
+                    });
+                }
 
-            if (! empty($missing)) {
-                Schema::table('users', function ($table) use ($missing) {
-                    foreach ($missing as $col) {
-                        $table->string($col, 10)->default('none');
-                    }
-                });
+                return;
+            }
+
+            // Untuk MySQL / MariaDB (hosting production & lokal)
+            $columns = DB::select('SHOW COLUMNS FROM users');
+            $columnTypes = [];
+            foreach ($columns as $c) {
+                $colName = is_object($c) ? ($c->Field ?? '') : ($c['Field'] ?? '');
+                $colType = is_object($c) ? ($c->Type ?? '') : ($c['Type'] ?? '');
+                if ($colName) {
+                    $columnTypes[$colName] = strtolower($colType);
+                }
+            }
+
+            foreach ($this->permissionFields as $col) {
+                if (! isset($columnTypes[$col])) {
+                    DB::statement("ALTER TABLE `users` ADD COLUMN `{$col}` VARCHAR(10) NOT NULL DEFAULT 'none'");
+                } elseif (str_contains($columnTypes[$col], 'tinyint') || str_contains($columnTypes[$col], 'int')) {
+                    DB::statement("ALTER TABLE `users` MODIFY COLUMN `{$col}` VARCHAR(10) NOT NULL DEFAULT 'none'");
+                    DB::statement("UPDATE `users` SET `{$col}` = 'full' WHERE `{$col}` = '1'");
+                    DB::statement("UPDATE `users` SET `{$col}` = 'none' WHERE `{$col}` = '0' OR `{$col}` IS NULL OR `{$col}` = ''");
+                }
             }
         } catch (\Throwable $e) {
-            Log::warning('Auto add permission columns error: '.$e->getMessage());
+            Log::warning('Auto fix permission columns error: '.$e->getMessage());
         }
     }
 
@@ -151,10 +176,16 @@ class UserController extends Controller
         // Dashboard selalu terbuka otomatis untuk semua pengguna
         $data['akses_dashboard'] = ($data['role'] === 'admin') ? 'full' : 'view';
 
-        $newUser = User::create($data);
-        ActivityLog::log('tambah', 'user', "Menambahkan user baru: {$newUser->nama_lengkap} ({$newUser->username})", $newUser->toArray());
+        try {
+            $newUser = User::create($data);
+            ActivityLog::log('tambah', 'user', "Menambahkan user baru: {$newUser->nama_lengkap} ({$newUser->username})", $newUser->toArray());
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
+            return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
+        } catch (\Throwable $e) {
+            Log::error('Gagal tambah user: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->withInput()->with('error', 'Gagal menambahkan user: '.$e->getMessage());
+        }
     }
 
     public function update(Request $request, $id)
@@ -212,10 +243,16 @@ class UserController extends Controller
         // Dashboard selalu terbuka otomatis untuk semua pengguna
         $data['akses_dashboard'] = ($data['role'] === 'admin') ? 'full' : 'view';
 
-        $targetUser->update($data);
-        ActivityLog::log('edit', 'user', "Mengubah data user: {$targetUser->nama_lengkap}", $targetUser->toArray());
+        try {
+            $targetUser->update($data);
+            ActivityLog::log('edit', 'user', "Mengubah data user: {$targetUser->nama_lengkap}", $targetUser->toArray());
 
-        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui.');
+            return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            Log::error('Gagal update user id '.$id.': '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->withInput()->with('error', 'Gagal menyimpan perubahan user: '.$e->getMessage());
+        }
     }
 
     public function destroy($id)
