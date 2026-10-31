@@ -235,11 +235,8 @@ class PdfReportService
             $pdf->SetFillColor(220, 220, 220);
             $pdf->SetTextColor(0, 0, 0);
 
-            $isSingleUptMultiDate = ($uptId && $tanggalMulai && $tanggalAkhir && $tanggalMulai !== $tanggalAkhir);
-            $col2Title = $isSingleUptMultiDate ? 'Hari / Tanggal' : 'Unit Pelaksana Teknis';
-
             $pdf->Cell($widths[0], 8, 'No', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 8, $col2Title, 1, 0, 'C', true);
+            $pdf->Cell($widths[1], 8, 'Unit Pelaksana Teknis', 1, 0, 'C', true);
             $pdf->Cell($widths[2], 8, 'Kapasitas', 1, 0, 'C', true);
             $pdf->Cell($widths[3], 8, 'Tahanan', 1, 0, 'C', true);
             $pdf->Cell($widths[4], 8, 'Narapidana', 1, 0, 'C', true);
@@ -291,7 +288,7 @@ class PdfReportService
                 $persen = $kap > 0 ? round((($tot - $kap) / $kap) * 100, 1) : 0;
                 $tingkat = $kap > 0 ? round(($tot / $kap) * 100, 1) : 0;
 
-                $textUPT = $isSingleUptMultiDate ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
+                $textUPT = $r->nama_upt;
                 $numLines = $pdf->getNumLines($textUPT, $widths[1]);
                 $rowH = max(7, $numLines * 3.8);
 
@@ -344,11 +341,8 @@ class PdfReportService
             $pdf->SetFillColor(220, 220, 220);
             $pdf->SetTextColor(0, 0, 0);
 
-            $isSingleUptMultiDate = ($uptId && $tanggalMulai && $tanggalAkhir && $tanggalMulai !== $tanggalAkhir);
-            $col2Title = $isSingleUptMultiDate ? 'HARI / TANGGAL' : 'NAMA UPT';
-
             $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
+            $pdf->Cell($widths[1], 7, 'NAMA UPT', 1, 0, 'C', true);
             $pdf->Cell($widths[2], 7, 'BM', 1, 0, 'C', true);
             $pdf->Cell($widths[3], 7, 'PB', 1, 0, 'C', true);
             $pdf->Cell($widths[4], 7, 'CB', 1, 0, 'C', true);
@@ -367,40 +361,19 @@ class PdfReportService
                 $q->whereBetween('dbh.tanggal', [$tanggalMulai, $tanggalAkhir]);
             }
 
-            if ($uptId) {
-                $data = $q->select(
-                    'dbh.tanggal',
-                    'u.nama_upt',
-                    DB::raw('SUM(dbh.bebas_murni) as total_bm'),
-                    DB::raw('SUM(dbh.pb) as total_pb'),
-                    DB::raw('SUM(dbh.cb) as total_cb'),
-                    DB::raw('SUM(dbh.cmb) as total_cmb'),
-                    DB::raw('SUM(dbh.asimilasi) as total_asimilasi'),
-                    DB::raw('SUM(dbh.bdh) as total_bdh'),
-                    DB::raw('SUM(dbh.lainnya) as total_lainnya'),
-                    DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya) as total_bebas'),
-                    DB::raw('GROUP_CONCAT(DISTINCT NULLIF(dbh.ket_lainnya, "") SEPARATOR "; ") as rincian_lainnya'),
-                    DB::raw('MAX(dbh.keterangan) as keterangan')
-                )->groupBy('dbh.tanggal', 'u.id', 'u.nama_upt')
-                    ->orderBy('dbh.tanggal')
-                    ->get();
-            } else {
-                $data = $q->select(
-                    'u.nama_upt',
-                    DB::raw('SUM(dbh.bebas_murni) as total_bm'),
-                    DB::raw('SUM(dbh.pb) as total_pb'),
-                    DB::raw('SUM(dbh.cb) as total_cb'),
-                    DB::raw('SUM(dbh.cmb) as total_cmb'),
-                    DB::raw('SUM(dbh.asimilasi) as total_asimilasi'),
-                    DB::raw('SUM(dbh.bdh) as total_bdh'),
-                    DB::raw('SUM(dbh.lainnya) as total_lainnya'),
-                    DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya) as total_bebas'),
-                    DB::raw('GROUP_CONCAT(DISTINCT NULLIF(dbh.ket_lainnya, "") SEPARATOR "; ") as rincian_lainnya'),
-                    DB::raw('MAX(dbh.keterangan) as keterangan')
-                )->groupBy('u.id', 'u.nama_upt')
-                    ->orderBy('u.nama_upt')
-                    ->get();
-            }
+            $data = $q->select(
+                'u.nama_upt',
+                DB::raw('SUM(dbh.bebas_murni) as total_bm'),
+                DB::raw('SUM(dbh.pb) as total_pb'),
+                DB::raw('SUM(dbh.cb) as total_cb'),
+                DB::raw('SUM(dbh.cmb) as total_cmb'),
+                DB::raw('SUM(dbh.asimilasi) as total_asimilasi'),
+                DB::raw('SUM(dbh.bdh) as total_bdh'),
+                DB::raw('SUM(dbh.lainnya) as total_lainnya'),
+                DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya) as total_bebas'),
+                DB::raw('GROUP_CONCAT(DISTINCT NULLIF(dbh.ket_lainnya, "") SEPARATOR "; ") as rincian_lainnya'),
+                DB::raw('MAX(dbh.keterangan) as keterangan')
+            )->groupBy('u.id', 'u.nama_upt')->orderBy('u.nama_upt')->get();
 
             $no = 1;
             $tBm = 0;
@@ -432,7 +405,7 @@ class PdfReportService
                 $tLain += $lain;
                 $gTotal += $sub;
 
-                $textUPT = $isSingleUptMultiDate ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
+                $textUPT = $r->nama_upt;
                 $textKet = trim(($r->keterangan ?? '').(! empty($r->rincian_lainnya) ? ' ('.$r->rincian_lainnya.')' : ''));
                 if (empty($textKet)) {
                     $textKet = '-';
@@ -486,11 +459,8 @@ class PdfReportService
             $pdf->SetFillColor(220, 220, 220);
             $pdf->SetTextColor(0, 0, 0);
 
-            $isSingleUptMultiDate = ($uptId && $tanggalMulai && $tanggalAkhir && $tanggalMulai !== $tanggalAkhir);
-            $col2Title = $isSingleUptMultiDate ? 'HARI / TANGGAL' : 'NAMA UPT';
-
             $pdf->Cell($widths[0], 7, 'NO', 1, 0, 'C', true);
-            $pdf->Cell($widths[1], 7, $col2Title, 1, 0, 'C', true);
+            $pdf->Cell($widths[1], 7, 'NAMA UPT', 1, 0, 'C', true);
             $pdf->Cell($widths[2], 7, 'AI', 1, 0, 'C', true);
             $pdf->Cell($widths[3], 7, 'AII', 1, 0, 'C', true);
             $pdf->Cell($widths[4], 7, 'AIII', 1, 0, 'C', true);
@@ -527,7 +497,7 @@ class PdfReportService
                 $tAV += $r->overstaying_av;
                 $gTotal += $sub;
 
-                $textUPT = $isSingleUptMultiDate ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
+                $textUPT = $r->nama_upt;
                 $textKet = ! empty($r->keterangan) ? $r->keterangan : 'Nihil';
 
                 $nUPT = $pdf->getNumLines($textUPT, $widths[1]);
