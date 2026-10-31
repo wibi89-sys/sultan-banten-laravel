@@ -17,6 +17,7 @@ class KroscekController extends Controller
         $user = auth()->user();
         $userUptFilter = $user ? $user->getUserUptFilter() : null;
         $isOperator = ($userUptFilter !== null);
+        $isKanwil = $user && $user->isKanwil();
 
         $rawTanggal = $request->query('tanggal', date('Y-m-d'));
         try {
@@ -364,7 +365,9 @@ class KroscekController extends Controller
             'detailSort',
             'detailKroscekList',
             'detailStats',
-            'activeTab'
+            'activeTab',
+            'isKanwil',
+            'instansi'
         ));
     }
 
@@ -376,6 +379,7 @@ class KroscekController extends Controller
         $user = auth()->user();
         $userUptFilter = $user ? $user->getUserUptFilter() : null;
         $isOperator = ($userUptFilter !== null);
+        $isKanwil = $user && $user->isKanwil();
 
         if ($isOperator) {
             $selectedDetailUptId = (int) $userUptFilter;
@@ -418,6 +422,7 @@ class KroscekController extends Controller
             'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
             'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
             'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
+            'nip_ttd' => $request->query('nip_ttd'),
             'show_ttd' => ! $isUpt && ($request->query('show_ttd', '1') === '1'),
             'show_ttd_image' => ! $isUpt && ($request->query('show_ttd_image', '1') === '1'),
             'show_stempel' => ! $isUpt && ($request->query('show_stempel', '1') === '1'),

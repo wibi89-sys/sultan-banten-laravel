@@ -144,12 +144,24 @@
         </div>
     </div>
     <div class="d-flex align-items-center gap-1.5 pe-1">
+        @if(!empty($isKanwil))
+        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalOpsiCetakPdf" title="Atur Opsi Tanda Tangan, Stempel, dan QR Code untuk Cetak PDF">
+            <i class="fas fa-sliders-h me-1"></i> Opsi Cetak
+        </button>
+        @endif
         <a href="{{ route('kroscek.detail-pdf', [
             'detail_upt_id' => $selectedDetailUptId,
             'tanggal_mulai' => $detailTanggalMulai,
             'tanggal_akhir' => $detailTanggalAkhir,
             'sort' => $detailSort ?? 'desc'
-        ]) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold" title="Buka Dokumen PDF Resmi untuk Dicetak atau Disimpan">
+        ]) }}" 
+           data-base-url="{{ route('kroscek.detail-pdf', [
+            'detail_upt_id' => $selectedDetailUptId,
+            'tanggal_mulai' => $detailTanggalMulai,
+            'tanggal_akhir' => $detailTanggalAkhir,
+            'sort' => $detailSort ?? 'desc'
+        ]) }}"
+           target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold btn-pdf-kroscek" title="Buka Dokumen PDF Resmi untuk Dicetak atau Disimpan">
             <i class="fas fa-file-pdf me-1"></i> Cetak PDF
         </a>
         <div class="btn-group btn-group-sm" role="group">
