@@ -735,10 +735,12 @@ class PdfReportService
         $tglTtd = function_exists('formatIndonesianDate') ? formatIndonesianDate(date('Y-m-d'), false) : date('d/m/Y');
 
         $sigX = ($orientation === 'L') ? 215 : 130;
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('helvetica', '', 9.5);
         $pdf->SetX($sigX);
-        $pdf->Cell(70, 5, $tempatTtd.', '.$tglTtd, 0, 1, 'C');
+        $pdf->Cell(70, 4.5, $tempatTtd.', '.$tglTtd, 0, 1, 'C');
         $pdf->SetX($sigX);
-        $pdf->Cell(70, 5, $jabatanTtd, 0, 1, 'C');
+        $pdf->Cell(70, 4.5, $jabatanTtd, 0, 1, 'C');
         $pdf->Ln(2);
 
         $yBeforeSig = $pdf->GetY();
@@ -751,11 +753,11 @@ class PdfReportService
         }
 
         $pdf->Ln(20);
-        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetFont('helvetica', 'B', 9.5);
         $pdf->SetX($sigX);
-        $pdf->Cell(70, 5, $namaTtd, 0, 1, 'C');
+        $pdf->Cell(70, 4.5, $namaTtd, 0, 1, 'C');
         if (! empty($signData['nip_ttd'])) {
-            $pdf->SetFont('helvetica', '', 8);
+            $pdf->SetFont('helvetica', '', 8.5);
             $pdf->SetX($sigX);
             $pdf->Cell(70, 4, 'NIP. '.$signData['nip_ttd'], 0, 1, 'C');
         }
@@ -1153,50 +1155,73 @@ class PdfReportService
 
         $namaUpt = $uptData['nama_upt'] ?? 'UPT Pemasyarakatan';
 
-        // 1. KOP Resmi Instansi Kantor Wilayah (Landscape)
-        $logoKop = null;
-        if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
-            $logoKop = public_path($instansi->logo_kop);
-        } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
-            $logoKop = public_path($instansi->logo);
+        $isKanwil = $user ? $user->isKanwil() : false;
+        $isUpt = ! $isKanwil || ! empty($signData['is_upt']);
+        if ($isKanwil) {
+            $isUpt = false;
         }
 
-        if ($logoKop) {
-            $pdf->Image($logoKop, 15, 10, 22);
+        if ($isUpt) {
+            // Mode UPT: Tanpa Kop Kanwil, langsung judul dokumen & nama Satker UPT
+            $pdf->Ln(2);
+            $pdf->SetFont('helvetica', 'B', 12);
+            $pdf->Cell(0, 6, 'LAPORAN RINCIAN PERHITUNGAN POIN & MEDALI KEDISIPLINAN UPT', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 8.5);
+            $pdf->SetTextColor(71, 85, 105);
+            $pdf->Cell(0, 4, 'LAMPIRAN BUKTI DETAIL KELENGKAPAN & KEPATUHAN PELAPORAN HARIAN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
+            $pdf->Ln(1);
+            $pdf->SetLineWidth(0.4);
+            $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+            $pdf->Ln(3);
+        } else {
+            // Mode Kanwil: KOP Resmi Instansi Kantor Wilayah (Landscape)
+            $logoKop = null;
+            if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+                $logoKop = public_path($instansi->logo_kop);
+            } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+                $logoKop = public_path($instansi->logo);
+            }
+
+            if ($logoKop) {
+                $pdf->Image($logoKop, 15, 10, 22);
+            }
+
+            $wKop = 230;
+            $pdf->SetFont('helvetica', '', 10);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', '', 8.5);
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
+            $pdf->SetX(40);
+            $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
+
+            $pdf->Ln(2);
+            $pdf->SetLineWidth(0.6);
+            $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+            $pdf->SetLineWidth(0.2);
+            $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
+            $pdf->Ln(3);
+
+            // 2. Judul Dokumen
+            $pdf->SetFont('helvetica', 'B', 11);
+            $pdf->Cell(0, 5, 'LAPORAN RINCIAN PERHITUNGAN POIN & MEDALI KEDISIPLINAN UPT', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 8.5);
+            $pdf->SetTextColor(71, 85, 105);
+            $pdf->Cell(0, 4, 'LAMPIRAN BUKTI DETAIL KELENGKAPAN & KEPATUHAN PELAPORAN HARIAN', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
+            $pdf->Ln(1);
         }
-
-        $wKop = 230;
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
-        $pdf->SetFont('helvetica', '', 8.5);
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
-        $pdf->SetX(40);
-        $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
-
-        $pdf->Ln(2);
-        $pdf->SetLineWidth(0.6);
-        $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
-        $pdf->SetLineWidth(0.2);
-        $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
-        $pdf->Ln(3);
-
-        // 2. Judul Dokumen
-        $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(0, 5, 'LAPORAN RINCIAN PERHITUNGAN POIN & MEDALI KEDISIPLINAN UPT', 0, 1, 'C');
-        $pdf->SetFont('helvetica', 'B', 8.5);
-        $pdf->SetTextColor(71, 85, 105);
-        $pdf->Cell(0, 4, 'LAMPIRAN BUKTI DETAIL KELENGKAPAN & KEPATUHAN PELAPORAN HARIAN', 0, 1, 'C');
-        $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
-        $pdf->Ln(1);
 
         // 3. Metadata Periode & Filter Info
         $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($period['start_date'], false) : $period['start_date'];
@@ -1423,7 +1448,7 @@ class PdfReportService
         $pdf->SetTextColor(0, 0, 0);
 
         // 8. Signature Block (Mode Kanwil)
-        if (! empty($signData['show_ttd'])) {
+        if (! $isUpt && ! empty($signData['show_ttd'])) {
             if ($pdf->GetY() > 145) {
                 $pdf->AddPage();
             }

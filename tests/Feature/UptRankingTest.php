@@ -106,4 +106,49 @@ class UptRankingTest extends TestCase
         $response->assertSee('activity-log/ranking/detail-pdf');
         $response->assertSee('PDF');
     }
+
+    public function test_activity_log_ranking_detail_pdf_with_custom_options(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin user found.');
+        }
+
+        $upt = Upt::first();
+        if (! $upt) {
+            $this->markTestSkipped('No UPT found.');
+        }
+
+        $response = $this->actingAs($admin)->get(route('activity-log.ranking.detail-pdf', [
+            'upt_id' => $upt->id,
+            'tanggal_mulai' => '2026-10-01',
+            'tanggal_akhir' => '2026-10-15',
+            'show_ttd' => '0',
+            'show_stempel' => '0',
+            'show_qrcode' => '0',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_activity_log_ranking_detail_pdf_accessible_by_upt_user(): void
+    {
+        $uptUser = User::where('role', 'operator')->whereNotNull('upt_id')->first();
+        if (! $uptUser) {
+            $this->markTestSkipped('No UPT operator found.');
+        }
+
+        $uptUser->akses_activity_log = 'view';
+        $uptUser->save();
+
+        $response = $this->actingAs($uptUser)->get(route('activity-log.ranking.detail-pdf', [
+            'upt_id' => $uptUser->upt_id,
+            'tanggal_mulai' => '2026-10-01',
+            'tanggal_akhir' => '2026-10-15',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
 }

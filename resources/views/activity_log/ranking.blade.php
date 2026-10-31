@@ -262,6 +262,15 @@
         <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill small">
             <i class="fas fa-clock me-1"></i> Jam Input: <strong>{{ $rankingData['period']['jam_mulai'] ?? '08:00' }} - {{ $rankingData['period']['jam_selesai'] }} WIB</strong>
         </span>
+        @if(!empty($isKanwil))
+        <button type="button" 
+                class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm" 
+                data-bs-toggle="modal" 
+                data-bs-target="#modalOpsiCetakPdf"
+                title="Atur Opsi Tanda Tangan, Stempel, dan QR Code untuk Cetak PDF">
+            <i class="fas fa-sliders-h me-1.5"></i> Opsi Cetak PDF
+        </button>
+        @endif
         <a href="{{ route('activity-log.ranking.excel', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
            class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm"
            aria-label="Export Excel Ranking Kepatuhan UPT">
@@ -739,8 +748,9 @@
                                     <i class="fas fa-calendar-alt me-1"></i> Detail
                                 </button>
                                 <a href="{{ route('activity-log.ranking.detail-pdf', ['upt_id' => $upt['upt_id'], 'tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
+                                   data-base-url="{{ route('activity-log.ranking.detail-pdf', ['upt_id' => $upt['upt_id'], 'tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}"
                                    target="_blank" 
-                                   class="btn btn-outline-danger btn-sm rounded-pill px-2.5 shadow-xs" 
+                                   class="btn btn-outline-danger btn-sm rounded-pill px-2.5 shadow-xs btn-pdf-upt" 
                                    title="Cetak PDF Lampiran Bukti Detail Poin & Medali {{ $upt['nama_upt'] }}">
                                     <i class="fas fa-file-pdf me-1"></i> PDF
                                 </a>
@@ -801,8 +811,9 @@
                                         <i class="fas fa-calendar-alt me-1"></i> Detail
                                     </button>
                                     <a href="{{ route('activity-log.ranking.detail-pdf', ['upt_id' => $upt['upt_id'], 'tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
+                                       data-base-url="{{ route('activity-log.ranking.detail-pdf', ['upt_id' => $upt['upt_id'], 'tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}"
                                        target="_blank" 
-                                       class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold" style="font-size: 11px;"
+                                       class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold btn-pdf-upt" style="font-size: 11px;"
                                        title="Cetak PDF Lampiran Bukti Detail {{ $upt['nama_upt'] }}">
                                         <i class="fas fa-file-pdf me-1"></i> PDF
                                     </a>
@@ -1044,10 +1055,21 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer bg-light d-flex justify-content-between">
-                <a id="btnModalPrintPdf" href="#" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-xs">
-                    <i class="fas fa-file-pdf me-1.5"></i> Cetak PDF Lampiran Bukti
-                </a>
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <a id="btnModalPrintPdf" href="#" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-xs">
+                        <i class="fas fa-file-pdf me-1.5"></i> Cetak PDF Lampiran Bukti
+                    </a>
+                    @if(!empty($isKanwil))
+                    <button type="button" 
+                            class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 shadow-xs" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalOpsiCetakPdf"
+                            title="Atur Opsi TTD, Stempel, & QR Code Cetak">
+                        <i class="fas fa-sliders-h me-1"></i> Opsi Cetak
+                    </button>
+                    @endif
+                </div>
                 <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -1100,6 +1122,136 @@
         </div>
     </div>
 </div>
+
+@if(!empty($isKanwil))
+<!-- Modal Opsi Cetak PDF (Mode Kanwil) -->
+<div class="modal fade" id="modalOpsiCetakPdf" tabindex="-1" aria-labelledby="modalOpsiCetakPdfLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <div>
+                    <h5 class="modal-title fw-bold" id="modalOpsiCetakPdfLabel">
+                        <i class="fas fa-file-pdf me-2"></i>Pengaturan Cetak PDF Lampiran Bukti
+                    </h5>
+                    <small class="text-white-50">Atur kelengkapan Tanda Tangan, Stempel dinas, dan QR Code validasi dokumen (Mode Kanwil)</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- 3 Toggle Switches Utama -->
+                <div class="row g-3 p-3 rounded mb-3" style="background-color: var(--bs-tertiary-bg, #f8fafc); border: 1px dashed var(--border-color, #cbd5e1); border-radius: 10px;">
+                    <!-- 1. Tanda Tangan -->
+                    <div class="col-md-4">
+                        <div class="p-2 h-100">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" id="pdf_opt_show_ttd" value="1" checked onchange="togglePdfSignatureFields()">
+                                <label class="form-check-label fw-semibold small" for="pdf_opt_show_ttd">
+                                    <i class="fas fa-signature text-primary me-1"></i> Sertakan Tanda Tangan
+                                </label>
+                            </div>
+                            <small class="text-muted d-block ms-4" style="font-size: 11px;">
+                                Tampilkan blok tanda tangan di bagian kanan bawah
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 2. Stempel Laporan -->
+                    <div class="col-md-4">
+                        <div class="p-2 h-100">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" id="pdf_opt_show_stempel" value="1" checked onchange="updateAllPdfLinks()">
+                                <label class="form-check-label fw-semibold small" for="pdf_opt_show_stempel">
+                                    <i class="fas fa-stamp text-danger me-1"></i> Sertakan Stempel
+                                </label>
+                            </div>
+                            <div class="ms-4">
+                                <small class="text-muted d-block" style="font-size: 11px;">
+                                    Tempelkan cap dinas resmi instansi pada area tanda tangan
+                                </small>
+                                @if(!empty($instansi?->stempel_image) && file_exists(public_path($instansi->stempel_image)))
+                                    <span class="badge bg-success-subtle text-success mt-1" style="font-size: 10px;"><i class="fas fa-check-circle me-1"></i>Aset stempel aktif</span>
+                                @else
+                                    <span class="badge bg-warning-subtle text-warning mt-1" style="font-size: 10px;"><i class="fas fa-info-circle me-1"></i>Belum ada file stempel</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. QR Code Validasi -->
+                    <div class="col-md-4">
+                        <div class="p-2 h-100">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" id="pdf_opt_show_qrcode" value="1" checked onchange="updateAllPdfLinks()">
+                                <label class="form-check-label fw-semibold small" for="pdf_opt_show_qrcode">
+                                    <i class="fas fa-qrcode text-dark me-1"></i> Sertakan QR Code
+                                </label>
+                            </div>
+                            <small class="text-muted d-block ms-4" style="font-size: 11px;">
+                                Barcode validasi dokumen pada footer bawah
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Penanda Tangan -->
+                <div id="pdfSignatureFieldsContainer" class="p-3 border rounded mb-3" style="background: var(--card-bg, #fff);">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="pdf_opt_tempat_ttd" class="form-label fw-semibold small">Tempat Penandatanganan</label>
+                            <input type="text" id="pdf_opt_tempat_ttd" class="form-control form-control-sm" value="Serang" oninput="updateAllPdfLinks()">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="pdf_opt_jabatan_ttd" class="form-label fw-semibold small">Jabatan Penanda Tangan</label>
+                            <input type="text" id="pdf_opt_jabatan_ttd" class="form-control form-control-sm" value="Kepala Bidang Pelayanan dan Pembinaan" oninput="updateAllPdfLinks()">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="pdf_opt_nama_ttd" class="form-label fw-semibold small">Nama Penanda Tangan</label>
+                            <input type="text" id="pdf_opt_nama_ttd" class="form-control form-control-sm" value="Surya Dharma" oninput="updateAllPdfLinks()">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="pdf_opt_nip_ttd" class="form-label fw-semibold small">NIP (Opsional)</label>
+                            <input type="text" id="pdf_opt_nip_ttd" class="form-control form-control-sm" placeholder="Contoh: 19780101 200003 1 001" oninput="updateAllPdfLinks()">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch pt-1">
+                                <input class="form-check-input" type="checkbox" id="pdf_opt_show_ttd_image" value="1" checked onchange="updateAllPdfLinks()">
+                                <label class="form-check-label small" for="pdf_opt_show_ttd_image">
+                                    <strong>Gunakan Gambar Tanda Tangan Digital</strong> (Jika dimatikan, sediakan ruang tanda tangan basah)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pilihan Cetak Langsung UPT Tertentu -->
+                <div class="p-3 bg-light rounded border">
+                    <label class="form-label fw-bold small text-secondary mb-2">
+                        <i class="fas fa-print me-1"></i>Buka PDF untuk UPT:
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <select id="pdf_opt_select_upt" class="form-select">
+                            @foreach($rankingData['rankings'] as $u)
+                                <option value="{{ $u['upt_id'] }}">#{{ $u['rank'] }} - {{ $u['nama_upt'] }} ({{ $u['total_points'] }} Poin)</option>
+                            @endforeach
+                        </select>
+                        <button type="button" class="btn btn-danger fw-semibold px-3" onclick="openSelectedUptPdf()">
+                            <i class="fas fa-external-link-alt me-1"></i> Buka PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="resetPdfOptions()">
+                    <i class="fas fa-redo me-1"></i> Reset Default
+                </button>
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-1"></i> Simpan &amp; Terapkan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('scripts')
@@ -1234,10 +1386,12 @@
         filterDetailTable('all');
 
         // Update link cetak PDF lampiran pada modal
-        const pdfBtn = document.getElementById('btnModalPrintPdf');
-        if (pdfBtn) {
-            pdfBtn.href = `{{ route('activity-log.ranking.detail-pdf') }}?upt_id=${upt.upt_id}&tanggal_mulai={{ $startDate }}&tanggal_akhir={{ $endDate }}`;
+        currentModalUptId = upt.upt_id;
+        const selectUpt = document.getElementById('pdf_opt_select_upt');
+        if (selectUpt) {
+            selectUpt.value = upt.upt_id;
         }
+        updateAllPdfLinks();
 
         const modal = new bootstrap.Modal(document.getElementById('modalDetailHarian'));
         modal.show();
@@ -1406,16 +1560,105 @@
     btnShowRankingTable?.addEventListener('click', () => setLeaderboardViewMode('table'));
     btnShowRankingCards?.addEventListener('click', () => setLeaderboardViewMode('cards'));
 
-    // Muat preferensi tampilan tersimpan dari localStorage saat halaman dimuat
-    try {
-        const savedViewMode = localStorage.getItem(LEADERBOARD_VIEW_KEY);
-        if (savedViewMode === 'cards') {
-            setLeaderboardViewMode('cards', false);
-        } else {
-            setLeaderboardViewMode('table', false);
-        }
-    } catch(e) {
-        setLeaderboardViewMode('table', false);
+    // Opsi Cetak PDF (Kanwil)
+    let currentModalUptId = null;
+
+    function getPdfParams() {
+        const showTtd = document.getElementById('pdf_opt_show_ttd');
+        const showStempel = document.getElementById('pdf_opt_show_stempel');
+        const showQr = document.getElementById('pdf_opt_show_qrcode');
+        const showTtdImg = document.getElementById('pdf_opt_show_ttd_image');
+        const tempat = document.getElementById('pdf_opt_tempat_ttd');
+        const jabatan = document.getElementById('pdf_opt_jabatan_ttd');
+        const nama = document.getElementById('pdf_opt_nama_ttd');
+        const nip = document.getElementById('pdf_opt_nip_ttd');
+
+        if (!showTtd) return ''; // Bukan Kanwil atau modal tidak tersedia
+
+        const params = new URLSearchParams();
+        params.set('show_ttd', showTtd.checked ? '1' : '0');
+        params.set('show_stempel', showStempel && showStempel.checked ? '1' : '0');
+        params.set('show_qrcode', showQr && showQr.checked ? '1' : '0');
+        params.set('show_ttd_image', showTtdImg && showTtdImg.checked ? '1' : '0');
+        if (tempat && tempat.value.trim()) params.set('tempat_ttd', tempat.value.trim());
+        if (jabatan && jabatan.value.trim()) params.set('jabatan_ttd', jabatan.value.trim());
+        if (nama && nama.value.trim()) params.set('nama_ttd', nama.value.trim());
+        if (nip && nip.value.trim()) params.set('nip_ttd', nip.value.trim());
+
+        return params.toString();
     }
+    window.getPdfParams = getPdfParams;
+
+    function togglePdfSignatureFields() {
+        const showTtd = document.getElementById('pdf_opt_show_ttd');
+        const container = document.getElementById('pdfSignatureFieldsContainer');
+        const stempelCheck = document.getElementById('pdf_opt_show_stempel');
+        if (container && showTtd) {
+            container.style.display = showTtd.checked ? 'block' : 'none';
+            if (stempelCheck) {
+                stempelCheck.disabled = !showTtd.checked;
+            }
+        }
+        updateAllPdfLinks();
+    }
+    window.togglePdfSignatureFields = togglePdfSignatureFields;
+
+    function resetPdfOptions() {
+        const showTtd = document.getElementById('pdf_opt_show_ttd');
+        const showStempel = document.getElementById('pdf_opt_show_stempel');
+        const showQr = document.getElementById('pdf_opt_show_qrcode');
+        const showTtdImg = document.getElementById('pdf_opt_show_ttd_image');
+        const tempat = document.getElementById('pdf_opt_tempat_ttd');
+        const jabatan = document.getElementById('pdf_opt_jabatan_ttd');
+        const nama = document.getElementById('pdf_opt_nama_ttd');
+        const nip = document.getElementById('pdf_opt_nip_ttd');
+
+        if (showTtd) showTtd.checked = true;
+        if (showStempel) { showStempel.checked = true; showStempel.disabled = false; }
+        if (showQr) showQr.checked = true;
+        if (showTtdImg) showTtdImg.checked = true;
+        if (tempat) tempat.value = 'Serang';
+        if (jabatan) jabatan.value = 'Kepala Bidang Pelayanan dan Pembinaan';
+        if (nama) nama.value = 'Surya Dharma';
+        if (nip) nip.value = '';
+
+        const container = document.getElementById('pdfSignatureFieldsContainer');
+        if (container) container.style.display = 'block';
+
+        updateAllPdfLinks();
+    }
+    window.resetPdfOptions = resetPdfOptions;
+
+    function updateAllPdfLinks() {
+        const extraParams = getPdfParams();
+        document.querySelectorAll('a.btn-pdf-upt').forEach(el => {
+            const base = el.getAttribute('data-base-url');
+            if (base) {
+                el.href = extraParams ? `${base}&${extraParams}` : base;
+            }
+        });
+
+        if (currentModalUptId) {
+            const pdfBtn = document.getElementById('btnModalPrintPdf');
+            if (pdfBtn) {
+                const base = `{{ route('activity-log.ranking.detail-pdf') }}?upt_id=${currentModalUptId}&tanggal_mulai={{ $startDate }}&tanggal_akhir={{ $endDate }}`;
+                pdfBtn.href = extraParams ? `${base}&${extraParams}` : base;
+            }
+        }
+    }
+    window.updateAllPdfLinks = updateAllPdfLinks;
+
+    function openSelectedUptPdf() {
+        const select = document.getElementById('pdf_opt_select_upt');
+        if (!select || !select.value) return;
+        const extraParams = getPdfParams();
+        const base = `{{ route('activity-log.ranking.detail-pdf') }}?upt_id=${select.value}&tanggal_mulai={{ $startDate }}&tanggal_akhir={{ $endDate }}`;
+        const url = extraParams ? `${base}&${extraParams}` : base;
+        window.open(url, '_blank');
+    }
+    window.openSelectedUptPdf = openSelectedUptPdf;
+
+    // Inisialisasi parameter PDF pada link tombol di halaman
+    updateAllPdfLinks();
 </script>
 @endpush

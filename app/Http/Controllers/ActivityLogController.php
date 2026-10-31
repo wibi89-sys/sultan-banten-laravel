@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\Instansi;
 use App\Models\User;
 use App\Services\PdfReportService;
 use App\Services\UptRankingService;
@@ -181,6 +182,8 @@ class ActivityLogController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
             'preset' => $preset,
+            'isKanwil' => $user->isKanwil(),
+            'instansi' => Instansi::getFirst(),
         ]);
     }
 
@@ -313,17 +316,20 @@ class ActivityLogController extends Controller
             abort(404, 'Data UPT tidak ditemukan.');
         }
 
+        $isKanwil = $user && $user->isKanwil();
+        $isUpt = ! $isKanwil || ($request->query('mode') === 'upt');
+
         $signData = [
-            'is_upt' => false,
+            'is_upt' => $isUpt,
             'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
             'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
             'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
             'nip_ttd' => $request->query('nip_ttd', ''),
             'kalimat_penutup' => '',
-            'show_ttd' => true,
-            'show_ttd_image' => true,
-            'show_stempel' => true,
-            'show_qrcode' => true,
+            'show_ttd' => ! $isUpt && ($request->query('show_ttd', '1') === '1'),
+            'show_ttd_image' => ! $isUpt && ($request->query('show_ttd_image', '1') === '1'),
+            'show_stempel' => ! $isUpt && ($request->query('show_stempel', '1') === '1'),
+            'show_qrcode' => $request->query('show_qrcode', '1') === '1',
         ];
 
         return PdfReportService::generateRankingUptDetail($targetUpt, $rankingData['period'], $signData);
