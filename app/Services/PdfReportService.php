@@ -210,6 +210,8 @@ class PdfReportService
 
     private static function renderReportContent($pdf, $reportType, $uptId, $tanggalMulai, $tanggalAkhir, $instansi, $signData)
     {
+        $uptModel = $uptId ? Upt::find($uptId) : null;
+
         // Date String
         $hariTanggalStr = 'Semua Periode';
         if (! empty($tanggalMulai) && ! empty($tanggalAkhir)) {
@@ -225,9 +227,11 @@ class PdfReportService
         }
 
         if ($reportType === 'penghuni') {
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(0, 5, 'Hari/Tanggal :', 0, 1, 'L');
-            $pdf->Cell(0, 5, $hariTanggalStr, 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 9.5);
+            $pdf->Cell(0, 5, 'Hari/Tanggal : '.$hariTanggalStr, 0, 1, 'L');
+            if ($uptModel) {
+                $pdf->Cell(0, 5, 'UPT : '.$uptModel->nama_upt, 0, 1, 'L');
+            }
             $pdf->Ln(2);
 
             $widths = [10, 65, 18, 18, 20, 20, 20, 19];
@@ -332,8 +336,11 @@ class PdfReportService
             self::renderSignature($pdf, $instansi, $signData);
 
         } elseif ($reportType === 'bebas_harian') {
-            $pdf->SetFont('helvetica', '', 10);
+            $pdf->SetFont('helvetica', '', 9.5);
             $pdf->Cell(0, 5, 'Hari/Tanggal : '.$hariTanggalStr, 0, 1, 'L');
+            if ($uptModel) {
+                $pdf->Cell(0, 5, 'UPT : '.$uptModel->nama_upt, 0, 1, 'L');
+            }
             $pdf->Ln(2);
 
             $widths = [8, 42, 12, 12, 12, 12, 12, 12, 14, 14, 40];
@@ -363,6 +370,7 @@ class PdfReportService
 
             $data = $q->select(
                 'u.nama_upt',
+                'dbh.tanggal',
                 DB::raw('SUM(dbh.bebas_murni) as total_bm'),
                 DB::raw('SUM(dbh.pb) as total_pb'),
                 DB::raw('SUM(dbh.cb) as total_cb'),
@@ -373,7 +381,7 @@ class PdfReportService
                 DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya) as total_bebas'),
                 DB::raw('GROUP_CONCAT(DISTINCT NULLIF(dbh.ket_lainnya, "") SEPARATOR "; ") as rincian_lainnya'),
                 DB::raw('MAX(dbh.keterangan) as keterangan')
-            )->groupBy('u.id', 'u.nama_upt')->orderBy('u.nama_upt')->get();
+            )->groupBy('u.id', 'u.nama_upt', 'dbh.tanggal')->orderBy('u.nama_upt')->orderBy('dbh.tanggal')->get();
 
             $no = 1;
             $tBm = 0;
@@ -450,8 +458,11 @@ class PdfReportService
             self::renderSignature($pdf, $instansi, $signData);
 
         } elseif ($reportType === 'overstaying') {
-            $pdf->SetFont('helvetica', '', 10);
+            $pdf->SetFont('helvetica', '', 9.5);
             $pdf->Cell(0, 5, 'Hari/Tanggal : '.$hariTanggalStr, 0, 1, 'L');
+            if ($uptModel) {
+                $pdf->Cell(0, 5, 'UPT : '.$uptModel->nama_upt, 0, 1, 'L');
+            }
             $pdf->Ln(2);
 
             $widths = [8, 55, 13, 13, 13, 13, 13, 15, 47];
@@ -536,8 +547,11 @@ class PdfReportService
 
         } else {
             // Landscape reports (Integrasi, Rekapitulasi)
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(0, 5, 'Periode: '.$hariTanggalStr, 0, 1, 'L');
+            $pdf->SetFont('helvetica', '', 9.5);
+            $pdf->Cell(0, 5, 'Periode : '.$hariTanggalStr, 0, 1, 'L');
+            if ($uptModel) {
+                $pdf->Cell(0, 5, 'UPT : '.$uptModel->nama_upt, 0, 1, 'L');
+            }
             $pdf->Ln(2);
 
             if ($reportType === 'rekapitulasi') {
