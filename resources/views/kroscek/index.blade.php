@@ -291,6 +291,32 @@
         background-color: #0f172a !important;
         border-color: #334155 !important;
     }
+    @media print {
+        .sidebar, .navbar, .topbar, footer, .btn, .btn-quick-filter-detail,
+        .input-group, #detailScrollHint, #btnShowDetailCards, #btnShowDetailTable,
+        .nav-tabs, [role="tablist"], .alert, .modal, .card-filter, form {
+            display: none !important;
+        }
+        body, .main-content, .content-card {
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            box-shadow: none !important;
+        }
+        #tab-detail-pane {
+            display: block !important;
+            opacity: 1 !important;
+        }
+        #detailTableWrapper {
+            display: block !important;
+            overflow: visible !important;
+        }
+        .kroscek-table-grid {
+            width: 100% !important;
+            font-size: 8.5pt !important;
+        }
+    }
 </style>
 @endpush
 
@@ -1032,7 +1058,7 @@
                         @endif
 
                         {{-- 1. Filter UPT --}}
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-bold text-dark mb-1">
                                 <i class="fas fa-building text-primary me-1"></i> Pilih UPT:
                             </label>
@@ -1046,7 +1072,7 @@
                         </div>
 
                         {{-- 2. Mulai Tanggal --}}
-                        <div class="col-6 col-md-3">
+                        <div class="col-6 col-md-2">
                             <label class="form-label small fw-bold text-dark mb-1">
                                 <i class="fas fa-calendar-alt text-primary me-1"></i> Mulai Tanggal:
                             </label>
@@ -1054,33 +1080,59 @@
                         </div>
 
                         {{-- 3. Sampai Tanggal --}}
-                        <div class="col-6 col-md-3">
+                        <div class="col-6 col-md-2">
                             <label class="form-label small fw-bold text-dark mb-1">
                                 <i class="fas fa-calendar-check text-primary me-1"></i> Sampai Tanggal:
                             </label>
                             <input type="date" name="tanggal_akhir" class="form-control form-control-sm" style="border-color: #cbd5e1;" value="{{ $detailTanggalAkhir }}" aria-label="Sampai Tanggal">
                         </div>
 
-                        {{-- 4. Tombol Filter --}}
-                        <div class="col-12 col-md-2">
-                            <button type="submit" class="btn btn-sm btn-primary w-100 shadow-sm fw-semibold">
-                                <i class="fas fa-filter me-1"></i> Terapkan
-                            </button>
+                        {{-- 4. Urutan Tanggal --}}
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="fas fa-sort-amount-down text-primary me-1"></i> Urutan:
+                            </label>
+                            <select name="sort" class="form-select form-select-sm fw-semibold text-dark" style="border-color: #cbd5e1;" onchange="this.form.submit()" aria-label="Urutan Tanggal">
+                                <option value="desc" {{ ($detailSort ?? 'desc') === 'desc' ? 'selected' : '' }}>Terbaru (DESC)</option>
+                                <option value="asc" {{ ($detailSort ?? 'desc') === 'asc' ? 'selected' : '' }}>Terlama (ASC)</option>
+                            </select>
+                        </div>
+
+                        {{-- 5. Tombol Filter & Cetak PDF --}}
+                        <div class="col-12 col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-sm btn-primary w-50 shadow-sm fw-semibold">
+                                    <i class="fas fa-filter me-1"></i> Terapkan
+                                </button>
+                                <a href="{{ route('kroscek.detail-pdf', [
+                                    'detail_upt_id' => $selectedDetailUptId,
+                                    'tanggal_mulai' => $detailTanggalMulai,
+                                    'tanggal_akhir' => $detailTanggalAkhir,
+                                    'sort' => $detailSort ?? 'desc'
+                                ]) }}" target="_blank" class="btn btn-sm btn-danger w-50 shadow-sm fw-semibold d-inline-flex align-items-center justify-content-center text-nowrap" title="Buka Dokumen PDF Resmi Lengkap untuk Dicetak atau Disimpan">
+                                    <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                                </a>
+                            </div>
                         </div>
                     </form>
 
                     {{-- Presets Cepat Tanggal --}}
                     <div class="d-flex align-items-center flex-wrap gap-2 pt-2 mt-2 border-top small">
                         <span class="text-muted"><i class="fas fa-bolt text-warning me-1"></i>Preset Cepat:</span>
-                        <a href="{{ route('kroscek.index', ['tab' => 'detail', 'detail_upt_id' => $selectedDetailUptId, 'tanggal_mulai' => date('Y-m-01'), 'tanggal_akhir' => date('Y-m-d')]) }}" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill small">
+                        <a href="{{ route('kroscek.index', ['tab' => 'detail', 'detail_upt_id' => $selectedDetailUptId, 'tanggal_mulai' => date('Y-m-01'), 'tanggal_akhir' => date('Y-m-d'), 'sort' => $detailSort ?? 'desc']) }}" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill small">
                             Bulan Ini
                         </a>
-                        <a href="{{ route('kroscek.index', ['tab' => 'detail', 'detail_upt_id' => $selectedDetailUptId, 'tanggal_mulai' => \Carbon\Carbon::now()->subDays(6)->format('Y-m-d'), 'tanggal_akhir' => date('Y-m-d')]) }}" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill small">
+                        <a href="{{ route('kroscek.index', ['tab' => 'detail', 'detail_upt_id' => $selectedDetailUptId, 'tanggal_mulai' => \Carbon\Carbon::now()->subDays(6)->format('Y-m-d'), 'tanggal_akhir' => date('Y-m-d'), 'sort' => $detailSort ?? 'desc']) }}" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill small">
                             7 Hari Terakhir
                         </a>
-                        <a href="{{ route('kroscek.index', ['tab' => 'detail', 'detail_upt_id' => $selectedDetailUptId, 'tanggal_mulai' => \Carbon\Carbon::now()->subDays(29)->format('Y-m-d'), 'tanggal_akhir' => date('Y-m-d')]) }}" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill small">
+                        <a href="{{ route('kroscek.index', ['tab' => 'detail', 'detail_upt_id' => $selectedDetailUptId, 'tanggal_mulai' => \Carbon\Carbon::now()->subDays(29)->format('Y-m-d'), 'tanggal_akhir' => date('Y-m-d'), 'sort' => $detailSort ?? 'desc']) }}" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill small">
                             30 Hari Terakhir
                         </a>
+                        <div class="ms-auto">
+                            <button type="button" onclick="window.print()" class="btn btn-xs btn-outline-secondary py-1 px-2.5 rounded-pill small fw-medium" title="Print Halaman dari Browser (Ctrl+P)">
+                                <i class="fas fa-print text-primary me-1"></i> Print Halaman
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

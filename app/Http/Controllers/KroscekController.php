@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Instansi;
 use App\Models\Upt;
+use App\Services\PdfReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -313,7 +314,111 @@ class KroscekController extends Controller
             $detailTanggalAkhir = $temp;
         }
 
-        $activeTab = $request->query('tab', ($request->has('detail_upt_id') || $request->has('tanggal_mulai') || $request->has('tanggal_akhir')) ? 'detail' : 'harian');
+        $detailSort = strtolower($request->query('sort', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $activeTab = $request->query('tab', ($request->has('detail_upt_id') || $request->has('tanggal_mulai') || $request->has('tanggal_akhir') || $request->has('sort')) ? 'detail' : 'harian');
+
+        $detailData = self::getDetailKroscekData((int) $selectedDetailUptId, $detailTanggalMulai, $detailTanggalAkhir, $detailSort);
+        $detailKroscekList = $detailData['list'];
+        $detailStats = $detailData['stats'];
+
+        return view('kroscek.index', compact(
+            'kroscekList',
+            'filterTanggal',
+            'isOperator',
+            'myUptData',
+            'totalUpt',
+            'totalSinkron',
+            'totalSelisih',
+            'totalLengkap4',
+            'totalBelumLengkap',
+            'totalPopulasiSeBanten',
+            'totalTahananSeBanten',
+            'totalNapiSeBanten',
+            'totalOverstayingSeBanten',
+            'totalBebasSeBanten',
+            'totalUsulanSeBanten',
+            'jamSelesaiStr',
+            'allUptList',
+            'selectedDetailUptId',
+            'selectedDetailUpt',
+            'detailTanggalMulai',
+            'detailTanggalAkhir',
+            'detailSort',
+            'detailKroscekList',
+            'detailStats',
+            'activeTab'
+        ));
+    }
+
+    /**
+     * Cetak atau Simpan Dokumen PDF Kelengkapan Pelaporan & Kroscek Harian per Tanggal (Detil Tiap UPT)
+     */
+    public function detailPdf(Request $request)
+    {
+        $user = auth()->user();
+        $userUptFilter = $user ? $user->getUserUptFilter() : null;
+        $isOperator = ($userUptFilter !== null);
+
+        if ($isOperator) {
+            $selectedDetailUptId = (int) $userUptFilter;
+        } else {
+            $selectedDetailUptId = (int) $request->query('detail_upt_id');
+            if (! $selectedDetailUptId) {
+                $firstUpt = Upt::orderBy('nama_upt', 'asc')->first();
+                $selectedDetailUptId = $firstUpt ? $firstUpt->id : 0;
+            }
+        }
+
+        $rawTglMulai = $request->query('tanggal_mulai', date('Y-m-01'));
+        $rawTglAkhir = $request->query('tanggal_akhir', date('Y-m-d'));
+        try {
+            $detailTanggalMulai = Carbon::parse($rawTglMulai)->format('Y-m-d');
+        } catch (\Exception) {
+            $detailTanggalMulai = date('Y-m-01');
+        }
+        try {
+            $detailTanggalAkhir = Carbon::parse($rawTglAkhir)->format('Y-m-d');
+        } catch (\Exception) {
+            $detailTanggalAkhir = date('Y-m-d');
+        }
+
+        if ($detailTanggalMulai > $detailTanggalAkhir) {
+            $temp = $detailTanggalMulai;
+            $detailTanggalMulai = $detailTanggalAkhir;
+            $detailTanggalAkhir = $temp;
+        }
+
+        $sort = strtolower($request->query('sort', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $data = self::getDetailKroscekData($selectedDetailUptId, $detailTanggalMulai, $detailTanggalAkhir, $sort);
+
+        $signData = [
+            'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
+            'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
+            'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
+            'show_ttd' => $request->query('show_ttd', '1') === '1',
+            'show_ttd_image' => $request->query('show_ttd_image', '1') === '1',
+            'show_stempel' => $request->query('show_stempel', '1') === '1',
+            'show_qrcode' => $request->query('show_qrcode', '1') === '1',
+        ];
+
+        return PdfReportService::generateKroscekDetail($data, $signData);
+    }
+
+    /**
+     * Ambil data lengkap kelengkapan pelaporan & kroscek harian untuk UPT dan rentang tanggal tertentu.
+     * Digunakan bersama oleh tampilan web Tab 2 dan Cetak PDF.
+     */
+    public static function getDetailKroscekData(
+        int $selectedDetailUptId,
+        string $detailTanggalMulai,
+        string $detailTanggalAkhir,
+        string $sort = 'desc'
+    ): array {
+        $selectedDetailUpt = Upt::find($selectedDetailUptId);
+        $instansi = Instansi::getFirst();
+        $jamSelesaiStr = substr($instansi->jam_selesai ?? '11:00:00', 0, 8);
 
         $detailKroscekList = [];
         $detailSinkronCount = 0;
@@ -321,7 +426,7 @@ class KroscekController extends Controller
         $detailLengkap4Count = 0;
         $detailBelumLengkapCount = 0;
 
-        if ($selectedDetailUptId) {
+        if ($selectedDetailUpt) {
             // 1. Data Penghuni per Tanggal untuk UPT Terpilih
             $detailPenghuniRaw = DB::table('data_penghuni')
                 ->select(
@@ -387,7 +492,17 @@ class KroscekController extends Controller
             $startDate = Carbon::parse($detailTanggalMulai)->startOfDay();
             $endDate = Carbon::parse($detailTanggalAkhir)->startOfDay();
 
-            for ($date = $endDate->copy(); $date->gte($startDate); $date->subDay()) {
+            if ($sort === 'asc') {
+                $loopCondition = fn ($date) => $date->lte($endDate);
+                $stepAction = fn ($date) => $date->addDay();
+                $initialDate = $startDate->copy();
+            } else {
+                $loopCondition = fn ($date) => $date->gte($startDate);
+                $stepAction = fn ($date) => $date->subDay();
+                $initialDate = $endDate->copy();
+            }
+
+            for ($date = $initialDate; $loopCondition($date); $stepAction($date)) {
                 $tgl = $date->format('Y-m-d');
                 $tglDeadline = Carbon::parse($tgl.' '.$jamSelesaiStr);
 
@@ -557,31 +672,15 @@ class KroscekController extends Controller
             'pct_lengkap' => $detailTotalDays > 0 ? round(($detailLengkap4Count / $detailTotalDays) * 100) : 0,
         ];
 
-        return view('kroscek.index', compact(
-            'kroscekList',
-            'filterTanggal',
-            'isOperator',
-            'myUptData',
-            'totalUpt',
-            'totalSinkron',
-            'totalSelisih',
-            'totalLengkap4',
-            'totalBelumLengkap',
-            'totalPopulasiSeBanten',
-            'totalTahananSeBanten',
-            'totalNapiSeBanten',
-            'totalOverstayingSeBanten',
-            'totalBebasSeBanten',
-            'totalUsulanSeBanten',
-            'jamSelesaiStr',
-            'allUptList',
-            'selectedDetailUptId',
-            'selectedDetailUpt',
-            'detailTanggalMulai',
-            'detailTanggalAkhir',
-            'detailKroscekList',
-            'detailStats',
-            'activeTab'
-        ));
+        return [
+            'upt' => $selectedDetailUpt,
+            'upt_id' => $selectedDetailUptId,
+            'tanggal_mulai' => $detailTanggalMulai,
+            'tanggal_akhir' => $detailTanggalAkhir,
+            'sort' => $sort,
+            'jam_selesai_str' => $jamSelesaiStr,
+            'list' => $detailKroscekList,
+            'stats' => $detailStats,
+        ];
     }
 }

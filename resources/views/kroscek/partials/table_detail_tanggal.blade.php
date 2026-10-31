@@ -135,13 +135,23 @@
     <span class="text-muted small ps-2 fw-semibold" style="font-size: 11.5px;">
         <i class="fas fa-sliders-h text-primary me-1"></i> Format Tampilan:
     </span>
-    <div class="btn-group btn-group-sm" role="group">
-        <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowDetailTable" onclick="setKroscekDetailViewMode('table')">
-            <i class="fas fa-table me-1"></i> Tabel
-        </button>
-        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowDetailCards" onclick="setKroscekDetailViewMode('cards')">
-            <i class="fas fa-th-large me-1"></i> Kartu Grid
-        </button>
+    <div class="d-flex align-items-center gap-1.5">
+        <a href="{{ route('kroscek.detail-pdf', [
+            'detail_upt_id' => $selectedDetailUptId,
+            'tanggal_mulai' => $detailTanggalMulai,
+            'tanggal_akhir' => $detailTanggalAkhir,
+            'sort' => $detailSort ?? 'desc'
+        ]) }}" target="_blank" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold" title="Buka Dokumen PDF Resmi untuk Dicetak atau Disimpan">
+            <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+        </a>
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowDetailTable" onclick="setKroscekDetailViewMode('table')">
+                <i class="fas fa-table me-1"></i> Tabel
+            </button>
+            <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" id="btnShowDetailCards" onclick="setKroscekDetailViewMode('cards')">
+                <i class="fas fa-th-large me-1"></i> Kartu Grid
+            </button>
+        </div>
     </div>
 </div>
 

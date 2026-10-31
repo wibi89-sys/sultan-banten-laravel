@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Upt;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
@@ -80,6 +81,43 @@ class ExampleTest extends TestCase
             $response->assertSee($operatorUpt->nama_upt);
             $response->assertDontSee('Matriks 12 UPT (Monitoring Harian)');
         }
+    }
+
+    public function test_admin_can_download_kroscek_detail_pdf(): void
+    {
+        $user = User::where('role', 'admin')->first() ?? User::first();
+        $upt = Upt::first();
+        $response = $this->actingAs($user)->get("/kroscek/detail-pdf?detail_upt_id={$upt->id}&tanggal_mulai=2026-10-01&tanggal_akhir=2026-10-05&sort=desc");
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('inline; filename="Laporan_Kroscek_Detail_', $response->headers->get('Content-Disposition') ?? '');
+    }
+
+    public function test_operator_user_is_restricted_to_their_own_upt_on_detail_pdf(): void
+    {
+        $operator = User::where('role', 'operator')->whereNotNull('upt_id')->first();
+        if ($operator) {
+            $otherUpt = Upt::where('id', '!=', $operator->upt_id)->first();
+            $otherUptId = $otherUpt ? $otherUpt->id : 9999;
+
+            // Operator mencoba request PDF UPT lain
+            $response = $this->actingAs($operator)->get("/kroscek/detail-pdf?detail_upt_id={$otherUptId}&tanggal_mulai=2026-10-01&tanggal_akhir=2026-10-05");
+
+            $response->assertStatus(200);
+            $response->assertHeader('Content-Type', 'application/pdf');
+
+            // Header Content-Disposition harus berisi nama UPT operator sendiri, bukan UPT lain
+            $operatorUpt = Upt::find($operator->upt_id);
+            $expectedSlug = Str::slug($operatorUpt->nama_upt);
+            $this->assertStringContainsString($expectedSlug, $response->headers->get('Content-Disposition') ?? '');
+        }
+    }
+
+    public function test_unauthenticated_user_accessing_kroscek_detail_pdf_is_redirected(): void
+    {
+        $response = $this->get('/kroscek/detail-pdf');
+        $response->assertRedirect('/login');
     }
 
     public function test_kroscek_modal_has_quick_action_buttons(): void

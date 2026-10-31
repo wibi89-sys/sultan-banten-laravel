@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
 
     // Kroscek Data
     Route::get('/kroscek', [KroscekController::class, 'index'])->name('kroscek.index');
+    Route::get('/kroscek/detail-pdf', [KroscekController::class, 'detailPdf'])->name('kroscek.detail-pdf');
 
     // Data Penghuni
     Route::get('/penghuni', [PenghuniController::class, 'index'])->name('penghuni.index');

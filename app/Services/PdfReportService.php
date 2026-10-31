@@ -6,6 +6,7 @@ use App\Models\DataIntegrasi;
 use App\Models\Instansi;
 use App\Models\Upt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PdfReportService
 {
@@ -689,5 +690,307 @@ class PdfReportService
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->SetX($sigX);
         $pdf->Cell(70, 5, $namaTtd, 0, 1, 'C');
+    }
+
+    /**
+     * Generate PDF Kelengkapan Pelaporan & Kroscek Harian per Tanggal (Detil Tiap UPT)
+     */
+    public static function generateKroscekDetail(array $data, array $signData = [])
+    {
+        $tcpdfPath = app_path('Libraries/tcpdf/tcpdf.php');
+        if (! file_exists($tcpdfPath)) {
+            $tcpdfPath = base_path('../tcpdf/tcpdf.php');
+        }
+        require_once $tcpdfPath;
+
+        $instansi = Instansi::getFirst();
+        $user = auth()->user();
+
+        // Instantiate TCPDF in Landscape
+        $pdf = new class('L', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
+        {
+            public $instansiModel = null;
+
+            public $showQrCode = true;
+
+            public function Header() {}
+
+            public function Footer()
+            {
+                if ($this->showQrCode) {
+                    $this->SetY(-20);
+                    $y = $this->GetY();
+                    $qrText = "✅ Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
+                    $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
+                    $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                }
+
+                $this->SetY(-15);
+                $this->SetFont('helvetica', 'I', 7);
+                $this->SetTextColor(100, 100, 100);
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, 0, 'C');
+                $this->SetTextColor(0, 0, 0);
+            }
+        };
+
+        $pdf->instansiModel = $instansi;
+        $pdf->showQrCode = ! empty($signData['show_qrcode']);
+        $pdf->SetCreator('Sultan Banten');
+        $pdf->SetAuthor($user->nama_lengkap ?? 'Admin');
+        $pdf->SetTitle('Laporan Kelengkapan Pelaporan & Kroscek Harian per Tanggal');
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->SetAutoPageBreak(true, 25);
+        $pdf->AddPage();
+
+        // 1. KOP Resmi Instansi (Landscape)
+        $logoKop = null;
+        if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+            $logoKop = public_path($instansi->logo_kop);
+        } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+            $logoKop = public_path($instansi->logo);
+        }
+
+        if ($logoKop) {
+            $pdf->Image($logoKop, 15, 10, 22);
+        }
+
+        $wKop = 230;
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
+        $pdf->SetFont('helvetica', '', 8.5);
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
+
+        $pdf->Ln(2);
+        $pdf->SetLineWidth(0.6);
+        $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+        $pdf->SetLineWidth(0.2);
+        $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
+        $pdf->Ln(3);
+
+        // 2. Judul Dokumen & Subtitle
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(0, 5, 'LAPORAN KELENGKAPAN PELAPORAN & KROSCEK HARIAN PER TANGGAL', 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'B', 9.5);
+        $namaUpt = $data['upt']->nama_upt ?? 'UPT Pemasyarakatan';
+        $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
+        $pdf->Ln(1);
+
+        // 3. Metadata Periode & Filter Info
+        $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($data['tanggal_mulai'], false) : $data['tanggal_mulai'];
+        $tglAkhirStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($data['tanggal_akhir'], false) : $data['tanggal_akhir'];
+        $urutanStr = ($data['sort'] ?? 'desc') === 'asc' ? 'Terlama ke Terbaru (ASC)' : 'Terbaru ke Terlama (DESC)';
+        $totalHari = $data['stats']['total_hari'] ?? count($data['list']);
+        $jamSelesai = substr($data['jam_selesai_str'] ?? '11:00:00', 0, 5);
+
+        $pdf->SetFont('helvetica', '', 8);
+        $metaText = "Periode: {$tglMulaiStr} s/d {$tglAkhirStr} ({$totalHari} Hari Kalender) | Batas Waktu Input: {$jamSelesai} WIB | Urutan: {$urutanStr}";
+        $pdf->Cell(0, 4.5, $metaText, 0, 1, 'C');
+        $pdf->Ln(2);
+
+        // 4. Ringkasan KPI Cards
+        $stats = $data['stats'];
+        $pdf->SetFont('helvetica', 'B', 7.5);
+
+        $kpiWidth = 69.25; // 277 / 4
+
+        // Box 1: Sinkron
+        $pdf->SetFillColor(240, 253, 244);
+        $pdf->SetTextColor(22, 101, 52);
+        $pdf->Cell($kpiWidth, 5.5, "Kroscek Sinkron: {$stats['sinkron']}/{$stats['total_hari']} Hari ({$stats['pct_sinkron']}%)", 1, 0, 'C', true);
+
+        // Box 2: Selisih
+        $pdf->SetFillColor($stats['selisih'] > 0 ? 254 : 248, $stats['selisih'] > 0 ? 242 : 250, $stats['selisih'] > 0 ? 242 : 252);
+        $pdf->SetTextColor($stats['selisih'] > 0 ? 185 : 100, $stats['selisih'] > 0 ? 28 : 116, $stats['selisih'] > 0 ? 28 : 139);
+        $pdf->Cell($kpiWidth, 5.5, "Kroscek Selisih: {$stats['selisih']} Hari", 1, 0, 'C', true);
+
+        // Box 3: Lengkap 4/4
+        $pdf->SetFillColor(239, 246, 255);
+        $pdf->SetTextColor(29, 78, 216);
+        $pdf->Cell($kpiWidth, 5.5, "4/4 Modul Lengkap: {$stats['lengkap_4']}/{$stats['total_hari']} Hari ({$stats['pct_lengkap']}%)", 1, 0, 'C', true);
+
+        // Box 4: Belum Lengkap
+        $pdf->SetFillColor($stats['belum_lengkap'] > 0 ? 254 : 248, $stats['belum_lengkap'] > 0 ? 249 : 250, $stats['belum_lengkap'] > 0 ? 195 : 252);
+        $pdf->SetTextColor($stats['belum_lengkap'] > 0 ? 180 : 100, $stats['belum_lengkap'] > 0 ? 83 : 116, $stats['belum_lengkap'] > 0 ? 9 : 139);
+        $pdf->Cell($kpiWidth, 5.5, "Belum Lengkap: {$stats['belum_lengkap']} Hari", 1, 1, 'C', true);
+
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Ln(2);
+
+        // 5. Header Tabel Rincian Harian
+        $renderTableHeader = function () use ($pdf) {
+            $yTop = $pdf->GetY();
+            $pdf->SetFont('helvetica', 'B', 7.5);
+            $pdf->SetFillColor(52, 73, 94);
+            $pdf->SetTextColor(255, 255, 255);
+
+            // Rowspan columns (tinggi 10mm)
+            $pdf->SetXY(10, $yTop);
+            $pdf->Cell(8, 10, 'NO', 1, 0, 'C', true);
+            $pdf->Cell(34, 10, 'TANGGAL & HARI', 1, 0, 'C', true);
+
+            // Group 1: Kroscek Tahanan (tinggi 5mm)
+            $pdf->Cell(60, 5, 'KROSCEK TAHANAN', 1, 0, 'C', true);
+
+            // Group 2: Status 4 Modul (tinggi 5mm)
+            $pdf->Cell(104, 5, 'STATUS & JAM INPUT 4 MODUL LAPORAN', 1, 0, 'C', true);
+
+            // Rowspan columns (tinggi 10mm)
+            $pdf->Cell(45, 10, 'DINAMIKA POPULASI', 1, 0, 'C', true);
+            $pdf->Cell(26, 10, 'STATUS MODUL', 1, 1, 'C', true);
+
+            // Sub-headers (tinggi 5mm di bawah baris atas group)
+            $pdf->SetXY(52, $yTop + 5);
+            $pdf->SetFillColor(68, 92, 115);
+            $pdf->Cell(18, 5, 'Penghuni', 1, 0, 'C', true);
+            $pdf->Cell(18, 5, 'Overstay', 1, 0, 'C', true);
+            $pdf->Cell(24, 5, 'Status', 1, 0, 'C', true);
+            $pdf->Cell(26, 5, '1. Penghuni', 1, 0, 'C', true);
+            $pdf->Cell(26, 5, '2. Overstay', 1, 0, 'C', true);
+            $pdf->Cell(26, 5, '3. Integrasi', 1, 0, 'C', true);
+            $pdf->Cell(26, 5, '4. Bebas', 1, 1, 'C', true);
+
+            $pdf->SetY($yTop + 10);
+            $pdf->SetTextColor(0, 0, 0);
+        };
+
+        $renderTableHeader();
+
+        // 6. Data Rows
+        $no = 1;
+        $pdf->SetFont('helvetica', '', 7);
+
+        foreach ($data['list'] as $r) {
+            if ($pdf->GetY() > 175) {
+                $pdf->AddPage();
+                $renderTableHeader();
+                $pdf->SetFont('helvetica', '', 7);
+            }
+
+            $isOdd = ($no % 2 === 1);
+            $bgR = $isOdd ? 255 : 248;
+            $bgG = $isOdd ? 255 : 250;
+            $bgB = $isOdd ? 255 : 252;
+            $pdf->SetFillColor($bgR, $bgG, $bgB);
+            $pdf->SetTextColor(0, 0, 0);
+
+            $rowH = 5.5;
+
+            // 1. No
+            $pdf->Cell(8, $rowH, $no++, 1, 0, 'C', true);
+
+            // 2. Tanggal & Hari
+            $tglHariText = $r['hari'].', '.$r['tanggal_formatted'];
+            $pdf->Cell(34, $rowH, $tglHariText, 1, 0, 'L', true);
+
+            // 3. Kroscek Tahanan Penghuni
+            $tPenghuniStr = $r['tahanan_penghuni'] !== null ? number_format($r['tahanan_penghuni']) : '-';
+            $pdf->Cell(18, $rowH, $tPenghuniStr, 1, 0, 'C', true);
+
+            // 4. Kroscek Tahanan Overstaying
+            $tOverstayStr = $r['tahanan_overstaying'] !== null ? number_format($r['tahanan_overstaying']) : '-';
+            $pdf->Cell(18, $rowH, $tOverstayStr, 1, 0, 'C', true);
+
+            // 5. Status Kroscek
+            if ($r['status_kroscek'] === 'sinkron') {
+                $pdf->SetTextColor(22, 101, 52);
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->Cell(24, $rowH, 'Sinkron', 1, 0, 'C', true);
+            } elseif ($r['status_kroscek'] === 'selisih') {
+                $pdf->SetTextColor(185, 28, 28);
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->Cell(24, $rowH, 'Selisih '.$r['selisih'], 1, 0, 'C', true);
+            } else {
+                $pdf->SetTextColor(100, 116, 139);
+                $pdf->SetFont('helvetica', '', 7);
+                $pdf->Cell(24, $rowH, 'Belum Lengkap', 1, 0, 'C', true);
+            }
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('helvetica', '', 7);
+
+            // 6. Modul 1: Penghuni
+            if ($r['penghuni']['exists']) {
+                $txt = $r['penghuni']['jam_str'].($r['penghuni']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $pdf->SetTextColor($r['penghuni']['is_tepat'] ? 22 : 180, $r['penghuni']['is_tepat'] ? 101 : 83, $r['penghuni']['is_tepat'] ? 52 : 9);
+            } else {
+                $txt = 'Belum';
+                $pdf->SetTextColor(185, 28, 28);
+            }
+            $pdf->Cell(26, $rowH, $txt, 1, 0, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // 7. Modul 2: Overstaying
+            if ($r['overstaying']['exists']) {
+                $txt = $r['overstaying']['jam_str'].($r['overstaying']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $pdf->SetTextColor($r['overstaying']['is_tepat'] ? 22 : 180, $r['overstaying']['is_tepat'] ? 101 : 83, $r['overstaying']['is_tepat'] ? 52 : 9);
+            } else {
+                $txt = 'Belum';
+                $pdf->SetTextColor(185, 28, 28);
+            }
+            $pdf->Cell(26, $rowH, $txt, 1, 0, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // 8. Modul 3: Integrasi
+            if ($r['integrasi']['exists']) {
+                $txt = $r['integrasi']['jam_str'].($r['integrasi']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $pdf->SetTextColor($r['integrasi']['is_tepat'] ? 22 : 180, $r['integrasi']['is_tepat'] ? 101 : 83, $r['integrasi']['is_tepat'] ? 52 : 9);
+            } else {
+                $txt = 'Belum';
+                $pdf->SetTextColor(185, 28, 28);
+            }
+            $pdf->Cell(26, $rowH, $txt, 1, 0, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // 9. Modul 4: Bebas Harian
+            if ($r['bebas']['exists']) {
+                $txt = $r['bebas']['jam_str'].($r['bebas']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $pdf->SetTextColor($r['bebas']['is_tepat'] ? 22 : 180, $r['bebas']['is_tepat'] ? 101 : 83, $r['bebas']['is_tepat'] ? 52 : 9);
+            } else {
+                $txt = 'Belum';
+                $pdf->SetTextColor(185, 28, 28);
+            }
+            $pdf->Cell(26, $rowH, $txt, 1, 0, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // 10. Dinamika Populasi
+            $popStr = number_format($r['penghuni']['total_penghuni']).' WBP (Bbs:'.$r['bebas']['total_bebas'].', Ost:'.$r['overstaying']['total_overstaying'].')';
+            $pdf->Cell(45, $rowH, $popStr, 1, 0, 'C', true);
+
+            // 11. Kelengkapan
+            if ($r['is_all_completed']) {
+                $pdf->SetTextColor(22, 101, 52);
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->Cell(26, $rowH, '4/4 Lengkap', 1, 1, 'C', true);
+            } else {
+                $pdf->SetTextColor(180, 83, 9);
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->Cell(26, $rowH, $r['completed_count'].'/4 Terisi', 1, 1, 'C', true);
+            }
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('helvetica', '', 7);
+        }
+
+        // 7. Signature Block
+        if ($pdf->GetY() > 145) {
+            $pdf->AddPage();
+        }
+        self::renderSignature($pdf, $instansi, $signData, 'L');
+
+        // Output PDF
+        $cleanUpt = Str::slug($namaUpt);
+        $filename = "Laporan_Kroscek_Detail_{$cleanUpt}_".date('Ymd_His').'.pdf';
+
+        return response($pdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 }
