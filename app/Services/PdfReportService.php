@@ -918,7 +918,7 @@ class PdfReportService
 
             // 6. Modul 1: Penghuni
             if ($r['penghuni']['exists']) {
-                $txt = $r['penghuni']['jam_str'].($r['penghuni']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $txt = $r['penghuni']['jam_str'].($r['penghuni']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
                 $pdf->SetTextColor($r['penghuni']['is_tepat'] ? 22 : 180, $r['penghuni']['is_tepat'] ? 101 : 83, $r['penghuni']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -929,7 +929,7 @@ class PdfReportService
 
             // 7. Modul 2: Overstaying
             if ($r['overstaying']['exists']) {
-                $txt = $r['overstaying']['jam_str'].($r['overstaying']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $txt = $r['overstaying']['jam_str'].($r['overstaying']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
                 $pdf->SetTextColor($r['overstaying']['is_tepat'] ? 22 : 180, $r['overstaying']['is_tepat'] ? 101 : 83, $r['overstaying']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -940,7 +940,7 @@ class PdfReportService
 
             // 8. Modul 3: Integrasi
             if ($r['integrasi']['exists']) {
-                $txt = $r['integrasi']['jam_str'].($r['integrasi']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $txt = $r['integrasi']['jam_str'].($r['integrasi']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
                 $pdf->SetTextColor($r['integrasi']['is_tepat'] ? 22 : 180, $r['integrasi']['is_tepat'] ? 101 : 83, $r['integrasi']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -951,7 +951,7 @@ class PdfReportService
 
             // 9. Modul 4: Bebas Harian
             if ($r['bebas']['exists']) {
-                $txt = $r['bebas']['jam_str'].($r['bebas']['is_tepat'] ? ' [Tepat]' : ' [Telat]');
+                $txt = $r['bebas']['jam_str'].($r['bebas']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
                 $pdf->SetTextColor($r['bebas']['is_tepat'] ? 22 : 180, $r['bebas']['is_tepat'] ? 101 : 83, $r['bebas']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
