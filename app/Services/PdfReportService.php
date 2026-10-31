@@ -41,6 +41,8 @@ class PdfReportService
 
             public $showQrCode = true;
 
+            public $qrValidationText = '';
+
             public function Header() {}
 
             public function Footer()
@@ -48,9 +50,9 @@ class PdfReportService
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
-                    $qrText = "Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
+                    $qrText = $this->qrValidationText ?: "Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
                     $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
-                    $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                    $this->write2DBarcode($qrText, 'QRCODE,M', 15, $y, 16, 16, $style, 'N');
                 }
 
                 $this->SetY(-15);
@@ -77,6 +79,28 @@ class PdfReportService
             $isUpt = false;
         }
         $uptModel = $uptId ? Upt::find($uptId) : null;
+
+        // Validasi detail QR Code (Menampilkan Satker UPT spesifik atau Kanwil untuk cetak Multi-UPT)
+        $satkerText = $uptModel ? $uptModel->nama_upt : 'Kantor Wilayah Ditjenpas Banten (Rekapitulasi Seluruh UPT)';
+        $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($tanggalMulai, false) : $tanggalMulai;
+        $tglAkhirStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($tanggalAkhir, false) : $tanggalAkhir;
+        $waktuCetak = date('d/m/Y H:i:s').' WIB';
+        $namaPenandatangan = ! empty($signData['show_ttd']) ? ($signData['nama_ttd'] ?? 'Surya Dharma') : '-';
+        $jabatanPenandatangan = ! empty($signData['show_ttd']) ? ($signData['jabatan_ttd'] ?? 'Kepala Bidang Pelayanan dan Pembinaan') : '-';
+
+        $qrLines = [
+            '[VERIFIKASI KEABSAHAN DOKUMEN DIGITAL]',
+            'Aplikasi: SULTAN BANTEN (Ditjenpas Kemenimipas Banten)',
+            'Status: DOKUMEN SAH & TERVERIFIKASI SISTEM',
+            'Laporan: '.($reportTitles[$reportType] ?? 'Laporan'),
+            'Satker: '.$satkerText,
+            "Periode: {$tglMulaiStr} s/d {$tglAkhirStr}",
+            'Waktu Cetak: '.$waktuCetak,
+        ];
+        if (! empty($signData['show_ttd']) && $namaPenandatangan !== '-') {
+            $qrLines[] = "Penandatangan: {$namaPenandatangan} ({$jabatanPenandatangan})";
+        }
+        $pdf->qrValidationText = implode("\n", $qrLines);
 
         // Header / Kop
         if ($isUpt) {
@@ -784,6 +808,8 @@ class PdfReportService
 
             public $showQrCode = true;
 
+            public $qrValidationText = '';
+
             public function Header() {}
 
             public function Footer()
@@ -791,9 +817,9 @@ class PdfReportService
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
-                    $qrText = "Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
+                    $qrText = $this->qrValidationText ?: "Dokumen Valid\ndicetak melalui :\nSULTAN BANTEN @Ditjenpas Banten";
                     $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
-                    $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                    $this->write2DBarcode($qrText, 'QRCODE,M', 15, $y, 16, 16, $style, 'N');
                 }
 
                 $this->SetY(-15);
@@ -820,6 +846,27 @@ class PdfReportService
         }
 
         $namaUpt = $data['upt']->nama_upt ?? 'UPT Pemasyarakatan';
+
+        // Validasi detail QR Code
+        $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($data['tanggal_mulai'], false) : $data['tanggal_mulai'];
+        $tglAkhirStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($data['tanggal_akhir'], false) : $data['tanggal_akhir'];
+        $waktuCetak = date('d/m/Y H:i:s').' WIB';
+        $namaPenandatangan = ! empty($signData['show_ttd']) ? ($signData['nama_ttd'] ?? 'Surya Dharma') : '-';
+        $jabatanPenandatangan = ! empty($signData['show_ttd']) ? ($signData['jabatan_ttd'] ?? 'Kepala Bidang Pelayanan dan Pembinaan') : '-';
+
+        $qrLines = [
+            '[VERIFIKASI KEABSAHAN DOKUMEN DIGITAL]',
+            'Aplikasi: SULTAN BANTEN (Ditjenpas Kemenimipas Banten)',
+            'Status: DOKUMEN SAH & TERVERIFIKASI SISTEM',
+            'Laporan: Kelengkapan Pelaporan & Kroscek Harian per Tanggal',
+            'Satker: '.$namaUpt,
+            "Periode: {$tglMulaiStr} s/d {$tglAkhirStr}",
+            'Waktu Cetak: '.$waktuCetak,
+        ];
+        if (! empty($signData['show_ttd']) && $namaPenandatangan !== '-') {
+            $qrLines[] = "Penandatangan: {$namaPenandatangan} ({$jabatanPenandatangan})";
+        }
+        $pdf->qrValidationText = implode("\n", $qrLines);
 
         if ($isUpt) {
             // 1. Header Dokumen UPT (Bersih Tanpa Kop Kanwil)
@@ -1125,6 +1172,8 @@ class PdfReportService
         {
             public $showQrCode = true;
 
+            public $qrValidationText = '';
+
             public function Header() {}
 
             public function Footer()
@@ -1132,9 +1181,9 @@ class PdfReportService
                 if ($this->showQrCode) {
                     $this->SetY(-20);
                     $y = $this->GetY();
-                    $qrText = "Dokumen Sah & Valid\nLampiran Bukti Poin & Medali UPT\nSULTAN BANTEN @Ditjenpas Banten";
+                    $qrText = $this->qrValidationText ?: "Dokumen Sah & Valid\nLampiran Bukti Poin & Medali UPT\nSULTAN BANTEN @Ditjenpas Banten";
                     $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
-                    $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                    $this->write2DBarcode($qrText, 'QRCODE,M', 15, $y, 16, 16, $style, 'N');
                 }
 
                 $this->SetY(-15);
@@ -1154,6 +1203,32 @@ class PdfReportService
         $pdf->AddPage();
 
         $namaUpt = $uptData['nama_upt'] ?? 'UPT Pemasyarakatan';
+
+        // Validasi detail QR Code
+        $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($period['start_date'], false) : $period['start_date'];
+        $tglAkhirStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($period['end_date'], false) : $period['end_date'];
+        $totalHari = $period['total_days'] ?? count($uptData['daily_breakdown'] ?? []);
+        $rankNum = $uptData['rank'] ?? 1;
+        $totalPoints = number_format($uptData['total_points'] ?? 0);
+        $kepatuhan = $uptData['persentase_kepatuhan'] ?? 0;
+        $waktuCetak = date('d/m/Y H:i:s').' WIB';
+        $namaPenandatangan = ! empty($signData['show_ttd']) ? ($signData['nama_ttd'] ?? 'Surya Dharma') : '-';
+        $jabatanPenandatangan = ! empty($signData['show_ttd']) ? ($signData['jabatan_ttd'] ?? 'Kepala Bidang Pelayanan dan Pembinaan') : '-';
+
+        $qrLines = [
+            '[VERIFIKASI KEABSAHAN DOKUMEN DIGITAL]',
+            'Aplikasi: SULTAN BANTEN (Ditjenpas Kemenimipas Banten)',
+            'Status: DOKUMEN SAH & TERVERIFIKASI SISTEM',
+            'Laporan: Rincian Perhitungan Poin & Medali Kedisiplinan',
+            'Satker: '.$namaUpt,
+            "Periode: {$tglMulaiStr} s/d {$tglAkhirStr} ({$totalHari} Hari)",
+            "Capaian: Peringkat #{$rankNum} ({$totalPoints} Poin / {$kepatuhan}%)",
+            'Waktu Cetak: '.$waktuCetak,
+        ];
+        if (! empty($signData['show_ttd']) && $namaPenandatangan !== '-') {
+            $qrLines[] = "Penandatangan: {$namaPenandatangan} ({$jabatanPenandatangan})";
+        }
+        $pdf->qrValidationText = implode("\n", $qrLines);
 
         $isKanwil = $user ? $user->isKanwil() : false;
         $isUpt = ! $isKanwil || ! empty($signData['is_upt']);
