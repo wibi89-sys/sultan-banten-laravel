@@ -716,11 +716,18 @@ class PdfReportService
         $showTtdImage = ! isset($signData['show_ttd_image']) || (bool) $signData['show_ttd_image'];
         $showStempel = ! isset($signData['show_stempel']) || (bool) $signData['show_stempel'];
 
-        $kalimatPenutup = $signData['kalimat_penutup'] ?? 'Demikian laporan ini disampaikan, atas perhatiannya diucapkan terima kasih.';
-        $pdf->Ln(4);
-        $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(0, 5, $kalimatPenutup, 0, 1, 'L');
-        $pdf->Ln(4);
+        $kalimatPenutup = array_key_exists('kalimat_penutup', $signData)
+            ? $signData['kalimat_penutup']
+            : 'Demikian laporan ini disampaikan, atas perhatiannya diucapkan terima kasih.';
+
+        if (! empty($kalimatPenutup)) {
+            $pdf->Ln(4);
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->Cell(0, 5, $kalimatPenutup, 0, 1, 'L');
+            $pdf->Ln(4);
+        } else {
+            $pdf->Ln(2);
+        }
 
         $tempatTtd = $signData['tempat_ttd'] ?? 'Serang';
         $jabatanTtd = $signData['jabatan_ttd'] ?? 'Kepala Bidang Pelayanan dan Pembinaan';
@@ -1238,7 +1245,7 @@ class PdfReportService
         $pdf->Ln(2.5);
 
         // 5. Header Tabel Rincian Harian
-        $colWidths = [8, 30, 34, 34, 34, 34, 56, 22, 25]; // Total = 277 mm
+        $colWidths = [8, 30, 37, 37, 37, 37, 45, 21, 25]; // Total = 277 mm
 
         $renderTableHeader = function () use ($pdf, $colWidths) {
             $pdf->SetFont('helvetica', 'B', 7);

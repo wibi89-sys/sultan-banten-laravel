@@ -319,7 +319,7 @@ class ActivityLogController extends Controller
             'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
             'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
             'nip_ttd' => $request->query('nip_ttd', ''),
-            'kalimat_penutup' => 'Demikian laporan rincian perhitungan perolehan poin dan medali kedisiplinan pelaporan ini dibuat secara transparan sebagai lampiran bukti sah penilaian kinerja UPT.',
+            'kalimat_penutup' => '',
             'show_ttd' => true,
             'show_ttd_image' => true,
             'show_stempel' => true,
