@@ -258,7 +258,7 @@
         </li>
     </ul>
 
-    <div class="d-flex align-items-center flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
         <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill small">
             <i class="fas fa-clock me-1"></i> Jam Input: <strong>{{ $rankingData['period']['jam_mulai'] ?? '08:00' }} - {{ $rankingData['period']['jam_selesai'] }} WIB</strong>
         </span>
@@ -266,18 +266,6 @@
            class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm"
            aria-label="Export Excel Ranking Kepatuhan UPT">
             <i class="fas fa-file-excel me-1"></i> Export Excel
-        </a>
-        <a href="{{ route('activity-log.ranking.pdf', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
-           target="_blank"
-           class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm"
-           aria-label="Cetak Laporan Penetapan Peringkat (PDF A4)">
-            <i class="fas fa-file-pdf me-1"></i> Cetak Laporan PDF
-        </a>
-        <a href="{{ route('activity-log.ranking.sertifikat', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate, 'bundle' => 1]) }}" 
-           target="_blank"
-           class="btn btn-outline-warning btn-sm rounded-pill px-3 shadow-sm text-dark fw-semibold"
-           aria-label="Cetak Paket Piagam Penghargaan 3 Besar (PDF Landscape)">
-            <i class="fas fa-award text-warning me-1"></i> Paket Piagam (3 Besar)
         </a>
     </div>
 </div>
@@ -478,14 +466,9 @@
                 <span class="badge bg-light text-dark border me-1">{{ $top2['persentase_kepatuhan'] }}% Kepatuhan</span>
                 <span class="badge bg-success-subtle text-success"><i class="fas fa-check-double me-1"></i>{{ $top2['count_kroscek_sesuai'] }}x Sinkron</span>
             </div>
-            <div class="d-flex gap-1 mt-3">
-                <button class="btn btn-outline-secondary btn-sm rounded-pill flex-grow-1" onclick="showDetailModal({{ json_encode($top2) }})">
-                    <i class="fas fa-eye me-1"></i> Riwayat
-                </button>
-                <a href="{{ route('activity-log.ranking.sertifikat', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate, 'rank' => 2]) }}" target="_blank" class="btn btn-secondary btn-sm rounded-pill px-3 shadow-sm fw-semibold" title="Unduh Piagam Penghargaan Juara II (PDF A4 Landscape)">
-                    <i class="fas fa-award me-1"></i> Piagam 🥈
-                </a>
-            </div>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill mt-3 w-100" onclick="showDetailModal({{ json_encode($top2) }})">
+                <i class="fas fa-eye me-1"></i> Detail Riwayat
+            </button>
         </div>
         @endif
 
@@ -504,14 +487,9 @@
                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle me-1 fw-bold">{{ $top1['persentase_kepatuhan'] }}% Kepatuhan</span>
                 <span class="badge bg-success-subtle text-success fw-bold"><i class="fas fa-check-double me-1"></i>{{ $top1['count_kroscek_sesuai'] }}x Sinkron</span>
             </div>
-            <div class="d-flex gap-1 mt-3">
-                <button class="btn btn-warning btn-sm rounded-pill flex-grow-1 fw-bold shadow-sm" onclick="showDetailModal({{ json_encode($top1) }})">
-                    <i class="fas fa-trophy me-1"></i> Riwayat Juara
-                </button>
-                <a href="{{ route('activity-log.ranking.sertifikat', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate, 'rank' => 1]) }}" target="_blank" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm fw-bold border border-warning" title="Unduh Piagam Penghargaan Juara I (PDF A4 Landscape)">
-                    <i class="fas fa-award text-warning me-1"></i> Piagam 🥇
-                </a>
-            </div>
+            <button class="btn btn-warning btn-sm rounded-pill mt-3 w-100 fw-bold shadow-sm" onclick="showDetailModal({{ json_encode($top1) }})">
+                <i class="fas fa-trophy me-1"></i> Detail Riwayat Juara
+            </button>
         </div>
         @endif
 
@@ -530,14 +508,9 @@
                 <span class="badge bg-light text-dark border me-1">{{ $top3['persentase_kepatuhan'] }}% Kepatuhan</span>
                 <span class="badge bg-success-subtle text-success"><i class="fas fa-check-double me-1"></i>{{ $top3['count_kroscek_sesuai'] }}x Sinkron</span>
             </div>
-            <div class="d-flex gap-1 mt-3">
-                <button class="btn btn-outline-danger btn-sm rounded-pill flex-grow-1" onclick="showDetailModal({{ json_encode($top3) }})">
-                    <i class="fas fa-eye me-1"></i> Riwayat
-                </button>
-                <a href="{{ route('activity-log.ranking.sertifikat', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate, 'rank' => 3]) }}" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm fw-semibold" title="Unduh Piagam Penghargaan Juara III (PDF A4 Landscape)">
-                    <i class="fas fa-award me-1"></i> Piagam 🥉
-                </a>
-            </div>
+            <button class="btn btn-outline-danger btn-sm rounded-pill mt-3 w-100" onclick="showDetailModal({{ json_encode($top3) }})">
+                <i class="fas fa-eye me-1"></i> Detail Riwayat
+            </button>
         </div>
         @endif
     </div>
@@ -761,20 +734,9 @@
 
                         <!-- Tombol Aksi Detail -->
                         <td class="text-center">
-                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5" onclick="showDetailModal({{ json_encode($upt) }})" title="Lihat Riwayat Harian Lengkap">
-                                    <i class="fas fa-calendar-alt me-1"></i> Detail
-                                </button>
-                                @if($rank <= 3)
-                                    <a href="{{ route('activity-log.ranking.sertifikat', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate, 'rank' => $rank]) }}" 
-                                       target="_blank" 
-                                       class="btn btn-outline-warning btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center shadow-xs" 
-                                       style="width: 28px; height: 28px;" 
-                                       title="Unduh Piagam Penghargaan Juara {{ $rank }} (PDF)">
-                                        <i class="fas fa-award text-warning" style="font-size: 13px;"></i>
-                                    </a>
-                                @endif
-                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="showDetailModal({{ json_encode($upt) }})">
+                                <i class="fas fa-calendar-alt me-1"></i> Detail
+                            </button>
                         </td>
                     </tr>
                 @empty
@@ -826,20 +788,9 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 11px;" onclick="showDetailModal({{ json_encode($upt) }})">
-                                        <i class="fas fa-calendar-alt me-1"></i> Detail
-                                    </button>
-                                    @if($rank <= 3)
-                                        <a href="{{ route('activity-log.ranking.sertifikat', ['tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate, 'rank' => $rank]) }}" 
-                                           target="_blank" 
-                                           class="btn btn-outline-warning btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center shadow-xs" 
-                                           style="width: 26px; height: 26px;" 
-                                           title="Unduh Piagam Penghargaan Juara {{ $rank }} (PDF)">
-                                            <i class="fas fa-award text-warning" style="font-size: 12px;"></i>
-                                        </a>
-                                    @endif
-                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-semibold flex-shrink-0" style="font-size: 11px;" onclick="showDetailModal({{ json_encode($upt) }})">
+                                    <i class="fas fa-calendar-alt me-1"></i> Detail
+                                </button>
                             </div>
 
                             <!-- Card Metrics: Total Poin & Kepatuhan -->

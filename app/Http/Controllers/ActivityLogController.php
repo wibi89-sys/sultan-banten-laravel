@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\User;
-use App\Services\PdfReportService;
 use App\Services\UptRankingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -279,73 +278,5 @@ class ActivityLogController extends Controller
             'Pragma' => 'no-cache',
             'Expires' => '0',
         ]);
-    }
-
-    /**
-     * Cetak atau Simpan Dokumen PDF Laporan Penetapan Peringkat Kedisiplinan UPT (A4)
-     * Lengkap dengan Rekapitulasi 12 UPT, Executive Summary KPI, Tanda Tangan Kanwil,
-     * dan Halaman 2 Lampiran Pedoman Penilaian / Penjelasan Poin.
-     */
-    public function exportRankingPdf(Request $request)
-    {
-        $user = auth()->user();
-        if (! $user->hasAccess('activity_log')) {
-            abort(403, 'Akses ditolak.');
-        }
-
-        $startDate = $request->query('tanggal_mulai', date('Y-m-01'));
-        $endDate = $request->query('tanggal_akhir', date('Y-m-t'));
-        $orientation = $request->query('orientation', 'P');
-
-        $data = UptRankingService::calculateRanking($startDate, $endDate);
-
-        $signData = [
-            'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
-            'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Divisi Pemasyarakatan'),
-            'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
-            'nip_ttd' => $request->query('nip_ttd', ''),
-            'show_ttd' => true,
-            'show_ttd_image' => true,
-            'show_stempel' => true,
-            'show_qrcode' => true,
-        ];
-
-        return PdfReportService::generateRankingReport($data, $signData, $orientation);
-    }
-
-    /**
-     * Cetak atau Simpan Dokumen PDF Piagam Penghargaan Juara 3 Besar Leaderboard (A4 Landscape)
-     * Mendukung cetak satuan (?rank=1|2|3) atau paket sekaligus (?bundle=1).
-     */
-    public function exportCertificatePdf(Request $request)
-    {
-        $user = auth()->user();
-        if (! $user->hasAccess('activity_log')) {
-            abort(403, 'Akses ditolak.');
-        }
-
-        $startDate = $request->query('tanggal_mulai', date('Y-m-01'));
-        $endDate = $request->query('tanggal_akhir', date('Y-m-t'));
-        $rank = (int) $request->query('rank', 1);
-        $bundle = (bool) $request->query('bundle', false);
-
-        $data = UptRankingService::calculateRanking($startDate, $endDate);
-
-        $signData = [
-            'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
-            'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Kantor Wilayah'),
-            'nama_ttd' => $request->query('nama_ttd', 'DODOT ADIKOESWANTO'),
-            'nip_ttd' => $request->query('nip_ttd', ''),
-            'show_ttd' => true,
-            'show_ttd_image' => true,
-            'show_stempel' => true,
-            'show_qrcode' => true,
-        ];
-
-        if ($bundle) {
-            return PdfReportService::generateTop3Certificates($data, $signData);
-        }
-
-        return PdfReportService::generateCertificate($data, $rank, $signData);
     }
 }
