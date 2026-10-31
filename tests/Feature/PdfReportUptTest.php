@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\KroscekController;
 use App\Models\Upt;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -96,5 +98,24 @@ class PdfReportUptTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_h_tag_calculation_relative_to_report_date(): void
+    {
+        $hSameDay = KroscekController::calculateHTagInfo('2026-10-31', Carbon::parse('2026-10-31 07:45:00'));
+        $this->assertEquals('H', $hSameDay['h_tag']);
+        $this->assertEquals('07:45', $hSameDay['jam_str']);
+
+        $hYesterday = KroscekController::calculateHTagInfo('2026-10-31', Carbon::parse('2026-10-30 20:30:00'));
+        $this->assertEquals('H-1', $hYesterday['h_tag']);
+        $this->assertEquals('20:30', $hYesterday['jam_str']);
+
+        $hTomorrow = KroscekController::calculateHTagInfo('2026-10-31', Carbon::parse('2026-11-01 08:15:00'));
+        $this->assertEquals('H+1', $hTomorrow['h_tag']);
+        $this->assertEquals('08:15', $hTomorrow['jam_str']);
+
+        $hNull = KroscekController::calculateHTagInfo('2026-10-31', null);
+        $this->assertNull($hNull['h_tag']);
+        $this->assertNull($hNull['jam_str']);
     }
 }

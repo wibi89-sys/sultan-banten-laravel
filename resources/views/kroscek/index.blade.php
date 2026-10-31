@@ -659,11 +659,19 @@
             </div>
 
             {{-- Switcher Format Tampilan: Tabel Matriks vs Kartu Grid (Aktif di PC & Mobile) --}}
-            <div class="d-flex align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border">
-                <span class="text-muted small ps-2 fw-semibold" style="font-size: 11.5px;">
-                    <i class="fas fa-sliders-h text-primary me-1"></i> Format Tampilan:
-                </span>
-                <div class="btn-group btn-group-sm" role="group">
+            <div class="d-flex align-items-center justify-content-between mb-3 p-1.5 bg-light rounded-pill border flex-wrap gap-2">
+                <div class="d-flex align-items-center flex-wrap gap-2 ps-2">
+                    <span class="text-muted small fw-semibold" style="font-size: 11.5px;">
+                        <i class="fas fa-sliders-h text-primary me-1"></i> Format Tampilan:
+                    </span>
+                    <div class="d-none d-md-flex align-items-center gap-1.5 ms-2 text-muted" style="font-size: 10.5px;">
+                        <span class="text-secondary fw-semibold">Penanda:</span>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1.5 py-0.5" title="Diinput pada hari yang sama">H = Hari-H</span>
+                        <span class="badge bg-info-subtle text-info border border-info-subtle px-1.5 py-0.5" title="Diinput lebih awal/kemarin">H-1 = Lebih Awal</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-1.5 py-0.5" title="Diinput di hari berikutnya">H+1 = Terlambat</span>
+                    </div>
+                </div>
+                <div class="btn-group btn-group-sm pe-1" role="group">
                     <button type="button" class="btn btn-xs btn-primary rounded-pill px-3 py-1 fw-semibold active" id="btnShowTable" onclick="setKroscekViewMode('table')">
                         <i class="fas fa-table me-1"></i> Tabel
                     </button>
@@ -784,7 +792,16 @@
                                 {{-- Modul 1: Penghuni --}}
                                 <td class="text-center">
                                     @if($row['penghuni']['exists'])
-                                        <div class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['penghuni']['jam_str'] }}</div>
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-0.5">
+                                            <span class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['penghuni']['jam_str'] }}</span>
+                                            @if(!empty($row['penghuni']['h_tag']))
+                                                <span class="badge {{ $row['penghuni']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['penghuni']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                      style="font-size: 8.5px; padding: 1px 4px; cursor: help;" 
+                                                      title="{{ $row['penghuni']['h_desc'] }} ({{ $row['penghuni']['created_at_full'] }} WIB)">
+                                                    {{ $row['penghuni']['h_tag'] }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         @if($row['penghuni']['is_tepat'])
                                             <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 fw-medium" style="font-size: 9.5px; padding: 1.5px 6px;">Tepat</span>
                                         @else
@@ -800,7 +817,16 @@
                                 {{-- Modul 2: Overstaying --}}
                                 <td class="text-center">
                                     @if($row['overstaying']['exists'])
-                                        <div class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['overstaying']['jam_str'] }}</div>
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-0.5">
+                                            <span class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['overstaying']['jam_str'] }}</span>
+                                            @if(!empty($row['overstaying']['h_tag']))
+                                                <span class="badge {{ $row['overstaying']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['overstaying']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                      style="font-size: 8.5px; padding: 1px 4px; cursor: help;" 
+                                                      title="{{ $row['overstaying']['h_desc'] }} ({{ $row['overstaying']['created_at_full'] }} WIB)">
+                                                    {{ $row['overstaying']['h_tag'] }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         @if($row['overstaying']['is_tepat'])
                                             <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 fw-medium" style="font-size: 9.5px; padding: 1.5px 6px;">Tepat</span>
                                         @else
@@ -816,7 +842,16 @@
                                 {{-- Modul 3: Integrasi --}}
                                 <td class="text-center">
                                     @if($row['integrasi']['exists'])
-                                        <div class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['integrasi']['jam_str'] }}</div>
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-0.5">
+                                            <span class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['integrasi']['jam_str'] }}</span>
+                                            @if(!empty($row['integrasi']['h_tag']))
+                                                <span class="badge {{ $row['integrasi']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['integrasi']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                      style="font-size: 8.5px; padding: 1px 4px; cursor: help;" 
+                                                      title="{{ $row['integrasi']['h_desc'] }} ({{ $row['integrasi']['created_at_full'] }} WIB)">
+                                                    {{ $row['integrasi']['h_tag'] }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         @if($row['integrasi']['is_tepat'])
                                             <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 fw-medium" style="font-size: 9.5px; padding: 1.5px 6px;">Tepat</span>
                                         @else
@@ -832,7 +867,16 @@
                                 {{-- Modul 4: Bebas Harian --}}
                                 <td class="text-center">
                                     @if($row['bebas']['exists'])
-                                        <div class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['bebas']['jam_str'] }}</div>
+                                        <div class="d-flex align-items-center justify-content-center gap-1 mb-0.5">
+                                            <span class="text-secondary font-monospace" style="font-size: 12px;">{{ $row['bebas']['jam_str'] }}</span>
+                                            @if(!empty($row['bebas']['h_tag']))
+                                                <span class="badge {{ $row['bebas']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['bebas']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                      style="font-size: 8.5px; padding: 1px 4px; cursor: help;" 
+                                                      title="{{ $row['bebas']['h_desc'] }} ({{ $row['bebas']['created_at_full'] }} WIB)">
+                                                    {{ $row['bebas']['h_tag'] }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         @if($row['bebas']['is_tepat'])
                                             <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25 fw-medium" style="font-size: 9.5px; padding: 1.5px 6px;">Tepat</span>
                                         @else
@@ -957,7 +1001,16 @@
                                         <div class="p-1.5 rounded-2 bg-light border">
                                             <div class="text-muted" style="font-size: 10px;">Penghuni</div>
                                             @if($row['penghuni']['exists'])
-                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['penghuni']['jam_str'] }}</div>
+                                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                                    <span class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['penghuni']['jam_str'] }}</span>
+                                                    @if(!empty($row['penghuni']['h_tag']))
+                                                        <span class="badge {{ $row['penghuni']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['penghuni']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                              style="font-size: 8px; padding: 0.5px 3px;" 
+                                                              title="{{ $row['penghuni']['h_desc'] }} ({{ $row['penghuni']['created_at_full'] }} WIB)">
+                                                            {{ $row['penghuni']['h_tag'] }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                                 <span class="badge {{ $row['penghuni']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['penghuni']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['penghuni']['is_tepat'] ? 'Tepat' : 'Terlambat' }}</span>
                                             @else
                                                 <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
@@ -969,7 +1022,16 @@
                                         <div class="p-1.5 rounded-2 bg-light border">
                                             <div class="text-muted" style="font-size: 10px;">Overstay</div>
                                             @if($row['overstaying']['exists'])
-                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['overstaying']['jam_str'] }}</div>
+                                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                                    <span class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['overstaying']['jam_str'] }}</span>
+                                                    @if(!empty($row['overstaying']['h_tag']))
+                                                        <span class="badge {{ $row['overstaying']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['overstaying']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                              style="font-size: 8px; padding: 0.5px 3px;" 
+                                                              title="{{ $row['overstaying']['h_desc'] }} ({{ $row['overstaying']['created_at_full'] }} WIB)">
+                                                            {{ $row['overstaying']['h_tag'] }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                                 <span class="badge {{ $row['overstaying']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['overstaying']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['overstaying']['is_tepat'] ? 'Tepat' : 'Terlambat' }}</span>
                                             @else
                                                 <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
@@ -981,7 +1043,16 @@
                                         <div class="p-1.5 rounded-2 bg-light border">
                                             <div class="text-muted" style="font-size: 10px;">Integrasi</div>
                                             @if($row['integrasi']['exists'])
-                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['integrasi']['jam_str'] }}</div>
+                                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                                    <span class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['integrasi']['jam_str'] }}</span>
+                                                    @if(!empty($row['integrasi']['h_tag']))
+                                                        <span class="badge {{ $row['integrasi']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['integrasi']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                              style="font-size: 8px; padding: 0.5px 3px;" 
+                                                              title="{{ $row['integrasi']['h_desc'] }} ({{ $row['integrasi']['created_at_full'] }} WIB)">
+                                                            {{ $row['integrasi']['h_tag'] }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                                 <span class="badge {{ $row['integrasi']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['integrasi']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['integrasi']['is_tepat'] ? 'Tepat' : 'Terlambat' }}</span>
                                             @else
                                                 <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
@@ -993,7 +1064,16 @@
                                         <div class="p-1.5 rounded-2 bg-light border">
                                             <div class="text-muted" style="font-size: 10px;">Bebas</div>
                                             @if($row['bebas']['exists'])
-                                                <div class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['bebas']['jam_str'] }}</div>
+                                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                                    <span class="font-monospace fw-semibold text-dark" style="font-size: 11px;">{{ $row['bebas']['jam_str'] }}</span>
+                                                    @if(!empty($row['bebas']['h_tag']))
+                                                        <span class="badge {{ $row['bebas']['h_tag'] === 'H' ? 'bg-primary-subtle text-primary border border-primary-subtle' : ($row['bebas']['is_tepat'] ? 'bg-info-subtle text-info border border-info-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle') }}" 
+                                                              style="font-size: 8px; padding: 0.5px 3px;" 
+                                                              title="{{ $row['bebas']['h_desc'] }} ({{ $row['bebas']['created_at_full'] }} WIB)">
+                                                            {{ $row['bebas']['h_tag'] }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                                 <span class="badge {{ $row['bebas']['is_tepat'] ? 'bg-success text-success' : 'bg-warning text-dark' }} bg-opacity-15 border border-{{ $row['bebas']['is_tepat'] ? 'success' : 'warning' }} border-opacity-25" style="font-size: 9px; padding: 1px 4px;">{{ $row['bebas']['is_tepat'] ? 'Tepat' : 'Terlambat' }}</span>
                                             @else
                                                 <div class="text-muted font-monospace" style="font-size: 11px;">-</div>
@@ -1581,11 +1661,18 @@
             alertBadge.innerHTML = '<i class="fas fa-minus-circle"></i> Belum Lengkap';
         }
 
+        const formatWaktuWithH = (m) => {
+            if (!m || !m.exists) return 'Belum Diinput';
+            const tag = m.h_tag ? ` • ${m.h_tag}` : '';
+            const dateFull = m.created_at_full ? ` [${m.created_at_full} WIB]` : '';
+            return `${m.jam_str} WIB (${m.is_tepat ? 'Tepat Waktu' : 'Terlambat'}${tag})${dateFull}`;
+        };
+
         // Tab 1: Penghuni
         document.getElementById('det_p_tahanan').innerText = data.penghuni.total_tahanan !== null ? data.penghuni.total_tahanan.toLocaleString('id-ID') : '-';
         document.getElementById('det_p_napi').innerText = data.penghuni.total_napi !== null ? data.penghuni.total_napi.toLocaleString('id-ID') : '-';
         document.getElementById('det_p_total').innerText = data.penghuni.total_penghuni !== null ? data.penghuni.total_penghuni.toLocaleString('id-ID') : '-';
-        document.getElementById('det_p_waktu').innerText = data.penghuni.exists ? `${data.penghuni.jam_str} WIB (${data.penghuni.is_tepat ? 'Tepat Waktu' : 'Terlambat'})` : 'Belum Diinput';
+        document.getElementById('det_p_waktu').innerText = formatWaktuWithH(data.penghuni);
 
         // Tab 2: Overstaying
         document.getElementById('det_o_t_ai').innerText = data.overstaying.tahanan_ai;
@@ -1601,7 +1688,7 @@
         document.getElementById('det_o_o_aiv').innerText = data.overstaying.overstaying_aiv;
         document.getElementById('det_o_o_av').innerText = data.overstaying.overstaying_av;
         document.getElementById('det_o_o_total').innerText = data.overstaying.total_overstaying;
-        document.getElementById('det_o_waktu').innerText = data.overstaying.exists ? `${data.overstaying.jam_str} WIB (${data.overstaying.is_tepat ? 'Tepat Waktu' : 'Terlambat'})` : 'Belum Diinput';
+        document.getElementById('det_o_waktu').innerText = formatWaktuWithH(data.overstaying);
 
         // Tab 3: Integrasi
         document.getElementById('det_i_u_pb').innerText = data.integrasi.usulan_pb;
@@ -1617,7 +1704,7 @@
         document.getElementById('det_i_s_cmk').innerText = data.integrasi.sk_cmk;
         document.getElementById('det_i_s_asimilasi').innerText = data.integrasi.sk_asimilasi;
         document.getElementById('det_i_s_total').innerText = data.integrasi.total_sk;
-        document.getElementById('det_i_waktu').innerText = data.integrasi.exists ? `${data.integrasi.jam_str} WIB (${data.integrasi.is_tepat ? 'Tepat Waktu' : 'Terlambat'})` : 'Belum Diinput';
+        document.getElementById('det_i_waktu').innerText = formatWaktuWithH(data.integrasi);
 
         // Tab 4: Bebas Harian
         document.getElementById('det_b_murni').innerText = data.bebas.bebas_murni;
@@ -1630,7 +1717,7 @@
         const detLain = document.getElementById('det_b_lain');
         if (detLain) detLain.innerText = (data.bebas.bdh ? data.bebas.bdh + ' / ' : '') + data.bebas.lainnya;
         document.getElementById('det_b_total').innerText = data.bebas.total_bebas + ' Orang';
-        document.getElementById('det_b_waktu').innerText = data.bebas.exists ? `${data.bebas.jam_str} WIB (${data.bebas.is_tepat ? 'Tepat Waktu' : 'Terlambat'})` : 'Belum Diinput';
+        document.getElementById('det_b_waktu').innerText = formatWaktuWithH(data.bebas);
 
         // Quick Actions & Dynamic URLs
         const tgl = data.tanggal;

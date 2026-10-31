@@ -192,6 +192,11 @@ class KroscekController extends Controller
                 $missingModules[] = 'Bebas Harian';
             }
 
+            $pInfo = self::calculateHTagInfo($filterTanggal, $pCreatedAt);
+            $oInfo = self::calculateHTagInfo($filterTanggal, $oCreatedAt);
+            $iInfo = self::calculateHTagInfo($filterTanggal, $iCreatedAt);
+            $bInfo = self::calculateHTagInfo($filterTanggal, $bCreatedAt);
+
             $kroscekList[] = [
                 'tanggal' => $filterTanggal,
                 'tanggal_label' => Carbon::parse($filterTanggal)->translatedFormat('l, d F Y'),
@@ -216,7 +221,10 @@ class KroscekController extends Controller
                     'total_tahanan' => $pTahanan,
                     'total_napi' => $pNapi,
                     'total_penghuni' => $pTotal,
-                    'jam_str' => $pCreatedAt ? $pCreatedAt->format('H:i') : null,
+                    'jam_str' => $pInfo['jam_str'],
+                    'h_tag' => $pInfo['h_tag'],
+                    'h_desc' => $pInfo['h_desc'],
+                    'created_at_full' => $pInfo['created_at_full'],
                     'is_tepat' => $pIsTepat,
                 ],
 
@@ -235,7 +243,10 @@ class KroscekController extends Controller
                     'overstaying_aiii' => $oExists ? (int) $o->overstaying_aiii : 0,
                     'overstaying_aiv' => $oExists ? (int) $o->overstaying_aiv : 0,
                     'overstaying_av' => $oExists ? (int) $o->overstaying_av : 0,
-                    'jam_str' => $oCreatedAt ? $oCreatedAt->format('H:i') : null,
+                    'jam_str' => $oInfo['jam_str'],
+                    'h_tag' => $oInfo['h_tag'],
+                    'h_desc' => $oInfo['h_desc'],
+                    'created_at_full' => $oInfo['created_at_full'],
                     'is_tepat' => $oIsTepat,
                 ],
 
@@ -254,7 +265,10 @@ class KroscekController extends Controller
                     'sk_cmb' => $iExists ? (int) $i->sk_terbit_cmb : 0,
                     'sk_cmk' => $iExists ? (int) $i->sk_terbit_cmk : 0,
                     'sk_asimilasi' => $iExists ? (int) $i->sk_terbit_asimilasi : 0,
-                    'jam_str' => $iCreatedAt ? $iCreatedAt->format('H:i') : null,
+                    'jam_str' => $iInfo['jam_str'],
+                    'h_tag' => $iInfo['h_tag'],
+                    'h_desc' => $iInfo['h_desc'],
+                    'created_at_full' => $iInfo['created_at_full'],
                     'is_tepat' => $iIsTepat,
                 ],
 
@@ -269,7 +283,10 @@ class KroscekController extends Controller
                     'asimilasi' => $bExists ? (int) $b->asimilasi : 0,
                     'bdh' => $bExists ? (int) $b->bdh : 0,
                     'lainnya' => $bExists ? (int) $b->lainnya : 0,
-                    'jam_str' => $bCreatedAt ? $bCreatedAt->format('H:i') : null,
+                    'jam_str' => $bInfo['jam_str'],
+                    'h_tag' => $bInfo['h_tag'],
+                    'h_desc' => $bInfo['h_desc'],
+                    'created_at_full' => $bInfo['created_at_full'],
                     'is_tepat' => $bIsTepat,
                 ],
             ];
@@ -580,6 +597,11 @@ class KroscekController extends Controller
                     $missingModules[] = 'Bebas Harian';
                 }
 
+                $pInfo = self::calculateHTagInfo($tgl, $pCreatedAt);
+                $oInfo = self::calculateHTagInfo($tgl, $oCreatedAt);
+                $iInfo = self::calculateHTagInfo($tgl, $iCreatedAt);
+                $bInfo = self::calculateHTagInfo($tgl, $bCreatedAt);
+
                 $detailKroscekList[] = [
                     'tanggal' => $tgl,
                     'tanggal_formatted' => $date->translatedFormat('d/m/Y'),
@@ -605,7 +627,10 @@ class KroscekController extends Controller
                         'total_tahanan' => $pTahanan,
                         'total_napi' => $pNapi,
                         'total_penghuni' => $pTotal,
-                        'jam_str' => $pCreatedAt ? $pCreatedAt->format('H:i') : null,
+                        'jam_str' => $pInfo['jam_str'],
+                        'h_tag' => $pInfo['h_tag'],
+                        'h_desc' => $pInfo['h_desc'],
+                        'created_at_full' => $pInfo['created_at_full'],
                         'is_tepat' => $pIsTepat,
                     ],
 
@@ -624,7 +649,10 @@ class KroscekController extends Controller
                         'overstaying_aiii' => $oExists ? (int) $o->overstaying_aiii : 0,
                         'overstaying_aiv' => $oExists ? (int) $o->overstaying_aiv : 0,
                         'overstaying_av' => $oExists ? (int) $o->overstaying_av : 0,
-                        'jam_str' => $oCreatedAt ? $oCreatedAt->format('H:i') : null,
+                        'jam_str' => $oInfo['jam_str'],
+                        'h_tag' => $oInfo['h_tag'],
+                        'h_desc' => $oInfo['h_desc'],
+                        'created_at_full' => $oInfo['created_at_full'],
                         'is_tepat' => $oIsTepat,
                     ],
 
@@ -643,7 +671,10 @@ class KroscekController extends Controller
                         'sk_cmb' => $iExists ? (int) $i->sk_terbit_cmb : 0,
                         'sk_cmk' => $iExists ? (int) $i->sk_terbit_cmk : 0,
                         'sk_asimilasi' => $iExists ? (int) $i->sk_terbit_asimilasi : 0,
-                        'jam_str' => $iCreatedAt ? $iCreatedAt->format('H:i') : null,
+                        'jam_str' => $iInfo['jam_str'],
+                        'h_tag' => $iInfo['h_tag'],
+                        'h_desc' => $iInfo['h_desc'],
+                        'created_at_full' => $iInfo['created_at_full'],
                         'is_tepat' => $iIsTepat,
                     ],
 
@@ -658,7 +689,10 @@ class KroscekController extends Controller
                         'asimilasi' => $bExists ? (int) $b->asimilasi : 0,
                         'bdh' => $bExists ? (int) $b->bdh : 0,
                         'lainnya' => $bExists ? (int) $b->lainnya : 0,
-                        'jam_str' => $bCreatedAt ? $bCreatedAt->format('H:i') : null,
+                        'jam_str' => $bInfo['jam_str'],
+                        'h_tag' => $bInfo['h_tag'],
+                        'h_desc' => $bInfo['h_desc'],
+                        'created_at_full' => $bInfo['created_at_full'],
                         'is_tepat' => $bIsTepat,
                     ],
                 ];
@@ -685,6 +719,45 @@ class KroscekController extends Controller
             'jam_selesai_str' => $jamSelesaiStr,
             'list' => $detailKroscekList,
             'stats' => $detailStats,
+        ];
+    }
+
+    /**
+     * Hitung notasi relatif hari (H, H-1, H+1, dst) dan deskripsi waktu input.
+     *
+     * @return array{jam_str: ?string, h_tag: ?string, h_desc: ?string, created_at_full: ?string}
+     */
+    public static function calculateHTagInfo(string $targetDateStr, ?Carbon $createdAt): array
+    {
+        if (! $createdAt) {
+            return [
+                'jam_str' => null,
+                'h_tag' => null,
+                'h_desc' => null,
+                'created_at_full' => null,
+            ];
+        }
+
+        $targetDay = Carbon::parse($targetDateStr)->startOfDay();
+        $inputDay = $createdAt->copy()->startOfDay();
+        $diff = (int) $targetDay->diffInDays($inputDay, false);
+
+        if ($diff === 0) {
+            $hTag = 'H';
+            $hDesc = 'Diinput pada hari yang sama';
+        } elseif ($diff < 0) {
+            $hTag = 'H'.$diff;
+            $hDesc = 'Diinput '.abs($diff).' hari lebih awal';
+        } else {
+            $hTag = 'H+'.$diff;
+            $hDesc = 'Diinput '.$diff.' hari setelah tanggal laporan';
+        }
+
+        return [
+            'jam_str' => $createdAt->format('H:i'),
+            'h_tag' => $hTag,
+            'h_desc' => $hDesc,
+            'created_at_full' => $createdAt->format('d/m/Y H:i'),
         ];
     }
 }

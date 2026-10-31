@@ -865,10 +865,14 @@ class PdfReportService
         $totalHari = $data['stats']['total_hari'] ?? count($data['list']);
         $jamSelesai = substr($data['jam_selesai_str'] ?? '11:00:00', 0, 5);
 
-        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('helvetica', '', 7.5);
         $metaText = "Periode: {$tglMulaiStr} s/d {$tglAkhirStr} ({$totalHari} Hari Kalender) | Batas Waktu Input: {$jamSelesai} WIB | Urutan: {$urutanStr}";
-        $pdf->Cell(0, 4.5, $metaText, 0, 1, 'C');
-        $pdf->Ln(2);
+        $pdf->Cell(0, 4, $metaText, 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'I', 6.8);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(0, 3.5, 'Keterangan Penanda Waktu: [H] = Input hari yang sama | [H-1] = Input lebih awal/kemarin | [H+1] = Input terlambat hari berikutnya', 0, 1, 'C');
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Ln(1.5);
 
         // 4. Ringkasan KPI Cards
         $stats = $data['stats'];
@@ -991,8 +995,10 @@ class PdfReportService
             $pdf->SetFont('helvetica', '', 7);
 
             // 6. Modul 1: Penghuni
+            $pdf->SetFont('helvetica', '', 6.5);
             if ($r['penghuni']['exists']) {
-                $txt = $r['penghuni']['jam_str'].($r['penghuni']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
+                $hTag = ! empty($r['penghuni']['h_tag']) ? ' • '.$r['penghuni']['h_tag'] : '';
+                $txt = $r['penghuni']['jam_str'].($r['penghuni']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['penghuni']['is_tepat'] ? 22 : 180, $r['penghuni']['is_tepat'] ? 101 : 83, $r['penghuni']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -1003,7 +1009,8 @@ class PdfReportService
 
             // 7. Modul 2: Overstaying
             if ($r['overstaying']['exists']) {
-                $txt = $r['overstaying']['jam_str'].($r['overstaying']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
+                $hTag = ! empty($r['overstaying']['h_tag']) ? ' • '.$r['overstaying']['h_tag'] : '';
+                $txt = $r['overstaying']['jam_str'].($r['overstaying']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['overstaying']['is_tepat'] ? 22 : 180, $r['overstaying']['is_tepat'] ? 101 : 83, $r['overstaying']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -1014,7 +1021,8 @@ class PdfReportService
 
             // 8. Modul 3: Integrasi
             if ($r['integrasi']['exists']) {
-                $txt = $r['integrasi']['jam_str'].($r['integrasi']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
+                $hTag = ! empty($r['integrasi']['h_tag']) ? ' • '.$r['integrasi']['h_tag'] : '';
+                $txt = $r['integrasi']['jam_str'].($r['integrasi']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['integrasi']['is_tepat'] ? 22 : 180, $r['integrasi']['is_tepat'] ? 101 : 83, $r['integrasi']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -1025,7 +1033,8 @@ class PdfReportService
 
             // 9. Modul 4: Bebas Harian
             if ($r['bebas']['exists']) {
-                $txt = $r['bebas']['jam_str'].($r['bebas']['is_tepat'] ? ' (Tepat)' : ' (Terlambat)');
+                $hTag = ! empty($r['bebas']['h_tag']) ? ' • '.$r['bebas']['h_tag'] : '';
+                $txt = $r['bebas']['jam_str'].($r['bebas']['is_tepat'] ? " (Tepat{$hTag})" : " (Terlambat{$hTag})");
                 $pdf->SetTextColor($r['bebas']['is_tepat'] ? 22 : 180, $r['bebas']['is_tepat'] ? 101 : 83, $r['bebas']['is_tepat'] ? 52 : 9);
             } else {
                 $txt = 'Belum';
@@ -1033,6 +1042,7 @@ class PdfReportService
             }
             $pdf->Cell(26, $rowH, $txt, 1, 0, 'C', true);
             $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('helvetica', '', 7);
 
             // 10. Dinamika Populasi
             $popStr = number_format($r['penghuni']['total_penghuni']).' WBP (Bbs:'.$r['bebas']['total_bebas'].', Ost:'.$r['overstaying']['total_overstaying'].')';
