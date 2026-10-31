@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\PdfReportService;
 use App\Services\UptRankingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -278,5 +279,53 @@ class ActivityLogController extends Controller
             'Pragma' => 'no-cache',
             'Expires' => '0',
         ]);
+    }
+
+    /**
+     * Cetak atau Simpan Dokumen PDF Lampiran Bukti Detail Perolehan Poin & Medali UPT (A4 Landscape)
+     */
+    public function rankingUptDetailPdf(Request $request)
+    {
+        $user = auth()->user();
+        if (! $user->hasAccess('activity_log')) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $uptId = (int) $request->query('upt_id');
+        $startDate = $request->query('tanggal_mulai', date('Y-m-01'));
+        $endDate = $request->query('tanggal_akhir', date('Y-m-t'));
+
+        $rankingData = UptRankingService::calculateRanking($startDate, $endDate);
+
+        $targetUpt = null;
+        foreach ($rankingData['rankings'] as $u) {
+            if ($u['upt_id'] === $uptId) {
+                $targetUpt = $u;
+                break;
+            }
+        }
+
+        if (! $targetUpt && ! empty($rankingData['rankings'])) {
+            $targetUpt = $rankingData['rankings'][0];
+        }
+
+        if (! $targetUpt) {
+            abort(404, 'Data UPT tidak ditemukan.');
+        }
+
+        $signData = [
+            'is_upt' => false,
+            'tempat_ttd' => $request->query('tempat_ttd', 'Serang'),
+            'jabatan_ttd' => $request->query('jabatan_ttd', 'Kepala Bidang Pelayanan dan Pembinaan'),
+            'nama_ttd' => $request->query('nama_ttd', 'Surya Dharma'),
+            'nip_ttd' => $request->query('nip_ttd', ''),
+            'kalimat_penutup' => 'Demikian laporan rincian perhitungan perolehan poin dan medali kedisiplinan pelaporan ini dibuat secara transparan sebagai lampiran bukti sah penilaian kinerja UPT.',
+            'show_ttd' => true,
+            'show_ttd_image' => true,
+            'show_stempel' => true,
+            'show_qrcode' => true,
+        ];
+
+        return PdfReportService::generateRankingUptDetail($targetUpt, $rankingData['period'], $signData);
     }
 }

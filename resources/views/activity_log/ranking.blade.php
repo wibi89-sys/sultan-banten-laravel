@@ -732,11 +732,19 @@
                             </div>
                         </td>
 
-                        <!-- Tombol Aksi Detail -->
+                        <!-- Tombol Aksi Detail & Cetak PDF Lampiran -->
                         <td class="text-center">
-                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="showDetailModal({{ json_encode($upt) }})">
-                                <i class="fas fa-calendar-alt me-1"></i> Detail
-                            </button>
+                            <div class="d-flex align-items-center justify-content-center gap-1.5">
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5" onclick="showDetailModal({{ json_encode($upt) }})" title="Lihat Riwayat Harian di Layar">
+                                    <i class="fas fa-calendar-alt me-1"></i> Detail
+                                </button>
+                                <a href="{{ route('activity-log.ranking.detail-pdf', ['upt_id' => $upt['upt_id'], 'tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
+                                   target="_blank" 
+                                   class="btn btn-outline-danger btn-sm rounded-pill px-2.5 shadow-xs" 
+                                   title="Cetak PDF Lampiran Bukti Detail Poin & Medali {{ $upt['nama_upt'] }}">
+                                    <i class="fas fa-file-pdf me-1"></i> PDF
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -788,9 +796,17 @@
                                         @endif
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-semibold flex-shrink-0" style="font-size: 11px;" onclick="showDetailModal({{ json_encode($upt) }})">
-                                    <i class="fas fa-calendar-alt me-1"></i> Detail
-                                </button>
+                                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 11px;" onclick="showDetailModal({{ json_encode($upt) }})">
+                                        <i class="fas fa-calendar-alt me-1"></i> Detail
+                                    </button>
+                                    <a href="{{ route('activity-log.ranking.detail-pdf', ['upt_id' => $upt['upt_id'], 'tanggal_mulai' => $startDate, 'tanggal_akhir' => $endDate]) }}" 
+                                       target="_blank" 
+                                       class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold" style="font-size: 11px;"
+                                       title="Cetak PDF Lampiran Bukti Detail {{ $upt['nama_upt'] }}">
+                                        <i class="fas fa-file-pdf me-1"></i> PDF
+                                    </a>
+                                </div>
                             </div>
 
                             <!-- Card Metrics: Total Poin & Kepatuhan -->
@@ -1028,7 +1044,10 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <a id="btnModalPrintPdf" href="#" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-xs">
+                    <i class="fas fa-file-pdf me-1.5"></i> Cetak PDF Lampiran Bukti
+                </a>
                 <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -1213,6 +1232,12 @@
 
         // Reset filter to 'all'
         filterDetailTable('all');
+
+        // Update link cetak PDF lampiran pada modal
+        const pdfBtn = document.getElementById('btnModalPrintPdf');
+        if (pdfBtn) {
+            pdfBtn.href = `{{ route('activity-log.ranking.detail-pdf') }}?upt_id=${upt.upt_id}&tanggal_mulai={{ $startDate }}&tanggal_akhir={{ $endDate }}`;
+        }
 
         const modal = new bootstrap.Modal(document.getElementById('modalDetailHarian'));
         modal.show();

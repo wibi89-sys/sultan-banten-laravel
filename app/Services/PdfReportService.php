@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DataIntegrasi;
 use App\Models\Instansi;
 use App\Models\Upt;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -715,9 +716,10 @@ class PdfReportService
         $showTtdImage = ! isset($signData['show_ttd_image']) || (bool) $signData['show_ttd_image'];
         $showStempel = ! isset($signData['show_stempel']) || (bool) $signData['show_stempel'];
 
+        $kalimatPenutup = $signData['kalimat_penutup'] ?? 'Demikian laporan ini disampaikan, atas perhatiannya diucapkan terima kasih.';
         $pdf->Ln(4);
         $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(0, 5, 'Demikian laporan ini disampaikan, atas perhatiannya diucapkan terima kasih.', 0, 1, 'L');
+        $pdf->Cell(0, 5, $kalimatPenutup, 0, 1, 'L');
         $pdf->Ln(4);
 
         $tempatTtd = $signData['tempat_ttd'] ?? 'Serang';
@@ -745,6 +747,11 @@ class PdfReportService
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->SetX($sigX);
         $pdf->Cell(70, 5, $namaTtd, 0, 1, 'C');
+        if (! empty($signData['nip_ttd'])) {
+            $pdf->SetFont('helvetica', '', 8);
+            $pdf->SetX($sigX);
+            $pdf->Cell(70, 4, 'NIP. '.$signData['nip_ttd'], 0, 1, 'C');
+        }
     }
 
     /**
@@ -1074,6 +1081,351 @@ class PdfReportService
         // Output PDF
         $cleanUpt = Str::slug($namaUpt);
         $filename = "Laporan_Kroscek_Detail_{$cleanUpt}_".date('Ymd_His').'.pdf';
+
+        return response($pdf->Output($filename, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
+    }
+
+    /**
+     * Generate PDF Laporan Rincian Perhitungan Kedisiplinan, Poin & Medali UPT (A4 Landscape)
+     * Dibuat seperti Laporan Kelengkapan Pelaporan & Kroscek Harian per Tanggal,
+     * lengkap dengan Kop resmi Kanwil, metadata periode, ringkasan KPI,
+     * tabel rincian harian 5 komponen penilaian, total capaian, tanda tangan & stempel Kanwil,
+     * serta QR Code keabsahan dokumen untuk lampiran bukti penetapan poin & medali.
+     *
+     * @param  array  $uptData  Data satu UPT dari UptRankingService::calculateRanking(...)['rankings']
+     * @param  array  $period  Metadata periode evaluasi
+     * @param  array  $signData  Pengaturan tanda tangan & stempel
+     * @return Response
+     */
+    public static function generateRankingUptDetail(array $uptData, array $period, array $signData = [])
+    {
+        $tcpdfPath = app_path('Libraries/tcpdf/tcpdf.php');
+        if (! file_exists($tcpdfPath)) {
+            $tcpdfPath = base_path('../tcpdf/tcpdf.php');
+        }
+        require_once $tcpdfPath;
+
+        $instansi = Instansi::getFirst();
+        $user = auth()->user();
+
+        // Instantiate TCPDF in Landscape
+        $pdf = new class('L', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
+        {
+            public $showQrCode = true;
+
+            public function Header() {}
+
+            public function Footer()
+            {
+                if ($this->showQrCode) {
+                    $this->SetY(-20);
+                    $y = $this->GetY();
+                    $qrText = "✅ Dokumen Sah & Valid\nLampiran Bukti Poin & Medali UPT\nSULTAN BANTEN @Ditjenpas Banten";
+                    $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
+                    $this->write2DBarcode($qrText, 'QRCODE,L', 15, $y, 15, 15, $style, 'N');
+                }
+
+                $this->SetY(-15);
+                $this->SetFont('helvetica', 'I', 7);
+                $this->SetTextColor(100, 100, 100);
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, 0, 'C');
+                $this->SetTextColor(0, 0, 0);
+            }
+        };
+
+        $pdf->showQrCode = ! empty($signData['show_qrcode']);
+        $pdf->SetCreator('Sultan Banten');
+        $pdf->SetAuthor($user->nama_lengkap ?? 'Kanwil Ditjenpas Banten');
+        $pdf->SetTitle('Laporan Rincian Perhitungan Poin & Medali - '.($uptData['nama_upt'] ?? 'UPT'));
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->SetAutoPageBreak(true, 25);
+        $pdf->AddPage();
+
+        $namaUpt = $uptData['nama_upt'] ?? 'UPT Pemasyarakatan';
+
+        // 1. KOP Resmi Instansi Kantor Wilayah (Landscape)
+        $logoKop = null;
+        if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+            $logoKop = public_path($instansi->logo_kop);
+        } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+            $logoKop = public_path($instansi->logo);
+        }
+
+        if ($logoKop) {
+            $pdf->Image($logoKop, 15, 10, 22);
+        }
+
+        $wKop = 230;
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4.5, 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA', 0, 1, 'C');
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4.5, 'DIREKTORAT JENDERAL PEMASYARAKATAN', 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 5, 'KANTOR WILAYAH BANTEN', 0, 1, 'C');
+        $pdf->SetFont('helvetica', '', 8.5);
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4, "Jl.KH.Sam'un No.44 Serang, Banten | Telepon: 0822-6666-2044 | Faksimilie: 0822-6666-2044", 0, 1, 'C');
+        $pdf->SetX(40);
+        $pdf->Cell($wKop, 4, 'Laman: djpasbanten@gmail.com | Pos-el: djpasbanten@gmail.com', 0, 1, 'C');
+
+        $pdf->Ln(2);
+        $pdf->SetLineWidth(0.6);
+        $pdf->Line(10, $pdf->GetY(), 287, $pdf->GetY());
+        $pdf->SetLineWidth(0.2);
+        $pdf->Line(10, $pdf->GetY() + 0.8, 287, $pdf->GetY() + 0.8);
+        $pdf->Ln(3);
+
+        // 2. Judul Dokumen
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(0, 5, 'LAPORAN RINCIAN PERHITUNGAN POIN & MEDALI KEDISIPLINAN UPT', 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'B', 8.5);
+        $pdf->SetTextColor(71, 85, 105);
+        $pdf->Cell(0, 4, 'LAMPIRAN BUKTI DETAIL KELENGKAPAN & KEPATUHAN PELAPORAN HARIAN', 0, 1, 'C');
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
+        $pdf->Ln(1);
+
+        // 3. Metadata Periode & Filter Info
+        $tglMulaiStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($period['start_date'], false) : $period['start_date'];
+        $tglAkhirStr = function_exists('formatIndonesianDate') ? formatIndonesianDate($period['end_date'], false) : $period['end_date'];
+        $totalHari = $period['total_days'] ?? count($uptData['daily_breakdown'] ?? []);
+        $jamMulai = $period['jam_mulai'] ?? '08:00';
+        $jamSelesai = $period['jam_selesai'] ?? '11:00';
+        $rankNum = $uptData['rank'] ?? 1;
+
+        $pdf->SetFont('helvetica', '', 7.5);
+        $metaText = "Periode Evaluasi: {$tglMulaiStr} s/d {$tglAkhirStr} ({$totalHari} Hari Efektif) | Batas Jam Input: {$jamMulai} - {$jamSelesai} WIB (Maks 100 Poin/Hari)";
+        $pdf->Cell(0, 4, $metaText, 0, 1, 'C');
+
+        $pdf->SetFont('helvetica', 'B', 7.5);
+        $pdf->SetTextColor(30, 41, 59);
+        $subMeta = "Peringkat Klasemen: #{$rankNum} se-Wilayah Banten | Total Capaian: ".number_format($uptData['total_points'])." Poin ({$uptData['persentase_kepatuhan']}%) | Rata-rata Selesai Input: {$uptData['rata_rata_jam_input']}";
+        $pdf->Cell(0, 4, $subMeta, 0, 1, 'C');
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Ln(2);
+
+        // 4. Ringkasan KPI Cards
+        $pdf->SetFont('helvetica', 'B', 7.5);
+        $kpiWidth = 69.25; // 277 / 4
+
+        // Box 1: Total Poin
+        $pdf->SetFillColor(239, 246, 255);
+        $pdf->SetTextColor(29, 78, 216);
+        $pdf->Cell($kpiWidth, 5.5, 'Total Poin: '.number_format($uptData['total_points']).' / '.number_format($uptData['max_points'])." ({$uptData['persentase_kepatuhan']}%)", 1, 0, 'C', true);
+
+        // Box 2: Medali Disiplin
+        $pdf->SetFillColor(254, 243, 199);
+        $pdf->SetTextColor(180, 83, 9);
+        $pdf->Cell($kpiWidth, 5.5, "Medali: 🥇 {$uptData['count_gold']} Gold (<08.00) • 🥈 {$uptData['count_silver']} Silver (08-11)", 1, 0, 'C', true);
+
+        // Box 3: Hari Sempurna
+        $pdf->SetFillColor(240, 253, 244);
+        $pdf->SetTextColor(22, 101, 52);
+        $pdf->Cell($kpiWidth, 5.5, "Hari 100 Poin: {$uptData['count_hari_sempurna']}/{$totalHari} Hari Sempurna", 1, 0, 'C', true);
+
+        // Box 4: Kroscek Tahanan
+        $pdf->SetFillColor(241, 245, 249);
+        $pdf->SetTextColor(51, 65, 85);
+        $pdf->Cell($kpiWidth, 5.5, "Kroscek: {$uptData['count_kroscek_sesuai']}x Sesuai ({$uptData['count_kroscek_perbaikan']}x Edit, {$uptData['count_kroscek_selisih']}x Beda)", 1, 1, 'C', true);
+
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Ln(2.5);
+
+        // 5. Header Tabel Rincian Harian
+        $colWidths = [8, 30, 34, 34, 34, 34, 56, 22, 25]; // Total = 277 mm
+
+        $renderTableHeader = function () use ($pdf, $colWidths) {
+            $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->SetFillColor(52, 73, 94);
+            $pdf->SetTextColor(255, 255, 255);
+
+            $pdf->Cell($colWidths[0], 6.5, 'NO', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[1], 6.5, 'TANGGAL & HARI', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[2], 6.5, '1. PENGHUNI (20)', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[3], 6.5, '2. OVERSTAYING (20)', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[4], 6.5, '3. INTEGRASI (20)', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[5], 6.5, '4. BEBAS HARIAN (20)', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[6], 6.5, '5. KROSCEK TAHANAN (20)', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[7], 6.5, 'TOTAL POIN', 1, 0, 'C', true);
+            $pdf->Cell($colWidths[8], 6.5, 'STATUS / MEDALI', 1, 1, 'C', true);
+
+            $pdf->SetTextColor(0, 0, 0);
+        };
+
+        $renderTableHeader();
+
+        // 6. Data Rows
+        $no = 1;
+        $rowH = 5.8;
+        $dailyList = $uptData['daily_breakdown'] ?? [];
+
+        foreach ($dailyList as $row) {
+            if ($pdf->GetY() > 175) {
+                $pdf->AddPage();
+                $renderTableHeader();
+            }
+
+            $isOdd = ($no % 2 === 1);
+            $pdf->SetFillColor($isOdd ? 255 : 248, $isOdd ? 255 : 250, $isOdd ? 255 : 252);
+            $pdf->SetFont('helvetica', '', 6.7);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // Kolom 1: No
+            $pdf->Cell($colWidths[0], $rowH, $no++, 1, 0, 'C', true);
+
+            // Kolom 2: Tanggal & Hari
+            $tglFormatted = date('d/m/Y', strtotime($row['tanggal']));
+            $pdf->Cell($colWidths[1], $rowH, ' '.$row['hari'].', '.$tglFormatted, 1, 0, 'L', true);
+
+            // Helper format modul
+            $renderModulCell = function ($m, $w) use ($pdf, $rowH) {
+                if (empty($m) || ($m['status'] ?? 'kosong') === 'kosong') {
+                    $pdf->SetTextColor(185, 28, 28);
+                    $pdf->Cell($w, $rowH, 'Belum Lapor (0p)', 1, 0, 'C', true);
+                } else {
+                    $timingTag = '';
+                    if (! empty($m['timing_type'])) {
+                        if ($m['timing_type'] === 'h_minus_1') {
+                            $timingTag = ' [H-1]';
+                        } elseif ($m['timing_type'] === 'susulan') {
+                            $timingTag = ' [H+1]';
+                        } elseif (! empty($m['is_hari_h'])) {
+                            $timingTag = ' [H]';
+                        }
+                    }
+
+                    $medalSymbol = '';
+                    if (! empty($m['is_golden'])) {
+                        $medalSymbol = ' 🥇';
+                    } elseif (! empty($m['is_silver'])) {
+                        $medalSymbol = ' 🥈';
+                    }
+
+                    $text = ($m['jam_str'] ?? '-').$timingTag.' ('.$m['poin'].'p'.$medalSymbol.')';
+
+                    if (! empty($m['is_golden'])) {
+                        $pdf->SetTextColor(180, 83, 9);
+                    } elseif (($m['status'] ?? '') === 'tepat') {
+                        $pdf->SetTextColor(22, 101, 52);
+                    } else {
+                        $pdf->SetTextColor(180, 83, 9);
+                    }
+
+                    $pdf->Cell($w, $rowH, $text, 1, 0, 'C', true);
+                }
+                $pdf->SetTextColor(0, 0, 0);
+            };
+
+            // Kolom 3-6: 4 Modul Laporan
+            $renderModulCell($row['penghuni'], $colWidths[2]);
+            $renderModulCell($row['overstaying'], $colWidths[3]);
+            $renderModulCell($row['integrasi'], $colWidths[4]);
+            $renderModulCell($row['bebas'], $colWidths[5]);
+
+            // Kolom 7: Kroscek Tahanan
+            $k = $row['kroscek'] ?? [];
+            $kStatus = $k['status'] ?? 'kosong';
+            $tP = $k['tahanan_penghuni'] !== null ? number_format($k['tahanan_penghuni']) : '-';
+            $tO = $k['tahanan_overstaying'] !== null ? number_format($k['tahanan_overstaying']) : '-';
+
+            if ($kStatus === 'sesuai') {
+                $pdf->SetTextColor(22, 101, 52);
+                $kText = "P: {$tP} | O: {$tO} • Sinkron ({$k['poin']}p)";
+            } elseif (in_array($kStatus, ['sesuai_perbaikan_jam_input', 'sesuai_perbaikan', 'sesuai_perbaikan_luar_jam', 'sesuai_perbaikan_lewat_hari'])) {
+                $pdf->SetTextColor(180, 83, 9);
+                $kText = "P: {$tP} | O: {$tO} • Edit ({$k['poin']}p)";
+            } elseif ($kStatus === 'selisih') {
+                $pdf->SetTextColor(185, 28, 28);
+                $kText = "P: {$tP} | O: {$tO} • Selisih {$k['selisih']} (0p)";
+            } else {
+                $pdf->SetTextColor(100, 116, 139);
+                $kText = 'Belum Lengkap (0p)';
+            }
+            $pdf->Cell($colWidths[6], $rowH, $kText, 1, 0, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // Kolom 8: Total Poin Harian (Maks 100)
+            $dayPts = $row['total_poin'] ?? 0;
+            $pdf->SetFont('helvetica', 'B', 7);
+            if ($dayPts === 100) {
+                $pdf->SetTextColor(22, 101, 52);
+            } elseif ($dayPts >= 75) {
+                $pdf->SetTextColor(29, 78, 216);
+            } elseif ($dayPts >= 50) {
+                $pdf->SetTextColor(180, 83, 9);
+            } else {
+                $pdf->SetTextColor(185, 28, 28);
+            }
+            $pdf->Cell($colWidths[7], $rowH, $dayPts.' Poin', 1, 0, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+
+            // Kolom 9: Status / Medali Harian
+            $hasGold = (! empty($row['penghuni']['is_golden']) || ! empty($row['overstaying']['is_golden']) || ! empty($row['integrasi']['is_golden']) || ! empty($row['bebas']['is_golden']));
+            $hasSilver = (! empty($row['penghuni']['is_silver']) || ! empty($row['overstaying']['is_silver']) || ! empty($row['integrasi']['is_silver']) || ! empty($row['bebas']['is_silver']));
+
+            $pdf->SetFont('helvetica', 'B', 6.5);
+            if ($dayPts === 100 && $hasGold) {
+                $pdf->SetTextColor(180, 83, 9);
+                $statusText = '🥇 Sempurna';
+            } elseif ($dayPts === 100) {
+                $pdf->SetTextColor(22, 101, 52);
+                $statusText = '🥈 100 Poin';
+            } elseif ($kStatus === 'selisih') {
+                $pdf->SetTextColor(185, 28, 28);
+                $statusText = '⚠️ Selisih';
+            } elseif (($row['penghuni']['status'] ?? '') === 'terlambat' || ($row['overstaying']['status'] ?? '') === 'terlambat' || ($row['integrasi']['status'] ?? '') === 'terlambat' || ($row['bebas']['status'] ?? '') === 'terlambat') {
+                $pdf->SetTextColor(180, 83, 9);
+                $statusText = '⏰ Terlambat';
+            } elseif (($row['penghuni']['status'] ?? '') === 'kosong' || ($row['overstaying']['status'] ?? '') === 'kosong' || ($row['integrasi']['status'] ?? '') === 'kosong' || ($row['bebas']['status'] ?? '') === 'kosong') {
+                $pdf->SetTextColor(185, 28, 28);
+                $statusText = '❌ Belum Lapor';
+            } else {
+                $pdf->SetTextColor(51, 65, 85);
+                $statusText = 'Tepat Waktu';
+            }
+            $pdf->Cell($colWidths[8], $rowH, $statusText, 1, 1, 'C', true);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('helvetica', '', 6.7);
+        }
+
+        // 7. Tabel Footer (Total Akumulasi)
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->SetFillColor(52, 73, 94);
+        $pdf->SetTextColor(255, 255, 255);
+
+        $wFootLabel = array_sum(array_slice($colWidths, 0, 6));
+        $pdf->Cell($wFootLabel, 6, 'TOTAL AKUMULASI POIN & MEDALI ('.count($dailyList).' HARI EVALUASI)', 1, 0, 'C', true);
+        $pdf->Cell($colWidths[6], 6, "{$uptData['count_kroscek_sesuai']}x Sinkron ({$uptData['count_kroscek_selisih']}x Beda)", 1, 0, 'C', true);
+        $pdf->Cell($colWidths[7], 6, number_format($uptData['total_points']).' Poin', 1, 0, 'C', true);
+        $pdf->Cell($colWidths[8], 6, $uptData['persentase_kepatuhan'].'% Kepatuhan', 1, 1, 'C', true);
+
+        $pdf->SetTextColor(0, 0, 0);
+
+        // Catatan Kaki Pedoman Poin
+        $pdf->Ln(1.5);
+        $pdf->SetFont('helvetica', 'I', 6.2);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(0, 3.5, '* Keterangan Nilai: 5 Komponen dievaluasi per hari (maksimal 20 poin/komponen, total 100 poin/hari). 🥇 Gold: Input Golden Hours (< 08.00 WIB) | 🥈 Silver: Jam Kerja (08.00 - 11.00 WIB) | [H-1]: Lapor Awal | [H+1]: Susulan.', 0, 1, 'L');
+        $pdf->Cell(0, 3.2, '  Kroscek Tahanan: Sinkron langsung = 20 Poin, Perbaikan jam kerja = 18 Poin, Perbaikan hari-H = 12 Poin, Perbaikan susulan = 8 Poin, Selisih = 0 Poin.', 0, 1, 'L');
+        $pdf->SetTextColor(0, 0, 0);
+
+        // 8. Signature Block (Mode Kanwil)
+        if (! empty($signData['show_ttd'])) {
+            if ($pdf->GetY() > 145) {
+                $pdf->AddPage();
+            }
+            self::renderSignature($pdf, $instansi, $signData, 'L');
+        }
+
+        // Output PDF
+        $cleanUpt = Str::slug($namaUpt);
+        $filename = "Lampiran_Detail_Poin_Medali_{$cleanUpt}_{$period['start_date']}_sd_{$period['end_date']}.pdf";
 
         return response($pdf->Output($filename, 'S'), 200, [
             'Content-Type' => 'application/pdf',

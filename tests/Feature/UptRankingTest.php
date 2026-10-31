@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Upt;
 use App\Models\User;
 use App\Services\UptRankingService;
 use Tests\TestCase;
@@ -61,5 +62,48 @@ class UptRankingTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+    }
+
+    public function test_activity_log_ranking_detail_pdf_requires_authentication(): void
+    {
+        $response = $this->get(route('activity-log.ranking.detail-pdf'));
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_activity_log_ranking_detail_pdf_accessible_by_admin(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin user found.');
+        }
+
+        $upt = Upt::first();
+        if (! $upt) {
+            $this->markTestSkipped('No UPT found.');
+        }
+
+        $response = $this->actingAs($admin)->get(route('activity-log.ranking.detail-pdf', [
+            'upt_id' => $upt->id,
+            'tanggal_mulai' => '2026-10-01',
+            'tanggal_akhir' => '2026-10-15',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('Lampiran_Detail_Poin_Medali', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_activity_log_ranking_view_contains_detail_pdf_buttons(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin user found.');
+        }
+
+        $response = $this->actingAs($admin)->get(route('activity-log.ranking'));
+
+        $response->assertStatus(200);
+        $response->assertSee('activity-log/ranking/detail-pdf');
+        $response->assertSee('PDF');
     }
 }

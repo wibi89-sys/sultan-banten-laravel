@@ -230,6 +230,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
     Route::get('/activity-log/ranking', [ActivityLogController::class, 'ranking'])->name('activity-log.ranking');
     Route::get('/activity-log/ranking/export-excel', [ActivityLogController::class, 'exportRankingExcel'])->name('activity-log.ranking.excel');
+    Route::get('/activity-log/ranking/detail-pdf', [ActivityLogController::class, 'rankingUptDetailPdf'])->name('activity-log.ranking.detail-pdf');
 
     // Profil
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
