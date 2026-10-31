@@ -68,6 +68,37 @@ class UserController extends Controller
         return view('users.index', compact('users', 'uptList'));
     }
 
+    public function create()
+    {
+        $this->ensurePermissionColumns();
+
+        $user = auth()->user();
+        if (! $user->canManage('user')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Manajemen User.');
+        }
+
+        $uptList = Upt::orderBy('nama_upt')->get();
+        $groupedModules = $this->getGroupedModules();
+
+        return view('users.create', compact('uptList', 'groupedModules'));
+    }
+
+    public function edit($id)
+    {
+        $this->ensurePermissionColumns();
+
+        $user = auth()->user();
+        if (! $user->canManage('user')) {
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Manajemen User.');
+        }
+
+        $targetUser = User::with('upt')->findOrFail($id);
+        $uptList = Upt::orderBy('nama_upt')->get();
+        $groupedModules = $this->getGroupedModules();
+
+        return view('users.edit', compact('targetUser', 'uptList', 'groupedModules'));
+    }
+
     public function store(Request $request)
     {
         $this->ensurePermissionColumns();
@@ -123,7 +154,7 @@ class UserController extends Controller
         $newUser = User::create($data);
         ActivityLog::log('tambah', 'user', "Menambahkan user baru: {$newUser->nama_lengkap} ({$newUser->username})", $newUser->toArray());
 
-        return back()->with('success', 'User berhasil ditambahkan.');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     public function update(Request $request, $id)
@@ -184,7 +215,7 @@ class UserController extends Controller
         $targetUser->update($data);
         ActivityLog::log('edit', 'user', "Mengubah data user: {$targetUser->nama_lengkap}", $targetUser->toArray());
 
-        return back()->with('success', 'Data user berhasil diperbarui.');
+        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui.');
     }
 
     public function destroy($id)
@@ -209,5 +240,89 @@ class UserController extends Controller
         } catch (QueryException $e) {
             return back()->with('error', 'Tidak dapat menghapus user ini karena masih memiliki relasi data terkait di sistem.');
         }
+    }
+
+    public function getGroupedModules(): array
+    {
+        return [
+            'Layanan & Data Pemasyarakatan' => [
+                'penghuni' => [
+                    'label' => 'Data Penghuni (Lapas/Rutan)',
+                    'desc' => 'Laporan rekapitulasi harian jumlah tahanan dan narapidana per kamar/blok.',
+                    'icon' => 'fas fa-users text-primary',
+                ],
+                'overstaying' => [
+                    'label' => 'Data Overstaying Tahanan',
+                    'desc' => 'Monitoring masa penahanan habis tahap kepolisian, kejaksaan, pengadilan.',
+                    'icon' => 'fas fa-clock text-warning',
+                ],
+                'integrasi' => [
+                    'label' => 'Data Integrasi (PB, CB, CMB, Asimilasi)',
+                    'desc' => 'Pencatatan usulan dan SK terbit hak integrasi warga binaan.',
+                    'icon' => 'fas fa-user-check text-success',
+                ],
+                'bebas_harian' => [
+                    'label' => 'Pencatatan Bebas Harian',
+                    'desc' => 'Rekap harian wargabinaan bebas murni, integrasi, asimilasi, bdh.',
+                    'icon' => 'fas fa-door-open text-info',
+                ],
+                'sidang_tpp' => [
+                    'label' => 'Agenda Sidang TPP',
+                    'desc' => 'Jadwal, undangan, unggah usulan WBP, verifikasi Kanwil, & hasil sidang.',
+                    'icon' => 'fas fa-gavel text-secondary',
+                ],
+                'mutasi' => [
+                    'label' => 'Usulan Mutasi Narapidana Antar-UPT',
+                    'desc' => 'Pengusulan pemindahan napi, telaah, penetapan kuota Kanwil, & BAST.',
+                    'icon' => 'fas fa-exchange-alt text-danger',
+                ],
+            ],
+            'Pelaporan & Audit Sistem' => [
+                'laporan' => [
+                    'label' => 'Cetak Laporan & Rekapitulasi',
+                    'desc' => 'Cetak dokumen laporan rekapitulasi harian, bulanan, ekspor Excel & PDF.',
+                    'icon' => 'fas fa-print text-primary',
+                ],
+                'activity_log' => [
+                    'label' => 'Log Aktivitas Pengguna',
+                    'desc' => 'Audit jejak rekam login, penambahan, pengubahan, dan penghapusan data.',
+                    'icon' => 'fas fa-history text-muted',
+                ],
+            ],
+            'Master Data & Pengaturan Wilayah' => [
+                'upt' => [
+                    'label' => 'Master Data Unit Pelaksana Teknis (UPT)',
+                    'desc' => 'Kelola daftar Lapas, Rutan, Bapas, kapasitas hunian, dan titik koordinat.',
+                    'icon' => 'fas fa-building text-info',
+                ],
+                'user' => [
+                    'label' => 'Manajemen User & Hak Akses',
+                    'desc' => 'Kelola akun pengguna, peran, hak akses granular 14 modul sistem.',
+                    'icon' => 'fas fa-user-shield text-dark',
+                ],
+                'instansi' => [
+                    'label' => 'Pengaturan Instansi & Tampilan',
+                    'desc' => 'Identitas instansi, batas jam input harian, running text, logo/stempel.',
+                    'icon' => 'fas fa-cogs text-secondary',
+                ],
+                'pengumuman' => [
+                    'label' => 'Pengumuman & Informasi Internal',
+                    'desc' => 'Kelola pengumuman running text, banner pop-up, dan edaran pimpinan.',
+                    'icon' => 'fas fa-bullhorn text-warning',
+                ],
+            ],
+            'Layanan Notifikasi WhatsApp' => [
+                'wa_settings' => [
+                    'label' => 'WhatsApp Gateway & Kontak Pimpinan',
+                    'desc' => 'Konfigurasi token Fonnte, nomor grup WhatsApp, dan daftar kontak pimpinan.',
+                    'icon' => 'fab fa-whatsapp text-success',
+                ],
+                'wa_schedule' => [
+                    'label' => 'Jadwal & Template Pesan WhatsApp',
+                    'desc' => 'Pengaturan otomatisasi pengiriman pesan pengingat dan laporan terpadu.',
+                    'icon' => 'fas fa-calendar-alt text-primary',
+                ],
+            ],
+        ];
     }
 }

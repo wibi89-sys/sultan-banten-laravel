@@ -205,4 +205,35 @@ class UserGranularPermissionTest extends TestCase
         $this->assertEquals('none', $createdUser->akses_mutasi);
         $this->assertEquals('view', $createdUser->akses_upt);
     }
+
+    public function test_create_and_edit_user_full_pages_render_successfully(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin found');
+        }
+
+        // Admin can access create page
+        $createResponse = $this->actingAs($admin)->get('/users/create');
+        $createResponse->assertStatus(200);
+        $createResponse->assertSee('Tambah Pengguna Baru');
+        $createResponse->assertSee('Layanan &amp; Data Pemasyarakatan', false);
+
+        // Admin can access edit page
+        $editResponse = $this->actingAs($admin)->get("/users/{$admin->id}/edit");
+        $editResponse->assertStatus(200);
+        $editResponse->assertSee('Edit Pengguna');
+        $editResponse->assertSee($admin->username);
+
+        // View-only user on user module cannot access create page
+        $upt = Upt::first();
+        $viewOnlyUser = User::factory()->create([
+            'role' => 'operator',
+            'upt_id' => $upt ? $upt->id : null,
+            'akses_user' => 'view',
+        ]);
+
+        $blockedCreateResponse = $this->actingAs($viewOnlyUser)->get('/users/create');
+        $blockedCreateResponse->assertStatus(403);
+    }
 }
