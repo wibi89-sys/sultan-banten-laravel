@@ -957,7 +957,10 @@
                             <i class="fas fa-exclamation-triangle me-1"></i>Hanya Yang Selisih (<span id="countSelisihDays">0</span>)
                         </button>
                         <button type="button" class="btn btn-outline-warning" id="btnFilterTelat" onclick="filterDetailTable('telat')">
-                            <i class="fas fa-clock me-1"></i>Ada Terlambat/Kosong (<span id="countTelatDays">0</span>)
+                            <i class="fas fa-clock me-1"></i>Ada Terlambat (<span id="countTelatDays">0</span>)
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnFilterKosong" onclick="filterDetailTable('kosong')">
+                            <i class="fas fa-times-circle me-1"></i>Ada Kosong (<span id="countKosongDays">0</span>)
                         </button>
                     </div>
                     <small class="text-muted"><i class="fas fa-filter text-primary me-1"></i>Filter baris riwayat berdasarkan status</small>
@@ -1093,6 +1096,22 @@
         modal.show();
     }
 
+    function isRowTerlambat(r) {
+        return (r.penghuni && r.penghuni.status === 'terlambat') ||
+               (r.overstaying && r.overstaying.status === 'terlambat') ||
+               (r.integrasi && r.integrasi.status === 'terlambat') ||
+               (r.bebas && r.bebas.status === 'terlambat') ||
+               (r.kroscek && (r.kroscek.status === 'sesuai_perbaikan_luar_jam' || r.kroscek.status === 'sesuai_perbaikan_lewat_hari'));
+    }
+
+    function isRowKosong(r) {
+        return (!r.penghuni || r.penghuni.status === 'kosong') ||
+               (!r.overstaying || r.overstaying.status === 'kosong') ||
+               (!r.integrasi || r.integrasi.status === 'kosong') ||
+               (!r.bebas || r.bebas.status === 'kosong') ||
+               (!r.kroscek || r.kroscek.status === 'kosong');
+    }
+
     function showDetailModal(upt) {
         document.getElementById('modalSubTitle').textContent = upt.nama_upt + ' (Total: ' + Number(upt.total_points).toLocaleString() + ' Poin | Kepatuhan: ' + upt.persentase_kepatuhan + '%)';
 
@@ -1132,17 +1151,13 @@
         // Count stats for filter buttons
         const totalCount = currentDetailRows.length;
         const selisihCount = currentDetailRows.filter(r => r.kroscek && r.kroscek.status === 'selisih').length;
-        const telatCount = currentDetailRows.filter(r => {
-            return (r.penghuni && r.penghuni.status !== 'tepat') ||
-                   (r.overstaying && r.overstaying.status !== 'tepat') ||
-                   (r.integrasi && r.integrasi.status !== 'tepat') ||
-                   (r.bebas && r.bebas.status !== 'tepat') ||
-                   (r.kroscek && r.kroscek.status !== 'sesuai');
-        }).length;
+        const telatCount = currentDetailRows.filter(isRowTerlambat).length;
+        const kosongCount = currentDetailRows.filter(isRowKosong).length;
 
         document.getElementById('countAllDays').textContent = totalCount;
         document.getElementById('countSelisihDays').textContent = selisihCount;
         document.getElementById('countTelatDays').textContent = telatCount;
+        document.getElementById('countKosongDays').textContent = kosongCount;
 
         // Reset filter to 'all'
         filterDetailTable('all');
@@ -1156,18 +1171,15 @@
         document.getElementById('btnFilterAll').classList.toggle('active', type === 'all');
         document.getElementById('btnFilterSelisih').classList.toggle('active', type === 'selisih');
         document.getElementById('btnFilterTelat').classList.toggle('active', type === 'telat');
+        document.getElementById('btnFilterKosong').classList.toggle('active', type === 'kosong');
 
         let filtered = currentDetailRows;
         if (type === 'selisih') {
             filtered = currentDetailRows.filter(r => r.kroscek && r.kroscek.status === 'selisih');
         } else if (type === 'telat') {
-            filtered = currentDetailRows.filter(r => {
-                return (r.penghuni && r.penghuni.status !== 'tepat') ||
-                       (r.overstaying && r.overstaying.status !== 'tepat') ||
-                       (r.integrasi && r.integrasi.status !== 'tepat') ||
-                       (r.bebas && r.bebas.status !== 'tepat') ||
-                       (r.kroscek && r.kroscek.status !== 'sesuai');
-            });
+            filtered = currentDetailRows.filter(isRowTerlambat);
+        } else if (type === 'kosong') {
+            filtered = currentDetailRows.filter(isRowKosong);
         }
 
         renderDetailTableRows(filtered);
