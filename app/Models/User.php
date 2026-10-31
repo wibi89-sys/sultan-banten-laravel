@@ -59,7 +59,17 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isOperatorWilayah(): bool
+    {
+        return $this->role === 'operator_wilayah';
+    }
+
     public function isOperator(): bool
+    {
+        return $this->role === 'operator';
+    }
+
+    public function isOperatorUpt(): bool
     {
         return $this->role === 'operator';
     }
@@ -71,7 +81,7 @@ class User extends Authenticatable
 
     public function isKanwil(): bool
     {
-        return empty($this->upt_id);
+        return empty($this->upt_id) || $this->role === 'operator_wilayah';
     }
 
     /**
@@ -83,7 +93,7 @@ class User extends Authenticatable
             return 'full';
         }
 
-        // Dashboard bersifat terbuka otomatis untuk semua pengguna
+        // Dashboard bersifat terbuka otomatis untuk semua pengguna (minimal view)
         if ($menu === 'dashboard') {
             return 'view';
         }
@@ -92,7 +102,7 @@ class User extends Authenticatable
         $val = $this->{$property} ?? 'none';
 
         if ($val === true || $val === 1 || $val === '1' || $val === 'full') {
-            return $this->isViewer() ? 'view' : 'full';
+            return 'full';
         }
 
         if ($val === 'view' || $val === 'lihat') {
@@ -108,6 +118,7 @@ class User extends Authenticatable
      */
     public function hasAccess(string $menu, string $requiredLevel = 'view'): bool
     {
+        // Admin selalu memiliki akses penuh ke seluruh modul, dashboard selalu terbuka
         if ($this->isAdmin() || $menu === 'dashboard') {
             return true;
         }
@@ -152,10 +163,10 @@ class User extends Authenticatable
 
     public function getUserUptFilter(): ?int
     {
-        if ($this->isAdmin()) {
+        if ($this->isAdmin() || $this->isOperatorWilayah() || empty($this->upt_id)) {
             return null;
         }
 
-        return $this->upt_id ? (int) $this->upt_id : null;
+        return (int) $this->upt_id;
     }
 }

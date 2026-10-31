@@ -64,6 +64,11 @@ class UserController extends Controller
                 }
             }
 
+            // Pastikan kolom role adalah VARCHAR(30) bukan ENUM agar mendukung operator_wilayah
+            if (isset($columnTypes['role']) && str_contains($columnTypes['role'], 'enum')) {
+                DB::statement("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(30) NOT NULL DEFAULT 'operator'");
+            }
+
             foreach ($this->permissionFields as $col) {
                 if (! isset($columnTypes[$col])) {
                     DB::statement("ALTER TABLE `users` ADD COLUMN `{$col}` VARCHAR(10) NOT NULL DEFAULT 'none'");
@@ -137,7 +142,7 @@ class UserController extends Controller
             'username' => 'required|string|max:50|unique:users,username',
             'nama_lengkap' => 'required|string|max:100',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,operator,viewer',
+            'role' => 'required|in:admin,operator,operator_wilayah,viewer',
         ]);
 
         $data = [
@@ -157,16 +162,6 @@ class UserController extends Controller
                     $val = 'full';
                 } elseif (! in_array($val, ['none', 'view', 'full'], true)) {
                     $val = 'none';
-                }
-
-                // Jika role viewer, batasi maksimal hanya 'view'
-                if ($data['role'] === 'viewer' && $val === 'full') {
-                    $val = 'view';
-                }
-
-                // Jika role admin, otomatis 'full'
-                if ($data['role'] === 'admin') {
-                    $val = 'full';
                 }
 
                 $data[$field] = $val;
@@ -201,7 +196,7 @@ class UserController extends Controller
 
         $request->validate([
             'nama_lengkap' => 'required|string|max:100',
-            'role' => 'required|in:admin,operator,viewer',
+            'role' => 'required|in:admin,operator,operator_wilayah,viewer',
         ]);
 
         $data = [
@@ -224,16 +219,6 @@ class UserController extends Controller
                     $val = 'full';
                 } elseif (! in_array($val, ['none', 'view', 'full'], true)) {
                     $val = 'none';
-                }
-
-                // Jika role viewer, batasi maksimal hanya 'view'
-                if ($data['role'] === 'viewer' && $val === 'full') {
-                    $val = 'view';
-                }
-
-                // Jika role admin, otomatis 'full'
-                if ($data['role'] === 'admin') {
-                    $val = 'full';
                 }
 
                 $data[$field] = $val;

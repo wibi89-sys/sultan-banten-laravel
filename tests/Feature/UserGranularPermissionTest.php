@@ -24,10 +24,10 @@ class UserGranularPermissionTest extends TestCase
         $this->assertTrue($admin->canView('penghuni'));
         $this->assertTrue($admin->canManage('penghuni'));
 
-        // 2. Viewer role is capped at 'view' even if column has 'full'
+        // 2. Viewer role with view and none permissions
         $viewer = new User([
             'role' => 'viewer',
-            'akses_penghuni' => 'full',
+            'akses_penghuni' => 'view',
             'akses_mutasi' => 'view',
             'akses_upt' => 'none',
         ]);
@@ -38,7 +38,27 @@ class UserGranularPermissionTest extends TestCase
         $this->assertEquals('none', $viewer->getAccessLevel('upt'));
         $this->assertFalse($viewer->canView('upt'));
 
-        // 3. Regular operator with mixed permissions
+        // 3. Operator Wilayah (Kanwil scope) with flexible permissions
+        $opWilayah = new User([
+            'role' => 'operator_wilayah',
+            'upt_id' => null,
+            'akses_mutasi' => 'full',
+            'akses_sidang_tpp' => 'full',
+            'akses_penghuni' => 'view',
+            'akses_user' => 'none',
+        ]);
+        $this->assertTrue($opWilayah->isOperatorWilayah());
+        $this->assertTrue($opWilayah->isKanwil());
+        $this->assertNull($opWilayah->getUserUptFilter());
+        $this->assertEquals('full', $opWilayah->getAccessLevel('mutasi'));
+        $this->assertTrue($opWilayah->canManage('mutasi'));
+        $this->assertEquals('view', $opWilayah->getAccessLevel('penghuni'));
+        $this->assertTrue($opWilayah->canView('penghuni'));
+        $this->assertFalse($opWilayah->canManage('penghuni'));
+        $this->assertEquals('none', $opWilayah->getAccessLevel('user'));
+        $this->assertFalse($opWilayah->canView('user'));
+
+        // 4. Regular operator with mixed permissions
         $operator = new User([
             'role' => 'operator',
             'upt_id' => $upt ? $upt->id : null,
@@ -46,6 +66,8 @@ class UserGranularPermissionTest extends TestCase
             'akses_overstaying' => 'full',
             'akses_mutasi' => 'none',
         ]);
+        $this->assertTrue($operator->isOperator());
+        $this->assertTrue($operator->isOperatorUpt());
         // Penghuni: view only
         $this->assertEquals('view', $operator->getAccessLevel('penghuni'));
         $this->assertTrue($operator->canView('penghuni'));
@@ -235,5 +257,63 @@ class UserGranularPermissionTest extends TestCase
 
         $blockedCreateResponse = $this->actingAs($viewOnlyUser)->get('/users/create');
         $blockedCreateResponse->assertStatus(403);
+    }
+
+    public function test_user_controller_can_create_and_update_operator_wilayah(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin found');
+        }
+
+        $uniqueUsername = 'opwilayah_'.uniqid();
+
+        // 1. Create operator_wilayah
+        $response = $this->actingAs($admin)->from('/users')->post('/users', [
+            'nama_lengkap' => 'Operator Kanwil Mutasi & TPP',
+            'username' => $uniqueUsername,
+            'password' => 'secret123',
+            'role' => 'operator_wilayah',
+            'upt_id' => '',
+            'akses_mutasi' => 'full',
+            'akses_sidang_tpp' => 'full',
+            'akses_penghuni' => 'view',
+            'akses_user' => 'none',
+        ]);
+
+        $response->assertRedirect('/users');
+        $response->assertSessionHas('success');
+
+        $user = User::where('username', $uniqueUsername)->first();
+        $this->assertNotNull($user);
+        $this->assertEquals('operator_wilayah', $user->role);
+        $this->assertTrue($user->isOperatorWilayah());
+        $this->assertTrue($user->isKanwil());
+        $this->assertNull($user->upt_id);
+        $this->assertEquals('full', $user->akses_mutasi);
+        $this->assertEquals('full', $user->akses_sidang_tpp);
+        $this->assertEquals('view', $user->akses_penghuni);
+        $this->assertEquals('none', $user->akses_user);
+
+        // 2. Update operator_wilayah permissions
+        $updateResponse = $this->actingAs($admin)->from('/users')->put("/users/{$user->id}", [
+            'nama_lengkap' => 'Operator Kanwil Updated',
+            'role' => 'operator_wilayah',
+            'upt_id' => '',
+            'akses_mutasi' => 'view',
+            'akses_sidang_tpp' => 'full',
+            'akses_penghuni' => 'none',
+            'akses_laporan' => 'full',
+        ]);
+
+        $updateResponse->assertRedirect('/users');
+        $updateResponse->assertSessionHas('success');
+
+        $user->refresh();
+        $this->assertEquals('Operator Kanwil Updated', $user->nama_lengkap);
+        $this->assertEquals('view', $user->akses_mutasi);
+        $this->assertEquals('full', $user->akses_sidang_tpp);
+        $this->assertEquals('none', $user->akses_penghuni);
+        $this->assertEquals('full', $user->akses_laporan);
     }
 }

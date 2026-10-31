@@ -31,8 +31,11 @@
         padding: 4px 8px;
         border-radius: 12px;
         font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
     }
     .role-admin { background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%); color: white; }
+    .role-operator_wilayah { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; }
     .role-operator { background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%); color: white; }
     .role-viewer { background: #64748b; color: white; }
 </style>
@@ -85,7 +88,17 @@
                     <td class="small">{{ $u->no_wa ?: '-' }}</td>
                     <td class="text-center">
                         <span class="role-badge role-{{ $u->role }}">
-                            {{ ucfirst($u->role) }}
+                            @if($u->role === 'admin')
+                                <i class="fas fa-crown me-1"></i>Administrator
+                            @elseif($u->role === 'operator_wilayah')
+                                <i class="fas fa-building me-1"></i>Operator Wilayah
+                            @elseif($u->role === 'operator')
+                                <i class="fas fa-user-tie me-1"></i>Operator UPT
+                            @elseif($u->role === 'viewer')
+                                <i class="fas fa-eye me-1"></i>Viewer
+                            @else
+                                {{ ucfirst($u->role) }}
+                            @endif
                         </span>
                     </td>
                     <td class="small fw-semibold text-secondary">

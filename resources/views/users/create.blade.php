@@ -174,10 +174,11 @@
                 <div class="card-body p-3">
                     <div class="mb-3">
                         <label for="role" class="form-label small fw-semibold">Peran Utama (Role) <span class="text-danger">*</span></label>
-                        <select name="role" id="role" class="form-select form-select-sm" required onchange="handleRoleChange(this.value)">
-                            <option value="operator" {{ old('role', 'operator') == 'operator' ? 'selected' : '' }}>Operator UPT</option>
-                            <option value="viewer" {{ old('role') == 'viewer' ? 'selected' : '' }}>Viewer (Hanya Lihat / Kanwil)</option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator Wilayah</option>
+                        <select name="role" id="role" class="form-select form-select-sm" required onchange="handleRoleChange(this.value, true)">
+                            <option value="operator" {{ old('role', 'operator') == 'operator' ? 'selected' : '' }}>Operator UPT (Satuan Kerja)</option>
+                            <option value="operator_wilayah" {{ old('role') == 'operator_wilayah' ? 'selected' : '' }}>Operator Wilayah (Kantor Wilayah)</option>
+                            <option value="viewer" {{ old('role') == 'viewer' ? 'selected' : '' }}>Viewer (Pengawas / Hanya Lihat)</option>
+                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator Wilayah (Superuser)</option>
                         </select>
                     </div>
 
@@ -192,12 +193,20 @@
                         <small class="text-muted" style="font-size: 11px;">Pilih UPT tempat tugas operator. Kosongkan jika staf Kantor Wilayah.</small>
                     </div>
 
-                    <div id="notice_role_admin" class="alert alert-info py-2 px-3 small d-none mb-0">
-                        <i class="fas fa-info-circle me-1"></i><strong>Catatan:</strong> Akun Administrator Wilayah otomatis memiliki <strong>Akses Penuh</strong> ke seluruh modul sistem.
+                    <div id="notice_role_admin" class="alert alert-danger bg-danger bg-opacity-10 border border-danger border-opacity-25 py-2 px-3 small d-none mb-0">
+                        <i class="fas fa-crown text-danger me-1"></i><strong>Administrator Wilayah:</strong> Memiliki wewenang tingkat sistem. Hak akses modul tetap dapat dikustomisasi secara fleksibel pada matriks hak akses di sebelah kanan.
                     </div>
 
-                    <div id="notice_role_viewer" class="alert alert-secondary py-2 px-3 small d-none mb-0">
-                        <i class="fas fa-info-circle me-1"></i><strong>Catatan:</strong> Akun Viewer dibatasi maksimal hanya pada mode <strong>Lihat Saja</strong>.
+                    <div id="notice_role_operator_wilayah" class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-25 py-2 px-3 small d-none mb-0">
+                        <i class="fas fa-building text-primary me-1"></i><strong>Operator Wilayah:</strong> Beroperasi dalam cakupan Kantor Wilayah (Semua UPT). Anda bebas menentukan izin setiap modul (lihat saja atau penuh) secara fleksibel.
+                    </div>
+
+                    <div id="notice_role_operator" class="alert alert-info bg-info bg-opacity-10 border border-info border-opacity-25 py-2 px-3 small d-none mb-0">
+                        <i class="fas fa-user-tie text-info me-1"></i><strong>Operator UPT:</strong> Terikat pada satuan kerja (UPT) tertentu. Tentukan modul mana saja yang boleh diakses atau dikelola oleh operator ini.
+                    </div>
+
+                    <div id="notice_role_viewer" class="alert alert-secondary bg-secondary bg-opacity-10 border border-secondary border-opacity-25 py-2 px-3 small d-none mb-0">
+                        <i class="fas fa-eye text-secondary me-1"></i><strong>Viewer / Pengawas:</strong> Pengaturan awal untuk pengawasan (lihat saja), namun tetap fleksibel disesuaikan per modul.
                     </div>
                 </div>
             </div>
@@ -298,44 +307,53 @@
 <script>
     function setAllPermissions(level) {
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
-            if (radio.value === level && !radio.disabled) {
+            if (radio.value === level) {
                 radio.checked = true;
             }
         });
     }
 
-    function handleRoleChange(role) {
-        const adminNotice = document.getElementById('notice_role_admin');
-        const viewerNotice = document.getElementById('notice_role_viewer');
-        const fullRadios = document.querySelectorAll('input[type="radio"][value="full"]');
+    function handleRoleChange(role, isManualChange = false) {
+        const notices = {
+            'admin': document.getElementById('notice_role_admin'),
+            'operator_wilayah': document.getElementById('notice_role_operator_wilayah'),
+            'operator': document.getElementById('notice_role_operator'),
+            'viewer': document.getElementById('notice_role_viewer'),
+        };
 
-        if (role === 'admin') {
-            adminNotice.classList.remove('d-none');
-            viewerNotice.classList.add('d-none');
-            setAllPermissions('full');
-            fullRadios.forEach(r => r.disabled = false);
-        } else if (role === 'viewer') {
-            adminNotice.classList.add('d-none');
-            viewerNotice.classList.remove('d-none');
-            // Disable full options and switch to view if previously full
-            fullRadios.forEach(r => {
-                if (r.checked) {
-                    const viewRadio = r.closest('.radio-pill-group').querySelector('input[value="view"]');
-                    if (viewRadio) viewRadio.checked = true;
+        Object.keys(notices).forEach(key => {
+            if (notices[key]) {
+                if (key === role) {
+                    notices[key].classList.remove('d-none');
+                } else {
+                    notices[key].classList.add('d-none');
                 }
-                r.disabled = true;
-            });
-        } else {
-            adminNotice.classList.add('d-none');
-            viewerNotice.classList.add('d-none');
-            fullRadios.forEach(r => r.disabled = false);
+            }
+        });
+
+        // Pastikan seluruh opsi radio selalu aktif dan dapat dikustomisasi secara bebas
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = false);
+
+        if (isManualChange) {
+            const uptSelect = document.getElementById('upt_id');
+            if (role === 'admin' || role === 'operator_wilayah') {
+                if (uptSelect) {
+                    uptSelect.value = '';
+                }
+            }
+
+            if (role === 'admin') {
+                setAllPermissions('full');
+            } else if (role === 'viewer') {
+                setAllPermissions('view');
+            }
         }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         const roleEl = document.getElementById('role');
         if (roleEl) {
-            handleRoleChange(roleEl.value);
+            handleRoleChange(roleEl.value, false);
         }
     });
 </script>
