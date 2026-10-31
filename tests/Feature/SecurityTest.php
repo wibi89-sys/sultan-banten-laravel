@@ -58,14 +58,14 @@ class SecurityTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_laporan_excel_rekapitulasi_streams_successfully(): void
+    public function test_laporan_excel_integrasi_streams_successfully(): void
     {
         $user = User::where('role', 'admin')->first();
         if (! $user) {
             $this->markTestSkipped('No admin found');
         }
 
-        $response = $this->actingAs($user)->get('/laporan/excel?type=rekapitulasi');
+        $response = $this->actingAs($user)->get('/laporan/excel?type=integrasi');
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
     }

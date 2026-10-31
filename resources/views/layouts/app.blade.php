@@ -426,7 +426,6 @@
                     <a href="{{ route('laporan.index', ['type' => 'overstaying']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'overstaying' ? 'active' : '' }}"><i class="fas fa-clock"></i><span>Lap. Overstaying</span></a>
                     <a href="{{ route('laporan.index', ['type' => 'integrasi']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'integrasi' ? 'active' : '' }}"><i class="fas fa-exchange-alt"></i><span>Lap. Integrasi</span></a>
                     <a href="{{ route('laporan.index', ['type' => 'bebas_harian']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'bebas_harian' ? 'active' : '' }}"><i class="fas fa-door-open"></i><span>Lap. Bebas Harian</span></a>
-                    <a href="{{ route('laporan.index', ['type' => 'rekapitulasi']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'rekapitulasi' ? 'active' : '' }}"><i class="fas fa-chart-bar"></i><span>Rekapitulasi</span></a>
                 </div>
             </div>
             @endif

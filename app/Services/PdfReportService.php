@@ -27,8 +27,11 @@ class PdfReportService
             'overstaying' => 'LAPORAN OVERSTAYING TAHANAN',
             'integrasi' => 'LAPORAN DATA INTEGRASI',
             'bebas_harian' => 'LAPORAN PENGELUARAN / BEBAS HARIAN',
-            'rekapitulasi' => 'LAPORAN REKAPITULASI',
         ];
+
+        if (! array_key_exists($reportType, $reportTitles)) {
+            $reportType = 'penghuni';
+        }
 
         $orientation = in_array($reportType, ['overstaying', 'penghuni', 'bebas_harian']) ? 'P' : 'L';
 
@@ -86,7 +89,6 @@ class PdfReportService
             'overstaying' => 'Overstaying',
             'integrasi' => 'Integrasi',
             'bebas_harian' => 'Bebas Harian',
-            'rekapitulasi' => 'Rekapitulasi',
         ];
         $namaLapShort = $shortReportNames[$reportType] ?? ($reportTitles[$reportType] ?? 'Laporan');
         $satkerText = $uptModel ? $uptModel->nama_upt : 'Kanwil Banten (Multi UPT)';
@@ -156,7 +158,7 @@ class PdfReportService
             $pdf->Cell(0, 6, 'UPT PEMASYARAKATAN KANTOR WILAYAH BANTEN', 0, 1, 'C');
             $pdf->Ln(2);
         } else {
-            // Mode Kanwil Landscape (Integrasi & Rekapitulasi)
+            // Mode Kanwil Landscape (Integrasi)
             $logoKop = null;
             if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
                 $logoKop = public_path($instansi->logo_kop);
@@ -601,7 +603,7 @@ class PdfReportService
             self::renderSignature($pdf, $instansi, $signData);
 
         } else {
-            // Landscape reports (Integrasi, Rekapitulasi)
+            // Landscape reports (Integrasi)
             $pdf->SetFont('helvetica', '', 9.5);
             $pdf->Cell(0, 5, 'Periode : '.$hariTanggalStr, 0, 1, 'L');
             if ($uptModel) {
@@ -609,134 +611,7 @@ class PdfReportService
             }
             $pdf->Ln(2);
 
-            if ($reportType === 'rekapitulasi') {
-                $headers = ['No', 'UPT', 'Kapasitas', 'Tahanan', 'Narapidana', 'Total', '% Kapasitas', 'Overstaying', 'Integrasi'];
-                $widths = [10, 85, 24, 24, 24, 24, 24, 24, 24];
-
-                $renderTableHeader = function () use ($pdf, $headers, $widths) {
-                    $pdf->SetFont('helvetica', 'B', 8);
-                    $pdf->SetFillColor(52, 73, 94);
-                    $pdf->SetTextColor(255, 255, 255);
-                    foreach ($headers as $i => $h) {
-                        $pdf->Cell($widths[$i], 7, $h, 1, 0, 'C', true);
-                    }
-                    $pdf->Ln();
-                    $pdf->SetTextColor(0, 0, 0);
-                };
-
-                $renderTableHeader();
-
-                $uptQuery = Upt::orderBy('nama_upt');
-                if ($uptId) {
-                    $uptQuery->where('id', $uptId);
-                }
-                $upts = $uptQuery->get();
-
-                $no = 1;
-                $gKap = 0;
-                $gTah = 0;
-                $gNap = 0;
-                $gTot = 0;
-                $gOvs = 0;
-                $gInt = 0;
-                $pdf->SetFont('helvetica', '', 8);
-                $pdf->SetTextColor(0, 0, 0);
-
-                $exclude = ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup'];
-
-                $penghuniMap = DB::table('data_penghuni')
-                    ->select(
-                        'upt_id',
-                        DB::raw('COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan), 0) as tah'),
-                        DB::raw('COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as nap')
-                    )
-                    ->whereNotIn('klasifikasi_pidana', $exclude)
-                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
-                    ->groupBy('upt_id')
-                    ->get()
-                    ->keyBy('upt_id');
-
-                $overstayingMap = DB::table('data_overstaying')
-                    ->select(
-                        'upt_id',
-                        DB::raw('COALESCE(SUM(overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av), 0) as ovs')
-                    )
-                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
-                    ->groupBy('upt_id')
-                    ->get()
-                    ->keyBy('upt_id');
-
-                $integrasiMap = DB::table('data_integrasi')
-                    ->select(
-                        'upt_id',
-                        DB::raw('COALESCE(SUM(usulan_pb + usulan_cb + usulan_cmb + usulan_cmk + usulan_asimilasi + sk_terbit_pb + sk_terbit_cb + sk_terbit_cmb + sk_terbit_cmk + sk_terbit_asimilasi), 0) as int_total')
-                    )
-                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
-                    ->groupBy('upt_id')
-                    ->get()
-                    ->keyBy('upt_id');
-
-                foreach ($upts as $u) {
-                    $pData = $penghuniMap->get($u->id);
-                    $tah = (int) ($pData->tah ?? 0);
-                    $nap = (int) ($pData->nap ?? 0);
-                    $tot = $tah + $nap;
-                    $kap = (int) $u->kapasitas;
-                    $persen = $kap > 0 ? round(($tot / $kap) * 100, 1) : 0;
-
-                    $ovs = (int) ($overstayingMap->get($u->id)?->ovs ?? 0);
-                    $int = (int) ($integrasiMap->get($u->id)?->int_total ?? 0);
-
-                    $gKap += $kap;
-                    $gTah += $tah;
-                    $gNap += $nap;
-                    $gTot += $tot;
-                    $gOvs += $ovs;
-                    $gInt += $int;
-
-                    if ($pdf->GetY() + 6 > 180) {
-                        $pdf->AddPage();
-                        $renderTableHeader();
-                        $pdf->SetFont('helvetica', '', 8);
-                    }
-
-                    $pdf->Cell($widths[0], 6, $no++, 1, 0, 'C');
-                    $pdf->Cell($widths[1], 6, $u->nama_upt, 1, 0, 'L');
-                    $pdf->Cell($widths[2], 6, number_format($kap), 1, 0, 'C');
-                    $pdf->Cell($widths[3], 6, number_format($tah), 1, 0, 'C');
-                    $pdf->Cell($widths[4], 6, number_format($nap), 1, 0, 'C');
-                    $pdf->Cell($widths[5], 6, number_format($tot), 1, 0, 'C');
-                    $pdf->Cell($widths[6], 6, $persen.'%', 1, 0, 'C');
-                    $pdf->Cell($widths[7], 6, number_format($ovs), 1, 0, 'C');
-                    $pdf->Cell($widths[8], 6, number_format($int), 1, 1, 'C');
-                }
-
-                if (! $uptId) {
-                    if ($pdf->GetY() + 7 > 180) {
-                        $pdf->AddPage();
-                        $renderTableHeader();
-                    }
-
-                    $pdf->SetFont('helvetica', 'B', 8);
-                    $pdf->SetFillColor(52, 73, 94);
-                    $pdf->SetTextColor(255, 255, 255);
-                    $pdf->Cell($widths[0] + $widths[1], 7, 'TOTAL', 1, 0, 'C', true);
-                    $pdf->Cell($widths[2], 7, number_format($gKap), 1, 0, 'C', true);
-                    $pdf->Cell($widths[3], 7, number_format($gTah), 1, 0, 'C', true);
-                    $pdf->Cell($widths[4], 7, number_format($gNapi ?? $gNap), 1, 0, 'C', true);
-                    $pdf->Cell($widths[5], 7, number_format($gTot), 1, 0, 'C', true);
-                    $totPersen = $gKap > 0 ? round(($gTot / $gKap) * 100, 1) : 0;
-                    $pdf->Cell($widths[6], 7, $totPersen.'%', 1, 0, 'C', true);
-                    $pdf->Cell($widths[7], 7, number_format($gOvs), 1, 0, 'C', true);
-                    $pdf->Cell($widths[8], 7, number_format($gInt), 1, 1, 'C', true);
-                }
-
-                self::renderSignature($pdf, $instansi, $signData, 'L');
-
-            } elseif ($reportType === 'integrasi') {
+            if ($reportType === 'integrasi') {
                 $widths = [8, 65, 18, 13, 13, 13, 13, 14, 13, 13, 13, 13, 14, 15];
 
                 $renderTableHeader = function () use ($pdf, $widths) {

@@ -18,7 +18,6 @@ class LaporanController extends Controller
         'overstaying' => 'Laporan Data Overstaying',
         'integrasi' => 'Laporan Data Integrasi',
         'bebas_harian' => 'Laporan Data Bebas Harian',
-        'rekapitulasi' => 'Laporan Rekapitulasi',
     ];
 
     public function index(Request $request)
@@ -59,6 +58,9 @@ class LaporanController extends Controller
         }
 
         $reportType = $request->query('type', 'penghuni');
+        if (! array_key_exists($reportType, $this->reportTitles)) {
+            $reportType = 'penghuni';
+        }
         $userUptFilter = $user->getUserUptFilter();
         $isKanwil = $user->isKanwil();
         $isUpt = ! $isKanwil || ($request->query('mode') === 'upt');
@@ -88,6 +90,9 @@ class LaporanController extends Controller
         }
 
         $reportType = $request->query('type', 'penghuni');
+        if (! array_key_exists($reportType, $this->reportTitles)) {
+            $reportType = 'penghuni';
+        }
         $userUptFilter = $user->getUserUptFilter();
         $uptId = $userUptFilter ?: ($request->query('upt_id') ? (int) $request->query('upt_id') : null);
         $tanggalMulai = $request->query('tanggal_mulai', date('Y-m-01'));
@@ -105,7 +110,6 @@ class LaporanController extends Controller
                 'overstaying' => 11,
                 'integrasi' => 15,
                 'bebas_harian' => 15,
-                'rekapitulasi' => 9,
                 default => 10,
             };
 
@@ -219,85 +223,6 @@ class LaporanController extends Controller
                     echo "<tr><td align=\"center\">{$no}</td><td align=\"center\">{$tglStr}</td><td>{$r->upt?->nama_upt}</td><td align=\"center\">{$r->usulan_pb}</td><td align=\"center\">{$r->usulan_cb}</td><td align=\"center\">{$r->usulan_cmb}</td><td align=\"center\">{$r->usulan_cmk}</td><td align=\"center\">{$r->usulan_asimilasi}</td><td align=\"center\"><b>{$totU}</b></td><td align=\"center\">{$r->sk_terbit_pb}</td><td align=\"center\">{$r->sk_terbit_cb}</td><td align=\"center\">{$r->sk_terbit_cmb}</td><td align=\"center\">{$r->sk_terbit_cmk}</td><td align=\"center\">{$r->sk_terbit_asimilasi}</td><td align=\"center\"><b>{$totSK}</b></td></tr>";
                     $no++;
                 }
-
-            } elseif ($reportType === 'rekapitulasi') {
-                $uptQuery = Upt::orderBy('nama_upt');
-                if ($uptId) {
-                    $uptQuery->where('id', $uptId);
-                }
-                $upts = $uptQuery->get();
-
-                echo '<tr bgcolor="#34495e" style="color: white; font-weight: bold;"><td>No</td><td>UPT</td><td>Kapasitas</td><td>Tahanan</td><td>Narapidana</td><td>Total</td><td>% Kapasitas</td><td>Overstaying</td><td>Integrasi</td></tr>';
-
-                $no = 1;
-                $gKap = 0;
-                $gTah = 0;
-                $gNap = 0;
-                $gTot = 0;
-                $gOvs = 0;
-                $gInt = 0;
-
-                $exclude = ['WNA', 'Sakit Berkepanjangan', 'Lansia >70 tahun', 'Pidana Mati', 'Seumur Hidup'];
-
-                $penghuniMap = DB::table('data_penghuni')
-                    ->select(
-                        'upt_id',
-                        DB::raw('COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan), 0) as tah'),
-                        DB::raw('COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as nap')
-                    )
-                    ->whereNotIn('klasifikasi_pidana', $exclude)
-                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
-                    ->groupBy('upt_id')
-                    ->get()
-                    ->keyBy('upt_id');
-
-                $overstayingMap = DB::table('data_overstaying')
-                    ->select(
-                        'upt_id',
-                        DB::raw('COALESCE(SUM(overstaying_ai + overstaying_aii + overstaying_aiii + overstaying_aiv + overstaying_av), 0) as ovs')
-                    )
-                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
-                    ->groupBy('upt_id')
-                    ->get()
-                    ->keyBy('upt_id');
-
-                $integrasiMap = DB::table('data_integrasi')
-                    ->select(
-                        'upt_id',
-                        DB::raw('COALESCE(SUM(usulan_pb + usulan_cb + usulan_cmb + usulan_cmk + usulan_asimilasi + sk_terbit_pb + sk_terbit_cb + sk_terbit_cmb + sk_terbit_cmk + sk_terbit_asimilasi), 0) as int_total')
-                    )
-                    ->when($uptId, fn ($q) => $q->where('upt_id', $uptId))
-                    ->when($tanggalMulai && $tanggalAkhir, fn ($q) => $q->whereBetween('tanggal', [$tanggalMulai, $tanggalAkhir]))
-                    ->groupBy('upt_id')
-                    ->get()
-                    ->keyBy('upt_id');
-
-                foreach ($upts as $u) {
-                    $pData = $penghuniMap->get($u->id);
-                    $tah = (int) ($pData->tah ?? 0);
-                    $nap = (int) ($pData->nap ?? 0);
-                    $tot = $tah + $nap;
-                    $kap = (int) $u->kapasitas;
-                    $persen = $kap > 0 ? round(($tot / $kap) * 100, 1) : 0;
-
-                    $ovs = (int) ($overstayingMap->get($u->id)?->ovs ?? 0);
-                    $int = (int) ($integrasiMap->get($u->id)?->int_total ?? 0);
-
-                    $gKap += $kap;
-                    $gTah += $tah;
-                    $gNap += $nap;
-                    $gTot += $tot;
-                    $gOvs += $ovs;
-                    $gInt += $int;
-
-                    echo "<tr><td align=\"center\">{$no}</td><td>{$u->nama_upt}</td><td align=\"center\">{$kap}</td><td align=\"center\">{$tah}</td><td align=\"center\">{$nap}</td><td align=\"center\"><b>{$tot}</b></td><td align=\"center\">{$persen}%</td><td align=\"center\">{$ovs}</td><td align=\"center\">{$int}</td></tr>";
-                    $no++;
-                }
-
-                $totPersen = $gKap > 0 ? round(($gTot / $gKap) * 100, 1) : 0;
-                echo '<tr bgcolor="#34495e" style="color: white; font-weight: bold;"><td colspan="2" align="center">TOTAL</td><td align="center">'.$gKap.'</td><td align="center">'.$gTah.'</td><td align="center">'.$gNap.'</td><td align="center">'.$gTot.'</td><td align="center">'.$totPersen.'%</td><td align="center">'.$gOvs.'</td><td align="center">'.$gInt.'</td></tr>';
 
             } else {
                 // Penghuni

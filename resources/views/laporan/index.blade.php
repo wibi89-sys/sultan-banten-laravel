@@ -47,19 +47,19 @@
     <h6 class="mb-3 fw-bold"><i class="fas fa-layer-group text-primary me-2"></i>Pilih Jenis Laporan</h6>
     
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3">
             <a href="{{ route('laporan.index', ['type' => 'penghuni']) }}" class="report-type-card {{ $reportType == 'penghuni' ? 'active' : '' }}">
                 <i class="fas fa-users"></i>
                 <h6 class="mb-0 fs-6">Penghuni</h6>
             </a>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3">
             <a href="{{ route('laporan.index', ['type' => 'overstaying']) }}" class="report-type-card {{ $reportType == 'overstaying' ? 'active' : '' }}">
                 <i class="fas fa-clock"></i>
                 <h6 class="mb-0 fs-6">Overstaying</h6>
             </a>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3">
             <a href="{{ route('laporan.index', ['type' => 'integrasi']) }}" class="report-type-card {{ $reportType == 'integrasi' ? 'active' : '' }}">
                 <i class="fas fa-exchange-alt"></i>
                 <h6 class="mb-0 fs-6">Integrasi</h6>
@@ -69,12 +69,6 @@
             <a href="{{ route('laporan.index', ['type' => 'bebas_harian']) }}" class="report-type-card {{ $reportType == 'bebas_harian' ? 'active' : '' }}">
                 <i class="fas fa-door-open"></i>
                 <h6 class="mb-0 fs-6">Bebas Harian</h6>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="{{ route('laporan.index', ['type' => 'rekapitulasi']) }}" class="report-type-card {{ $reportType == 'rekapitulasi' ? 'active' : '' }}">
-                <i class="fas fa-chart-bar"></i>
-                <h6 class="mb-0 fs-6">Rekapitulasi</h6>
             </a>
         </div>
     </div>

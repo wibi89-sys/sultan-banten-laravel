@@ -325,8 +325,8 @@ class UserController extends Controller
             ],
             'Pelaporan & Audit Sistem' => [
                 'laporan' => [
-                    'label' => 'Cetak Laporan & Rekapitulasi',
-                    'desc' => 'Cetak dokumen laporan rekapitulasi harian, bulanan, ekspor Excel & PDF.',
+                    'label' => 'Cetak Laporan',
+                    'desc' => 'Cetak dokumen laporan harian, bulanan, ekspor Excel & PDF.',
                     'icon' => 'fas fa-print text-primary',
                 ],
                 'activity_log' => [
