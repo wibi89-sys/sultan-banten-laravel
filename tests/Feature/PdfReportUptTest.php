@@ -60,6 +60,36 @@ class PdfReportUptTest extends TestCase
         $response->assertHeader('Content-Type', 'application/pdf');
     }
 
+    public function test_upt_user_can_generate_bebas_harian_pdf_report_with_multi_date(): void
+    {
+        $upt = Upt::first();
+        $uptUser = User::factory()->create([
+            'role' => 'operator',
+            'upt_id' => $upt->id,
+            'akses_laporan' => 'view',
+        ]);
+
+        $response = $this->actingAs($uptUser)->get('/laporan/pdf?type=bebas_harian&tanggal_mulai='.date('Y-m-01').'&tanggal_akhir='.date('Y-m-d'));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_upt_user_can_generate_overstaying_pdf_report_with_multi_date(): void
+    {
+        $upt = Upt::first();
+        $uptUser = User::factory()->create([
+            'role' => 'operator',
+            'upt_id' => $upt->id,
+            'akses_laporan' => 'view',
+        ]);
+
+        $response = $this->actingAs($uptUser)->get('/laporan/pdf?type=overstaying&tanggal_mulai='.date('Y-m-01').'&tanggal_akhir='.date('Y-m-d'));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
     public function test_kroscek_detail_pdf_generation(): void
     {
         $upt = Upt::first();
