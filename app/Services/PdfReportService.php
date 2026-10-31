@@ -1166,9 +1166,6 @@ class PdfReportService
             $pdf->Ln(2);
             $pdf->SetFont('helvetica', 'B', 12);
             $pdf->Cell(0, 6, 'LAPORAN RINCIAN PERHITUNGAN POIN & MEDALI KEDISIPLINAN UPT', 0, 1, 'C');
-            $pdf->SetFont('helvetica', 'B', 8.5);
-            $pdf->SetTextColor(71, 85, 105);
-            $pdf->Cell(0, 4, 'LAMPIRAN BUKTI DETAIL KELENGKAPAN & KEPATUHAN PELAPORAN HARIAN', 0, 1, 'C');
             $pdf->SetFont('helvetica', 'B', 10);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
@@ -1214,9 +1211,6 @@ class PdfReportService
             // 2. Judul Dokumen
             $pdf->SetFont('helvetica', 'B', 11);
             $pdf->Cell(0, 5, 'LAPORAN RINCIAN PERHITUNGAN POIN & MEDALI KEDISIPLINAN UPT', 0, 1, 'C');
-            $pdf->SetFont('helvetica', 'B', 8.5);
-            $pdf->SetTextColor(71, 85, 105);
-            $pdf->Cell(0, 4, 'LAMPIRAN BUKTI DETAIL KELENGKAPAN & KEPATUHAN PELAPORAN HARIAN', 0, 1, 'C');
             $pdf->SetFont('helvetica', 'B', 10);
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Cell(0, 5, strtoupper($namaUpt), 0, 1, 'C');
