@@ -267,36 +267,93 @@ class FluktuasiController extends Controller
                 $analisisList[] = "<span class=\"text-danger fw-bold\"><i class=\"fas fa-balance-scale me-1\"></i>{$bdh} Tahanan Bebas Demi Hukum (BDH)</span>";
             }
 
-            // 2. Alih status vonis inkrah (Tahanan berkurang, Napi bertambah)
-            $alihStatus = 0;
-            if ($deltaTahanan < 0 && $deltaNapi > 0) {
-                $alihStatus = min(abs($deltaTahanan), $deltaNapi);
-                $analisisList[] = "<span class=\"text-primary fw-semibold\"><i class=\"fas fa-gavel me-1\"></i>{$alihStatus} Tahanan Vonis Inkrah (Alih Status &rarr; Narapidana)</span>";
-            }
+            // 2. Perpindahan Tahap Upaya Hukum & Alih Status Vonis Inkrah (A.III, A.IV, A.V)
 
-            // 3. Pergerakan Antar-Tingkat Penahanan / Proses Sidang (A.I s/d A.V)
-            // a. Polisi (A.I) -> Jaksa (A.II) [Tahap II]
-            if ($deltaAi < 0 && $deltaAii > 0) {
-                $tahap2 = min(abs($deltaAi), $deltaAii);
-                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-share me-1\"></i>{$tahap2} Tahanan Tahap II (Polisi A.I &rarr; Jaksa A.II)</span>";
-            }
-            // b. Jaksa (A.II) -> Sidang Pengadilan Negeri (A.III)
-            if ($deltaAii < 0 && $deltaAiii > 0) {
-                $pelimpahanPn = min(abs($deltaAii), $deltaAiii);
-                $analisisList[] = "<span class=\"text-info fw-semibold\"><i class=\"fas fa-balance-scale-right me-1\"></i>{$pelimpahanPn} Tahanan Masuk Sidang (Jaksa A.II &rarr; PN A.III)</span>";
-            }
-            // c. PN (A.III) -> Pengadilan Tinggi (A.IV) [Banding]
-            if ($deltaAiii < 0 && $deltaAiv > 0) {
-                $banding = min(abs($deltaAiii), $deltaAiv);
-                $analisisList[] = "<span class=\"text-muted fw-semibold\"><i class=\"fas fa-landmark me-1\"></i>{$banding} Tahanan Upaya Hukum Banding (PN A.III &rarr; PT A.IV)</span>";
-            }
-            // d. PT (A.IV) -> Mahkamah Agung (A.V) [Kasasi]
+            // a. Perpindahan Kasasi ke MA (A.IV -> A.V)
+            $kasasi = 0;
             if ($deltaAiv < 0 && $deltaAv > 0) {
                 $kasasi = min(abs($deltaAiv), $deltaAv);
-                $analisisList[] = "<span class=\"text-muted fw-semibold\"><i class=\"fas fa-university me-1\"></i>{$kasasi} Tahanan Upaya Hukum Kasasi (PT A.IV &rarr; MA A.V)</span>";
+            }
+            $sisaTurunAiv = ($deltaAiv < 0) ? (abs($deltaAiv) - $kasasi) : 0;
+            $sisaTurunAv = ($deltaAv < 0) ? abs($deltaAv) : 0;
+
+            // b. Perpindahan Banding ke PT (A.III -> A.IV)
+            $banding = 0;
+            if ($deltaAiii < 0 && $deltaAiv > 0) {
+                $banding = min(abs($deltaAiii), $deltaAiv);
+            }
+            $sisaTurunAiii = ($deltaAiii < 0) ? (abs($deltaAiii) - $banding) : 0;
+
+            // c. Pelimpahan ke Sidang PN (A.II -> A.III)
+            $pelimpahanPn = 0;
+            if ($deltaAii < 0 && $deltaAiii > 0) {
+                $pelimpahanPn = min(abs($deltaAii), $deltaAiii);
             }
 
-            // 4. Tahanan Baru Masuk (Penerimaan A.I / A.II / A.III)
+            // d. Tahap II (A.I -> A.II)
+            $tahap2 = 0;
+            if ($deltaAi < 0 && $deltaAii > 0) {
+                $tahap2 = min(abs($deltaAi), $deltaAii);
+            }
+
+            // e. Alih Status Vonis Inkrah (Pengurangan A.III, A.IV, A.V yang terserap menjadi Narapidana)
+            $alihStatus = 0;
+            $rincianInkrah = [];
+
+            if ($deltaNapi > 0) {
+                $sisaNapiBertambah = $deltaNapi;
+
+                // 1. Serap dari putusan Kasasi Mahkamah Agung (A.V)
+                if ($sisaTurunAv > 0 && $sisaNapiBertambah > 0) {
+                    $ambilAv = min($sisaTurunAv, $sisaNapiBertambah);
+                    $alihStatus += $ambilAv;
+                    $sisaNapiBertambah -= $ambilAv;
+                    $rincianInkrah[] = "{$ambilAv} Kasasi MA (A.V)";
+                }
+
+                // 2. Serap dari putusan Banding Pengadilan Tinggi (A.IV)
+                if ($sisaTurunAiv > 0 && $sisaNapiBertambah > 0) {
+                    $ambilAiv = min($sisaTurunAiv, $sisaNapiBertambah);
+                    $alihStatus += $ambilAiv;
+                    $sisaNapiBertambah -= $ambilAiv;
+                    $rincianInkrah[] = "{$ambilAiv} Banding PT (A.IV)";
+                }
+
+                // 3. Serap dari vonis Pengadilan Negeri (A.III)
+                if ($sisaTurunAiii > 0 && $sisaNapiBertambah > 0) {
+                    $ambilAiii = min($sisaTurunAiii, $sisaNapiBertambah);
+                    $alihStatus += $ambilAiii;
+                    $sisaNapiBertambah -= $ambilAiii;
+                    $rincianInkrah[] = "{$ambilAiii} PN (A.III)";
+                }
+
+                // Fallback umum jika rincian A.I-A.V tidak lengkap tapi deltaTahanan negatif
+                if ($alihStatus === 0 && $deltaTahanan < 0) {
+                    $alihStatus = min(abs($deltaTahanan), $deltaNapi);
+                }
+            }
+
+            // Narasi Alih Status Vonis Inkrah
+            if ($alihStatus > 0) {
+                $teksRincianInkrah = ! empty($rincianInkrah) ? ' ('.implode(', ', $rincianInkrah).')' : '';
+                $analisisList[] = "<span class=\"text-primary fw-semibold\"><i class=\"fas fa-gavel me-1\"></i>{$alihStatus} Tahanan Vonis Inkrah (Alih Status &rarr; Narapidana){$teksRincianInkrah}</span>";
+            }
+
+            // Narasi Perpindahan Tahapan Peradilan
+            if ($kasasi > 0) {
+                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-university me-1\"></i>{$kasasi} Tahanan Upaya Hukum Kasasi (PT A.IV &rarr; MA A.V)</span>";
+            }
+            if ($banding > 0) {
+                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-landmark me-1\"></i>{$banding} Tahanan Upaya Hukum Banding (PN A.III &rarr; PT A.IV)</span>";
+            }
+            if ($pelimpahanPn > 0) {
+                $analisisList[] = "<span class=\"text-info fw-semibold\"><i class=\"fas fa-balance-scale-right me-1\"></i>{$pelimpahanPn} Tahanan Masuk Sidang (Jaksa A.II &rarr; PN A.III)</span>";
+            }
+            if ($tahap2 > 0) {
+                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-share me-1\"></i>{$tahap2} Tahanan Tahap II (Polisi A.I &rarr; Jaksa A.II)</span>";
+            }
+
+            // 3. Tahanan Baru Masuk (Penerimaan A.I / A.II / A.III)
             $tahananBaruMasuk = 0;
             if ($deltaTahanan > 0) {
                 $tahananBaruMasuk = $deltaTahanan;
@@ -320,7 +377,7 @@ class FluktuasiController extends Controller
                 $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$deltaTahanan} Tahanan Baru Masuk{$rincianMasuk}</span>";
             }
 
-            // 5. Narapidana Baru Masuk (Penerimaan / Mutasi Masuk di luar alih status)
+            // 4. Narapidana Baru Masuk (Penerimaan / Mutasi Masuk di luar alih status)
             if ($deltaNapi > 0 && $deltaNapi > $alihStatus) {
                 $napiBaru = $deltaNapi - $alihStatus;
                 $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$napiBaru} Narapidana Baru Masuk (Penerimaan / Mutasi Masuk)</span>";

@@ -472,7 +472,7 @@
                             </table>
                         </div>
                         <div class="small text-muted mt-2">
-                            <i class="fas fa-info-circle text-primary me-1"></i>Penurunan di A.III yang dibarengi naiknya Narapidana menandakan perkara telah diputus oleh Pengadilan Negeri dan beralih status (*inkrah*).
+                            <i class="fas fa-info-circle text-primary me-1"></i>Penurunan pada <strong>A.III (Pengadilan Negeri)</strong>, <strong>A.IV (Pengadilan Tinggi/Banding)</strong>, atau <strong>A.V (Mahkamah Agung/Kasasi)</strong> yang dibarengi naiknya jumlah Narapidana menandakan perkara telah berkekuatan hukum tetap (<em>inkrah</em>) di tingkat peradilan masing-masing dan beralih status menjadi Narapidana.
                         </div>
                     </div>
 
