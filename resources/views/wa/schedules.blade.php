@@ -209,6 +209,79 @@
             </form>
         </div>
     </div>
+
+    <!-- Kartu 3: Undangan Sidang TPP -->
+    <div class="col-12 mt-3">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom flex-wrap gap-2">
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-gavel text-warning me-2"></i>3. Notifikasi Undangan Sidang TPP (Ke Grup WhatsApp)
+                    </h6>
+                    <small class="text-muted">Template pesan WhatsApp yang otomatis dikirimkan ke grup saat UPT membuat agenda / jadwal Sidang TPP.</small>
+                </div>
+                <span class="badge bg-warning-subtle text-dark border px-2 py-1"><i class="fas fa-bell me-1"></i>Otomatis Saat Sidang Didaftarkan</span>
+            </div>
+
+            <form action="{{ route('wa.schedules.builtin.update') }}" method="POST">
+                @csrf
+                <input type="hidden" name="type" value="sidang_tpp">
+
+                <div class="row g-3 mb-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold mb-0">Target Grup Tujuan</label>
+                    </div>
+                    <div class="col-md-9">
+                        <select name="group_id_tpp" class="form-select form-select-sm">
+                            <option value="">-- Gunakan Grup WhatsApp Utama / Default --</option>
+                            @foreach($groups as $grp)
+                                <option value="{{ $grp->group_id }}" {{ ($waSettings->group_id_tpp ?? '') == $grp->group_id ? 'selected' : '' }}>
+                                    {{ $grp->nama_grup }} ({{ Str::limit($grp->group_id, 25) }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted" style="font-size: 11px;">Pilih grup spesifik untuk Undangan TPP atau biarkan default mengikuti grup utama.</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label small fw-semibold mb-0">Template Pesan Undangan Sidang TPP</label>
+                        <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetTppTemplate()">
+                            <i class="fas fa-undo me-1"></i>Reset ke Default
+                        </button>
+                    </div>
+                    <textarea name="template_sidang_tpp" id="textarea_template_sidang_tpp" class="form-control form-control-sm font-monospace" rows="9" required>{{ $waSettings->template_sidang_tpp ?: $defaultTppTemplate }}</textarea>
+                    
+                    <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
+                        <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-primary"></i>Variabel Tag Tersedia:</span>
+                        <div class="mt-1 d-flex flex-wrap gap-1">
+                            <span class="badge bg-white text-dark border"><code>{nama_upt}</code> Nama UPT</span>
+                            <span class="badge bg-white text-dark border"><code>{hari_tanggal}</code> Hari &amp; Tanggal</span>
+                            <span class="badge bg-white text-dark border"><code>{jam_mulai}</code> Jam Mulai</span>
+                            <span class="badge bg-white text-dark border"><code>{jam_selesai}</code> Jam Selesai</span>
+                            <span class="badge bg-white text-dark border"><code>{agenda}</code> Agenda Sidang</span>
+                            <span class="badge bg-white text-dark border"><code>{link_surat}</code> Link Unduh Surat (PDF)</span>
+                            <span class="badge bg-white text-dark border"><code>{link_daring}</code> Link Daring (Zoom/Meet)</span>
+                            <span class="badge bg-white text-dark border"><code>{meeting_id}</code> Meeting ID</span>
+                            <span class="badge bg-white text-dark border"><code>{passcode}</code> Passcode</span>
+                            <span class="badge bg-white text-dark border"><code>{blok_online}</code> Blok Info Sidang Daring</span>
+                            <span class="badge bg-white text-dark border"><code>{nomor_undangan}</code> No. Surat</span>
+                            <span class="badge bg-white text-dark border"><code>{metode}</code> Metode Sidang</span>
+                            <span class="badge bg-white text-dark border"><code>{total_usulan}</code> Total WBP</span>
+                            <span class="badge bg-white text-dark border"><code>{link_detail}</code> Link Web Sultan Banten</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center pt-2 border-top">
+                    <button type="submit" class="btn btn-primary btn-sm px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i>Simpan Template Sidang TPP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- ================================= BAGIAN 2: JADWAL LAPORAN TERPADU & KUSTOM ================================= -->
@@ -216,7 +289,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2 border-bottom">
         <div>
             <h5 class="fw-bold fs-6 mb-1">
-                <i class="fas fa-calendar-alt text-primary me-2"></i>3. Jadwal Laporan Terpadu Harian &amp; Kustom
+                <i class="fas fa-calendar-alt text-primary me-2"></i>4. Jadwal Laporan Terpadu Harian &amp; Kustom
             </h5>
             <small class="text-muted">Pengiriman laporan komprehensif harian (penghuni, overstaying, integrasi, rincian bebas harian) ke grup dan pimpinan.</small>
         </div>
@@ -620,5 +693,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+function resetTppTemplate() {
+    if (confirm('Kembalikan template Undangan Sidang TPP ke teks bawaan sistem?')) {
+        const defaultText = @json($defaultTppTemplate);
+        document.getElementById('textarea_template_sidang_tpp').value = defaultText;
+    }
+}
 </script>
 @endsection

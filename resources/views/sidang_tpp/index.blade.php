@@ -111,6 +111,11 @@
                     <p class="text-muted small mb-0">Implementasi Bintorwasdal sesuai Surat Edaran Direktur Jenderal Pemasyarakatan No: PAS-38.OT.02.02 Tahun 2026</p>
                 </div>
                 <div class="d-flex gap-2">
+                    @if(auth()->user()->hasAccess('wa_settings') || auth()->user()->hasAccess('wa_schedule'))
+                    <a href="{{ route('wa.schedules') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm" title="Atur Template Pesan WhatsApp Undangan Sidang TPP">
+                        <i class="fab fa-whatsapp me-1"></i>Atur Template WA
+                    </a>
+                    @endif
                     @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id))
                     <a href="{{ route('sidang-tpp.create') }}" class="btn btn-primary btn-sm px-3 shadow-sm" id="btnJadwalkanSidang">
                         <i class="fas fa-plus-circle me-1"></i>Jadwalkan Sidang Baru
@@ -249,6 +254,12 @@
                                 <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-outline-info" title="Detail Lengkap Sidang">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                <form action="{{ route('sidang-tpp.broadcast-wa', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirim notifikasi WhatsApp undangan sidang ini ke Grup?');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-success" title="Kirim Notifikasi Undangan ke Grup WhatsApp">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </button>
+                                </form>
                                 @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id) && auth()->user()->upt_id == $s->upt_id && !in_array($s->status_verifikasi_kanwil, ['sesuai', 'terverifikasi']))
                                 <form action="{{ route('sidang-tpp.destroy', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda sidang ini? Seluruh data usulan dan berkas terkait akan terhapus.');">
                                     @csrf

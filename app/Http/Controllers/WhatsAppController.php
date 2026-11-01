@@ -415,8 +415,9 @@ class WhatsAppController extends Controller
         $groupedVariables = WhatsAppService::getGroupedTemplateVariables();
         $variables = WhatsAppService::getTemplateVariables();
         $defaultTemplate = WhatsAppService::getDefaultTemplate();
+        $defaultTppTemplate = WhatsAppService::getDefaultSidangTppTemplate();
 
-        return view('wa.schedules', compact('schedules', 'waSettings', 'groups', 'variables', 'groupedVariables', 'defaultTemplate'));
+        return view('wa.schedules', compact('schedules', 'waSettings', 'groups', 'variables', 'groupedVariables', 'defaultTemplate', 'defaultTppTemplate'));
     }
 
     public function scheduleIndex()
@@ -458,6 +459,17 @@ class WhatsAppController extends Controller
             ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui aturan monitoring siang');
 
             return back()->with('success', 'Aturan monitoring siang berhasil diperbarui!');
+        }
+
+        if ($type === 'sidang_tpp') {
+            $setting->template_sidang_tpp = $request->input('template_sidang_tpp', '');
+            if ($request->has('group_id_tpp')) {
+                $setting->group_id_tpp = trim($request->input('group_id_tpp'));
+            }
+            $setting->save();
+            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui template notifikasi Undangan Sidang TPP');
+
+            return back()->with('success', 'Template Notifikasi Undangan Sidang TPP berhasil diperbarui!');
         }
 
         return back();

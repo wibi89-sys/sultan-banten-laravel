@@ -294,35 +294,12 @@ class SidangTppController extends Controller
 
             DB::commit();
 
-            // WhatsApp Notification Hook jika link daring diisi
+            // WhatsApp Notification Hook: Kirim Undangan Sidang TPP ke Grup WhatsApp
             try {
-                if (! empty($sidang->link_daring)) {
-                    $pesan = sprintf(
-                        "🏛️ *AGENDA SIDANG TPP PEMASYARAKATAN BANTEN*\n".
-                        "━━━━━━━━━━━━━━━━━━━━━━\n".
-                        "📍 *UPT*: %s\n".
-                        "📅 *Tanggal*: %s (Pukul %s WIB)\n".
-                        "🔗 *Metode*: %s\n".
-                        "💻 *Link Daring*: %s\n".
-                        "🆔 *Meeting ID*: %s | Passcode: %s\n".
-                        "👥 *Jumlah Usulan Warga Binaan*: %d Orang\n".
-                        "📌 *Agenda*: %s\n".
-                        "━━━━━━━━━━━━━━━━━━━━━━\n".
-                        '_SULTAN BANTEN - Sistem Monitoring Terpadu Bintorwasdal_',
-                        $sidang->upt?->nama_upt ?? 'UPT Banten',
-                        $sidang->tanggal_sidang->translatedFormat('l, d F Y'),
-                        substr((string) $sidang->jam_mulai, 0, 5),
-                        $sidang->metode_label,
-                        $sidang->link_daring,
-                        $sidang->meeting_id ?: '-',
-                        $sidang->passcode ?: '-',
-                        $sidang->total_usulan,
-                        $sidang->agenda_label
-                    );
-                    WhatsAppService::sendToDefaultGroup($pesan);
-                }
+                WhatsAppService::notifyUndanganSidangTpp($sidang);
             } catch (\Throwable $e) {
                 // Abaikan jika WA gateway belum terhubung
+                Log::warning('Gagal mengirim WhatsApp Undangan Sidang TPP: '.$e->getMessage());
             }
 
             return redirect()->route('sidang-tpp.index')
@@ -758,6 +735,26 @@ class SidangTppController extends Controller
         $downloadName = "{$type}_{$cleanUpt}_{$sidang->tanggal_sidang->format('Ymd')}.{$extension}";
 
         return response()->download($fullPath, $downloadName);
+    }
+
+    /**
+     * Broadcast / Kirim Ulang Notifikasi Undangan Sidang TPP ke Grup WhatsApp
+     */
+    public function broadcastWa(int $id): RedirectResponse
+    {
+        $this->checkAccess();
+        $sidang = SidangTpp::with('upt')->findOrFail($id);
+
+        try {
+            $result = WhatsAppService::notifyUndanganSidangTpp($sidang);
+            if (! empty($result['success'])) {
+                return back()->with('success', 'Notifikasi Undangan Sidang TPP berhasil dikirim ke Grup WhatsApp!');
+            }
+
+            return back()->with('warning', 'Pesan tidak terkirim: '.($result['message'] ?? 'Gateway WhatsApp tidak merespons'));
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal mengirim WhatsApp: '.$e->getMessage());
+        }
     }
 
     /**

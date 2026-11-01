@@ -44,6 +44,12 @@
             <a href="{{ route('sidang-tpp.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Kembali
             </a>
+            <form action="{{ route('sidang-tpp.broadcast-wa', $sidang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirimkan notifikasi WhatsApp undangan sidang ini ke Grup sekarang?');">
+                @csrf
+                <button type="submit" class="btn btn-outline-success btn-sm shadow-sm" title="Kirim Notifikasi WhatsApp Undangan Sidang TPP ke Grup">
+                    <i class="fab fa-whatsapp me-1"></i>Kirim Undangan ke Grup WA
+                </button>
+            </form>
             @if($sidang->hasLaporanKanwil())
             <a href="{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}" class="btn btn-success btn-sm shadow-sm fw-bold">
                 <i class="fas fa-download me-1"></i>Download Laporan Sidang TPP Kanwil

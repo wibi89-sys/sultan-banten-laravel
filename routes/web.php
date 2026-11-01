@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/preview-excel', [SidangTppController::class, 'previewExcel'])->name('preview-excel');
         Route::get('/download-template', [SidangTppController::class, 'downloadTemplate'])->name('download-template');
         Route::get('/{id}', [SidangTppController::class, 'show'])->whereNumber('id')->name('show');
+        Route::post('/{id}/broadcast-wa', [SidangTppController::class, 'broadcastWa'])->whereNumber('id')->name('broadcast-wa');
         Route::delete('/{id}', [SidangTppController::class, 'destroy'])->whereNumber('id')->name('destroy');
         Route::get('/{id}/download/{type}', [SidangTppController::class, 'downloadFile'])->whereNumber('id')->name('download-file');
 

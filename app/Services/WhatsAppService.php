@@ -7,6 +7,7 @@ use App\Models\DataIntegrasi;
 use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
 use App\Models\MutasiNarapidana;
+use App\Models\SidangTpp;
 use App\Models\Upt;
 use App\Models\User;
 use App\Models\WaGroup;
@@ -1161,6 +1162,110 @@ class WhatsAppService
 
             return self::send($defaultGroup->group_id, $msg);
         } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public static function getDefaultSidangTppTemplate(): string
+    {
+        return "🏛️ *UNDANGAN SIDANG TPP PEMASYARAKATAN*\n".
+            "*{nama_upt}*\n\n".
+            "Pemberitahuan pelaksanaan Sidang TPP:\n".
+            "🗓️ *Waktu*: {hari_tanggal}\n".
+            "⏰ *Pukul*: {jam_mulai} WIB s.d. Selesai\n".
+            "📋 *Agenda*: {agenda}\n\n".
+            "📄 *Link Surat Undangan (PDF)*:\n".
+            "👉 {link_surat}\n\n".
+            "{blok_online}\n\n".
+            "━━━━━━━━━━━━━━━━━━━━━━\n".
+            '_SULTAN BANTEN - Sistem Monitoring Bintorwasdal_';
+    }
+
+    public static function sendToDefaultGroup(string $message, ?string $preferredGroupId = null): array
+    {
+        try {
+            $groupId = $preferredGroupId;
+
+            if (empty($groupId) && Schema::hasTable('wa_groups')) {
+                $group = WaGroup::where('aktif', true)->where('is_default', true)->first()
+                    ?? WaGroup::where('aktif', true)->first();
+                $groupId = $group?->group_id;
+            }
+
+            if (empty($groupId)) {
+                $setting = WaSetting::getFirst();
+                $groupId = $setting?->group_id;
+            }
+
+            if (empty($groupId)) {
+                return ['success' => false, 'message' => 'Grup WhatsApp aktif tidak ditemukan'];
+            }
+
+            return self::send($groupId, $message);
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public static function notifyUndanganSidangTpp(SidangTpp $sidang): array
+    {
+        try {
+            $setting = WaSetting::getFirst();
+            $template = (! empty($setting?->template_sidang_tpp))
+                ? $setting->template_sidang_tpp
+                : self::getDefaultSidangTppTemplate();
+
+            $namaUpt = $sidang->upt?->nama_upt ?? 'UPT Pemasyarakatan';
+            $hariTanggal = $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-';
+            $jamMulai = substr((string) $sidang->jam_mulai, 0, 5);
+            $jamSelesai = ! empty($sidang->jam_selesai) ? substr((string) $sidang->jam_selesai, 0, 5) : 'Selesai';
+            $agenda = $sidang->agenda_sidang ?: ($sidang->agenda_deskripsi ?: ($sidang->agenda_kategori ?? 'Sidang TPP'));
+
+            $linkSurat = ! empty($sidang->file_undangan)
+                ? url('/sidang-tpp/'.$sidang->id.'/download/undangan')
+                : '(Menyusul / Belum diunggah)';
+
+            $linkDaring = $sidang->link_daring ?: '-';
+            $meetingId = $sidang->meeting_id ?: '-';
+            $passcode = $sidang->passcode ?: '-';
+
+            // Susun blok online / tatap muka
+            if (! empty($sidang->link_daring)) {
+                $blokOnline = "💻 *Link Sidang Online*:\n👉 {$sidang->link_daring}";
+                if (! empty($sidang->meeting_id) || ! empty($sidang->passcode)) {
+                    $blokOnline .= "\n(Meeting ID: {$meetingId} | Passcode: {$passcode})";
+                }
+            } else {
+                $blokOnline = "📍 *Metode*: Tatap Muka di Ruang Sidang TPP {$namaUpt}";
+            }
+
+            $replacements = [
+                '{nama_upt}' => $namaUpt,
+                '{hari_tanggal}' => $hariTanggal,
+                '{tanggal_sidang}' => $sidang->tanggal_sidang ? $sidang->tanggal_sidang->format('d/m/Y') : '-',
+                '{tanggal_surat}' => $sidang->tanggal_surat ? $sidang->tanggal_surat->format('d/m/Y') : '-',
+                '{nomor_undangan}' => $sidang->nomor_undangan,
+                '{jam_mulai}' => $jamMulai,
+                '{jam_selesai}' => $jamSelesai,
+                '{agenda}' => $agenda,
+                '{metode}' => $sidang->metode_label,
+                '{total_usulan}' => (string) ($sidang->total_usulan ?? 0),
+                '{link_surat}' => $linkSurat,
+                '{link_daring}' => $linkDaring,
+                '{meeting_id}' => $meetingId,
+                '{passcode}' => $passcode,
+                '{link_detail}' => url('/sidang-tpp/'.$sidang->id),
+                '{blok_online}' => $blokOnline,
+            ];
+
+            $message = str_replace(array_keys($replacements), array_values($replacements), $template);
+
+            $targetGroupId = $setting?->group_id_tpp ?: null;
+
+            return self::sendToDefaultGroup($message, $targetGroupId);
+        } catch (\Throwable $e) {
+            Log::error('Gagal mengirim WhatsApp Undangan Sidang TPP: '.$e->getMessage());
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

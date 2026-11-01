@@ -23,6 +23,8 @@ class WaSetting extends Model
         'daftar_salam',
         'template_pagi',
         'template_siang',
+        'template_sidang_tpp',
+        'group_id_tpp',
     ];
 
     protected function casts(): array
