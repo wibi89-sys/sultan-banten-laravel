@@ -409,6 +409,7 @@ class WhatsAppController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
+        WaSetting::ensureTppColumnsExist();
         $schedules = WaScheduledReport::orderByDesc('id')->get();
         $waSettings = WaSetting::getFirst();
         $groups = $this->getActiveGroups();
@@ -462,8 +463,12 @@ class WhatsAppController extends Controller
         }
 
         if ($type === 'sidang_tpp') {
-            $setting->template_sidang_tpp = $request->input('template_sidang_tpp', '');
-            if ($request->has('group_id_tpp')) {
+            WaSetting::ensureTppColumnsExist();
+
+            if (Schema::hasColumn('wa_settings', 'template_sidang_tpp')) {
+                $setting->template_sidang_tpp = $request->input('template_sidang_tpp', '');
+            }
+            if (Schema::hasColumn('wa_settings', 'group_id_tpp') && $request->has('group_id_tpp')) {
                 $setting->group_id_tpp = trim($request->input('group_id_tpp'));
             }
             $setting->save();
