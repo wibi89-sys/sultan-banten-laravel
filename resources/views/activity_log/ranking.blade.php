@@ -1001,12 +1001,12 @@
 <div class="modal fade" id="modalDetailHarian" tabindex="-1" aria-labelledby="modalDetailHarianLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-primary text-white py-3">
                 <div>
-                    <h5 class="modal-title fw-bold" id="modalDetailHarianLabel">
-                        <i class="fas fa-calendar-alt me-2"></i>Rincian Riwayat Harian UPT
+                    <h5 class="modal-title fw-bold d-flex align-items-center" id="modalDetailHarianLabel">
+                        <i class="fas fa-calendar-alt text-warning me-2 fs-5"></i>Rincian Riwayat Harian UPT
                     </h5>
-                    <small id="modalSubTitle" class="text-white-50"></small>
+                    <div id="modalSubTitle" class="text-white fw-medium small mt-1" style="font-size: 13px; color: #ffffff !important;"></div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1080,12 +1080,12 @@
 <div class="modal fade" id="modalSelisihDates" tabindex="-1" aria-labelledby="modalSelisihDatesLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-danger text-white py-3">
                 <div>
-                    <h5 class="modal-title fw-bold" id="modalSelisihDatesLabel">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Daftar Tanggal Selisih Kroscek Tahanan
+                    <h5 class="modal-title fw-bold d-flex align-items-center" id="modalSelisihDatesLabel">
+                        <i class="fas fa-exclamation-triangle text-warning me-2 fs-5"></i>Daftar Tanggal Selisih Kroscek Tahanan
                     </h5>
-                    <small id="modalSelisihUptName" class="text-white-50"></small>
+                    <div id="modalSelisihUptName" class="text-white fw-medium small mt-1" style="font-size: 13px; color: #ffffff !important;"></div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1128,12 +1128,12 @@
 <div class="modal fade" id="modalOpsiCetakPdf" tabindex="-1" aria-labelledby="modalOpsiCetakPdfLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-danger text-white py-3">
                 <div>
-                    <h5 class="modal-title fw-bold" id="modalOpsiCetakPdfLabel">
-                        <i class="fas fa-file-pdf me-2"></i>Pengaturan Cetak PDF Lampiran Bukti
+                    <h5 class="modal-title fw-bold d-flex align-items-center" id="modalOpsiCetakPdfLabel">
+                        <i class="fas fa-file-pdf text-warning me-2 fs-5"></i>Pengaturan Cetak PDF Lampiran Bukti
                     </h5>
-                    <small class="text-white-50">Atur kelengkapan Tanda Tangan, Stempel dinas, dan QR Code validasi dokumen (Mode Kanwil)</small>
+                    <div class="text-white fw-medium small mt-1" style="font-size: 13px; opacity: 0.95;">Atur kelengkapan Tanda Tangan, Stempel dinas, dan QR Code validasi dokumen (Mode Kanwil)</div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1260,7 +1260,9 @@
 
     function showSelisihDatesModal(namaUpt, selisihDates) {
         const count = selisihDates ? selisihDates.length : 0;
-        document.getElementById('modalSelisihUptName').innerHTML = `UPT: <strong>${namaUpt}</strong> &bull; Ditemukan <strong>${count} hari</strong> terdapat selisih`;
+        document.getElementById('modalSelisihUptName').innerHTML = 
+            `<span class="badge bg-white text-danger fw-bold px-2 py-1 me-2 shadow-xs" style="font-size: 11.5px;">${namaUpt}</span>` +
+            `<span class="text-white fw-semibold">Ditemukan <strong class="text-warning">${count} hari</strong> terdapat selisih</span>`;
         const tbody = document.getElementById('modalSelisihTableBody');
         tbody.innerHTML = '';
 
@@ -1326,7 +1328,13 @@
     }
 
     function showDetailModal(upt) {
-        document.getElementById('modalSubTitle').textContent = upt.nama_upt + ' (Total: ' + Number(upt.total_points).toLocaleString() + ' Poin | Kepatuhan: ' + upt.persentase_kepatuhan + '%)';
+        const uptName = upt.nama_upt || '-';
+        const totalPoin = Number(upt.total_points || 0).toLocaleString();
+        const kepatuhan = upt.persentase_kepatuhan || 0;
+
+        document.getElementById('modalSubTitle').innerHTML = 
+            `<span class="badge bg-warning text-dark fw-bold px-2 py-1 me-2 shadow-xs" style="font-size: 11.5px; letter-spacing: 0.3px;">${uptName}</span>` +
+            `<span class="text-white fw-semibold" style="font-size: 13px;">Total: <strong class="text-warning">${totalPoin} Poin</strong> &bull; Kepatuhan: <strong class="text-white">${kepatuhan}%</strong></span>`;
 
         // Summary Mini Cards
         const summaryHtml = `

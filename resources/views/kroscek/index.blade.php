@@ -1543,12 +1543,12 @@
 <div class="modal fade" id="modalOpsiCetakPdf" tabindex="-1" aria-labelledby="modalOpsiCetakPdfLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-danger text-white py-3">
                 <div>
-                    <h5 class="modal-title fw-bold" id="modalOpsiCetakPdfLabel">
-                        <i class="fas fa-file-pdf me-2"></i>Pengaturan Cetak PDF Kroscek Harian
+                    <h5 class="modal-title fw-bold d-flex align-items-center" id="modalOpsiCetakPdfLabel">
+                        <i class="fas fa-file-pdf text-warning me-2 fs-5"></i>Pengaturan Cetak PDF Kroscek Harian
                     </h5>
-                    <small class="text-white-50">Atur kelengkapan Tanda Tangan, Stempel dinas, dan QR Code validasi dokumen (Mode Kanwil)</small>
+                    <div class="text-white fw-medium small mt-1" style="font-size: 13px; opacity: 0.95;">Atur kelengkapan Tanda Tangan, Stempel dinas, dan QR Code validasi dokumen (Mode Kanwil)</div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
