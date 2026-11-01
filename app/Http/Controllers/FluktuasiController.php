@@ -326,7 +326,7 @@ class FluktuasiController extends Controller
                 $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$napiBaru} Narapidana Baru Masuk (Penerimaan / Mutasi Masuk)</span>";
             }
 
-            // 6. Narapidana Bebas Resmi (Faktor Pengurang dari hari kemarin)
+            // 6. Narapidana Bebas (Faktor Pengurang dari hari kemarin)
             if ($bebasNapi > 0) {
                 $rincianBebas = [];
                 if ($pb > 0) {

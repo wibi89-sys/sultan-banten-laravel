@@ -371,9 +371,10 @@
                         </td>
                         <td>{{ number_format($summary['total_bebas']) }} Orang</td>
                         <td colspan="2" class="text-start small fw-normal">
-                            Akumulasi: {{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Baru &bull; 
-                            {{ number_format($summary['estimasi_alih_status']) }} Alih Status Vonis &bull; 
-                            {{ number_format($summary['total_bebas']) }} Bebas Resmi
+                            <strong>Akumulasi Wilayah:</strong> 
+                            {{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; 
+                            {{ number_format($summary['estimasi_alih_status']) }} Vonis Inkrah &bull; 
+                            {{ number_format($summary['total_bebas']) }} WBP Bebas
                         </td>
                     </tr>
                 </tfoot>
@@ -648,7 +649,7 @@ function bukaModalDetailFluktuasi(row) {
                     <div>
                         <strong>Sebagian Pengurangan Belum Terketerangan:</strong><br>
                         Narapidana berkurang <strong>-${selisihNapi} orang</strong>${rincianBerkurang}. 
-                        Tercatat <strong>${row.total_bebas} orang bebas resmi</strong>, namun masih terdapat selisih <strong>-${gap} orang</strong> di luar laporan bebas harian (potensi mutasi keluar).
+                        Tercatat <strong>${row.total_bebas} orang di Laporan Bebas Harian</strong>, namun masih terdapat selisih <strong>-${gap} orang</strong> di luar laporan bebas harian (potensi mutasi keluar).
                     </div>
                 </div>
             `;
