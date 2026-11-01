@@ -23,7 +23,7 @@ class FluktuasiController extends Controller
         $tanggalPembanding = $request->query('tanggal_pembanding', $defaultKemarin);
 
         // Filter UPT jika user adalah operator
-        $userUptFilter = (! $user->isAdmin() && ! empty($user->upt_id)) ? (int) $user->upt_id : 0;
+        $userUptFilter = ($user && ! $user->isAdmin() && ! empty($user->upt_id)) ? (int) $user->upt_id : 0;
         $filterUpt = $userUptFilter ?: (int) $request->query('upt_id', 0);
 
         // Ambil Daftar UPT
@@ -88,7 +88,15 @@ class FluktuasiController extends Controller
             ->get()
             ->keyBy('upt_id');
 
-        // 5. Data Bebas Harian pada Tanggal Acuan ($tanggal)
+        // 5. Data Bebas Harian Faktor Pengurang Stok
+        // Perubahan stok antara $tanggalPembanding (H-1) dan $tanggal (H) disebabkan oleh peristiwa bebas
+        // yang terjadi pada hari kemarin ($tanggalPembanding) atau rentang sebelum apel pagi $tanggal
+        $tglBebasMulai = $tanggalPembanding;
+        $tglBebasSelesai = date('Y-m-d', strtotime('-1 day', strtotime($tanggal)));
+        if ($tglBebasSelesai < $tglBebasMulai) {
+            $tglBebasSelesai = $tglBebasMulai;
+        }
+
         $bebasCurrent = DB::table('data_bebas_harian')
             ->select(
                 'upt_id',
@@ -101,7 +109,7 @@ class FluktuasiController extends Controller
                 DB::raw('SUM(lainnya) as lainnya'),
                 DB::raw('SUM(bebas_murni + pb + cb + cmb + asimilasi + bdh + lainnya) as total_bebas')
             )
-            ->where('tanggal', $tanggal)
+            ->whereBetween('tanggal', [$tglBebasMulai, $tglBebasSelesai])
             ->whereIn('upt_id', $uptIds)
             ->groupBy('upt_id')
             ->get()
@@ -197,10 +205,32 @@ class FluktuasiController extends Controller
             $alihStatus = 0;
             if ($deltaTahanan < 0 && $deltaNapi > 0) {
                 $alihStatus = min(abs($deltaTahanan), $deltaNapi);
-                $analisisList[] = "<span class=\"text-primary fw-semibold\"><i class=\"fas fa-sync-alt me-1\"></i>{$alihStatus} Tahanan Vonis Inkrah (Alih Status ke Narapidana)</span>";
+                $analisisList[] = "<span class=\"text-primary fw-semibold\"><i class=\"fas fa-gavel me-1\"></i>{$alihStatus} Tahanan Vonis Inkrah (Alih Status &rarr; Narapidana)</span>";
             }
 
-            // 3. Tahanan Baru Masuk (Penerimaan A.I/A.II/A.III)
+            // 3. Pergerakan Antar-Tingkat Penahanan / Proses Sidang (A.I s/d A.V)
+            // a. Polisi (A.I) -> Jaksa (A.II) [Tahap II]
+            if ($deltaAi < 0 && $deltaAii > 0) {
+                $tahap2 = min(abs($deltaAi), $deltaAii);
+                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-share me-1\"></i>{$tahap2} Tahanan Tahap II (Polisi A.I &rarr; Jaksa A.II)</span>";
+            }
+            // b. Jaksa (A.II) -> Sidang Pengadilan Negeri (A.III)
+            if ($deltaAii < 0 && $deltaAiii > 0) {
+                $pelimpahanPn = min(abs($deltaAii), $deltaAiii);
+                $analisisList[] = "<span class=\"text-info fw-semibold\"><i class=\"fas fa-balance-scale-right me-1\"></i>{$pelimpahanPn} Tahanan Masuk Sidang (Jaksa A.II &rarr; PN A.III)</span>";
+            }
+            // c. PN (A.III) -> Pengadilan Tinggi (A.IV) [Banding]
+            if ($deltaAiii < 0 && $deltaAiv > 0) {
+                $banding = min(abs($deltaAiii), $deltaAiv);
+                $analisisList[] = "<span class=\"text-muted fw-semibold\"><i class=\"fas fa-landmark me-1\"></i>{$banding} Tahanan Upaya Hukum Banding (PN A.III &rarr; PT A.IV)</span>";
+            }
+            // d. PT (A.IV) -> Mahkamah Agung (A.V) [Kasasi]
+            if ($deltaAiv < 0 && $deltaAv > 0) {
+                $kasasi = min(abs($deltaAiv), $deltaAv);
+                $analisisList[] = "<span class=\"text-muted fw-semibold\"><i class=\"fas fa-university me-1\"></i>{$kasasi} Tahanan Upaya Hukum Kasasi (PT A.IV &rarr; MA A.V)</span>";
+            }
+
+            // 4. Tahanan Baru Masuk (Penerimaan A.I / A.II / A.III)
             $tahananBaruMasuk = 0;
             if ($deltaTahanan > 0) {
                 $tahananBaruMasuk = $deltaTahanan;
@@ -208,17 +238,29 @@ class FluktuasiController extends Controller
                 if ($deltaAi > 0) {
                     $tahapMasuk[] = "+{$deltaAi} Polisi (A.I)";
                 }
-                if ($deltaAii > 0) {
-                    $tahapMasuk[] = "+{$deltaAii} Jaksa (A.II)";
+                if ($deltaAii > 0 && ($deltaAi >= 0 || $deltaAii > abs($deltaAi))) {
+                    $netAii = ($deltaAi < 0) ? ($deltaAii - abs($deltaAi)) : $deltaAii;
+                    if ($netAii > 0) {
+                        $tahapMasuk[] = "+{$netAii} Jaksa (A.II)";
+                    }
                 }
-                if ($deltaAiii > 0) {
-                    $tahapMasuk[] = "+{$deltaAiii} PN (A.III)";
+                if ($deltaAiii > 0 && ($deltaAii >= 0 || $deltaAiii > abs($deltaAii))) {
+                    $netAiii = ($deltaAii < 0) ? ($deltaAiii - abs($deltaAii)) : $deltaAiii;
+                    if ($netAiii > 0) {
+                        $tahapMasuk[] = "+{$netAiii} PN (A.III)";
+                    }
                 }
                 $rincianMasuk = ! empty($tahapMasuk) ? ' ('.implode(', ', $tahapMasuk).')' : '';
                 $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$deltaTahanan} Tahanan Baru Masuk{$rincianMasuk}</span>";
             }
 
-            // 4. Narapidana Bebas Resmi
+            // 5. Narapidana Baru Masuk (Penerimaan / Mutasi Masuk di luar alih status)
+            if ($deltaNapi > 0 && $deltaNapi > $alihStatus) {
+                $napiBaru = $deltaNapi - $alihStatus;
+                $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$napiBaru} Narapidana Baru Masuk (Penerimaan / Mutasi Masuk)</span>";
+            }
+
+            // 6. Narapidana Bebas Resmi (Faktor Pengurang dari hari kemarin)
             if ($bebasNapi > 0) {
                 $rincianBebas = [];
                 if ($pb > 0) {
@@ -240,10 +282,19 @@ class FluktuasiController extends Controller
                 $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-door-open me-1\"></i>-{$bebasNapi} Narapidana Bebas{$teksBebas}</span>";
             }
 
-            // 5. Jika total penghuni tetap sama
+            // 7. Narapidana Berkurang (Jika pengurangan Napi lebih besar dari jumlah yang bebas, misal mutasi keluar)
+            if ($deltaNapi < 0) {
+                $totalBerkurang = abs($deltaNapi);
+                if ($totalBerkurang > $bebasNapi) {
+                    $mutasiKeluar = $totalBerkurang - $bebasNapi;
+                    $analisisList[] = "<span class=\"text-secondary small\"><i class=\"fas fa-sign-out-alt me-1\"></i>-{$mutasiKeluar} Narapidana (Mutasi Keluar / Pengurangan Lainnya)</span>";
+                }
+            }
+
+            // 8. Jika total penghuni tetap sama atau nihil perubahan
             if ($deltaPenghuni === 0 && $deltaTahanan === 0 && $deltaNapi === 0) {
                 if ($totalBebas > 0) {
-                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalBebas} Bebas tapi Stok Penghuni Tetap Sama (Potensi Belum Terpotong di Stok)</span>";
+                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalBebas} Bebas kemarin tapi Stok Penghuni Tetap Sama (Potensi Belum Terpotong di Stok)</span>";
                 } else {
                     $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
                 }
@@ -321,6 +372,8 @@ class FluktuasiController extends Controller
             'summary',
             'tanggal',
             'tanggalPembanding',
+            'tglBebasMulai',
+            'tglBebasSelesai',
             'filterUpt',
             'userUptFilter',
             'allUptList',

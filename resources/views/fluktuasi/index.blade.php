@@ -183,7 +183,7 @@
             <div class="card stat-kpi-card bg-success text-white p-3">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="small fw-semibold text-white-50">Total Bebas Hari Ini</div>
+                        <div class="small fw-semibold text-white-50">Total Bebas (Pengurang)</div>
                         <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_bebas']) }} <span class="fs-6 fw-normal">Orang</span></div>
                     </div>
                     @if($summary['total_bdh'] > 0)
@@ -203,9 +203,9 @@
         <i class="fas fa-info-circle text-primary fs-3 flex-shrink-0"></i>
         <div class="small">
             <strong>Panduan Membaca Dinamika Tambah Kurang:</strong> 
-            Perubahan Tahanan dan Narapidana tidak hanya dipengaruhi oleh warga binaan baru masuk atau bebas. 
-            Ketika Tahanan menerima vonis hakim yang telah berkekuatan hukum tetap (<em>inkrah</em>), statusnya beralih menjadi <strong>Narapidana</strong> (Tahanan berkurang, Narapidana bertambah, namun Total Fisik tetap sama).
-            Tahanan juga dapat bebas apabila masa penahanannya habis demi hukum (<strong>Bebas Demi Hukum / BDH</strong>).
+            Perubahan stok fisik penghuni hari ini (apel pagi) dipengaruhi oleh pergerakan warga binaan pada hari kemarin (pembebasan, alih status, dan penerimaan baru). 
+            Ketika Tahanan menerima vonis hakim yang telah berkekuatan hukum tetap (<em>inkrah</em>), statusnya beralih menjadi <strong>Narapidana</strong> (Tahanan berkurang, Narapidana bertambah, Total Fisik tetap).
+            Perpindahan antar-tingkat penahanan (A.I &rarr; A.II &rarr; A.III dst.) juga dipantau sebagai dinamika proses peradilan.
         </div>
     </div>
 
@@ -226,7 +226,12 @@
                         <th colspan="3" class="bg-primary bg-opacity-10 text-primary">1. Tahanan (Overstaying A1-A5)</th>
                         <th colspan="3" class="bg-info bg-opacity-10 text-info">2. Narapidana</th>
                         <th colspan="3" class="bg-dark bg-opacity-10 text-dark">3. Total Penghuni</th>
-                        <th rowspan="2" style="min-width: 130px;">4. Bebas Harian (Pengurang)</th>
+                        <th rowspan="2" style="min-width: 140px;">
+                            4. Bebas Harian (Pengurang)
+                            <div class="small text-muted fw-normal" style="font-size: 10px; text-transform: none;">
+                                Periode: {{ \Carbon\Carbon::parse($tglBebasMulai)->format('d/m') }}@if($tglBebasSelesai != $tglBebasMulai)-{{ \Carbon\Carbon::parse($tglBebasSelesai)->format('d/m') }}@endif
+                            </div>
+                        </th>
                         <th rowspan="2" style="min-width: 250px;" class="text-start">5. Analisis Dinamika &amp; Penyebab</th>
                         <th rowspan="2" style="width: 80px;">Rincian</th>
                     </tr>
@@ -467,6 +472,9 @@
 
                     <!-- Tab 2: Rincian Bebas Harian -->
                     <div class="tab-pane fade" id="tab-bebas" role="tabpanel">
+                        <div class="alert alert-light border small text-muted py-2 px-3 mb-3">
+                            <i class="fas fa-info-circle text-primary me-1"></i>Peristiwa pembebasan pada <strong>{{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}@if($tglBebasSelesai != $tglBebasMulai) s/d {{ \Carbon\Carbon::parse($tglBebasSelesai)->translatedFormat('d M Y') }}@endif</strong> yang menjadi faktor pengurang stok penghuni.
+                        </div>
                         <div class="row g-2 text-center" id="mdf_bebas_container">
                             <!-- Populated dynamically via JS -->
                         </div>
