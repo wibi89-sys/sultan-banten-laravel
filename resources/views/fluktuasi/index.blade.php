@@ -374,7 +374,7 @@
                             <strong>Akumulasi Wilayah:</strong> 
                             {{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; 
                             {{ number_format($summary['estimasi_alih_status']) }} Vonis Inkrah &bull; 
-                            {{ number_format($summary['total_bebas']) }} WBP Bebas
+                            {{ number_format($summary['total_bebas']) }} Bebas
                         </td>
                     </tr>
                 </tfoot>
