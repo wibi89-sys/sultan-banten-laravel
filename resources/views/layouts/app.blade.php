@@ -334,6 +334,10 @@
                 <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
             
+            <a href="{{ route('fluktuasi.index') }}" class="{{ request()->routeIs('fluktuasi.*') ? 'active' : '' }}" title="Dinamika &amp; Fluktuasi Tambah Kurang Penghuni">
+                <i class="fas fa-exchange-alt"></i><span>Fluktuasi Penghuni</span>
+            </a>
+            
             @if($user->hasAccess('penghuni') || $user->hasAccess('overstaying') || $user->hasAccess('integrasi') || $user->hasAccess('bebas_harian'))
             <div class="menu-parent {{ request()->routeIs('penghuni.*') || request()->routeIs('overstaying.*') || request()->routeIs('integrasi.*') || request()->routeIs('bebas-harian.*') || request()->routeIs('kroscek.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuInputData">
                 <i class="fas fa-edit"></i>

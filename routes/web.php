@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BebasHarianController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FluktuasiController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\IntegrasiController;
 use App\Http\Controllers\KroscekController;
@@ -58,6 +59,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes (Must be logged in)
 Route::middleware('auth')->group(function () {
+    // Modul Dinamika / Fluktuasi Tambah Kurang Penghuni (Berdiri Sendiri)
+    Route::get('/fluktuasi', [FluktuasiController::class, 'index'])->name('fluktuasi.index');
+
     // Kalkulator Telram PAS (Terbuka untuk semua user)
     Route::get('/telram', [TelramController::class, 'index'])->name('telram.index');
     Route::post('/telram/calculate', [TelramController::class, 'calculate'])->name('telram.calculate');
