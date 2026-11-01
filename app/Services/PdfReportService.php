@@ -26,7 +26,7 @@ class PdfReportService
             'penghuni' => 'LAPORAN DATA PENGHUNI & OVERKAPASITAS',
             'overstaying' => 'LAPORAN OVERSTAYING TAHANAN',
             'integrasi' => 'LAPORAN DATA INTEGRASI',
-            'bebas_harian' => 'LAPORAN PENGELUARAN / BEBAS HARIAN',
+            'bebas_harian' => 'LAPORAN PENGELUARAN (BEBAS & MUTASI)',
         ];
 
         if (! array_key_exists($reportType, $reportTitles)) {
@@ -88,7 +88,7 @@ class PdfReportService
             'penghuni' => 'Data Penghuni',
             'overstaying' => 'Overstaying',
             'integrasi' => 'Integrasi',
-            'bebas_harian' => 'Bebas Harian',
+            'bebas_harian' => 'Bebas & Mutasi',
         ];
         $namaLapShort = $shortReportNames[$reportType] ?? ($reportTitles[$reportType] ?? 'Laporan');
         $satkerText = $uptModel ? $uptModel->nama_upt : 'Kanwil Banten (Multi UPT)';
@@ -362,7 +362,7 @@ class PdfReportService
             }
             $pdf->Ln(2);
 
-            $widths = [8, 42, 12, 12, 12, 12, 12, 12, 14, 14, 40];
+            $widths = [7, 38, 10, 10, 10, 10, 10, 10, 11, 10, 12, 52];
             $col2Title = $uptId ? 'HARI / TANGGAL' : 'NAMA UPT';
 
             $renderTableHeader = function () use ($pdf, $widths, $col2Title) {
@@ -378,9 +378,10 @@ class PdfReportService
                 $pdf->Cell($widths[5], 7, 'CMB', 1, 0, 'C', true);
                 $pdf->Cell($widths[6], 7, 'ASIM', 1, 0, 'C', true);
                 $pdf->Cell($widths[7], 7, 'BDH', 1, 0, 'C', true);
-                $pdf->Cell($widths[8], 7, 'LAINNYA', 1, 0, 'C', true);
-                $pdf->Cell($widths[9], 7, 'TOTAL', 1, 0, 'C', true);
-                $pdf->Cell($widths[10], 7, 'KETERANGAN', 1, 1, 'C', true);
+                $pdf->Cell($widths[8], 7, 'MUTASI', 1, 0, 'C', true);
+                $pdf->Cell($widths[9], 7, 'LAIN', 1, 0, 'C', true);
+                $pdf->Cell($widths[10], 7, 'TOTAL', 1, 0, 'C', true);
+                $pdf->Cell($widths[11], 7, 'KETERANGAN', 1, 1, 'C', true);
             };
 
             $renderTableHeader();
@@ -402,8 +403,10 @@ class PdfReportService
                 DB::raw('SUM(dbh.cmb) as total_cmb'),
                 DB::raw('SUM(dbh.asimilasi) as total_asimilasi'),
                 DB::raw('SUM(dbh.bdh) as total_bdh'),
+                DB::raw('SUM(dbh.mutasi_keluar) as total_mutasi'),
                 DB::raw('SUM(dbh.lainnya) as total_lainnya'),
-                DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya) as total_bebas'),
+                DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.mutasi_keluar + dbh.lainnya) as total_pengurang'),
+                DB::raw('GROUP_CONCAT(DISTINCT NULLIF(CASE WHEN dbh.mutasi_keluar > 0 THEN CONCAT("Mutasi: ", dbh.mutasi_keluar, " org (", IFNULL(NULLIF(dbh.ket_mutasi, ""), dbh.klasifikasi_pidana), ")") ELSE NULL END, "") SEPARATOR "; ") as rincian_mutasi'),
                 DB::raw('GROUP_CONCAT(DISTINCT NULLIF(dbh.ket_lainnya, "") SEPARATOR "; ") as rincian_lainnya'),
                 DB::raw('MAX(dbh.keterangan) as keterangan')
             )->groupBy('u.id', 'u.nama_upt', 'dbh.tanggal')->orderBy('u.nama_upt')->orderBy('dbh.tanggal')->get();
@@ -415,6 +418,7 @@ class PdfReportService
             $tCmb = 0;
             $tAsim = 0;
             $tBdh = 0;
+            $tMutasi = 0;
             $tLain = 0;
             $gTotal = 0;
             $pdf->SetFont('helvetica', '', 7.5);
@@ -426,8 +430,9 @@ class PdfReportService
                 $cmb = (int) $r->total_cmb;
                 $asim = (int) $r->total_asimilasi;
                 $bdh = (int) $r->total_bdh;
+                $mutasi = (int) $r->total_mutasi;
                 $lain = (int) $r->total_lainnya;
-                $sub = (int) $r->total_bebas;
+                $sub = (int) $r->total_pengurang;
 
                 $tBm += $bm;
                 $tPb += $pb;
@@ -435,17 +440,20 @@ class PdfReportService
                 $tCmb += $cmb;
                 $tAsim += $asim;
                 $tBdh += $bdh;
+                $tMutasi += $mutasi;
                 $tLain += $lain;
                 $gTotal += $sub;
 
                 $textUPT = $uptId ? formatIndonesianDate($r->tanggal, true) : $r->nama_upt;
-                $textKet = trim(($r->keterangan ?? '').(! empty($r->rincian_lainnya) ? ' ('.$r->rincian_lainnya.')' : ''));
-                if (empty($textKet)) {
-                    $textKet = '-';
-                }
+                $rincianArr = array_filter([
+                    $r->keterangan,
+                    $r->rincian_mutasi,
+                    $r->rincian_lainnya,
+                ]);
+                $textKet = ! empty($rincianArr) ? implode('; ', $rincianArr) : '-';
 
                 $nUPT = $pdf->getNumLines($textUPT, $widths[1]);
-                $nKet = $pdf->getNumLines($textKet, $widths[10]);
+                $nKet = $pdf->getNumLines($textKet, $widths[11]);
                 $rowH = max(6, max($nUPT, $nKet) * 4.5);
 
                 if ($pdf->GetY() + $rowH > 265) {
@@ -464,13 +472,14 @@ class PdfReportService
                 $pdf->Cell($widths[5], $rowH, $cmb, 1, 0, 'C');
                 $pdf->Cell($widths[6], $rowH, $asim, 1, 0, 'C');
                 $pdf->Cell($widths[7], $rowH, $bdh, 1, 0, 'C');
-                $pdf->Cell($widths[8], $rowH, $lain, 1, 0, 'C');
+                $pdf->Cell($widths[8], $rowH, $mutasi, 1, 0, 'C');
+                $pdf->Cell($widths[9], $rowH, $lain, 1, 0, 'C');
                 $pdf->SetFont('helvetica', 'B', 7.5);
-                $pdf->Cell($widths[9], $rowH, $sub, 1, 0, 'C');
+                $pdf->Cell($widths[10], $rowH, $sub, 1, 0, 'C');
                 $pdf->SetFont('helvetica', '', 7.5);
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
-                $pdf->MultiCell($widths[10], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
+                $pdf->MultiCell($widths[11], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
             }
 
             if (! $uptId) {
@@ -488,9 +497,10 @@ class PdfReportService
                 $pdf->Cell($widths[5], 6, $tCmb, 1, 0, 'C', true);
                 $pdf->Cell($widths[6], 6, $tAsim, 1, 0, 'C', true);
                 $pdf->Cell($widths[7], 6, $tBdh, 1, 0, 'C', true);
-                $pdf->Cell($widths[8], 6, $tLain, 1, 0, 'C', true);
-                $pdf->Cell($widths[9], 6, $gTotal, 1, 0, 'C', true);
-                $pdf->Cell($widths[10], 6, '', 1, 1, 'C', true);
+                $pdf->Cell($widths[8], 6, $tMutasi, 1, 0, 'C', true);
+                $pdf->Cell($widths[9], 6, $tLain, 1, 0, 'C', true);
+                $pdf->Cell($widths[10], 6, $gTotal, 1, 0, 'C', true);
+                $pdf->Cell($widths[11], 6, '', 1, 1, 'C', true);
             }
 
             self::renderSignature($pdf, $instansi, $signData);

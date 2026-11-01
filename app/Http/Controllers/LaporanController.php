@@ -17,7 +17,7 @@ class LaporanController extends Controller
         'penghuni' => 'Laporan Data Penghuni',
         'overstaying' => 'Laporan Data Overstaying',
         'integrasi' => 'Laporan Data Integrasi',
-        'bebas_harian' => 'Laporan Data Bebas Harian',
+        'bebas_harian' => 'Laporan Data Bebas & Mutasi',
     ];
 
     public function index(Request $request)
@@ -109,7 +109,7 @@ class LaporanController extends Controller
             $colspan = match ($reportType) {
                 'overstaying' => 11,
                 'integrasi' => 15,
-                'bebas_harian' => 15,
+                'bebas_harian' => 17,
                 default => 10,
             };
 
@@ -127,7 +127,7 @@ class LaporanController extends Controller
                 }
                 $data = $q->get();
 
-                echo '<tr bgcolor="#34495e" style="color: white; font-weight: bold;"><td>No</td><td>Tanggal</td><td>UPT</td><td>Klasifikasi Pidana</td><td>Bebas Murni</td><td>PB</td><td>CB</td><td>CMB</td><td>Asimilasi</td><td>BDH</td><td>Lainnya</td><td>Rincian Lainnya</td><td>Total</td><td>Catatan</td><td>Waktu Input</td></tr>';
+                echo '<tr bgcolor="#34495e" style="color: white; font-weight: bold;"><td>No</td><td>Tanggal</td><td>UPT</td><td>Klasifikasi Pidana</td><td>Bebas Murni</td><td>PB</td><td>CB</td><td>CMB</td><td>Asimilasi</td><td>BDH</td><td>Mutasi Keluar</td><td>Tujuan Mutasi</td><td>Lainnya</td><td>Rincian Lainnya</td><td>Total</td><td>Catatan</td><td>Waktu Input</td></tr>';
                 $no = 1;
                 $totBm = 0;
                 $totPb = 0;
@@ -135,6 +135,7 @@ class LaporanController extends Controller
                 $totCmb = 0;
                 $totAsim = 0;
                 $totBdh = 0;
+                $totMutasi = 0;
                 $totLain = 0;
                 $grandTotal = 0;
 
@@ -145,8 +146,9 @@ class LaporanController extends Controller
                     $cmb = (int) $r->cmb;
                     $asim = (int) $r->asimilasi;
                     $bdh = (int) $r->bdh;
+                    $mutasi = (int) $r->mutasi_keluar;
                     $lain = (int) $r->lainnya;
-                    $sub = $bm + $pb + $cb + $cmb + $asim + $bdh + $lain;
+                    $sub = $bm + $pb + $cb + $cmb + $asim + $bdh + $mutasi + $lain;
 
                     $totBm += $bm;
                     $totPb += $pb;
@@ -154,17 +156,18 @@ class LaporanController extends Controller
                     $totCmb += $cmb;
                     $totAsim += $asim;
                     $totBdh += $bdh;
+                    $totMutasi += $mutasi;
                     $totLain += $lain;
                     $grandTotal += $sub;
 
                     $tglStr = $r->tanggal ? date('d/m/Y', strtotime($r->tanggal)) : '-';
                     $createdStr = $r->created_at ? date('d/m/Y H:i:s', strtotime($r->created_at)) : '-';
 
-                    echo "<tr><td align=\"center\">{$no}</td><td align=\"center\">{$tglStr}</td><td>{$r->upt?->nama_upt}</td><td>{$r->klasifikasi_pidana}</td><td align=\"center\">{$bm}</td><td align=\"center\">{$pb}</td><td align=\"center\">{$cb}</td><td align=\"center\">{$cmb}</td><td align=\"center\">{$asim}</td><td align=\"center\">{$bdh}</td><td align=\"center\">{$lain}</td><td>{$r->ket_lainnya}</td><td align=\"center\"><b>{$sub}</b></td><td>{$r->keterangan}</td><td align=\"center\">{$createdStr}</td></tr>";
+                    echo "<tr><td align=\"center\">{$no}</td><td align=\"center\">{$tglStr}</td><td>{$r->upt?->nama_upt}</td><td>{$r->klasifikasi_pidana}</td><td align=\"center\">{$bm}</td><td align=\"center\">{$pb}</td><td align=\"center\">{$cb}</td><td align=\"center\">{$cmb}</td><td align=\"center\">{$asim}</td><td align=\"center\">{$bdh}</td><td align=\"center\">{$mutasi}</td><td>{$r->ket_mutasi}</td><td align=\"center\">{$lain}</td><td>{$r->ket_lainnya}</td><td align=\"center\"><b>{$sub}</b></td><td>{$r->keterangan}</td><td align=\"center\">{$createdStr}</td></tr>";
                     $no++;
                 }
 
-                echo '<tr bgcolor="#34495e" style="color: white; font-weight: bold;"><td colspan="4" align="center">TOTAL</td><td align="center">'.$totBm.'</td><td align="center">'.$totPb.'</td><td align="center">'.$totCb.'</td><td align="center">'.$totCmb.'</td><td align="center">'.$totAsim.'</td><td align="center">'.$totBdh.'</td><td align="center">'.$totLain.'</td><td></td><td align="center">'.$grandTotal.'</td><td colspan="2"></td></tr>';
+                echo '<tr bgcolor="#34495e" style="color: white; font-weight: bold;"><td colspan="4" align="center">TOTAL</td><td align="center">'.$totBm.'</td><td align="center">'.$totPb.'</td><td align="center">'.$totCb.'</td><td align="center">'.$totCmb.'</td><td align="center">'.$totAsim.'</td><td align="center">'.$totBdh.'</td><td align="center">'.$totMutasi.'</td><td></td><td align="center">'.$totLain.'</td><td></td><td align="center">'.$grandTotal.'</td><td colspan="2"></td></tr>';
 
             } elseif ($reportType === 'overstaying') {
                 $q = DataOverstaying::with('upt')->orderBy('tanggal', 'desc');

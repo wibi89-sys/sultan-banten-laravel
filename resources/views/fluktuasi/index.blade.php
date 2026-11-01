@@ -54,6 +54,33 @@
         vertical-align: middle;
         font-size: 13px;
     }
+    @media print {
+        .sidebar, .navbar, .top-header, .btn, form, th:last-child, td:last-child {
+            display: none !important;
+        }
+        body, .content-wrapper, .container-fluid {
+            background: #fff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+        }
+        .table-responsive {
+            overflow: visible !important;
+        }
+        .table-fluktuasi {
+            font-size: 9.5px !important;
+        }
+        .table-fluktuasi th, .table-fluktuasi td {
+            padding: 3px 2px !important;
+        }
+        @page {
+            size: landscape;
+            margin: 8mm;
+        }
+    }
 </style>
 @endpush
 
@@ -66,7 +93,7 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <div>
                     <h5 class="fw-bold mb-1"><i class="fas fa-balance-scale text-primary me-2"></i>Laporan Fluktuasi Tambah Kurang Penghuni</h5>
-                    <p class="text-muted small mb-0">Analisis pergerakan harian Tahanan (A.I - A.V), Narapidana, Alih Status Vonis, dan Bebas Harian / Bebas Demi Hukum</p>
+                    <p class="text-muted small mb-0">Analisis pergerakan harian Tahanan (A.I - A.V), Narapidana, Alih Status Vonis, Pembebasan &amp; Mutasi Keluar</p>
                 </div>
                 <div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
@@ -217,7 +244,7 @@
             <h6 class="fw-bold mb-0 text-dark">
                 <i class="fas fa-table me-2 text-primary"></i>Matriks Fluktuasi Harian Per UPT ({{ \Carbon\Carbon::parse($tanggalPembanding)->translatedFormat('d M') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d M Y') }})
             </h6>
-            <small class="text-muted"><i class="fas fa-check-double text-success me-1"></i>Data Terintegrasi Laporan Penghuni, Overstaying &amp; Bebas Harian</small>
+            <small class="text-muted"><i class="fas fa-check-double text-success me-1"></i>Data Terintegrasi Laporan Penghuni, Overstaying &amp; Bebas &amp; Mutasi</small>
         </div>
         <div class="table-responsive">
             <table class="table table-hover table-bordered table-fluktuasi mb-0 align-middle">
@@ -421,7 +448,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link small fw-bold py-2" id="tab-bebas-btn" data-bs-toggle="pill" data-bs-target="#tab-bebas" type="button" role="tab">
-                            <i class="fas fa-door-open me-1"></i>Rincian Bebas &amp; Rekonsiliasi
+                            <i class="fas fa-door-open me-1"></i>Rincian Bebas &amp; Mutasi
                         </button>
                     </li>
                 </ul>
@@ -518,15 +545,15 @@
                         </div>
                     </div>
 
-                    <!-- Tab 3: Rincian Bebas Harian & Rekonsiliasi -->
+                    <!-- Tab 3: Rincian Bebas & Mutasi Rekonsiliasi -->
                     <div class="tab-pane fade" id="tab-bebas" role="tabpanel">
-                        <!-- Alert Box Komparasi & Rekonsiliasi Bebas -->
+                        <!-- Alert Box Komparasi & Rekonsiliasi Bebas & Mutasi -->
                         <div id="mdf_rekonsiliasi_box" class="mb-3">
                             <!-- Populated dynamically via JS -->
                         </div>
 
                         <div class="small fw-semibold text-secondary mb-2">
-                            <i class="fas fa-list-alt me-1"></i>Kategori Pembebasan Kemarin ({{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}):
+                            <i class="fas fa-list-alt me-1"></i>Kategori Pengeluaran (Bebas &amp; Mutasi) Kemarin ({{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}):
                         </div>
                         <div class="row g-2 text-center" id="mdf_bebas_container">
                             <!-- Populated dynamically via JS -->
