@@ -404,8 +404,13 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link small fw-bold py-2" id="tab-napi-btn" data-bs-toggle="pill" data-bs-target="#tab-napi" type="button" role="tab">
+                            <i class="fas fa-users me-1"></i>Komparasi Narapidana
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link small fw-bold py-2" id="tab-bebas-btn" data-bs-toggle="pill" data-bs-target="#tab-bebas" type="button" role="tab">
-                            <i class="fas fa-door-open me-1"></i>Rincian Bebas Harian
+                            <i class="fas fa-door-open me-1"></i>Rincian Bebas &amp; Rekonsiliasi
                         </button>
                     </li>
                 </ul>
@@ -470,10 +475,47 @@
                         </div>
                     </div>
 
-                    <!-- Tab 2: Rincian Bebas Harian -->
+                    <!-- Tab 2: Komparasi Narapidana Per Tindak Pidana -->
+                    <div class="tab-pane fade" id="tab-napi" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm text-center mb-0 align-middle">
+                                <thead class="table-light small fw-bold">
+                                    <tr>
+                                        <th class="text-start">Klasifikasi Tindak Pidana</th>
+                                        <th width="22%">Kemarin ({{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }})</th>
+                                        <th width="22%">Hari Ini ({{ \Carbon\Carbon::parse($tanggal)->format('d/m') }})</th>
+                                        <th width="18%">Fluktuasi (&plusmn;)</th>
+                                        <th width="22%">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mdf_napi_tbody">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td class="text-start">TOTAL NARAPIDANA</td>
+                                        <td id="mdf_napi_tot_prev">-</td>
+                                        <td id="mdf_napi_tot_curr">-</td>
+                                        <td id="mdf_napi_tot_delta">-</td>
+                                        <td id="mdf_napi_tot_ket">-</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            <i class="fas fa-info-circle text-primary me-1"></i>Perbandingan jumlah narapidana berdasarkan 10 klasifikasi perkara pokok tindak pidana.
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Rincian Bebas Harian & Rekonsiliasi -->
                     <div class="tab-pane fade" id="tab-bebas" role="tabpanel">
-                        <div class="alert alert-light border small text-muted py-2 px-3 mb-3">
-                            <i class="fas fa-info-circle text-primary me-1"></i>Peristiwa pembebasan pada <strong>{{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}@if($tglBebasSelesai != $tglBebasMulai) s/d {{ \Carbon\Carbon::parse($tglBebasSelesai)->translatedFormat('d M Y') }}@endif</strong> yang menjadi faktor pengurang jumlah penghuni.
+                        <!-- Alert Box Komparasi & Rekonsiliasi Bebas -->
+                        <div id="mdf_rekonsiliasi_box" class="mb-3">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <div class="small fw-semibold text-secondary mb-2">
+                            <i class="fas fa-list-alt me-1"></i>Kategori Pembebasan Kemarin ({{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}):
                         </div>
                         <div class="row g-2 text-center" id="mdf_bebas_container">
                             <!-- Populated dynamically via JS -->
@@ -527,7 +569,115 @@ function bukaModalDetailFluktuasi(row) {
     document.getElementById('mdf_tot_curr').textContent = row.tahanan_curr.toLocaleString();
     document.getElementById('mdf_tot_delta').innerHTML = formatBadge(row.delta_tahanan);
 
-    // Tab 2: Rincian Bebas
+    // Tab 2: Komparasi Narapidana
+    const napiTbody = document.getElementById('mdf_napi_tbody');
+    let napiRowsHtml = '';
+    if (row.komparasi_napi && row.komparasi_napi.length > 0) {
+        row.komparasi_napi.forEach(k => {
+            let ket = '<span class="text-muted small">Tetap</span>';
+            if (k.delta < 0) {
+                ket = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Berkurang ${Math.abs(k.delta)}</span>`;
+            } else if (k.delta > 0) {
+                ket = `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Bertambah ${k.delta}</span>`;
+            }
+
+            napiRowsHtml += `
+                <tr>
+                    <td class="text-start fw-semibold">${k.klasifikasi}</td>
+                    <td>${k.prev.toLocaleString()}</td>
+                    <td class="fw-bold">${k.curr.toLocaleString()}</td>
+                    <td>${formatBadge(k.delta)}</td>
+                    <td>${ket}</td>
+                </tr>
+            `;
+        });
+    }
+    napiTbody.innerHTML = napiRowsHtml;
+    document.getElementById('mdf_napi_tot_prev').textContent = row.napi_prev.toLocaleString();
+    document.getElementById('mdf_napi_tot_curr').textContent = row.napi_curr.toLocaleString();
+    document.getElementById('mdf_napi_tot_delta').innerHTML = formatBadge(row.delta_napi);
+    document.getElementById('mdf_napi_tot_ket').innerHTML = row.delta_napi < 0 
+        ? `<span class="text-danger fw-bold">Berkurang ${Math.abs(row.delta_napi)}</span>` 
+        : (row.delta_napi > 0 ? `<span class="text-success fw-bold">Bertambah ${row.delta_napi}</span>` : '<span class="text-muted">Stabil</span>');
+
+    // Tab 3: Rincian Bebas & Rekonsiliasi Box
+    const rekonBox = document.getElementById('mdf_rekonsiliasi_box');
+    let rekonHtml = `
+        <div class="card border bg-light p-3 mb-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-sm-4 text-center border-end">
+                    <small class="text-muted d-block" style="font-size: 11px;">Narapidana Kemarin</small>
+                    <span class="fs-6 fw-bold text-dark">${row.napi_prev.toLocaleString()} Orang</span>
+                </div>
+                <div class="col-sm-4 text-center border-end">
+                    <small class="text-muted d-block" style="font-size: 11px;">Narapidana Hari Ini</small>
+                    <span class="fs-6 fw-bold text-primary">${row.napi_curr.toLocaleString()} Orang</span>
+                </div>
+                <div class="col-sm-4 text-center">
+                    <small class="text-muted d-block" style="font-size: 11px;">Perubahan Net</small>
+                    <span class="fs-6 fw-bold ${row.delta_napi < 0 ? 'text-danger' : (row.delta_napi > 0 ? 'text-success' : 'text-secondary')}">
+                        ${row.delta_napi > 0 ? '+' : ''}${row.delta_napi} Orang
+                    </span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    if (row.delta_napi < 0) {
+        const selisihNapi = Math.abs(row.delta_napi);
+        const rincianBerkurang = row.napi_berkurang_text ? ` pada klasifikasi: <strong>${row.napi_berkurang_text}</strong>` : '';
+
+        if (row.total_bebas === 0) {
+            rekonHtml += `
+                <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning fs-5 flex-shrink-0 mt-1"></i>
+                    <div>
+                        <strong>Pengurangan Narapidana Belum Terketerangan di Bebas Harian:</strong><br>
+                        Terdapat pengurangan <strong>-${selisihNapi} Narapidana</strong>${rincianBerkurang}, 
+                        namun <strong>Laporan Bebas Harian kemarin tercatat 0 (Nihil)</strong>.<br>
+                        <span class="text-dark">&bull; <strong>Kemungkinan 1</strong>: Narapidana telah <strong>dipindahkan / mutasi keluar</strong> ke Lapas lain.<br>
+                        &bull; <strong>Kemungkinan 2</strong>: Pembebasan (Bebas Murni/PB/CB) belum terinput oleh operator pada tanggal tersebut.</span>
+                    </div>
+                </div>
+            `;
+        } else if (selisihNapi > row.total_bebas) {
+            const gap = selisihNapi - row.total_bebas;
+            rekonHtml += `
+                <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
+                    <i class="fas fa-info-circle text-warning fs-5 flex-shrink-0 mt-1"></i>
+                    <div>
+                        <strong>Sebagian Pengurangan Belum Terketerangan:</strong><br>
+                        Narapidana berkurang <strong>-${selisihNapi} orang</strong>${rincianBerkurang}. 
+                        Tercatat <strong>${row.total_bebas} orang bebas resmi</strong>, namun masih terdapat selisih <strong>-${gap} orang</strong> di luar laporan bebas harian (potensi mutasi keluar).
+                    </div>
+                </div>
+            `;
+        } else if (selisihNapi === row.total_bebas) {
+            rekonHtml += `
+                <div class="alert alert-success border-success d-flex align-items-center gap-2 py-2 px-3 small mb-3">
+                    <i class="fas fa-check-circle text-success fs-5 flex-shrink-0"></i>
+                    <div>
+                        <strong>Data Sinkron Sempurna:</strong><br>
+                        Pengurangan <strong>-${selisihNapi} Narapidana</strong>${rincianBerkurang} klop 100% dengan <strong>${row.total_bebas} orang</strong> pada Laporan Bebas Harian.
+                    </div>
+                </div>
+            `;
+        }
+    } else if (row.delta_napi === 0 && row.total_bebas > 0) {
+        rekonHtml += `
+            <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
+                <i class="fas fa-exclamation-circle text-warning fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                    <strong>Perlu Kroscek Laporan:</strong><br>
+                    Tercatat <strong>${row.total_bebas} orang bebas</strong> di laporan bebas harian kemarin, tetapi jumlah narapidana hari ini tetap sama (potensi laporan penghuni belum dipotong atau ada alih status tahanan pengimbang).
+                </div>
+            </div>
+        `;
+    }
+
+    rekonBox.innerHTML = rekonHtml;
+
+    // Tab 3: Rincian Bebas
     const bCont = document.getElementById('mdf_bebas_container');
     bCont.innerHTML = `
         <div class="col-4">

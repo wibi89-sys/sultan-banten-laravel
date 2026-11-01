@@ -47,6 +47,19 @@ class FluktuasiController extends Controller
             ->get()
             ->keyBy('upt_id');
 
+        // 1b. Rincian Narapidana & Tahanan Per Klasifikasi Hari Ini
+        $penghuniKlasifikasiCurr = DB::table('data_penghuni')
+            ->select(
+                'upt_id',
+                'klasifikasi_pidana',
+                DB::raw('(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan) as tahanan'),
+                DB::raw('(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan) as narapidana')
+            )
+            ->where('tanggal', $tanggal)
+            ->whereIn('upt_id', $uptIds)
+            ->get()
+            ->groupBy('upt_id');
+
         // 2. Data Penghuni Hari Kemarin / Pembanding ($tanggalPembanding)
         $penghuniPrev = DB::table('data_penghuni')
             ->select(
@@ -59,6 +72,19 @@ class FluktuasiController extends Controller
             ->groupBy('upt_id')
             ->get()
             ->keyBy('upt_id');
+
+        // 2b. Rincian Narapidana & Tahanan Per Klasifikasi Kemarin
+        $penghuniKlasifikasiPrev = DB::table('data_penghuni')
+            ->select(
+                'upt_id',
+                'klasifikasi_pidana',
+                DB::raw('(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan) as tahanan'),
+                DB::raw('(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan) as narapidana')
+            )
+            ->where('tanggal', $tanggalPembanding)
+            ->whereIn('upt_id', $uptIds)
+            ->get()
+            ->groupBy('upt_id');
 
         // 3. Data Overstaying A.I s/d A.V Hari Ini
         $overstayingCurrent = DB::table('data_overstaying')
@@ -160,6 +186,46 @@ class FluktuasiController extends Controller
             $penghuniTotalCurr = $tahananCurr + $napiCurr;
             $penghuniTotalPrev = $tahananPrev + $napiPrev;
             $deltaPenghuni = $penghuniTotalCurr - $penghuniTotalPrev;
+
+            // Rincian Komparasi Narapidana & Tahanan Per Klasifikasi Tindak Pidana
+            $klasCurrList = ($penghuniKlasifikasiCurr->get($uptId) ?? collect())->keyBy('klasifikasi_pidana');
+            $klasPrevList = ($penghuniKlasifikasiPrev->get($uptId) ?? collect())->keyBy('klasifikasi_pidana');
+
+            $daftarKlasifikasi = [
+                'Pidana Umum', 'Tipikor', 'Narkoba Bandar', 'Narkoba Pengguna',
+                'Teroris', 'Trafficking', 'Ilegal Logging', 'Money Laundering',
+                'Genosida', 'UU ITE',
+            ];
+
+            $komparasiNapi = [];
+            $napiBerkurangList = [];
+            $napiBertambahList = [];
+
+            foreach ($daftarKlasifikasi as $klas) {
+                $nPrev = (int) ($klasPrevList->get($klas)?->narapidana ?? 0);
+                $nCurr = (int) ($klasCurrList->get($klas)?->narapidana ?? 0);
+                $deltaK = $nCurr - $nPrev;
+
+                $tPrev = (int) ($klasPrevList->get($klas)?->tahanan ?? 0);
+                $tCurr = (int) ($klasCurrList->get($klas)?->tahanan ?? 0);
+                $deltaT = $tCurr - $tPrev;
+
+                $komparasiNapi[] = [
+                    'klasifikasi' => $klas,
+                    'prev' => $nPrev,
+                    'curr' => $nCurr,
+                    'delta' => $deltaK,
+                    'tahanan_prev' => $tPrev,
+                    'tahanan_curr' => $tCurr,
+                    'tahanan_delta' => $deltaT,
+                ];
+
+                if ($deltaK < 0) {
+                    $napiBerkurangList[] = "{$klas}: {$deltaK}";
+                } elseif ($deltaK > 0) {
+                    $napiBertambahList[] = "{$klas}: +{$deltaK}";
+                }
+            }
 
             // Rincian Bebas Harian
             $bebasMurni = (int) ($bCurr?->bebas_murni ?? 0);
@@ -282,12 +348,19 @@ class FluktuasiController extends Controller
                 $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-door-open me-1\"></i>-{$bebasNapi} Narapidana Bebas{$teksBebas}</span>";
             }
 
-            // 7. Narapidana Berkurang (Jika pengurangan Napi lebih besar dari jumlah yang bebas, misal mutasi keluar)
+            // 7. Narapidana Berkurang
             if ($deltaNapi < 0) {
                 $totalBerkurang = abs($deltaNapi);
-                if ($totalBerkurang > $bebasNapi) {
-                    $mutasiKeluar = $totalBerkurang - $bebasNapi;
-                    $analisisList[] = "<span class=\"text-secondary small\"><i class=\"fas fa-sign-out-alt me-1\"></i>-{$mutasiKeluar} Narapidana (Mutasi Keluar / Pengurangan Lainnya)</span>";
+                $rincianBerkurang = ! empty($napiBerkurangList) ? ' ('.implode(', ', $napiBerkurangList).')' : '';
+
+                if ($bebasNapi > 0) {
+                    if ($totalBerkurang > $bebasNapi) {
+                        $selisihTidakTercatat = $totalBerkurang - $bebasNapi;
+                        $analisisList[] = "<span class=\"text-secondary small d-block\"><i class=\"fas fa-info-circle me-1\"></i>Selisih -{$selisihTidakTercatat} Narapidana di luar Laporan Bebas{$rincianBerkurang} (Potensi Mutasi Keluar atau Ekspirasi belum terinput)</span>";
+                    }
+                } else {
+                    $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-user-minus me-1\"></i>-{$totalBerkurang} Narapidana Berkurang{$rincianBerkurang}</span>";
+                    $analisisList[] = '<span class="text-warning small d-block"><i class="fas fa-question-circle me-1"></i>Nihil di Laporan Bebas Harian (Potensi Mutasi Keluar ke Lapas lain atau Ekspirasi belum diinput operator)</span>';
                 }
             }
 
@@ -341,6 +414,11 @@ class FluktuasiController extends Controller
                 'alih_status' => $alihStatus,
                 'tahanan_baru' => $tahananBaruMasuk,
                 'analisis' => $analisisList,
+                'komparasi_napi' => $komparasiNapi,
+                'napi_berkurang_list' => $napiBerkurangList,
+                'napi_bertambah_list' => $napiBertambahList,
+                'napi_berkurang_text' => implode(', ', $napiBerkurangList),
+                'napi_unexplained' => ($deltaNapi < 0) ? max(0, abs($deltaNapi) - $bebasNapi) : 0,
             ];
 
             // Akumulasi ringkasan wilayah
