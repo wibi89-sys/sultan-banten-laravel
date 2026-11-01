@@ -88,8 +88,8 @@ class FluktuasiController extends Controller
             ->get()
             ->keyBy('upt_id');
 
-        // 5. Data Bebas Harian Faktor Pengurang Stok
-        // Perubahan stok antara $tanggalPembanding (H-1) dan $tanggal (H) disebabkan oleh peristiwa bebas
+        // 5. Data Bebas Harian Faktor Pengurang Jumlah Penghuni
+        // Perubahan jumlah penghuni antara $tanggalPembanding (H-1) dan $tanggal (H) disebabkan oleh peristiwa bebas
         // yang terjadi pada hari kemarin ($tanggalPembanding) atau rentang sebelum apel pagi $tanggal
         $tglBebasMulai = $tanggalPembanding;
         $tglBebasSelesai = date('Y-m-d', strtotime('-1 day', strtotime($tanggal)));
@@ -294,12 +294,12 @@ class FluktuasiController extends Controller
             // 8. Jika total penghuni tetap sama atau nihil perubahan
             if ($deltaPenghuni === 0 && $deltaTahanan === 0 && $deltaNapi === 0) {
                 if ($totalBebas > 0) {
-                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalBebas} Bebas kemarin tapi Stok Penghuni Tetap Sama (Potensi Belum Terpotong di Stok)</span>";
+                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalBebas} Bebas kemarin tapi Jumlah Penghuni Tetap Sama (Potensi Belum Terupdate di Laporan Penghuni)</span>";
                 } else {
                     $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
                 }
             } elseif ($deltaPenghuni === 0 && ($deltaTahanan !== 0 || $deltaNapi !== 0)) {
-                $analisisList[] = '<span class="text-info fw-semibold"><i class="fas fa-exchange-alt me-1"></i>Total Fisik Tetap (Pergeseran Status Internal)</span>';
+                $analisisList[] = '<span class="text-info fw-semibold"><i class="fas fa-exchange-alt me-1"></i>Total Penghuni Tetap (Pergeseran Status Internal)</span>';
             }
 
             $rows[] = [

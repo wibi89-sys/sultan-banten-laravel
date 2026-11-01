@@ -155,12 +155,12 @@
             </div>
         </div>
 
-        <!-- Kartu 3: Total Fisik Penghuni -->
+        <!-- Kartu 3: Total Isi Penghuni -->
         <div class="col-6 col-xl-3">
             <div class="card stat-kpi-card bg-dark text-white p-3">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="small fw-semibold text-white-50">Total Isi Fisik Penghuni</div>
+                        <div class="small fw-semibold text-white-50">Total Isi Penghuni</div>
                         <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_penghuni_curr']) }}</div>
                     </div>
                     @if($summary['delta_penghuni'] > 0)
@@ -203,8 +203,8 @@
         <i class="fas fa-info-circle text-primary fs-3 flex-shrink-0"></i>
         <div class="small">
             <strong>Panduan Membaca Dinamika Tambah Kurang:</strong> 
-            Perubahan stok fisik penghuni hari ini (apel pagi) dipengaruhi oleh pergerakan warga binaan pada hari kemarin (pembebasan, alih status, dan penerimaan baru). 
-            Ketika Tahanan menerima vonis hakim yang telah berkekuatan hukum tetap (<em>inkrah</em>), statusnya beralih menjadi <strong>Narapidana</strong> (Tahanan berkurang, Narapidana bertambah, Total Fisik tetap).
+            Perubahan jumlah penghuni hari ini (posisi apel pagi) dipengaruhi oleh pergerakan warga binaan pada hari kemarin (pembebasan, alih status, dan penerimaan baru). 
+            Ketika Tahanan menerima vonis hakim yang telah berkekuatan hukum tetap (<em>inkrah</em>), statusnya beralih menjadi <strong>Narapidana</strong> (Tahanan berkurang, Narapidana bertambah, Total Penghuni tetap).
             Perpindahan antar-tingkat penahanan (A.I &rarr; A.II &rarr; A.III dst.) juga dipantau sebagai dinamika proses peradilan.
         </div>
     </div>
@@ -473,7 +473,7 @@
                     <!-- Tab 2: Rincian Bebas Harian -->
                     <div class="tab-pane fade" id="tab-bebas" role="tabpanel">
                         <div class="alert alert-light border small text-muted py-2 px-3 mb-3">
-                            <i class="fas fa-info-circle text-primary me-1"></i>Peristiwa pembebasan pada <strong>{{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}@if($tglBebasSelesai != $tglBebasMulai) s/d {{ \Carbon\Carbon::parse($tglBebasSelesai)->translatedFormat('d M Y') }}@endif</strong> yang menjadi faktor pengurang stok penghuni.
+                            <i class="fas fa-info-circle text-primary me-1"></i>Peristiwa pembebasan pada <strong>{{ \Carbon\Carbon::parse($tglBebasMulai)->translatedFormat('d M Y') }}@if($tglBebasSelesai != $tglBebasMulai) s/d {{ \Carbon\Carbon::parse($tglBebasSelesai)->translatedFormat('d M Y') }}@endif</strong> yang menjadi faktor pengurang jumlah penghuni.
                         </div>
                         <div class="row g-2 text-center" id="mdf_bebas_container">
                             <!-- Populated dynamically via JS -->
