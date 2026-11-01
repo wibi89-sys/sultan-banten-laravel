@@ -570,3 +570,4 @@ function bukaModalDetailFluktuasi(row) {
 }
 </script>
 @endpush
+

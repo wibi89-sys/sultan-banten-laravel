@@ -242,7 +242,11 @@ class FluktuasiController extends Controller
 
             // 5. Jika total penghuni tetap sama
             if ($deltaPenghuni === 0 && $deltaTahanan === 0 && $deltaNapi === 0) {
-                $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
+                if ($totalBebas > 0) {
+                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalBebas} Bebas tapi Stok Penghuni Tetap Sama (Potensi Belum Terpotong di Stok)</span>";
+                } else {
+                    $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
+                }
             } elseif ($deltaPenghuni === 0 && ($deltaTahanan !== 0 || $deltaNapi !== 0)) {
                 $analisisList[] = '<span class="text-info fw-semibold"><i class="fas fa-exchange-alt me-1"></i>Total Fisik Tetap (Pergeseran Status Internal)</span>';
             }
