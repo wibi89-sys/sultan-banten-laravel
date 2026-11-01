@@ -178,20 +178,22 @@
             </div>
         </div>
 
-        <!-- Kartu 4: Total Bebas Harian & BDH -->
+        <!-- Kartu 4: Total Bebas Harian, BDH & Mutasi -->
         <div class="col-6 col-xl-3">
             <div class="card stat-kpi-card bg-success text-white p-3">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="small fw-semibold text-white-50">Total Bebas (Pengurang)</div>
-                        <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_bebas']) }} <span class="fs-6 fw-normal">Orang</span></div>
+                        <div class="small fw-semibold text-white-50">Total Pengeluaran (Bebas &amp; Mutasi)</div>
+                        <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_pengurang']) }} <span class="fs-6 fw-normal">Orang</span></div>
                     </div>
-                    @if($summary['total_bdh'] > 0)
+                    @if($summary['total_mutasi_keluar'] > 0)
+                        <span class="badge bg-secondary text-white fw-bold shadow-xs">{{ $summary['total_mutasi_keluar'] }} Mutasi</span>
+                    @elseif($summary['total_bdh'] > 0)
                         <span class="badge bg-warning text-dark fw-bold shadow-xs">{{ $summary['total_bdh'] }} BDH</span>
                     @endif
                 </div>
                 <div class="small mt-2 text-white-50">
-                    PB: {{ $summary['total_pb'] }} &bull; CB: {{ $summary['total_cb'] }} &bull; Murni: {{ $summary['total_bebas_murni'] }}
+                    Bebas: {{ $summary['total_bebas'] }} &bull; Mutasi: {{ $summary['total_mutasi_keluar'] }} &bull; BDH: {{ $summary['total_bdh'] }}
                 </div>
                 <i class="fas fa-door-open stat-icon"></i>
             </div>
@@ -227,7 +229,7 @@
                         <th colspan="3" class="bg-info bg-opacity-10 text-info">2. Narapidana</th>
                         <th colspan="3" class="bg-dark bg-opacity-10 text-dark">3. Total Penghuni</th>
                         <th rowspan="2" style="min-width: 140px;">
-                            4. Bebas Harian (Pengurang)
+                            4. Pengeluaran (Bebas &amp; Mutasi)
                             <div class="small text-muted fw-normal" style="font-size: 10px; text-transform: none;">
                                 Periode: {{ \Carbon\Carbon::parse($tglBebasMulai)->format('d/m') }}@if($tglBebasSelesai != $tglBebasMulai)-{{ \Carbon\Carbon::parse($tglBebasSelesai)->format('d/m') }}@endif
                             </div>
@@ -297,12 +299,17 @@
                             @endif
                         </td>
 
-                        <!-- Bebas Harian -->
+                        <!-- Pengeluaran Harian (Bebas & Mutasi) -->
                         <td class="text-center">
-                            @if($r['total_bebas'] > 0)
+                            @if($r['total_pengurang'] > 0)
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fw-bold">
-                                    {{ $r['total_bebas'] }} Orang
+                                    {{ $r['total_pengurang'] }} Orang
                                 </span>
+                                @if($r['mutasi_keluar'] > 0)
+                                <div class="mt-1">
+                                    <span class="badge bg-secondary text-white" style="font-size: 10px;">{{ $r['mutasi_keluar'] }} Mutasi Keluar</span>
+                                </div>
+                                @endif
                                 @if($r['bdh'] > 0)
                                 <div class="mt-1">
                                     <span class="badge bg-danger text-white" style="font-size: 10px;">{{ $r['bdh'] }} BDH</span>
@@ -369,12 +376,15 @@
                             @else 0
                             @endif
                         </td>
-                        <td>{{ number_format($summary['total_bebas']) }} Orang</td>
+                        <td>{{ number_format($summary['total_pengurang']) }} Orang</td>
                         <td colspan="2" class="text-start small fw-normal">
                             <strong>Akumulasi Wilayah:</strong> 
                             {{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; 
                             {{ number_format($summary['estimasi_alih_status']) }} Vonis Inkrah &bull; 
                             {{ number_format($summary['total_bebas']) }} Bebas
+                            @if($summary['total_mutasi_keluar'] > 0)
+                                &bull; {{ number_format($summary['total_mutasi_keluar']) }} Mutasi Keluar
+                            @endif
                         </td>
                     </tr>
                 </tfoot>
@@ -624,53 +634,65 @@ function bukaModalDetailFluktuasi(row) {
         </div>
     `;
 
+    const pengurangNapi = (row.pengurang_napi !== undefined) ? row.pengurang_napi : ((row.bebas_napi || 0) + (row.mutasi_keluar || 0));
+    const totalPengurang = (row.total_pengurang !== undefined) ? row.total_pengurang : ((row.total_bebas || 0) + (row.mutasi_keluar || 0));
+    const mutasiKeluar = row.mutasi_keluar || 0;
+
     if (row.delta_napi < 0) {
         const selisihNapi = Math.abs(row.delta_napi);
         const rincianBerkurang = row.napi_berkurang_text ? ` pada klasifikasi: <strong>${row.napi_berkurang_text}</strong>` : '';
 
-        if (row.total_bebas === 0) {
+        if (pengurangNapi === 0) {
             rekonHtml += `
                 <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
                     <i class="fas fa-exclamation-triangle text-warning fs-5 flex-shrink-0 mt-1"></i>
                     <div>
-                        <strong>Pengurangan Narapidana Belum Terketerangan di Bebas Harian:</strong><br>
+                        <strong>Pengurangan Narapidana Belum Terketerangan di Bebas &amp; Mutasi:</strong><br>
                         Terdapat pengurangan <strong>-${selisihNapi} Narapidana</strong>${rincianBerkurang}, 
-                        namun <strong>Laporan Bebas Harian kemarin tercatat 0 (Nihil)</strong>.<br>
-                        <span class="text-dark">&bull; <strong>Kemungkinan 1</strong>: Narapidana telah <strong>dipindahkan / mutasi keluar</strong> ke Lapas lain.<br>
+                        namun <strong>Laporan Bebas &amp; Mutasi kemarin tercatat 0 (Nihil)</strong>.<br>
+                        <span class="text-dark">&bull; <strong>Kemungkinan 1</strong>: Narapidana telah <strong>dipindahkan / mutasi keluar</strong> ke Lapas lain namun belum diinput di laporan.<br>
                         &bull; <strong>Kemungkinan 2</strong>: Pembebasan (Bebas Murni/PB/CB) belum terinput oleh operator pada tanggal tersebut.</span>
                     </div>
                 </div>
             `;
-        } else if (selisihNapi > row.total_bebas) {
-            const gap = selisihNapi - row.total_bebas;
+        } else if (selisihNapi > pengurangNapi) {
+            const gap = selisihNapi - pengurangNapi;
             rekonHtml += `
                 <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
                     <i class="fas fa-info-circle text-warning fs-5 flex-shrink-0 mt-1"></i>
                     <div>
                         <strong>Sebagian Pengurangan Belum Terketerangan:</strong><br>
                         Narapidana berkurang <strong>-${selisihNapi} orang</strong>${rincianBerkurang}. 
-                        Tercatat <strong>${row.total_bebas} orang di Laporan Bebas Harian</strong>, namun masih terdapat selisih <strong>-${gap} orang</strong> di luar laporan bebas harian (potensi mutasi keluar).
+                        Tercatat <strong>${pengurangNapi} orang di Laporan Bebas &amp; Mutasi</strong> (Bebas: ${row.bebas_napi || 0}, Mutasi: ${mutasiKeluar}), namun masih terdapat selisih <strong>-${gap} orang</strong> di luar laporan (potensi mutasi keluar/ekspirasi lain yang belum dicatat).
                     </div>
                 </div>
             `;
-        } else if (selisihNapi === row.total_bebas) {
+        } else if (selisihNapi === pengurangNapi) {
+            let labelKlop = `${pengurangNapi} orang`;
+            if (mutasiKeluar > 0 && row.bebas_napi > 0) {
+                labelKlop += ` (${row.bebas_napi} Bebas + ${mutasiKeluar} Mutasi Keluar)`;
+            } else if (mutasiKeluar > 0) {
+                labelKlop += ` (${mutasiKeluar} Mutasi Keluar)`;
+            } else {
+                labelKlop += ` (${row.bebas_napi} Bebas)`;
+            }
             rekonHtml += `
                 <div class="alert alert-success border-success d-flex align-items-center gap-2 py-2 px-3 small mb-3">
                     <i class="fas fa-check-circle text-success fs-5 flex-shrink-0"></i>
                     <div>
                         <strong>Data Sinkron Sempurna:</strong><br>
-                        Pengurangan <strong>-${selisihNapi} Narapidana</strong>${rincianBerkurang} klop 100% dengan <strong>${row.total_bebas} orang</strong> pada Laporan Bebas Harian.
+                        Pengurangan <strong>-${selisihNapi} Narapidana</strong>${rincianBerkurang} klop 100% dengan <strong>${labelKlop}</strong> pada Laporan Bebas &amp; Mutasi.
                     </div>
                 </div>
             `;
         }
-    } else if (row.delta_napi === 0 && row.total_bebas > 0) {
+    } else if (row.delta_napi === 0 && totalPengurang > 0) {
         rekonHtml += `
             <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
                 <i class="fas fa-exclamation-circle text-warning fs-5 flex-shrink-0 mt-1"></i>
                 <div>
                     <strong>Perlu Kroscek Laporan:</strong><br>
-                    Tercatat <strong>${row.total_bebas} orang bebas</strong> di laporan bebas harian kemarin, tetapi jumlah narapidana hari ini tetap sama (potensi laporan penghuni belum dipotong atau ada alih status tahanan pengimbang).
+                    Tercatat <strong>${totalPengurang} pengeluaran (Bebas/Mutasi)</strong> di laporan harian kemarin, tetapi jumlah narapidana hari ini tetap sama (potensi laporan penghuni belum dipotong atau ada alih status tahanan pengimbang).
                 </div>
             </div>
         `;
@@ -678,7 +700,12 @@ function bukaModalDetailFluktuasi(row) {
 
     rekonBox.innerHTML = rekonHtml;
 
-    // Tab 3: Rincian Bebas
+    // Tab 3: Rincian Box Bebas & Mutasi
+    let mutasiDetailTeks = '';
+    if (row.rincian_mutasi && row.rincian_mutasi.length > 0) {
+        mutasiDetailTeks = `<div class="mt-1 small text-muted text-start" style="font-size: 10.5px;">${row.rincian_mutasi.join('<br>')}</div>`;
+    }
+
     const bCont = document.getElementById('mdf_bebas_container');
     bCont.innerHTML = `
         <div class="col-4">
@@ -717,9 +744,26 @@ function bukaModalDetailFluktuasi(row) {
                 <strong class="fs-6 text-danger">${row.bdh} Orang</strong>
             </div>
         </div>
+        <div class="col-6">
+            <div class="p-2 border rounded bg-secondary bg-opacity-10 border-secondary">
+                <small class="text-secondary d-block fw-semibold" style="font-size: 11px;">Mutasi Keluar ke Lapas Lain</small>
+                <strong class="fs-6 text-secondary">${row.mutasi_keluar || 0} Orang</strong>
+                ${mutasiDetailTeks}
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-2 border rounded bg-light">
+                <small class="text-muted d-block" style="font-size: 11px;">Pengeluaran Lainnya</small>
+                <strong class="fs-6 text-dark">${row.lainnya || 0} Orang</strong>
+            </div>
+        </div>
         <div class="col-12 mt-2">
-            <div class="p-2 bg-success bg-opacity-10 border border-success rounded text-success fw-bold">
-                Total Seluruh Warga Binaan Bebas: ${row.total_bebas} Orang
+            <div class="p-2 bg-success bg-opacity-10 border border-success rounded text-success fw-bold d-flex justify-content-around flex-wrap gap-2">
+                <span>Total Bebas: <strong>${row.total_bebas} Orang</strong></span>
+                <span>&bull;</span>
+                <span>Mutasi Keluar: <strong>${row.mutasi_keluar || 0} Orang</strong></span>
+                <span>&bull;</span>
+                <span>Grand Total Pengeluaran: <strong>${row.total_pengurang || row.total_bebas} Orang</strong></span>
             </div>
         </div>
     `;

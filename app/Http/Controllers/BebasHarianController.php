@@ -53,8 +53,9 @@ class BebasHarianController extends Controller
                 DB::raw('SUM(dbh.cmb) as total_cmb'),
                 DB::raw('SUM(dbh.asimilasi) as total_asimilasi'),
                 DB::raw('SUM(dbh.bdh) as total_bdh'),
+                DB::raw('SUM(dbh.mutasi_keluar) as total_mutasi'),
                 DB::raw('SUM(dbh.lainnya) as total_lainnya'),
-                DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.lainnya) as grand_total'),
+                DB::raw('SUM(dbh.bebas_murni + dbh.pb + dbh.cb + dbh.cmb + dbh.asimilasi + dbh.bdh + dbh.mutasi_keluar + dbh.lainnya) as grand_total'),
                 DB::raw('MAX(dbh.keterangan) as keterangan'),
                 DB::raw('MAX(dbh.created_at) as created_at')
             )
@@ -193,6 +194,8 @@ class BebasHarianController extends Controller
                     'cmb' => (int) $request->input('cmb_'.$key, 0),
                     'asimilasi' => (int) $request->input('asimilasi_'.$key, 0),
                     'bdh' => (int) $request->input('bdh_'.$key, 0),
+                    'mutasi_keluar' => (int) $request->input('mutasi_keluar_'.$key, 0),
+                    'ket_mutasi' => $request->input('ket_mutasi_'.$key, ''),
                     'lainnya' => (int) $request->input('lainnya_'.$key, 0),
                     'ket_lainnya' => $request->input('ket_lainnya_'.$key, ''),
                     'keterangan' => $keteranganGlobal,
@@ -273,6 +276,8 @@ class BebasHarianController extends Controller
                     'cmb' => (int) $request->input('edit_cmb_'.$key, 0),
                     'asimilasi' => (int) $request->input('edit_asimilasi_'.$key, 0),
                     'bdh' => (int) $request->input('edit_bdh_'.$key, 0),
+                    'mutasi_keluar' => (int) $request->input('edit_mutasi_keluar_'.$key, 0),
+                    'ket_mutasi' => $request->input('edit_ket_mutasi_'.$key, ''),
                     'lainnya' => (int) $request->input('edit_lainnya_'.$key, 0),
                     'ket_lainnya' => $request->input('edit_ket_lainnya_'.$key, ''),
                     'keterangan' => $keteranganGlobal,

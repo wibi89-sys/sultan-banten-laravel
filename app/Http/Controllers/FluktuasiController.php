@@ -132,7 +132,9 @@ class FluktuasiController extends Controller
                 DB::raw('SUM(cmb) as cmb'),
                 DB::raw('SUM(asimilasi) as asimilasi'),
                 DB::raw('SUM(bdh) as bdh'),
+                DB::raw('SUM(mutasi_keluar) as mutasi_keluar'),
                 DB::raw('SUM(lainnya) as lainnya'),
+                DB::raw('SUM(bebas_murni + pb + cb + cmb + asimilasi + bdh + mutasi_keluar + lainnya) as total_pengurang'),
                 DB::raw('SUM(bebas_murni + pb + cb + cmb + asimilasi + bdh + lainnya) as total_bebas')
             )
             ->whereBetween('tanggal', [$tglBebasMulai, $tglBebasSelesai])
@@ -140,6 +142,15 @@ class FluktuasiController extends Controller
             ->groupBy('upt_id')
             ->get()
             ->keyBy('upt_id');
+
+        // Query rincian mutasi keluar untuk keperluan narasi analisis & modal detail
+        $mutasiDetail = DB::table('data_bebas_harian')
+            ->select('upt_id', 'klasifikasi_pidana', 'mutasi_keluar', 'ket_mutasi')
+            ->whereBetween('tanggal', [$tglBebasMulai, $tglBebasSelesai])
+            ->whereIn('upt_id', $uptIds)
+            ->where('mutasi_keluar', '>', 0)
+            ->get()
+            ->groupBy('upt_id');
 
         // Kompilasi Matriks Fluktuasi Per UPT & Hitung Akumulasi
         $rows = [];
@@ -159,7 +170,9 @@ class FluktuasiController extends Controller
             'total_cmb' => 0,
             'total_asimilasi' => 0,
             'total_bdh' => 0,
+            'total_mutasi_keluar' => 0,
             'total_bebas' => 0,
+            'total_pengurang' => 0,
             'estimasi_alih_status' => 0,
             'estimasi_tahanan_baru' => 0,
         ];
@@ -227,16 +240,27 @@ class FluktuasiController extends Controller
                 }
             }
 
-            // Rincian Bebas Harian
+            // Rincian Bebas Harian & Mutasi Keluar
             $bebasMurni = (int) ($bCurr?->bebas_murni ?? 0);
             $pb = (int) ($bCurr?->pb ?? 0);
             $cb = (int) ($bCurr?->cb ?? 0);
             $cmb = (int) ($bCurr?->cmb ?? 0);
             $asimilasi = (int) ($bCurr?->asimilasi ?? 0);
             $bdh = (int) ($bCurr?->bdh ?? 0);
+            $mutasiKeluar = (int) ($bCurr?->mutasi_keluar ?? 0);
             $lainnya = (int) ($bCurr?->lainnya ?? 0);
             $totalBebas = (int) ($bCurr?->total_bebas ?? 0);
+            $totalPengurang = (int) ($bCurr?->total_pengurang ?? 0);
             $bebasNapi = $bebasMurni + $pb + $cb + $cmb + $asimilasi + $lainnya;
+            $pengurangNapi = $bebasNapi + $mutasiKeluar;
+
+            // Rincian Keterangan Mutasi Keluar
+            $daftarMutasiUpt = $mutasiDetail->get($uptId) ?? collect();
+            $rincianMutasiList = [];
+            foreach ($daftarMutasiUpt as $dm) {
+                $ket = ! empty($dm->ket_mutasi) ? " ({$dm->ket_mutasi})" : '';
+                $rincianMutasiList[] = "{$dm->klasifikasi_pidana}: {$dm->mutasi_keluar} Orang{$ket}";
+            }
 
             // Rincian Overstaying & Fluktuasi AI s/d AV
             $aiCurr = (int) ($oCurr?->tahanan_ai ?? 0);
@@ -383,6 +407,12 @@ class FluktuasiController extends Controller
                 $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$napiBaru} Narapidana Baru Masuk (Penerimaan / Mutasi Masuk)</span>";
             }
 
+            // 5. Narapidana Mutasi Keluar
+            if ($mutasiKeluar > 0) {
+                $teksMutasi = ! empty($rincianMutasiList) ? ' ('.implode(', ', $rincianMutasiList).')' : '';
+                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-truck-moving me-1\"></i>-{$mutasiKeluar} Narapidana Mutasi Keluar{$teksMutasi}</span>";
+            }
+
             // 6. Narapidana Bebas (Faktor Pengurang dari hari kemarin)
             if ($bebasNapi > 0) {
                 $rincianBebas = [];
@@ -410,21 +440,21 @@ class FluktuasiController extends Controller
                 $totalBerkurang = abs($deltaNapi);
                 $rincianBerkurang = ! empty($napiBerkurangList) ? ' ('.implode(', ', $napiBerkurangList).')' : '';
 
-                if ($bebasNapi > 0) {
-                    if ($totalBerkurang > $bebasNapi) {
-                        $selisihTidakTercatat = $totalBerkurang - $bebasNapi;
-                        $analisisList[] = "<span class=\"text-secondary small d-block\"><i class=\"fas fa-info-circle me-1\"></i>Selisih -{$selisihTidakTercatat} Narapidana di luar Laporan Bebas{$rincianBerkurang} (Potensi Mutasi Keluar atau Ekspirasi belum terinput)</span>";
+                if ($pengurangNapi > 0) {
+                    if ($totalBerkurang > $pengurangNapi) {
+                        $selisihTidakTercatat = $totalBerkurang - $pengurangNapi;
+                        $analisisList[] = "<span class=\"text-secondary small d-block\"><i class=\"fas fa-info-circle me-1\"></i>Selisih -{$selisihTidakTercatat} Narapidana di luar Laporan Bebas/Mutasi{$rincianBerkurang} (Potensi Ekspirasi atau Mutasi belum terinput)</span>";
                     }
                 } else {
                     $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-user-minus me-1\"></i>-{$totalBerkurang} Narapidana Berkurang{$rincianBerkurang}</span>";
-                    $analisisList[] = '<span class="text-warning small d-block"><i class="fas fa-question-circle me-1"></i>Nihil di Laporan Bebas Harian (Potensi Mutasi Keluar ke Lapas lain atau Ekspirasi belum diinput operator)</span>';
+                    $analisisList[] = '<span class="text-warning small d-block"><i class="fas fa-question-circle me-1"></i>Nihil di Laporan Bebas &amp; Mutasi (Potensi Mutasi Keluar ke Lapas lain atau Ekspirasi belum diinput operator)</span>';
                 }
             }
 
             // 8. Jika total penghuni tetap sama atau nihil perubahan
             if ($deltaPenghuni === 0 && $deltaTahanan === 0 && $deltaNapi === 0) {
-                if ($totalBebas > 0) {
-                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalBebas} Bebas kemarin tapi Jumlah Penghuni Tetap Sama (Potensi Belum Terupdate di Laporan Penghuni)</span>";
+                if ($totalPengurang > 0) {
+                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalPengurang} Pengeluaran (Bebas/Mutasi) kemarin tapi Jumlah Penghuni Tetap Sama (Potensi Belum Terupdate di Laporan Penghuni)</span>";
                 } else {
                     $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
                 }
@@ -450,9 +480,13 @@ class FluktuasiController extends Controller
                 'cmb' => $cmb,
                 'asimilasi' => $asimilasi,
                 'bdh' => $bdh,
+                'mutasi_keluar' => $mutasiKeluar,
+                'rincian_mutasi' => $rincianMutasiList,
                 'lainnya' => $lainnya,
                 'total_bebas' => $totalBebas,
+                'total_pengurang' => $totalPengurang,
                 'bebas_napi' => $bebasNapi,
+                'pengurang_napi' => $pengurangNapi,
                 'ai_curr' => $aiCurr,
                 'ai_prev' => $aiPrev,
                 'delta_ai' => $deltaAi,
@@ -475,7 +509,7 @@ class FluktuasiController extends Controller
                 'napi_berkurang_list' => $napiBerkurangList,
                 'napi_bertambah_list' => $napiBertambahList,
                 'napi_berkurang_text' => implode(', ', $napiBerkurangList),
-                'napi_unexplained' => ($deltaNapi < 0) ? max(0, abs($deltaNapi) - $bebasNapi) : 0,
+                'napi_unexplained' => ($deltaNapi < 0) ? max(0, abs($deltaNapi) - $pengurangNapi) : 0,
             ];
 
             // Akumulasi ringkasan wilayah
@@ -494,7 +528,9 @@ class FluktuasiController extends Controller
             $summary['total_cmb'] += $cmb;
             $summary['total_asimilasi'] += $asimilasi;
             $summary['total_bdh'] += $bdh;
+            $summary['total_mutasi_keluar'] += $mutasiKeluar;
             $summary['total_bebas'] += $totalBebas;
+            $summary['total_pengurang'] += $totalPengurang;
             $summary['estimasi_alih_status'] += $alihStatus;
             $summary['estimasi_tahanan_baru'] += $tahananBaruMasuk;
         }

@@ -132,6 +132,7 @@
                             <th class="text-center">CMB</th>
                             <th class="text-center">Asimilasi</th>
                             <th class="text-center">BDH</th>
+                            <th class="text-center">Mutasi Keluar</th>
                             <th class="text-center">Lainnya</th>
                             <th class="text-center bg-light fw-bold">Total</th>
                             <th>Keterangan</th>
@@ -150,6 +151,7 @@
                                 <td class="text-center"><span class="badge bg-warning text-dark">{{ $row->total_cmb }}</span></td>
                                 <td class="text-center"><span class="badge bg-success">{{ $row->total_asimilasi }}</span></td>
                                 <td class="text-center"><span class="badge bg-danger">{{ $row->total_bdh }}</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">{{ $row->total_mutasi }}</span></td>
                                 <td class="text-center"><span class="badge bg-dark">{{ $row->total_lainnya }}</span></td>
                                 <td class="text-center fw-bold bg-light">
                                     <span class="badge bg-success fs-6">{{ $row->grand_total }}</span>
@@ -176,7 +178,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="text-center py-4 text-muted">
+                                <td colspan="14" class="text-center py-4 text-muted">
                                     <i class="fas fa-inbox fa-3x mb-2 d-block opacity-50"></i>
                                     Belum ada data bebas harian yang tercatat.
                                 </td>
@@ -239,16 +241,18 @@
                         <table class="table table-bordered table-sm input-matrix-table align-middle">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="min-width: 160px;">Klasifikasi Tindak Pidana</th>
-                                    <th style="width: 75px;">Bebas Murni</th>
-                                    <th style="width: 75px;">PB</th>
-                                    <th style="width: 75px;">CB</th>
-                                    <th style="width: 75px;">CMB</th>
-                                    <th style="width: 75px;">Asimilasi</th>
-                                    <th style="width: 75px;">BDH</th>
-                                    <th style="width: 75px;">Lainnya</th>
-                                    <th style="min-width: 160px;">Ket. Jika Lainnya</th>
-                                    <th style="width: 70px;" class="text-center bg-secondary">Total</th>
+                                    <th style="min-width: 150px;">Klasifikasi Tindak Pidana</th>
+                                    <th style="width: 70px;">Bebas Murni</th>
+                                    <th style="width: 70px;">PB</th>
+                                    <th style="width: 70px;">CB</th>
+                                    <th style="width: 70px;">CMB</th>
+                                    <th style="width: 70px;">Asimilasi</th>
+                                    <th style="width: 70px;">BDH</th>
+                                    <th style="width: 70px;" class="bg-secondary text-white">Mutasi Keluar</th>
+                                    <th style="min-width: 140px;">Ket. Tujuan Mutasi</th>
+                                    <th style="width: 70px;">Lainnya</th>
+                                    <th style="min-width: 140px;">Ket. Jika Lainnya</th>
+                                    <th style="width: 70px;" class="text-center bg-primary">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -261,6 +265,8 @@
                                         <td><input type="number" name="cmb_{{ $key }}" class="form-control form-control-sm matrix-input" min="0" value="0"></td>
                                         <td><input type="number" name="asimilasi_{{ $key }}" class="form-control form-control-sm matrix-input" min="0" value="0"></td>
                                         <td><input type="number" name="bdh_{{ $key }}" class="form-control form-control-sm matrix-input" min="0" value="0"></td>
+                                        <td><input type="number" name="mutasi_keluar_{{ $key }}" class="form-control form-control-sm matrix-input input-mutasi" min="0" value="0" data-key="{{ $key }}"></td>
+                                        <td><input type="text" name="ket_mutasi_{{ $key }}" class="form-control form-control-sm input-ket-mutasi" placeholder="Tujuan mutasi..." disabled id="ket_mutasi_{{ $key }}"></td>
                                         <td><input type="number" name="lainnya_{{ $key }}" class="form-control form-control-sm matrix-input input-lainnya" min="0" value="0" data-key="{{ $key }}"></td>
                                         <td><input type="text" name="ket_lainnya_{{ $key }}" class="form-control form-control-sm input-ket-lainnya" placeholder="Tulis rincian jika lainnya..." disabled id="ket_{{ $key }}"></td>
                                         <td class="text-center fw-bold row-total bg-light">0</td>
@@ -276,6 +282,8 @@
                                     <td class="text-center" id="total_cmb">0</td>
                                     <td class="text-center" id="total_asimilasi">0</td>
                                     <td class="text-center" id="total_bdh">0</td>
+                                    <td class="text-center" id="total_mutasi">0</td>
+                                    <td></td>
                                     <td class="text-center" id="total_lainnya">0</td>
                                     <td></td>
                                     <td class="text-center fs-6 text-primary" id="grand_total_all">0</td>
@@ -326,16 +334,18 @@
                         <table class="table table-bordered table-sm input-matrix-table align-middle">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="min-width: 160px;">Klasifikasi Tindak Pidana</th>
-                                    <th style="width: 75px;">Bebas Murni</th>
-                                    <th style="width: 75px;">PB</th>
-                                    <th style="width: 75px;">CB</th>
-                                    <th style="width: 75px;">CMB</th>
-                                    <th style="width: 75px;">Asimilasi</th>
-                                    <th style="width: 75px;">BDH</th>
-                                    <th style="width: 75px;">Lainnya</th>
-                                    <th style="min-width: 160px;">Ket. Jika Lainnya</th>
-                                    <th style="width: 70px;" class="text-center bg-secondary">Total</th>
+                                    <th style="min-width: 150px;">Klasifikasi Tindak Pidana</th>
+                                    <th style="width: 70px;">Bebas Murni</th>
+                                    <th style="width: 70px;">PB</th>
+                                    <th style="width: 70px;">CB</th>
+                                    <th style="width: 70px;">CMB</th>
+                                    <th style="width: 70px;">Asimilasi</th>
+                                    <th style="width: 70px;">BDH</th>
+                                    <th style="width: 70px;" class="bg-secondary text-white">Mutasi Keluar</th>
+                                    <th style="min-width: 140px;">Ket. Tujuan Mutasi</th>
+                                    <th style="width: 70px;">Lainnya</th>
+                                    <th style="min-width: 140px;">Ket. Jika Lainnya</th>
+                                    <th style="width: 70px;" class="text-center bg-warning text-dark">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -348,6 +358,8 @@
                                         <td><input type="number" name="edit_cmb_{{ $key }}" id="edit_cmb_{{ $key }}" class="form-control form-control-sm matrix-edit-input" min="0" value="0"></td>
                                         <td><input type="number" name="edit_asimilasi_{{ $key }}" id="edit_asimilasi_{{ $key }}" class="form-control form-control-sm matrix-edit-input" min="0" value="0"></td>
                                         <td><input type="number" name="edit_bdh_{{ $key }}" id="edit_bdh_{{ $key }}" class="form-control form-control-sm matrix-edit-input" min="0" value="0"></td>
+                                        <td><input type="number" name="edit_mutasi_keluar_{{ $key }}" id="edit_mutasi_{{ $key }}" class="form-control form-control-sm matrix-edit-input edit-input-mutasi" min="0" value="0" data-edit-key="{{ $key }}"></td>
+                                        <td><input type="text" name="edit_ket_mutasi_{{ $key }}" id="edit_ket_mutasi_{{ $key }}" class="form-control form-control-sm edit-input-ket-mutasi" placeholder="Tujuan mutasi..." disabled></td>
                                         <td><input type="number" name="edit_lainnya_{{ $key }}" id="edit_lainnya_{{ $key }}" class="form-control form-control-sm matrix-edit-input edit-input-lainnya" min="0" value="0" data-edit-key="{{ $key }}"></td>
                                         <td><input type="text" name="edit_ket_lainnya_{{ $key }}" id="edit_ket_{{ $key }}" class="form-control form-control-sm edit-input-ket-lainnya" placeholder="Tulis rincian jika lainnya..." disabled></td>
                                         <td class="text-center fw-bold edit-row-total bg-light">0</td>
@@ -363,6 +375,8 @@
                                     <td class="text-center" id="edit_total_cmb">0</td>
                                     <td class="text-center" id="edit_total_asimilasi">0</td>
                                     <td class="text-center" id="edit_total_bdh">0</td>
+                                    <td class="text-center" id="edit_total_mutasi">0</td>
+                                    <td></td>
                                     <td class="text-center" id="edit_total_lainnya">0</td>
                                     <td></td>
                                     <td class="text-center fs-6 text-dark" id="edit_grand_total_all">0</td>
@@ -422,7 +436,7 @@
 @push('scripts')
 <script>
     function calculateAddTotals() {
-        let colBm = 0, colPb = 0, colCb = 0, colCmb = 0, colAsim = 0, colBdh = 0, colLain = 0, grandTotal = 0;
+        let colBm = 0, colPb = 0, colCb = 0, colCmb = 0, colAsim = 0, colBdh = 0, colMutasi = 0, colLain = 0, grandTotal = 0;
 
         document.querySelectorAll('#formTambah tbody tr').forEach(tr => {
             const bm = parseInt(tr.querySelector('input[name^="bebas_murni_"]')?.value) || 0;
@@ -431,13 +445,14 @@
             const cmb = parseInt(tr.querySelector('input[name^="cmb_"]')?.value) || 0;
             const asim = parseInt(tr.querySelector('input[name^="asimilasi_"]')?.value) || 0;
             const bdh = parseInt(tr.querySelector('input[name^="bdh_"]')?.value) || 0;
+            const mutasi = parseInt(tr.querySelector('input[name^="mutasi_keluar_"]')?.value) || 0;
             const lain = parseInt(tr.querySelector('input[name^="lainnya_"]')?.value) || 0;
 
-            const rowSum = bm + pb + cb + cmb + asim + bdh + lain;
+            const rowSum = bm + pb + cb + cmb + asim + bdh + mutasi + lain;
             tr.querySelector('.row-total').textContent = rowSum;
 
             colBm += bm; colPb += pb; colCb += cb; colCmb += cmb;
-            colAsim += asim; colBdh += bdh; colLain += lain;
+            colAsim += asim; colBdh += bdh; colMutasi += mutasi; colLain += lain;
             grandTotal += rowSum;
         });
 
@@ -447,12 +462,27 @@
         document.getElementById('total_cmb').textContent = colCmb;
         document.getElementById('total_asimilasi').textContent = colAsim;
         document.getElementById('total_bdh').textContent = colBdh;
+        document.getElementById('total_mutasi').textContent = colMutasi;
         document.getElementById('total_lainnya').textContent = colLain;
         document.getElementById('grand_total_all').textContent = grandTotal;
     }
 
     document.querySelectorAll('#formTambah .matrix-input').forEach(input => {
         input.addEventListener('input', calculateAddTotals);
+    });
+
+    document.querySelectorAll('#formTambah .input-mutasi').forEach(input => {
+        input.addEventListener('input', function() {
+            const key = this.getAttribute('data-key');
+            const ketInput = document.getElementById('ket_mutasi_' + key);
+            if (parseInt(this.value) > 0) {
+                ketInput.disabled = false;
+                ketInput.focus();
+            } else {
+                ketInput.disabled = true;
+                ketInput.value = '';
+            }
+        });
     });
 
     document.querySelectorAll('#formTambah .input-lainnya').forEach(input => {
@@ -470,7 +500,7 @@
     });
 
     function calculateEditTotals() {
-        let colBm = 0, colPb = 0, colCb = 0, colCmb = 0, colAsim = 0, colBdh = 0, colLain = 0, grandTotal = 0;
+        let colBm = 0, colPb = 0, colCb = 0, colCmb = 0, colAsim = 0, colBdh = 0, colMutasi = 0, colLain = 0, grandTotal = 0;
 
         document.querySelectorAll('#formEdit tbody tr').forEach(tr => {
             const bm = parseInt(tr.querySelector('input[name^="edit_bebas_murni_"]')?.value) || 0;
@@ -479,13 +509,14 @@
             const cmb = parseInt(tr.querySelector('input[name^="edit_cmb_"]')?.value) || 0;
             const asim = parseInt(tr.querySelector('input[name^="edit_asimilasi_"]')?.value) || 0;
             const bdh = parseInt(tr.querySelector('input[name^="edit_bdh_"]')?.value) || 0;
+            const mutasi = parseInt(tr.querySelector('input[name^="edit_mutasi_keluar_"]')?.value) || 0;
             const lain = parseInt(tr.querySelector('input[name^="edit_lainnya_"]')?.value) || 0;
 
-            const rowSum = bm + pb + cb + cmb + asim + bdh + lain;
+            const rowSum = bm + pb + cb + cmb + asim + bdh + mutasi + lain;
             tr.querySelector('.edit-row-total').textContent = rowSum;
 
             colBm += bm; colPb += pb; colCb += cb; colCmb += cmb;
-            colAsim += asim; colBdh += bdh; colLain += lain;
+            colAsim += asim; colBdh += bdh; colMutasi += mutasi; colLain += lain;
             grandTotal += rowSum;
         });
 
@@ -495,12 +526,26 @@
         document.getElementById('edit_total_cmb').textContent = colCmb;
         document.getElementById('edit_total_asimilasi').textContent = colAsim;
         document.getElementById('edit_total_bdh').textContent = colBdh;
+        document.getElementById('edit_total_mutasi').textContent = colMutasi;
         document.getElementById('edit_total_lainnya').textContent = colLain;
         document.getElementById('edit_grand_total_all').textContent = grandTotal;
     }
 
     document.querySelectorAll('#formEdit .matrix-edit-input').forEach(input => {
         input.addEventListener('input', calculateEditTotals);
+    });
+
+    document.querySelectorAll('#formEdit .edit-input-mutasi').forEach(input => {
+        input.addEventListener('input', function() {
+            const key = this.getAttribute('data-edit-key');
+            const ketInput = document.getElementById('edit_ket_mutasi_' + key);
+            if (parseInt(this.value) > 0) {
+                ketInput.disabled = false;
+            } else {
+                ketInput.disabled = true;
+                ketInput.value = '';
+            }
+        });
     });
 
     document.querySelectorAll('#formEdit .edit-input-lainnya').forEach(input => {
@@ -545,7 +590,14 @@
                         if (document.getElementById('edit_cmb_' + key)) document.getElementById('edit_cmb_' + key).value = item.cmb;
                         if (document.getElementById('edit_asimilasi_' + key)) document.getElementById('edit_asimilasi_' + key).value = item.asimilasi;
                         if (document.getElementById('edit_bdh_' + key)) document.getElementById('edit_bdh_' + key).value = item.bdh;
+                        if (document.getElementById('edit_mutasi_' + key)) document.getElementById('edit_mutasi_' + key).value = item.mutasi_keluar || 0;
                         if (document.getElementById('edit_lainnya_' + key)) document.getElementById('edit_lainnya_' + key).value = item.lainnya;
+
+                        const ketMutasiEl = document.getElementById('edit_ket_mutasi_' + key);
+                        if (ketMutasiEl && item.ket_mutasi) {
+                            ketMutasiEl.value = item.ket_mutasi;
+                            ketMutasiEl.disabled = false;
+                        }
 
                         const ketEl = document.getElementById('edit_ket_' + key);
                         if (ketEl && item.ket_lainnya) {

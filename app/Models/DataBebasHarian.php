@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class DataBebasHarian extends Model
 {
@@ -21,6 +23,8 @@ class DataBebasHarian extends Model
         'cmb',
         'asimilasi',
         'bdh',
+        'mutasi_keluar',
+        'ket_mutasi',
         'lainnya',
         'ket_lainnya',
         'keterangan',
@@ -36,6 +40,7 @@ class DataBebasHarian extends Model
             'cmb' => 'integer',
             'asimilasi' => 'integer',
             'bdh' => 'integer',
+            'mutasi_keluar' => 'integer',
             'lainnya' => 'integer',
         ];
     }
@@ -48,5 +53,31 @@ class DataBebasHarian extends Model
     public function getTotalBebasAttribute(): int
     {
         return $this->bebas_murni + $this->pb + $this->cb + $this->cmb + $this->asimilasi + $this->bdh + $this->lainnya;
+    }
+
+    public function getTotalPengurangAttribute(): int
+    {
+        return $this->total_bebas + ($this->mutasi_keluar ?? 0);
+    }
+
+    /**
+     * Memastikan kolom mutasi_keluar dan ket_mutasi tersedia di database (auto-heal).
+     */
+    public static function ensureMutasiColumnsExist(): void
+    {
+        try {
+            if (! Schema::hasColumn('data_bebas_harian', 'mutasi_keluar')) {
+                Schema::table('data_bebas_harian', function (Blueprint $table) {
+                    $table->integer('mutasi_keluar')->default(0)->nullable()->after('bdh');
+                });
+            }
+            if (! Schema::hasColumn('data_bebas_harian', 'ket_mutasi')) {
+                Schema::table('data_bebas_harian', function (Blueprint $table) {
+                    $table->string('ket_mutasi', 255)->nullable()->after('mutasi_keluar');
+                });
+            }
+        } catch (\Throwable $e) {
+            // Ignore error
+        }
     }
 }
