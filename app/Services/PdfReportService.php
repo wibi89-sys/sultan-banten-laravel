@@ -362,7 +362,7 @@ class PdfReportService
             }
             $pdf->Ln(2);
 
-            $widths = [7, 38, 10, 10, 10, 10, 10, 10, 11, 10, 12, 52];
+            $widths = [8, 50, 11, 11, 11, 11, 11, 11, 12, 11, 13, 30];
             $col2Title = $uptId ? 'HARI / TANGGAL' : 'NAMA UPT';
 
             $renderTableHeader = function () use ($pdf, $widths, $col2Title) {
@@ -453,8 +453,10 @@ class PdfReportService
                 $textKet = ! empty($rincianArr) ? implode('; ', $rincianArr) : '-';
 
                 $nUPT = $pdf->getNumLines($textUPT, $widths[1]);
+                $pdf->SetFont('helvetica', '', 7);
                 $nKet = $pdf->getNumLines($textKet, $widths[11]);
-                $rowH = max(6, max($nUPT, $nKet) * 4.5);
+                $pdf->SetFont('helvetica', '', 7.5);
+                $rowH = max(6, max($nUPT, $nKet) * 4);
 
                 if ($pdf->GetY() + $rowH > 265) {
                     $pdf->AddPage();
@@ -476,10 +478,11 @@ class PdfReportService
                 $pdf->Cell($widths[9], $rowH, $lain, 1, 0, 'C');
                 $pdf->SetFont('helvetica', 'B', 7.5);
                 $pdf->Cell($widths[10], $rowH, $sub, 1, 0, 'C');
-                $pdf->SetFont('helvetica', '', 7.5);
+                $pdf->SetFont('helvetica', '', 7);
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
                 $pdf->MultiCell($widths[11], $rowH, $textKet, 1, 'L', false, 1, $x, $y, true, 0, false, true, $rowH, 'M');
+                $pdf->SetFont('helvetica', '', 7.5);
             }
 
             if (! $uptId) {
