@@ -140,7 +140,7 @@ class BebasHarianController extends Controller
             'upt_name' => $upt?->nama_upt ?? 'UPT',
             'tanggal_formatted' => formatDate($tanggal),
             'message' => $exists
-                ? 'Data bebas harian untuk '.($upt?->nama_upt ?? 'UPT ini').' pada tanggal '.formatDate($tanggal).' sudah ada.'
+                ? 'Data bebas & mutasi untuk '.($upt?->nama_upt ?? 'UPT ini').' pada tanggal '.formatDate($tanggal).' sudah ada.'
                 : null,
         ]);
     }
@@ -149,7 +149,7 @@ class BebasHarianController extends Controller
     {
         $user = auth()->user();
         if (! $user->canManage('bebas_harian')) {
-            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas Harian.');
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas & Mutasi.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -174,7 +174,7 @@ class BebasHarianController extends Controller
         $isExisting = DataBebasHarian::where('upt_id', $uptId)->whereDate('tanggal', $tanggal)->exists();
 
         if ($isExisting && ! $forceUpdate) {
-            return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
+            return back()->with('error', 'Data Bebas & Mutasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada. Silakan konfirmasi untuk meng-update atau batalkan.')->withInput();
         }
 
         DB::beginTransaction();
@@ -207,24 +207,24 @@ class BebasHarianController extends Controller
             $upt = Upt::find($uptId);
             $action = $isExisting ? 'edit' : 'tambah';
             $msg = $isExisting
-                ? "Memperbarui data bebas harian UPT {$upt->nama_upt} tanggal {$tanggal} via form input"
-                : "Menambahkan data bebas harian UPT {$upt->nama_upt} tanggal {$tanggal}";
+                ? "Memperbarui data bebas & mutasi UPT {$upt->nama_upt} tanggal {$tanggal} via form input"
+                : "Menambahkan data bebas & mutasi UPT {$upt->nama_upt} tanggal {$tanggal}";
 
             ActivityLog::log($action, 'bebas_harian', $msg, ['upt_id' => $uptId, 'tanggal' => $tanggal]);
 
             $successMsg = $isExisting
-                ? "Data bebas harian untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
-                : 'Data bebas harian berhasil disimpan.';
+                ? "Data bebas & mutasi untuk UPT {$upt->nama_upt} tanggal ".formatDate($tanggal).' berhasil diperbarui.'
+                : 'Data bebas & mutasi berhasil disimpan.';
 
             return back()->with('success', $successMsg);
         } catch (UniqueConstraintViolationException $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+            return back()->with('error', 'Data Bebas & Mutasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
         } catch (QueryException $e) {
             DB::rollBack();
             if ($e->getCode() == 23000 || ($e->errorInfo[1] ?? null) == 1062) {
-                return back()->with('error', 'Data Bebas Harian untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
+                return back()->with('error', 'Data Bebas & Mutasi untuk UPT ini pada tanggal '.formatDate($tanggal).' sudah ada.')->withInput();
             }
 
             return back()->with('error', 'Gagal menyimpan data: '.$e->getMessage())->withInput();
@@ -239,7 +239,7 @@ class BebasHarianController extends Controller
     {
         $user = auth()->user();
         if (! $user->canManage('bebas_harian')) {
-            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas Harian.');
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas & Mutasi.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -292,12 +292,12 @@ class BebasHarianController extends Controller
                 'user_name' => $user->nama_lengkap ?? $user->username,
                 'aksi' => 'edit',
                 'modul' => 'bebas_harian',
-                'deskripsi' => "Memperbarui data bebas harian UPT {$upt->nama_upt} tanggal {$tanggal}",
+                'deskripsi' => "Memperbarui data bebas & mutasi UPT {$upt->nama_upt} tanggal {$tanggal}",
                 'data_lama' => null,
                 'data_baru' => json_encode(['upt_id' => $uptId, 'tanggal' => $tanggal]),
             ]);
 
-            return back()->with('success', 'Data bebas harian berhasil diperbarui.');
+            return back()->with('success', 'Data bebas & mutasi berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -309,7 +309,7 @@ class BebasHarianController extends Controller
     {
         $user = auth()->user();
         if (! $user->canManage('bebas_harian')) {
-            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas Harian.');
+            abort(403, 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Bebas & Mutasi.');
         }
 
         $timeCheck = isInputTimeAllowed();
@@ -332,12 +332,12 @@ class BebasHarianController extends Controller
                 'user_name' => $user->nama_lengkap ?? $user->username,
                 'aksi' => 'hapus',
                 'modul' => 'bebas_harian',
-                'deskripsi' => "Menghapus data bebas harian UPT ID {$uptId} tanggal {$tanggal}",
+                'deskripsi' => "Menghapus data bebas & mutasi UPT ID {$uptId} tanggal {$tanggal}",
                 'data_lama' => json_encode(['upt_id' => $uptId, 'tanggal' => $tanggal]),
                 'data_baru' => null,
             ]);
 
-            return back()->with('success', 'Data bebas harian berhasil dihapus.');
+            return back()->with('success', 'Data bebas & mutasi berhasil dihapus.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus data: '.$e->getMessage());
         }

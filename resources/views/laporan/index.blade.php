@@ -68,7 +68,7 @@
         <div class="col-6 col-md-3">
             <a href="{{ route('laporan.index', ['type' => 'bebas_harian']) }}" class="report-type-card {{ $reportType == 'bebas_harian' ? 'active' : '' }}">
                 <i class="fas fa-door-open"></i>
-                <h6 class="mb-0 fs-6">Bebas Harian</h6>
+                <h6 class="mb-0 fs-6">Bebas &amp; Mutasi</h6>
             </a>
         </div>
     </div>

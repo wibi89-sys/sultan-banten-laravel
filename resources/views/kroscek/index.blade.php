@@ -737,7 +737,7 @@
                             <th class="th-sub-modul">Penghuni</th>
                             <th class="th-sub-modul">Overstay</th>
                             <th class="th-sub-modul">Integrasi</th>
-                            <th class="th-sub-modul">Bebas Harian</th>
+                            <th class="th-sub-modul">Bebas &amp; Mutasi</th>
                         </tr>
                     </thead>
                     <tbody id="kroscekTableBody">
@@ -1314,7 +1314,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link py-2 fw-semibold" id="tab-b-btn" data-bs-toggle="pill" data-bs-target="#tab-bebas" type="button" role="tab">
-                            <i class="fas fa-door-open me-1"></i> 4. Bebas Harian
+                            <i class="fas fa-door-open me-1"></i> 4. Bebas &amp; Mutasi
                         </button>
                     </li>
                 </ul>
@@ -1476,11 +1476,11 @@
                         </div>
                     </div>
 
-                    {{-- Tab 4: Bebas Harian --}}
+                    {{-- Tab 4: Bebas & Mutasi --}}
                     <div class="tab-pane fade" id="tab-bebas" role="tabpanel">
                         <div id="b_notif_belum" class="alert alert-warning py-2 px-3 small rounded-3 d-none align-items-center mb-3">
                             <i class="fas fa-exclamation-triangle fs-5 me-2 text-warning flex-shrink-0"></i>
-                            <div><strong>Modul Bebas Harian Belum Diinput!</strong> Data bebas harian belum tercatat untuk tanggal evaluasi ini.</div>
+                            <div><strong>Modul Bebas &amp; Mutasi Belum Diinput!</strong> Data bebas &amp; mutasi belum tercatat untuk tanggal evaluasi ini.</div>
                         </div>
                         <div class="row g-2 text-center small">
                             <div class="col-4 col-sm-2 p-2 bg-light rounded-2" style="border: 1px solid #cbd5e1;">
@@ -1521,7 +1521,7 @@
                                     <i class="fas fa-plus me-1"></i> Input Data Tanggal Ini
                                 </a>
                                 <a href="#" id="b_btn_manage" class="btn btn-sm btn-outline-primary fw-semibold d-none">
-                                    <i class="fas fa-external-link-alt me-1"></i> Buka / Kelola Form Bebas Harian
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka / Kelola Form Bebas &amp; Mutasi
                                 </a>
                                 <div id="b_lock_notice" class="badge bg-secondary bg-opacity-75 py-1.5 px-2.5 text-wrap fw-normal d-none" style="font-size: 11px;">
                                     <i class="fas fa-lock me-1"></i> <span id="b_lock_text">Akses Terbatas</span>
@@ -2014,7 +2014,7 @@
             document.getElementById('b_btn_manage'),
             document.getElementById('b_lock_notice'),
             document.getElementById('b_lock_text'),
-            'Bebas Harian'
+            'Bebas & Mutasi'
         );
 
         // Trigger Tab 1 Active

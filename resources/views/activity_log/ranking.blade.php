@@ -1044,7 +1044,7 @@
                                 <th width="14%">Penghuni (20)</th>
                                 <th width="14%">Overstaying (20)</th>
                                 <th width="14%">Integrasi (20)</th>
-                                <th width="14%">Bebas Harian (20)</th>
+                                <th width="14%">Bebas &amp; Mutasi (20)</th>
                                 <th width="18%">Kroscek Tahanan (20)</th>
                                 <th width="13%">Total Poin</th>
                             </tr>

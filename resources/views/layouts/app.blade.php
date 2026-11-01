@@ -356,7 +356,7 @@
                     <a href="{{ route('integrasi.index') }}" class="{{ request()->routeIs('integrasi.*') ? 'active' : '' }}"><i class="fas fa-exchange-alt"></i><span>Data Integrasi</span></a>
                     @endif
                     @if($user->hasAccess('bebas_harian'))
-                    <a href="{{ route('bebas-harian.index') }}" class="{{ request()->routeIs('bebas-harian.*') ? 'active' : '' }}"><i class="fas fa-door-open"></i><span>Bebas Harian</span></a>
+                    <a href="{{ route('bebas-harian.index') }}" class="{{ request()->routeIs('bebas-harian.*') ? 'active' : '' }}"><i class="fas fa-door-open"></i><span>Bebas &amp; Mutasi</span></a>
                     @endif
                     <a href="{{ route('kroscek.index') }}" class="{{ request()->routeIs('kroscek.*') ? 'active' : '' }}">
                         <i class="fas fa-check-double"></i><span>Kroscek Data</span>
@@ -429,7 +429,7 @@
                     <a href="{{ route('laporan.index', ['type' => 'penghuni']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'penghuni' ? 'active' : '' }}"><i class="fas fa-users"></i><span>Lap. Penghuni</span></a>
                     <a href="{{ route('laporan.index', ['type' => 'overstaying']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'overstaying' ? 'active' : '' }}"><i class="fas fa-clock"></i><span>Lap. Overstaying</span></a>
                     <a href="{{ route('laporan.index', ['type' => 'integrasi']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'integrasi' ? 'active' : '' }}"><i class="fas fa-exchange-alt"></i><span>Lap. Integrasi</span></a>
-                    <a href="{{ route('laporan.index', ['type' => 'bebas_harian']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'bebas_harian' ? 'active' : '' }}"><i class="fas fa-door-open"></i><span>Lap. Bebas Harian</span></a>
+                    <a href="{{ route('laporan.index', ['type' => 'bebas_harian']) }}" class="{{ request()->routeIs('laporan.*') && request('type') == 'bebas_harian' ? 'active' : '' }}"><i class="fas fa-door-open"></i><span>Lap. Bebas &amp; Mutasi</span></a>
                 </div>
             </div>
             @endif

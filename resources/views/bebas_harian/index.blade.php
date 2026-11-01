@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Data Bebas Harian - Sultan Banten')
-@section('page_title', 'Data Bebas Harian')
+@section('title', 'Data Bebas & Mutasi - Sultan Banten')
+@section('page_title', 'Data Bebas & Mutasi')
 
 @push('styles')
 <style>
@@ -50,8 +50,8 @@
 <div class="content-wrapper">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-door-open me-2 text-primary"></i>Pencatatan Bebas Harian</h5>
-            <p class="text-muted mb-0 small">Pencatatan harian WBP / Tahanan bebas (Bebas Murni, PB, CB, CMB, Asimilasi, BDH, Lainnya)</p>
+            <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-door-open me-2 text-primary"></i>Pencatatan Bebas &amp; Mutasi</h5>
+            <p class="text-muted mb-0 small">Pencatatan harian narapidana &amp; tahanan bebas serta mutasi keluar (Bebas Murni, PB, CB, CMB, Asimilasi, BDH, Mutasi Keluar, Lainnya)</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             @if(auth()->user()->canManage('bebas_harian'))
@@ -62,7 +62,7 @@
                 </span>
                 @endif
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambah" {{ !$canInput ? 'disabled' : '' }}>
-                    <i class="fas fa-plus me-1"></i> Input Bebas Hari Ini
+                    <i class="fas fa-plus me-1"></i> Input Bebas &amp; Mutasi
                 </button>
             @else
                 <span class="badge bg-secondary px-3 py-2">
@@ -159,15 +159,15 @@
                                 <td><small class="text-muted">{{ $row->keterangan ?? '-' }}</small></td>
                                 <td class="text-center">
                                     @if(auth()->user()->canManage('bebas_harian'))
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data" aria-label="Edit Data Bebas Harian {{ $row->nama_upt }}">
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data" aria-label="Edit Data Bebas &amp; Mutasi {{ $row->nama_upt }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form method="POST" action="{{ route('bebas-harian.destroy') }}" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus seluruh data bebas harian UPT ini pada tanggal {{ indonesianDate($row->tanggal) }}?')">
+                                    <form method="POST" action="{{ route('bebas-harian.destroy') }}" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus seluruh data bebas & mutasi UPT ini pada tanggal {{ indonesianDate($row->tanggal) }}?')">
                                         @csrf
                                         @method('DELETE')
                                         <input type="hidden" name="del_upt_id" value="{{ $row->upt_id }}">
                                         <input type="hidden" name="del_tanggal" value="{{ $row->tanggal }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data" aria-label="Hapus Data Bebas Harian {{ $row->nama_upt }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data" aria-label="Hapus Data Bebas &amp; Mutasi {{ $row->nama_upt }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -180,7 +180,7 @@
                             <tr>
                                 <td colspan="14" class="text-center py-4 text-muted">
                                     <i class="fas fa-inbox fa-3x mb-2 d-block opacity-50"></i>
-                                    Belum ada data bebas harian yang tercatat.
+                                    Belum ada data bebas &amp; mutasi yang tercatat.
                                 </td>
                             </tr>
                         @endforelse
@@ -202,7 +202,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold">
-                    <i class="fas fa-door-open me-2"></i> Form Input Bebas Harian
+                    <i class="fas fa-door-open me-2"></i> Form Input Bebas &amp; Mutasi
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
@@ -300,7 +300,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" id="bebas_btn_submit" class="btn btn-primary px-4">
-                        <i class="fas fa-save me-1"></i> Simpan Data Bebas Harian
+                        <i class="fas fa-save me-1"></i> Simpan Data Bebas &amp; Mutasi
                     </button>
                 </div>
             </form>
@@ -314,7 +314,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title fw-bold">
-                    <i class="fas fa-edit me-2"></i> Edit Data Bebas Harian
+                    <i class="fas fa-edit me-2"></i> Edit Data Bebas &amp; Mutasi
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
@@ -401,23 +401,23 @@
     </div>
 </div>
 
-<!-- Modal Konfirmasi Duplicate Bebas Harian -->
+<!-- Modal Konfirmasi Duplicate Bebas & Mutasi -->
 <div class="modal fade" id="modalConfirmDuplicateBebas" tabindex="-1" style="z-index: 1070;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow border-0">
             <div class="modal-header py-2 bg-warning text-dark">
                 <h5 class="modal-title fs-6 fw-bold">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Bebas Harian
+                    <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Pembaruan Data Bebas &amp; Mutasi
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <div class="modal-body py-3">
                 <p class="mb-2" id="confirm_duplicate_bebas_msg">
-                    Data bebas harian untuk UPT ini pada tanggal yang dipilih sudah ada di sistem.
+                    Data bebas &amp; mutasi untuk UPT ini pada tanggal yang dipilih sudah ada di sistem.
                 </p>
                 <div class="alert alert-warning py-2 px-3 small mb-0">
                     <i class="fas fa-info-circle me-1"></i>
-                    Apakah Anda ingin meng-<strong>Update</strong> data bebas harian yang sudah ada tersebut dengan angka baru ini, atau <strong>Batalkan</strong>?
+                    Apakah Anda ingin meng-<strong>Update</strong> data bebas &amp; mutasi yang sudah ada tersebut dengan angka baru ini, atau <strong>Batalkan</strong>?
                 </div>
             </div>
             <div class="modal-footer py-2 bg-light">
@@ -642,7 +642,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.exists) {
-                        messageEl.innerHTML = (data.message || 'Data bebas harian untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
+                        messageEl.innerHTML = (data.message || 'Data bebas & mutasi untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
                         warningBox.classList.remove('d-none');
                         warningBox.classList.add('d-flex');
                     } else {
@@ -699,13 +699,13 @@
                 .then(data => {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Data Bebas Harian';
+                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Data Bebas &amp; Mutasi';
                     }
 
                     if (data.exists) {
                         const msgEl = document.getElementById('confirm_duplicate_bebas_msg');
                         if (msgEl) {
-                            msgEl.innerHTML = `Data bebas harian untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
+                            msgEl.innerHTML = `Data bebas & mutasi untuk <strong>${data.upt_name || 'UPT ini'}</strong> pada tanggal <strong>${data.tanggal_formatted || tanggal}</strong> sudah ada di database.`;
                         }
                         const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmDuplicateBebas'));
                         modalConfirm.show();
@@ -721,7 +721,7 @@
                 .catch(() => {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Data Bebas Harian';
+                        submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan Data Bebas &amp; Mutasi';
                     }
                     formTambah.submit();
                 });

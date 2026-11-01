@@ -10,7 +10,7 @@
         'penghuni' => ['label' => 'Data Penghuni (Lapas/Rutan)', 'icon' => 'fas fa-users'],
         'overstaying' => ['label' => 'Data Overstaying Tahanan', 'icon' => 'fas fa-clock'],
         'integrasi' => ['label' => 'Data Integrasi (PB, CB, CMB)', 'icon' => 'fas fa-user-check'],
-        'bebas_harian' => ['label' => 'Bebas Harian', 'icon' => 'fas fa-door-open'],
+        'bebas_harian' => ['label' => 'Bebas & Mutasi', 'icon' => 'fas fa-door-open'],
         'sidang_tpp' => ['label' => 'Sidang TPP', 'icon' => 'fas fa-gavel'],
         'mutasi' => ['label' => 'Mutasi Narapidana Antar-UPT', 'icon' => 'fas fa-exchange-alt'],
         'laporan' => ['label' => 'Cetak Laporan', 'icon' => 'fas fa-print'],
