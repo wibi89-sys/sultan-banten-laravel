@@ -29,6 +29,7 @@ class InstansiController extends Controller
         }
 
         $request->validate([
+            'nama_aplikasi' => 'nullable|string|max:100',
             'nama_instansi' => 'nullable|string|max:255',
             'alamat' => 'nullable|string|max:500',
             'telepon' => 'nullable|string|max:50',
@@ -49,6 +50,7 @@ class InstansiController extends Controller
             $instansi = new Instansi;
         }
 
+        $instansi->nama_aplikasi = $request->input('nama_aplikasi');
         $instansi->nama_instansi = $request->input('nama_instansi');
         $instansi->alamat = $request->input('alamat');
         $instansi->telepon = $request->input('telepon');

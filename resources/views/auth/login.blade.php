@@ -109,10 +109,10 @@
                                 @if($isLoginWebp)
                                 <picture class="flex-shrink-0">
                                     <source srcset="{{ asset($chosenLoginLogo) }}" type="image/webp">
-                                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-12 h-12 object-contain bg-white rounded-xl p-1.5 shadow-md flex-shrink-0" width="48" height="48" fetchpriority="high">
+                                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" class="w-12 h-12 object-contain bg-white rounded-xl p-1.5 shadow-md flex-shrink-0" width="48" height="48" fetchpriority="high">
                                 </picture>
                                 @else
-                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-12 h-12 object-contain bg-white rounded-xl p-1.5 shadow-md flex-shrink-0" width="48" height="48" fetchpriority="high">
+                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" class="w-12 h-12 object-contain bg-white rounded-xl p-1.5 shadow-md flex-shrink-0" width="48" height="48" fetchpriority="high">
                                 @endif
                             </div>
                         @else
@@ -121,8 +121,8 @@
                             </div>
                         @endif
                         <div>
-                            <h1 class="font-bold text-lg sm:text-xl">{{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}</h1>
-                            <p class="text-xs text-white/80">Kantor Wilayah Ditjenpas Banten</p>
+                            <h1 class="font-bold text-lg sm:text-xl">{{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}</h1>
+                            <p class="text-xs text-white/80">{{ $instansi->nama_instansi ?? 'Kantor Wilayah Ditjenpas Banten' }}</p>
                         </div>
                     </div>
 
@@ -157,10 +157,10 @@
                         @if($isMWebp)
                         <picture>
                             <source srcset="{{ asset($chosenMLogo) }}" type="image/webp">
-                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-full h-full object-contain" width="64" height="64" fetchpriority="high">
+                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" class="w-full h-full object-contain" width="64" height="64" fetchpriority="high">
                         </picture>
                         @else
-                        <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-full h-full object-contain" width="64" height="64" fetchpriority="high">
+                        <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" class="w-full h-full object-contain" width="64" height="64" fetchpriority="high">
                         @endif
                     </div>
                 @else
@@ -169,10 +169,10 @@
                     </div>
                 @endif
                 <h2 class="text-2xl font-black text-white tracking-wide uppercase drop-shadow-md">
-                    {{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}
+                    {{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}
                 </h2>
                 <p class="text-xs text-white/90 font-medium tracking-wide drop-shadow mt-1">
-                    Kantor Wilayah Ditjenpas Banten
+                    {{ $instansi->nama_instansi ?? 'Kantor Wilayah Ditjenpas Banten' }}
                 </p>
             </div>
 
@@ -365,7 +365,7 @@
                             @if($hasFootThumb)
                             <source srcset="{{ asset($chosenFootLogo) }}" type="image/webp">
                             @endif
-                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-6 h-6 sm:w-8 sm:h-8 object-contain" width="32" height="32" loading="lazy">
+                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}" class="w-6 h-6 sm:w-8 sm:h-8 object-contain" width="32" height="32" loading="lazy">
                         </picture>
                     @else
                         <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded flex items-center justify-center">
@@ -373,12 +373,12 @@
                         </div>
                     @endif
                     <div>
-                        <p class="font-semibold text-gray-800 text-sm sm:text-base">SULTAN BANTEN</p>
-                        <p class="text-xs text-gray-500 hidden sm:block">Ditjenpas Banten</p>
+                        <p class="font-semibold text-gray-800 text-sm sm:text-base">{{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}</p>
+                        <p class="text-xs text-gray-500 hidden sm:block">{{ $instansi->nama_instansi ?? 'Kantor Wilayah Ditjenpas Banten' }}</p>
                     </div>
                 </div>
                 <div class="text-center sm:text-right text-xs sm:text-sm text-gray-500">
-                    <p>&copy; {{ date('Y') }} SULTAN BANTEN</p>
+                    <p>&copy; {{ date('Y') }} {{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}</p>
                 </div>
             </div>
         </div>

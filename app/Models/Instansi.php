@@ -12,6 +12,7 @@ class Instansi extends Model
     protected $table = 'instansi';
 
     protected $fillable = [
+        'nama_aplikasi',
         'nama_instansi',
         'alamat',
         'telepon',
@@ -32,10 +33,21 @@ class Instansi extends Model
         'stempel_image',
     ];
 
+    public function getNamaAplikasiAttribute($value): string
+    {
+        return ! empty($value) ? $value : 'SULTAN BANTEN';
+    }
+
+    public function getNamaInstansiAttribute($value): string
+    {
+        return ! empty($value) ? $value : 'Kantor Wilayah Ditjenpas Banten';
+    }
+
     public static function getFirst()
     {
         return static::first() ?? new static([
-            'nama_instansi' => 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM BANTEN',
+            'nama_aplikasi' => 'SULTAN BANTEN',
+            'nama_instansi' => 'Kantor Wilayah Ditjenpas Banten',
             'jam_mulai' => '06:00',
             'jam_selesai' => '08:00',
         ]);

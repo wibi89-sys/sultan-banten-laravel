@@ -32,8 +32,14 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="nama_instansi" class="form-label small fw-semibold">Nama Instansi <span class="text-danger">*</span></label>
-                            <input type="text" id="nama_instansi" name="nama_instansi" class="form-control form-control-sm" value="{{ $instansi->nama_instansi }}" aria-label="Nama Instansi" required>
+                            <label for="nama_aplikasi" class="form-label small fw-semibold">Nama Aplikasi / Brand Sistem <span class="text-danger">*</span></label>
+                            <input type="text" id="nama_aplikasi" name="nama_aplikasi" class="form-control form-control-sm" value="{{ $instansi->nama_aplikasi }}" placeholder="Contoh: SULTAN BANTEN" aria-label="Nama Aplikasi" required>
+                            <small class="text-muted d-block mt-1" style="font-size: 11px;">Nama singkatan atau brand sistem (muncul di judul header, sidebar menu, dan halaman login).</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nama_instansi" class="form-label small fw-semibold">Nama Instansi / Kantor Induk <span class="text-danger">*</span></label>
+                            <input type="text" id="nama_instansi" name="nama_instansi" class="form-control form-control-sm" value="{{ $instansi->nama_instansi }}" placeholder="Contoh: Kantor Wilayah Ditjenpas Banten" aria-label="Nama Instansi" required>
+                            <small class="text-muted d-block mt-1" style="font-size: 11px;">Nama lembaga/kantor resmi (muncul di subjudul login, tanda wilayah, dan dokumen dinas).</small>
                         </div>
                         <div class="mb-3">
                             <label for="alamat_instansi" class="form-label small fw-semibold">Alamat Kantor</label>

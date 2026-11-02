@@ -13,10 +13,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Sultan Banten">
+    <meta name="apple-mobile-web-app-title" content="{{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="apple-touch-icon" href="{{ asset('assets/icons/apple-touch-icon.png') }}">
-    <title>@yield('title', 'Sultan Banten - Kemenkumham Banten')</title>
+    <title>@yield('title', ($instansi->nama_aplikasi ?? 'Sultan Banten') . ' - ' . ($instansi->nama_instansi ?? 'Ditjenpas Banten'))</title>
     <!-- Preconnect to external CDNs for faster DNS and TLS negotiation -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
@@ -378,15 +378,16 @@
                 @if($isSideWebp)
                 <picture>
                     <source srcset="{{ asset($chosenSideLogo) }}" type="image/webp">
-                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;" loading="lazy">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;" loading="lazy">
                 </picture>
                 @else
-                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;" loading="lazy">
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" width="60" height="60" style="object-fit: contain;" loading="lazy">
                 @endif
             @else
                 <i class="fas fa-building fa-3x text-white mb-2"></i>
             @endif
-            <h5>{{ $instansi->nama_instansi ?? 'Sultan Banten' }}</h5>
+            <h5>{{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}</h5>
+            <small class="text-white-50 d-block text-truncate" style="font-size: 11px; margin-top: 2px;">{{ $instansi->nama_instansi ?? 'Ditjenpas Banten' }}</small>
         </div>
         <div class="sidebar-menu">
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') || request()->routeIs('home') ? 'active' : '' }}">
@@ -591,15 +592,15 @@
                 @if($isWebp)
                 <picture class="flex-shrink-0">
                     <source srcset="{{ asset($chosenLogo) }}" type="image/webp">
-                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 flex-shrink-0" width="40" height="40" fetchpriority="high">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" class="public-logo me-2 flex-shrink-0" width="40" height="40" fetchpriority="high">
                 </picture>
                 @else
-                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 flex-shrink-0" width="40" height="40" fetchpriority="high">
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}" class="public-logo me-2 flex-shrink-0" width="40" height="40" fetchpriority="high">
                 @endif
                 @endif
                 <div class="min-w-0 overflow-hidden">
-                    <h5 class="mb-0 fw-bold public-title text-truncate">{{ $instansi->nama_instansi ?? 'Sultan Banten' }}</h5>
-                    <small class="public-subtitle d-none d-md-inline text-truncate"><i class="fas fa-chart-line me-1"></i>Dashboard Sistem Update Laporan Terpadu Harian</small>
+                    <h5 class="mb-0 fw-bold public-title text-truncate">{{ $instansi->nama_aplikasi ?? 'Sultan Banten' }}</h5>
+                    <small class="public-subtitle d-none d-md-inline text-truncate"><i class="fas fa-chart-line me-1"></i>{{ $instansi->nama_instansi ?? 'Kantor Wilayah Ditjenpas Banten' }}</small>
                 </div>
                 @endif
             </div>
@@ -681,7 +682,7 @@
 
         <!-- Footer -->
         <footer class="text-center py-3 mt-auto" style="background: transparent; color: var(--text-secondary); font-size: 12px;">
-            © Ditjenpas Banten {{ date('Y') }}
+            © {{ $instansi->nama_instansi ?? 'Ditjenpas Banten' }} {{ date('Y') }}
         </footer>
     </main>
 
