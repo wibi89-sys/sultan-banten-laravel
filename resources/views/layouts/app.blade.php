@@ -682,7 +682,7 @@
 
         <!-- Footer -->
         <footer class="text-center py-3 mt-auto" style="background: transparent; color: var(--text-secondary); font-size: 12px;">
-            © {{ $instansi->nama_instansi ?? 'Ditjenpas Banten' }} {{ date('Y') }}
+            &copy; {{ date('Y') }} {{ $instansi->nama_instansi ?? 'Kanwil Ditjenpas Banten' }}
         </footer>
     </main>
 

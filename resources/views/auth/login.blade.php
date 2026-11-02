@@ -378,7 +378,7 @@
                     </div>
                 </div>
                 <div class="text-center sm:text-right text-xs sm:text-sm text-gray-500">
-                    <p>&copy; {{ date('Y') }} {{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}</p>
+                    <p>&copy; {{ date('Y') }} {{ $instansi->nama_instansi ?? 'Kanwil Ditjenpas Banten' }}</p>
                 </div>
             </div>
         </div>
