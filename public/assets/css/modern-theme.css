@@ -2297,6 +2297,10 @@ body.modal-open .marquee-container {
     .user-dropdown-toggle .profile-name-text {
         display: none !important;
     }
+    .btn-login-public {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
     .dark-mode-switch {
         margin-right: 4px;
         gap: 2px;

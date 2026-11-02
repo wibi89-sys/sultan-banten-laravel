@@ -533,6 +533,10 @@
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
         }
 
         .main-content.no-sidebar .topbar .btn-login-public:hover {
@@ -922,9 +926,9 @@
             .stat-card .stat-value { font-size: 16px; }
             .stat-card .stat-label { font-size: 10px; }
             .section-header { font-size: 11px; }
-            .public-title { font-size: 14px !important; }
-            .public-subtitle { font-size: 11px !important; }
-            .btn-login-public { padding: 6px 12px !important; font-size: 12px; }
+            .public-title { font-size: 13.5px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+            .public-subtitle { display: none !important; }
+            .btn-login-public { padding: 5px 12px !important; font-size: 11.5px !important; white-space: nowrap !important; flex-shrink: 0 !important; }
             .dark-mode-switch .switch { width: 42px; height: 22px; }
             .dark-mode-switch .slider:before { height: 16px; width: 16px; }
             .dark-mode-switch input:checked + .slider:before { transform: translateX(20px); }
@@ -2391,24 +2395,38 @@
             }
 
             .main-content.no-sidebar .topbar {
-                padding: 12px 14px !important;
+                padding: 8px 12px !important;
+                flex-wrap: nowrap !important;
             }
 
             .main-content.no-sidebar .topbar .public-logo {
                 height: 36px !important;
+                width: 36px !important;
+                min-width: 36px !important;
+                max-width: 36px !important;
+                flex-shrink: 0 !important;
             }
 
             .main-content.no-sidebar .topbar .public-title {
-                font-size: 15px !important;
+                font-size: 13.5px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
 
             .main-content.no-sidebar .topbar .public-subtitle {
-                font-size: 10.5px !important;
+                display: none !important;
             }
 
             .main-content.no-sidebar .topbar .btn-login-public {
-                padding: 6px 13px !important;
+                padding: 5px 12px !important;
                 font-size: 11.5px !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+            }
+
+            .main-content.no-sidebar .topbar .dark-mode-switch {
+                margin-right: 0 !important;
             }
 
             .exec-filter-bar {

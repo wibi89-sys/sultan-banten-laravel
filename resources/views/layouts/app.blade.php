@@ -135,44 +135,51 @@
         }
         @media (max-width: 767.98px) {
             .main-content.no-sidebar .topbar {
-                padding: 10px 14px;
+                padding: 8px 12px !important;
+                flex-wrap: nowrap !important;
             }
             .main-content.no-sidebar .topbar .public-logo {
-                height: 40px !important;
-                width: 40px !important;
-                min-width: 40px !important;
-                max-width: 40px !important;
+                height: 36px !important;
+                width: 36px !important;
+                min-width: 36px !important;
+                max-width: 36px !important;
                 flex-shrink: 0 !important;
             }
             .main-content.no-sidebar .topbar .public-subtitle {
                 display: none !important;
             }
             .main-content.no-sidebar .topbar .public-title {
-                font-size: 14px !important;
+                font-size: 13.5px !important;
                 line-height: 1.25 !important;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: calc(100vw - 195px);
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 100% !important;
             }
             .main-content.no-sidebar .topbar .btn-login-public {
-                padding: 6px 12px !important;
-                font-size: 12px !important;
-                border-radius: 16px;
+                padding: 5px 12px !important;
+                font-size: 11.5px !important;
+                border-radius: 16px !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
             }
             .main-content.no-sidebar .topbar #pwaInstallBtn {
                 background: rgba(255,255,255,0.25) !important;
                 color: #ffffff !important;
                 border: 1px solid rgba(255,255,255,0.45) !important;
-                padding: 5px 8px !important;
+                padding: 4px 8px !important;
                 font-size: 11px !important;
+                flex-shrink: 0 !important;
+            }
+            .main-content.no-sidebar .topbar .dark-mode-switch {
+                margin-right: 0 !important;
             }
         }
         .main-content.no-sidebar .topbar .btn-login-public {
             background: rgba(255,255,255,0.95);
             color: var(--primary-color, #667eea) !important;
             border: none;
-            padding: 8px 20px;
+            padding: 8px 18px;
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
@@ -180,6 +187,8 @@
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
         }
         .main-content.no-sidebar .topbar .btn-login-public:hover {
             background: white;
@@ -562,10 +571,10 @@
     <!-- Main Content -->
     <main id="main-content" role="main" class="main-content {{ !$user ? 'no-sidebar' : '' }}">
         <!-- Topbar -->
-        <div class="topbar d-flex justify-content-between align-items-center flex-wrap">
-            <div class="d-flex align-items-center">
+        <div class="topbar d-flex justify-content-between align-items-center flex-nowrap">
+            <div class="d-flex align-items-center min-w-0 flex-grow-1 me-2 overflow-hidden">
                 @if($user)
-                <button class="toggle-btn d-lg-none me-2" id="toggleSidebar" aria-label="Toggle Menu Sidebar"><i class="fas fa-bars"></i></button>
+                <button class="toggle-btn d-lg-none me-2 flex-shrink-0" id="toggleSidebar" aria-label="Toggle Menu Sidebar"><i class="fas fa-bars"></i></button>
                 <h4 class="mb-0 text-truncate">@yield('page_title', 'Dashboard')</h4>
                 @else
                 <!-- Public Header with Logo -->
@@ -582,26 +591,26 @@
                 @if($isWebp)
                 <picture class="flex-shrink-0">
                     <source srcset="{{ asset($chosenLogo) }}" type="image/webp">
-                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 me-sm-3 flex-shrink-0" width="45" height="45" fetchpriority="high">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 flex-shrink-0" width="40" height="40" fetchpriority="high">
                 </picture>
                 @else
-                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 me-sm-3 flex-shrink-0" width="45" height="45" fetchpriority="high">
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 flex-shrink-0" width="40" height="40" fetchpriority="high">
                 @endif
                 @endif
-                <div class="overflow-hidden">
-                    <h5 class="mb-0 fw-bold public-title">{{ $instansi->nama_instansi ?? 'Sultan Banten' }}</h5>
-                    <small class="public-subtitle"><i class="fas fa-chart-line me-1"></i>Dashboard Sistem Update Laporan Terpadu Harian</small>
+                <div class="min-w-0 overflow-hidden">
+                    <h5 class="mb-0 fw-bold public-title text-truncate">{{ $instansi->nama_instansi ?? 'Sultan Banten' }}</h5>
+                    <small class="public-subtitle d-none d-md-inline text-truncate"><i class="fas fa-chart-line me-1"></i>Dashboard Sistem Update Laporan Terpadu Harian</small>
                 </div>
                 @endif
             </div>
-            <div class="d-flex align-items-center mt-2 mt-md-0 flex-shrink-0">
+            <div class="d-flex align-items-center flex-shrink-0 ms-auto gap-1 gap-sm-2">
                 <!-- PWA Install Button -->
-                <button id="pwaInstallBtn" type="button" class="btn btn-sm btn-outline-primary rounded-pill d-none me-2 shadow-xs flex-shrink-0" style="font-size: 11px; font-weight: 600; padding: 4px 8px; white-space: nowrap;" title="Install Aplikasi Sultan Banten">
+                <button id="pwaInstallBtn" type="button" class="btn btn-sm btn-outline-primary rounded-pill d-none shadow-xs flex-shrink-0" style="font-size: 11px; font-weight: 600; padding: 4px 8px; white-space: nowrap;" title="Install Aplikasi Sultan Banten">
                     <i class="fas fa-download"></i><span class="d-none d-sm-inline ms-1">Install App</span>
                 </button>
 
                 <!-- Dark Mode Switch -->
-                <div class="dark-mode-switch">
+                <div class="dark-mode-switch mb-0">
                     <span class="switch-label d-none d-md-inline"><i class="fas fa-sun text-warning"></i></span>
                     <label class="switch" for="darkModeToggle">
                         <input type="checkbox" id="darkModeToggle" aria-label="Aktifkan Mode Gelap">
@@ -642,8 +651,8 @@
                     </ul>
                 </div>
                 @else
-                <a href="{{ route('login') }}" class="btn btn-login-public">
-                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                <a href="{{ route('login') }}" class="btn btn-login-public flex-shrink-0" title="Masuk ke Akun Operator">
+                    <i class="fas fa-sign-in-alt me-1"></i><span>Login</span>
                 </a>
                 @endif
             </div>
