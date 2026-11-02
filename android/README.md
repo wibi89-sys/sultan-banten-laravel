@@ -53,3 +53,4 @@ Jika ingin membuat file release bertanda tangan (*Signed Release APK*):
 3. Buat Key store baru (*Create new...*) atau gunakan Keystore yang sudah ada.
 4. Pilih build variant **release** &rarr; Finish.
 5. File APK release yang dihasilkan siap dipasang di seluruh smartphone Android (Android 7.0 hingga Android 14+).
+

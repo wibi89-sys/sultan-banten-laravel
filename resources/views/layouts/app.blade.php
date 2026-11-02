@@ -116,7 +116,11 @@
         }
         .main-content.no-sidebar .topbar .public-logo {
             height: 45px;
-            width: auto;
+            width: 45px;
+            min-width: 45px;
+            max-width: 45px;
+            flex-shrink: 0;
+            object-fit: contain;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
             animation: fadeInLeft 0.5s ease-out;
         }
@@ -128,6 +132,41 @@
             color: rgba(255,255,255,0.9);
             text-shadow: 0 1px 2px rgba(0,0,0,0.15);
             animation: fadeInLeft 0.5s ease-out 0.2s both;
+        }
+        @media (max-width: 767.98px) {
+            .main-content.no-sidebar .topbar {
+                padding: 10px 14px;
+            }
+            .main-content.no-sidebar .topbar .public-logo {
+                height: 40px !important;
+                width: 40px !important;
+                min-width: 40px !important;
+                max-width: 40px !important;
+                flex-shrink: 0 !important;
+            }
+            .main-content.no-sidebar .topbar .public-subtitle {
+                display: none !important;
+            }
+            .main-content.no-sidebar .topbar .public-title {
+                font-size: 14px !important;
+                line-height: 1.25 !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: calc(100vw - 195px);
+            }
+            .main-content.no-sidebar .topbar .btn-login-public {
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+                border-radius: 16px;
+            }
+            .main-content.no-sidebar .topbar #pwaInstallBtn {
+                background: rgba(255,255,255,0.25) !important;
+                color: #ffffff !important;
+                border: 1px solid rgba(255,255,255,0.45) !important;
+                padding: 5px 8px !important;
+                font-size: 11px !important;
+            }
         }
         .main-content.no-sidebar .topbar .btn-login-public {
             background: rgba(255,255,255,0.95);
@@ -541,24 +580,24 @@
                     $isWebp = $hasThumbLogo || $hasWebpLogo;
                 @endphp
                 @if($isWebp)
-                <picture>
+                <picture class="flex-shrink-0">
                     <source srcset="{{ asset($chosenLogo) }}" type="image/webp">
-                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45" fetchpriority="high">
+                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 me-sm-3 flex-shrink-0" width="45" height="45" fetchpriority="high">
                 </picture>
                 @else
-                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-3" width="45" height="45" fetchpriority="high">
+                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="public-logo me-2 me-sm-3 flex-shrink-0" width="45" height="45" fetchpriority="high">
                 @endif
                 @endif
-                <div>
+                <div class="overflow-hidden">
                     <h5 class="mb-0 fw-bold public-title">{{ $instansi->nama_instansi ?? 'Sultan Banten' }}</h5>
                     <small class="public-subtitle"><i class="fas fa-chart-line me-1"></i>Dashboard Sistem Update Laporan Terpadu Harian</small>
                 </div>
                 @endif
             </div>
-            <div class="d-flex align-items-center mt-2 mt-md-0">
+            <div class="d-flex align-items-center mt-2 mt-md-0 flex-shrink-0">
                 <!-- PWA Install Button -->
-                <button id="pwaInstallBtn" type="button" class="btn btn-sm btn-outline-primary rounded-pill d-none me-2 shadow-xs" style="font-size: 11px; font-weight: 600; padding: 3px 10px;" title="Install Aplikasi Sultan Banten">
-                    <i class="fas fa-download me-1"></i> Install App
+                <button id="pwaInstallBtn" type="button" class="btn btn-sm btn-outline-primary rounded-pill d-none me-2 shadow-xs flex-shrink-0" style="font-size: 11px; font-weight: 600; padding: 4px 8px; white-space: nowrap;" title="Install Aplikasi Sultan Banten">
+                    <i class="fas fa-download"></i><span class="d-none d-sm-inline ms-1">Install App</span>
                 </button>
 
                 <!-- Dark Mode Switch -->

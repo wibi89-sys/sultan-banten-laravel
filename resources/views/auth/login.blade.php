@@ -93,7 +93,7 @@
         <header class="relative z-10">
             <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
                         @if (!empty($instansi->logo))
                             @php
                                 $loginLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
@@ -104,29 +104,31 @@
                                 $chosenLoginLogo = $hasLoginThumb ? $loginThumbLogo : ($hasLoginWebp ? $loginWebpLogo : $instansi->logo);
                                 $isLoginWebp = $hasLoginThumb || $hasLoginWebp;
                             @endphp
-                            @if($isLoginWebp)
-                            <picture>
-                                <source srcset="{{ asset($chosenLoginLogo) }}" type="image/webp">
-                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48" fetchpriority="high">
-                            </picture>
-                            @else
-                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1" width="48" height="48" fetchpriority="high">
-                            @endif
+                            <div class="flex-shrink-0">
+                                @if($isLoginWebp)
+                                <picture class="flex-shrink-0">
+                                    <source srcset="{{ asset($chosenLoginLogo) }}" type="image/webp">
+                                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1 flex-shrink-0" width="48" height="48" fetchpriority="high">
+                                </picture>
+                                @else
+                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1 flex-shrink-0" width="48" height="48" fetchpriority="high">
+                                @endif
+                            </div>
                         @else
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
                                 <i class="fas fa-balance-scale text-lg sm:text-2xl text-primary"></i>
                             </div>
                         @endif
-                        <div>
-                            <h1 class="font-bold text-lg sm:text-xl">{{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}</h1>
+                        <div class="min-w-0">
+                            <h1 class="font-bold text-base sm:text-xl truncate">{{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}</h1>
                             <p class="text-xs text-white/80 hidden sm:block">Ditjenpas Banten</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button id="loginPwaInstallBtn" type="button" class="hidden bg-white/20 hover:bg-white/30 text-white px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium items-center gap-1.5 transition-all text-xs sm:text-sm border border-white/40 shadow-sm" title="Install Aplikasi Sultan Banten">
-                            <i class="fas fa-download"></i> <span>Install App</span>
+                    <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                        <button id="loginPwaInstallBtn" type="button" class="hidden bg-white/20 hover:bg-white/30 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium items-center gap-1.5 transition-all text-xs sm:text-sm border border-white/40 shadow-sm flex-shrink-0" title="Install Aplikasi Sultan Banten">
+                            <i class="fas fa-download"></i> <span class="hidden sm:inline">Install App</span>
                         </button>
-                        <a href="{{ route('dashboard') }}" class="bg-white text-gray-800 hover:bg-gray-100 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium flex items-center gap-1 sm:gap-2 shadow-lg transition-all text-sm">
+                        <a href="{{ route('dashboard') }}" class="bg-white text-gray-800 hover:bg-gray-100 px-2.5 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium flex items-center gap-1 sm:gap-2 shadow-lg transition-all text-xs sm:text-sm flex-shrink-0">
                             <i class="fas fa-home"></i> 
                             <span class="hidden sm:inline">Lihat Dashboard</span>
                             <span class="sm:hidden">Dashboard</span>

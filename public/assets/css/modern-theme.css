@@ -2271,6 +2271,19 @@ body.modal-open .marquee-container {
         flex-wrap: nowrap !important;
         gap: 8px;
     }
+    .topbar .public-logo {
+        height: 40px !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        flex-shrink: 0 !important;
+        object-fit: contain !important;
+    }
+    #pwaInstallBtn {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        flex-shrink: 0 !important;
+    }
     .topbar h4, .topbar .h4 {
         font-size: 14.5px !important;
         white-space: nowrap;
