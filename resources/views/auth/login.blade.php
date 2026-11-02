@@ -350,10 +350,11 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-white border-t py-3 sm:py-6 mt-auto">
+    <footer class="bg-white border-t py-2.5 sm:py-6 mt-auto">
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
-                <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Brand: Terlihat di Desktop/Tablet, disembunyikan di Mobile agar bersih & tidak duplikat -->
+                <div class="hidden sm:flex items-center gap-2 sm:gap-3">
                     @if (!empty($instansi->logo))
                         @php
                             $footLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
@@ -374,10 +375,10 @@
                     @endif
                     <div>
                         <p class="font-semibold text-gray-800 text-sm sm:text-base">{{ $instansi->nama_aplikasi ?? 'SULTAN BANTEN' }}</p>
-                        <p class="text-xs text-gray-500 hidden sm:block">{{ $instansi->nama_instansi ?? 'Kantor Wilayah Ditjenpas Banten' }}</p>
+                        <p class="text-xs text-gray-500">{{ $instansi->nama_instansi ?? 'Kantor Wilayah Ditjenpas Banten' }}</p>
                     </div>
                 </div>
-                <div class="text-center sm:text-right text-xs sm:text-sm text-gray-500">
+                <div class="text-center sm:text-right text-xs sm:text-sm text-gray-500 w-full sm:w-auto">
                     <p>&copy; {{ date('Y') }} {{ $instansi->nama_instansi ?? 'Kanwil Ditjenpas Banten' }}</p>
                 </div>
             </div>
