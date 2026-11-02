@@ -1,0 +1,78 @@
+{
+  "name": "SULTAN Banten - Sistem Pelayanan Terpadu Pemasyarakatan",
+  "short_name": "SULTAN Banten",
+  "description": "Sistem Informasi & Pelaporan Terpadu Divisi Pemasyarakatan Kantor Wilayah Kemenkumham Banten",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "orientation": "any",
+  "lang": "id",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard Utama",
+      "short_name": "Dashboard",
+      "description": "Buka dashboard pelaporan terpadu",
+      "url": "/dashboard?source=pwa",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Fluktuasi Penghuni",
+      "short_name": "Fluktuasi",
+      "description": "Pantau dinamika tambah kurang penghuni",
+      "url": "/fluktuasi?source=pwa",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Bebas & Mutasi",
+      "short_name": "Bebas & Mutasi",
+      "description": "Input dan rekapitulasi data pembebasan serta mutasi keluar",
+      "url": "/bebas-harian?source=pwa",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Kroscek Data",
+      "short_name": "Kroscek",
+      "description": "Kroscek sinkronisasi data 4 modul pelaporan UPT",
+      "url": "/kroscek?source=pwa",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["productivity", "government", "utilities"]
+}
+

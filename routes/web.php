@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Route;
 // Public Routes (Dashboard is public like in native PHP)
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/offline', function () {
+    return response()->file(public_path('offline.html'));
+})->name('pwa.offline');
 
 // Public Cron WhatsApp endpoint with throttle & secure key check
 Route::get('/cron-wa', function (Request $request) {

@@ -14,6 +14,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Sultan Banten">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/icons/apple-touch-icon.png') }}">
     <title>@yield('title', 'Sultan Banten - Kemenkumham Banten')</title>
     <!-- Preconnect to external CDNs for faster DNS and TLS negotiation -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -504,6 +506,9 @@
             </div>
             @endif
 
+            <a href="javascript:void(0)" id="sidebarPwaInstallBtn" class="d-none text-primary fw-bold" style="background-color: rgba(99, 102, 241, 0.1);">
+                <i class="fas fa-download text-primary"></i><span>Install Aplikasi</span>
+            </a>
             <a href="{{ route('profile.index') }}" class="{{ request()->routeIs('profile.*') ? 'active' : '' }}"><i class="fas fa-user-circle"></i><span>Profil Saya</span></a>
             <form action="{{ route('logout') }}" method="POST" id="logoutForm" class="d-inline">
                 @csrf
@@ -551,6 +556,11 @@
                 @endif
             </div>
             <div class="d-flex align-items-center mt-2 mt-md-0">
+                <!-- PWA Install Button -->
+                <button id="pwaInstallBtn" type="button" class="btn btn-sm btn-outline-primary rounded-pill d-none me-2 shadow-xs" style="font-size: 11px; font-weight: 600; padding: 3px 10px;" title="Install Aplikasi Sultan Banten">
+                    <i class="fas fa-download me-1"></i> Install App
+                </button>
+
                 <!-- Dark Mode Switch -->
                 <div class="dark-mode-switch">
                     <span class="switch-label d-none d-md-inline"><i class="fas fa-sun text-warning"></i></span>
@@ -725,6 +735,67 @@
                 }
             });
         }
+    </script>
+    <!-- PWA Service Worker Registration & Install Handler -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('{{ asset("sw.js") }}')
+                    .then(function(reg) {
+                        reg.onupdatefound = function() {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = function() {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('[PWA] Versi baru SULTAN Banten tersedia.');
+                                }
+                            };
+                        };
+                    })
+                    .catch(function(err) {
+                        console.warn('[PWA] Service Worker registration failed:', err);
+                    });
+            });
+        }
+
+        // PWA Install Prompt Handler
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            const installBtns = [
+                document.getElementById('pwaInstallBtn'),
+                document.getElementById('sidebarPwaInstallBtn'),
+                document.getElementById('loginPwaInstallBtn')
+            ];
+
+            installBtns.forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('d-none');
+                    btn.addEventListener('click', () => {
+                        btn.classList.add('d-none');
+                        if (deferredPrompt) {
+                            deferredPrompt.prompt();
+                            deferredPrompt.userChoice.then((choiceResult) => {
+                                deferredPrompt = null;
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] SULTAN Banten berhasil di-install.');
+            const installBtns = [
+                document.getElementById('pwaInstallBtn'),
+                document.getElementById('sidebarPwaInstallBtn'),
+                document.getElementById('loginPwaInstallBtn')
+            ];
+            installBtns.forEach(btn => {
+                if (btn) btn.classList.add('d-none');
+            });
+        });
     </script>
     @stack('scripts')
 </body>

@@ -8,6 +8,13 @@
     <link rel="icon" href="{{ asset('assets/favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Halaman Masuk SULTAN BANTEN - Sistem Informasi & Pelaporan Terpadu Divisi Pemasyarakatan Kantor Wilayah Kemenkumham Banten.">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sultan Banten">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/icons/apple-touch-icon.png') }}">
     <title>Login - Sultan Banten</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,11 +122,16 @@
                             <p class="text-xs text-white/80 hidden sm:block">Ditjenpas Banten</p>
                         </div>
                     </div>
-                    <a href="{{ route('dashboard') }}" class="bg-white text-gray-800 hover:bg-gray-100 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium flex items-center gap-1 sm:gap-2 shadow-lg transition-all text-sm">
-                        <i class="fas fa-home"></i> 
-                        <span class="hidden sm:inline">Lihat Dashboard</span>
-                        <span class="sm:hidden">Dashboard</span>
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <button id="loginPwaInstallBtn" type="button" class="hidden bg-white/20 hover:bg-white/30 text-white px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium items-center gap-1.5 transition-all text-xs sm:text-sm border border-white/40 shadow-sm" title="Install Aplikasi Sultan Banten">
+                            <i class="fas fa-download"></i> <span>Install App</span>
+                        </button>
+                        <a href="{{ route('dashboard') }}" class="bg-white text-gray-800 hover:bg-gray-100 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium flex items-center gap-1 sm:gap-2 shadow-lg transition-all text-sm">
+                            <i class="fas fa-home"></i> 
+                            <span class="hidden sm:inline">Lihat Dashboard</span>
+                            <span class="sm:hidden">Dashboard</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -338,5 +350,59 @@
             </div>
         </div>
     </footer>
+
+    <!-- PWA Service Worker Registration & Install Handler -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('{{ asset("sw.js") }}')
+                    .then(function(reg) {
+                        reg.onupdatefound = function() {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = function() {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('[PWA] Versi baru SULTAN Banten tersedia.');
+                                }
+                            };
+                        };
+                    })
+                    .catch(function(err) {
+                        console.warn('[PWA] Service Worker registration failed:', err);
+                    });
+            });
+        }
+
+        // PWA Install Prompt Handler
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            const installBtn = document.getElementById('loginPwaInstallBtn');
+            if (installBtn) {
+                installBtn.classList.remove('hidden');
+                installBtn.classList.add('inline-flex');
+                installBtn.addEventListener('click', () => {
+                    installBtn.classList.add('hidden');
+                    installBtn.classList.remove('inline-flex');
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(() => {
+                            deferredPrompt = null;
+                        });
+                    }
+                });
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] SULTAN Banten berhasil di-install.');
+            const installBtn = document.getElementById('loginPwaInstallBtn');
+            if (installBtn) {
+                installBtn.classList.add('hidden');
+                installBtn.classList.remove('inline-flex');
+            }
+        });
+    </script>
 </body>
 </html>
