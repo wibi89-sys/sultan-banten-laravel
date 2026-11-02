@@ -93,7 +93,8 @@
         <header class="relative z-10">
             <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
+                    <!-- Brand: Terlihat di Desktop/Tablet (di mobile ditampilkan di tengah atas form login) -->
+                    <div class="hidden sm:flex items-center gap-3 flex-shrink-0">
                         @if (!empty($instansi->logo))
                             @php
                                 $loginLogoExt = pathinfo($instansi->logo, PATHINFO_EXTENSION);
@@ -108,53 +109,90 @@
                                 @if($isLoginWebp)
                                 <picture class="flex-shrink-0">
                                     <source srcset="{{ asset($chosenLoginLogo) }}" type="image/webp">
-                                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1 flex-shrink-0" width="48" height="48" fetchpriority="high">
+                                    <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-12 h-12 object-contain bg-white rounded-xl p-1.5 shadow-md flex-shrink-0" width="48" height="48" fetchpriority="high">
                                 </picture>
                                 @else
-                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-10 h-10 sm:w-12 sm:h-12 object-contain bg-white rounded-lg p-1 flex-shrink-0" width="48" height="48" fetchpriority="high">
+                                <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-12 h-12 object-contain bg-white rounded-xl p-1.5 shadow-md flex-shrink-0" width="48" height="48" fetchpriority="high">
                                 @endif
                             </div>
                         @else
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-balance-scale text-lg sm:text-2xl text-primary"></i>
+                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                                <i class="fas fa-balance-scale text-2xl text-primary"></i>
                             </div>
                         @endif
-                        <div class="min-w-0">
-                            <h1 class="font-bold text-base sm:text-xl truncate">{{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}</h1>
-                            <p class="text-xs text-white/80 hidden sm:block">Ditjenpas Banten</p>
+                        <div>
+                            <h1 class="font-bold text-lg sm:text-xl">{{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}</h1>
+                            <p class="text-xs text-white/80">Kantor Wilayah Ditjenpas Banten</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                        <button id="loginPwaInstallBtn" type="button" class="hidden bg-white/20 hover:bg-white/30 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium items-center gap-1.5 transition-all text-xs sm:text-sm border border-white/40 shadow-sm flex-shrink-0" title="Install Aplikasi Sultan Banten">
-                            <i class="fas fa-download"></i> <span class="hidden sm:inline">Install App</span>
+
+                    <!-- Action Buttons: Install App & Dashboard di Atas Halaman -->
+                    <div class="flex items-center justify-end w-full sm:w-auto gap-2 ml-auto">
+                        <button id="loginPwaInstallBtn" type="button" class="hidden bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-medium items-center gap-1.5 transition-all text-xs sm:text-sm border border-white/30 shadow-sm backdrop-blur-sm flex-shrink-0" title="Install Aplikasi Sultan Banten">
+                            <i class="fas fa-download"></i> <span>Install App</span>
                         </button>
-                        <a href="{{ route('dashboard') }}" class="bg-white text-gray-800 hover:bg-gray-100 px-2.5 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium flex items-center gap-1 sm:gap-2 shadow-lg transition-all text-xs sm:text-sm flex-shrink-0">
-                            <i class="fas fa-home"></i> 
-                            <span class="hidden sm:inline">Lihat Dashboard</span>
-                            <span class="sm:hidden">Dashboard</span>
+                        <a href="{{ route('dashboard') }}" class="bg-white text-gray-800 hover:bg-gray-100 px-3.5 py-1.5 sm:px-5 sm:py-2 rounded-xl font-semibold flex items-center gap-2 shadow-md transition-all text-xs sm:text-sm flex-shrink-0">
+                            <i class="fas fa-home text-blue-600"></i> 
+                            <span>Dashboard</span>
                         </a>
                     </div>
                 </div>
             </div>
         </header>
         
-        <!-- Mobile: Simplified Layout -->
-        <div class="sm:hidden relative z-10 flex-1 flex flex-col justify-center px-4 py-6">
-            <div class="bg-white rounded-2xl shadow-2xl p-5">
-                <div class="text-center mb-4">
-                    <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight">Login</h3>
+        <!-- Mobile: Centered Logo + Kanwil Ditjenpas Banten + Login Card -->
+        <div class="sm:hidden relative z-10 flex-1 flex flex-col justify-center px-4 py-4 my-auto">
+            <!-- Center Logo & Branding -->
+            <div class="text-center mb-4">
+                @if (!empty($instansi->logo))
+                    @php
+                        $mThumbLogo = preg_replace('/\.' . preg_quote($loginLogoExt ?? 'png', '/') . '$/i', '_thumb.webp', $instansi->logo);
+                        $mWebpLogo = preg_replace('/\.' . preg_quote($loginLogoExt ?? 'png', '/') . '$/i', '.webp', $instansi->logo);
+                        $hasMThumb = file_exists(public_path($mThumbLogo));
+                        $hasMWebp = file_exists(public_path($mWebpLogo));
+                        $chosenMLogo = $hasMThumb ? $mThumbLogo : ($hasMWebp ? $mWebpLogo : $instansi->logo);
+                        $isMWebp = $hasMThumb || $hasMWebp;
+                    @endphp
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl p-2.5 shadow-2xl mx-auto mb-3 border-2 border-white/30">
+                        @if($isMWebp)
+                        <picture>
+                            <source srcset="{{ asset($chosenMLogo) }}" type="image/webp">
+                            <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-full h-full object-contain" width="64" height="64" fetchpriority="high">
+                        </picture>
+                        @else
+                        <img src="{{ asset($instansi->logo) }}" alt="Logo {{ $instansi->nama_instansi ?? 'Sultan Banten' }}" class="w-full h-full object-contain" width="64" height="64" fetchpriority="high">
+                        @endif
+                    </div>
+                @else
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-2xl mx-auto mb-3 border-2 border-white/30">
+                        <i class="fas fa-balance-scale text-3xl text-primary"></i>
+                    </div>
+                @endif
+                <h2 class="text-2xl font-black text-white tracking-wide uppercase drop-shadow-md">
+                    {{ $instansi->nama_instansi ?? 'SULTAN BANTEN' }}
+                </h2>
+                <p class="text-xs text-white/90 font-medium tracking-wide drop-shadow mt-1">
+                    Kantor Wilayah Ditjenpas Banten
+                </p>
+            </div>
+
+            <!-- Card Form Login -->
+            <div class="bg-white rounded-3xl shadow-2xl p-5 border border-white/30">
+                <div class="text-center mb-4 pb-2 border-b border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800">Masuk ke Sistem</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Silakan masuk dengan akun operator Anda</p>
                 </div>
                 
                 @if ($errors->any())
-                    <div class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg mb-3 flex items-center gap-2 text-sm">
-                        <i class="fas fa-exclamation-circle"></i>
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl mb-3 flex items-center gap-2 text-xs">
+                        <i class="fas fa-exclamation-circle text-red-500"></i>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 @if (session('success'))
-                    <div class="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg mb-3 flex items-center gap-2 text-sm">
-                        <i class="fas fa-check-circle"></i>
+                    <div class="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-xl mb-3 flex items-center gap-2 text-xs">
+                        <i class="fas fa-check-circle text-green-500"></i>
                         <span>{{ session('success') }}</span>
                     </div>
                 @endif
@@ -162,30 +200,23 @@
                 <form action="{{ route('login') }}" method="POST" class="space-y-3">
                     @csrf
                     <div class="relative">
-                        <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input type="text" id="username_mobile" name="username" value="{{ old('username') }}" class="input-field w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Username" aria-label="Username" required autofocus>
+                        <i class="fas fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" id="username_mobile" name="username" value="{{ old('username') }}" class="input-field w-full pl-10 pr-3.5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Username" aria-label="Username" required autofocus>
                     </div>
                     <div class="relative">
-                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input type="password" id="password_mobile" name="password" class="input-field w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Password" aria-label="Password" required>
+                        <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="password" id="password_mobile" name="password" class="input-field w-full pl-10 pr-3.5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none text-gray-800 text-sm placeholder:text-gray-400" placeholder="Password" aria-label="Password" required>
                     </div>
-                    <div class="flex items-center text-xs text-gray-600">
+                    <div class="flex items-center text-xs text-gray-600 pt-1">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" name="remember" class="mr-2 rounded"> Ingat Sesi Saya
                         </label>
                     </div>
-                    <button type="submit" class="w-full bg-primary hover:opacity-90 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm" style="background-color: #1e40af;">
+                    <button type="submit" class="w-full bg-primary hover:opacity-95 text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-md" style="background-color: #1e40af;">
                         <i class="fas fa-sign-in-alt"></i>
                         <span>Masuk</span>
                     </button>
                 </form>
-                
-                <div class="mt-4 pt-3 border-t border-gray-100">
-                    <a href="{{ route('dashboard') }}" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 text-sm">
-                        <i class="fas fa-home"></i>
-                        <span>Kembali ke Dashboard</span>
-                    </a>
-                </div>
             </div>
         </div>
         
