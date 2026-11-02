@@ -43,6 +43,38 @@
         padding: 6px 8px;
         border-radius: 6px;
     }
+    .input-matrix-table thead th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+    }
+    .input-matrix-table tbody td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 8;
+        background-color: var(--card-bg, #ffffff) !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+    }
+    .input-matrix-table tfoot td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 8;
+        background-color: #dbeafe !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+    }
+    [data-theme="dark"] .input-matrix-table thead th:first-child {
+        background-color: #0f172a !important;
+    }
+    [data-theme="dark"] .input-matrix-table tbody td:first-child {
+        background-color: #1e293b !important;
+    }
+    [data-theme="dark"] .input-matrix-table tfoot td:first-child {
+        background-color: #1e3a8a !important;
+        color: #ffffff !important;
+    }
 </style>
 @endpush
 
@@ -119,6 +151,10 @@
     <!-- Tabel Data List -->
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
+            <div class="scroll-hint-mobile mx-3 mt-3">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser tabel ke samping untuk melihat seluruh jenis pengeluaran dan aksi.</span>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
@@ -237,6 +273,10 @@
                         </div>
                     </div>
 
+                    <div class="scroll-hint-mobile mb-2">
+                        <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                        <span>Geser ke samping untuk mengisi PB, CB, Mutasi Keluar, dll. Kolom klasifikasi terkunci di kiri.</span>
+                    </div>
                     <div class="table-responsive mb-3">
                         <table class="table table-bordered table-sm input-matrix-table align-middle">
                             <thead class="table-dark">
@@ -330,6 +370,10 @@
                         <div><strong>Tanggal:</strong> <span id="display_edit_tanggal">-</span></div>
                     </div>
 
+                    <div class="scroll-hint-mobile mb-2">
+                        <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                        <span>Geser ke samping untuk mengisi PB, CB, Mutasi Keluar, dll. Kolom klasifikasi terkunci di kiri.</span>
+                    </div>
                     <div class="table-responsive mb-3">
                         <table class="table table-bordered table-sm input-matrix-table align-middle">
                             <thead class="table-dark">

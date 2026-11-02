@@ -131,6 +131,35 @@
         text-align: center !important;
         white-space: nowrap !important;
     }
+    .kroscek-table-grid .col-sticky-no {
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 5 !important;
+        background-color: var(--card-bg, #ffffff) !important;
+    }
+    .kroscek-table-grid .col-sticky-upt {
+        position: sticky !important;
+        left: 38px !important;
+        z-index: 5 !important;
+        background-color: var(--card-bg, #ffffff) !important;
+        box-shadow: 3px 0 5px -2px rgba(0, 0, 0, 0.12) !important;
+    }
+    .kroscek-table-grid thead th.col-sticky-no {
+        z-index: 12 !important;
+        background-color: #f1f5f9 !important;
+    }
+    .kroscek-table-grid thead th.col-sticky-upt {
+        z-index: 12 !important;
+        background-color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] .kroscek-table-grid .col-sticky-no,
+    [data-theme="dark"] .kroscek-table-grid .col-sticky-upt {
+        background-color: #1e293b !important;
+    }
+    [data-theme="dark"] .kroscek-table-grid thead th.col-sticky-no,
+    [data-theme="dark"] .kroscek-table-grid thead th.col-sticky-upt {
+        background-color: #334155 !important;
+    }
     .th-group-kroscek {
         background-color: #f1f5f9 !important;
         color: #1e293b !important;
@@ -699,6 +728,10 @@
             </div>
 
             {{-- Tabel Terpadu 12 UPT Se-Banten dengan Garis Jelas dan Kolom Modul Terpisah --}}
+            <div class="scroll-hint-mobile mb-2">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser ke samping untuk melihat Kroscek Tahanan &amp; Status 4 Modul. Kolom UPT tetap terkunci di kiri.</span>
+            </div>
             <div class="table-responsive table-responsive-kroscek shadow-sm mb-4" id="kroscekTableWrapper">
                 <table class="table table-bordered table-hover align-middle mb-0 kroscek-table-grid">
                     <colgroup>
@@ -716,8 +749,8 @@
                     </colgroup>
                     <thead>
                         <tr class="text-center align-middle">
-                            <th rowspan="2" class="text-center col-no">No</th>
-                            <th rowspan="2" class="text-start">Nama UPT</th>
+                            <th rowspan="2" class="text-center col-no col-sticky-no">No</th>
+                            <th rowspan="2" class="text-start col-sticky-upt">Nama UPT</th>
                             <th colspan="3" class="text-center th-group-kroscek">
                                 <i class="fas fa-balance-scale me-1"></i> Kroscek Tahanan
                             </th>
@@ -755,10 +788,10 @@
                                 data-masalah="{{ $rowHasIssues ? '1' : '0' }}">
                                 
                                 {{-- No --}}
-                                <td class="text-center text-muted col-no" style="font-size: 12px;">{{ $loop->iteration }}</td>
+                                <td class="text-center text-muted col-no col-sticky-no" style="font-size: 12px;">{{ $loop->iteration }}</td>
 
                                 {{-- Nama UPT --}}
-                                <td class="text-start">
+                                <td class="text-start col-sticky-upt">
                                     <div class="fw-semibold text-dark" style="font-size: 12.5px; line-height: 1.35;">{{ $row['nama_upt'] }}</div>
                                     <div class="mt-1">
                                         @if($rowIsLengkap)

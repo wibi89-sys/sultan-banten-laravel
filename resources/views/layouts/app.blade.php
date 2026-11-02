@@ -9,8 +9,11 @@
     <link rel="icon" href="{{ !empty($instansi->favicon) ? asset($instansi->favicon) : asset('assets/favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Sistem Informasi Pelayanan Terpadu Pemasyarakatan Kantor Wilayah Kementerian Hukum dan HAM Banten (SULTAN Banten)">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sultan Banten">
     <title>@yield('title', 'Sultan Banten - Kemenkumham Banten')</title>
     <!-- Preconnect to external CDNs for faster DNS and TLS negotiation -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -219,6 +222,12 @@
             .marquee-container {
                 left: 0 !important;
             }
+            .main-content {
+                padding-bottom: 52px !important;
+            }
+        }
+        body.modal-open .marquee-container {
+            display: none !important;
         }
 
         /* Topbar & Dropdown Stacking Context Fix */
@@ -513,7 +522,7 @@
             <div class="d-flex align-items-center">
                 @if($user)
                 <button class="toggle-btn d-lg-none me-2" id="toggleSidebar" aria-label="Toggle Menu Sidebar"><i class="fas fa-bars"></i></button>
-                <h4 class="mb-0">@yield('page_title', 'Dashboard')</h4>
+                <h4 class="mb-0 text-truncate">@yield('page_title', 'Dashboard')</h4>
                 @else
                 <!-- Public Header with Logo -->
                 @if(!empty($instansi->logo))

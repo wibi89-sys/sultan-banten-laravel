@@ -39,6 +39,12 @@
         border-top: none;
         border-radius: 0 0 6px 6px;
     }
+    @media (max-width: 575.98px) {
+        .input-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 8px !important;
+        }
+    }
     .jumlah-box {
         margin-top: 8px;
         padding: 6px 12px;
@@ -121,6 +127,10 @@
         </div>
     </div>
 
+    <div class="scroll-hint-mobile mb-2">
+        <i class="fas fa-arrows-left-right text-primary me-1"></i>
+        <span>Geser tabel ke samping untuk melihat seluruh rincian usulan integrasi (PB, CB, CMB, Asimilasi).</span>
+    </div>
     <div class="table-responsive">
         <table class="table table-hover table-sm align-middle mb-0">
             <thead>

@@ -2241,3 +2241,178 @@ hr {
         left: 0;
     }
 }
+
+/* ============================================
+   MOBILE RESPONSIVE ENHANCEMENTS (FASE 1)
+   ============================================ */
+
+/* Bottom padding to prevent marquee overlay on mobile */
+@media (max-width: 991.98px) {
+    .main-content {
+        padding-bottom: 52px !important;
+    }
+}
+
+/* Hide marquee when modal is open to avoid obscuring action buttons */
+body.modal-open .marquee-container {
+    display: none !important;
+}
+
+/* Semi-transparent marquee when virtual keyboard / form input is active */
+@media (max-width: 767.98px) {
+    body:focus-within .marquee-container {
+        opacity: 0.15;
+        pointer-events: none;
+    }
+    
+    /* Topbar Mobile Streamlining */
+    .topbar {
+        padding: 8px 12px;
+        flex-wrap: nowrap !important;
+        gap: 8px;
+    }
+    .topbar h4, .topbar .h4 {
+        font-size: 14.5px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100vw - 170px);
+    }
+    .user-dropdown-toggle {
+        padding: 2px 4px;
+    }
+    .user-dropdown-toggle .profile-name-text {
+        display: none !important;
+    }
+    .dark-mode-switch {
+        margin-right: 4px;
+        gap: 2px;
+    }
+    .dark-mode-switch .switch {
+        width: 38px;
+        height: 20px;
+    }
+    .dark-mode-switch .slider:before {
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        font-size: 8px;
+    }
+    .dark-mode-switch input:checked + .slider:before {
+        transform: translateX(18px);
+    }
+}
+
+/* Reusable Mobile Scroll Hint */
+.scroll-hint-mobile {
+    display: none;
+}
+@media (max-width: 991.98px) {
+    .scroll-hint-mobile {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--text-secondary, #64748b);
+        background-color: rgba(99, 102, 241, 0.08);
+        border: 1px dashed rgba(99, 102, 241, 0.25);
+        border-radius: 8px;
+        padding: 6px 12px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Sticky Column Utility for Data Tables */
+.col-sticky-no {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 4 !important;
+    background-color: var(--card-bg, #ffffff) !important;
+}
+.col-sticky-upt {
+    position: sticky !important;
+    left: 45px !important;
+    z-index: 4 !important;
+    background-color: var(--card-bg, #ffffff) !important;
+    box-shadow: 3px 0 5px -2px rgba(0, 0, 0, 0.12) !important;
+}
+
+thead th.col-sticky-no,
+thead th.col-sticky-upt {
+    z-index: 10 !important;
+    background-color: var(--table-header-bg, #f8fafc) !important;
+}
+
+tfoot td.col-sticky-no,
+tfoot td.col-sticky-upt,
+tfoot td.col-sticky-total {
+    z-index: 6 !important;
+    position: sticky !important;
+    left: 0 !important;
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .col-sticky-no,
+[data-theme="dark"] .col-sticky-upt {
+    background-color: #1e293b !important;
+    box-shadow: 3px 0 5px -2px rgba(0, 0, 0, 0.4) !important;
+}
+[data-theme="dark"] thead th.col-sticky-no,
+[data-theme="dark"] thead th.col-sticky-upt {
+    background-color: #334155 !important;
+}
+
+/* Touch-friendly Input Matrix Table in Modals */
+.input-matrix-table thead th:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    background-color: #212529 !important;
+    color: #ffffff !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.15) !important;
+}
+.input-matrix-table tbody td:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 8 !important;
+    background-color: var(--card-bg, #ffffff) !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+}
+.input-matrix-table tfoot td:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 8 !important;
+    background-color: #e0e7ff !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+}
+[data-theme="dark"] .input-matrix-table thead th:first-child {
+    background-color: #0f172a !important;
+}
+[data-theme="dark"] .input-matrix-table tbody td:first-child {
+    background-color: #1e293b !important;
+}
+[data-theme="dark"] .input-matrix-table tfoot td:first-child {
+    background-color: #312e81 !important;
+}
+
+@media (max-width: 767.98px) {
+    .input-matrix-table input[type="number"],
+    .input-matrix-table input[type="text"] {
+        height: 38px !important;
+        font-size: 13.5px !important;
+        min-width: 55px !important;
+    }
+    
+    .input-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .input-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}

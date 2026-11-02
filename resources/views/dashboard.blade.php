@@ -766,6 +766,10 @@
                 </div>
             </div>
             
+            <div class="scroll-hint-mobile mb-2">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser ke samping untuk melihat seluruh data kapasitas &amp; tingkat hunian UPT.</span>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tableOverkapasitas" style="font-size: 11px;">
                     <thead class="table-light">
@@ -1090,6 +1094,10 @@
                     <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableKejahatan" placeholder="Cari nama UPT..." aria-label="Cari nama UPT di tabel jenis kejahatan">
                 </div>
             </div>
+            <div class="scroll-hint-mobile mb-2">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser ke samping untuk melihat seluruh data kapasitas &amp; tingkat hunian UPT.</span>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tableKejahatan" style="font-size: 11px;">
                     <thead class="table-light">
@@ -1256,6 +1264,10 @@
                     <i class="fas fa-search"></i>
                     <input type="text" class="form-control form-control-sm table-search-input" data-table="#tablePMSH" placeholder="Cari UPT..." aria-label="Cari nama UPT di tabel pidana mati dan seumur hidup">
                 </div>
+            </div>
+            <div class="scroll-hint-mobile mb-2">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser ke samping untuk melihat seluruh data kapasitas &amp; tingkat hunian UPT.</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tablePMSH" style="font-size: 11px;">
@@ -1566,6 +1578,10 @@
                     <i class="fas fa-search"></i>
                     <input type="text" class="form-control form-control-sm table-search-input" data-table="#tableBebasHarian" placeholder="Cari UPT..." aria-label="Cari nama UPT di tabel bebas harian">
                 </div>
+            </div>
+            <div class="scroll-hint-mobile mb-2">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser ke samping untuk melihat seluruh data kapasitas &amp; tingkat hunian UPT.</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tableBebasHarian" style="font-size: 11px;">

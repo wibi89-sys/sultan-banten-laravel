@@ -42,6 +42,36 @@
     .input-table .group-header.uu-ite { background: #e0f2fe; color: #075985; }
     .input-table .group-header.lainnya { background: #fef3c7; color: #92400e; }
     
+    .input-table th:first-child,
+    .input-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background-color: var(--card-bg, #ffffff) !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+    }
+    .input-table thead tr:nth-child(1) th:first-child {
+        z-index: 15;
+        background-color: var(--table-header-bg, #f8fafc) !important;
+    }
+    .input-table thead tr:nth-child(2) th:first-child {
+        z-index: 14;
+        background-color: var(--table-header-bg, #f8fafc) !important;
+    }
+    .input-table .group-header {
+        position: sticky;
+        left: 0;
+        z-index: 6;
+    }
+    [data-theme="dark"] .input-table th:first-child,
+    [data-theme="dark"] .input-table td:first-child {
+        background-color: #1e293b !important;
+    }
+    [data-theme="dark"] .input-table thead tr:nth-child(1) th:first-child,
+    [data-theme="dark"] .input-table thead tr:nth-child(2) th:first-child {
+        background-color: #334155 !important;
+    }
+    
     .input-table thead th {
         position: sticky;
         z-index: 10;
@@ -249,6 +279,10 @@
         </div>
     </div>
 
+    <div class="scroll-hint-mobile mb-2">
+        <i class="fas fa-arrows-left-right text-primary me-1"></i>
+        <span>Geser tabel ke samping untuk melihat seluruh rincian tahanan &amp; narapidana.</span>
+    </div>
     <div class="table-responsive">
         <table class="table table-hover table-sm align-middle mb-0">
             <thead>
@@ -411,6 +445,10 @@
                         </div>
                     </div>
                     
+                    <div class="scroll-hint-mobile mb-2">
+                        <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                        <span>Geser tabel ke kanan untuk mengisi Tahanan &amp; Narapidana. Kolom klasifikasi terkunci di kiri.</span>
+                    </div>
                     <div class="input-container border rounded">
                         <table class="input-table mb-0">
                             <thead class="sticky-top">

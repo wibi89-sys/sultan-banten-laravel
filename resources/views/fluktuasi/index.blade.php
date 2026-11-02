@@ -54,6 +54,26 @@
         vertical-align: middle;
         font-size: 13px;
     }
+    @media (max-width: 575.98px) {
+        .stat-kpi-card {
+            padding: 10px 12px !important;
+        }
+        .stat-kpi-card .h3 {
+            font-size: 18px !important;
+        }
+        .stat-kpi-card .small {
+            font-size: 10.5px !important;
+        }
+        .stat-kpi-card .badge {
+            font-size: 9.5px !important;
+            padding: 2px 6px !important;
+        }
+        .stat-kpi-card .stat-icon {
+            font-size: 26px !important;
+            right: 8px !important;
+            bottom: 8px !important;
+        }
+    }
     @media print {
         .sidebar, .navbar, .top-header, .btn, form, th:last-child, td:last-child {
             display: none !important;
@@ -246,12 +266,16 @@
             </h6>
             <small class="text-muted"><i class="fas fa-check-double text-success me-1"></i>Data Terintegrasi Laporan Penghuni, Overstaying &amp; Bebas &amp; Mutasi</small>
         </div>
+        <div class="scroll-hint-mobile mx-3 mt-3">
+            <i class="fas fa-arrows-left-right text-primary me-1"></i>
+            <span>Geser ke kanan untuk melihat rincian Narapidana, Pengeluaran &amp; Analisis. Kolom UPT tetap terkunci di kiri.</span>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover table-bordered table-fluktuasi mb-0 align-middle">
                 <thead class="table-light text-secondary text-center">
                     <tr>
-                        <th rowspan="2" style="width: 45px;">No</th>
-                        <th rowspan="2" style="min-width: 190px;" class="text-start">Unit Pelaksana Teknis (UPT)</th>
+                        <th rowspan="2" class="col-sticky-no" style="width: 45px;">No</th>
+                        <th rowspan="2" class="col-sticky-upt text-start" style="min-width: 190px;">Unit Pelaksana Teknis (UPT)</th>
                         <th colspan="3" class="bg-primary bg-opacity-10 text-primary">1. Tahanan (Overstaying A1-A5)</th>
                         <th colspan="3" class="bg-info bg-opacity-10 text-info">2. Narapidana</th>
                         <th colspan="3" class="bg-dark bg-opacity-10 text-dark">3. Total Penghuni</th>
@@ -282,8 +306,8 @@
                 <tbody>
                     @forelse($rows as $idx => $r)
                     <tr>
-                        <td class="text-center text-muted fw-bold">{{ $idx + 1 }}</td>
-                        <td class="fw-semibold text-dark text-start">
+                        <td class="text-center text-muted fw-bold col-sticky-no">{{ $idx + 1 }}</td>
+                        <td class="fw-semibold text-dark text-start col-sticky-upt">
                             {{ $r['nama_upt'] }}
                         </td>
 
@@ -380,7 +404,7 @@
                 <!-- Footer Total Akumulasi -->
                 <tfoot class="table-dark text-center fw-bold">
                     <tr>
-                        <td colspan="2" class="text-start">TOTAL SE-WILAYAH BANTEN</td>
+                        <td colspan="2" class="text-start col-sticky-total">TOTAL SE-WILAYAH BANTEN</td>
                         <td>{{ number_format($summary['total_tahanan_prev']) }}</td>
                         <td>{{ number_format($summary['total_tahanan_curr']) }}</td>
                         <td>
