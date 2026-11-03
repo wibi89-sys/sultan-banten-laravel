@@ -660,8 +660,12 @@ class SidangTppController extends Controller
         $downloadName = "Laporan_Sidang_TPP_Kanwil_{$cleanUpt}_{$sidang->tanggal_sidang->format('Ymd')}.pdf";
 
         if ($request->boolean('preview') || $request->query('view') === '1') {
+            $mimeType = File::mimeType($fullPath) ?: 'application/pdf';
+
             return response()->file($fullPath, [
+                'Content-Type' => $mimeType,
                 'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+                'X-Frame-Options' => 'SAMEORIGIN',
             ]);
         }
 
@@ -741,8 +745,12 @@ class SidangTppController extends Controller
         $downloadName = "{$type}_{$cleanUpt}_{$sidang->tanggal_sidang->format('Ymd')}.{$extension}";
 
         if ($request->boolean('preview') || $request->query('view') === '1') {
+            $mimeType = File::mimeType($fullPath) ?: 'application/pdf';
+
             return response()->file($fullPath, [
+                'Content-Type' => $mimeType,
                 'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+                'X-Frame-Options' => 'SAMEORIGIN',
             ]);
         }
 

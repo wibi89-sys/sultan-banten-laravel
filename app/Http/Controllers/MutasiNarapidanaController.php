@@ -697,8 +697,12 @@ class MutasiNarapidanaController extends Controller
         $downloadName = "mutasi_{$type}_{$cleanNoSurat}.{$ext}";
 
         if ($request->boolean('preview') || $request->query('view') === '1') {
+            $mimeType = File::mimeType($fullPath) ?: 'application/pdf';
+
             return response()->file($fullPath, [
+                'Content-Type' => $mimeType,
                 'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+                'X-Frame-Options' => 'SAMEORIGIN',
             ]);
         }
 
