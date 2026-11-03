@@ -1142,30 +1142,31 @@
 <div class="modal fade" id="modalDetailFluktuasi" tabindex="-1" aria-labelledby="modalDetailFluktuasiLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white py-3">
-                <div>
-                    <h5 class="modal-title fw-bold d-flex align-items-center" id="modalDetailFluktuasiLabel">
-                        <i class="fas fa-balance-scale text-warning me-2 fs-5"></i>Rincian Fluktuasi Penghuni
+            <div class="modal-header bg-primary text-white py-2.5 px-3 d-flex align-items-start justify-content-between gap-2">
+                <div class="pe-2" style="min-width: 0; flex: 1 1 auto;">
+                    <h5 class="modal-title fw-bold d-flex align-items-center fs-6 mb-1 text-truncate" id="modalDetailFluktuasiLabel">
+                        <i class="fas fa-balance-scale text-warning me-2 flex-shrink-0"></i>
+                        <span>Rincian Fluktuasi Penghuni</span>
                     </h5>
-                    <div id="mdf_upt_title" class="text-white fw-semibold small mt-1"></div>
+                    <div id="mdf_upt_title" class="text-white small" style="min-width: 0; word-break: break-word;"></div>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white flex-shrink-0 ms-1 mt-1" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-3 p-sm-4">
                 <!-- Nav Tabs -->
-                <ul class="nav nav-pills nav-fill mb-3" id="fluktuasiTab" role="tablist">
+                <ul class="nav nav-pills nav-fill mb-3 gap-1 flex-column flex-sm-row" id="fluktuasiTab" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active small fw-bold py-2" id="tab-overstaying-btn" data-bs-toggle="pill" data-bs-target="#tab-overstaying" type="button" role="tab">
+                        <button class="nav-link active small fw-bold py-2 text-start text-sm-center" id="tab-overstaying-btn" data-bs-toggle="pill" data-bs-target="#tab-overstaying" type="button" role="tab">
                             <i class="fas fa-clock me-1"></i>Tahap Penahanan (A.I - A.V)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link small fw-bold py-2" id="tab-napi-btn" data-bs-toggle="pill" data-bs-target="#tab-napi" type="button" role="tab">
+                        <button class="nav-link small fw-bold py-2 text-start text-sm-center" id="tab-napi-btn" data-bs-toggle="pill" data-bs-target="#tab-napi" type="button" role="tab">
                             <i class="fas fa-users me-1"></i>Komparasi Narapidana
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link small fw-bold py-2" id="tab-bebas-btn" data-bs-toggle="pill" data-bs-target="#tab-bebas" type="button" role="tab">
+                        <button class="nav-link small fw-bold py-2 text-start text-sm-center" id="tab-bebas-btn" data-bs-toggle="pill" data-bs-target="#tab-bebas" type="button" role="tab">
                             <i class="fas fa-door-open me-1"></i>Rincian Bebas &amp; Mutasi
                         </button>
                     </li>
@@ -1297,8 +1298,10 @@ function formatBadge(val) {
 
 function bukaModalDetailFluktuasi(row) {
     document.getElementById('mdf_upt_title').innerHTML = 
-        `<span class="badge bg-warning text-dark fw-bold px-2 py-1 me-2">${row.nama_upt}</span>` +
-        `<span class="text-white">Fluktuasi Tanggal <strong>{{ $tanggalPembanding }}</strong> &rarr; <strong>{{ $tanggal }}</strong></span>`;
+        `<div class="d-flex flex-wrap align-items-center gap-1.5 mt-1" style="min-width: 0;">` +
+            `<span class="badge bg-warning text-dark fw-bold px-2 py-1 text-wrap text-start shadow-xs" style="line-height: 1.35; max-width: 100%; word-break: break-word;">${row.nama_upt}</span>` +
+            `<span class="text-white small text-nowrap"><i class="fas fa-calendar-alt me-1 text-warning"></i>{{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}</span>` +
+        `</div>`;
 
     // Tab 1: Overstaying A.I - A.V
     document.getElementById('mdf_ai_prev').textContent = row.ai_prev.toLocaleString();
