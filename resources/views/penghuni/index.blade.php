@@ -445,106 +445,212 @@
                         </div>
                     </div>
                     
-                    <div class="scroll-hint-mobile mb-2">
-                        <i class="fas fa-arrows-left-right text-primary me-1"></i>
-                        <span>Geser tabel ke kanan untuk mengisi Tahanan &amp; Narapidana. Kolom klasifikasi terkunci di kiri.</span>
+                    <!-- View Mode Toggle Toolbar (Hybrid Mode) -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold text-muted"><i class="fas fa-sliders-h text-primary me-1"></i>Format Tampilan:</span>
+                        </div>
+                        <div class="btn-group btn-group-sm shadow-xs" role="group" id="penghuniModeToggle">
+                            <button type="button" class="btn btn-primary" id="btnModeCard" onclick="switchPenghuniMode('card')">
+                                <i class="fas fa-grip-vertical me-1"></i> Mode Kartu (Mobile)
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="btnModeTable" onclick="switchPenghuniMode('table')">
+                                <i class="fas fa-table me-1"></i> Mode Tabel (Excel)
+                            </button>
+                        </div>
                     </div>
-                    <div class="input-container border rounded">
-                        <table class="input-table mb-0">
-                            <thead class="sticky-top">
-                                <tr>
-                                    <th rowspan="2" style="width: 150px; vertical-align: middle;">Klasifikasi</th>
-                                    <th colspan="4" class="tahanan-header">TAHANAN</th>
-                                    <th colspan="4" class="narapidana-header">NARAPIDANA</th>
-                                    <th rowspan="2" style="width: 55px; vertical-align: middle;">Total</th>
-                                </tr>
-                                <tr>
-                                    <th>DL</th><th>DP</th><th>AL</th><th>AP</th>
-                                    <th>DL</th><th>DP</th><th>AL</th><th>AP</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Pidana Umum -->
-                                <tr>
-                                    <td colspan="10" class="group-header umum text-uppercase py-1"><i class="fas fa-user me-1"></i>Pidana Umum</td>
-                                </tr>
-                                @foreach ($klasifikasiUmum as $k)
-                                @php $key = $klasifikasiKeys[$k]; @endphp
-                                <tr>
-                                    <td class="text-start px-2 fw-semibold">{{ $k }}</td>
-                                    <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
-                                </tr>
-                                @endforeach
-                                
-                                <!-- Pidana Khusus -->
-                                <tr>
-                                    <td colspan="10" class="group-header khusus text-uppercase py-1"><i class="fas fa-gavel me-1"></i>Pidana Khusus</td>
-                                </tr>
+
+                    <!-- CONTAINER 1: MODE KARTU AKORDION (MOBILE-FIRST) -->
+                    <div id="penghuniCardModeContainer" class="mb-3">
+                        <div class="alert alert-light border py-1.5 px-3 mb-2 small text-muted d-flex align-items-center gap-1.5" style="font-size: 11.5px;">
+                            <i class="fas fa-info-circle text-primary"></i>
+                            <span>Sentuh klasifikasi untuk buka/tutup form. Tekan tombol <strong>+</strong> atau <strong>-</strong> (atau ketik langsung) untuk koreksi cepat.</span>
+                        </div>
+
+                        <!-- Accordion Group 1: PIDANA KHUSUS -->
+                        <div class="card border mb-2 shadow-xs rounded-3 overflow-hidden">
+                            <div class="card-header py-2 px-3 bg-danger bg-opacity-10 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseCardKhusus" aria-expanded="true">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-danger text-white px-2 py-1">⚖️</span>
+                                    <span class="small fw-bold text-danger">PIDANA KHUSUS</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-danger bg-opacity-25 text-danger fw-bold" id="badge_group_khusus">0 Orang</span>
+                                    <i class="fas fa-chevron-down text-danger small"></i>
+                                </div>
+                            </div>
+                            <div class="collapse show p-2 bg-light bg-opacity-50" id="collapseCardKhusus">
                                 @foreach ($klasifikasiKhusus as $k)
                                 @php $key = $klasifikasiKeys[$k]; @endphp
-                                <tr>
-                                    <td class="text-start px-2 fw-semibold">{{ $k }}</td>
-                                    <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
-                                </tr>
+                                @include('penghuni.partials.card_item', ['k' => $k, 'key' => $key, 'isLainnya' => false])
                                 @endforeach
-                                
-                                <!-- UU ITE -->
-                                <tr>
-                                    <td colspan="10" class="group-header uu-ite text-uppercase py-1"><i class="fas fa-laptop me-1"></i>UU ITE</td>
-                                </tr>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Group 2: PIDANA UMUM -->
+                        <div class="card border mb-2 shadow-xs rounded-3 overflow-hidden">
+                            <div class="card-header py-2 px-3 bg-primary bg-opacity-10 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseCardUmum" aria-expanded="true">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary text-white px-2 py-1">🏢</span>
+                                    <span class="small fw-bold text-primary">PIDANA UMUM</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary bg-opacity-25 text-primary fw-bold" id="badge_group_umum">0 Orang</span>
+                                    <i class="fas fa-chevron-down text-primary small"></i>
+                                </div>
+                            </div>
+                            <div class="collapse show p-2 bg-light bg-opacity-50" id="collapseCardUmum">
+                                @foreach ($klasifikasiUmum as $k)
+                                @php $key = $klasifikasiKeys[$k]; @endphp
+                                @include('penghuni.partials.card_item', ['k' => $k, 'key' => $key, 'isLainnya' => false])
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Accordion Group 3: UU ITE -->
+                        <div class="card border mb-2 shadow-xs rounded-3 overflow-hidden">
+                            <div class="card-header py-2 px-3 bg-info bg-opacity-10 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseCardUUITE" aria-expanded="true">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-info text-white px-2 py-1">💻</span>
+                                    <span class="small fw-bold text-info">UU ITE</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-info bg-opacity-25 text-info fw-bold" id="badge_group_uuite">0 Orang</span>
+                                    <i class="fas fa-chevron-down text-info small"></i>
+                                </div>
+                            </div>
+                            <div class="collapse show p-2 bg-light bg-opacity-50" id="collapseCardUUITE">
                                 @foreach ($klasifikasiUUITE as $k)
                                 @php $key = $klasifikasiKeys[$k]; @endphp
-                                <tr>
-                                    <td class="text-start px-2 fw-semibold">{{ $k }}</td>
-                                    <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
-                                </tr>
+                                @include('penghuni.partials.card_item', ['k' => $k, 'key' => $key, 'isLainnya' => false])
                                 @endforeach
-                                
-                                <!-- Lainnya -->
-                                <tr>
-                                    <td colspan="10" class="group-header lainnya text-uppercase py-1"><i class="fas fa-exclamation-triangle me-1"></i>Lainnya</td>
-                                </tr>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Group 4: ATENSI KHUSUS / LAINNYA -->
+                        <div class="card border mb-2 shadow-xs rounded-3 overflow-hidden">
+                            <div class="card-header py-2 px-3 bg-warning bg-opacity-10 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseCardLainnya" aria-expanded="true">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-warning text-dark px-2 py-1">⚠️</span>
+                                    <span class="small fw-bold text-warning">ATENSI KHUSUS / LAINNYA</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-warning bg-opacity-25 text-warning fw-bold" id="badge_group_lainnya">0 Orang</span>
+                                    <i class="fas fa-chevron-down text-warning small"></i>
+                                </div>
+                            </div>
+                            <div class="collapse show p-2 bg-light bg-opacity-50" id="collapseCardLainnya">
                                 @foreach ($klasifikasiLainnya as $k)
                                 @php $key = $klasifikasiKeys[$k]; @endphp
-                                <tr class="row-lainnya">
-                                    <td class="text-start px-2 fw-semibold">{{ $k }}</td>
-                                    <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
-                                    <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
-                                </tr>
+                                @include('penghuni.partials.card_item', ['k' => $k, 'key' => $key, 'isLainnya' => true])
                                 @endforeach
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER 2: MODE TABEL MATRIKS (DESKTOP) -->
+                    <div id="penghuniTableModeContainer" class="d-none">
+                        <div class="scroll-hint-mobile mb-2">
+                            <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                            <span>Geser tabel ke kanan untuk mengisi Tahanan &amp; Narapidana. Kolom klasifikasi terkunci di kiri.</span>
+                        </div>
+                        <div class="input-container border rounded">
+                            <table class="input-table mb-0">
+                                <thead class="sticky-top">
+                                    <tr>
+                                        <th rowspan="2" style="width: 150px; vertical-align: middle;">Klasifikasi</th>
+                                        <th colspan="4" class="tahanan-header">TAHANAN</th>
+                                        <th colspan="4" class="narapidana-header">NARAPIDANA</th>
+                                        <th rowspan="2" style="width: 55px; vertical-align: middle;">Total</th>
+                                    </tr>
+                                    <tr>
+                                        <th>DL</th><th>DP</th><th>AL</th><th>AP</th>
+                                        <th>DL</th><th>DP</th><th>AL</th><th>AP</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Pidana Umum -->
+                                    <tr>
+                                        <td colspan="10" class="group-header umum text-uppercase py-1"><i class="fas fa-user me-1"></i>Pidana Umum</td>
+                                    </tr>
+                                    @foreach ($klasifikasiUmum as $k)
+                                    @php $key = $klasifikasiKeys[$k]; @endphp
+                                    <tr>
+                                        <td class="text-start px-2 fw-semibold">{{ $k }}</td>
+                                        <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
+                                    </tr>
+                                    @endforeach
+                                    
+                                    <!-- Pidana Khusus -->
+                                    <tr>
+                                        <td colspan="10" class="group-header khusus text-uppercase py-1"><i class="fas fa-gavel me-1"></i>Pidana Khusus</td>
+                                    </tr>
+                                    @foreach ($klasifikasiKhusus as $k)
+                                    @php $key = $klasifikasiKeys[$k]; @endphp
+                                    <tr>
+                                        <td class="text-start px-2 fw-semibold">{{ $k }}</td>
+                                        <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
+                                    </tr>
+                                    @endforeach
+                                    
+                                    <!-- UU ITE -->
+                                    <tr>
+                                        <td colspan="10" class="group-header uu-ite text-uppercase py-1"><i class="fas fa-laptop me-1"></i>UU ITE</td>
+                                    </tr>
+                                    @foreach ($klasifikasiUUITE as $k)
+                                    @php $key = $klasifikasiKeys[$k]; @endphp
+                                    <tr>
+                                        <td class="text-start px-2 fw-semibold">{{ $k }}</td>
+                                        <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
+                                    </tr>
+                                    @endforeach
+                                    
+                                    <!-- Lainnya -->
+                                    <tr>
+                                        <td colspan="10" class="group-header lainnya text-uppercase py-1"><i class="fas fa-exclamation-triangle me-1"></i>Lainnya</td>
+                                    </tr>
+                                    @foreach ($klasifikasiLainnya as $k)
+                                    @php $key = $klasifikasiKeys[$k]; @endphp
+                                    <tr class="row-lainnya">
+                                        <td class="text-start px-2 fw-semibold">{{ $k }}</td>
+                                        <td><input type="number" name="tahanan_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="tahanan_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dl_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_dp_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_al_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td><input type="number" name="narapidana_ap_{{ $key }}" value="0" min="0" data-row="{{ $key }}" oninput="updateRowTotal('{{ $key }}')"></td>
+                                        <td class="row-total fw-bold" id="total_{{ $key }}">0</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     
                     <!-- Grand Total Summary -->
@@ -719,14 +825,103 @@
     const klasifikasiLainnyaKeys = @json(array_map(function($k) use ($klasifikasiKeys) { return $klasifikasiKeys[$k]; }, $klasifikasiLainnya));
     const lainnyaList = @json($klasifikasiLainnya);
 
+    const groupKhususKeys = @json(array_map(function($k) use ($klasifikasiKeys) { return $klasifikasiKeys[$k]; }, $klasifikasiKhusus));
+    const groupUmumKeys = @json(array_map(function($k) use ($klasifikasiKeys) { return $klasifikasiKeys[$k]; }, $klasifikasiUmum));
+    const groupUUITEKeys = @json(array_map(function($k) use ($klasifikasiKeys) { return $klasifikasiKeys[$k]; }, $klasifikasiUUITE));
+    const groupLainnyaKeys = @json(array_map(function($k) use ($klasifikasiKeys) { return $klasifikasiKeys[$k]; }, $klasifikasiLainnya));
+
+    function switchPenghuniMode(mode) {
+        const cardContainer = document.getElementById('penghuniCardModeContainer');
+        const tableContainer = document.getElementById('penghuniTableModeContainer');
+        const btnCard = document.getElementById('btnModeCard');
+        const btnTable = document.getElementById('btnModeTable');
+
+        if (!cardContainer || !tableContainer) return;
+
+        if (mode === 'card') {
+            cardContainer.classList.remove('d-none');
+            tableContainer.classList.add('d-none');
+            btnCard.classList.remove('btn-outline-primary');
+            btnCard.classList.add('btn-primary');
+            btnTable.classList.remove('btn-primary');
+            btnTable.classList.add('btn-outline-primary');
+        } else {
+            cardContainer.classList.add('d-none');
+            tableContainer.classList.remove('d-none');
+            btnTable.classList.remove('btn-outline-primary');
+            btnTable.classList.add('btn-primary');
+            btnCard.classList.remove('btn-primary');
+            btnCard.classList.add('btn-outline-primary');
+        }
+    }
+
+    function syncCardToTable(name, val) {
+        const tblInput = document.querySelector(`input[name="${name}"]`);
+        if (tblInput) {
+            tblInput.value = Math.max(0, parseInt(val) || 0);
+            const key = tblInput.getAttribute('data-row');
+            if (key) updateRowTotal(key);
+        }
+    }
+
+    function stepCardInput(name, delta) {
+        const cardInput = document.getElementById('card_' + name);
+        if (cardInput) {
+            let val = (parseInt(cardInput.value) || 0) + delta;
+            if (val < 0) val = 0;
+            cardInput.value = val;
+            syncCardToTable(name, val);
+        }
+    }
+
     function updateRowTotal(key) {
         const inputs = document.querySelectorAll('[data-row="' + key + '"]');
         let total = 0;
+        let subTahanan = 0;
+        let subNapi = 0;
+
         inputs.forEach(input => {
-            total += parseInt(input.value) || 0;
+            const val = parseInt(input.value) || 0;
+            total += val;
+            if (input.name.startsWith('tahanan_')) {
+                subTahanan += val;
+            } else if (input.name.startsWith('narapidana_')) {
+                subNapi += val;
+            }
         });
+
+        // Update Table Total
         const el = document.getElementById('total_' + key);
         if (el) el.textContent = total;
+
+        // Update Card View elements if exist
+        const cardTotal = document.getElementById('card_total_badge_' + key);
+        if (cardTotal) cardTotal.textContent = total;
+
+        const cardSubTahanan = document.getElementById('card_sub_tahanan_' + key);
+        if (cardSubTahanan) cardSubTahanan.textContent = subTahanan;
+
+        const cardSubNapi = document.getElementById('card_sub_napi_' + key);
+        if (cardSubNapi) cardSubNapi.textContent = subNapi;
+
+        const activeBadge = document.getElementById('card_active_badge_' + key);
+        if (activeBadge) {
+            if (total > 0) {
+                activeBadge.classList.remove('d-none');
+            } else {
+                activeBadge.classList.add('d-none');
+            }
+        }
+
+        // Mirror table values into card inputs
+        ['tahanan_dl', 'tahanan_dp', 'tahanan_al', 'tahanan_ap', 'narapidana_dl', 'narapidana_dp', 'narapidana_al', 'narapidana_ap'].forEach(col => {
+            const tblInp = document.querySelector(`input[name="${col}_${key}"]`);
+            const cardInp = document.getElementById(`card_${col}_${key}`);
+            if (tblInp && cardInp && cardInp.value != tblInp.value) {
+                cardInp.value = tblInp.value;
+            }
+        });
+
         updateGrandTotals();
     }
 
@@ -744,6 +939,39 @@
             if (el) grandTotalLainnya += parseInt(el.textContent) || 0;
         });
         document.getElementById('grandTotalLainnya').textContent = grandTotalLainnya;
+
+        // Update group badges in Card Mode
+        let totKhusus = 0;
+        groupKhususKeys.forEach(k => {
+            const el = document.getElementById('total_' + k);
+            if (el) totKhusus += parseInt(el.textContent) || 0;
+        });
+        const bKhusus = document.getElementById('badge_group_khusus');
+        if (bKhusus) bKhusus.textContent = totKhusus + ' Orang';
+
+        let totUmum = 0;
+        groupUmumKeys.forEach(k => {
+            const el = document.getElementById('total_' + k);
+            if (el) totUmum += parseInt(el.textContent) || 0;
+        });
+        const bUmum = document.getElementById('badge_group_umum');
+        if (bUmum) bUmum.textContent = totUmum + ' Orang';
+
+        let totUUITE = 0;
+        groupUUITEKeys.forEach(k => {
+            const el = document.getElementById('total_' + k);
+            if (el) totUUITE += parseInt(el.textContent) || 0;
+        });
+        const bUUITE = document.getElementById('badge_group_uuite');
+        if (bUUITE) bUUITE.textContent = totUUITE + ' Orang';
+
+        let totLainnya = 0;
+        groupLainnyaKeys.forEach(k => {
+            const el = document.getElementById('total_' + k);
+            if (el) totLainnya += parseInt(el.textContent) || 0;
+        });
+        const bLainnya = document.getElementById('badge_group_lainnya');
+        if (bLainnya) bLainnya.textContent = totLainnya + ' Orang';
     }
 
     function editData(data) {
@@ -879,7 +1107,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.exists) {
-                        messageEl.innerHTML = (data.message || 'Data penghuni untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
+                        messageEl.innerHTML = (data.message || 'Data penghuni untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
                         warningBox.classList.remove('d-none');
                         warningBox.classList.add('d-flex');
                     } else {
@@ -914,6 +1142,13 @@
         modalAddEl.addEventListener('show.bs.modal', function() {
             const forceInput = document.getElementById('penghuni_force_update');
             if (forceInput) forceInput.value = '0';
+
+            // Automatic layout detection: Card for mobile/tablet, Table for desktop
+            if (window.innerWidth < 768) {
+                switchPenghuniMode('card');
+            } else {
+                switchPenghuniMode('table');
+            }
 
             if (selectUpt && selectUpt.value) {
                 loadPreviousData();

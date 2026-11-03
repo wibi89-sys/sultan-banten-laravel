@@ -632,7 +632,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.exists) {
-                        messageEl.innerHTML = (data.message || 'Data overstaying untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold text-dark">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
+                        messageEl.innerHTML = (data.message || 'Data overstaying untuk UPT ini pada tanggal tersebut sudah ada.') + '<br><span class="fw-semibold">Klik Simpan untuk konfirmasi Update atau Batal.</span>';
                         warningBox.classList.remove('d-none');
                         warningBox.classList.add('d-flex');
                         submitBtn.disabled = false;
