@@ -2344,41 +2344,64 @@ body.modal-open .marquee-container {
 .col-sticky-no {
     position: sticky !important;
     left: 0 !important;
-    z-index: 4 !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    text-align: center !important;
+    z-index: 5 !important;
     background-color: var(--card-bg, #ffffff) !important;
+    background-clip: padding-box !important;
+    border-right: 1px solid var(--border-color, #e2e8f0) !important;
+    box-sizing: border-box !important;
 }
 .col-sticky-upt {
     position: sticky !important;
-    left: 45px !important;
-    z-index: 4 !important;
+    left: 38px !important;
+    z-index: 5 !important;
     background-color: var(--card-bg, #ffffff) !important;
-    box-shadow: 3px 0 5px -2px rgba(0, 0, 0, 0.12) !important;
+    background-clip: padding-box !important;
+    border-right: 2px solid #cbd5e1 !important;
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.12) !important;
+    box-sizing: border-box !important;
 }
 
-thead th.col-sticky-no,
+thead th.col-sticky-no {
+    z-index: 10 !important;
+    background-color: var(--table-header-bg, #f8fafc) !important;
+    background-clip: padding-box !important;
+    border-right: 1px solid var(--border-color, #e2e8f0) !important;
+}
 thead th.col-sticky-upt {
     z-index: 10 !important;
     background-color: var(--table-header-bg, #f8fafc) !important;
+    background-clip: padding-box !important;
+    border-right: 2px solid #cbd5e1 !important;
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.12) !important;
 }
 
 tfoot td.col-sticky-no,
 tfoot td.col-sticky-upt,
 tfoot td.col-sticky-total {
-    z-index: 6 !important;
+    z-index: 8 !important;
     position: sticky !important;
     left: 0 !important;
     background-color: #1e293b !important;
     color: #ffffff !important;
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.25) !important;
 }
 
 [data-theme="dark"] .col-sticky-no,
 [data-theme="dark"] .col-sticky-upt {
     background-color: #1e293b !important;
-    box-shadow: 3px 0 5px -2px rgba(0, 0, 0, 0.4) !important;
+    border-color: #334155 !important;
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.4) !important;
 }
 [data-theme="dark"] thead th.col-sticky-no,
 [data-theme="dark"] thead th.col-sticky-upt {
     background-color: #334155 !important;
+    border-color: #475569 !important;
 }
 
 /* Touch-friendly Input Matrix Table in Modals */

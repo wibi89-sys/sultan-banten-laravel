@@ -44,6 +44,10 @@
         border: 1px solid #e2e8f0;
         font-weight: 600;
     }
+    .table-fluktuasi {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+    }
     .table-fluktuasi th {
         font-size: 11.5px;
         letter-spacing: 0.2px;
@@ -53,6 +57,64 @@
     .table-fluktuasi td {
         vertical-align: middle;
         font-size: 13px;
+    }
+    .table-fluktuasi .col-sticky-no {
+        left: 0 !important;
+        width: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
+        text-align: center !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+        border-right: 1px solid var(--border-color, #e2e8f0) !important;
+    }
+    .table-fluktuasi .col-sticky-upt {
+        left: 38px !important;
+        min-width: 175px !important;
+        border-right: 2px solid #cbd5e1 !important;
+    }
+    @media (max-width: 767.98px) {
+        .table-fluktuasi .col-sticky-upt {
+            min-width: 135px !important;
+            font-size: 12px !important;
+        }
+    }
+
+    /* Mobile Cards View Styling */
+    .fluktuasi-card {
+        border-radius: 14px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+    }
+    .fluktuasi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .fluktuasi-mini-box {
+        background: rgba(241, 245, 249, 0.7);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 10px;
+        padding: 8px 6px;
+    }
+    [data-theme="dark"] .fluktuasi-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] .fluktuasi-mini-box {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .fluktuasi-strip {
+        background: rgba(255, 255, 255, 0.04) !important;
+    }
+    .btn-view-mode {
+        transition: all 0.2s ease;
+    }
+    .btn-view-mode.active {
+        background: #1e40af !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3) !important;
     }
     @media (max-width: 575.98px) {
         .stat-kpi-card {
@@ -258,24 +320,214 @@
         </div>
     </div>
 
-    <!-- Tabel Matriks Fluktuasi Tambah Kurang Per UPT -->
+    <!-- Tabel & Kartu Matriks Fluktuasi Tambah Kurang Per UPT -->
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h6 class="fw-bold mb-0 text-dark">
-                <i class="fas fa-table me-2 text-primary"></i>Matriks Fluktuasi Harian Per UPT ({{ \Carbon\Carbon::parse($tanggalPembanding)->translatedFormat('d M') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d M Y') }})
-            </h6>
-            <small class="text-muted"><i class="fas fa-check-double text-success me-1"></i>Data Terintegrasi Laporan Penghuni, Overstaying &amp; Bebas &amp; Mutasi</small>
+        <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fas fa-table me-2 text-primary"></i>Matriks Fluktuasi Harian Per UPT
+                </h6>
+                <small class="text-muted" style="font-size: 11px;">
+                    {{ \Carbon\Carbon::parse($tanggalPembanding)->translatedFormat('d M') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d M Y') }} &bull; Data Terintegrasi
+                </small>
+            </div>
+            <!-- View Switcher (Kartu vs Tabel) -->
+            <div class="btn-group btn-group-sm p-0.5 bg-light rounded-pill border shadow-xs" role="group" id="fluktuasiViewToggle" aria-label="Pilihan Tampilan">
+                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-semibold btn-view-mode active" id="btnViewCards" onclick="switchFluktuasiView('cards')" title="Tampilan Kartu Ringkasan (Nyaman di Mobile)">
+                    <i class="fas fa-th-large me-1"></i><span>Mode Kartu</span> <span class="badge bg-primary-subtle text-primary ms-1 d-none d-sm-inline" style="font-size: 9.5px;">Mobile Friendly</span>
+                </button>
+                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-semibold text-secondary btn-view-mode" id="btnViewTable" onclick="switchFluktuasiView('table')" title="Tampilan Tabel Matriks Spreadsheet">
+                    <i class="fas fa-table-list me-1"></i><span>Tabel Matriks</span>
+                </button>
+            </div>
         </div>
-        <div class="scroll-hint-mobile mx-3 mt-3">
-            <i class="fas fa-arrows-left-right text-primary me-1"></i>
-            <span>Geser ke kanan untuk melihat rincian Narapidana, Pengeluaran &amp; Analisis. Kolom UPT tetap terkunci di kiri.</span>
+
+        <!-- 1. TAMPILAN KARTU FLUKTUASI (Mobile-Friendly Executive Cards) -->
+        <div id="fluktuasiCardsView" class="p-3">
+            <!-- Ringkasan Akumulasi Wilayah (Executive Summary Banner) -->
+            <div class="card border-0 mb-3 text-white shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 16px;">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-white bg-opacity-20 text-white px-2 py-1" style="font-size: 11px;">
+                            <i class="fas fa-shield-alt me-1"></i>TOTAL SE-WILAYAH BANTEN
+                        </span>
+                        <span class="fw-bold" style="font-size: 12px;">
+                            {{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}
+                        </span>
+                    </div>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="bg-white bg-opacity-10 rounded-3 p-2">
+                                <div class="text-white-50" style="font-size: 10px;">Total Tahanan</div>
+                                <div class="fw-bold fs-6">{{ number_format($summary['total_tahanan_curr']) }}</div>
+                                <div class="small fw-semibold {{ $summary['delta_tahanan'] > 0 ? 'text-warning' : ($summary['delta_tahanan'] < 0 ? 'text-info' : 'text-white-50') }}" style="font-size: 11px;">
+                                    {{ $summary['delta_tahanan'] > 0 ? '+'.$summary['delta_tahanan'] : $summary['delta_tahanan'] }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-white bg-opacity-10 rounded-3 p-2">
+                                <div class="text-white-50" style="font-size: 10px;">Total Napi</div>
+                                <div class="fw-bold fs-6">{{ number_format($summary['total_napi_curr']) }}</div>
+                                <div class="small fw-semibold {{ $summary['delta_napi'] > 0 ? 'text-warning' : ($summary['delta_napi'] < 0 ? 'text-info' : 'text-white-50') }}" style="font-size: 11px;">
+                                    {{ $summary['delta_napi'] > 0 ? '+'.$summary['delta_napi'] : $summary['delta_napi'] }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-white bg-opacity-10 rounded-3 p-2">
+                                <div class="text-white-50" style="font-size: 10px;">Total Penghuni</div>
+                                <div class="fw-bold fs-6">{{ number_format($summary['total_penghuni_curr']) }}</div>
+                                <div class="small fw-bold {{ $summary['delta_penghuni'] > 0 ? 'text-danger' : ($summary['delta_penghuni'] < 0 ? 'text-success' : 'text-white-50') }}" style="font-size: 11px;">
+                                    {{ $summary['delta_penghuni'] > 0 ? '+'.$summary['delta_penghuni'] : $summary['delta_penghuni'] }} Net
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-white border-opacity-15 d-flex justify-content-between align-items-center flex-wrap gap-1" style="font-size: 11px;">
+                        <span><i class="fas fa-door-open me-1"></i>Pengeluaran: <strong>{{ number_format($summary['total_pengurang']) }} Orang</strong></span>
+                        <span>{{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; {{ number_format($summary['total_bebas']) }} Bebas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daftar Kartu Per UPT -->
+            <div class="row g-3">
+                @forelse($rows as $idx => $r)
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 fluktuasi-card shadow-xs">
+                        <!-- Card Header -->
+                        <div class="card-header bg-transparent py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2 min-w-0">
+                                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary fw-bold" style="font-size: 11px; min-width: 24px;">{{ $idx + 1 }}</span>
+                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 13.5px;" title="{{ $r['nama_upt'] }}">
+                                    {{ $r['nama_upt'] }}
+                                </h6>
+                            </div>
+                            <div class="flex-shrink-0 ms-2">
+                                @if($r['delta_penghuni'] > 0)
+                                    <span class="badge bg-danger text-white px-2 py-1 fw-bold" style="font-size: 11px;">+{{ $r['delta_penghuni'] }} Net</span>
+                                @elseif($r['delta_penghuni'] < 0)
+                                    <span class="badge bg-success text-white px-2 py-1 fw-bold" style="font-size: 11px;">{{ $r['delta_penghuni'] }} Net</span>
+                                @else
+                                    <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 11px;">0 Net</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3">
+                            <!-- 3 Grid Metrik Fluktuasi -->
+                            <div class="row g-2 text-center mb-2.5">
+                                <!-- Tahanan -->
+                                <div class="col-4">
+                                    <div class="fluktuasi-mini-box h-100">
+                                        <span class="text-muted d-block text-truncate" style="font-size: 10px; font-weight: 600;">1. TAHANAN</span>
+                                        <div class="fw-bold text-dark mt-1" style="font-size: 13px;">{{ number_format($r['tahanan_curr']) }}</div>
+                                        <div class="mt-1">
+                                            @if($r['delta_tahanan'] > 0)
+                                                <span class="badge badge-delta-neg" style="font-size: 10px; padding: 2px 6px;">+{{ $r['delta_tahanan'] }}</span>
+                                            @elseif($r['delta_tahanan'] < 0)
+                                                <span class="badge badge-delta-pos" style="font-size: 10px; padding: 2px 6px;">{{ $r['delta_tahanan'] }}</span>
+                                            @else
+                                                <span class="badge badge-delta-zero" style="font-size: 10px; padding: 2px 6px;">0</span>
+                                            @endif
+                                        </div>
+                                        <span class="text-muted d-block mt-0.5" style="font-size: 9.5px;">Lalu: {{ number_format($r['tahanan_prev']) }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Narapidana -->
+                                <div class="col-4">
+                                    <div class="fluktuasi-mini-box h-100">
+                                        <span class="text-muted d-block text-truncate" style="font-size: 10px; font-weight: 600;">2. NAPI</span>
+                                        <div class="fw-bold text-dark mt-1" style="font-size: 13px;">{{ number_format($r['napi_curr']) }}</div>
+                                        <div class="mt-1">
+                                            @if($r['delta_napi'] > 0)
+                                                <span class="badge badge-delta-neg" style="font-size: 10px; padding: 2px 6px;">+{{ $r['delta_napi'] }}</span>
+                                            @elseif($r['delta_napi'] < 0)
+                                                <span class="badge badge-delta-pos" style="font-size: 10px; padding: 2px 6px;">{{ $r['delta_napi'] }}</span>
+                                            @else
+                                                <span class="badge badge-delta-zero" style="font-size: 10px; padding: 2px 6px;">0</span>
+                                            @endif
+                                        </div>
+                                        <span class="text-muted d-block mt-0.5" style="font-size: 9.5px;">Lalu: {{ number_format($r['napi_prev']) }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Total Penghuni -->
+                                <div class="col-4">
+                                    <div class="fluktuasi-mini-box h-100" style="background: rgba(30, 64, 175, 0.08); border-color: rgba(30, 64, 175, 0.2);">
+                                        <span class="text-primary d-block text-truncate" style="font-size: 10px; font-weight: 700;">3. TOTAL</span>
+                                        <div class="fw-bold text-primary mt-1" style="font-size: 14px;">{{ number_format($r['penghuni_curr']) }}</div>
+                                        <div class="mt-1">
+                                            <span class="text-muted" style="font-size: 10px;">Lalu: {{ number_format($r['penghuni_prev']) }}</span>
+                                        </div>
+                                        <span class="text-muted d-block mt-0.5" style="font-size: 9.5px;">Harian</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pengeluaran Harian Strip -->
+                            <div class="p-2 rounded-2 fluktuasi-strip bg-light d-flex justify-content-between align-items-center mb-2" style="font-size: 11px;">
+                                <span class="text-secondary fw-semibold">
+                                    <i class="fas fa-door-open me-1 text-success"></i>Pengeluaran Bebas/Mutasi:
+                                </span>
+                                <div class="d-flex align-items-center gap-1">
+                                    @if($r['total_pengurang'] > 0)
+                                        <span class="badge bg-success text-white px-2 py-0.5 fw-bold" style="font-size: 10px;">{{ $r['total_pengurang'] }} Org</span>
+                                        @if($r['mutasi_keluar'] > 0)
+                                            <span class="badge bg-secondary text-white" style="font-size: 9.5px;">{{ $r['mutasi_keluar'] }} Mutasi</span>
+                                        @endif
+                                        @if($r['bdh'] > 0)
+                                            <span class="badge bg-danger text-white" style="font-size: 9.5px;">{{ $r['bdh'] }} BDH</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted small">0 (Nihil)</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Analisis Dinamika -->
+                            @if(!empty($r['analisis']))
+                            <div class="mb-2 p-2 rounded-2 border border-info-subtle bg-info-subtle bg-opacity-25" style="font-size: 11px;">
+                                <span class="fw-bold text-info-emphasis d-block mb-1"><i class="fas fa-info-circle me-1"></i>Analisis &amp; Dinamika:</span>
+                                <ul class="list-unstyled mb-0 d-flex flex-column gap-1 ps-1">
+                                    @foreach($r['analisis'] as $an)
+                                        <li>{!! $an !!}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endif
+
+                            <!-- Action Button -->
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 rounded-pill py-1.5 fw-semibold shadow-xs" onclick='bukaModalDetailFluktuasi(@json($r))'>
+                                <i class="fas fa-eye me-1"></i>Lihat Breakdown Rincian UPT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3 text-secondary opacity-50"></i>
+                    <h6>Tidak ada data untuk tanggal yang dipilih.</h6>
+                </div>
+                @endforelse
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered table-fluktuasi mb-0 align-middle">
-                <thead class="table-light text-secondary text-center">
-                    <tr>
-                        <th rowspan="2" class="col-sticky-no" style="width: 45px;">No</th>
-                        <th rowspan="2" class="col-sticky-upt text-start" style="min-width: 190px;">Unit Pelaksana Teknis (UPT)</th>
+
+        <!-- 2. TAMPILAN TABEL MATRIKS (Classic Spreadsheet Table) -->
+        <div id="fluktuasiTableView">
+            <div class="scroll-hint-mobile mx-3 mt-3">
+                <i class="fas fa-arrows-left-right text-primary me-1"></i>
+                <span>Geser ke kanan untuk melihat rincian Narapidana, Pengeluaran &amp; Analisis. Kolom No &amp; UPT terkunci rapat di kiri.</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered table-fluktuasi mb-0 align-middle">
+                    <thead class="table-light text-secondary text-center">
+                        <tr>
+                            <th rowspan="2" class="col-sticky-no text-center">No</th>
+                            <th rowspan="2" class="col-sticky-upt text-start">Unit Pelaksana Teknis (UPT)</th>
                         <th colspan="3" class="bg-primary bg-opacity-10 text-primary">1. Tahanan (Overstaying A1-A5)</th>
                         <th colspan="3" class="bg-info bg-opacity-10 text-info">2. Narapidana</th>
                         <th colspan="3" class="bg-dark bg-opacity-10 text-dark">3. Total Penghuni</th>
@@ -442,6 +694,7 @@
             </table>
         </div>
     </div>
+</div>
 </div>
 
 <!-- Modal Breakdown Interaktif Rincian Fluktuasi -->
@@ -822,6 +1075,54 @@ function bukaModalDetailFluktuasi(row) {
     const modal = new bootstrap.Modal(document.getElementById('modalDetailFluktuasi'));
     modal.show();
 }
+
+function switchFluktuasiView(mode) {
+    const cardsView = document.getElementById('fluktuasiCardsView');
+    const tableView = document.getElementById('fluktuasiTableView');
+    const btnCards = document.getElementById('btnViewCards');
+    const btnTable = document.getElementById('btnViewTable');
+
+    if (!cardsView || !tableView) return;
+
+    if (mode === 'cards') {
+        cardsView.classList.remove('d-none');
+        tableView.classList.add('d-none');
+        if (btnCards) {
+            btnCards.classList.add('active');
+            btnCards.classList.remove('text-secondary');
+        }
+        if (btnTable) {
+            btnTable.classList.remove('active');
+            btnTable.classList.add('text-secondary');
+        }
+        localStorage.setItem('fluktuasi_view_mode', 'cards');
+    } else {
+        cardsView.classList.add('d-none');
+        tableView.classList.remove('d-none');
+        if (btnTable) {
+            btnTable.classList.add('active');
+            btnTable.classList.remove('text-secondary');
+        }
+        if (btnCards) {
+            btnCards.classList.remove('active');
+            btnCards.classList.add('text-secondary');
+        }
+        localStorage.setItem('fluktuasi_view_mode', 'table');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const savedMode = localStorage.getItem('fluktuasi_view_mode');
+    if (savedMode) {
+        switchFluktuasiView(savedMode);
+    } else {
+        if (window.innerWidth < 768) {
+            switchFluktuasiView('cards');
+        } else {
+            switchFluktuasiView('table');
+        }
+    }
+});
 </script>
 @endpush
 
