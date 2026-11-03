@@ -165,9 +165,9 @@
                             <div class="small text-muted d-flex align-items-center gap-1 flex-wrap mt-0.5">
                                 <span>Undangan: {{ $s->nomor_undangan }}</span>
                                 @if(!empty($s->file_undangan))
-                                <button type="button" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none py-0.5 px-1.5" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) }}', 'Surat Undangan - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_undangan) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}')" title="Lihat Surat Undangan Sidang TPP">
-                                    <i class="fas fa-eye me-1"></i>Lihat Undangan
-                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none py-0.5 px-1.5" title="Buka Surat Undangan di Tab Baru">
+                                    <i class="fas fa-external-link-alt me-1"></i>Lihat Undangan
+                                </a>
                                 @endif
                             </div>
                         </td>
@@ -176,9 +176,9 @@
                             <div class="small fw-semibold text-dark">{{ $s->nomor_berita_acara }}</div>
                             @if(!empty($s->file_berita_acara))
                             <div class="d-inline-flex align-items-center gap-1 mt-1">
-                                <button type="button" class="badge bg-light text-primary border text-decoration-none py-1 px-2" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) }}', 'Berita Acara - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_berita_acara) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}')" title="Lihat Berita Acara Tanpa Download">
-                                    <i class="fas fa-eye text-primary me-1"></i>Lihat BA
-                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-light text-primary border text-decoration-none py-1 px-2" title="Buka Berita Acara di Tab Baru">
+                                    <i class="fas fa-external-link-alt text-primary me-1"></i>Lihat BA
+                                </a>
                                 <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1.5" title="Unduh Berkas Asli">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -220,9 +220,9 @@
                             <div class="small text-muted">No: <b>{{ $s->nomor_laporan_kanwil ?: '-' }}</b></div>
                             <div class="small text-muted">Tgl TTD: {{ $s->tanggal_ttd_kakanwil ? $s->tanggal_ttd_kakanwil->format('d/m/Y') : '-' }}</div>
                             <div class="d-inline-flex align-items-center gap-1 mt-1">
-                                <button type="button" class="btn btn-outline-success btn-sm py-0 px-2 fw-semibold" onclick="previewDokumen('{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) }}', 'Laporan Sidang TPP Kanwil - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_laporan_kanwil ?? '') }})', '{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}')" title="Lihat Laporan Kanwil Tanpa Download">
-                                    <i class="fas fa-eye me-1"></i>Lihat Laporan
-                                </button>
+                                <a href="{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm py-0 px-2 fw-semibold" title="Buka Laporan Kanwil di Tab Baru">
+                                    <i class="fas fa-external-link-alt me-1"></i>Lihat Laporan
+                                </a>
                                 <a href="{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}" class="btn btn-light btn-sm py-0 px-1.5 border" title="Unduh Laporan">
                                     <i class="fas fa-download text-muted"></i>
                                 </a>
@@ -348,19 +348,19 @@
                         </div>
                     </div>
 
-                    <!-- Dokumen Berkas yang Diunggah UPT (Pratinjau Langsung) -->
+                    <!-- Dokumen Berkas yang Diunggah UPT (Buka di Tab Baru) -->
                     <div class="card border border-primary-subtle bg-primary bg-opacity-10 mb-3 shadow-none">
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <span class="small fw-bold text-primary">
-                                    <i class="fas fa-file-pdf me-1.5"></i>Dokumen Berkas Unggahan UPT (Pratinjau Langsung):
+                                    <i class="fas fa-file-pdf me-1.5"></i>Dokumen Berkas Unggahan UPT (Buka di Tab Baru):
                                 </span>
                                 <span class="badge bg-primary text-white" style="font-size: 10px;">
-                                    <i class="fas fa-eye me-1"></i>Buka tanpa download
+                                    <i class="fas fa-external-link-alt me-1"></i>Buka Tab Baru
                                 </span>
                             </div>
                             <div id="v_dokumen_buttons" class="d-flex flex-wrap gap-2">
-                                <!-- Diisi secara dinamis via openModalVerifikasi -->
+                                <!-- Diisi secara dinamis via openModalVerifikasi dengan tag <a> target="_blank" -->
                             </div>
                         </div>
                     </div>
@@ -588,13 +588,12 @@
                 try {
                     const s = JSON.parse(el.textContent);
                     if (s.has_ba && s.url_preview_ba) {
-                        const btnBa = document.createElement('button');
-                        btnBa.type = 'button';
-                        btnBa.className = 'btn btn-sm btn-white bg-white text-dark border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold';
-                        btnBa.innerHTML = '<i class="fas fa-file-pdf text-danger"></i> <span>Lihat Berita Acara (BA)</span> <i class="fas fa-eye text-primary ms-1"></i>';
-                        btnBa.onclick = function() {
-                            previewDokumen(s.url_preview_ba, 'Berita Acara Sidang TPP - ' + s.upt_nama + ' (' + s.nomor_berita_acara + ')', s.url_download_ba);
-                        };
+                        const btnBa = document.createElement('a');
+                        btnBa.href = s.url_preview_ba;
+                        btnBa.target = '_blank';
+                        btnBa.rel = 'noopener noreferrer';
+                        btnBa.className = 'btn btn-sm btn-white bg-white text-dark border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold text-decoration-none';
+                        btnBa.innerHTML = '<i class="fas fa-file-pdf text-danger"></i> <span>Buka Berita Acara (BA)</span> <i class="fas fa-external-link-alt text-primary ms-1" style="font-size: 11px;"></i>';
                         docContainer.appendChild(btnBa);
                     } else {
                         const noBa = document.createElement('span');
@@ -604,24 +603,22 @@
                     }
 
                     if (s.has_undangan && s.url_preview_undangan) {
-                        const btnUnd = document.createElement('button');
-                        btnUnd.type = 'button';
-                        btnUnd.className = 'btn btn-sm btn-white bg-white text-dark border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold';
-                        btnUnd.innerHTML = '<i class="fas fa-file-pdf text-primary"></i> <span>Lihat Surat Undangan</span> <i class="fas fa-eye text-primary ms-1"></i>';
-                        btnUnd.onclick = function() {
-                            previewDokumen(s.url_preview_undangan, 'Surat Undangan - ' + s.upt_nama + ' (' + s.nomor_undangan + ')', s.url_download_undangan);
-                        };
+                        const btnUnd = document.createElement('a');
+                        btnUnd.href = s.url_preview_undangan;
+                        btnUnd.target = '_blank';
+                        btnUnd.rel = 'noopener noreferrer';
+                        btnUnd.className = 'btn btn-sm btn-white bg-white text-dark border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold text-decoration-none';
+                        btnUnd.innerHTML = '<i class="fas fa-file-pdf text-primary"></i> <span>Buka Surat Undangan</span> <i class="fas fa-external-link-alt text-primary ms-1" style="font-size: 11px;"></i>';
                         docContainer.appendChild(btnUnd);
                     }
 
                     if (s.has_laporan && s.url_preview_laporan) {
-                        const btnLap = document.createElement('button');
-                        btnLap.type = 'button';
-                        btnLap.className = 'btn btn-sm btn-white bg-white text-success border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold';
-                        btnLap.innerHTML = '<i class="fas fa-file-signature text-success"></i> <span>Lihat Laporan Kanwil</span> <i class="fas fa-eye text-success ms-1"></i>';
-                        btnLap.onclick = function() {
-                            previewDokumen(s.url_preview_laporan, 'Laporan Sidang TPP Kanwil - ' + s.upt_nama, s.url_download_laporan);
-                        };
+                        const btnLap = document.createElement('a');
+                        btnLap.href = s.url_preview_laporan;
+                        btnLap.target = '_blank';
+                        btnLap.rel = 'noopener noreferrer';
+                        btnLap.className = 'btn btn-sm btn-white bg-white text-success border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold text-decoration-none';
+                        btnLap.innerHTML = '<i class="fas fa-file-signature text-success"></i> <span>Buka Laporan Kanwil</span> <i class="fas fa-external-link-alt text-success ms-1" style="font-size: 11px;"></i>';
                         docContainer.appendChild(btnLap);
                     }
                 } catch (e) {
@@ -727,35 +724,32 @@
             let hasAnyDoc = false;
             if (s.has_ba && s.url_preview_ba) {
                 hasAnyDoc = true;
-                const btnBa = document.createElement('button');
-                btnBa.type = 'button';
-                btnBa.className = 'btn btn-xs btn-outline-danger d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill';
-                btnBa.innerHTML = '<i class="fas fa-eye me-1"></i>Lihat Berita Acara (BA)';
-                btnBa.onclick = function() {
-                    previewDokumen(s.url_preview_ba, 'Berita Acara - ' + s.upt_nama + ' (' + s.nomor_berita_acara + ')', s.url_download_ba);
-                };
+                const btnBa = document.createElement('a');
+                btnBa.href = s.url_preview_ba;
+                btnBa.target = '_blank';
+                btnBa.rel = 'noopener noreferrer';
+                btnBa.className = 'btn btn-xs btn-outline-danger d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill text-decoration-none';
+                btnBa.innerHTML = '<i class="fas fa-external-link-alt me-1"></i>Buka Berita Acara (BA)';
                 rwDocs.appendChild(btnBa);
             }
             if (s.has_undangan && s.url_preview_undangan) {
                 hasAnyDoc = true;
-                const btnUnd = document.createElement('button');
-                btnUnd.type = 'button';
-                btnUnd.className = 'btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill';
-                btnUnd.innerHTML = '<i class="fas fa-eye me-1"></i>Lihat Surat Undangan';
-                btnUnd.onclick = function() {
-                    previewDokumen(s.url_preview_undangan, 'Surat Undangan - ' + s.upt_nama + ' (' + s.nomor_undangan + ')', s.url_download_undangan);
-                };
+                const btnUnd = document.createElement('a');
+                btnUnd.href = s.url_preview_undangan;
+                btnUnd.target = '_blank';
+                btnUnd.rel = 'noopener noreferrer';
+                btnUnd.className = 'btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill text-decoration-none';
+                btnUnd.innerHTML = '<i class="fas fa-external-link-alt me-1"></i>Buka Surat Undangan';
                 rwDocs.appendChild(btnUnd);
             }
             if (s.has_laporan && s.url_preview_laporan) {
                 hasAnyDoc = true;
-                const btnLap = document.createElement('button');
-                btnLap.type = 'button';
-                btnLap.className = 'btn btn-xs btn-outline-success d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill';
-                btnLap.innerHTML = '<i class="fas fa-eye me-1"></i>Lihat Laporan Kanwil';
-                btnLap.onclick = function() {
-                    previewDokumen(s.url_preview_laporan, 'Laporan Kanwil - ' + s.upt_nama, s.url_download_laporan);
-                };
+                const btnLap = document.createElement('a');
+                btnLap.href = s.url_preview_laporan;
+                btnLap.target = '_blank';
+                btnLap.rel = 'noopener noreferrer';
+                btnLap.className = 'btn btn-xs btn-outline-success d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill text-decoration-none';
+                btnLap.innerHTML = '<i class="fas fa-external-link-alt me-1"></i>Buka Laporan Kanwil';
                 rwDocs.appendChild(btnLap);
             }
             if (!hasAnyDoc) {

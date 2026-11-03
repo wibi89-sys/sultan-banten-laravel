@@ -210,9 +210,9 @@
                             <div class="small text-muted">Tgl Surat: {{ $s->tanggal_surat->format('d/m/Y') }}</div>
                             @if($s->file_undangan)
                             <div class="d-inline-flex align-items-center gap-1 mt-1">
-                                <button type="button" class="badge bg-light text-primary border text-decoration-none py-1 px-1.5" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) }}', 'Surat Undangan - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_undangan) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}')" title="Lihat Surat Undangan">
-                                    <i class="fas fa-eye text-primary me-1"></i>Undangan
-                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-light text-primary border text-decoration-none py-1 px-1.5" title="Buka Surat Undangan di Tab Baru">
+                                    <i class="fas fa-external-link-alt text-primary me-1"></i>Undangan
+                                </a>
                                 <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1" title="Unduh File Asli">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -248,9 +248,9 @@
                             {!! $s->verifikasi_badge !!}
                             @if(!empty($s->file_laporan_kakanwil))
                             <div class="d-inline-flex align-items-center gap-1 mt-1">
-                                <button type="button" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none py-1 px-1.5" onclick="previewDokumen('{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) }}', 'Laporan Sidang TPP Kanwil - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_laporan_kanwil ?? '') }})', '{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}')" title="Lihat Laporan Ka. Kanwil">
-                                    <i class="fas fa-eye me-1"></i>TTD Kanwil
-                                </button>
+                                <a href="{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none py-1 px-1.5" title="Buka Laporan Ka. Kanwil di Tab Baru">
+                                    <i class="fas fa-external-link-alt me-1"></i>TTD Kanwil
+                                </a>
                                 <a href="{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1" title="Unduh Laporan Asli">
                                     <i class="fas fa-download"></i>
                                 </a>

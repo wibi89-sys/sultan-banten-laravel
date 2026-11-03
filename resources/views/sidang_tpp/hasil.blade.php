@@ -90,9 +90,9 @@
                             <div class="fw-semibold small text-dark">{{ $s->nomor_berita_acara }}</div>
                             @if(!empty($s->file_berita_acara))
                             <div class="d-inline-flex align-items-center gap-1 mt-1">
-                                <button type="button" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none py-1 px-1.5" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) }}', 'Berita Acara - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_berita_acara) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}')" title="Lihat Berita Acara">
-                                    <i class="fas fa-eye me-1"></i>Lihat BA
-                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none py-1 px-1.5" title="Buka Berita Acara di Tab Baru">
+                                    <i class="fas fa-external-link-alt me-1"></i>Lihat BA
+                                </a>
                                 <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1" title="Unduh Berkas Asli">
                                     <i class="fas fa-download"></i>
                                 </a>

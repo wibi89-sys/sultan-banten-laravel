@@ -200,10 +200,9 @@
                             </div>
                             @if($mutasi->file_surat_usulan)
                             <div class="d-flex align-items-center gap-1">
-                                <button type="button" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan', 'preview' => 1]) }}', 'Surat Usulan Resmi - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan']) }}')">
-                                    <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                </button>
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                </a>
                                 <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan']) }}" class="btn btn-outline-secondary btn-sm py-0.5 px-2" title="Unduh PDF">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -220,10 +219,9 @@
                             </div>
                             @if($mutasi->file_asesmen)
                             <div class="d-flex align-items-center gap-1">
-                                <button type="button" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen', 'preview' => 1]) }}', 'Asesmen Penempatan - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen']) }}')">
-                                    <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                </button>
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                </a>
                                 <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen']) }}" class="btn btn-outline-secondary btn-sm py-0.5 px-2" title="Unduh Berkas">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -240,10 +238,9 @@
                             </div>
                             @if($mutasi->file_bap)
                             <div class="d-flex align-items-center gap-1">
-                                <button type="button" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap', 'preview' => 1]) }}', 'Berita Acara Pemeriksaan (BAP) - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap']) }}')">
-                                    <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                </button>
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                </a>
                                 <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap']) }}" class="btn btn-outline-secondary btn-sm py-0.5 px-2" title="Unduh BAP">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -260,10 +257,9 @@
                             </div>
                             @if($mutasi->file_reg_f)
                             <div class="d-flex align-items-center gap-1">
-                                <button type="button" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f', 'preview' => 1]) }}', 'Buku Register F - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f']) }}')">
-                                    <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                </button>
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                </a>
                                 <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f']) }}" class="btn btn-outline-secondary btn-sm py-0.5 px-2" title="Unduh Register F">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -280,10 +276,9 @@
                             </div>
                             @if($mutasi->file_lampiran_wbp)
                             <div class="d-flex align-items-center gap-1">
-                                <button type="button" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}', 'Daftar WBP Usulan - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp']) }}')">
-                                    <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                </button>
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                </a>
                                 <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp']) }}" class="btn btn-outline-secondary btn-sm py-0.5 px-2" title="Unduh Berkas">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -417,10 +412,9 @@
 
                         @if($mutasi->file_persetujuan_kanwil)
                         <div class="d-flex gap-2 mb-2">
-                            <button type="button" class="btn btn-success btn-sm flex-fill shadow-sm fw-semibold"
-                                onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}', 'Surat Persetujuan Kanwil - {{ addslashes($mutasi->nomor_surat_kanwil) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}')">
-                                <i class="fas fa-eye me-1"></i> Lihat Surat Persetujuan (PDF)
-                            </button>
+                            <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm flex-fill shadow-sm fw-semibold">
+                                <i class="fas fa-external-link-alt me-1"></i> Buka Surat Persetujuan (Tab Baru)
+                            </a>
                             <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}" class="btn btn-outline-success btn-sm shadow-sm" title="Unduh PDF">
                                 <i class="fas fa-download"></i>
                             </a>
@@ -464,42 +458,37 @@
                     <form action="{{ route('mutasi.verifikasi', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         
-                        <!-- Panel Cepat: Pratinjau Dokumen Usulan UPT -->
+                        <!-- Panel Cepat: Buka Dokumen Usulan UPT di Tab Baru -->
                         <div class="alert alert-light border border-primary-subtle bg-primary-subtle bg-opacity-10 py-2.5 px-3 mb-3 small rounded-3">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                                 <span class="fw-bold text-primary"><i class="fas fa-search-plus me-1"></i>Dokumen UPT yang Perlu Diverifikasi:</span>
-                                <span class="badge bg-white text-secondary border small">Lihat langsung tanpa download</span>
+                                <span class="badge bg-white text-secondary border small"><i class="fas fa-external-link-alt me-1"></i>Buka di Tab Baru</span>
                             </div>
                             <div class="d-flex flex-wrap gap-1.5">
                                 @if($mutasi->file_surat_usulan)
-                                <button type="button" class="btn btn-xs btn-primary rounded-pill px-2.5 py-1 fw-semibold shadow-xs"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan', 'preview' => 1]) }}', 'Surat Usulan Resmi - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan']) }}')">
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-primary rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
                                     <i class="fas fa-file-pdf me-1"></i>1. Surat Usulan
-                                </button>
+                                </a>
                                 @endif
                                 @if($mutasi->file_asesmen)
-                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold shadow-xs"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen', 'preview' => 1]) }}', 'Asesmen Penempatan - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen']) }}')">
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
                                     <i class="fas fa-file-alt me-1"></i>2. Asesmen
-                                </button>
+                                </a>
                                 @endif
                                 @if($mutasi->file_bap)
-                                <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill px-2.5 py-1 fw-semibold shadow-xs"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap', 'preview' => 1]) }}', 'Berita Acara Pemeriksaan (BAP) - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap']) }}')">
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-warning text-dark rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
                                     <i class="fas fa-shield-alt me-1"></i>3. BAP
-                                </button>
+                                </a>
                                 @endif
                                 @if($mutasi->file_reg_f)
-                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold shadow-xs"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f', 'preview' => 1]) }}', 'Buku Register F - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f']) }}')">
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
                                     <i class="fas fa-clipboard-list me-1"></i>4. Register F
-                                </button>
+                                </a>
                                 @endif
                                 @if($mutasi->file_lampiran_wbp)
-                                <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-2.5 py-1 fw-semibold shadow-xs"
-                                    onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}', 'Daftar WBP Usulan - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp']) }}')">
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-info rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
                                     <i class="fas fa-users me-1"></i>5. Daftar WBP
-                                </button>
+                                </a>
                                 @endif
                             </div>
                         </div>
@@ -730,10 +719,9 @@
                                     @endif
                                 </div>
                                 <div class="d-flex gap-1.5">
-                                    <button type="button" class="btn btn-primary btn-sm flex-fill fw-semibold shadow-xs" style="font-size: 11px;"
-                                        onclick="previewDokumen('{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_pemindahan', 'tujuan_id' => $target->id, 'preview' => 1])) }}', 'Laporan Pemindahan - {{ addslashes($mutasi->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_pemindahan', 'tujuan_id' => $target->id])) }}')">
-                                        <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                    </button>
+                                    <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_pemindahan', 'tujuan_id' => $target->id, 'preview' => 1])) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm flex-fill fw-semibold shadow-xs" style="font-size: 11px;">
+                                        <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                    </a>
                                     <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_pemindahan', 'tujuan_id' => $target->id])) }}" class="btn btn-outline-primary btn-sm" title="Unduh File" style="font-size: 11px;">
                                         <i class="fas fa-download"></i>
                                     </a>
@@ -789,10 +777,9 @@
                                     @endif
                                 </div>
                                 <div class="d-flex gap-1.5">
-                                    <button type="button" class="btn btn-info btn-sm text-white flex-fill fw-semibold shadow-xs" style="font-size: 11px;"
-                                        onclick="previewDokumen('{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_penerimaan', 'tujuan_id' => $target->id, 'preview' => 1])) }}', 'Laporan Penerimaan - {{ addslashes($target->uptTujuan?->nama_upt) }}', '{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_penerimaan', 'tujuan_id' => $target->id])) }}')">
-                                        <i class="fas fa-eye me-1"></i> Lihat Dokumen
-                                    </button>
+                                    <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_penerimaan', 'tujuan_id' => $target->id, 'preview' => 1])) }}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm text-white flex-fill fw-semibold shadow-xs" style="font-size: 11px;">
+                                        <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                    </a>
                                     <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'laporan_penerimaan', 'tujuan_id' => $target->id])) }}" class="btn btn-outline-info btn-sm" title="Unduh File" style="font-size: 11px;">
                                         <i class="fas fa-download"></i>
                                     </a>
@@ -846,10 +833,9 @@
                                     <div class="fw-bold mb-1">{{ $target->tanggal_bast ? \Carbon\Carbon::parse($target->tanggal_bast)->format('d F Y') : '-' }}</div>
                                 </div>
                                 <div class="d-flex gap-1.5">
-                                    <button type="button" class="btn btn-success btn-sm flex-fill fw-semibold shadow-xs" style="font-size: 11px;"
-                                        onclick="previewDokumen('{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'bast', 'tujuan_id' => $target->id, 'preview' => 1])) }}', 'Berita Acara Serah Terima (BAST) - {{ addslashes($target->nomor_bast) }}', '{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'bast', 'tujuan_id' => $target->id])) }}')">
-                                        <i class="fas fa-eye me-1"></i> Lihat Dokumen BAST
-                                    </button>
+                                    <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'bast', 'tujuan_id' => $target->id, 'preview' => 1])) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm flex-fill fw-semibold shadow-xs" style="font-size: 11px;">
+                                        <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen BAST
+                                    </a>
                                     <a href="{{ route('mutasi.download-file', array_filter(['id' => $mutasi->id, 'type' => 'bast', 'tujuan_id' => $target->id])) }}" class="btn btn-outline-success btn-sm" title="Unduh File BAST" style="font-size: 11px;">
                                         <i class="fas fa-download"></i>
                                     </a>
