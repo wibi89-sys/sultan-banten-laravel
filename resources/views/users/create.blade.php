@@ -86,7 +86,7 @@
     @csrf
 
     <!-- Top Action Toolbar -->
-    <div class="d-flex justify-content-between align-items-center mb-4 sticky-actions">
+    <div class="d-flex justify-content-between align-items-center mb-4 sticky-actions flex-wrap gap-2">
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 small">

@@ -27,7 +27,7 @@
     <div class="card mb-3 bg-light border-0">
         <div class="card-body py-2">
             <form method="GET" action="{{ route('pengumuman.index') }}" class="row g-2 align-items-end">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="filter_kategori" class="form-label small fw-semibold">Kategori</label>
                     <select id="filter_kategori" name="kategori" class="form-select form-select-sm" aria-label="Filter Kategori">
                         <option value="">-- Semua Kategori --</option>
@@ -37,7 +37,7 @@
                         <option value="Peringatan" {{ request('kategori') == 'Peringatan' ? 'selected' : '' }}>Peringatan</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="filter_status" class="form-label small fw-semibold">Status</label>
                     <select id="filter_status" name="status" class="form-select form-select-sm" aria-label="Filter Status">
                         <option value="">-- Semua Status --</option>
@@ -45,7 +45,7 @@
                         <option value="nonaktif" {{ request('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex gap-2">
+                <div class="col-12 col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-fill" aria-label="Terapkan Filter Pengumuman"><i class="fas fa-search me-1"></i>Filter</button>
                     <a href="{{ route('pengumuman.index') }}" class="btn btn-secondary btn-sm flex-fill" aria-label="Reset Filter">Reset</a>
                 </div>

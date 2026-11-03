@@ -116,7 +116,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('bebas-harian.index') }}" class="row g-3 align-items-end">
                 @if(!$userUptFilter)
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label for="filter_bebas_upt" class="form-label small fw-semibold">UPT</label>
                     <select id="filter_bebas_upt" name="upt_id" class="form-select form-select-sm" aria-label="Pilih Satuan Kerja UPT">
                         <option value="">-- Semua UPT --</option>
@@ -128,15 +128,15 @@
                     </select>
                 </div>
                 @endif
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="filter_bebas_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
                     <input type="date" id="filter_bebas_mulai" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}" aria-label="Tanggal Mulai">
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="filter_bebas_sampai" class="form-label small fw-semibold">Tanggal Sampai</label>
                     <input type="date" id="filter_bebas_sampai" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}" aria-label="Tanggal Sampai">
                 </div>
-                <div class="col-md-3 d-flex gap-2">
+                <div class="col-12 col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
                         <i class="fas fa-filter me-1"></i> Filter
                     </button>

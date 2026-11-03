@@ -83,7 +83,7 @@
 
         <!-- CARD 2: PENDATAAN JUMLAH NARAPIDANA PER PERKARA -->
         <div class="card border-0 shadow-sm rounded-3 mb-3">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-users me-2 text-primary"></i>2. Pendataan Jumlah Narapidana per Klasifikasi Perkara</h6>
                 <span class="badge bg-primary fs-6 px-3 py-1" id="badgeTotalUsulan">Total: 0 Orang</span>
             </div>
@@ -170,7 +170,7 @@
                     </div>
                 </div>
             </div>
-            <div class="card-footer bg-light py-3 d-flex justify-content-between align-items-center">
+            <div class="card-footer bg-light py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <a href="{{ route('mutasi.index') }}" class="btn btn-outline-secondary btn-sm px-3">
                     <i class="fas fa-arrow-left me-1"></i> Batal / Kembali
                 </a>

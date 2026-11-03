@@ -91,7 +91,7 @@
             </div>
             
             <!-- Photo Upload Form -->
-            <form action="{{ route('profile.photo') }}" method="POST" enctype="multipart/form-data">
+            <form id="uploadPhotoForm" action="{{ route('profile.photo') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="mb-3">
                     <label for="photo" class="form-label small fw-semibold">Upload Foto Profil</label>
@@ -101,21 +101,21 @@
                     @enderror
                     <div class="form-text small text-muted">Format: JPG, PNG, GIF, WebP. Maks: 2MB</div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1" aria-label="Upload Foto Profil Baru">
-                        <i class="fas fa-upload me-1"></i> Upload Foto
-                    </button>
-                    @if(!empty($user->foto) && file_exists(public_path($user->foto)))
-                    <form action="{{ route('profile.photo.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus foto profil?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus foto" aria-label="Hapus Foto Profil">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
-                    @endif
-                </div>
             </form>
+            <div class="d-flex gap-2">
+                <button type="submit" form="uploadPhotoForm" class="btn btn-primary btn-sm flex-grow-1" aria-label="Upload Foto Profil Baru">
+                    <i class="fas fa-upload me-1"></i> Upload Foto
+                </button>
+                @if(!empty($user->foto) && file_exists(public_path($user->foto)))
+                <form action="{{ route('profile.photo.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus foto profil?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus foto" aria-label="Hapus Foto Profil">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+                @endif
+            </div>
         </div>
         
         <!-- User Info -->
@@ -166,7 +166,7 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <button type="submit" class="btn btn-primary px-4" aria-label="Simpan Perubahan Profil">
+                <button type="submit" class="btn btn-primary px-4 w-100 w-sm-auto" aria-label="Simpan Perubahan Profil">
                     <i class="fas fa-save me-1"></i> Simpan Perubahan
                 </button>
             </form>
@@ -199,7 +199,7 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <button type="submit" class="btn btn-warning px-4" aria-label="Simpan Password Baru">
+                <button type="submit" class="btn btn-warning px-4 w-100 w-sm-auto" aria-label="Simpan Password Baru">
                     <i class="fas fa-key me-1"></i> Ubah Password
                 </button>
             </form>

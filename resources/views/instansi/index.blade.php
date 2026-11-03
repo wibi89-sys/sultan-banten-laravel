@@ -187,11 +187,11 @@
 
         <div class="d-flex justify-content-end mt-4">
             @if(auth()->user()->canManage('instansi'))
-            <button type="submit" class="btn btn-primary px-4">
+            <button type="submit" class="btn btn-primary px-4 w-100 w-sm-auto">
                 <i class="fas fa-save me-1"></i> Simpan Pengaturan
             </button>
             @else
-            <button type="button" class="btn btn-secondary px-4" disabled>
+            <button type="button" class="btn btn-secondary px-4 w-100 w-sm-auto" disabled>
                 <i class="fas fa-lock me-1"></i> Mode Lihat Saja
             </button>
             @endif

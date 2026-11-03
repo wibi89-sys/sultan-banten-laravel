@@ -100,15 +100,15 @@
     <div class="card mb-3 bg-light border-0">
         <div class="card-body py-2">
             <form method="GET" action="{{ route('overstaying.index') }}" class="row g-2 align-items-end">
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label for="filter_overstaying_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
                     <input type="date" id="filter_overstaying_mulai" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}" aria-label="Tanggal Mulai">
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label for="filter_overstaying_sampai" class="form-label small fw-semibold">Tanggal Sampai</label>
                     <input type="date" id="filter_overstaying_sampai" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}" aria-label="Tanggal Sampai">
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label for="filter_overstaying_upt" class="form-label small fw-semibold">UPT</label>
                     <select id="filter_overstaying_upt" name="upt_id" class="form-select form-select-sm" aria-label="Pilih Satuan Kerja UPT" {{ $userUptFilter ? 'disabled' : '' }}>
                         <option value="0">-- Semua UPT --</option>
@@ -117,7 +117,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-5 d-flex gap-2">
+                <div class="col-12 col-md-5 d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-fill">
                         <i class="fas fa-search me-1"></i>Filter
                     </button>

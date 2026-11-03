@@ -2437,17 +2437,197 @@ tfoot td.col-sticky-total {
     background-color: #312e81 !important;
 }
 
+/* ============================================
+   COMPREHENSIVE MOBILE ERGONOMICS & TOUCH OPTIMIZATIONS
+   ============================================ */
+
+/* Spin buttons removal on number inputs for clean mobile typing */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 @media (max-width: 767.98px) {
-    .input-matrix-table input[type="number"],
-    .input-matrix-table input[type="text"] {
-        height: 38px !important;
-        font-size: 13.5px !important;
-        min-width: 55px !important;
+    /* Form controls & inputs touch sizing */
+    .form-control,
+    .form-select,
+    .form-control-sm,
+    .form-select-sm {
+        min-height: 40px !important;
+        font-size: 14px !important;
+        padding: 7px 12px !important;
+        border-radius: 8px !important;
     }
-    
+
+    textarea.form-control,
+    textarea.form-control-sm {
+        min-height: 80px !important;
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+    }
+
+    /* Labels readability */
+    .form-label {
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        margin-bottom: 4px !important;
+    }
+
+    /* Filter Form Buttons */
+    form .d-flex.gap-2 {
+        width: 100% !important;
+    }
+    form .d-flex.gap-2 .btn {
+        flex: 1 1 auto !important;
+        min-height: 40px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+
+    /* Mobile Modal Ergonomics (Docked Action Footer) */
+    .modal-dialog {
+        margin: 8px auto !important;
+        max-width: calc(100% - 16px) !important;
+    }
+    .modal-content {
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        border: 1px solid var(--border-color, #cbd5e1) !important;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25) !important;
+    }
+    .modal-header {
+        padding: 12px 16px !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1055 !important;
+    }
+    .modal-body {
+        padding: 14px 12px !important;
+        max-height: calc(85vh - 120px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .modal-footer {
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 1055 !important;
+        background: var(--card-bg, #ffffff) !important;
+        border-top: 1px solid var(--border-color, #e2e8f0) !important;
+        padding: 10px 14px !important;
+        box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.08) !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    [data-theme="dark"] .modal-footer {
+        background: #1e293b !important;
+        border-top-color: #334155 !important;
+    }
+    .modal-footer .btn {
+        flex: 1 1 auto !important;
+        min-height: 40px !important;
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Data Filter Tabs Mobile Scrollable Chip Strip */
+    .data-filter-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+        gap: 6px !important;
+    }
+    .data-filter-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+    .data-filter-tabs .filter-tab {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        padding: 7px 14px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        border-radius: 20px !important;
+    }
+
+    /* Matrix Table Inputs Touch Sizing */
+    .input-matrix-table input[type="number"],
+    .input-matrix-table input[type="text"],
+    .input-table input {
+        height: 38px !important;
+        min-width: 52px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        padding: 4px 2px !important;
+        border-radius: 6px !important;
+    }
+
+    /* Input Grid in Overstaying */
     .input-grid {
         grid-template-columns: repeat(3, 1fr) !important;
         gap: 8px !important;
+    }
+
+    /* Content Card Mobile Padding */
+    .content-card,
+    .content-wrapper {
+        padding: 12px 10px !important;
+        margin: 6px 4px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Table Responsive Smooth Touch Pan */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-x: contain !important;
+        margin-bottom: 12px !important;
+        border-radius: 8px !important;
+    }
+
+    /* Action buttons in tables (Edit, Delete, Detail) */
+    .table .btn-group {
+        display: inline-flex !important;
+        gap: 4px !important;
+    }
+    .table .btn-group .btn {
+        min-height: 32px !important;
+        min-width: 32px !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+    }
+
+    /* Quick Filter Pills & Nav Tabs */
+    .nav-tabs,
+    .nav-pills {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding-bottom: 4px !important;
+    }
+    .nav-tabs::-webkit-scrollbar,
+    .nav-pills::-webkit-scrollbar {
+        display: none !important;
+    }
+    .nav-tabs .nav-link,
+    .nav-pills .nav-link {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        font-size: 12.5px !important;
+        padding: 8px 14px !important;
     }
 }
 

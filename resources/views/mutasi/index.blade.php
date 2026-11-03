@@ -98,7 +98,7 @@
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-list-ul me-2 text-primary"></i>Daftar Berkas Usulan Mutasi Narapidana</h5>
                     <small class="text-muted">Data permohonan persetujuan dan penetapan pemindahan narapidana se-Wilayah Banten</small>
                 </div>
-                <div class="d-flex gap-2 align-items-center">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
                     @if(auth()->user()->canManage('mutasi') && ! empty(auth()->user()->upt_id))
                     <a href="{{ route('mutasi.create') }}" class="btn btn-primary btn-sm px-3 shadow-sm">
                         <i class="fas fa-plus-circle me-1"></i> Buat Usulan Baru
@@ -117,7 +117,7 @@
             <!-- Filter Bar -->
             <form method="GET" action="{{ route('mutasi.index') }}" class="row g-2 align-items-end pt-3 mt-1 border-top">
                 @if(auth()->user()->isAdmin() || empty(auth()->user()->upt_id))
-                <div class="col-md-3 col-sm-6">
+                <div class="col-12 col-md-3">
                     <label class="form-label small fw-semibold text-muted mb-1">Filter UPT</label>
                     <select name="upt_id" class="form-select form-select-sm">
                         <option value="">-- Semua UPT --</option>
@@ -128,7 +128,7 @@
                 </div>
                 @endif
 
-                <div class="col-md-2 col-sm-6">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold text-muted mb-1">Kategori</label>
                     <select name="kategori" class="form-select form-select-sm">
                         <option value="">-- Semua Kategori --</option>
@@ -139,7 +139,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-2 col-sm-6">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold text-muted mb-1">Status</label>
                     <select name="status" class="form-select form-select-sm">
                         <option value="">-- Semua Status --</option>
@@ -151,12 +151,12 @@
                     </select>
                 </div>
 
-                <div class="col-md-3 col-sm-6">
+                <div class="col-12 col-md-3">
                     <label class="form-label small fw-semibold text-muted mb-1">Cari No. Surat / Keterangan</label>
                     <input type="text" name="search" class="form-control form-control-sm" placeholder="No. surat usulan atau kanwil..." value="{{ request('search') }}">
                 </div>
 
-                <div class="col-md-2 col-sm-6 d-flex gap-1">
+                <div class="col-12 col-md-2 d-flex gap-1">
                     <button type="submit" class="btn btn-secondary btn-sm flex-fill"><i class="fas fa-search me-1"></i>Filter</button>
                     <a href="{{ route('mutasi.index') }}" class="btn btn-light btn-sm text-secondary border" title="Reset Filter"><i class="fas fa-undo"></i></a>
                 </div>

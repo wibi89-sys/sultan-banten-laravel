@@ -587,7 +587,7 @@
             </div>
 
             <!-- Filter User -->
-            <div class="col-6 col-md-2">
+            <div class="col-12 col-md-2">
                 <label for="filter_user_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-user me-1"></i>Pengguna</label>
                 <select id="filter_user_log" name="user_id" class="form-select form-select-sm" aria-label="Filter Pengguna">
                     <option value="">Semua User</option>
@@ -598,7 +598,7 @@
             </div>
 
             <!-- Filter Rentang Tanggal -->
-            <div class="col-6 col-md-3">
+            <div class="col-12 col-md-3">
                 <label for="filter_tanggal_mulai_log" class="form-label small fw-semibold text-muted mb-1"><i class="fas fa-calendar-alt me-1"></i>Rentang Tanggal</label>
                 <div class="input-group input-group-sm">
                     <input type="date" id="filter_tanggal_mulai_log" name="tanggal_mulai" class="form-control" value="{{ $filterTanggalMulai }}" title="Tanggal Mulai" aria-label="Tanggal Mulai">

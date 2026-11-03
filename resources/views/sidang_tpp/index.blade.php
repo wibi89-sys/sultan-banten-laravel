@@ -110,7 +110,7 @@
                     <h5 class="fw-bold mb-1"><i class="fas fa-calendar-alt text-primary me-2"></i>Daftar Agenda &amp; Undangan Sidang TPP</h5>
                     <p class="text-muted small mb-0">Implementasi Bintorwasdal sesuai Surat Edaran Direktur Jenderal Pemasyarakatan No: PAS-38.OT.02.02 Tahun 2026</p>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     @if(auth()->user()->hasAccess('wa_settings') || auth()->user()->hasAccess('wa_schedule'))
                     <a href="{{ route('wa.schedules') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm" title="Atur Template Pesan WhatsApp Undangan Sidang TPP">
                         <i class="fab fa-whatsapp me-1"></i>Atur Template WA
@@ -135,7 +135,7 @@
             <!-- Form Filter -->
             <form method="GET" action="{{ route('sidang-tpp.index') }}" class="row g-2 align-items-end pt-2 border-top">
                 @if(!$userUptFilter)
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label class="form-label small fw-semibold mb-1">Filter UPT</label>
                     <select name="upt_id" class="form-select form-select-sm" id="filter_upt_id">
                         <option value="">-- Seluruh UPT Se-Banten --</option>
@@ -145,7 +145,7 @@
                     </select>
                 </div>
                 @endif
-                <div class="col-md-2">
+                <div class="col-12 col-md-2">
                     <label class="form-label small fw-semibold mb-1">Status Sidang</label>
                     <select name="status" class="form-select form-select-sm" id="filter_status">
                         <option value="">-- Semua Status --</option>
@@ -155,15 +155,15 @@
                         <option value="selesai_ttd_kakanwil" {{ $statusSidang == 'selesai_ttd_kakanwil' ? 'selected' : '' }}>Selesai &amp; TTD Ka. Kanwil</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold mb-1">Dari Tanggal</label>
                     <input type="date" name="tanggal_mulai" class="form-select form-select-sm" value="{{ $tanggalMulai }}" id="filter_tgl_mulai">
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold mb-1">Sampai Tanggal</label>
                     <input type="date" name="tanggal_sampai" class="form-select form-select-sm" value="{{ $tanggalSampai }}" id="filter_tgl_sampai">
                 </div>
-                <div class="col-md-3 d-flex gap-2">
+                <div class="col-12 col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-sm px-3" id="btnFilterApply">
                         <i class="fas fa-filter me-1"></i>Filter
                     </button>
