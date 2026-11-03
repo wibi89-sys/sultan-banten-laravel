@@ -652,6 +652,9 @@ class WhatsAppService
                 'persen_over_kapasitas' => 'Persentase kelebihan kapasitas / overkapasitas (%) (alias: {persen_overkapasitas})',
                 'selisih_kapasitas' => 'Selisih matematis antara isi penghuni dan kapasitas',
                 'status_kapasitas' => 'Keterangan status kapasitas (Over Kapasitas +X orang atau Normal)',
+                'kategori_overcrowding' => 'Kategori overcrowding terstandarisasi (Tidak Overcrowding, Overcrowding, Critical, Extreme)',
+                'status_overcrowding' => 'Alias untuk kategori overcrowding',
+                'ringkasan_overcrowding_upt' => 'Daftar UPT dengan status Extreme (≥300%) dan Critical (150-299%)',
                 'total_tahanan' => 'Total seluruh tahanan (alias: {tahanan})',
                 'tahanan_dewasa' => 'Rincian total tahanan dewasa',
                 'tahanan_anak' => 'Rincian total tahanan anak',
@@ -772,6 +775,43 @@ class WhatsAppService
             ? "Over Kapasitas +{$overKapasitas} orang ({$persenOverKapasitas}%)"
             : ($totPenghuni === $totalKapasitas ? 'Sesuai Kapasitas (100%)' : 'Di Bawah Kapasitas (Tersedia '.abs($selisihKapasitas).' tempat)');
 
+        $overcrowding = getOvercrowdingStatus($totPenghuni, $totalKapasitas);
+        $kategoriOvercrowding = $overcrowding['status'];
+
+        // Analisis Overcrowding per UPT
+        $uptPenghuniList = DataPenghuni::where('tanggal', $tanggal)
+            ->selectRaw('
+                upt_id,
+                COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan + narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as total
+            ')
+            ->groupBy('upt_id')
+            ->with('upt')
+            ->get();
+
+        $extremeUptList = [];
+        $criticalUptList = [];
+        foreach ($uptPenghuniList as $up) {
+            $u = $up->upt;
+            if (! $u || ! $u->kapasitas) {
+                continue;
+            }
+            $oc = getOvercrowdingStatus((int) $up->total, (int) $u->kapasitas);
+            if ($oc['level'] === 'extreme') {
+                $extremeUptList[] = "• {$u->nama_upt}: {$oc['tingkat_hunian']}% (+{$oc['selisih']} org)";
+            } elseif ($oc['level'] === 'critical') {
+                $criticalUptList[] = "• {$u->nama_upt}: {$oc['tingkat_hunian']}% (+{$oc['selisih']} org)";
+            }
+        }
+
+        $ringkasanOvercrowding = '';
+        if (! empty($extremeUptList)) {
+            $ringkasanOvercrowding .= "🔴 *Extreme Overcrowding (≥300%):*\n".implode("\n", $extremeUptList)."\n\n";
+        }
+        if (! empty($criticalUptList)) {
+            $ringkasanOvercrowding .= "🟠 *Critical Overcrowding (150-299%):*\n".implode("\n", $criticalUptList);
+        }
+        $ringkasanOvercrowding = trim($ringkasanOvercrowding);
+
         $overstayingAgg = DataOverstaying::where('tanggal', $tanggal)
             ->selectRaw('
                 COALESCE(SUM(overstaying_ai), 0) as over_ai,
@@ -873,6 +913,9 @@ class WhatsAppService
             'persen_overkapasitas' => $persenOverKapasitas,
             'selisih_kapasitas' => $selisihKapasitas,
             'status_kapasitas' => $statusKapasitas,
+            'kategori_overcrowding' => $kategoriOvercrowding,
+            'status_overcrowding' => $kategoriOvercrowding,
+            'ringkasan_overcrowding_upt' => $ringkasanOvercrowding,
 
             // Tahanan & Narapidana
             'total_tahanan' => $totTahanan,

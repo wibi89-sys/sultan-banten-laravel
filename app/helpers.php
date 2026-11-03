@@ -2,6 +2,116 @@
 
 use App\Models\Instansi;
 
+if (! function_exists('getOvercrowdingStatus')) {
+    /**
+     * Klasifikasi Tingkat Hunian dan Overcrowding Terkalibrasi (Banten Context)
+     * - Tidak Overcrowding : <= 100%
+     * - Overcrowding       : 100.1% - 150%
+     * - Critical           : 150.1% - 299.9%
+     * - Extreme            : >= 300%
+     *
+     * @return array{
+     *     tingkat_hunian: float,
+     *     persen_over: float,
+     *     selisih: int,
+     *     status: string,
+     *     level: string,
+     *     badge_class: string,
+     *     badge_color: string,
+     *     icon: string,
+     *     keterangan: string
+     * }
+     */
+    function getOvercrowdingStatus(int $isi, int $kapasitas): array
+    {
+        if ($kapasitas <= 0) {
+            return [
+                'tingkat_hunian' => 0.0,
+                'persen_over' => 0.0,
+                'selisih' => $isi,
+                'status' => 'Belum Diatur',
+                'level' => 'unknown',
+                'badge_class' => 'bg-secondary text-white',
+                'badge_color' => '#64748b',
+                'icon' => 'fas fa-question-circle',
+                'keterangan' => 'Kapasitas UPT belum ditentukan',
+            ];
+        }
+
+        $tingkatHunian = round(($isi / $kapasitas) * 100, 1);
+        $selisih = $isi - $kapasitas;
+        $persenOver = max(0, round(($selisih / $kapasitas) * 100, 1));
+
+        if ($tingkatHunian <= 100.0) {
+            return [
+                'tingkat_hunian' => $tingkatHunian,
+                'persen_over' => 0.0,
+                'selisih' => $selisih,
+                'status' => 'Tidak Overcrowding',
+                'level' => 'normal',
+                'badge_class' => 'badge-overcrowding-normal',
+                'badge_color' => '#10b981',
+                'icon' => 'fas fa-check-circle',
+                'keterangan' => $selisih < 0 ? 'Tersedia '.abs($selisih).' tempat' : 'Sesuai Kapasitas (100%)',
+            ];
+        }
+
+        if ($tingkatHunian <= 150.0) {
+            return [
+                'tingkat_hunian' => $tingkatHunian,
+                'persen_over' => $persenOver,
+                'selisih' => $selisih,
+                'status' => 'Overcrowding',
+                'level' => 'overcrowding',
+                'badge_class' => 'badge-overcrowding-warning',
+                'badge_color' => '#f59e0b',
+                'icon' => 'fas fa-exclamation-circle',
+                'keterangan' => 'Overkapasitas +'.$selisih.' orang (+'.$persenOver.'%)',
+            ];
+        }
+
+        if ($tingkatHunian < 300.0) {
+            return [
+                'tingkat_hunian' => $tingkatHunian,
+                'persen_over' => $persenOver,
+                'selisih' => $selisih,
+                'status' => 'Critical Overcrowding',
+                'level' => 'critical',
+                'badge_class' => 'badge-overcrowding-critical',
+                'badge_color' => '#ea580c',
+                'icon' => 'fas fa-exclamation-triangle',
+                'keterangan' => 'Kepadatan Kritis +'.$selisih.' orang (+'.$persenOver.'%)',
+            ];
+        }
+
+        // >= 300%
+        return [
+            'tingkat_hunian' => $tingkatHunian,
+            'persen_over' => $persenOver,
+            'selisih' => $selisih,
+            'status' => 'Extreme Overcrowding',
+            'level' => 'extreme',
+            'badge_class' => 'badge-overcrowding-extreme',
+            'badge_color' => '#991b1b',
+            'icon' => 'fas fa-fire-alt',
+            'keterangan' => 'Kepadatan Ekstrem +'.$selisih.' orang (+'.$persenOver.'%)',
+        ];
+    }
+}
+
+if (! function_exists('renderOvercrowdingBadge')) {
+    function renderOvercrowdingBadge(int $isi, int $kapasitas, bool $showPersen = true): string
+    {
+        $status = getOvercrowdingStatus($isi, $kapasitas);
+        $persenText = $showPersen ? ' ('.number_format($status['tingkat_hunian'], 1, ',', '.').'%)' : '';
+
+        return '<span class="badge '.$status['badge_class'].' px-2 py-1 shadow-xs">'
+            .'<i class="'.$status['icon'].' me-1"></i>'
+            .e($status['status']).$persenText
+            .'</span>';
+    }
+}
+
 if (! function_exists('getOverkapasitasColorClass')) {
     function getOverkapasitasColorClass($persen)
     {

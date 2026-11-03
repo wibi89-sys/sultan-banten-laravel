@@ -385,10 +385,13 @@
                             {{ number_format($stats['total_penghuni'], 0, ',', '.') }}
                         </strong>
                     </div>
+                    @php
+                        $ocRegional = getOvercrowdingStatus($stats['total_penghuni'], $stats['total_kapasitas']);
+                    @endphp
                     <div class="speedo-bottom-stat text-center px-1">
-                        <div class="small text-muted text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.05em;">Status</div>
-                        <span class="badge {{ getOverkapasitasColorClass($stats['persen_overkapasitas']) }} px-2 py-1" style="font-size: 10.5px; border-radius: 12px; font-weight: 600;">
-                            {{ $persenOver > 0 ? 'Overkapasitas' : 'Normal' }}
+                        <div class="small text-muted text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.05em;">Status Tingkat Hunian</div>
+                        <span class="badge {{ $ocRegional['badge_class'] }} px-2 py-1 shadow-xs" style="font-size: 10px; border-radius: 12px; font-weight: 600;" title="{{ $ocRegional['keterangan'] }}">
+                            <i class="fas {{ $ocRegional['icon'] }} me-1"></i>{{ $ocRegional['status'] }}
                         </span>
                     </div>
                     <div class="speedo-bottom-stat text-end">
@@ -780,7 +783,7 @@
                             <th class="text-center py-2" style="width: 70px;">Tahanan</th>
                             <th class="text-center py-2" style="width: 70px;">Narapidana</th>
                             <th class="text-center py-2" style="width: 80px;">Total</th>
-                            <th class="text-center py-2" style="width: 120px;">Tingkat Hunian</th>
+                            <th class="text-center py-2" style="width: 145px;">Tingkat Hunian & Status</th>
                             <th class="text-center py-2" style="width: 80px;">% Over</th>
                         </tr>
                     </thead>
@@ -788,11 +791,18 @@
                         @php $no = 1; @endphp
                         @forelse ($uptDataTable as $row)
                             @php
-                                $persen = $row->kapasitas > 0 ? round((($row->total_penghuni - $row->kapasitas) / $row->kapasitas) * 100, 1) : 0;
-                                $tingkatHunianUpt = $row->kapasitas > 0 ? round(($row->total_penghuni / $row->kapasitas) * 100, 1) : 0;
+                                $ocUpt = getOvercrowdingStatus($row->total_penghuni, $row->kapasitas);
+                                $persen = $ocUpt['persen_over'];
+                                $tingkatHunianUpt = $ocUpt['tingkat_hunian'];
                                 $colorClass = getOverkapasitasColorClass($persen);
                                 $barWidth = min(100, max(0, $tingkatHunianUpt));
-                                $barColor = $persen > 50 ? '#f43f5e' : ($persen > 0 ? '#f59e0b' : '#10b981');
+                                $barColor = match($ocUpt['level']) {
+                                    'extreme' => '#7f1d1d',
+                                    'critical' => '#ea580c',
+                                    'overcrowding' => '#f59e0b',
+                                    'normal' => '#10b981',
+                                    default => '#6b7280'
+                                };
                                 $mapsUrl = ($row->latitude && $row->longitude)
                                     ? "https://www.google.com/maps/search/?api=1&query={$row->latitude},{$row->longitude}"
                                     : (!empty($row->alamat) ? "https://www.google.com/maps/search/?api=1&query=" . urlencode($row->nama_upt . ' ' . $row->alamat) : null);
@@ -827,8 +837,11 @@
                                 <td class="text-center py-2 font-speedometer">{{ number_format($row->total_narapidana) }}</td>
                                 <td class="text-center py-2 font-speedometer"><strong>{{ number_format($row->total_penghuni) }}</strong></td>
                                 <td class="py-2">
-                                    <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 10px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 gap-1" style="font-size: 10px;">
                                         <strong class="font-speedometer" style="font-size: 11px;">{{ $tingkatHunianUpt }}%</strong>
+                                        <span class="badge {{ $ocUpt['badge_class'] }} px-1.5 py-0.5" style="font-size: 9px;" title="{{ $ocUpt['keterangan'] }}">
+                                            <i class="fas {{ $ocUpt['icon'] }} me-0.5"></i>{{ $ocUpt['status'] }}
+                                        </span>
                                     </div>
                                     <div class="table-bar-track">
                                         <div class="table-bar-fill" style="width: {{ $barWidth }}%; background-color: {{ $barColor }};"></div>

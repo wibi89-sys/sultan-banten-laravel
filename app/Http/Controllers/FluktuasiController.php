@@ -155,6 +155,7 @@ class FluktuasiController extends Controller
         // Kompilasi Matriks Fluktuasi Per UPT & Hitung Akumulasi
         $rows = [];
         $summary = [
+            'total_kapasitas' => 0,
             'total_tahanan_prev' => 0,
             'total_tahanan_curr' => 0,
             'delta_tahanan' => 0,
@@ -199,6 +200,9 @@ class FluktuasiController extends Controller
             $penghuniTotalCurr = $tahananCurr + $napiCurr;
             $penghuniTotalPrev = $tahananPrev + $napiPrev;
             $deltaPenghuni = $penghuniTotalCurr - $penghuniTotalPrev;
+
+            $kapasitasUpt = (int) ($upt->kapasitas ?? 0);
+            $overcrowdingUpt = getOvercrowdingStatus($penghuniTotalCurr, $kapasitasUpt);
 
             // Rincian Komparasi Narapidana & Tahanan Per Klasifikasi Tindak Pidana
             $klasCurrList = ($penghuniKlasifikasiCurr->get($uptId) ?? collect())->keyBy('klasifikasi_pidana');
@@ -465,6 +469,8 @@ class FluktuasiController extends Controller
             $rows[] = [
                 'upt_id' => $uptId,
                 'nama_upt' => $upt->nama_upt,
+                'kapasitas' => $kapasitasUpt,
+                'overcrowding' => $overcrowdingUpt,
                 'tahanan_prev' => $tahananPrev,
                 'tahanan_curr' => $tahananCurr,
                 'delta_tahanan' => $deltaTahanan,
@@ -513,6 +519,7 @@ class FluktuasiController extends Controller
             ];
 
             // Akumulasi ringkasan wilayah
+            $summary['total_kapasitas'] += $kapasitasUpt;
             $summary['total_tahanan_prev'] += $tahananPrev;
             $summary['total_tahanan_curr'] += $tahananCurr;
             $summary['delta_tahanan'] += $deltaTahanan;
@@ -534,6 +541,11 @@ class FluktuasiController extends Controller
             $summary['estimasi_alih_status'] += $alihStatus;
             $summary['estimasi_tahanan_baru'] += $tahananBaruMasuk;
         }
+
+        $summary['overcrowding'] = getOvercrowdingStatus(
+            (int) $summary['total_penghuni_curr'],
+            (int) $summary['total_kapasitas']
+        );
 
         $allUptList = Upt::orderBy('nama_upt')->get();
         $instansi = Instansi::first();

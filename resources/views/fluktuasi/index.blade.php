@@ -746,10 +746,13 @@
             <!-- Ringkasan Akumulasi Wilayah (Executive Summary Banner) -->
             <div class="card border-0 mb-4 text-white shadow-sm fluktuasi-summary-banner">
                 <div class="card-body p-3 p-sm-3.5">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-3">
-                        <span class="badge bg-white text-primary px-2.5 py-1 fw-bold shadow-xs" style="font-size: 11px;">
-                            <i class="fas fa-shield-alt me-1"></i>TOTAL SE-WILAYAH BANTEN
-                        </span>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <div class="d-flex align-items-center flex-wrap gap-1.5">
+                            <span class="badge bg-white text-primary px-2.5 py-1 fw-bold shadow-xs" style="font-size: 11px;">
+                                <i class="fas fa-shield-alt me-1"></i>TOTAL SE-WILAYAH BANTEN
+                            </span>
+                            {!! renderOvercrowdingBadge($summary['total_penghuni_curr'], $summary['total_kapasitas']) !!}
+                        </div>
                         <span class="fw-bold text-white" style="font-size: 12px;">
                             {{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}
                         </span>
@@ -807,7 +810,7 @@
                         </div>
                     </div>
                     <div class="mt-2.5 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-1 text-white" style="font-size: 11px;">
-                        <span><i class="fas fa-door-open me-1"></i>Pengeluaran: <strong>{{ number_format($summary['total_pengurang']) }} Orang</strong></span>
+                        <span><i class="fas fa-warehouse me-1"></i>Kapasitas: <strong>{{ number_format($summary['total_kapasitas']) }}</strong> &bull; Hunian: <strong>{{ $summary['overcrowding']['tingkat_hunian'] }}%</strong> &bull; <i class="fas fa-door-open me-1"></i>Pengeluaran: <strong>{{ number_format($summary['total_pengurang']) }} Org</strong></span>
                         <span class="opacity-90">{{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; {{ number_format($summary['total_bebas']) }} Bebas</span>
                     </div>
                 </div>
@@ -833,9 +836,15 @@
                         <div class="card-header bg-transparent py-2.5 px-3 border-bottom d-flex justify-content-between align-items-start gap-2" style="min-width: 0;">
                             <div class="d-flex align-items-start gap-2" style="min-width: 0; flex: 1 1 auto;">
                                 <span class="fluktuasi-upt-badge mt-0.5">{{ $idx + 1 }}</span>
-                                <h6 class="fluktuasi-upt-title" title="{{ $r['nama_upt'] }}">
-                                    {{ $r['nama_upt'] }}
-                                </h6>
+                                <div style="min-width: 0;">
+                                    <h6 class="fluktuasi-upt-title mb-1" title="{{ $r['nama_upt'] }}">
+                                        {{ $r['nama_upt'] }}
+                                    </h6>
+                                    <div class="d-flex align-items-center flex-wrap gap-1">
+                                        {!! renderOvercrowdingBadge($r['penghuni_curr'], $r['kapasitas']) !!}
+                                        <small class="text-muted" style="font-size: 10px;">Kap: {{ number_format($r['kapasitas']) }}</small>
+                                    </div>
+                                </div>
                             </div>
                             <div class="flex-shrink-0">
                                 @if($r['delta_penghuni'] > 0)
@@ -1001,7 +1010,11 @@
                     <tr>
                         <td class="text-center text-muted fw-bold col-sticky-no">{{ $idx + 1 }}</td>
                         <td class="fw-semibold text-dark text-start col-sticky-upt">
-                            {{ $r['nama_upt'] }}
+                            <div>{{ $r['nama_upt'] }}</div>
+                            <div class="mt-1 d-flex align-items-center gap-1 flex-wrap">
+                                {!! renderOvercrowdingBadge($r['penghuni_curr'], $r['kapasitas']) !!}
+                                <small class="text-muted" style="font-size: 10.5px;">Kap: {{ number_format($r['kapasitas']) }}</small>
+                            </div>
                         </td>
 
                         <!-- Tahanan -->
@@ -1097,7 +1110,13 @@
                 <!-- Footer Total Akumulasi -->
                 <tfoot class="table-dark text-center fw-bold">
                     <tr>
-                        <td colspan="2" class="text-start col-sticky-total">TOTAL SE-WILAYAH BANTEN</td>
+                        <td colspan="2" class="text-start col-sticky-total">
+                            <div>TOTAL SE-WILAYAH BANTEN</div>
+                            <div class="mt-1 d-flex align-items-center gap-1.5 flex-wrap font-monospace fw-normal" style="font-size: 10.5px;">
+                                {!! renderOvercrowdingBadge($summary['total_penghuni_curr'], $summary['total_kapasitas']) !!}
+                                <span class="text-light opacity-75">Kapasitas: {{ number_format($summary['total_kapasitas']) }}</span>
+                            </div>
+                        </td>
                         <td>{{ number_format($summary['total_tahanan_prev']) }}</td>
                         <td>{{ number_format($summary['total_tahanan_curr']) }}</td>
                         <td>
@@ -1297,9 +1316,18 @@ function formatBadge(val) {
 }
 
 function bukaModalDetailFluktuasi(row) {
+    let ocBadge = '';
+    if (row.overcrowding && row.overcrowding.status) {
+        ocBadge = `<span class="badge ${row.overcrowding.badge_class} px-2 py-1 shadow-xs" title="${row.overcrowding.keterangan || ''}"><i class="fas ${row.overcrowding.icon} me-1"></i>${row.overcrowding.status} (${row.overcrowding.tingkat_hunian}%)</span>`;
+    }
+
+    const kapText = (row.kapasitas !== undefined) ? `<span class="badge bg-white bg-opacity-25 text-white px-2 py-1 shadow-xs"><i class="fas fa-warehouse me-1"></i>Kap: ${(row.kapasitas || 0).toLocaleString()} &bull; Isi: ${(row.penghuni_curr || 0).toLocaleString()}</span>` : '';
+
     document.getElementById('mdf_upt_title').innerHTML = 
         `<div class="d-flex flex-wrap align-items-center gap-1.5 mt-1" style="min-width: 0;">` +
             `<span class="badge bg-warning text-dark fw-bold px-2 py-1 text-wrap text-start shadow-xs" style="line-height: 1.35; max-width: 100%; word-break: break-word;">${row.nama_upt}</span>` +
+            ocBadge +
+            kapText +
             `<span class="text-white small text-nowrap"><i class="fas fa-calendar-alt me-1 text-warning"></i>{{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}</span>` +
         `</div>`;
 

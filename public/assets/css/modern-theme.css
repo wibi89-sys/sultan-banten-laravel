@@ -2744,3 +2744,43 @@ input[type="number"]::-webkit-inner-spin-button {
     color: #ffffff !important;
 }
 
+/* Overcrowding Classification Badges (Tingkat Hunian Standar Terkalibrasi Banten) */
+.badge-overcrowding-normal {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    border: 1px solid #059669 !important;
+}
+.badge-overcrowding-warning {
+    background-color: #f59e0b !important;
+    color: #0f172a !important;
+    border: 1px solid #d97706 !important;
+}
+.badge-overcrowding-critical {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+    border: 1px solid #c2410c !important;
+}
+.badge-overcrowding-extreme {
+    background-color: #991b1b !important;
+    color: #ffffff !important;
+    border: 1px solid #7f1d1d !important;
+    box-shadow: 0 0 8px rgba(153, 27, 27, 0.45) !important;
+}
+[data-theme="dark"] .badge-overcrowding-warning {
+    background-color: #b45309 !important;
+    color: #fef3c7 !important;
+    border-color: #d97706 !important;
+}
+[data-theme="dark"] .badge-overcrowding-critical {
+    background-color: #c2410c !important;
+    color: #ffedd5 !important;
+    border-color: #ea580c !important;
+}
+[data-theme="dark"] .badge-overcrowding-extreme {
+    background-color: #7f1d1d !important;
+    color: #fee2e2 !important;
+    border-color: #991b1b !important;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.4) !important;
+}
+
+
