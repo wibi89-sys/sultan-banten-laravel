@@ -81,33 +81,361 @@
     }
 
     /* Mobile Cards View Styling */
+    #fluktuasiCardsView {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
     .fluktuasi-card {
         border-radius: 14px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-        background: var(--card-bg, #ffffff);
-        border: 1px solid var(--border-color, #e2e8f0);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
     }
     .fluktuasi-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
-    .fluktuasi-mini-box {
-        background: rgba(241, 245, 249, 0.7);
-        border: 1px solid var(--border-color, #e2e8f0);
-        border-radius: 10px;
-        padding: 8px 6px;
-    }
     [data-theme="dark"] .fluktuasi-card {
         background: #1e293b !important;
         border-color: #334155 !important;
+    }
+
+    /* UPT Index Badge */
+    .fluktuasi-upt-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #1d4ed8 !important;
+        font-weight: 800;
+        font-size: 11px;
+        border: 1px solid #bfdbfe;
+        flex-shrink: 0;
+    }
+    [data-theme="dark"] .fluktuasi-upt-badge {
+        background: #1e3a8a;
+        color: #93c5fd !important;
+        border-color: #3b82f6;
+    }
+
+    /* UPT Title in Header */
+    .fluktuasi-upt-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #0f172a;
+        margin-bottom: 0;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    [data-theme="dark"] .fluktuasi-upt-title {
+        color: #f8fafc;
+    }
+
+    /* Net Delta Badges */
+    .badge-net-pos {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 11px;
+        padding: 3px 8px;
+        white-space: nowrap;
+    }
+    .badge-net-neg {
+        background-color: #16a34a !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 11px;
+        padding: 3px 8px;
+        white-space: nowrap;
+    }
+    .badge-net-zero {
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 700;
+        font-size: 11px;
+        padding: 3px 8px;
+        white-space: nowrap;
+    }
+    [data-theme="dark"] .badge-net-zero {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border-color: #475569 !important;
+    }
+
+    /* Mini Boxes */
+    .fluktuasi-mini-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 4px;
+        overflow: hidden;
+        word-break: break-word;
+    }
+    .fluktuasi-mini-box-total {
+        background: #eff6ff;
+        border-color: #bfdbfe;
     }
     [data-theme="dark"] .fluktuasi-mini-box {
         background: rgba(255, 255, 255, 0.04) !important;
         border-color: rgba(255, 255, 255, 0.08) !important;
     }
+    [data-theme="dark"] .fluktuasi-mini-box-total {
+        background: rgba(30, 64, 175, 0.15) !important;
+        border-color: rgba(59, 130, 246, 0.3) !important;
+    }
+
+    /* Typography inside Mini Boxes */
+    .fluktuasi-box-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: 0.3px;
+    }
+    .fluktuasi-box-label-total {
+        font-size: 10px;
+        font-weight: 800;
+        color: #1d4ed8;
+        letter-spacing: 0.3px;
+    }
+    [data-theme="dark"] .fluktuasi-box-label {
+        color: #94a3b8;
+    }
+    [data-theme="dark"] .fluktuasi-box-label-total {
+        color: #93c5fd;
+    }
+
+    .fluktuasi-box-val {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    .fluktuasi-box-val-total {
+        font-size: 15px;
+        font-weight: 800;
+        color: #1e40af;
+        line-height: 1.2;
+    }
+    [data-theme="dark"] .fluktuasi-box-val {
+        color: #f8fafc;
+    }
+    [data-theme="dark"] .fluktuasi-box-val-total {
+        color: #60a5fa;
+    }
+
+    .fluktuasi-box-sub {
+        font-size: 9.5px;
+        font-weight: 600;
+        color: #64748b;
+    }
+    .fluktuasi-box-sub-total {
+        font-size: 9.5px;
+        font-weight: 600;
+        color: #2563eb;
+    }
+    [data-theme="dark"] .fluktuasi-box-sub {
+        color: #94a3b8;
+    }
+    [data-theme="dark"] .fluktuasi-box-sub-total {
+        color: #93c5fd;
+    }
+
+    /* Delta Badges in Mini Boxes */
+    .badge-delta-pos {
+        background-color: #dcfce7 !important;
+        color: #15803d !important;
+        border: 1px solid #86efac !important;
+        font-weight: 700 !important;
+        font-size: 10px !important;
+        padding: 2px 5px !important;
+        display: inline-block;
+    }
+    .badge-delta-neg {
+        background-color: #fee2e2 !important;
+        color: #b91c1c !important;
+        border: 1px solid #fca5a5 !important;
+        font-weight: 700 !important;
+        font-size: 10px !important;
+        padding: 2px 5px !important;
+        display: inline-block;
+    }
+    .badge-delta-zero {
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 600 !important;
+        font-size: 10px !important;
+        padding: 2px 5px !important;
+        display: inline-block;
+    }
+    [data-theme="dark"] .badge-delta-pos {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        color: #4ade80 !important;
+        border-color: rgba(34, 197, 94, 0.4) !important;
+    }
+    [data-theme="dark"] .badge-delta-neg {
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+    }
+    [data-theme="dark"] .badge-delta-zero {
+        background-color: rgba(148, 163, 184, 0.15) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    /* Pengeluaran Strip */
+    .fluktuasi-strip {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 10px;
+    }
     [data-theme="dark"] .fluktuasi-strip {
         background: rgba(255, 255, 255, 0.04) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
     }
+    .fluktuasi-strip-label {
+        color: #334155;
+        font-weight: 700;
+        font-size: 11px;
+    }
+    [data-theme="dark"] .fluktuasi-strip-label {
+        color: #cbd5e1;
+    }
+    .badge-strip-total {
+        background-color: #16a34a !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 10px;
+        padding: 2px 8px;
+    }
+    .badge-strip-mutasi {
+        background-color: #475569 !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 9.5px;
+        padding: 2px 6px;
+    }
+    .badge-strip-bdh {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 9.5px;
+        padding: 2px 6px;
+    }
+    .fluktuasi-strip-nihil {
+        color: #64748b;
+        font-weight: 600;
+        font-size: 10.5px;
+    }
+    [data-theme="dark"] .fluktuasi-strip-nihil {
+        color: #94a3b8;
+    }
+
+    /* Analisis Box & High Contrast Colors for Light Mode */
+    .fluktuasi-analisis-box {
+        background-color: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 11px;
+        line-height: 1.45;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    [data-theme="dark"] .fluktuasi-analisis-box {
+        background-color: rgba(14, 165, 233, 0.08);
+        border-color: rgba(14, 165, 233, 0.25);
+    }
+    .fluktuasi-analisis-title {
+        color: #0369a1;
+        font-size: 11.5px;
+    }
+    [data-theme="dark"] .fluktuasi-analisis-title {
+        color: #38bdf8;
+    }
+
+    /* Force readable text colors inside fluktuasi cards in light mode */
+    .fluktuasi-card .text-secondary {
+        color: #334155 !important;
+    }
+    .fluktuasi-card .text-info {
+        color: #0284c7 !important;
+        font-weight: 600;
+    }
+    .fluktuasi-card .text-warning {
+        color: #b45309 !important;
+        font-weight: 600;
+    }
+    .fluktuasi-card .text-muted {
+        color: #475569 !important;
+    }
+    .fluktuasi-card .text-success {
+        color: #15803d !important;
+    }
+    .fluktuasi-card .text-danger {
+        color: #b91c1c !important;
+    }
+
+    /* Dark Mode Text Colors */
+    [data-theme="dark"] .fluktuasi-card .text-secondary {
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .fluktuasi-card .text-info {
+        color: #38bdf8 !important;
+    }
+    [data-theme="dark"] .fluktuasi-card .text-warning {
+        color: #fbbf24 !important;
+    }
+    [data-theme="dark"] .fluktuasi-card .text-muted {
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .fluktuasi-card .text-success {
+        color: #4ade80 !important;
+    }
+    [data-theme="dark"] .fluktuasi-card .text-danger {
+        color: #f87171 !important;
+    }
+
+    /* Breakdown Button */
+    .btn-breakdown-upt {
+        background: #eff6ff;
+        color: #1d4ed8 !important;
+        border: 1.5px solid #93c5fd;
+        font-weight: 700;
+        font-size: 12px;
+        transition: all 0.2s ease;
+    }
+    .btn-breakdown-upt:hover {
+        background: #1d4ed8;
+        color: #ffffff !important;
+        border-color: #1d4ed8;
+        transform: translateY(-1px);
+    }
+    [data-theme="dark"] .btn-breakdown-upt {
+        background: rgba(37, 99, 235, 0.15);
+        color: #93c5fd !important;
+        border-color: rgba(59, 130, 246, 0.4);
+    }
+    [data-theme="dark"] .btn-breakdown-upt:hover {
+        background: #2563eb;
+        color: #ffffff !important;
+    }
+
+    /* View Switcher */
     .btn-view-mode {
         transition: all 0.2s ease;
     }
@@ -321,7 +649,7 @@
     </div>
 
     <!-- Tabel & Kartu Matriks Fluktuasi Tambah Kurang Per UPT -->
-    <div class="card border-0 shadow-sm mb-4">
+    <div class="card border-0 shadow-sm mb-4" style="overflow: hidden;">
         <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
                 <h6 class="fw-bold mb-0 text-dark">
@@ -333,165 +661,173 @@
             </div>
             <!-- View Switcher (Kartu vs Tabel) -->
             <div class="btn-group btn-group-sm p-0.5 bg-light rounded-pill border shadow-xs" role="group" id="fluktuasiViewToggle" aria-label="Pilihan Tampilan">
-                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-semibold btn-view-mode active" id="btnViewCards" onclick="switchFluktuasiView('cards')" title="Tampilan Kartu Ringkasan (Nyaman di Mobile)">
-                    <i class="fas fa-th-large me-1"></i><span>Mode Kartu</span> <span class="badge bg-primary-subtle text-primary ms-1 d-none d-sm-inline" style="font-size: 9.5px;">Mobile Friendly</span>
+                <button type="button" class="btn btn-sm rounded-pill px-2.5 px-sm-3 py-1 fw-semibold btn-view-mode active" id="btnViewCards" onclick="switchFluktuasiView('cards')" title="Tampilan Kartu Ringkasan (Nyaman di Mobile)">
+                    <i class="fas fa-th-large me-1"></i><span>Mode Kartu</span> <span class="badge bg-white text-primary ms-1 d-none d-sm-inline" style="font-size: 9.5px; font-weight: 700;">Mobile</span>
                 </button>
-                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-semibold text-secondary btn-view-mode" id="btnViewTable" onclick="switchFluktuasiView('table')" title="Tampilan Tabel Matriks Spreadsheet">
+                <button type="button" class="btn btn-sm rounded-pill px-2.5 px-sm-3 py-1 fw-semibold text-secondary btn-view-mode" id="btnViewTable" onclick="switchFluktuasiView('table')" title="Tampilan Tabel Matriks Spreadsheet">
                     <i class="fas fa-table-list me-1"></i><span>Tabel Matriks</span>
                 </button>
             </div>
         </div>
 
         <!-- 1. TAMPILAN KARTU FLUKTUASI (Mobile-Friendly Executive Cards) -->
-        <div id="fluktuasiCardsView" class="p-3">
+        <div id="fluktuasiCardsView" class="p-2 p-sm-3">
             <!-- Ringkasan Akumulasi Wilayah (Executive Summary Banner) -->
-            <div class="card border-0 mb-3 text-white shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 16px;">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-white bg-opacity-20 text-white px-2 py-1" style="font-size: 11px;">
+            <div class="card border-0 mb-3 text-white shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 14px; overflow: hidden;">
+                <div class="card-body p-2.5 p-sm-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2">
+                        <span class="badge bg-white text-primary px-2 py-1 fw-bold" style="font-size: 11px;">
                             <i class="fas fa-shield-alt me-1"></i>TOTAL SE-WILAYAH BANTEN
                         </span>
-                        <span class="fw-bold" style="font-size: 12px;">
+                        <span class="fw-bold text-white" style="font-size: 12px;">
                             {{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}
                         </span>
                     </div>
-                    <div class="row g-2 text-center">
+                    <div class="row g-1 g-sm-2 text-center">
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-10 rounded-3 p-2">
-                                <div class="text-white-50" style="font-size: 10px;">Total Tahanan</div>
-                                <div class="fw-bold fs-6">{{ number_format($summary['total_tahanan_curr']) }}</div>
-                                <div class="small fw-semibold {{ $summary['delta_tahanan'] > 0 ? 'text-warning' : ($summary['delta_tahanan'] < 0 ? 'text-info' : 'text-white-50') }}" style="font-size: 11px;">
+                            <div class="bg-white bg-opacity-15 rounded-3 p-1.5 p-sm-2">
+                                <div class="text-white fw-semibold" style="font-size: 10px; opacity: 0.85;">Total Tahanan</div>
+                                <div class="fw-bold text-white fs-6 mt-0.5">{{ number_format($summary['total_tahanan_curr']) }}</div>
+                                <div class="small fw-bold mt-0.5" style="font-size: 10.5px; color: {{ $summary['delta_tahanan'] > 0 ? '#fde047' : ($summary['delta_tahanan'] < 0 ? '#67e8f9' : '#e2e8f0') }};">
                                     {{ $summary['delta_tahanan'] > 0 ? '+'.$summary['delta_tahanan'] : $summary['delta_tahanan'] }}
                                 </div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-10 rounded-3 p-2">
-                                <div class="text-white-50" style="font-size: 10px;">Total Napi</div>
-                                <div class="fw-bold fs-6">{{ number_format($summary['total_napi_curr']) }}</div>
-                                <div class="small fw-semibold {{ $summary['delta_napi'] > 0 ? 'text-warning' : ($summary['delta_napi'] < 0 ? 'text-info' : 'text-white-50') }}" style="font-size: 11px;">
+                            <div class="bg-white bg-opacity-15 rounded-3 p-1.5 p-sm-2">
+                                <div class="text-white fw-semibold" style="font-size: 10px; opacity: 0.85;">Total Napi</div>
+                                <div class="fw-bold text-white fs-6 mt-0.5">{{ number_format($summary['total_napi_curr']) }}</div>
+                                <div class="small fw-bold mt-0.5" style="font-size: 10.5px; color: {{ $summary['delta_napi'] > 0 ? '#fde047' : ($summary['delta_napi'] < 0 ? '#67e8f9' : '#e2e8f0') }};">
                                     {{ $summary['delta_napi'] > 0 ? '+'.$summary['delta_napi'] : $summary['delta_napi'] }}
                                 </div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-10 rounded-3 p-2">
-                                <div class="text-white-50" style="font-size: 10px;">Total Penghuni</div>
-                                <div class="fw-bold fs-6">{{ number_format($summary['total_penghuni_curr']) }}</div>
-                                <div class="small fw-bold {{ $summary['delta_penghuni'] > 0 ? 'text-danger' : ($summary['delta_penghuni'] < 0 ? 'text-success' : 'text-white-50') }}" style="font-size: 11px;">
+                            <div class="bg-white bg-opacity-15 rounded-3 p-1.5 p-sm-2">
+                                <div class="text-white fw-semibold" style="font-size: 10px; opacity: 0.85;">Total Penghuni</div>
+                                <div class="fw-bold text-white fs-6 mt-0.5">{{ number_format($summary['total_penghuni_curr']) }}</div>
+                                <div class="small fw-bold mt-0.5" style="font-size: 10.5px; color: {{ $summary['delta_penghuni'] > 0 ? '#fca5a5' : ($summary['delta_penghuni'] < 0 ? '#86efac' : '#e2e8f0') }};">
                                     {{ $summary['delta_penghuni'] > 0 ? '+'.$summary['delta_penghuni'] : $summary['delta_penghuni'] }} Net
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-2 pt-2 border-top border-white border-opacity-15 d-flex justify-content-between align-items-center flex-wrap gap-1" style="font-size: 11px;">
+                    <div class="mt-2 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-1 text-white" style="font-size: 11px;">
                         <span><i class="fas fa-door-open me-1"></i>Pengeluaran: <strong>{{ number_format($summary['total_pengurang']) }} Orang</strong></span>
-                        <span>{{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; {{ number_format($summary['total_bebas']) }} Bebas</span>
+                        <span class="opacity-90">{{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; {{ number_format($summary['total_bebas']) }} Bebas</span>
                     </div>
                 </div>
             </div>
 
             <!-- Daftar Kartu Per UPT -->
-            <div class="row g-3">
+            <div class="row g-2 g-sm-3">
                 @forelse($rows as $idx => $r)
                 <div class="col-12 col-md-6 col-xl-4">
                     <div class="card h-100 fluktuasi-card shadow-xs">
                         <!-- Card Header -->
-                        <div class="card-header bg-transparent py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center gap-2 min-w-0">
-                                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary fw-bold" style="font-size: 11px; min-width: 24px;">{{ $idx + 1 }}</span>
-                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 13.5px;" title="{{ $r['nama_upt'] }}">
+                        <div class="card-header bg-transparent py-2.5 px-3 border-bottom d-flex justify-content-between align-items-start gap-2" style="min-width: 0;">
+                            <div class="d-flex align-items-start gap-2" style="min-width: 0; flex: 1 1 auto;">
+                                <span class="fluktuasi-upt-badge mt-0.5">{{ $idx + 1 }}</span>
+                                <h6 class="fluktuasi-upt-title" title="{{ $r['nama_upt'] }}">
                                     {{ $r['nama_upt'] }}
                                 </h6>
                             </div>
-                            <div class="flex-shrink-0 ms-2">
+                            <div class="flex-shrink-0">
                                 @if($r['delta_penghuni'] > 0)
-                                    <span class="badge bg-danger text-white px-2 py-1 fw-bold" style="font-size: 11px;">+{{ $r['delta_penghuni'] }} Net</span>
+                                    <span class="badge badge-net-pos">+{{ $r['delta_penghuni'] }} Net</span>
                                 @elseif($r['delta_penghuni'] < 0)
-                                    <span class="badge bg-success text-white px-2 py-1 fw-bold" style="font-size: 11px;">{{ $r['delta_penghuni'] }} Net</span>
+                                    <span class="badge badge-net-neg">{{ $r['delta_penghuni'] }} Net</span>
                                 @else
-                                    <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 11px;">0 Net</span>
+                                    <span class="badge badge-net-zero">0 Net</span>
                                 @endif
                             </div>
                         </div>
 
                         <!-- Card Body -->
-                        <div class="card-body p-3">
+                        <div class="card-body p-2.5 p-sm-3">
                             <!-- 3 Grid Metrik Fluktuasi -->
-                            <div class="row g-2 text-center mb-2.5">
+                            <div class="row g-1 g-sm-2 text-center mb-2.5">
                                 <!-- Tahanan -->
-                                <div class="col-4">
+                                <div class="col-4 px-1">
                                     <div class="fluktuasi-mini-box h-100">
-                                        <span class="text-muted d-block text-truncate" style="font-size: 10px; font-weight: 600;">1. TAHANAN</span>
-                                        <div class="fw-bold text-dark mt-1" style="font-size: 13px;">{{ number_format($r['tahanan_curr']) }}</div>
-                                        <div class="mt-1">
+                                        <span class="fluktuasi-box-label d-block text-truncate">1. TAHANAN</span>
+                                        <div class="fluktuasi-box-val my-1">{{ number_format($r['tahanan_curr']) }}</div>
+                                        <div class="mb-1">
                                             @if($r['delta_tahanan'] > 0)
-                                                <span class="badge badge-delta-neg" style="font-size: 10px; padding: 2px 6px;">+{{ $r['delta_tahanan'] }}</span>
+                                                <span class="badge badge-delta-neg">+{{ $r['delta_tahanan'] }}</span>
                                             @elseif($r['delta_tahanan'] < 0)
-                                                <span class="badge badge-delta-pos" style="font-size: 10px; padding: 2px 6px;">{{ $r['delta_tahanan'] }}</span>
+                                                <span class="badge badge-delta-pos">{{ $r['delta_tahanan'] }}</span>
                                             @else
-                                                <span class="badge badge-delta-zero" style="font-size: 10px; padding: 2px 6px;">0</span>
+                                                <span class="badge badge-delta-zero">0</span>
                                             @endif
                                         </div>
-                                        <span class="text-muted d-block mt-0.5" style="font-size: 9.5px;">Lalu: {{ number_format($r['tahanan_prev']) }}</span>
+                                        <span class="fluktuasi-box-sub d-block text-truncate">Lalu: {{ number_format($r['tahanan_prev']) }}</span>
                                     </div>
                                 </div>
 
                                 <!-- Narapidana -->
-                                <div class="col-4">
+                                <div class="col-4 px-1">
                                     <div class="fluktuasi-mini-box h-100">
-                                        <span class="text-muted d-block text-truncate" style="font-size: 10px; font-weight: 600;">2. NAPI</span>
-                                        <div class="fw-bold text-dark mt-1" style="font-size: 13px;">{{ number_format($r['napi_curr']) }}</div>
-                                        <div class="mt-1">
+                                        <span class="fluktuasi-box-label d-block text-truncate">2. NAPI</span>
+                                        <div class="fluktuasi-box-val my-1">{{ number_format($r['napi_curr']) }}</div>
+                                        <div class="mb-1">
                                             @if($r['delta_napi'] > 0)
-                                                <span class="badge badge-delta-neg" style="font-size: 10px; padding: 2px 6px;">+{{ $r['delta_napi'] }}</span>
+                                                <span class="badge badge-delta-neg">+{{ $r['delta_napi'] }}</span>
                                             @elseif($r['delta_napi'] < 0)
-                                                <span class="badge badge-delta-pos" style="font-size: 10px; padding: 2px 6px;">{{ $r['delta_napi'] }}</span>
+                                                <span class="badge badge-delta-pos">{{ $r['delta_napi'] }}</span>
                                             @else
-                                                <span class="badge badge-delta-zero" style="font-size: 10px; padding: 2px 6px;">0</span>
+                                                <span class="badge badge-delta-zero">0</span>
                                             @endif
                                         </div>
-                                        <span class="text-muted d-block mt-0.5" style="font-size: 9.5px;">Lalu: {{ number_format($r['napi_prev']) }}</span>
+                                        <span class="fluktuasi-box-sub d-block text-truncate">Lalu: {{ number_format($r['napi_prev']) }}</span>
                                     </div>
                                 </div>
 
                                 <!-- Total Penghuni -->
-                                <div class="col-4">
-                                    <div class="fluktuasi-mini-box h-100" style="background: rgba(30, 64, 175, 0.08); border-color: rgba(30, 64, 175, 0.2);">
-                                        <span class="text-primary d-block text-truncate" style="font-size: 10px; font-weight: 700;">3. TOTAL</span>
-                                        <div class="fw-bold text-primary mt-1" style="font-size: 14px;">{{ number_format($r['penghuni_curr']) }}</div>
-                                        <div class="mt-1">
-                                            <span class="text-muted" style="font-size: 10px;">Lalu: {{ number_format($r['penghuni_prev']) }}</span>
+                                <div class="col-4 px-1">
+                                    <div class="fluktuasi-mini-box fluktuasi-mini-box-total h-100">
+                                        <span class="fluktuasi-box-label-total d-block text-truncate">3. TOTAL</span>
+                                        <div class="fluktuasi-box-val-total my-1">{{ number_format($r['penghuni_curr']) }}</div>
+                                        <div class="mb-1">
+                                            @if($r['delta_penghuni'] > 0)
+                                                <span class="badge badge-delta-neg">+{{ $r['delta_penghuni'] }}</span>
+                                            @elseif($r['delta_penghuni'] < 0)
+                                                <span class="badge badge-delta-pos">{{ $r['delta_penghuni'] }}</span>
+                                            @else
+                                                <span class="badge badge-delta-zero">0</span>
+                                            @endif
                                         </div>
-                                        <span class="text-muted d-block mt-0.5" style="font-size: 9.5px;">Harian</span>
+                                        <span class="fluktuasi-box-sub-total d-block text-truncate">Lalu: {{ number_format($r['penghuni_prev']) }}</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Pengeluaran Harian Strip -->
-                            <div class="p-2 rounded-2 fluktuasi-strip bg-light d-flex justify-content-between align-items-center mb-2" style="font-size: 11px;">
-                                <span class="text-secondary fw-semibold">
-                                    <i class="fas fa-door-open me-1 text-success"></i>Pengeluaran Bebas/Mutasi:
+                            <div class="fluktuasi-strip d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2">
+                                <span class="fluktuasi-strip-label">
+                                    <i class="fas fa-door-open me-1 text-success"></i>Pengeluaran:
                                 </span>
-                                <div class="d-flex align-items-center gap-1">
+                                <div class="d-flex align-items-center flex-wrap gap-1">
                                     @if($r['total_pengurang'] > 0)
-                                        <span class="badge bg-success text-white px-2 py-0.5 fw-bold" style="font-size: 10px;">{{ $r['total_pengurang'] }} Org</span>
+                                        <span class="badge badge-strip-total">{{ $r['total_pengurang'] }} Org</span>
                                         @if($r['mutasi_keluar'] > 0)
-                                            <span class="badge bg-secondary text-white" style="font-size: 9.5px;">{{ $r['mutasi_keluar'] }} Mutasi</span>
+                                            <span class="badge badge-strip-mutasi">{{ $r['mutasi_keluar'] }} Mutasi</span>
                                         @endif
                                         @if($r['bdh'] > 0)
-                                            <span class="badge bg-danger text-white" style="font-size: 9.5px;">{{ $r['bdh'] }} BDH</span>
+                                            <span class="badge badge-strip-bdh">{{ $r['bdh'] }} BDH</span>
                                         @endif
                                     @else
-                                        <span class="text-muted small">0 (Nihil)</span>
+                                        <span class="fluktuasi-strip-nihil">0 (Nihil)</span>
                                     @endif
                                 </div>
                             </div>
 
                             <!-- Analisis Dinamika -->
                             @if(!empty($r['analisis']))
-                            <div class="mb-2 p-2 rounded-2 border border-info-subtle bg-info-subtle bg-opacity-25" style="font-size: 11px;">
-                                <span class="fw-bold text-info-emphasis d-block mb-1"><i class="fas fa-info-circle me-1"></i>Analisis &amp; Dinamika:</span>
+                            <div class="mb-2 fluktuasi-analisis-box">
+                                <span class="fw-bold fluktuasi-analisis-title d-block mb-1">
+                                    <i class="fas fa-info-circle me-1"></i>Analisis &amp; Dinamika:
+                                </span>
                                 <ul class="list-unstyled mb-0 d-flex flex-column gap-1 ps-1">
                                     @foreach($r['analisis'] as $an)
                                         <li>{!! $an !!}</li>
@@ -501,7 +837,7 @@
                             @endif
 
                             <!-- Action Button -->
-                            <button type="button" class="btn btn-outline-primary btn-sm w-100 rounded-pill py-1.5 fw-semibold shadow-xs" onclick='bukaModalDetailFluktuasi(@json($r))'>
+                            <button type="button" class="btn btn-breakdown-upt btn-sm w-100 rounded-pill py-1.5 shadow-xs" onclick='bukaModalDetailFluktuasi(@json($r))'>
                                 <i class="fas fa-eye me-1"></i>Lihat Breakdown Rincian UPT
                             </button>
                         </div>
