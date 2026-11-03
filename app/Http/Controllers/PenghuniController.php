@@ -126,20 +126,37 @@ class PenghuniController extends Controller
             return response()->json(['success' => false, 'has_data' => false, 'message' => 'Pilih UPT terlebih dahulu.']);
         }
 
-        // Input data tidak ada hari libur: ambil tepat data hari kemarin (H-1)
-        $previousDate = date('Y-m-d', strtotime($tanggal.' - 1 day'));
+        // Cek data tepat H-1 terlebih dahulu
+        $exactYesterday = date('Y-m-d', strtotime($tanggal.' - 1 day'));
+        $previousDate = $exactYesterday;
+        $isExactYesterday = true;
 
         $records = DataPenghuni::where('upt_id', $uptId)
-            ->whereDate('tanggal', $previousDate)
+            ->whereDate('tanggal', $exactYesterday)
             ->get();
+
+        // Jika data tepat H-1 belum ada, cari data tanggal terakhir yang tersedia sebelum tanggal yang dipilih
+        if ($records->isEmpty()) {
+            $latestPriorDate = DataPenghuni::where('upt_id', $uptId)
+                ->where('tanggal', '<', $tanggal)
+                ->max('tanggal');
+
+            if ($latestPriorDate) {
+                $previousDate = $latestPriorDate;
+                $isExactYesterday = false;
+                $records = DataPenghuni::where('upt_id', $uptId)
+                    ->whereDate('tanggal', $previousDate)
+                    ->get();
+            }
+        }
 
         if ($records->isEmpty()) {
             return response()->json([
                 'success' => true,
                 'has_data' => false,
-                'previous_date' => $previousDate,
-                'formatted_yesterday' => formatIndonesianDate($previousDate),
-                'message' => 'Data hari kemarin ('.formatIndonesianDate($previousDate).') belum diinput untuk UPT ini. Silakan input data hari kemarin terlebih dahulu atau input manual dari 0.',
+                'previous_date' => $exactYesterday,
+                'formatted_yesterday' => formatIndonesianDate($exactYesterday),
+                'message' => 'Belum ada data sebelumnya yang tercatat untuk UPT ini. Silakan input dari 0.',
             ]);
         }
 
@@ -164,6 +181,7 @@ class PenghuniController extends Controller
             'success' => true,
             'has_data' => count($data) > 0,
             'previous_date' => $previousDate,
+            'is_exact_yesterday' => $isExactYesterday,
             'formatted_date' => formatIndonesianDate($previousDate),
             'data' => $data,
         ]);

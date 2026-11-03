@@ -419,7 +419,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal" id="penghuni_add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', request('tanggal', request('tanggal_mulai', date('Y-m-d')))) }}" required>
+                            <input type="date" name="tanggal" id="penghuni_add_tanggal" class="form-control form-control-sm" value="{{ old('tanggal', request('tanggal', date('Y-m-d'))) }}" required>
                         </div>
                     </div>
                     
@@ -1019,7 +1019,15 @@
         if (!selectUpt || !inputTanggal) return;
         const uptId = selectUpt.value;
         const tanggal = inputTanggal.value;
-        if (!uptId || !tanggal) {
+        if (!uptId) {
+            if (noticeBox) {
+                noticeBox.classList.remove('d-none', 'alert-warning', 'alert-success');
+                noticeBox.classList.add('alert-info');
+                noticeText.innerHTML = '<i class="fas fa-magic text-primary me-1"></i> <strong>Fitur Auto-Copy Aktif:</strong> Silakan pilih UPT di atas untuk menyalin data secara otomatis.';
+            }
+            return;
+        }
+        if (!tanggal) {
             if (noticeBox) noticeBox.classList.add('d-none');
             return;
         }
@@ -1027,20 +1035,24 @@
         if (noticeBox) {
             noticeBox.classList.remove('d-none', 'alert-warning', 'alert-success');
             noticeBox.classList.add('alert-info');
-            noticeText.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memeriksa data hari kemarin untuk UPT ini...';
+            noticeText.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memeriksa data hari sebelumnya untuk UPT ini...';
         }
 
-        fetch(`{{ route('penghuni.previous-data') }}?upt_id=${uptId}&tanggal=${tanggal}`)
+        fetch(`{{ route('penghuni.previous-data', [], false) }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.has_data && res.data) {
-                    // Populate inputs
+                    // Populate both table inputs and card inputs directly
                     Object.keys(res.data).forEach(key => {
                         const row = res.data[key];
                         ['tahanan_dl', 'tahanan_dp', 'tahanan_al', 'tahanan_ap', 'narapidana_dl', 'narapidana_dp', 'narapidana_al', 'narapidana_ap'].forEach(col => {
-                            const input = modalAddEl.querySelector(`input[name="${col}_${key}"]`);
-                            if (input) {
-                                input.value = row[col] ?? 0;
+                            const tblInput = modalAddEl.querySelector(`input[name="${col}_${key}"]`);
+                            if (tblInput) {
+                                tblInput.value = row[col] ?? 0;
+                            }
+                            const cardInput = document.getElementById(`card_${col}_${key}`);
+                            if (cardInput) {
+                                cardInput.value = row[col] ?? 0;
                             }
                         });
                         updateRowTotal(key);
@@ -1050,19 +1062,23 @@
                     if (noticeBox) {
                         noticeBox.classList.remove('d-none', 'alert-info', 'alert-warning');
                         noticeBox.classList.add('alert-success');
-                        noticeText.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i> Data berhasil <strong>disalin otomatis dari hari kemarin (${res.formatted_date})</strong>. Silakan sesuaikan angka yang berubah saja.`;
+                        const sourceDesc = res.is_exact_yesterday 
+                            ? `hari kemarin (${res.formatted_date})` 
+                            : `tanggal terakhir yang tersedia (${res.formatted_date})`;
+                        noticeText.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i> Data berhasil <strong>disalin otomatis dari ${sourceDesc}</strong>. Silakan sesuaikan angka yang berubah saja.`;
                     }
                 } else {
                     // Jika data hari kemarin belum diinput, kosongkan input ke 0
-                    const inputs = modalAddEl.querySelectorAll('.input-table input[type="number"]');
-                    inputs.forEach(input => { input.value = 0; });
+                    modalAddEl.querySelectorAll('.input-table input[type="number"], .stepper-input').forEach(input => {
+                        input.value = 0;
+                    });
                     klasifikasiUtama.concat(klasifikasiLainnyaKeys).forEach(key => { updateRowTotal(key); });
                     updateGrandTotals();
 
                     if (noticeBox) {
                         noticeBox.classList.remove('d-none', 'alert-info', 'alert-success');
                         noticeBox.classList.add('alert-warning');
-                        noticeText.innerHTML = `<i class="fas fa-exclamation-triangle text-warning me-1"></i> ${res.message || 'Data hari kemarin belum diinput untuk UPT ini. Silakan input dari 0.'}`;
+                        noticeText.innerHTML = `<i class="fas fa-exclamation-triangle text-warning me-1"></i> ${res.message || 'Belum ada data sebelumnya untuk UPT ini. Silakan input dari 0.'}`;
                     }
                 }
             })
@@ -1074,8 +1090,7 @@
 
     function resetFormToZero() {
         if (!modalAddEl) return;
-        const inputs = modalAddEl.querySelectorAll('.input-table input[type="number"]');
-        inputs.forEach(input => {
+        modalAddEl.querySelectorAll('.input-table input[type="number"], .stepper-input').forEach(input => {
             input.value = 0;
         });
         klasifikasiUtama.concat(klasifikasiLainnyaKeys).forEach(key => {
@@ -1103,7 +1118,7 @@
 
         clearTimeout(checkDuplicatePenghuniTimeout);
         checkDuplicatePenghuniTimeout = setTimeout(() => {
-            fetch(`{{ route('penghuni.check-exists') }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
+            fetch(`{{ route('penghuni.check-exists', [], false) }}?upt_id=${encodeURIComponent(uptId)}&tanggal=${encodeURIComponent(tanggal)}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.exists) {
@@ -1150,9 +1165,15 @@
                 switchPenghuniMode('table');
             }
 
+            loadPreviousData();
+            if (selectUpt && selectUpt.value) {
+                checkDuplicatePenghuni();
+            }
+        });
+
+        modalAddEl.addEventListener('shown.bs.modal', function() {
             if (selectUpt && selectUpt.value) {
                 loadPreviousData();
-                checkDuplicatePenghuni();
             }
         });
     }
