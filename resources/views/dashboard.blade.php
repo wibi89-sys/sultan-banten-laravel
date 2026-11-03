@@ -93,19 +93,15 @@
             $pctPidum = round((($stats['total_pidum'] ?? 0) / $grandTotalPerkara) * 100, 1);
             $pctPidsus = round((($stats['total_pidsus'] ?? 0) / $grandTotalPerkara) * 100, 1);
             
-            if ($persenOver > 50) {
-                $statusColor = '#f43f5e';
-                $statusBadgeClass = 'pill-badge-rose';
-                $statusText = 'Overkapasitas Kritis';
-            } elseif ($persenOver > 0) {
-                $statusColor = '#f59e0b';
-                $statusBadgeClass = 'pill-badge-amber';
-                $statusText = 'Sedikit Over';
-            } else {
-                $statusColor = '#10b981';
-                $statusBadgeClass = 'pill-badge-emerald';
-                $statusText = 'Kapasitas Normal';
-            }
+            $ocRegionalHeader = getOvercrowdingStatus($totalPenghuni, (int) ($stats['total_kapasitas'] ?? 0));
+            $statusColor = $ocRegionalHeader['badge_color'];
+            $statusBadgeClass = match($ocRegionalHeader['level']) {
+                'extreme' => 'pill-badge-extreme',
+                'critical' => 'pill-badge-orange',
+                'overcrowding' => 'pill-badge-amber',
+                default => 'pill-badge-emerald',
+            };
+            $statusText = $ocRegionalHeader['status'];
         @endphp
 
         <!-- Bento Cockpit Center Grid (Speedometer Diapit di Tengah) -->
@@ -745,9 +741,10 @@
                     <span><i class="fas fa-info-circle text-primary me-1"></i>Klik radar UPT untuk membuka HUD & rute Google Maps</span>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap" style="font-size: 10px;">
-                    <span class="pill-badge pill-badge-emerald"><i class="fas fa-circle text-xs me-1"></i>Normal / Longgar (&le;100%)</span>
-                    <span class="pill-badge pill-badge-amber"><i class="fas fa-circle text-xs me-1"></i>Waspada (101-150%)</span>
-                    <span class="pill-badge pill-badge-rose"><i class="fas fa-circle text-xs me-1"></i>Kritis (&gt;150%)</span>
+                    <span class="pill-badge pill-badge-emerald" title="Tingkat hunian di bawah atau sama dengan kapasitas"><i class="fas fa-circle text-xs me-1"></i>Tidak Overcrowding (&le;100%)</span>
+                    <span class="pill-badge pill-badge-amber" title="Tingkat hunian 100.1% s/d 150%"><i class="fas fa-circle text-xs me-1"></i>Overcrowding (100.1-150%)</span>
+                    <span class="pill-badge pill-badge-orange" title="Tingkat hunian 150.1% s/d 299.9%"><i class="fas fa-circle text-xs me-1"></i>Critical Overcrowding (150.1-299.9%)</span>
+                    <span class="pill-badge pill-badge-extreme" title="Tingkat hunian 300% ke atas"><i class="fas fa-circle text-xs me-1"></i>Extreme Overcrowding (&ge;300%)</span>
                 </div>
             </div>
         </div>
@@ -2567,6 +2564,36 @@
     const uptLocations = {!! json_encode($uptLocations) !!};
     const markers = [];
 
+    // Helper Klasifikasi Overcrowding 4 Kategori Terstandarisasi Banten
+    function getOvercrowdingMeta(tingkatHunian) {
+        if (tingkatHunian >= 300) {
+            return {
+                statusClass: 'extreme',
+                statusBadge: 'Extreme Overcrowding',
+                markerColor: '#991b1b'
+            };
+        }
+        if (tingkatHunian > 150) {
+            return {
+                statusClass: 'orange',
+                statusBadge: 'Critical Overcrowding',
+                markerColor: '#ea580c'
+            };
+        }
+        if (tingkatHunian > 100) {
+            return {
+                statusClass: 'amber',
+                statusBadge: 'Overcrowding',
+                markerColor: '#f59e0b'
+            };
+        }
+        return {
+            statusClass: 'emerald',
+            statusBadge: 'Tidak Overcrowding',
+            markerColor: '#10b981'
+        };
+    }
+
     uptLocations.forEach(upt => {
         const totalPenghuni = parseInt(upt.total_penghuni) || 0;
         const totalTahanan = parseInt(upt.total_tahanan) || 0;
@@ -2576,18 +2603,10 @@
         const tingkatHunian = kapasitas > 0 ? Math.round((totalPenghuni / kapasitas) * 100) : 0;
         const persenText = persen > 0 ? '+' + persen + '%' : persen + '%';
         
-        let statusClass = 'emerald';
-        let statusBadge = 'Longgar';
-        let markerColor = '#10b981';
-        if (persen > 50) { 
-            statusClass = 'rose'; 
-            statusBadge = 'Kritis'; 
-            markerColor = '#f43f5e';
-        } else if (persen > 0) { 
-            statusClass = 'amber'; 
-            statusBadge = 'Waspada'; 
-            markerColor = '#f59e0b';
-        }
+        const meta = getOvercrowdingMeta(tingkatHunian);
+        const statusClass = meta.statusClass;
+        const statusBadge = meta.statusBadge;
+        const markerColor = meta.markerColor;
 
         const namaUpper = (upt.nama_upt || '').toUpperCase();
         let iconClass = 'fa-building';
@@ -2744,18 +2763,10 @@
         const tingkatHunian = kapasitas > 0 ? Math.round((totalPenghuni / kapasitas) * 100) : 0;
         const persenText = persen > 0 ? '+' + persen + '%' : persen + '%';
 
-        let statusClass = 'emerald';
-        let statusBadge = 'Longgar';
-        let markerColor = '#10b981';
-        if (persen > 50) { 
-            statusClass = 'rose'; 
-            statusBadge = 'Kritis'; 
-            markerColor = '#f43f5e';
-        } else if (persen > 0) { 
-            statusClass = 'amber'; 
-            statusBadge = 'Waspada'; 
-            markerColor = '#f59e0b';
-        }
+        const meta = getOvercrowdingMeta(tingkatHunian);
+        const statusClass = meta.statusClass;
+        const statusBadge = meta.statusBadge;
+        const markerColor = meta.markerColor;
 
         const lat = parseFloat(uptData.latitude);
         const lng = parseFloat(uptData.longitude);

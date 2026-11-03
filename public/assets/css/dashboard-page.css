@@ -1943,6 +1943,30 @@
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
+        .pill-badge-orange {
+            background: rgba(234, 88, 12, 0.14);
+            color: #ea580c;
+            border: 1px solid rgba(234, 88, 12, 0.3);
+        }
+        [data-theme="dark"] .pill-badge-orange {
+            background: rgba(234, 88, 12, 0.25);
+            color: #fb923c;
+            border-color: rgba(234, 88, 12, 0.45);
+        }
+
+        .pill-badge-extreme {
+            background: rgba(153, 27, 27, 0.16);
+            color: #991b1b;
+            border: 1px solid rgba(153, 27, 27, 0.4);
+            font-weight: 700;
+        }
+        [data-theme="dark"] .pill-badge-extreme {
+            background: rgba(153, 27, 27, 0.35);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.3);
+        }
+
         .pill-badge-rose {
             background: rgba(244, 63, 94, 0.14);
             color: #f43f5e;
@@ -2870,7 +2894,7 @@
             background: #047857;
         }
 
-        /* Status: Waspada / Amber */
+        /* Status: Overcrowding / Amber */
         .hud-amber .hud-marker-core {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
@@ -2882,7 +2906,36 @@
             background: #b45309;
         }
 
-        /* Status: Kritis / Overkapasitas / Rose */
+        /* Status: Critical Overcrowding / Orange */
+        .hud-orange .hud-marker-core {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            box-shadow: 0 0 16px rgba(234, 88, 12, 0.75);
+            animation: hudPulseFast 1.8s infinite alternate;
+        }
+        .hud-orange .hud-marker-pulse {
+            background: rgba(234, 88, 12, 0.55);
+            animation-duration: 1.6s;
+        }
+        .hud-orange .hud-marker-badge {
+            background: #c2410c;
+        }
+
+        /* Status: Extreme Overcrowding (>=300%) / Dark Red Pekat Glow */
+        .hud-extreme .hud-marker-core {
+            background: linear-gradient(135deg, #991b1b, #7f1d1d);
+            box-shadow: 0 0 20px rgba(153, 27, 27, 0.95);
+            animation: hudPulseFast 1.2s infinite alternate;
+        }
+        .hud-extreme .hud-marker-pulse {
+            background: rgba(153, 27, 27, 0.7);
+            animation-duration: 1.1s;
+        }
+        .hud-extreme .hud-marker-badge {
+            background: #7f1d1d;
+            border-color: #fca5a5;
+        }
+
+        /* Status: Kritis / Overkapasitas / Rose (Legacy fallback) */
         .hud-rose .hud-marker-core {
             background: linear-gradient(135deg, #f43f5e, #e11d48);
             box-shadow: 0 0 18px rgba(244, 63, 94, 0.8);
@@ -3101,16 +3154,29 @@
             transition: width 0.5s ease;
         }
 
-        .hud-popup-progress-fill.bg-emerald {
-            background: linear-gradient(90deg, #10b981, #34d399);
+        .hud-popup-progress-fill.bg-emerald,
+        .mobile-sheet-progress-fill.bg-emerald {
+            background: linear-gradient(90deg, #10b981, #34d399) !important;
         }
 
-        .hud-popup-progress-fill.bg-amber {
-            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        .hud-popup-progress-fill.bg-amber,
+        .mobile-sheet-progress-fill.bg-amber {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24) !important;
         }
 
-        .hud-popup-progress-fill.bg-rose {
-            background: linear-gradient(90deg, #f43f5e, #fb7185);
+        .hud-popup-progress-fill.bg-orange,
+        .mobile-sheet-progress-fill.bg-orange {
+            background: linear-gradient(90deg, #ea580c, #fb923c) !important;
+        }
+
+        .hud-popup-progress-fill.bg-extreme,
+        .mobile-sheet-progress-fill.bg-extreme {
+            background: linear-gradient(90deg, #991b1b, #ef4444) !important;
+        }
+
+        .hud-popup-progress-fill.bg-rose,
+        .mobile-sheet-progress-fill.bg-rose {
+            background: linear-gradient(90deg, #f43f5e, #fb7185) !important;
         }
 
         /* Action Button for Google Maps Navigation */
