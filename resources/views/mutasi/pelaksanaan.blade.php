@@ -145,9 +145,14 @@
                                     <i class="fas fa-users me-1"></i>Disetujui: {{ $m->total_disetujui ?? $m->total_usulan }} WBP
                                 </small>
                                 @if($m->file_persetujuan_kanwil)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil']) }}" class="badge bg-success text-decoration-none mt-1 d-inline-block" target="_blank">
-                                    <i class="fas fa-download me-1"></i>Unduh Surat Kanwil
-                                </a>
+                                <div class="d-inline-flex align-items-center gap-1 mt-1">
+                                    <button type="button" class="badge bg-success text-white border-0 text-decoration-none py-1 px-2" onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}', 'Surat Persetujuan Kanwil - {{ addslashes($m->nomor_surat_kanwil ?? '') }}', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil']) }}')" title="Lihat Surat Persetujuan Kanwil">
+                                        <i class="fas fa-eye me-1"></i>Lihat Surat
+                                    </button>
+                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil']) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1.5" title="Unduh Surat Kanwil">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
                                 @endif
                             </td>
                             <td>
@@ -169,9 +174,9 @@
                                     </div>
                                     <div>
                                         @if($m->hasLaporanPemindahan())
-                                        <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan']) }}" class="badge bg-success text-decoration-none" target="_blank" title="Unduh Laporan Pemindahan">
-                                            <i class="fas fa-check me-1"></i>Ada (Unduh)
-                                        </a>
+                                        <button type="button" class="badge bg-success border-0 text-white py-1 px-1.5" onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}', 'Laporan Pemindahan - {{ addslashes($m->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan']) }}')" title="Lihat Laporan Pemindahan">
+                                            <i class="fas fa-eye me-1"></i>Lihat
+                                        </button>
                                         @else
                                         <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
                                         @endif
@@ -186,9 +191,9 @@
                                     </div>
                                     <div>
                                         @if($m->hasLaporanPenerimaan())
-                                        <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan']) }}" class="badge bg-success text-decoration-none" target="_blank" title="Unduh Laporan Penerimaan">
-                                            <i class="fas fa-check me-1"></i>Ada (Unduh)
-                                        </a>
+                                        <button type="button" class="badge bg-success border-0 text-white py-1 px-1.5" onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}', 'Laporan Penerimaan', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan']) }}')" title="Lihat Laporan Penerimaan">
+                                            <i class="fas fa-eye me-1"></i>Lihat
+                                        </button>
                                         @else
                                         <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
                                         @endif
@@ -203,9 +208,9 @@
                                     </div>
                                     <div>
                                         @if($m->hasBast())
-                                        <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast']) }}" class="badge bg-success text-decoration-none" target="_blank" title="Unduh BAST">
-                                            <i class="fas fa-check me-1"></i>Ada (Unduh)
-                                        </a>
+                                        <button type="button" class="badge bg-success border-0 text-white py-1 px-1.5" onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}', 'BAST Serah Terima Mutasi', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast']) }}')" title="Lihat BAST">
+                                            <i class="fas fa-eye me-1"></i>Lihat
+                                        </button>
                                         @else
                                         <span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
                                         @endif

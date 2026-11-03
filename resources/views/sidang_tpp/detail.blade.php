@@ -51,6 +51,9 @@
                 </button>
             </form>
             @if($sidang->hasLaporanKanwil())
+            <button type="button" class="btn btn-outline-success btn-sm shadow-sm fw-bold" onclick="previewDokumen('{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $sidang->id, 'preview' => 1]) }}', 'Laporan Sidang TPP Kanwil - {{ addslashes($sidang->nomor_laporan_kanwil ?? '') }}', '{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}')">
+                <i class="fas fa-eye me-1"></i>Lihat Laporan
+            </button>
             <a href="{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}" class="btn btn-success btn-sm shadow-sm fw-bold">
                 <i class="fas fa-download me-1"></i>Download Laporan Sidang TPP Kanwil
             </a>
@@ -75,9 +78,12 @@
                     </div>
                 </div>
             </div>
-            <div>
-                <a href="{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}" class="btn btn-light btn-lg px-4 text-success fw-bold shadow">
-                    <i class="fas fa-download me-2"></i>Download Laporan Kanwil (PDF)
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-light btn-lg px-3 text-success fw-bold shadow" onclick="previewDokumen('{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $sidang->id, 'preview' => 1]) }}', 'Laporan Sidang TPP Kanwil - {{ addslashes($sidang->nomor_laporan_kanwil ?? '') }}', '{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}')">
+                    <i class="fas fa-eye me-2"></i>Lihat Laporan
+                </button>
+                <a href="{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}" class="btn btn-outline-light btn-lg px-3 text-white fw-bold shadow">
+                    <i class="fas fa-download me-2"></i>Download (PDF)
                 </a>
             </div>
         </div>
@@ -171,9 +177,14 @@
                             <td class="text-muted">Berkas Undangan (PDF)</td>
                             <td>: 
                                 @if(!empty($sidang->file_undangan))
-                                <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'undangan']) }}" class="btn btn-outline-primary btn-sm py-0 px-2">
-                                    <i class="fas fa-file-pdf text-danger me-1"></i>Unduh Surat Undangan
-                                </a>
+                                <div class="d-inline-flex align-items-center gap-1">
+                                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 fw-semibold" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'undangan', 'preview' => 1]) }}', 'Surat Undangan - {{ addslashes($sidang->nomor_undangan) }}', '{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'undangan']) }}')">
+                                        <i class="fas fa-eye me-1"></i>Lihat Undangan
+                                    </button>
+                                    <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'undangan']) }}" class="btn btn-light btn-sm py-0 px-1.5 border" title="Unduh File Asli">
+                                        <i class="fas fa-download text-muted"></i>
+                                    </a>
+                                </div>
                                 @else
                                 <span class="text-muted small">Tidak ada lampiran PDF</span>
                                 @endif
@@ -230,9 +241,14 @@
                                 @if(!empty($sidang->nomor_berita_acara))
                                 <b>{{ $sidang->nomor_berita_acara }}</b>
                                 @if(!empty($sidang->file_berita_acara))
-                                <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'berita_acara']) }}" class="badge bg-light text-primary border text-decoration-none ms-1">
-                                    <i class="fas fa-file-pdf text-danger me-1"></i>Unduh BA
-                                </a>
+                                <div class="d-inline-flex align-items-center gap-1 ms-1">
+                                    <button type="button" class="badge bg-light text-primary border text-decoration-none py-1 px-2" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'berita_acara', 'preview' => 1]) }}', 'Berita Acara - {{ addslashes($sidang->nomor_berita_acara) }}', '{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'berita_acara']) }}')" title="Lihat Berita Acara">
+                                        <i class="fas fa-eye text-primary me-1"></i>Lihat BA
+                                    </button>
+                                    <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'berita_acara']) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1.5" title="Unduh Berkas Asli">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
                                 @endif
                                 @else
                                 <span class="text-muted small">-</span>

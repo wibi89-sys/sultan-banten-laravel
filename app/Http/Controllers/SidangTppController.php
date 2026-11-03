@@ -646,7 +646,7 @@ class SidangTppController extends Controller
     /**
      * Download Resmi Laporan Sidang TPP Kantor Wilayah untuk UPT
      */
-    public function downloadLaporanKanwil(int $id): BinaryFileResponse
+    public function downloadLaporanKanwil(Request $request, int $id): BinaryFileResponse
     {
         $this->checkAccess();
         $sidang = SidangTpp::with('upt')->findOrFail($id);
@@ -658,6 +658,12 @@ class SidangTppController extends Controller
         $fullPath = public_path($sidang->file_laporan_kakanwil);
         $cleanUpt = preg_replace('/[^a-zA-Z0-9_-]/', '_', $sidang->upt?->nama_upt ?? 'UPT');
         $downloadName = "Laporan_Sidang_TPP_Kanwil_{$cleanUpt}_{$sidang->tanggal_sidang->format('Ymd')}.pdf";
+
+        if ($request->boolean('preview') || $request->query('view') === '1') {
+            return response()->file($fullPath, [
+                'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+            ]);
+        }
 
         return response()->download($fullPath, $downloadName);
     }
@@ -711,7 +717,7 @@ class SidangTppController extends Controller
     /**
      * Unduh File Berkas Sidang (Undangan, BA, atau Laporan TTD Ka. Kanwil)
      */
-    public function downloadFile(int $id, string $type): BinaryFileResponse
+    public function downloadFile(Request $request, int $id, string $type): BinaryFileResponse
     {
         $this->checkAccess();
 
@@ -733,6 +739,12 @@ class SidangTppController extends Controller
         $extension = pathinfo($fullPath, PATHINFO_EXTENSION);
         $cleanUpt = preg_replace('/[^a-zA-Z0-9_-]/', '_', $sidang->upt?->nama_upt ?? 'UPT');
         $downloadName = "{$type}_{$cleanUpt}_{$sidang->tanggal_sidang->format('Ymd')}.{$extension}";
+
+        if ($request->boolean('preview') || $request->query('view') === '1') {
+            return response()->file($fullPath, [
+                'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+            ]);
+        }
 
         return response()->download($fullPath, $downloadName);
     }

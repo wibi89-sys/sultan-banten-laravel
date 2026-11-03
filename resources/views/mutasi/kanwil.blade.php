@@ -159,24 +159,28 @@
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
                                     @if($m->file_surat_usulan)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan']) }}" class="badge bg-primary text-decoration-none" target="_blank" title="Surat Usulan">
+                                    <button type="button" class="badge bg-primary text-white border-0 shadow-xs" style="cursor: pointer;" title="Lihat Surat Usulan"
+                                        onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}', 'Surat Usulan - {{ addslashes($m->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan']) }}')">
                                         <i class="fas fa-file-pdf me-1"></i>Surat
-                                    </a>
+                                    </button>
                                     @endif
                                     @if($m->file_asesmen)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'asesmen']) }}" class="badge bg-secondary text-decoration-none" target="_blank" title="Asesmen">
+                                    <button type="button" class="badge bg-secondary text-white border-0 shadow-xs" style="cursor: pointer;" title="Lihat Asesmen Penempatan"
+                                        onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'asesmen', 'preview' => 1]) }}', 'Asesmen - {{ addslashes($m->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'asesmen']) }}')">
                                         <i class="fas fa-file-alt me-1"></i>Asesmen
-                                    </a>
+                                    </button>
                                     @endif
                                     @if($m->file_bap)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bap']) }}" class="badge bg-warning text-dark text-decoration-none" target="_blank" title="BAP">
+                                    <button type="button" class="badge bg-warning text-dark border-0 shadow-xs" style="cursor: pointer;" title="Lihat BAP"
+                                        onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bap', 'preview' => 1]) }}', 'BAP - {{ addslashes($m->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bap']) }}')">
                                         <i class="fas fa-shield-alt me-1"></i>BAP
-                                    </a>
+                                    </button>
                                     @endif
                                     @if($m->file_reg_f)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'reg_f']) }}" class="badge bg-info text-white text-decoration-none" target="_blank" title="Register F">
+                                    <button type="button" class="badge bg-info text-white border-0 shadow-xs" style="cursor: pointer;" title="Lihat Register F"
+                                        onclick="previewDokumen('{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'reg_f', 'preview' => 1]) }}', 'Register F - {{ addslashes($m->uptAsal?->nama_upt) }}', '{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'reg_f']) }}')">
                                         <i class="fas fa-clipboard-list me-1"></i>Reg F
-                                    </a>
+                                    </button>
                                     @endif
                                 </div>
                             </td>

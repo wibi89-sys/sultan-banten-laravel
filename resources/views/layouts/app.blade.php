@@ -850,6 +850,7 @@
             });
         });
     </script>
+    @include('partials.modal_preview_dokumen')
     @stack('scripts')
 </body>
 </html>

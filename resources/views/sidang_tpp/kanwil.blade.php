@@ -135,6 +135,15 @@
                             'catatan_bintorwasdal' => $s->catatan_bintorwasdal ?? '',
                             'atensi_list' => $atensiData,
                             'usulan' => $wbpItems,
+                            'has_ba' => !empty($s->file_berita_acara),
+                            'has_undangan' => !empty($s->file_undangan),
+                            'has_laporan' => !empty($s->file_laporan_kakanwil),
+                            'url_preview_ba' => !empty($s->file_berita_acara) ? route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) : null,
+                            'url_download_ba' => !empty($s->file_berita_acara) ? route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) : null,
+                            'url_preview_undangan' => !empty($s->file_undangan) ? route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) : null,
+                            'url_download_undangan' => !empty($s->file_undangan) ? route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) : null,
+                            'url_preview_laporan' => !empty($s->file_laporan_kakanwil) ? route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) : null,
+                            'url_download_laporan' => !empty($s->file_laporan_kakanwil) ? route('sidang-tpp.download-laporan-kanwil', $s->id) : null,
                         ];
                     @endphp
                     <script type="application/json" id="sidang-data-{{ $s->id }}">{!! json_encode($sidangPayload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
@@ -153,15 +162,27 @@
                         </td>
                         <td>
                             <div class="fw-semibold text-primary">{{ $s->upt?->nama_upt ?? '-' }}</div>
-                            <small class="text-muted">Undangan: {{ $s->nomor_undangan }}</small>
+                            <div class="small text-muted d-flex align-items-center gap-1 flex-wrap mt-0.5">
+                                <span>Undangan: {{ $s->nomor_undangan }}</span>
+                                @if(!empty($s->file_undangan))
+                                <button type="button" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none py-0.5 px-1.5" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) }}', 'Surat Undangan - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_undangan) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}')" title="Lihat Surat Undangan Sidang TPP">
+                                    <i class="fas fa-eye me-1"></i>Lihat Undangan
+                                </button>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             @if(!empty($s->nomor_berita_acara))
                             <div class="small fw-semibold text-dark">{{ $s->nomor_berita_acara }}</div>
                             @if(!empty($s->file_berita_acara))
-                            <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}" class="badge bg-light text-primary border text-decoration-none mt-1 d-inline-block">
-                                <i class="fas fa-file-pdf text-danger me-1"></i>Unduh BA UPT
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1 mt-1">
+                                <button type="button" class="badge bg-light text-primary border text-decoration-none py-1 px-2" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) }}', 'Berita Acara - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_berita_acara) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}')" title="Lihat Berita Acara Tanpa Download">
+                                    <i class="fas fa-eye text-primary me-1"></i>Lihat BA
+                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}" class="badge bg-light text-secondary border text-decoration-none py-1 px-1.5" title="Unduh Berkas Asli">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
                             @endif
                             @else
                             <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Belum Ada BA</span>
@@ -198,9 +219,14 @@
                             </div>
                             <div class="small text-muted">No: <b>{{ $s->nomor_laporan_kanwil ?: '-' }}</b></div>
                             <div class="small text-muted">Tgl TTD: {{ $s->tanggal_ttd_kakanwil ? $s->tanggal_ttd_kakanwil->format('d/m/Y') : '-' }}</div>
-                            <a href="{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}" class="btn btn-outline-success btn-sm py-0 px-2 mt-1 fw-semibold">
-                                <i class="fas fa-file-pdf me-1"></i>Unduh Laporan
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1 mt-1">
+                                <button type="button" class="btn btn-outline-success btn-sm py-0 px-2 fw-semibold" onclick="previewDokumen('{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) }}', 'Laporan Sidang TPP Kanwil - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_laporan_kanwil ?? '') }})', '{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}')" title="Lihat Laporan Kanwil Tanpa Download">
+                                    <i class="fas fa-eye me-1"></i>Lihat Laporan
+                                </button>
+                                <a href="{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}" class="btn btn-light btn-sm py-0 px-1.5 border" title="Unduh Laporan">
+                                    <i class="fas fa-download text-muted"></i>
+                                </a>
+                            </div>
                             @else
                             <div class="badge bg-warning-subtle text-warning border border-warning-subtle p-2 text-wrap text-start">
                                 <i class="fas fa-exclamation-circle me-1"></i>Belum Diunggah Kanwil
@@ -322,6 +348,23 @@
                         </div>
                     </div>
 
+                    <!-- Dokumen Berkas yang Diunggah UPT (Pratinjau Langsung) -->
+                    <div class="card border border-primary-subtle bg-primary bg-opacity-10 mb-3 shadow-none">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="small fw-bold text-primary">
+                                    <i class="fas fa-file-pdf me-1.5"></i>Dokumen Berkas Unggahan UPT (Pratinjau Langsung):
+                                </span>
+                                <span class="badge bg-primary text-white" style="font-size: 10px;">
+                                    <i class="fas fa-eye me-1"></i>Buka tanpa download
+                                </span>
+                            </div>
+                            <div id="v_dokumen_buttons" class="d-flex flex-wrap gap-2">
+                                <!-- Diisi secara dinamis via openModalVerifikasi -->
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tombol Buka Pop-up Rincian Warga Binaan & Putusannya -->
                     <div class="mb-3">
                         <button type="button" class="btn btn-outline-info btn-sm w-100 fw-bold shadow-sm d-flex justify-content-between align-items-center py-2 px-3" onclick="openRincianFromVerif()">
@@ -418,6 +461,9 @@
                             <span class="badge bg-danger fs-6 px-3 py-1.5" id="rw_stat_tolak"><i class="fas fa-times-circle me-1"></i>0 Ditolak</span>
                             <span class="badge bg-secondary fs-6 px-3 py-1.5" id="rw_stat_belum"><i class="fas fa-question-circle me-1"></i>0 Belum Putus</span>
                             <span class="badge bg-danger text-white fs-6 px-3 py-1.5 d-none" id="rw_stat_atensi"><i class="fas fa-exclamation-triangle me-1"></i><span id="rw_atensi_count">0</span> Perlu Atensi</span>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 pt-2 border-top mt-2" id="rw_dokumen_buttons">
+                            <!-- Diisi secara dinamis via openModalRincianWbp -->
                         </div>
                     </div>
                 </div>
@@ -533,6 +579,57 @@
         document.getElementById('kanwil_hadir').checked = (kanwilHadir === 1);
         document.getElementById('catatan_bintorwasdal').value = catatan || '';
 
+        // Render dokumen UPT yang diverifikasi
+        const docContainer = document.getElementById('v_dokumen_buttons');
+        if (docContainer) {
+            docContainer.innerHTML = '';
+            const el = document.getElementById('sidang-data-' + id);
+            if (el) {
+                try {
+                    const s = JSON.parse(el.textContent);
+                    if (s.has_ba && s.url_preview_ba) {
+                        const btnBa = document.createElement('button');
+                        btnBa.type = 'button';
+                        btnBa.className = 'btn btn-sm btn-white bg-white text-dark border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold';
+                        btnBa.innerHTML = '<i class="fas fa-file-pdf text-danger"></i> <span>Lihat Berita Acara (BA)</span> <i class="fas fa-eye text-primary ms-1"></i>';
+                        btnBa.onclick = function() {
+                            previewDokumen(s.url_preview_ba, 'Berita Acara Sidang TPP - ' + s.upt_nama + ' (' + s.nomor_berita_acara + ')', s.url_download_ba);
+                        };
+                        docContainer.appendChild(btnBa);
+                    } else {
+                        const noBa = document.createElement('span');
+                        noBa.className = 'badge bg-warning-subtle text-warning border border-warning-subtle py-1.5 px-2';
+                        noBa.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>BA Belum Diunggah UPT';
+                        docContainer.appendChild(noBa);
+                    }
+
+                    if (s.has_undangan && s.url_preview_undangan) {
+                        const btnUnd = document.createElement('button');
+                        btnUnd.type = 'button';
+                        btnUnd.className = 'btn btn-sm btn-white bg-white text-dark border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold';
+                        btnUnd.innerHTML = '<i class="fas fa-file-pdf text-primary"></i> <span>Lihat Surat Undangan</span> <i class="fas fa-eye text-primary ms-1"></i>';
+                        btnUnd.onclick = function() {
+                            previewDokumen(s.url_preview_undangan, 'Surat Undangan - ' + s.upt_nama + ' (' + s.nomor_undangan + ')', s.url_download_undangan);
+                        };
+                        docContainer.appendChild(btnUnd);
+                    }
+
+                    if (s.has_laporan && s.url_preview_laporan) {
+                        const btnLap = document.createElement('button');
+                        btnLap.type = 'button';
+                        btnLap.className = 'btn btn-sm btn-white bg-white text-success border shadow-xs d-inline-flex align-items-center gap-1.5 fw-semibold';
+                        btnLap.innerHTML = '<i class="fas fa-file-signature text-success"></i> <span>Lihat Laporan Kanwil</span> <i class="fas fa-eye text-success ms-1"></i>';
+                        btnLap.onclick = function() {
+                            previewDokumen(s.url_preview_laporan, 'Laporan Sidang TPP Kanwil - ' + s.upt_nama, s.url_download_laporan);
+                        };
+                        docContainer.appendChild(btnLap);
+                    }
+                } catch (e) {
+                    console.error('Error parsing sidang payload in openModalVerifikasi', e);
+                }
+            }
+        }
+
         // Render atensi Kanwil
         const atensiBox = document.getElementById('v_atensi_box');
         const atensiItems = document.getElementById('v_atensi_items');
@@ -621,6 +718,49 @@
             document.getElementById('rw_atensi_count').innerText = atensiCount;
         } else {
             atensiBadge.classList.add('d-none');
+        }
+
+        // Render Dokumen Sidang di Pop-up Rincian
+        const rwDocs = document.getElementById('rw_dokumen_buttons');
+        if (rwDocs) {
+            rwDocs.innerHTML = '<span class="small fw-semibold text-muted me-1"><i class="fas fa-paperclip me-1"></i>Dokumen Berkas:</span>';
+            let hasAnyDoc = false;
+            if (s.has_ba && s.url_preview_ba) {
+                hasAnyDoc = true;
+                const btnBa = document.createElement('button');
+                btnBa.type = 'button';
+                btnBa.className = 'btn btn-xs btn-outline-danger d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill';
+                btnBa.innerHTML = '<i class="fas fa-eye me-1"></i>Lihat Berita Acara (BA)';
+                btnBa.onclick = function() {
+                    previewDokumen(s.url_preview_ba, 'Berita Acara - ' + s.upt_nama + ' (' + s.nomor_berita_acara + ')', s.url_download_ba);
+                };
+                rwDocs.appendChild(btnBa);
+            }
+            if (s.has_undangan && s.url_preview_undangan) {
+                hasAnyDoc = true;
+                const btnUnd = document.createElement('button');
+                btnUnd.type = 'button';
+                btnUnd.className = 'btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill';
+                btnUnd.innerHTML = '<i class="fas fa-eye me-1"></i>Lihat Surat Undangan';
+                btnUnd.onclick = function() {
+                    previewDokumen(s.url_preview_undangan, 'Surat Undangan - ' + s.upt_nama + ' (' + s.nomor_undangan + ')', s.url_download_undangan);
+                };
+                rwDocs.appendChild(btnUnd);
+            }
+            if (s.has_laporan && s.url_preview_laporan) {
+                hasAnyDoc = true;
+                const btnLap = document.createElement('button');
+                btnLap.type = 'button';
+                btnLap.className = 'btn btn-xs btn-outline-success d-inline-flex align-items-center gap-1 fw-semibold py-1 px-2.5 rounded-pill';
+                btnLap.innerHTML = '<i class="fas fa-eye me-1"></i>Lihat Laporan Kanwil';
+                btnLap.onclick = function() {
+                    previewDokumen(s.url_preview_laporan, 'Laporan Kanwil - ' + s.upt_nama, s.url_download_laporan);
+                };
+                rwDocs.appendChild(btnLap);
+            }
+            if (!hasAnyDoc) {
+                rwDocs.innerHTML += '<span class="text-muted small fst-italic">Belum ada berkas yang diunggah</span>';
+            }
         }
 
         // Reset filter & search

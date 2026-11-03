@@ -100,27 +100,42 @@
                         </td>
                         <td class="text-center">
                             @if(!empty($s->file_undangan))
-                            <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}" class="btn btn-outline-primary btn-sm py-1 px-2" title="Unduh Surat Undangan Kanwil">
-                                <i class="fas fa-file-pdf text-danger me-1"></i>Unduh
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2" title="Lihat Surat Undangan" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan', 'preview' => 1]) }}', 'Surat Undangan - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_undangan) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}')">
+                                    <i class="fas fa-eye me-1"></i>Lihat
+                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'undangan']) }}" class="btn btn-light btn-sm py-1 px-1.5 border" title="Unduh File Asli">
+                                    <i class="fas fa-download text-muted"></i>
+                                </a>
+                            </div>
                             @else
                             <span class="text-muted small">-</span>
                             @endif
                         </td>
                         <td class="text-center">
                             @if(!empty($s->file_berita_acara))
-                            <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}" class="btn btn-outline-success btn-sm py-1 px-2" title="Unduh Berita Acara UPT">
-                                <i class="fas fa-file-pdf text-danger me-1"></i>Unduh BA
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <button type="button" class="btn btn-outline-success btn-sm py-1 px-2" title="Lihat Berita Acara UPT" onclick="previewDokumen('{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara', 'preview' => 1]) }}', 'Berita Acara - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_berita_acara) }})', '{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}')">
+                                    <i class="fas fa-eye me-1"></i>Lihat BA
+                                </button>
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $s->id, 'type' => 'berita_acara']) }}" class="btn btn-light btn-sm py-1 px-1.5 border" title="Unduh Berkas Asli">
+                                    <i class="fas fa-download text-muted"></i>
+                                </a>
+                            </div>
                             @else
                             <span class="badge bg-light text-secondary border">Belum Ada</span>
                             @endif
                         </td>
                         <td class="text-center" style="background-color: #f0fdf4;">
                             @if(!empty($s->file_laporan_kakanwil))
-                            <a href="{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}" class="btn btn-success btn-sm py-1 px-3 fw-bold shadow-sm" title="Unduh Laporan Sidang TPP Kantor Wilayah (Dasar Usulan Hak Bersyarat)">
-                                <i class="fas fa-file-signature me-1"></i>Unduh Laporan Kanwil
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <button type="button" class="btn btn-outline-success btn-sm py-1 px-2 fw-bold" title="Lihat Laporan Sidang TPP Kanwil" onclick="previewDokumen('{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $s->id, 'preview' => 1]) }}', 'Laporan Sidang TPP Kanwil - {{ addslashes($s->upt?->nama_upt) }} ({{ addslashes($s->nomor_laporan_kanwil ?? '') }})', '{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}')">
+                                    <i class="fas fa-eye me-1"></i>Lihat
+                                </button>
+                                <a href="{{ route('sidang-tpp.download-laporan-kanwil', $s->id) }}" class="btn btn-success btn-sm py-1 px-2 fw-bold shadow-sm" title="Unduh Laporan Asli">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
                             <div class="small text-muted mt-1" style="font-size: 11px;">
                                 No: <b>{{ $s->nomor_laporan_kanwil ?: '-' }}</b>
                             </div>

@@ -696,6 +696,12 @@ class MutasiNarapidanaController extends Controller
         $cleanNoSurat = preg_replace('/[^a-zA-Z0-9_-]/', '_', $mutasi->nomor_surat);
         $downloadName = "mutasi_{$type}_{$cleanNoSurat}.{$ext}";
 
+        if ($request->boolean('preview') || $request->query('view') === '1') {
+            return response()->file($fullPath, [
+                'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+            ]);
+        }
+
         return response()->download($fullPath, $downloadName);
     }
 
