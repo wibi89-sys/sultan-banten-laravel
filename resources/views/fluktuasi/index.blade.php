@@ -106,6 +106,76 @@
         border-color: #334155 !important;
     }
 
+    /* Executive Summary Banner (Total Se-Wilayah Banten) */
+    .fluktuasi-summary-banner {
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+        border-radius: 14px !important;
+        border: none !important;
+        overflow: hidden !important;
+    }
+    [data-theme="dark"] .fluktuasi-summary-banner {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
+        border: 1px solid #334155 !important;
+    }
+    .fluktuasi-banner-card {
+        background: #ffffff !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+        padding: 8px 4px !important;
+        overflow: hidden;
+        word-break: break-word;
+    }
+    .fluktuasi-banner-card-total {
+        background: #eff6ff !important;
+        border-color: #bfdbfe !important;
+    }
+    [data-theme="dark"] .fluktuasi-banner-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    }
+    [data-theme="dark"] .fluktuasi-banner-card-total {
+        background: rgba(30, 64, 175, 0.25) !important;
+        border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+    .fluktuasi-banner-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #475569 !important;
+        letter-spacing: 0.3px;
+    }
+    .fluktuasi-banner-label-total {
+        font-size: 10px;
+        font-weight: 800;
+        color: #1d4ed8 !important;
+        letter-spacing: 0.3px;
+    }
+    [data-theme="dark"] .fluktuasi-banner-label {
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .fluktuasi-banner-label-total {
+        color: #93c5fd !important;
+    }
+    .fluktuasi-banner-val {
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a !important;
+        line-height: 1.25;
+    }
+    .fluktuasi-banner-val-total {
+        font-size: 17px;
+        font-weight: 800;
+        color: #1e40af !important;
+        line-height: 1.25;
+    }
+    [data-theme="dark"] .fluktuasi-banner-val {
+        color: #ffffff !important;
+    }
+    [data-theme="dark"] .fluktuasi-banner-val-total {
+        color: #60a5fa !important;
+    }
+
     /* UPT Index Badge */
     .fluktuasi-upt-badge {
         display: inline-flex;
@@ -673,10 +743,10 @@
         <!-- 1. TAMPILAN KARTU FLUKTUASI (Mobile-Friendly Executive Cards) -->
         <div id="fluktuasiCardsView" class="p-2 p-sm-3">
             <!-- Ringkasan Akumulasi Wilayah (Executive Summary Banner) -->
-            <div class="card border-0 mb-3 text-white shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 14px; overflow: hidden;">
+            <div class="card border-0 mb-3 text-white shadow-sm fluktuasi-summary-banner">
                 <div class="card-body p-2.5 p-sm-3">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2">
-                        <span class="badge bg-white text-primary px-2 py-1 fw-bold" style="font-size: 11px;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2.5">
+                        <span class="badge bg-white text-primary px-2.5 py-1 fw-bold shadow-xs" style="font-size: 11px;">
                             <i class="fas fa-shield-alt me-1"></i>TOTAL SE-WILAYAH BANTEN
                         </span>
                         <span class="fw-bold text-white" style="font-size: 12px;">
@@ -684,35 +754,58 @@
                         </span>
                     </div>
                     <div class="row g-1 g-sm-2 text-center">
+                        <!-- Box 1: Total Tahanan -->
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-15 rounded-3 p-1.5 p-sm-2">
-                                <div class="text-white fw-semibold" style="font-size: 10px; opacity: 0.85;">Total Tahanan</div>
-                                <div class="fw-bold text-white fs-6 mt-0.5">{{ number_format($summary['total_tahanan_curr']) }}</div>
-                                <div class="small fw-bold mt-0.5" style="font-size: 10.5px; color: {{ $summary['delta_tahanan'] > 0 ? '#fde047' : ($summary['delta_tahanan'] < 0 ? '#67e8f9' : '#e2e8f0') }};">
-                                    {{ $summary['delta_tahanan'] > 0 ? '+'.$summary['delta_tahanan'] : $summary['delta_tahanan'] }}
+                            <div class="fluktuasi-banner-card h-100">
+                                <span class="fluktuasi-banner-label d-block text-truncate">TOTAL TAHANAN</span>
+                                <div class="fluktuasi-banner-val my-0.5">{{ number_format($summary['total_tahanan_curr']) }}</div>
+                                <div class="mt-0.5">
+                                    @if($summary['delta_tahanan'] > 0)
+                                        <span class="badge badge-delta-neg">+{{ number_format($summary['delta_tahanan']) }}</span>
+                                    @elseif($summary['delta_tahanan'] < 0)
+                                        <span class="badge badge-delta-pos">{{ number_format($summary['delta_tahanan']) }}</span>
+                                    @else
+                                        <span class="badge badge-delta-zero">0</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Box 2: Total Napi -->
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-15 rounded-3 p-1.5 p-sm-2">
-                                <div class="text-white fw-semibold" style="font-size: 10px; opacity: 0.85;">Total Napi</div>
-                                <div class="fw-bold text-white fs-6 mt-0.5">{{ number_format($summary['total_napi_curr']) }}</div>
-                                <div class="small fw-bold mt-0.5" style="font-size: 10.5px; color: {{ $summary['delta_napi'] > 0 ? '#fde047' : ($summary['delta_napi'] < 0 ? '#67e8f9' : '#e2e8f0') }};">
-                                    {{ $summary['delta_napi'] > 0 ? '+'.$summary['delta_napi'] : $summary['delta_napi'] }}
+                            <div class="fluktuasi-banner-card h-100">
+                                <span class="fluktuasi-banner-label d-block text-truncate">TOTAL NAPI</span>
+                                <div class="fluktuasi-banner-val my-0.5">{{ number_format($summary['total_napi_curr']) }}</div>
+                                <div class="mt-0.5">
+                                    @if($summary['delta_napi'] > 0)
+                                        <span class="badge badge-delta-neg">+{{ number_format($summary['delta_napi']) }}</span>
+                                    @elseif($summary['delta_napi'] < 0)
+                                        <span class="badge badge-delta-pos">{{ number_format($summary['delta_napi']) }}</span>
+                                    @else
+                                        <span class="badge badge-delta-zero">0</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Box 3: Total Penghuni -->
                         <div class="col-4">
-                            <div class="bg-white bg-opacity-15 rounded-3 p-1.5 p-sm-2">
-                                <div class="text-white fw-semibold" style="font-size: 10px; opacity: 0.85;">Total Penghuni</div>
-                                <div class="fw-bold text-white fs-6 mt-0.5">{{ number_format($summary['total_penghuni_curr']) }}</div>
-                                <div class="small fw-bold mt-0.5" style="font-size: 10.5px; color: {{ $summary['delta_penghuni'] > 0 ? '#fca5a5' : ($summary['delta_penghuni'] < 0 ? '#86efac' : '#e2e8f0') }};">
-                                    {{ $summary['delta_penghuni'] > 0 ? '+'.$summary['delta_penghuni'] : $summary['delta_penghuni'] }} Net
+                            <div class="fluktuasi-banner-card fluktuasi-banner-card-total h-100">
+                                <span class="fluktuasi-banner-label-total d-block text-truncate">TOTAL PENGHUNI</span>
+                                <div class="fluktuasi-banner-val-total my-0.5">{{ number_format($summary['total_penghuni_curr']) }}</div>
+                                <div class="mt-0.5">
+                                    @if($summary['delta_penghuni'] > 0)
+                                        <span class="badge badge-delta-neg">+{{ number_format($summary['delta_penghuni']) }} Net</span>
+                                    @elseif($summary['delta_penghuni'] < 0)
+                                        <span class="badge badge-delta-pos">{{ number_format($summary['delta_penghuni']) }} Net</span>
+                                    @else
+                                        <span class="badge badge-delta-zero">0 Net</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-2 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-1 text-white" style="font-size: 11px;">
+                    <div class="mt-2.5 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-1 text-white" style="font-size: 11px;">
                         <span><i class="fas fa-door-open me-1"></i>Pengeluaran: <strong>{{ number_format($summary['total_pengurang']) }} Orang</strong></span>
                         <span class="opacity-90">{{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; {{ number_format($summary['total_bebas']) }} Bebas</span>
                     </div>
