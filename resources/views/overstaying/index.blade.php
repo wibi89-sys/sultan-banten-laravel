@@ -185,7 +185,7 @@
                     <tr>
                         <td class="text-center text-muted">{{ $loop->iteration + ($overstayingList->currentPage() - 1) * $overstayingList->perPage() }}</td>
                         <td class="text-center">{{ \Carbon\Carbon::parse($data->tanggal)->format('d/m/y') }}</td>
-                        <td class="fw-semibold text-dark">{{ $data->upt->nama_upt ?? '-' }}</td>
+                        <td class="fw-semibold">{{ $data->upt->nama_upt ?? '-' }}</td>
                         <td class="text-center">{{ $data->tahanan_ai }}</td>
                         <td class="text-center">{{ $data->tahanan_aii }}</td>
                         <td class="text-center">{{ $data->tahanan_aiii }}</td>

@@ -39,6 +39,7 @@
         // Set tema seawal mungkin agar tidak berkedip
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
         }
     </script>
     <style>
@@ -770,6 +771,7 @@
         const darkModeToggle = document.getElementById('darkModeToggle');
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
             if (darkModeToggle) darkModeToggle.checked = true;
         }
 
@@ -777,9 +779,11 @@
             darkModeToggle.addEventListener('change', function() {
                 if (this.checked) {
                     document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
                     localStorage.setItem('theme', 'dark');
                 } else {
                     document.documentElement.removeAttribute('data-theme');
+                    document.documentElement.removeAttribute('data-bs-theme');
                     localStorage.setItem('theme', 'light');
                 }
             });

@@ -335,7 +335,7 @@
                     <tr class="{{ $isLainnya ? 'row-lainnya' : '' }}">
                         <td class="text-center text-muted">{{ $loop->iteration + ($penghuniList->currentPage() - 1) * $penghuniList->perPage() }}</td>
                         <td class="text-center">{{ \Carbon\Carbon::parse($data->tanggal)->format('d/m/y') }}</td>
-                        <td class="fw-semibold text-dark">{{ $data->upt->nama_upt ?? '-' }}</td>
+                        <td class="fw-semibold">{{ $data->upt->nama_upt ?? '-' }}</td>
                         <td class="text-center">
                             <span class="badge {{ $isLainnya ? 'badge-lainnya' : 'bg-secondary' }} badge-klasifikasi">
                                 {{ $data->klasifikasi_pidana }}
