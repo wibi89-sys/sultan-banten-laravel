@@ -562,6 +562,29 @@
             margin: 8mm;
         }
     }
+
+    /* Modal Detail Fluktuasi Header & Pill Badges */
+    #modalDetailFluktuasi .modal-header {
+        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+    #modalDetailFluktuasi .modal-title {
+        color: #ffffff !important;
+    }
+    #modalDetailFluktuasi .badge-kapasitas-pill {
+        background: rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .badge-kapasitas-pill {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
 </style>
 @endpush
 
@@ -1321,7 +1344,9 @@ function bukaModalDetailFluktuasi(row) {
         ocBadge = `<span class="badge ${row.overcrowding.badge_class} px-2 py-1 shadow-xs" title="${row.overcrowding.keterangan || ''}"><i class="fas ${row.overcrowding.icon} me-1"></i>${row.overcrowding.status} (${row.overcrowding.tingkat_hunian}%)</span>`;
     }
 
-    const kapText = (row.kapasitas !== undefined) ? `<span class="badge bg-white bg-opacity-25 text-white px-2 py-1 shadow-xs"><i class="fas fa-warehouse me-1"></i>Kap: ${(row.kapasitas || 0).toLocaleString()} &bull; Isi: ${(row.penghuni_curr || 0).toLocaleString()}</span>` : '';
+    const kapText = (row.kapasitas !== undefined)
+        ? `<span class="badge badge-kapasitas-pill px-2 py-1 shadow-xs" style="background: rgba(255,255,255,0.22) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.45) !important;"><i class="fas fa-warehouse me-1"></i>Kap: ${(row.kapasitas || 0).toLocaleString()} &bull; Isi: ${(row.penghuni_curr || 0).toLocaleString()}</span>`
+        : '';
 
     document.getElementById('mdf_upt_title').innerHTML = 
         `<div class="d-flex flex-wrap align-items-center gap-1.5 mt-1" style="min-width: 0;">` +
