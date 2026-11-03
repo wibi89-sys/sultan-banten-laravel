@@ -780,6 +780,18 @@
                             {{ \Carbon\Carbon::parse($tanggalPembanding)->format('d/m') }} &rarr; {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}
                         </span>
                     </div>
+
+                    @if(!empty($summary['upt_belum_input_curr_list']))
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-25 text-white py-2 px-3 mb-3 rounded-3 small d-flex align-items-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-warning flex-shrink-0"></i>
+                        <div class="text-start" style="font-size: 11.5px;">
+                            <strong>{{ count($summary['upt_belum_input_curr_list']) }} UPT Belum Menginput Hari Ini:</strong>
+                            <span class="opacity-90">{{ implode(', ', $summary['upt_belum_input_curr_list']) }}</span>.
+                            <span class="d-block opacity-75 mt-0.5" style="font-size: 10.5px;">Fluktuasi UPT tersebut ditangguhkan untuk mencegah selisih semu pada data wilayah.</span>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="row g-1 g-sm-2 text-center">
                         <!-- Box 1: Total Tahanan -->
                         <div class="col-4">
@@ -864,13 +876,22 @@
                                         {{ $r['nama_upt'] }}
                                     </h6>
                                     <div class="d-flex align-items-center flex-wrap gap-1">
-                                        {!! renderOvercrowdingBadge($r['penghuni_curr'], $r['kapasitas']) !!}
-                                        <small class="text-muted" style="font-size: 10px;">Kap: {{ number_format($r['kapasitas']) }}</small>
+                                        @if($r['has_input_curr'])
+                                            {!! renderOvercrowdingBadge($r['penghuni_curr'], $r['kapasitas']) !!}
+                                            <small class="text-muted" style="font-size: 10px;">Kap: {{ number_format($r['kapasitas']) }}</small>
+                                        @elseif($r['has_input_prev'])
+                                            {!! renderOvercrowdingBadge($r['penghuni_prev'], $r['kapasitas']) !!}
+                                            <small class="text-muted" style="font-size: 10px;">(Data Kemarin)</small>
+                                        @else
+                                            <span class="badge bg-secondary text-white" style="font-size: 10px;">Nihil Data</span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                             <div class="flex-shrink-0">
-                                @if($r['delta_penghuni'] > 0)
+                                @if(!$r['has_input_curr'])
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Input</span>
+                                @elseif($r['delta_penghuni'] > 0)
                                     <span class="badge badge-net-pos">+{{ $r['delta_penghuni'] }} Net</span>
                                 @elseif($r['delta_penghuni'] < 0)
                                     <span class="badge badge-net-neg">{{ $r['delta_penghuni'] }} Net</span>
@@ -888,16 +909,21 @@
                                 <div class="col-4 px-1">
                                     <div class="fluktuasi-mini-box h-100">
                                         <span class="fluktuasi-box-label d-block text-truncate">1. TAHANAN</span>
-                                        <div class="fluktuasi-box-val my-1">{{ number_format($r['tahanan_curr']) }}</div>
-                                        <div class="mb-1">
-                                            @if($r['delta_tahanan'] > 0)
-                                                <span class="badge badge-delta-neg">+{{ $r['delta_tahanan'] }}</span>
-                                            @elseif($r['delta_tahanan'] < 0)
-                                                <span class="badge badge-delta-pos">{{ $r['delta_tahanan'] }}</span>
-                                            @else
-                                                <span class="badge badge-delta-zero">0</span>
-                                            @endif
-                                        </div>
+                                        @if($r['has_input_curr'])
+                                            <div class="fluktuasi-box-val my-1">{{ number_format($r['tahanan_curr']) }}</div>
+                                            <div class="mb-1">
+                                                @if($r['delta_tahanan'] > 0)
+                                                    <span class="badge badge-delta-neg">+{{ $r['delta_tahanan'] }}</span>
+                                                @elseif($r['delta_tahanan'] < 0)
+                                                    <span class="badge badge-delta-pos">{{ $r['delta_tahanan'] }}</span>
+                                                @else
+                                                    <span class="badge badge-delta-zero">0</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="fluktuasi-box-val my-1 text-warning fs-6"><i class="fas fa-clock me-0.5"></i>-</div>
+                                            <div class="mb-1"><span class="badge badge-delta-zero">-</span></div>
+                                        @endif
                                         <span class="fluktuasi-box-sub d-block text-truncate">Lalu: {{ number_format($r['tahanan_prev']) }}</span>
                                     </div>
                                 </div>
@@ -906,16 +932,21 @@
                                 <div class="col-4 px-1">
                                     <div class="fluktuasi-mini-box h-100">
                                         <span class="fluktuasi-box-label d-block text-truncate">2. NAPI</span>
-                                        <div class="fluktuasi-box-val my-1">{{ number_format($r['napi_curr']) }}</div>
-                                        <div class="mb-1">
-                                            @if($r['delta_napi'] > 0)
-                                                <span class="badge badge-delta-neg">+{{ $r['delta_napi'] }}</span>
-                                            @elseif($r['delta_napi'] < 0)
-                                                <span class="badge badge-delta-pos">{{ $r['delta_napi'] }}</span>
-                                            @else
-                                                <span class="badge badge-delta-zero">0</span>
-                                            @endif
-                                        </div>
+                                        @if($r['has_input_curr'])
+                                            <div class="fluktuasi-box-val my-1">{{ number_format($r['napi_curr']) }}</div>
+                                            <div class="mb-1">
+                                                @if($r['delta_napi'] > 0)
+                                                    <span class="badge badge-delta-neg">+{{ $r['delta_napi'] }}</span>
+                                                @elseif($r['delta_napi'] < 0)
+                                                    <span class="badge badge-delta-pos">{{ $r['delta_napi'] }}</span>
+                                                @else
+                                                    <span class="badge badge-delta-zero">0</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="fluktuasi-box-val my-1 text-warning fs-6"><i class="fas fa-clock me-0.5"></i>-</div>
+                                            <div class="mb-1"><span class="badge badge-delta-zero">-</span></div>
+                                        @endif
                                         <span class="fluktuasi-box-sub d-block text-truncate">Lalu: {{ number_format($r['napi_prev']) }}</span>
                                     </div>
                                 </div>
@@ -924,16 +955,21 @@
                                 <div class="col-4 px-1">
                                     <div class="fluktuasi-mini-box fluktuasi-mini-box-total h-100">
                                         <span class="fluktuasi-box-label-total d-block text-truncate">3. TOTAL</span>
-                                        <div class="fluktuasi-box-val-total my-1">{{ number_format($r['penghuni_curr']) }}</div>
-                                        <div class="mb-1">
-                                            @if($r['delta_penghuni'] > 0)
-                                                <span class="badge badge-delta-neg">+{{ $r['delta_penghuni'] }}</span>
-                                            @elseif($r['delta_penghuni'] < 0)
-                                                <span class="badge badge-delta-pos">{{ $r['delta_penghuni'] }}</span>
-                                            @else
-                                                <span class="badge badge-delta-zero">0</span>
-                                            @endif
-                                        </div>
+                                        @if($r['has_input_curr'])
+                                            <div class="fluktuasi-box-val-total my-1">{{ number_format($r['penghuni_curr']) }}</div>
+                                            <div class="mb-1">
+                                                @if($r['delta_penghuni'] > 0)
+                                                    <span class="badge badge-delta-neg">+{{ $r['delta_penghuni'] }}</span>
+                                                @elseif($r['delta_penghuni'] < 0)
+                                                    <span class="badge badge-delta-pos">{{ $r['delta_penghuni'] }}</span>
+                                                @else
+                                                    <span class="badge badge-delta-zero">0</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="fluktuasi-box-val-total my-1 text-warning fs-6"><i class="fas fa-clock me-0.5"></i>Pending</div>
+                                            <div class="mb-1"><span class="badge badge-delta-zero">Pending</span></div>
+                                        @endif
                                         <span class="fluktuasi-box-sub-total d-block text-truncate">Lalu: {{ number_format($r['penghuni_prev']) }}</span>
                                     </div>
                                 </div>
@@ -952,6 +988,9 @@
                                         @endif
                                         @if($r['bdh'] > 0)
                                             <span class="badge badge-strip-bdh">{{ $r['bdh'] }} BDH</span>
+                                        @endif
+                                        @if($r['lainnya'] > 0)
+                                            <span class="badge badge-strip-mutasi" title="{{ implode('; ', $r['rincian_lainnya']) }}">{{ $r['lainnya'] }} Lainnya</span>
                                         @endif
                                     @else
                                         <span class="fluktuasi-strip-nihil">0 (Nihil)</span>
@@ -1035,16 +1074,31 @@
                         <td class="fw-semibold text-dark text-start col-sticky-upt">
                             <div>{{ $r['nama_upt'] }}</div>
                             <div class="mt-1 d-flex align-items-center gap-1 flex-wrap">
-                                {!! renderOvercrowdingBadge($r['penghuni_curr'], $r['kapasitas']) !!}
-                                <small class="text-muted" style="font-size: 10.5px;">Kap: {{ number_format($r['kapasitas']) }}</small>
+                                @if($r['has_input_curr'])
+                                    {!! renderOvercrowdingBadge($r['penghuni_curr'], $r['kapasitas']) !!}
+                                    <small class="text-muted" style="font-size: 10.5px;">Kap: {{ number_format($r['kapasitas']) }}</small>
+                                @elseif($r['has_input_prev'])
+                                    {!! renderOvercrowdingBadge($r['penghuni_prev'], $r['kapasitas']) !!}
+                                    <small class="text-muted" style="font-size: 10px;">(Data Kemarin)</small>
+                                @else
+                                    <span class="badge bg-secondary text-white" style="font-size: 10px;">Nihil Data</span>
+                                @endif
                             </div>
                         </td>
 
                         <!-- Tahanan -->
                         <td class="text-center text-muted">{{ number_format($r['tahanan_prev']) }}</td>
-                        <td class="text-center fw-bold">{{ number_format($r['tahanan_curr']) }}</td>
+                        <td class="text-center fw-bold">
+                            @if($r['has_input_curr'])
+                                {{ number_format($r['tahanan_curr']) }}
+                            @else
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-1.5 py-0.5" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Pending</span>
+                            @endif
+                        </td>
                         <td class="text-center">
-                            @if($r['delta_tahanan'] > 0)
+                            @if(!$r['has_input_curr'])
+                                <span class="badge badge-delta-zero px-2 py-1">-</span>
+                            @elseif($r['delta_tahanan'] > 0)
                                 <span class="badge badge-delta-neg px-2 py-1">+{{ $r['delta_tahanan'] }}</span>
                             @elseif($r['delta_tahanan'] < 0)
                                 <span class="badge badge-delta-pos px-2 py-1">{{ $r['delta_tahanan'] }}</span>
@@ -1055,9 +1109,17 @@
 
                         <!-- Narapidana -->
                         <td class="text-center text-muted">{{ number_format($r['napi_prev']) }}</td>
-                        <td class="text-center fw-bold">{{ number_format($r['napi_curr']) }}</td>
+                        <td class="text-center fw-bold">
+                            @if($r['has_input_curr'])
+                                {{ number_format($r['napi_curr']) }}
+                            @else
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-1.5 py-0.5" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Pending</span>
+                            @endif
+                        </td>
                         <td class="text-center">
-                            @if($r['delta_napi'] > 0)
+                            @if(!$r['has_input_curr'])
+                                <span class="badge badge-delta-zero px-2 py-1">-</span>
+                            @elseif($r['delta_napi'] > 0)
                                 <span class="badge badge-delta-neg px-2 py-1">+{{ $r['delta_napi'] }}</span>
                             @elseif($r['delta_napi'] < 0)
                                 <span class="badge badge-delta-pos px-2 py-1">{{ $r['delta_napi'] }}</span>
@@ -1068,9 +1130,17 @@
 
                         <!-- Total Penghuni -->
                         <td class="text-center text-muted fw-semibold">{{ number_format($r['penghuni_prev']) }}</td>
-                        <td class="text-center fw-bold text-primary">{{ number_format($r['penghuni_curr']) }}</td>
+                        <td class="text-center fw-bold text-primary">
+                            @if($r['has_input_curr'])
+                                {{ number_format($r['penghuni_curr']) }}
+                            @else
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-1.5 py-0.5" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Belum Input</span>
+                            @endif
+                        </td>
                         <td class="text-center">
-                            @if($r['delta_penghuni'] > 0)
+                            @if(!$r['has_input_curr'])
+                                <span class="badge bg-secondary text-white px-2 py-1">Pending</span>
+                            @elseif($r['delta_penghuni'] > 0)
                                 <span class="badge bg-danger text-white px-2 py-1 fw-bold">+{{ $r['delta_penghuni'] }}</span>
                             @elseif($r['delta_penghuni'] < 0)
                                 <span class="badge bg-success text-white px-2 py-1 fw-bold">{{ $r['delta_penghuni'] }}</span>
@@ -1093,6 +1163,11 @@
                                 @if($r['bdh'] > 0)
                                 <div class="mt-1">
                                     <span class="badge bg-danger text-white" style="font-size: 10px;">{{ $r['bdh'] }} BDH</span>
+                                </div>
+                                @endif
+                                @if($r['lainnya'] > 0)
+                                <div class="mt-1">
+                                    <span class="badge bg-secondary text-white" style="font-size: 10px;" title="{{ implode('; ', $r['rincian_lainnya']) }}">{{ $r['lainnya'] }} Lainnya</span>
                                 </div>
                                 @endif
                             @else
@@ -1344,9 +1419,15 @@ function bukaModalDetailFluktuasi(row) {
         ocBadge = `<span class="badge ${row.overcrowding.badge_class} px-2 py-1 shadow-xs" title="${row.overcrowding.keterangan || ''}"><i class="fas ${row.overcrowding.icon} me-1"></i>${row.overcrowding.status} (${row.overcrowding.tingkat_hunian}%)</span>`;
     }
 
-    const kapText = (row.kapasitas !== undefined)
-        ? `<span class="badge badge-kapasitas-pill px-2 py-1 shadow-xs" style="background: rgba(255,255,255,0.22) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.45) !important;"><i class="fas fa-warehouse me-1"></i>Kap: ${(row.kapasitas || 0).toLocaleString()} &bull; Isi: ${(row.penghuni_curr || 0).toLocaleString()}</span>`
-        : '';
+    let kapText = '';
+    if (row.has_input_curr) {
+        kapText = `<span class="badge badge-kapasitas-pill px-2 py-1 shadow-xs" style="background: rgba(255,255,255,0.22) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.45) !important;"><i class="fas fa-warehouse me-1"></i>Kap: ${(row.kapasitas || 0).toLocaleString()} &bull; Isi: ${(row.penghuni_curr || 0).toLocaleString()}</span>`;
+    } else if (row.has_input_prev) {
+        kapText = `<span class="badge badge-kapasitas-pill px-2 py-1 shadow-xs" style="background: rgba(255,255,255,0.22) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.45) !important;"><i class="fas fa-warehouse me-1"></i>Kap: ${(row.kapasitas || 0).toLocaleString()} &bull; Kemarin: ${(row.penghuni_prev || 0).toLocaleString()}</span>` +
+                  `<span class="badge bg-warning text-dark px-2 py-1 shadow-xs"><i class="fas fa-clock me-1"></i>Belum Input Hari Ini</span>`;
+    } else {
+        kapText = `<span class="badge bg-warning text-dark px-2 py-1 shadow-xs"><i class="fas fa-clock me-1"></i>Belum Ada Data</span>`;
+    }
 
     document.getElementById('mdf_upt_title').innerHTML = 
         `<div class="d-flex flex-wrap align-items-center gap-1.5 mt-1" style="min-width: 0;">` +
@@ -1378,8 +1459,13 @@ function bukaModalDetailFluktuasi(row) {
     document.getElementById('mdf_delta_av').innerHTML = formatBadge(row.delta_av);
 
     document.getElementById('mdf_tot_prev').textContent = row.tahanan_prev.toLocaleString();
-    document.getElementById('mdf_tot_curr').textContent = row.tahanan_curr.toLocaleString();
-    document.getElementById('mdf_tot_delta').innerHTML = formatBadge(row.delta_tahanan);
+    if (row.has_input_curr) {
+        document.getElementById('mdf_tot_curr').textContent = row.tahanan_curr.toLocaleString();
+        document.getElementById('mdf_tot_delta').innerHTML = formatBadge(row.delta_tahanan);
+    } else {
+        document.getElementById('mdf_tot_curr').innerHTML = '<span class="badge bg-warning text-dark">Pending</span>';
+        document.getElementById('mdf_tot_delta').innerHTML = '<span class="text-muted">-</span>';
+    }
 
     // Tab 2: Komparasi Narapidana
     const napiTbody = document.getElementById('mdf_napi_tbody');
@@ -1397,20 +1483,26 @@ function bukaModalDetailFluktuasi(row) {
                 <tr>
                     <td class="text-start fw-semibold">${k.klasifikasi}</td>
                     <td>${k.prev.toLocaleString()}</td>
-                    <td class="fw-bold">${k.curr.toLocaleString()}</td>
-                    <td>${formatBadge(k.delta)}</td>
-                    <td>${ket}</td>
+                    <td class="fw-bold">${row.has_input_curr ? k.curr.toLocaleString() : '<span class="badge bg-warning text-dark">Pending</span>'}</td>
+                    <td>${row.has_input_curr ? formatBadge(k.delta) : '<span class="text-muted">-</span>'}</td>
+                    <td>${row.has_input_curr ? ket : '<span class="badge bg-warning text-dark">Pending</span>'}</td>
                 </tr>
             `;
         });
     }
     napiTbody.innerHTML = napiRowsHtml;
     document.getElementById('mdf_napi_tot_prev').textContent = row.napi_prev.toLocaleString();
-    document.getElementById('mdf_napi_tot_curr').textContent = row.napi_curr.toLocaleString();
-    document.getElementById('mdf_napi_tot_delta').innerHTML = formatBadge(row.delta_napi);
-    document.getElementById('mdf_napi_tot_ket').innerHTML = row.delta_napi < 0 
-        ? `<span class="text-danger fw-bold">Berkurang ${Math.abs(row.delta_napi)}</span>` 
-        : (row.delta_napi > 0 ? `<span class="text-success fw-bold">Bertambah ${row.delta_napi}</span>` : '<span class="text-muted">Stabil</span>');
+    if (row.has_input_curr) {
+        document.getElementById('mdf_napi_tot_curr').textContent = row.napi_curr.toLocaleString();
+        document.getElementById('mdf_napi_tot_delta').innerHTML = formatBadge(row.delta_napi);
+        document.getElementById('mdf_napi_tot_ket').innerHTML = row.delta_napi < 0 
+            ? `<span class="text-danger fw-bold">Berkurang ${Math.abs(row.delta_napi)}</span>` 
+            : (row.delta_napi > 0 ? `<span class="text-success fw-bold">Bertambah ${row.delta_napi}</span>` : '<span class="text-muted">Stabil</span>');
+    } else {
+        document.getElementById('mdf_napi_tot_curr').innerHTML = '<span class="badge bg-warning text-dark">Pending</span>';
+        document.getElementById('mdf_napi_tot_delta').innerHTML = '<span class="text-muted">-</span>';
+        document.getElementById('mdf_napi_tot_ket').innerHTML = '<span class="badge bg-warning text-dark">Laporan Belum Diinput</span>';
+    }
 
     // Tab 3: Rincian Bebas & Rekonsiliasi Box
     const rekonBox = document.getElementById('mdf_rekonsiliasi_box');
@@ -1423,12 +1515,14 @@ function bukaModalDetailFluktuasi(row) {
                 </div>
                 <div class="col-sm-4 text-center border-end">
                     <small class="text-muted d-block" style="font-size: 11px;">Narapidana Hari Ini</small>
-                    <span class="fs-6 fw-bold text-primary">${row.napi_curr.toLocaleString()} Orang</span>
+                    <span class="fs-6 fw-bold ${row.has_input_curr ? 'text-primary' : 'text-warning'}">
+                        ${row.has_input_curr ? row.napi_curr.toLocaleString() + ' Orang' : 'Belum Diinput'}
+                    </span>
                 </div>
                 <div class="col-sm-4 text-center">
                     <small class="text-muted d-block" style="font-size: 11px;">Perubahan Net</small>
-                    <span class="fs-6 fw-bold ${row.delta_napi < 0 ? 'text-danger' : (row.delta_napi > 0 ? 'text-success' : 'text-secondary')}">
-                        ${row.delta_napi > 0 ? '+' : ''}${row.delta_napi} Orang
+                    <span class="fs-6 fw-bold ${!row.has_input_curr ? 'text-muted' : (row.delta_napi < 0 ? 'text-danger' : (row.delta_napi > 0 ? 'text-success' : 'text-secondary'))}">
+                        ${!row.has_input_curr ? 'Pending' : ((row.delta_napi > 0 ? '+' : '') + row.delta_napi + ' Orang')}
                     </span>
                 </div>
             </div>
@@ -1439,7 +1533,17 @@ function bukaModalDetailFluktuasi(row) {
     const totalPengurang = (row.total_pengurang !== undefined) ? row.total_pengurang : ((row.total_bebas || 0) + (row.mutasi_keluar || 0));
     const mutasiKeluar = row.mutasi_keluar || 0;
 
-    if (row.delta_napi < 0) {
+    if (!row.has_input_curr) {
+        rekonHtml += `
+            <div class="alert alert-warning border-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3">
+                <i class="fas fa-clock text-warning fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                    <strong>Laporan Penghuni Hari Ini Belum Diinput:</strong><br>
+                    Operator UPT belum mengirim laporan penghuni (apel pagi) pada tanggal acuan ini. Analisis perbandingan dan rekonsiliasi fluktuasi ditangguhkan sementara sampai operator menginput data penghuni terbaru untuk mencegah timbulnya selisih semu.
+                </div>
+            </div>
+        `;
+    } else if (row.delta_napi < 0) {
         const selisihNapi = Math.abs(row.delta_napi);
         const rincianBerkurang = row.napi_berkurang_text ? ` pada klasifikasi: <strong>${row.napi_berkurang_text}</strong>` : '';
 
@@ -1507,6 +1611,11 @@ function bukaModalDetailFluktuasi(row) {
         mutasiDetailTeks = `<div class="mt-1 small text-muted text-start" style="font-size: 10.5px;">${row.rincian_mutasi.join('<br>')}</div>`;
     }
 
+    let lainnyaDetailTeks = '';
+    if (row.rincian_lainnya && row.rincian_lainnya.length > 0) {
+        lainnyaDetailTeks = `<div class="mt-1 small text-muted text-start" style="font-size: 10.5px;">${row.rincian_lainnya.join('<br>')}</div>`;
+    }
+
     const bCont = document.getElementById('mdf_bebas_container');
     bCont.innerHTML = `
         <div class="col-4">
@@ -1556,6 +1665,7 @@ function bukaModalDetailFluktuasi(row) {
             <div class="p-2 border rounded bg-light">
                 <small class="text-muted d-block" style="font-size: 11px;">Pengeluaran Lainnya</small>
                 <strong class="fs-6 text-dark">${row.lainnya || 0} Orang</strong>
+                ${lainnyaDetailTeks}
             </div>
         </div>
         <div class="col-12 mt-2">

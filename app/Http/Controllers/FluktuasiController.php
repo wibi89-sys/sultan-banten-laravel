@@ -152,6 +152,15 @@ class FluktuasiController extends Controller
             ->get()
             ->groupBy('upt_id');
 
+        // Query rincian pengeluaran lainnya untuk keperluan narasi analisis & modal detail
+        $lainnyaDetail = DB::table('data_bebas_harian')
+            ->select('upt_id', 'klasifikasi_pidana', 'lainnya', 'ket_lainnya')
+            ->whereBetween('tanggal', [$tglBebasMulai, $tglBebasSelesai])
+            ->whereIn('upt_id', $uptIds)
+            ->where('lainnya', '>', 0)
+            ->get()
+            ->groupBy('upt_id');
+
         // Kompilasi Matriks Fluktuasi Per UPT & Hitung Akumulasi
         $rows = [];
         $summary = [
@@ -172,14 +181,24 @@ class FluktuasiController extends Controller
             'total_asimilasi' => 0,
             'total_bdh' => 0,
             'total_mutasi_keluar' => 0,
+            'total_lainnya' => 0,
             'total_bebas' => 0,
             'total_pengurang' => 0,
             'estimasi_alih_status' => 0,
             'estimasi_tahanan_baru' => 0,
+            'upt_total_count' => count($uptList),
+            'upt_input_curr_count' => 0,
+            'upt_belum_input_curr_list' => [],
         ];
 
         foreach ($uptList as $upt) {
             $uptId = $upt->id;
+
+            $hasInputCurr = $penghuniCurrent->has($uptId);
+            $hasInputPrev = $penghuniPrev->has($uptId);
+            $statusInput = ($hasInputCurr && $hasInputPrev) ? 'lengkap'
+                : (! $hasInputCurr && ! $hasInputPrev ? 'belum_input_keduanya'
+                : (! $hasInputCurr ? 'belum_input_curr' : 'belum_input_prev'));
 
             $pCurr = $penghuniCurrent->get($uptId);
             $pPrev = $penghuniPrev->get($uptId);
@@ -189,20 +208,31 @@ class FluktuasiController extends Controller
 
             $bCurr = $bebasCurrent->get($uptId);
 
-            $tahananCurr = (int) ($pCurr?->total_tahanan ?? 0);
             $tahananPrev = (int) ($pPrev?->total_tahanan ?? 0);
-            $deltaTahanan = $tahananCurr - $tahananPrev;
-
-            $napiCurr = (int) ($pCurr?->total_napi ?? 0);
             $napiPrev = (int) ($pPrev?->total_napi ?? 0);
-            $deltaNapi = $napiCurr - $napiPrev;
-
-            $penghuniTotalCurr = $tahananCurr + $napiCurr;
             $penghuniTotalPrev = $tahananPrev + $napiPrev;
-            $deltaPenghuni = $penghuniTotalCurr - $penghuniTotalPrev;
+
+            if ($hasInputCurr) {
+                $tahananCurr = (int) ($pCurr?->total_tahanan ?? 0);
+                $napiCurr = (int) ($pCurr?->total_napi ?? 0);
+                $penghuniTotalCurr = $tahananCurr + $napiCurr;
+
+                $deltaTahanan = $hasInputPrev ? ($tahananCurr - $tahananPrev) : 0;
+                $deltaNapi = $hasInputPrev ? ($napiCurr - $napiPrev) : 0;
+                $deltaPenghuni = $hasInputPrev ? ($penghuniTotalCurr - $penghuniTotalPrev) : 0;
+            } else {
+                $tahananCurr = 0;
+                $napiCurr = 0;
+                $penghuniTotalCurr = 0;
+
+                $deltaTahanan = 0;
+                $deltaNapi = 0;
+                $deltaPenghuni = 0;
+            }
 
             $kapasitasUpt = (int) ($upt->kapasitas ?? 0);
-            $overcrowdingUpt = getOvercrowdingStatus($penghuniTotalCurr, $kapasitasUpt);
+            $overcrowdingPenghuni = $hasInputCurr ? $penghuniTotalCurr : ($hasInputPrev ? $penghuniTotalPrev : 0);
+            $overcrowdingUpt = getOvercrowdingStatus($overcrowdingPenghuni, $kapasitasUpt);
 
             // Rincian Komparasi Narapidana & Tahanan Per Klasifikasi Tindak Pidana
             $klasCurrList = ($penghuniKlasifikasiCurr->get($uptId) ?? collect())->keyBy('klasifikasi_pidana');
@@ -218,29 +248,46 @@ class FluktuasiController extends Controller
             $napiBerkurangList = [];
             $napiBertambahList = [];
 
-            foreach ($daftarKlasifikasi as $klas) {
-                $nPrev = (int) ($klasPrevList->get($klas)?->narapidana ?? 0);
-                $nCurr = (int) ($klasCurrList->get($klas)?->narapidana ?? 0);
-                $deltaK = $nCurr - $nPrev;
+            if ($hasInputCurr) {
+                foreach ($daftarKlasifikasi as $klas) {
+                    $nPrev = (int) ($klasPrevList->get($klas)?->narapidana ?? 0);
+                    $nCurr = (int) ($klasCurrList->get($klas)?->narapidana ?? 0);
+                    $deltaK = $hasInputPrev ? ($nCurr - $nPrev) : 0;
 
-                $tPrev = (int) ($klasPrevList->get($klas)?->tahanan ?? 0);
-                $tCurr = (int) ($klasCurrList->get($klas)?->tahanan ?? 0);
-                $deltaT = $tCurr - $tPrev;
+                    $tPrev = (int) ($klasPrevList->get($klas)?->tahanan ?? 0);
+                    $tCurr = (int) ($klasCurrList->get($klas)?->tahanan ?? 0);
+                    $deltaT = $hasInputPrev ? ($tCurr - $tPrev) : 0;
 
-                $komparasiNapi[] = [
-                    'klasifikasi' => $klas,
-                    'prev' => $nPrev,
-                    'curr' => $nCurr,
-                    'delta' => $deltaK,
-                    'tahanan_prev' => $tPrev,
-                    'tahanan_curr' => $tCurr,
-                    'tahanan_delta' => $deltaT,
-                ];
+                    $komparasiNapi[] = [
+                        'klasifikasi' => $klas,
+                        'prev' => $nPrev,
+                        'curr' => $nCurr,
+                        'delta' => $deltaK,
+                        'tahanan_prev' => $tPrev,
+                        'tahanan_curr' => $tCurr,
+                        'tahanan_delta' => $deltaT,
+                    ];
 
-                if ($deltaK < 0) {
-                    $napiBerkurangList[] = "{$klas}: {$deltaK}";
-                } elseif ($deltaK > 0) {
-                    $napiBertambahList[] = "{$klas}: +{$deltaK}";
+                    if ($deltaK < 0) {
+                        $napiBerkurangList[] = "{$klas}: {$deltaK}";
+                    } elseif ($deltaK > 0) {
+                        $napiBertambahList[] = "{$klas}: +{$deltaK}";
+                    }
+                }
+            } else {
+                foreach ($daftarKlasifikasi as $klas) {
+                    $nPrev = (int) ($klasPrevList->get($klas)?->narapidana ?? 0);
+                    $tPrev = (int) ($klasPrevList->get($klas)?->tahanan ?? 0);
+
+                    $komparasiNapi[] = [
+                        'klasifikasi' => $klas,
+                        'prev' => $nPrev,
+                        'curr' => 0,
+                        'delta' => 0,
+                        'tahanan_prev' => $tPrev,
+                        'tahanan_curr' => 0,
+                        'tahanan_delta' => 0,
+                    ];
                 }
             }
 
@@ -266,204 +313,236 @@ class FluktuasiController extends Controller
                 $rincianMutasiList[] = "{$dm->klasifikasi_pidana}: {$dm->mutasi_keluar} Orang{$ket}";
             }
 
+            // Rincian Keterangan Pengeluaran Lainnya
+            $daftarLainnyaUpt = $lainnyaDetail->get($uptId) ?? collect();
+            $rincianLainnyaList = [];
+            foreach ($daftarLainnyaUpt as $dl) {
+                $ket = ! empty($dl->ket_lainnya) ? " ({$dl->ket_lainnya})" : '';
+                $rincianLainnyaList[] = "{$dl->klasifikasi_pidana}: {$dl->lainnya} Orang{$ket}";
+            }
+
             // Rincian Overstaying & Fluktuasi AI s/d AV
             $aiCurr = (int) ($oCurr?->tahanan_ai ?? 0);
             $aiPrev = (int) ($oPrev?->tahanan_ai ?? 0);
-            $deltaAi = $aiCurr - $aiPrev;
+            $deltaAi = ($hasInputCurr && $hasInputPrev) ? ($aiCurr - $aiPrev) : 0;
 
             $aiiCurr = (int) ($oCurr?->tahanan_aii ?? 0);
             $aiiPrev = (int) ($oPrev?->tahanan_aii ?? 0);
-            $deltaAii = $aiiCurr - $aiiPrev;
+            $deltaAii = ($hasInputCurr && $hasInputPrev) ? ($aiiCurr - $aiiPrev) : 0;
 
             $aiiiCurr = (int) ($oCurr?->tahanan_aiii ?? 0);
             $aiiiPrev = (int) ($oPrev?->tahanan_aiii ?? 0);
-            $deltaAiii = $aiiiCurr - $aiiiPrev;
+            $deltaAiii = ($hasInputCurr && $hasInputPrev) ? ($aiiiCurr - $aiiiPrev) : 0;
 
             $aivCurr = (int) ($oCurr?->tahanan_aiv ?? 0);
             $aivPrev = (int) ($oPrev?->tahanan_aiv ?? 0);
-            $deltaAiv = $aivCurr - $aivPrev;
+            $deltaAiv = ($hasInputCurr && $hasInputPrev) ? ($aivCurr - $aivPrev) : 0;
 
             $avCurr = (int) ($oCurr?->tahanan_av ?? 0);
             $avPrev = (int) ($oPrev?->tahanan_av ?? 0);
-            $deltaAv = $avCurr - $avPrev;
+            $deltaAv = ($hasInputCurr && $hasInputPrev) ? ($avCurr - $avPrev) : 0;
 
             // Analisis Otomatis (Narasi Dinamika Operasional)
             $analisisList = [];
 
-            // 1. Bebas Demi Hukum (BDH) pada Tahanan
-            if ($bdh > 0) {
-                $analisisList[] = "<span class=\"text-danger fw-bold\"><i class=\"fas fa-balance-scale me-1\"></i>{$bdh} Tahanan Bebas Demi Hukum (BDH)</span>";
-            }
-
-            // 2. Perpindahan Tahap Upaya Hukum & Alih Status Vonis Inkrah (A.III, A.IV, A.V)
-
-            // a. Perpindahan Kasasi ke MA (A.IV -> A.V)
-            $kasasi = 0;
-            if ($deltaAiv < 0 && $deltaAv > 0) {
-                $kasasi = min(abs($deltaAiv), $deltaAv);
-            }
-            $sisaTurunAiv = ($deltaAiv < 0) ? (abs($deltaAiv) - $kasasi) : 0;
-            $sisaTurunAv = ($deltaAv < 0) ? abs($deltaAv) : 0;
-
-            // b. Perpindahan Banding ke PT (A.III -> A.IV)
-            $banding = 0;
-            if ($deltaAiii < 0 && $deltaAiv > 0) {
-                $banding = min(abs($deltaAiii), $deltaAiv);
-            }
-            $sisaTurunAiii = ($deltaAiii < 0) ? (abs($deltaAiii) - $banding) : 0;
-
-            // c. Pelimpahan ke Sidang PN (A.II -> A.III)
-            $pelimpahanPn = 0;
-            if ($deltaAii < 0 && $deltaAiii > 0) {
-                $pelimpahanPn = min(abs($deltaAii), $deltaAiii);
-            }
-
-            // d. Tahap II (A.I -> A.II)
-            $tahap2 = 0;
-            if ($deltaAi < 0 && $deltaAii > 0) {
-                $tahap2 = min(abs($deltaAi), $deltaAii);
-            }
-
-            // e. Alih Status Vonis Inkrah (Pengurangan A.III, A.IV, A.V yang terserap menjadi Narapidana)
-            $alihStatus = 0;
-            $rincianInkrah = [];
-
-            if ($deltaNapi > 0) {
-                $sisaNapiBertambah = $deltaNapi;
-
-                // 1. Serap dari putusan Kasasi Mahkamah Agung (A.V)
-                if ($sisaTurunAv > 0 && $sisaNapiBertambah > 0) {
-                    $ambilAv = min($sisaTurunAv, $sisaNapiBertambah);
-                    $alihStatus += $ambilAv;
-                    $sisaNapiBertambah -= $ambilAv;
-                    $rincianInkrah[] = "{$ambilAv} Kasasi MA (A.V)";
-                }
-
-                // 2. Serap dari putusan Banding Pengadilan Tinggi (A.IV)
-                if ($sisaTurunAiv > 0 && $sisaNapiBertambah > 0) {
-                    $ambilAiv = min($sisaTurunAiv, $sisaNapiBertambah);
-                    $alihStatus += $ambilAiv;
-                    $sisaNapiBertambah -= $ambilAiv;
-                    $rincianInkrah[] = "{$ambilAiv} Banding PT (A.IV)";
-                }
-
-                // 3. Serap dari vonis Pengadilan Negeri (A.III)
-                if ($sisaTurunAiii > 0 && $sisaNapiBertambah > 0) {
-                    $ambilAiii = min($sisaTurunAiii, $sisaNapiBertambah);
-                    $alihStatus += $ambilAiii;
-                    $sisaNapiBertambah -= $ambilAiii;
-                    $rincianInkrah[] = "{$ambilAiii} PN (A.III)";
-                }
-
-                // Fallback umum jika rincian A.I-A.V tidak lengkap tapi deltaTahanan negatif
-                if ($alihStatus === 0 && $deltaTahanan < 0) {
-                    $alihStatus = min(abs($deltaTahanan), $deltaNapi);
-                }
-            }
-
-            // Narasi Alih Status Vonis Inkrah
-            if ($alihStatus > 0) {
-                $teksRincianInkrah = ! empty($rincianInkrah) ? ' ('.implode(', ', $rincianInkrah).')' : '';
-                $analisisList[] = "<span class=\"text-primary fw-semibold\"><i class=\"fas fa-gavel me-1\"></i>{$alihStatus} Tahanan Vonis Inkrah (Alih Status &rarr; Narapidana){$teksRincianInkrah}</span>";
-            }
-
-            // Narasi Perpindahan Tahapan Peradilan
-            if ($kasasi > 0) {
-                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-university me-1\"></i>{$kasasi} Tahanan Upaya Hukum Kasasi (PT A.IV &rarr; MA A.V)</span>";
-            }
-            if ($banding > 0) {
-                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-landmark me-1\"></i>{$banding} Tahanan Upaya Hukum Banding (PN A.III &rarr; PT A.IV)</span>";
-            }
-            if ($pelimpahanPn > 0) {
-                $analisisList[] = "<span class=\"text-info fw-semibold\"><i class=\"fas fa-balance-scale-right me-1\"></i>{$pelimpahanPn} Tahanan Masuk Sidang (Jaksa A.II &rarr; PN A.III)</span>";
-            }
-            if ($tahap2 > 0) {
-                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-share me-1\"></i>{$tahap2} Tahanan Tahap II (Polisi A.I &rarr; Jaksa A.II)</span>";
-            }
-
-            // 3. Tahanan Baru Masuk (Penerimaan A.I / A.II / A.III)
-            $tahananBaruMasuk = 0;
-            if ($deltaTahanan > 0) {
-                $tahananBaruMasuk = $deltaTahanan;
-                $tahapMasuk = [];
-                if ($deltaAi > 0) {
-                    $tahapMasuk[] = "+{$deltaAi} Polisi (A.I)";
-                }
-                if ($deltaAii > 0 && ($deltaAi >= 0 || $deltaAii > abs($deltaAi))) {
-                    $netAii = ($deltaAi < 0) ? ($deltaAii - abs($deltaAi)) : $deltaAii;
-                    if ($netAii > 0) {
-                        $tahapMasuk[] = "+{$netAii} Jaksa (A.II)";
-                    }
-                }
-                if ($deltaAiii > 0 && ($deltaAii >= 0 || $deltaAiii > abs($deltaAii))) {
-                    $netAiii = ($deltaAii < 0) ? ($deltaAiii - abs($deltaAii)) : $deltaAiii;
-                    if ($netAiii > 0) {
-                        $tahapMasuk[] = "+{$netAiii} PN (A.III)";
-                    }
-                }
-                $rincianMasuk = ! empty($tahapMasuk) ? ' ('.implode(', ', $tahapMasuk).')' : '';
-                $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$deltaTahanan} Tahanan Baru Masuk{$rincianMasuk}</span>";
-            }
-
-            // 4. Narapidana Baru Masuk (Penerimaan / Mutasi Masuk di luar alih status)
-            if ($deltaNapi > 0 && $deltaNapi > $alihStatus) {
-                $napiBaru = $deltaNapi - $alihStatus;
-                $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$napiBaru} Narapidana Baru Masuk (Penerimaan / Mutasi Masuk)</span>";
-            }
-
-            // 5. Narapidana Mutasi Keluar
-            if ($mutasiKeluar > 0) {
-                $teksMutasi = ! empty($rincianMutasiList) ? ' ('.implode(', ', $rincianMutasiList).')' : '';
-                $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-truck-moving me-1\"></i>-{$mutasiKeluar} Narapidana Mutasi Keluar{$teksMutasi}</span>";
-            }
-
-            // 6. Narapidana Bebas (Faktor Pengurang dari hari kemarin)
-            if ($bebasNapi > 0) {
-                $rincianBebas = [];
-                if ($pb > 0) {
-                    $rincianBebas[] = "{$pb} PB";
-                }
-                if ($cb > 0) {
-                    $rincianBebas[] = "{$cb} CB";
-                }
-                if ($cmb > 0) {
-                    $rincianBebas[] = "{$cmb} CMB";
-                }
-                if ($asimilasi > 0) {
-                    $rincianBebas[] = "{$asimilasi} Asimilasi";
-                }
-                if ($bebasMurni > 0) {
-                    $rincianBebas[] = "{$bebasMurni} Bebas Murni";
-                }
-                $teksBebas = ! empty($rincianBebas) ? ' ('.implode(', ', $rincianBebas).')' : '';
-                $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-door-open me-1\"></i>-{$bebasNapi} Narapidana Bebas{$teksBebas}</span>";
-            }
-
-            // 7. Narapidana Berkurang
-            if ($deltaNapi < 0) {
-                $totalBerkurang = abs($deltaNapi);
-                $rincianBerkurang = ! empty($napiBerkurangList) ? ' ('.implode(', ', $napiBerkurangList).')' : '';
-
-                if ($pengurangNapi > 0) {
-                    if ($totalBerkurang > $pengurangNapi) {
-                        $selisihTidakTercatat = $totalBerkurang - $pengurangNapi;
-                        $analisisList[] = "<span class=\"text-secondary small d-block\"><i class=\"fas fa-info-circle me-1\"></i>Selisih -{$selisihTidakTercatat} Narapidana di luar Laporan Bebas/Mutasi{$rincianBerkurang} (Potensi Ekspirasi atau Mutasi belum terinput)</span>";
-                    }
+            if (! $hasInputCurr) {
+                if (! $hasInputPrev) {
+                    $analisisList[] = '<span class="text-secondary fw-semibold"><i class="fas fa-minus-circle me-1"></i>Belum Ada Data Penghuni</span> <span class="text-muted small d-block">Data penghuni pada kedua tanggal belum diinput operator UPT.</span>';
                 } else {
-                    $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-user-minus me-1\"></i>-{$totalBerkurang} Narapidana Berkurang{$rincianBerkurang}</span>";
-                    $analisisList[] = '<span class="text-warning small d-block"><i class="fas fa-question-circle me-1"></i>Nihil di Laporan Bebas &amp; Mutasi (Potensi Mutasi Keluar ke Lapas lain atau Ekspirasi belum diinput operator)</span>';
+                    $analisisList[] = '<span class="text-warning fw-semibold"><i class="fas fa-clock me-1"></i>Belum Menginput Laporan Penghuni Hari Ini</span> <span class="text-muted small d-block">Operator UPT belum mengirim data apel pagi. Fluktuasi tambah/kurang ditangguhkan untuk mencegah selisih semu.</span>';
                 }
-            }
 
-            // 8. Jika total penghuni tetap sama atau nihil perubahan
-            if ($deltaPenghuni === 0 && $deltaTahanan === 0 && $deltaNapi === 0) {
                 if ($totalPengurang > 0) {
-                    $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalPengurang} Pengeluaran (Bebas/Mutasi) kemarin tapi Jumlah Penghuni Tetap Sama (Potensi Belum Terupdate di Laporan Penghuni)</span>";
-                } else {
-                    $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
+                    $analisisList[] = "<span class=\"text-info small d-block\"><i class=\"fas fa-info-circle me-1\"></i>Catatan Pengeluaran Kemarin: {$totalPengurang} orang (Bebas: {$bebasNapi}, Mutasi: {$mutasiKeluar}, BDH: {$bdh})</span>";
                 }
-            } elseif ($deltaPenghuni === 0 && ($deltaTahanan !== 0 || $deltaNapi !== 0)) {
-                $analisisList[] = '<span class="text-info fw-semibold"><i class="fas fa-exchange-alt me-1"></i>Total Penghuni Tetap (Pergeseran Status Internal)</span>';
+
+                $alihStatus = 0;
+                $tahananBaruMasuk = 0;
+            } elseif (! $hasInputPrev) {
+                $analisisList[] = '<span class="text-info fw-semibold"><i class="fas fa-history me-1"></i>Data Pembanding Belum Ada</span> <span class="text-muted small d-block">Komparasi fluktuasi belum dapat dihitung karena data pembanding belum diinput operator UPT.</span>';
+                $alihStatus = 0;
+                $tahananBaruMasuk = 0;
+            } else {
+                // Skenario normal: kedua tanggal memiliki data penghuni
+                // 1. Bebas Demi Hukum (BDH) pada Tahanan
+                if ($bdh > 0) {
+                    $analisisList[] = "<span class=\"text-danger fw-bold\"><i class=\"fas fa-balance-scale me-1\"></i>{$bdh} Tahanan Bebas Demi Hukum (BDH)</span>";
+                }
+
+                // 2. Perpindahan Tahap Upaya Hukum & Alih Status Vonis Inkrah (A.III, A.IV, A.V)
+
+                // a. Perpindahan Kasasi ke MA (A.IV -> A.V)
+                $kasasi = 0;
+                if ($deltaAiv < 0 && $deltaAv > 0) {
+                    $kasasi = min(abs($deltaAiv), $deltaAv);
+                }
+                $sisaTurunAiv = ($deltaAiv < 0) ? (abs($deltaAiv) - $kasasi) : 0;
+                $sisaTurunAv = ($deltaAv < 0) ? abs($deltaAv) : 0;
+
+                // b. Perpindahan Banding ke PT (A.III -> A.IV)
+                $banding = 0;
+                if ($deltaAiii < 0 && $deltaAiv > 0) {
+                    $banding = min(abs($deltaAiii), $deltaAiv);
+                }
+                $sisaTurunAiii = ($deltaAiii < 0) ? (abs($deltaAiii) - $banding) : 0;
+
+                // c. Pelimpahan ke Sidang PN (A.II -> A.III)
+                $pelimpahanPn = 0;
+                if ($deltaAii < 0 && $deltaAiii > 0) {
+                    $pelimpahanPn = min(abs($deltaAii), $deltaAiii);
+                }
+
+                // d. Tahap II (A.I -> A.II)
+                $tahap2 = 0;
+                if ($deltaAi < 0 && $deltaAii > 0) {
+                    $tahap2 = min(abs($deltaAi), $deltaAii);
+                }
+
+                // e. Alih Status Vonis Inkrah (Pengurangan A.III, A.IV, A.V yang terserap menjadi Narapidana)
+                $alihStatus = 0;
+                $rincianInkrah = [];
+
+                if ($deltaNapi > 0) {
+                    $sisaNapiBertambah = $deltaNapi;
+
+                    // 1. Serap dari putusan Kasasi Mahkamah Agung (A.V)
+                    if ($sisaTurunAv > 0 && $sisaNapiBertambah > 0) {
+                        $ambilAv = min($sisaTurunAv, $sisaNapiBertambah);
+                        $alihStatus += $ambilAv;
+                        $sisaNapiBertambah -= $ambilAv;
+                        $rincianInkrah[] = "{$ambilAv} Kasasi MA (A.V)";
+                    }
+
+                    // 2. Serap dari putusan Banding Pengadilan Tinggi (A.IV)
+                    if ($sisaTurunAiv > 0 && $sisaNapiBertambah > 0) {
+                        $ambilAiv = min($sisaTurunAiv, $sisaNapiBertambah);
+                        $alihStatus += $ambilAiv;
+                        $sisaNapiBertambah -= $ambilAiv;
+                        $rincianInkrah[] = "{$ambilAiv} Banding PT (A.IV)";
+                    }
+
+                    // 3. Serap dari vonis Pengadilan Negeri (A.III)
+                    if ($sisaTurunAiii > 0 && $sisaNapiBertambah > 0) {
+                        $ambilAiii = min($sisaTurunAiii, $sisaNapiBertambah);
+                        $alihStatus += $ambilAiii;
+                        $sisaNapiBertambah -= $ambilAiii;
+                        $rincianInkrah[] = "{$ambilAiii} PN (A.III)";
+                    }
+
+                    // Fallback umum jika rincian A.I-A.V tidak lengkap tapi deltaTahanan negatif
+                    if ($alihStatus === 0 && $deltaTahanan < 0) {
+                        $alihStatus = min(abs($deltaTahanan), $deltaNapi);
+                    }
+                }
+
+                // Narasi Alih Status Vonis Inkrah
+                if ($alihStatus > 0) {
+                    $teksRincianInkrah = ! empty($rincianInkrah) ? ' ('.implode(', ', $rincianInkrah).')' : '';
+                    $analisisList[] = "<span class=\"text-primary fw-semibold\"><i class=\"fas fa-gavel me-1\"></i>{$alihStatus} Tahanan Vonis Inkrah (Alih Status &rarr; Narapidana){$teksRincianInkrah}</span>";
+                }
+
+                // Narasi Perpindahan Tahapan Peradilan
+                if ($kasasi > 0) {
+                    $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-university me-1\"></i>{$kasasi} Tahanan Upaya Hukum Kasasi (PT A.IV &rarr; MA A.V)</span>";
+                }
+                if ($banding > 0) {
+                    $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-landmark me-1\"></i>{$banding} Tahanan Upaya Hukum Banding (PN A.III &rarr; PT A.IV)</span>";
+                }
+                if ($pelimpahanPn > 0) {
+                    $analisisList[] = "<span class=\"text-info fw-semibold\"><i class=\"fas fa-balance-scale-right me-1\"></i>{$pelimpahanPn} Tahanan Masuk Sidang (Jaksa A.II &rarr; PN A.III)</span>";
+                }
+                if ($tahap2 > 0) {
+                    $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-share me-1\"></i>{$tahap2} Tahanan Tahap II (Polisi A.I &rarr; Jaksa A.II)</span>";
+                }
+
+                // 3. Tahanan Baru Masuk (Penerimaan A.I / A.II / A.III)
+                $tahananBaruMasuk = 0;
+                if ($deltaTahanan > 0) {
+                    $tahananBaruMasuk = $deltaTahanan;
+                    $tahapMasuk = [];
+                    if ($deltaAi > 0) {
+                        $tahapMasuk[] = "+{$deltaAi} Polisi (A.I)";
+                    }
+                    if ($deltaAii > 0 && ($deltaAi >= 0 || $deltaAii > abs($deltaAi))) {
+                        $netAii = ($deltaAi < 0) ? ($deltaAii - abs($deltaAi)) : $deltaAii;
+                        if ($netAii > 0) {
+                            $tahapMasuk[] = "+{$netAii} Jaksa (A.II)";
+                        }
+                    }
+                    if ($deltaAiii > 0 && ($deltaAii >= 0 || $deltaAiii > abs($deltaAii))) {
+                        $netAiii = ($deltaAii < 0) ? ($deltaAiii - abs($deltaAii)) : $deltaAiii;
+                        if ($netAiii > 0) {
+                            $tahapMasuk[] = "+{$netAiii} PN (A.III)";
+                        }
+                    }
+                    $rincianMasuk = ! empty($tahapMasuk) ? ' ('.implode(', ', $tahapMasuk).')' : '';
+                    $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$deltaTahanan} Tahanan Baru Masuk{$rincianMasuk}</span>";
+                }
+
+                // 4. Narapidana Baru Masuk (Penerimaan / Mutasi Masuk di luar alih status)
+                if ($deltaNapi > 0 && $deltaNapi > $alihStatus) {
+                    $napiBaru = $deltaNapi - $alihStatus;
+                    $analisisList[] = "<span class=\"text-success fw-semibold\"><i class=\"fas fa-user-plus me-1\"></i>+{$napiBaru} Narapidana Baru Masuk (Penerimaan / Mutasi Masuk)</span>";
+                }
+
+                // 5. Narapidana Mutasi Keluar
+                if ($mutasiKeluar > 0) {
+                    $teksMutasi = ! empty($rincianMutasiList) ? ' ('.implode(', ', $rincianMutasiList).')' : '';
+                    $analisisList[] = "<span class=\"text-secondary fw-semibold\"><i class=\"fas fa-truck-moving me-1\"></i>-{$mutasiKeluar} Narapidana Mutasi Keluar{$teksMutasi}</span>";
+                }
+
+                // 6. Narapidana Bebas (Faktor Pengurang dari hari kemarin)
+                if ($bebasNapi > 0) {
+                    $rincianBebas = [];
+                    if ($pb > 0) {
+                        $rincianBebas[] = "{$pb} PB";
+                    }
+                    if ($cb > 0) {
+                        $rincianBebas[] = "{$cb} CB";
+                    }
+                    if ($cmb > 0) {
+                        $rincianBebas[] = "{$cmb} CMB";
+                    }
+                    if ($asimilasi > 0) {
+                        $rincianBebas[] = "{$asimilasi} Asimilasi";
+                    }
+                    if ($bebasMurni > 0) {
+                        $rincianBebas[] = "{$bebasMurni} Bebas Murni";
+                    }
+                    if ($lainnya > 0) {
+                        $ketLainnyaBrief = ! empty($rincianLainnyaList) ? ' ['.implode('; ', $rincianLainnyaList).']' : '';
+                        $rincianBebas[] = "{$lainnya} Lainnya{$ketLainnyaBrief}";
+                    }
+                    $teksBebas = ! empty($rincianBebas) ? ' ('.implode(', ', $rincianBebas).')' : '';
+                    $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-door-open me-1\"></i>-{$bebasNapi} Narapidana Bebas{$teksBebas}</span>";
+                }
+
+                // 7. Narapidana Berkurang
+                if ($deltaNapi < 0) {
+                    $totalBerkurang = abs($deltaNapi);
+                    $rincianBerkurang = ! empty($napiBerkurangList) ? ' ('.implode(', ', $napiBerkurangList).')' : '';
+
+                    if ($pengurangNapi > 0) {
+                        if ($totalBerkurang > $pengurangNapi) {
+                            $selisihTidakTercatat = $totalBerkurang - $pengurangNapi;
+                            $analisisList[] = "<span class=\"text-secondary small d-block\"><i class=\"fas fa-info-circle me-1\"></i>Selisih -{$selisihTidakTercatat} Narapidana di luar Laporan Bebas/Mutasi{$rincianBerkurang} (Potensi Ekspirasi atau Mutasi belum terinput)</span>";
+                        }
+                    } else {
+                        $analisisList[] = "<span class=\"text-danger fw-semibold\"><i class=\"fas fa-user-minus me-1\"></i>-{$totalBerkurang} Narapidana Berkurang{$rincianBerkurang}</span>";
+                        $analisisList[] = '<span class="text-warning small d-block"><i class="fas fa-question-circle me-1"></i>Nihil di Laporan Bebas &amp; Mutasi (Potensi Mutasi Keluar ke Lapas lain atau Ekspirasi belum diinput operator)</span>';
+                    }
+                }
+
+                // 8. Jika total penghuni tetap sama atau nihil perubahan
+                if ($deltaPenghuni === 0 && $deltaTahanan === 0 && $deltaNapi === 0) {
+                    if ($totalPengurang > 0) {
+                        $analisisList[] = "<span class=\"text-warning fw-semibold\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Perlu Kroscek: Tercatat {$totalPengurang} Pengeluaran (Bebas/Mutasi) kemarin tapi Jumlah Penghuni Tetap Sama (Potensi Belum Terupdate di Laporan Penghuni)</span>";
+                    } else {
+                        $analisisList[] = '<span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Penghuni Stabil (Nihil Tambah Kurang)</span>';
+                    }
+                } elseif ($deltaPenghuni === 0 && ($deltaTahanan !== 0 || $deltaNapi !== 0)) {
+                    $analisisList[] = '<span class="text-info fw-semibold"><i class="fas fa-exchange-alt me-1"></i>Total Penghuni Tetap (Pergeseran Status Internal)</span>';
+                }
             }
 
             $rows[] = [
@@ -471,6 +550,9 @@ class FluktuasiController extends Controller
                 'nama_upt' => $upt->nama_upt,
                 'kapasitas' => $kapasitasUpt,
                 'overcrowding' => $overcrowdingUpt,
+                'has_input_curr' => $hasInputCurr,
+                'has_input_prev' => $hasInputPrev,
+                'status_input' => $statusInput,
                 'tahanan_prev' => $tahananPrev,
                 'tahanan_curr' => $tahananCurr,
                 'delta_tahanan' => $deltaTahanan,
@@ -489,6 +571,7 @@ class FluktuasiController extends Controller
                 'mutasi_keluar' => $mutasiKeluar,
                 'rincian_mutasi' => $rincianMutasiList,
                 'lainnya' => $lainnya,
+                'rincian_lainnya' => $rincianLainnyaList,
                 'total_bebas' => $totalBebas,
                 'total_pengurang' => $totalPengurang,
                 'bebas_napi' => $bebasNapi,
@@ -515,20 +598,31 @@ class FluktuasiController extends Controller
                 'napi_berkurang_list' => $napiBerkurangList,
                 'napi_bertambah_list' => $napiBertambahList,
                 'napi_berkurang_text' => implode(', ', $napiBerkurangList),
-                'napi_unexplained' => ($deltaNapi < 0) ? max(0, abs($deltaNapi) - $pengurangNapi) : 0,
+                'napi_unexplained' => ($hasInputCurr && $hasInputPrev && $deltaNapi < 0) ? max(0, abs($deltaNapi) - $pengurangNapi) : 0,
             ];
 
             // Akumulasi ringkasan wilayah
             $summary['total_kapasitas'] += $kapasitasUpt;
             $summary['total_tahanan_prev'] += $tahananPrev;
-            $summary['total_tahanan_curr'] += $tahananCurr;
-            $summary['delta_tahanan'] += $deltaTahanan;
             $summary['total_napi_prev'] += $napiPrev;
-            $summary['total_napi_curr'] += $napiCurr;
-            $summary['delta_napi'] += $deltaNapi;
             $summary['total_penghuni_prev'] += $penghuniTotalPrev;
-            $summary['total_penghuni_curr'] += $penghuniTotalCurr;
-            $summary['delta_penghuni'] += $deltaPenghuni;
+
+            if ($hasInputCurr) {
+                $summary['upt_input_curr_count']++;
+                $summary['total_tahanan_curr'] += $tahananCurr;
+                $summary['total_napi_curr'] += $napiCurr;
+                $summary['total_penghuni_curr'] += $penghuniTotalCurr;
+                $summary['delta_tahanan'] += $deltaTahanan;
+                $summary['delta_napi'] += $deltaNapi;
+                $summary['delta_penghuni'] += $deltaPenghuni;
+            } else {
+                $summary['upt_belum_input_curr_list'][] = $upt->nama_upt;
+                // Gunakan data prev sebagai carry-over estimasi akumulasi agar angka wilayah tidak anjlok semu
+                $summary['total_tahanan_curr'] += $tahananPrev;
+                $summary['total_napi_curr'] += $napiPrev;
+                $summary['total_penghuni_curr'] += $penghuniTotalPrev;
+            }
+
             $summary['total_bebas_murni'] += $bebasMurni;
             $summary['total_pb'] += $pb;
             $summary['total_cb'] += $cb;
@@ -536,6 +630,7 @@ class FluktuasiController extends Controller
             $summary['total_asimilasi'] += $asimilasi;
             $summary['total_bdh'] += $bdh;
             $summary['total_mutasi_keluar'] += $mutasiKeluar;
+            $summary['total_lainnya'] += $lainnya;
             $summary['total_bebas'] += $totalBebas;
             $summary['total_pengurang'] += $totalPengurang;
             $summary['estimasi_alih_status'] += $alihStatus;

@@ -70,4 +70,33 @@ class BebasHarianDanFluktuasiMutasiTest extends TestCase
         $response->assertSee('Mutasi Keluar');
         $response->assertSee('Lapas Sukamiskin');
     }
+
+    public function test_fluktuasi_detects_pending_input_when_upt_has_not_submitted_today(): void
+    {
+        // 2026-11-03 has no data_penghuni records in test DB
+        $response = $this->actingAs($this->userAdmin)->get(route('fluktuasi.index', [
+            'tanggal' => '2026-11-03',
+            'tanggal_pembanding' => '2026-11-02',
+            'upt_id' => $this->upt->id,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Belum Menginput Laporan Penghuni Hari Ini');
+        $response->assertSee('Belum Input');
+        $response->assertDontSee('Nihil di Laporan Bebas &amp; Mutasi (Potensi Mutasi Keluar');
+    }
+
+    public function test_fluktuasi_includes_pengeluaran_lainnya_with_details_in_narration(): void
+    {
+        // Lapas Rangkasbitung (id: 8) on 2026-10-23 has lainnya = 2 with 'Penangguhan penahanan'
+        $response = $this->actingAs($this->userAdmin)->get(route('fluktuasi.index', [
+            'tanggal' => '2026-10-24',
+            'tanggal_pembanding' => '2026-10-23',
+            'upt_id' => 8,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Lainnya');
+        $response->assertSee('Penangguhan penahanan');
+    }
 }
