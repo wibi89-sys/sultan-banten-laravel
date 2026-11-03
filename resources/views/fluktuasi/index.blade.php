@@ -112,6 +112,7 @@
         border-radius: 14px !important;
         border: none !important;
         overflow: hidden !important;
+        margin-bottom: 24px !important;
     }
     [data-theme="dark"] .fluktuasi-summary-banner {
         background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
@@ -743,9 +744,9 @@
         <!-- 1. TAMPILAN KARTU FLUKTUASI (Mobile-Friendly Executive Cards) -->
         <div id="fluktuasiCardsView" class="p-2 p-sm-3">
             <!-- Ringkasan Akumulasi Wilayah (Executive Summary Banner) -->
-            <div class="card border-0 mb-3 text-white shadow-sm fluktuasi-summary-banner">
-                <div class="card-body p-2.5 p-sm-3">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2.5">
+            <div class="card border-0 mb-4 text-white shadow-sm fluktuasi-summary-banner">
+                <div class="card-body p-3 p-sm-3.5">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-3">
                         <span class="badge bg-white text-primary px-2.5 py-1 fw-bold shadow-xs" style="font-size: 11px;">
                             <i class="fas fa-shield-alt me-1"></i>TOTAL SE-WILAYAH BANTEN
                         </span>
@@ -810,6 +811,17 @@
                         <span class="opacity-90">{{ number_format($summary['estimasi_tahanan_baru']) }} Tahanan Masuk &bull; {{ number_format($summary['total_bebas']) }} Bebas</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Header Pemisah: Rincian Fluktuasi Per UPT -->
+            <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 fw-bold" style="font-size: 11px;">
+                        <i class="fas fa-building me-1"></i>{{ count($rows) }} UPT
+                    </span>
+                    <span class="small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 11px;">Rincian Fluktuasi Per Satuan Kerja</span>
+                </div>
+                <span class="text-muted small d-none d-sm-inline" style="font-size: 11px;"><i class="fas fa-hand-pointer me-1"></i>Sentuh kartu untuk rincian</span>
             </div>
 
             <!-- Daftar Kartu Per UPT -->
