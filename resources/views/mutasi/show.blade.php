@@ -15,17 +15,9 @@
                 <li class="breadcrumb-item active" aria-current="page">No: {{ $mutasi->nomor_surat }}</li>
             </ol>
         </nav>
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('mutasi.index') }}" class="btn btn-outline-secondary btn-sm shadow-xs">
-                <i class="fas fa-arrow-left me-1"></i>Kembali
-            </a>
-            <form action="{{ route('mutasi.broadcast-wa', $mutasi->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirimkan notifikasi WhatsApp berkas mutasi ini ke Grup sekarang?');">
-                @csrf
-                <button type="submit" class="btn btn-outline-success btn-sm shadow-xs" title="Kirim Notifikasi WhatsApp Mutasi ke Grup">
-                    <i class="fab fa-whatsapp me-1"></i>Kirim Notifikasi WA
-                </button>
-            </form>
-        </div>
+        <a href="{{ route('mutasi.index') }}" class="btn btn-outline-secondary btn-sm shadow-xs">
+            <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar Mutasi
+        </a>
     </div>
 
     <!-- Flash Messages -->

@@ -1013,28 +1013,6 @@ class MutasiNarapidanaController extends Controller
         ]);
     }
 
-    public function broadcastWa(int $id): RedirectResponse
-    {
-        $this->checkAccess();
-        $mutasi = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])->findOrFail($id);
-
-        try {
-            if ($mutasi->status === 'disetujui' || $mutasi->status === 'selesai') {
-                $result = WhatsAppService::notifyMutasiDisetujui($mutasi, isManual: true);
-            } else {
-                $result = WhatsAppService::notifyNewMutasiUsulan($mutasi, isManual: true);
-            }
-
-            if (! empty($result['success'])) {
-                return back()->with('success', 'Notifikasi WhatsApp Mutasi berhasil dikirim ke Grup WhatsApp!');
-            }
-
-            return back()->with('warning', 'Pesan tidak terkirim: '.($result['message'] ?? 'Gateway WhatsApp tidak merespons'));
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Gagal mengirim WhatsApp: '.$e->getMessage());
-        }
-    }
-
     private function handleUpload(Request $request, string $fieldName, string $prefix): ?string
     {
         if (! $request->hasFile($fieldName)) {

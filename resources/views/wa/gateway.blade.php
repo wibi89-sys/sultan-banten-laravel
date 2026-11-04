@@ -133,6 +133,79 @@
                     </div>
                 </div>
 
+                <!-- ================= PENGATURAN OTOMATISASI MODUL (PUSAT KENDALI KANWIL) ================= -->
+                <div class="border-top pt-3 mt-4 mb-3">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-robot text-primary me-2"></i>Otomatisasi Notifikasi Modul (Pusat Kendali Kanwil)
+                        </h6>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" style="font-size: 11px;">
+                            Wewenang Kanwil
+                        </span>
+                    </div>
+                    <small class="text-muted d-block mb-3">
+                        Tentukan apakah notifikasi ke grup WhatsApp aktif atau tidak saat ada agenda/usulan pada modul Sidang TPP &amp; Mutasi Narapidana, beserta grup WhatsApp tujuannya. <b>UPT pelaksana tidak memiliki kewenangan menentukan pengiriman notifikasi ini.</b>
+                    </small>
+
+                    <!-- Modul 1: Sidang TPP -->
+                    <div class="p-3 mb-3 rounded border bg-white shadow-xs">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-bold text-dark"><i class="fas fa-gavel text-warning me-1"></i>1. Notifikasi Sidang TPP</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Kirim otomatis saat UPT mendaftarkan jadwal sidang TPP baru.</small>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="wa_notif_sidang_tpp_otomatis" id="wa_notif_sidang_tpp_otomatis" value="1"
+                                    {{ !empty($waSettings->wa_notif_sidang_tpp_otomatis) ? 'checked' : '' }} style="cursor: pointer; width: 2.6em; height: 1.3em;">
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-center pt-2 border-top">
+                            <div class="col-sm-4">
+                                <label class="form-label small fw-semibold mb-0">Tujuan Grup WhatsApp:</label>
+                            </div>
+                            <div class="col-sm-8">
+                                <select name="group_id_tpp" class="form-select form-select-sm">
+                                    <option value="">-- Gunakan Grup WhatsApp Utama / Default --</option>
+                                    @foreach($groups as $grp)
+                                        <option value="{{ $grp->group_id }}" {{ ($waSettings->group_id_tpp ?? '') == $grp->group_id ? 'selected' : '' }}>
+                                            {{ $grp->nama_grup }} ({{ Str::limit($grp->group_id, 25) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modul 2: Mutasi Narapidana -->
+                    <div class="p-3 mb-3 rounded border bg-white shadow-xs">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-bold text-dark"><i class="fas fa-exchange-alt text-info me-1"></i>2. Notifikasi Mutasi Narapidana</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Kirim otomatis saat ada usulan mutasi baru atau saat Kanwil menerbitkan persetujuan mutasi.</small>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="wa_notif_mutasi_otomatis" id="wa_notif_mutasi_otomatis" value="1"
+                                    {{ !empty($waSettings->wa_notif_mutasi_otomatis) ? 'checked' : '' }} style="cursor: pointer; width: 2.6em; height: 1.3em;">
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-center pt-2 border-top">
+                            <div class="col-sm-4">
+                                <label class="form-label small fw-semibold mb-0">Tujuan Grup WhatsApp:</label>
+                            </div>
+                            <div class="col-sm-8">
+                                <select name="group_id_mutasi" class="form-select form-select-sm">
+                                    <option value="">-- Gunakan Grup WhatsApp Utama / Default --</option>
+                                    @foreach($groups as $grp)
+                                        <option value="{{ $grp->group_id }}" {{ ($waSettings->group_id_mutasi ?? '') == $grp->group_id ? 'selected' : '' }}>
+                                            {{ $grp->nama_grup }} ({{ Str::limit($grp->group_id, 25) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-end gap-2 border-top pt-3">
                     @if(auth()->user()->canManage('wa_settings'))
                     <button type="submit" class="btn btn-primary btn-sm px-4">

@@ -96,6 +96,8 @@ class WhatsAppController extends Controller
             $waSettings = new WaSetting;
         }
 
+        WaSetting::ensureTppColumnsExist();
+
         $waSettings->gateway_name = $request->input('gateway_name', 'fonnte');
         $waSettings->api_key = trim($request->input('api_key', ''));
         $waSettings->api_url = trim($request->input('api_url', 'https://api.fonnte.com/send'));
@@ -104,6 +106,18 @@ class WhatsAppController extends Controller
         if ($request->has('jeda_kirim')) {
             $waSettings->jeda_kirim = max(1, min(30, (int) $request->input('jeda_kirim', 4)));
         }
+
+        // Otomatisasi Modul Terpusat (Sidang TPP & Mutasi Narapidana)
+        $waSettings->wa_notif_sidang_tpp_otomatis = $request->boolean('wa_notif_sidang_tpp_otomatis');
+        if ($request->has('group_id_tpp')) {
+            $waSettings->group_id_tpp = trim($request->input('group_id_tpp'));
+        }
+
+        $waSettings->wa_notif_mutasi_otomatis = $request->boolean('wa_notif_mutasi_otomatis');
+        if ($request->has('group_id_mutasi')) {
+            $waSettings->group_id_mutasi = trim($request->input('group_id_mutasi'));
+        }
+
         $waSettings->save();
 
         ActivityLog::log('setting', 'wa_gateway', 'Memperbarui konfigurasi gateway WhatsApp');

@@ -151,7 +151,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/laporan-pemindahan', [MutasiNarapidanaController::class, 'laporanPemindahanStore'])->whereNumber('id')->name('laporan-pemindahan.store');
         Route::post('/{id}/laporan-penerimaan', [MutasiNarapidanaController::class, 'laporanPenerimaanStore'])->whereNumber('id')->name('laporan-penerimaan.store');
         Route::post('/{id}/bast', [MutasiNarapidanaController::class, 'bastStore'])->whereNumber('id')->name('bast.store');
-        Route::post('/{id}/broadcast-wa', [MutasiNarapidanaController::class, 'broadcastWa'])->whereNumber('id')->name('broadcast-wa');
         Route::get('/{id}/download/{type}', [MutasiNarapidanaController::class, 'downloadFile'])->whereNumber('id')->name('download-file');
         Route::delete('/{id}', [MutasiNarapidanaController::class, 'destroy'])->whereNumber('id')->name('destroy');
     });

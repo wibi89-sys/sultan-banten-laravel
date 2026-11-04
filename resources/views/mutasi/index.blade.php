@@ -99,11 +99,6 @@
                     <small class="text-muted">Data permohonan persetujuan dan penetapan pemindahan narapidana se-Wilayah Banten</small>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    @if(auth()->user()->hasAccess('wa_settings') || auth()->user()->hasAccess('wa_schedule'))
-                    <a href="{{ route('wa.schedules') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm" title="Atur Notifikasi WhatsApp Mutasi Narapidana">
-                        <i class="fab fa-whatsapp me-1"></i>Atur Notifikasi WA
-                    </a>
-                    @endif
                     @if(auth()->user()->canManage('mutasi') && ! empty(auth()->user()->upt_id))
                     <a href="{{ route('mutasi.create') }}" class="btn btn-primary btn-sm px-3 shadow-sm">
                         <i class="fas fa-plus-circle me-1"></i> Buat Usulan Baru

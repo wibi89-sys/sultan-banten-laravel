@@ -111,9 +111,9 @@
                     <p class="text-muted small mb-0">Implementasi Bintorwasdal sesuai Surat Edaran Direktur Jenderal Pemasyarakatan No: PAS-38.OT.02.02 Tahun 2026</p>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                    @if(auth()->user()->hasAccess('wa_settings') || auth()->user()->hasAccess('wa_schedule'))
-                    <a href="{{ route('wa.schedules') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm" title="Atur Template Pesan WhatsApp Undangan Sidang TPP">
-                        <i class="fab fa-whatsapp me-1"></i>Atur Template WA
+                    @if(auth()->user()->isKanwil() && (auth()->user()->hasAccess('wa_settings') || auth()->user()->hasAccess('wa_schedule')))
+                    <a href="{{ route('wa.gateway') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm" title="Atur Pengaturan WhatsApp Utama (Khusus Kanwil)">
+                        <i class="fab fa-whatsapp me-1"></i>Pengaturan WhatsApp
                     </a>
                     @endif
                     @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id))
