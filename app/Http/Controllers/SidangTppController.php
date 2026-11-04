@@ -294,12 +294,12 @@ class SidangTppController extends Controller
 
             DB::commit();
 
-            // WhatsApp Notification Hook: Kirim Undangan Sidang TPP ke Grup WhatsApp
+            // WhatsApp Notification Hook: Kirim Undangan Sidang TPP ke Grup WhatsApp jika diaktifkan di pengaturan
             try {
-                WhatsAppService::notifyUndanganSidangTpp($sidang);
+                WhatsAppService::notifyUndanganSidangTpp($sidang, isManual: false);
             } catch (\Throwable $e) {
                 // Abaikan jika WA gateway belum terhubung
-                Log::warning('Gagal mengirim WhatsApp Undangan Sidang TPP: '.$e->getMessage());
+                Log::warning('Gagal memproses WhatsApp Undangan Sidang TPP: '.$e->getMessage());
             }
 
             return redirect()->route('sidang-tpp.index')
@@ -766,7 +766,7 @@ class SidangTppController extends Controller
         $sidang = SidangTpp::with('upt')->findOrFail($id);
 
         try {
-            $result = WhatsAppService::notifyUndanganSidangTpp($sidang);
+            $result = WhatsAppService::notifyUndanganSidangTpp($sidang, isManual: true);
             if (! empty($result['success'])) {
                 return back()->with('success', 'Notifikasi Undangan Sidang TPP berhasil dikirim ke Grup WhatsApp!');
             }

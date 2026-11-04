@@ -1139,74 +1139,128 @@ class WhatsAppService
         ];
     }
 
-    public static function notifyNewMutasiUsulan(MutasiNarapidana $mutasi): array
+    public static function notifyNewMutasiUsulan(MutasiNarapidana $mutasi, bool $isManual = false): array
     {
         try {
-            $defaultGroup = WaGroup::where('aktif', true)->where('is_default', true)->first()
-                ?? WaGroup::where('aktif', true)->first();
+            $setting = WaSetting::getFirst();
+            if (! $isManual && empty($setting?->wa_notif_mutasi_otomatis)) {
+                Log::info("Notifikasi WhatsApp Usulan Mutasi #{$mutasi->id} diabaikan karena fitur otomatis dinonaktifkan.");
 
-            if (! $defaultGroup || empty($defaultGroup->group_id)) {
-                return ['success' => false, 'message' => 'Grup WhatsApp aktif tidak ditemukan'];
+                return ['success' => false, 'message' => 'Pengiriman otomatis notifikasi Usulan Mutasi sedang dinonaktifkan dalam pengaturan.'];
             }
+
+            $template = (! empty($setting?->template_mutasi_usulan))
+                ? $setting->template_mutasi_usulan
+                : self::getDefaultMutasiUsulanTemplate();
 
             $uptAsal = $mutasi->uptAsal?->nama_upt ?? 'UPT Pemohon';
             $tglSurat = $mutasi->tanggal_surat ? $mutasi->tanggal_surat->format('d/m/Y') : '-';
 
-            $msg = "📬 *USULAN MUTASI NARAPIDANA BARU*\n\n";
-            $msg .= "UPT Pemohon: *{$uptAsal}*\n";
-            $msg .= "No. Surat: {$mutasi->nomor_surat}\n";
-            $msg .= "Tanggal Surat: {$tglSurat}\n";
-            $msg .= "Kategori: *{$mutasi->kategori_mutasi}*\n\n";
-            $msg .= "👥 *Rincian Jumlah Narapidana Diusulkan:*\n";
-            $msg .= "• Narkotika: {$mutasi->jumlah_narkotika} orang\n";
-            $msg .= "• Pidana Umum: {$mutasi->jumlah_pidum} orang\n";
-            $msg .= "• Korupsi (Tipikor): {$mutasi->jumlah_korupsi} orang\n";
-            $msg .= "👉 *Total Usulan: {$mutasi->total_usulan} orang*\n\n";
-            if ($mutasi->keterangan) {
-                $msg .= "Keterangan: {$mutasi->keterangan}\n\n";
-            }
-            $msg .= "_Mohon kesediaan Tim Kanwil Kemenkumham Banten untuk menelaah berkas persyaratan dan menetapkan UPT Tujuan._\n";
-            $msg .= '_Sultan Banten Ditjenpas_';
+            $replacements = [
+                '{upt_asal}' => $uptAsal,
+                '{nomor_surat}' => $mutasi->nomor_surat,
+                '{tanggal_surat}' => $tglSurat,
+                '{kategori_mutasi}' => $mutasi->kategori_mutasi,
+                '{jumlah_narkotika}' => (string) ($mutasi->jumlah_narkotika ?? 0),
+                '{jumlah_pidum}' => (string) ($mutasi->jumlah_pidum ?? 0),
+                '{jumlah_korupsi}' => (string) ($mutasi->jumlah_korupsi ?? 0),
+                '{total_usulan}' => (string) ($mutasi->total_usulan ?? 0),
+                '{keterangan}' => $mutasi->keterangan ?: '-',
+                '{link_detail}' => url('/mutasi/'.$mutasi->id),
+            ];
 
-            return self::send($defaultGroup->group_id, $msg);
+            $message = str_replace(array_keys($replacements), array_values($replacements), $template);
+            $targetGroupId = $setting?->group_id_mutasi ?: null;
+
+            return self::sendToDefaultGroup($message, $targetGroupId);
         } catch (\Throwable $e) {
+            Log::error('Gagal mengirim WhatsApp Usulan Mutasi: '.$e->getMessage());
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
-    public static function notifyMutasiDisetujui(MutasiNarapidana $mutasi): array
+    public static function notifyMutasiDisetujui(MutasiNarapidana $mutasi, bool $isManual = false): array
     {
         try {
-            $defaultGroup = WaGroup::where('aktif', true)->where('is_default', true)->first()
-                ?? WaGroup::where('aktif', true)->first();
+            $setting = WaSetting::getFirst();
+            if (! $isManual && empty($setting?->wa_notif_mutasi_otomatis)) {
+                Log::info("Notifikasi WhatsApp Persetujuan Mutasi #{$mutasi->id} diabaikan karena fitur otomatis dinonaktifkan.");
 
-            if (! $defaultGroup || empty($defaultGroup->group_id)) {
-                return ['success' => false, 'message' => 'Grup WhatsApp aktif tidak ditemukan'];
+                return ['success' => false, 'message' => 'Pengiriman otomatis notifikasi Persetujuan Mutasi sedang dinonaktifkan dalam pengaturan.'];
             }
+
+            $template = (! empty($setting?->template_mutasi_disetujui))
+                ? $setting->template_mutasi_disetujui
+                : self::getDefaultMutasiDisetujuiTemplate();
 
             $uptAsal = $mutasi->uptAsal?->nama_upt ?? 'UPT Pemohon';
-            $uptTujuan = $mutasi->uptTujuan?->nama_upt ?? 'UPT Tujuan';
+            $uptTujuan = (! empty($mutasi->daftar_tujuan_text) && $mutasi->daftar_tujuan_text !== '-')
+                ? $mutasi->daftar_tujuan_text
+                : ($mutasi->uptTujuan?->nama_upt ?? 'UPT Tujuan');
             $tglSuratKanwil = $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('d/m/Y') : date('d/m/Y');
 
-            $msg = "✅ *SURAT PERSETUJUAN MUTASI KANWIL TERBIT*\n\n";
-            $msg .= "UPT Pemohon: *{$uptAsal}*\n";
-            $msg .= "UPT Penerima Ditunjuk: *{$uptTujuan}*\n";
-            $msg .= "No. Surat Kanwil: {$mutasi->nomor_surat_kanwil}\n";
-            $msg .= "Tanggal: {$tglSuratKanwil}\n\n";
-            $msg .= "👥 *Total WBP Disetujui: {$mutasi->total_disetujui} orang*\n";
-            $msg .= "• Narkotika: {$mutasi->jumlah_disetujui_narkotika} orang\n";
-            $msg .= "• Pidana Umum: {$mutasi->jumlah_disetujui_pidum} orang\n";
-            $msg .= "• Korupsi: {$mutasi->jumlah_disetujui_korupsi} orang\n\n";
-            if ($mutasi->catatan_kanwil) {
-                $msg .= "Catatan Kanwil: {$mutasi->catatan_kanwil}\n\n";
-            }
-            $msg .= "_Surat Persetujuan resmi sudah dapat diunduh di aplikasi Sultan Banten oleh UPT Pemohon dan UPT Penerima._\n";
-            $msg .= '_Sultan Banten Ditjenpas_';
+            $replacements = [
+                '{upt_asal}' => $uptAsal,
+                '{upt_tujuan}' => $uptTujuan,
+                '{nomor_surat_kanwil}' => $mutasi->nomor_surat_kanwil ?: '-',
+                '{tanggal_kanwil}' => $tglSuratKanwil,
+                '{total_disetujui}' => (string) ($mutasi->total_disetujui ?? 0),
+                '{jumlah_disetujui_narkotika}' => (string) ($mutasi->jumlah_disetujui_narkotika ?? 0),
+                '{jumlah_disetujui_pidum}' => (string) ($mutasi->jumlah_disetujui_pidum ?? 0),
+                '{jumlah_disetujui_korupsi}' => (string) ($mutasi->jumlah_disetujui_korupsi ?? 0),
+                '{catatan_kanwil}' => $mutasi->catatan_kanwil ?: '-',
+                '{link_detail}' => url('/mutasi/'.$mutasi->id),
+            ];
 
-            return self::send($defaultGroup->group_id, $msg);
+            $message = str_replace(array_keys($replacements), array_values($replacements), $template);
+            $targetGroupId = $setting?->group_id_mutasi ?: null;
+
+            return self::sendToDefaultGroup($message, $targetGroupId);
         } catch (\Throwable $e) {
+            Log::error('Gagal mengirim WhatsApp Persetujuan Mutasi: '.$e->getMessage());
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    public static function getDefaultMutasiUsulanTemplate(): string
+    {
+        return "📬 *USULAN MUTASI NARAPIDANA BARU*\n\n".
+            "UPT Pemohon: *{upt_asal}*\n".
+            "No. Surat: {nomor_surat}\n".
+            "Tanggal Surat: {tanggal_surat}\n".
+            "Kategori: *{kategori_mutasi}*\n\n".
+            "👥 *Rincian Jumlah Narapidana Diusulkan:*\n".
+            "• Narkotika: {jumlah_narkotika} orang\n".
+            "• Pidana Umum: {jumlah_pidum} orang\n".
+            "• Korupsi (Tipikor): {jumlah_korupsi} orang\n".
+            "👉 *Total Usulan: {total_usulan} orang*\n\n".
+            "Catatan/Keterangan: {keterangan}\n\n".
+            "🔗 *Detail Berkas & Verifikasi:*\n".
+            "👉 {link_detail}\n\n".
+            "_Mohon kesediaan Tim Kanwil Kemenkumham Banten untuk menelaah berkas persyaratan dan menetapkan UPT Tujuan._\n".
+            "━━━━━━━━━━━━━━━━━━━━━━\n".
+            '_SULTAN BANTEN - Sistem Monitoring Bintorwasdal_';
+    }
+
+    public static function getDefaultMutasiDisetujuiTemplate(): string
+    {
+        return "✅ *SURAT PERSETUJUAN MUTASI KANWIL TERBIT*\n\n".
+            "UPT Pemohon: *{upt_asal}*\n".
+            "UPT Penerima Ditunjuk: *{upt_tujuan}*\n".
+            "No. Surat Kanwil: {nomor_surat_kanwil}\n".
+            "Tanggal: {tanggal_kanwil}\n\n".
+            "👥 *Total WBP Disetujui: {total_disetujui} orang*\n".
+            "• Narkotika: {jumlah_disetujui_narkotika} orang\n".
+            "• Pidana Umum: {jumlah_disetujui_pidum} orang\n".
+            "• Korupsi: {jumlah_disetujui_korupsi} orang\n\n".
+            "Catatan Kanwil: {catatan_kanwil}\n\n".
+            "🔗 *Detail Surat & Pelaksanaan Pemindahan:*\n".
+            "👉 {link_detail}\n\n".
+            "_Surat Persetujuan resmi sudah dapat diunduh di aplikasi Sultan Banten oleh UPT Pemohon dan UPT Penerima._\n".
+            "━━━━━━━━━━━━━━━━━━━━━━\n".
+            '_SULTAN BANTEN - Sistem Monitoring Bintorwasdal_';
     }
 
     public static function getDefaultSidangTppTemplate(): string
@@ -1250,10 +1304,16 @@ class WhatsAppService
         }
     }
 
-    public static function notifyUndanganSidangTpp(SidangTpp $sidang): array
+    public static function notifyUndanganSidangTpp(SidangTpp $sidang, bool $isManual = false): array
     {
         try {
             $setting = WaSetting::getFirst();
+            if (! $isManual && empty($setting?->wa_notif_sidang_tpp_otomatis)) {
+                Log::info("Notifikasi WhatsApp Sidang TPP #{$sidang->id} diabaikan karena fitur otomatis dinonaktifkan.");
+
+                return ['success' => false, 'message' => 'Pengiriman otomatis notifikasi Sidang TPP sedang dinonaktifkan dalam pengaturan.'];
+            }
+
             $template = (! empty($setting?->template_sidang_tpp))
                 ? $setting->template_sidang_tpp
                 : self::getDefaultSidangTppTemplate();

@@ -417,8 +417,20 @@ class WhatsAppController extends Controller
         $variables = WhatsAppService::getTemplateVariables();
         $defaultTemplate = WhatsAppService::getDefaultTemplate();
         $defaultTppTemplate = WhatsAppService::getDefaultSidangTppTemplate();
+        $defaultMutasiUsulanTemplate = WhatsAppService::getDefaultMutasiUsulanTemplate();
+        $defaultMutasiDisetujuiTemplate = WhatsAppService::getDefaultMutasiDisetujuiTemplate();
 
-        return view('wa.schedules', compact('schedules', 'waSettings', 'groups', 'variables', 'groupedVariables', 'defaultTemplate', 'defaultTppTemplate'));
+        return view('wa.schedules', compact(
+            'schedules',
+            'waSettings',
+            'groups',
+            'variables',
+            'groupedVariables',
+            'defaultTemplate',
+            'defaultTppTemplate',
+            'defaultMutasiUsulanTemplate',
+            'defaultMutasiDisetujuiTemplate'
+        ));
     }
 
     public function scheduleIndex()
@@ -465,6 +477,9 @@ class WhatsAppController extends Controller
         if ($type === 'sidang_tpp') {
             WaSetting::ensureTppColumnsExist();
 
+            if (Schema::hasColumn('wa_settings', 'wa_notif_sidang_tpp_otomatis')) {
+                $setting->wa_notif_sidang_tpp_otomatis = $request->boolean('wa_notif_sidang_tpp_otomatis');
+            }
             if (Schema::hasColumn('wa_settings', 'template_sidang_tpp')) {
                 $setting->template_sidang_tpp = $request->input('template_sidang_tpp', '');
             }
@@ -472,9 +487,30 @@ class WhatsAppController extends Controller
                 $setting->group_id_tpp = trim($request->input('group_id_tpp'));
             }
             $setting->save();
-            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui template notifikasi Undangan Sidang TPP');
+            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui pengaturan notifikasi Undangan Sidang TPP');
 
-            return back()->with('success', 'Template Notifikasi Undangan Sidang TPP berhasil diperbarui!');
+            return back()->with('success', 'Pengaturan Notifikasi Undangan Sidang TPP berhasil diperbarui!');
+        }
+
+        if ($type === 'mutasi') {
+            WaSetting::ensureTppColumnsExist();
+
+            if (Schema::hasColumn('wa_settings', 'wa_notif_mutasi_otomatis')) {
+                $setting->wa_notif_mutasi_otomatis = $request->boolean('wa_notif_mutasi_otomatis');
+            }
+            if (Schema::hasColumn('wa_settings', 'group_id_mutasi') && $request->has('group_id_mutasi')) {
+                $setting->group_id_mutasi = trim($request->input('group_id_mutasi'));
+            }
+            if (Schema::hasColumn('wa_settings', 'template_mutasi_usulan')) {
+                $setting->template_mutasi_usulan = $request->input('template_mutasi_usulan', '');
+            }
+            if (Schema::hasColumn('wa_settings', 'template_mutasi_disetujui')) {
+                $setting->template_mutasi_disetujui = $request->input('template_mutasi_disetujui', '');
+            }
+            $setting->save();
+            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui pengaturan notifikasi Mutasi Narapidana');
+
+            return back()->with('success', 'Pengaturan Notifikasi Mutasi Narapidana berhasil diperbarui!');
         }
 
         return back();

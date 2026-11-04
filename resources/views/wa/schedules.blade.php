@@ -218,14 +218,35 @@
                     <h6 class="fw-bold mb-0 text-dark">
                         <i class="fas fa-gavel text-warning me-2"></i>3. Notifikasi Undangan Sidang TPP (Ke Grup WhatsApp)
                     </h6>
-                    <small class="text-muted">Template pesan WhatsApp yang otomatis dikirimkan ke grup saat UPT membuat agenda / jadwal Sidang TPP.</small>
+                    <small class="text-muted">Template dan aturan pengiriman notifikasi WhatsApp ke grup saat UPT membuat agenda / jadwal Sidang TPP.</small>
                 </div>
-                <span class="badge bg-warning-subtle text-dark border px-2 py-1"><i class="fas fa-bell me-1"></i>Otomatis Saat Sidang Didaftarkan</span>
+                @if($waSettings->wa_notif_sidang_tpp_otomatis ?? false)
+                    <span class="badge bg-success-subtle text-success border px-2 py-1"><i class="fas fa-check-circle me-1"></i>Otomatis Aktif</span>
+                @else
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1"><i class="fas fa-pause-circle me-1"></i>Otomatis Nonaktif (Hanya Manual)</span>
+                @endif
             </div>
 
             <form action="{{ route('wa.schedules.builtin.update') }}" method="POST">
                 @csrf
                 <input type="hidden" name="type" value="sidang_tpp">
+
+                <div class="row g-3 mb-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold mb-0">Pengiriman Otomatis</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" name="wa_notif_sidang_tpp_otomatis" id="switch_tpp_otomatis" value="1" {{ ($waSettings->wa_notif_sidang_tpp_otomatis ?? false) ? 'checked' : '' }} style="cursor: pointer; width: 2.5em; height: 1.3em;">
+                            <label class="form-check-label fw-bold text-dark ms-2" for="switch_tpp_otomatis" style="cursor: pointer;">
+                                Kirim Notifikasi Otomatis ke Grup saat UPT Mendaftarkan Sidang TPP
+                            </label>
+                        </div>
+                        <small class="text-muted" style="font-size: 11px;">
+                            Jika <b>nonaktif</b>, pesan WhatsApp <b>tidak akan terkirim otomatis</b> saat operator UPT menyimpan agenda sidang baru. Admin/operator tetap dapat menyiarkan undangan secara manual melalui tombol <i>"Kirim Undangan ke Grup WA"</i> di halaman detail sidang.
+                        </small>
+                    </div>
+                </div>
 
                 <div class="row g-3 mb-3 align-items-center">
                     <div class="col-md-3">
@@ -276,7 +297,144 @@
 
                 <div class="d-flex justify-content-end align-items-center pt-2 border-top">
                     <button type="submit" class="btn btn-primary btn-sm px-4 shadow-sm">
-                        <i class="fas fa-save me-1"></i>Simpan Template Sidang TPP
+                        <i class="fas fa-save me-1"></i>Simpan Pengaturan Sidang TPP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kartu 4: Notifikasi Mutasi Narapidana -->
+    <div class="col-12 mt-3">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom flex-wrap gap-2">
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-exchange-alt text-info me-2"></i>4. Notifikasi Mutasi Narapidana (Ke Grup WhatsApp)
+                    </h6>
+                    <small class="text-muted">Pengaturan pengiriman notifikasi WhatsApp ke grup saat usulan mutasi baru diajukan oleh UPT dan saat surat persetujuan mutasi diterbitkan oleh Kanwil.</small>
+                </div>
+                @if($waSettings->wa_notif_mutasi_otomatis ?? false)
+                    <span class="badge bg-success-subtle text-success border px-2 py-1"><i class="fas fa-check-circle me-1"></i>Otomatis Aktif</span>
+                @else
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1"><i class="fas fa-pause-circle me-1"></i>Otomatis Nonaktif (Hanya Manual)</span>
+                @endif
+            </div>
+
+            <form action="{{ route('wa.schedules.builtin.update') }}" method="POST">
+                @csrf
+                <input type="hidden" name="type" value="mutasi">
+
+                <div class="row g-3 mb-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold mb-0">Pengiriman Otomatis</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" name="wa_notif_mutasi_otomatis" id="switch_mutasi_otomatis" value="1" {{ ($waSettings->wa_notif_mutasi_otomatis ?? false) ? 'checked' : '' }} style="cursor: pointer; width: 2.5em; height: 1.3em;">
+                            <label class="form-check-label fw-bold text-dark ms-2" for="switch_mutasi_otomatis" style="cursor: pointer;">
+                                Kirim Notifikasi Otomatis ke Grup saat Usulan Mutasi Didaftarkan / Disetujui
+                            </label>
+                        </div>
+                        <small class="text-muted" style="font-size: 11px;">
+                            Jika <b>nonaktif</b>, pengajuan mutasi baru oleh UPT maupun penerbitan persetujuan Kanwil <b>tidak akan dikirim otomatis ke grup</b> (petugas tetap dapat mengirimkan notifikasi secara manual lewat tombol <i>"Kirim Notifikasi WA"</i> pada halaman rincian mutasi).
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold mb-0">Target Grup Tujuan</label>
+                    </div>
+                    <div class="col-md-9">
+                        <select name="group_id_mutasi" class="form-select form-select-sm">
+                            <option value="">-- Gunakan Grup WhatsApp Utama / Default --</option>
+                            @foreach($groups as $grp)
+                                <option value="{{ $grp->group_id }}" {{ ($waSettings->group_id_mutasi ?? '') == $grp->group_id ? 'selected' : '' }}>
+                                    {{ $grp->nama_grup }} ({{ Str::limit($grp->group_id, 25) }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted" style="font-size: 11px;">Pilih grup WhatsApp khusus untuk notifikasi mutasi atau biarkan default mengikuti grup utama.</small>
+                    </div>
+                </div>
+
+                <ul class="nav nav-tabs nav-tabs-sm mb-3" id="tabMutasiTemplate" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active small py-1.5 px-3 fw-semibold" id="tab-usulan-tab" data-bs-toggle="tab" data-bs-target="#tab-usulan" type="button" role="tab">
+                            <i class="fas fa-file-export me-1 text-primary"></i>1. Template Usulan Mutasi Baru
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link small py-1.5 px-3 fw-semibold" id="tab-disetujui-tab" data-bs-toggle="tab" data-bs-target="#tab-disetujui" type="button" role="tab">
+                            <i class="fas fa-stamp me-1 text-success"></i>2. Template Persetujuan Kanwil
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="tabMutasiContent">
+                    <!-- Tab 1: Template Usulan Mutasi Baru -->
+                    <div class="tab-pane fade show active" id="tab-usulan" role="tabpanel">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold mb-0 text-primary">Format Pesan: Pengajuan Usulan Mutasi Baru oleh UPT</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetMutasiUsulanTemplate()">
+                                    <i class="fas fa-undo me-1"></i>Reset ke Default
+                                </button>
+                            </div>
+                            <textarea name="template_mutasi_usulan" id="textarea_template_mutasi_usulan" class="form-control form-control-sm font-monospace" rows="8">{{ $waSettings->template_mutasi_usulan ?: $defaultMutasiUsulanTemplate }}</textarea>
+
+                            <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
+                                <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-primary"></i>Variabel Tag Tersedia:</span>
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-white text-dark border"><code>{upt_asal}</code> UPT Pemohon</span>
+                                    <span class="badge bg-white text-dark border"><code>{nomor_surat}</code> Nomor Surat</span>
+                                    <span class="badge bg-white text-dark border"><code>{tanggal_surat}</code> Tanggal Surat</span>
+                                    <span class="badge bg-white text-dark border"><code>{kategori_mutasi}</code> Kategori Mutasi</span>
+                                    <span class="badge bg-white text-dark border"><code>{jumlah_narkotika}</code> Jml Narkotika</span>
+                                    <span class="badge bg-white text-dark border"><code>{jumlah_pidum}</code> Jml Pidum</span>
+                                    <span class="badge bg-white text-dark border"><code>{jumlah_korupsi}</code> Jml Korupsi</span>
+                                    <span class="badge bg-white text-dark border"><code>{total_usulan}</code> Total Usulan</span>
+                                    <span class="badge bg-white text-dark border"><code>{keterangan}</code> Alasan/Keterangan</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_detail}</code> Link Berkas Mutasi</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Template Persetujuan Kanwil -->
+                    <div class="tab-pane fade" id="tab-disetujui" role="tabpanel">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold mb-0 text-success">Format Pesan: Penerbitan Persetujuan Mutasi oleh Kantor Wilayah</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetMutasiDisetujuiTemplate()">
+                                    <i class="fas fa-undo me-1"></i>Reset ke Default
+                                </button>
+                            </div>
+                            <textarea name="template_mutasi_disetujui" id="textarea_template_mutasi_disetujui" class="form-control form-control-sm font-monospace" rows="8">{{ $waSettings->template_mutasi_disetujui ?: $defaultMutasiDisetujuiTemplate }}</textarea>
+
+                            <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
+                                <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-success"></i>Variabel Tag Tersedia:</span>
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-white text-dark border"><code>{upt_asal}</code> UPT Pemohon</span>
+                                    <span class="badge bg-white text-dark border"><code>{upt_tujuan}</code> UPT Tujuan / Penerima</span>
+                                    <span class="badge bg-white text-dark border"><code>{nomor_surat_kanwil}</code> No. Surat Kanwil</span>
+                                    <span class="badge bg-white text-dark border"><code>{tanggal_kanwil}</code> Tanggal Surat Kanwil</span>
+                                    <span class="badge bg-white text-dark border"><code>{total_disetujui}</code> Total WBP Disetujui</span>
+                                    <span class="badge bg-white text-dark border"><code>{jumlah_disetujui_narkotika}</code> Disetujui Narkotika</span>
+                                    <span class="badge bg-white text-dark border"><code>{jumlah_disetujui_pidum}</code> Disetujui Pidum</span>
+                                    <span class="badge bg-white text-dark border"><code>{jumlah_disetujui_korupsi}</code> Disetujui Korupsi</span>
+                                    <span class="badge bg-white text-dark border"><code>{catatan_kanwil}</code> Catatan Kanwil</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_detail}</code> Link Berkas Mutasi</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center pt-2 border-top">
+                    <button type="submit" class="btn btn-primary btn-sm px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i>Simpan Pengaturan Mutasi
                     </button>
                 </div>
             </form>
@@ -289,7 +447,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2 border-bottom">
         <div>
             <h5 class="fw-bold fs-6 mb-1">
-                <i class="fas fa-calendar-alt text-primary me-2"></i>4. Jadwal Laporan Terpadu Harian &amp; Kustom
+                <i class="fas fa-calendar-alt text-primary me-2"></i>5. Jadwal Laporan Terpadu Harian &amp; Kustom
             </h5>
             <small class="text-muted">Pengiriman laporan komprehensif harian (penghuni, overstaying, integrasi, rincian bebas harian) ke grup dan pimpinan.</small>
         </div>
@@ -698,6 +856,20 @@ function resetTppTemplate() {
     if (confirm('Kembalikan template Undangan Sidang TPP ke teks bawaan sistem?')) {
         const defaultText = @json($defaultTppTemplate);
         document.getElementById('textarea_template_sidang_tpp').value = defaultText;
+    }
+}
+
+function resetMutasiUsulanTemplate() {
+    if (confirm('Kembalikan template Usulan Mutasi Baru ke teks bawaan sistem?')) {
+        const defaultText = @json($defaultMutasiUsulanTemplate);
+        document.getElementById('textarea_template_mutasi_usulan').value = defaultText;
+    }
+}
+
+function resetMutasiDisetujuiTemplate() {
+    if (confirm('Kembalikan template Persetujuan Mutasi Kanwil ke teks bawaan sistem?')) {
+        const defaultText = @json($defaultMutasiDisetujuiTemplate);
+        document.getElementById('textarea_template_mutasi_disetujui').value = defaultText;
     }
 }
 </script>

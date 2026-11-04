@@ -227,8 +227,12 @@ class MutasiNarapidanaController extends Controller
             $mutasi->toArray()
         );
 
-        // Notifikasi Otomatis ke Grup / Kanwil via WhatsApp
-        WhatsAppService::notifyNewMutasiUsulan($mutasi);
+        // Notifikasi Otomatis ke Grup / Kanwil via WhatsApp (jika diaktifkan di pengaturan)
+        try {
+            WhatsAppService::notifyNewMutasiUsulan($mutasi, isManual: false);
+        } catch (\Throwable $e) {
+            Log::warning('Gagal memproses WhatsApp Usulan Mutasi: '.$e->getMessage());
+        }
 
         return redirect()->route('mutasi.show', $mutasi->id)
             ->with('success', 'Usulan mutasi narapidana berhasil diajukan ke Kantor Wilayah.');
@@ -402,7 +406,11 @@ class MutasiNarapidanaController extends Controller
         );
 
         if ($mutasi->status === 'disetujui') {
-            WhatsAppService::notifyMutasiDisetujui($mutasi);
+            try {
+                WhatsAppService::notifyMutasiDisetujui($mutasi, isManual: false);
+            } catch (\Throwable $e) {
+                Log::warning('Gagal memproses WhatsApp Persetujuan Mutasi: '.$e->getMessage());
+            }
         }
 
         return redirect()->route('mutasi.show', $mutasi->id)
@@ -1003,6 +1011,28 @@ class MutasiNarapidanaController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    public function broadcastWa(int $id): RedirectResponse
+    {
+        $this->checkAccess();
+        $mutasi = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])->findOrFail($id);
+
+        try {
+            if ($mutasi->status === 'disetujui' || $mutasi->status === 'selesai') {
+                $result = WhatsAppService::notifyMutasiDisetujui($mutasi, isManual: true);
+            } else {
+                $result = WhatsAppService::notifyNewMutasiUsulan($mutasi, isManual: true);
+            }
+
+            if (! empty($result['success'])) {
+                return back()->with('success', 'Notifikasi WhatsApp Mutasi berhasil dikirim ke Grup WhatsApp!');
+            }
+
+            return back()->with('warning', 'Pesan tidak terkirim: '.($result['message'] ?? 'Gateway WhatsApp tidak merespons'));
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal mengirim WhatsApp: '.$e->getMessage());
+        }
     }
 
     private function handleUpload(Request $request, string $fieldName, string $prefix): ?string
