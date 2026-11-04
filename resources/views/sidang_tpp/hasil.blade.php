@@ -298,11 +298,16 @@
                         ? `<span class="badge bg-danger text-white fw-bold shadow-sm"><i class="fas fa-exclamation-triangle me-1"></i>MENARIK PERHATIAN</span>${item.catatan_perhatian ? '<br><small class="text-danger fw-semibold">' + item.catatan_perhatian + '</small>' : ''}`
                         : `<span class="badge bg-light text-muted border">Normal</span>`;
 
+                    const isMutasi = (item.jenis_usulan || '').toLowerCase().includes('mutasi') || (item.jenis_usulan || '').toLowerCase().includes('penempatan');
+                    const badgeJenis = isMutasi
+                        ? `<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>${item.jenis_usulan}</span>`
+                        : `<span class="badge bg-primary">${item.jenis_usulan || 'PB'}</span>`;
+
                     tr.innerHTML = `
                         <td class="text-center text-muted">${idx + 1}</td>
                         <td><b>${item.nama_wbp || '-'}</b><br><small class="text-muted"><code>${item.nomor_register || '-'}</code></small></td>
                         <td><small>${item.perkara_pasal || '-'}</small><br><small class="text-muted">${item.lama_pidana || ''}</small></td>
-                        <td class="text-center"><span class="badge bg-primary">${item.jenis_usulan || 'PB'}</span></td>
+                        <td class="text-center">${badgeJenis}</td>
                         <td class="text-center">${badgeAtensi}</td>
                         <td>
                             <select name="keputusan[${item.id}]" class="form-select form-select-sm keputusan-select fw-semibold">

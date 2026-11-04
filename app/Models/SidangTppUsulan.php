@@ -69,6 +69,25 @@ class SidangTppUsulan extends Model
         };
     }
 
+    public function getJenisUsulanBadgeAttribute(): string
+    {
+        $jenis = (string) ($this->jenis_usulan ?: 'PB');
+        if (str_contains(strtoupper($jenis), 'MUTASI') || str_contains(strtoupper($jenis), 'PENEMPATAN')) {
+            return '<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>Penempatan / Mutasi</span>';
+        }
+        if (strtoupper($jenis) === 'REGISTER F') {
+            return '<span class="badge bg-dark text-white"><i class="fas fa-file-contract me-1"></i>Register F</span>';
+        }
+        if (strtoupper($jenis) === 'REMISI') {
+            return '<span class="badge bg-warning text-dark"><i class="fas fa-award me-1"></i>Remisi</span>';
+        }
+        if (strtoupper($jenis) === 'ASIMILASI') {
+            return '<span class="badge bg-secondary text-white">Asimilasi</span>';
+        }
+
+        return '<span class="badge bg-primary">'.e($jenis).'</span>';
+    }
+
     public function getLitmasBadgeAttribute(): string
     {
         return match ($this->status_litmas) {

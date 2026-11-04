@@ -369,7 +369,7 @@
                         <td>{{ $u->perkara_pasal }}</td>
                         <td>{{ $u->lama_pidana }}</td>
                         <td class="text-center">{{ $u->tanggal_dua_pertiga ? $u->tanggal_dua_pertiga->format('d/m/Y') : '-' }}</td>
-                        <td class="text-center"><span class="badge bg-primary">{{ $u->jenis_usulan }}</span></td>
+                        <td class="text-center">{!! $u->jenis_usulan_badge !!}</td>
                         <td class="text-center">
                             @if($u->perlu_perhatian)
                                 <span class="badge bg-danger text-white fw-bold shadow-sm"><i class="fas fa-exclamation-circle me-1"></i>MENARIK PERHATIAN</span>
@@ -462,6 +462,7 @@
                                 <option value="CMB">CMB (Cuti Menjelang Bebas)</option>
                                 <option value="Asimilasi">Asimilasi</option>
                                 <option value="Remisi">Remisi</option>
+                                <option value="Penempatan/Mutasi">Penempatan / Mutasi</option>
                                 <option value="Register F">Register F</option>
                                 <option value="Lainnya">Lainnya</option>
                             </select>

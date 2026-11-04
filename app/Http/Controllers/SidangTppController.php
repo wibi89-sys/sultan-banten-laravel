@@ -924,6 +924,8 @@ class SidangTppController extends Controller
         $cleanJenis = strtoupper(trim((string) ($validated['jenis_usulan'] ?? '')));
         if (str_contains($cleanJenis, 'ASIMILASI')) {
             $validated['jenis_usulan'] = 'Asimilasi';
+        } elseif (str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN')) {
+            $validated['jenis_usulan'] = 'Penempatan/Mutasi';
         }
 
         $validated['perkara_pasal'] = $validated['perkara_pasal'] ?? '-';
@@ -979,6 +981,8 @@ class SidangTppController extends Controller
         $cleanJenis = strtoupper(trim((string) ($validated['jenis_usulan'] ?? '')));
         if (str_contains($cleanJenis, 'ASIMILASI')) {
             $validated['jenis_usulan'] = 'Asimilasi';
+        } elseif (str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN')) {
+            $validated['jenis_usulan'] = 'Penempatan/Mutasi';
         }
 
         $validated['perkara_pasal'] = $validated['perkara_pasal'] ?? '-';

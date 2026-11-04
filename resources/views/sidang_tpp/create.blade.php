@@ -367,6 +367,7 @@
                                 <option value="CMB">CMB (Cuti Menjelang Bebas)</option>
                                 <option value="Asimilasi">Asimilasi</option>
                                 <option value="Remisi">Remisi</option>
+                                <option value="Penempatan/Mutasi">Penempatan / Mutasi</option>
                                 <option value="Register F">Register F</option>
                                 <option value="Lainnya">Lainnya</option>
                             </select>
@@ -612,7 +613,12 @@
         document.getElementById('d_tanggal_ekspirasi').innerText = row.tanggal_ekspirasi || '-';
         document.getElementById('d_tanggal_setengah').innerText = row.tanggal_setengah_pidana || '-';
         document.getElementById('d_tanggal_dua_pertiga').innerText = row.tanggal_dua_pertiga || '-';
-        document.getElementById('d_jenis_usulan').innerText = row.jenis_usulan || 'PB';
+
+        const jenisUsulan = row.jenis_usulan || 'PB';
+        const isMutasi = jenisUsulan.toLowerCase().includes('mutasi') || jenisUsulan.toLowerCase().includes('penempatan');
+        const badgeEl = document.getElementById('d_jenis_usulan');
+        badgeEl.className = isMutasi ? 'badge bg-info text-white' : 'badge bg-primary';
+        badgeEl.innerHTML = isMutasi ? '<i class="fas fa-exchange-alt me-1"></i>' + escapeHtml(jenisUsulan) : escapeHtml(jenisUsulan);
 
         const dPerhatian = document.getElementById('d_perhatian_badge');
         if (row.perlu_perhatian) {
@@ -659,6 +665,12 @@
                 ? `<span class="badge bg-danger text-white fw-bold shadow-sm py-1 px-2"><i class="fas fa-exclamation-triangle me-1"></i>MENARIK PERHATIAN</span>`
                 : `<span class="badge bg-light text-muted border">Normal</span>`;
 
+            const jenisUsulan = row.jenis_usulan || 'PB';
+            const isMutasi = jenisUsulan.toLowerCase().includes('mutasi') || jenisUsulan.toLowerCase().includes('penempatan');
+            const badgeJenis = isMutasi
+                ? `<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>${escapeHtml(jenisUsulan)}</span>`
+                : `<span class="badge bg-primary">${escapeHtml(jenisUsulan)}</span>`;
+
             tr.innerHTML = `
                 <td class="text-center text-muted">${i + 1}</td>
                 <td class="fw-bold">${escapeHtml(row.nama_wbp)}</td>
@@ -666,7 +678,7 @@
                 <td><small>${escapeHtml(row.perkara_pasal || '-')}</small></td>
                 <td><small>${escapeHtml(row.lama_pidana || '-')}</small></td>
                 <td class="text-center"><small>${escapeHtml(row.tanggal_dua_pertiga || '-')}</small></td>
-                <td class="text-center"><span class="badge bg-primary">${escapeHtml(row.jenis_usulan || 'PB')}</span></td>
+                <td class="text-center">${badgeJenis}</td>
                 <td class="text-center">${badgePerhatian}</td>
                 <td class="text-muted small">${escapeHtml(row.catatan_perhatian || row.alasan_keterangan || '-')}</td>
                 <td class="text-center">

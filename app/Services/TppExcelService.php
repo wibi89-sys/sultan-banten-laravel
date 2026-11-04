@@ -45,7 +45,7 @@ class TppExcelService
             echo '<th>Tanggal Ekspirasi (YYYY-MM-DD)</th>';
             echo '<th>Tanggal 1/2 Pidana (YYYY-MM-DD)</th>';
             echo '<th>Tanggal 2/3 Pidana (YYYY-MM-DD)</th>';
-            echo '<th>Jenis Usulan (PB, CB, CMB, Asimilasi, Remisi, Register F, Lainnya)</th>';
+            echo '<th>Jenis Usulan (PB, CB, CMB, Asimilasi, Remisi, Penempatan/Mutasi, Register F, Lainnya)</th>';
             echo '<th style="background-color: #dc2626; color: #ffffff;">Menarik Perhatian Kanwil (Ya/Tidak)</th>';
             echo '<th>Catatan / Keterangan Khusus</th>';
             echo '</tr>';
@@ -110,6 +110,21 @@ class TppExcelService
             echo '<td class="txt" align="center">Register F</td>';
             echo '<td class="txt" align="center" style="background-color: #fee2e2; color: #991b1b; font-weight: bold;">Ya</td>';
             echo '<td class="txt">Tercatat dalam Register F pelanggaran tata tertib rutan, usulan hak integrasi tidak disetujui</td>';
+            echo '</tr>';
+
+            // Sample Row 5 - Penempatan / Mutasi
+            echo '<tr>';
+            echo '<td align="center">5</td>';
+            echo '<td class="txt">Doni Pratama bin Hartono</td>';
+            echo '<td class="txt">BI.210/2024</td>';
+            echo '<td class="txt">Narkotika Ps. 112 UU 35/2009</td>';
+            echo '<td class="txt">6 Tahun</td>';
+            echo '<td class="tgl">'.Carbon::now()->addYears(3)->format('Y-m-d').'</td>';
+            echo '<td class="tgl"></td>';
+            echo '<td class="tgl"></td>';
+            echo '<td class="txt" align="center">Penempatan/Mutasi</td>';
+            echo '<td class="txt" align="center">Tidak</td>';
+            echo '<td class="txt">Usulan mutasi pembinaan lanjutan ke Lapas Terbuka</td>';
             echo '</tr>';
 
             echo '</tbody>';
@@ -368,12 +383,13 @@ class TppExcelService
         $jenisUsulan = match (true) {
             str_contains($cleanJenis, 'REG') || str_contains($cleanJenis, 'REGISTER') => 'Register F',
             str_contains($cleanJenis, 'ASIMILASI') => 'Asimilasi',
+            str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN') => 'Penempatan/Mutasi',
             $cleanJenis === 'REMISI' => 'Remisi',
             $cleanJenis === 'CMB' => 'CMB',
             $cleanJenis === 'CB' => 'CB',
             $cleanJenis === 'PB' => 'PB',
             $cleanJenis === 'LAINNYA' => 'Lainnya',
-            default => in_array($cleanJenis, ['PB', 'CB', 'CMB', 'ASIMILASI', 'REMISI', 'REGISTER F', 'LAINNYA']) ? $jenisUsulanRaw : 'PB',
+            default => in_array($cleanJenis, ['PB', 'CB', 'CMB', 'ASIMILASI', 'REMISI', 'REGISTER F', 'PENEMPATAN/MUTASI', 'LAINNYA']) ? $jenisUsulanRaw : 'PB',
         };
 
         // Deteksi format lama (jika kolom 9 adalah angka SPPN dan ada kolom 11/12)

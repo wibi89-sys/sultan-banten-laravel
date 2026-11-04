@@ -636,13 +636,18 @@
             atensiList.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'p-2 bg-white rounded border border-danger-subtle shadow-sm small';
+                const isMutasi = (item.jenis || '').toLowerCase().includes('mutasi') || (item.jenis || '').toLowerCase().includes('penempatan');
+                const badgeJenis = isMutasi
+                    ? `<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>${escapeHtml(item.jenis)}</span>`
+                    : `<span class="badge bg-primary">${escapeHtml(item.jenis)}</span>`;
+
                 itemDiv.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="badge bg-danger text-white fw-bold"><i class="fas fa-exclamation-circle me-1"></i>MENARIK PERHATIAN</span>
-                        <span class="badge bg-primary">${item.jenis}</span>
+                        ${badgeJenis}
                     </div>
-                    <div class="fw-bold text-dark">${item.nama} <code class="text-secondary">(${item.register})</code></div>
-                    <div class="text-danger fw-semibold mt-1"><i class="fas fa-angle-right me-1"></i>Catatan: ${item.catatan}</div>
+                    <div class="fw-bold text-dark">${escapeHtml(item.nama)} <code class="text-secondary">(${escapeHtml(item.register)})</code></div>
+                    <div class="text-danger fw-semibold mt-1"><i class="fas fa-angle-right me-1"></i>Catatan: ${escapeHtml(item.catatan)}</div>
                 `;
                 atensiItems.appendChild(itemDiv);
             });
@@ -879,6 +884,12 @@
                 ? escapeHtml(u.alasan_keterangan)
                 : '<span class="text-muted fst-italic">Belum ada catatan alasan putusan UPT</span>';
 
+            // Jenis usulan badge
+            const isMutasi = (u.jenis_usulan || '').toLowerCase().includes('mutasi') || (u.jenis_usulan || '').toLowerCase().includes('penempatan');
+            const badgeJenis = isMutasi
+                ? `<span class="badge bg-info text-white px-2 py-1 fs-6"><i class="fas fa-exchange-alt me-1"></i>${escapeHtml(u.jenis_usulan)}</span>`
+                : `<span class="badge bg-primary px-2 py-1 fs-6">${escapeHtml(u.jenis_usulan)}</span>`;
+
             tr.innerHTML = `
                 <td class="text-center text-muted fw-semibold">${index + 1}</td>
                 <td>
@@ -891,7 +902,7 @@
                     </div>
                 </td>
                 <td>
-                    <span class="badge bg-primary px-2 py-1 fs-6">${escapeHtml(u.jenis_usulan)}</span>
+                    ${badgeJenis}
                     <div class="small mt-1 text-muted">SPPN: <b class="text-dark">${escapeHtml(u.skor_sppn)}</b></div>
                     <div class="d-flex flex-wrap gap-1 mt-1">
                         ${litmasBadge}

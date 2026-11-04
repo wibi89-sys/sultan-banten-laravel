@@ -51,4 +51,35 @@ class TppExcelServiceTest extends TestCase
 
         @unlink($tempFile);
     }
+
+    public function test_parse_csv_content_with_penempatan_mutasi(): void
+    {
+        $csvContent = "No;Nama WBP;Nomor Register;Perkara;Lama Pidana;Ekspirasi;1/2 Pidana;2/3 Pidana;Usulan;Menarik Perhatian Kanwil;Keterangan\n";
+        $csvContent .= "1;Doni Pratama;BI.210/2026;Narkotika;6 Tahun;2029-01-01;;;Penempatan / Mutasi;Tidak;Mutasi ke Lapas Terbuka\n";
+        $csvContent .= "2;Eko Wahyudi;BI.211/2026;Pencurian;3 Tahun;2028-05-01;;;Mutasi;Tidak;Pemindahan pembinaan lanjutan\n";
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'tpp_test_mutasi_').'.csv';
+        file_put_contents($tempFile, $csvContent);
+
+        $reflection = new \ReflectionClass(TppExcelService::class);
+        $method = $reflection->getMethod('parseCsv');
+        $method->setAccessible(true);
+
+        $result = $method->invoke(null, $tempFile);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(2, $result['total']);
+
+        $row1 = $result['data'][0];
+        $this->assertEquals('Doni Pratama', $row1['nama_wbp']);
+        $this->assertEquals('Penempatan/Mutasi', $row1['jenis_usulan']);
+        $this->assertNull($row1['tanggal_setengah_pidana']);
+        $this->assertNull($row1['tanggal_dua_pertiga']);
+
+        $row2 = $result['data'][1];
+        $this->assertEquals('Eko Wahyudi', $row2['nama_wbp']);
+        $this->assertEquals('Penempatan/Mutasi', $row2['jenis_usulan']);
+
+        @unlink($tempFile);
+    }
 }
