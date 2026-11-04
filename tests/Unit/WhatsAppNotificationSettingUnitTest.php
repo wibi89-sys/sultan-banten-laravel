@@ -27,3 +27,4 @@ class WhatsAppNotificationSettingUnitTest extends TestCase
         $this->assertStringContainsString('{total_disetujui}', $mutasiDisetujuiTemplate);
     }
 }
+
