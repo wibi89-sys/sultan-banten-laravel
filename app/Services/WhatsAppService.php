@@ -1325,7 +1325,7 @@ class WhatsAppService
             $agenda = $sidang->agenda_sidang ?: ($sidang->agenda_deskripsi ?: ($sidang->agenda_kategori ?? 'Sidang TPP'));
 
             $linkSurat = ! empty($sidang->file_undangan)
-                ? url('/sidang-tpp/'.$sidang->id.'/download/undangan')
+                ? route('sidang-tpp.public-undangan', $sidang->id)
                 : '(Menyusul / Belum diunggah)';
 
             $linkDaring = $sidang->link_daring ?: '-';

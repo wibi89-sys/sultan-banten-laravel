@@ -30,6 +30,10 @@ Route::get('/offline', function () {
     return response()->file(public_path('offline.html'));
 })->name('pwa.offline');
 
+// Public Link Surat Undangan TPP (Dapat dibuka langsung tanpa login untuk pesan WhatsApp & anggota TPP)
+Route::get('/undangan-tpp/{id}', [SidangTppController::class, 'publicUndangan'])->whereNumber('id')->name('sidang-tpp.public-undangan');
+Route::get('/tpp/undangan/{id}', [SidangTppController::class, 'publicUndangan'])->whereNumber('id');
+
 // Public Cron WhatsApp endpoint with throttle & secure key check
 Route::get('/cron-wa', function (Request $request) {
     $secretKey = env('CRON_SECRET_KEY', 'ditjenpas_banten_2026_secret');

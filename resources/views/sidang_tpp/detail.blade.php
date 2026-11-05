@@ -177,13 +177,19 @@
                             <td class="text-muted">Berkas Undangan (PDF)</td>
                             <td>: 
                                 @if(!empty($sidang->file_undangan))
-                                <div class="d-inline-flex align-items-center gap-1">
-                                    <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'undangan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-0 px-2 fw-semibold">
+                                <div class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <a href="{{ route('sidang-tpp.public-undangan', $sidang->id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-0 px-2 fw-semibold" title="Buka Surat Undangan di Tab Baru (Tanpa Login)">
                                         <i class="fas fa-external-link-alt me-1"></i>Lihat Undangan
                                     </a>
-                                    <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'undangan']) }}" class="btn btn-light btn-sm py-0 px-1.5 border" title="Unduh File Asli">
+                                    <a href="{{ route('sidang-tpp.public-undangan', ['id' => $sidang->id, 'download' => 1]) }}" class="btn btn-light btn-sm py-0 px-1.5 border" title="Unduh File Asli">
                                         <i class="fas fa-download text-muted"></i>
                                     </a>
+                                    <button type="button" class="btn btn-outline-success btn-sm py-0 px-2 fw-semibold" onclick="copyPublicUndanganLink('{{ route('sidang-tpp.public-undangan', $sidang->id) }}')" title="Salin tautan publik yang dapat dibuka siapa saja tanpa login">
+                                        <i class="fas fa-share-alt me-1"></i>Salin Link Publik
+                                    </button>
+                                </div>
+                                <div class="mt-1 small text-muted">
+                                    <i class="fas fa-globe text-success me-1"></i>Link publik: <a href="{{ route('sidang-tpp.public-undangan', $sidang->id) }}" target="_blank" class="text-decoration-none font-monospace">{{ route('sidang-tpp.public-undangan', $sidang->id) }}</a> <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Bisa Dibuka Tanpa Login</span>
                                 </div>
                                 @else
                                 <span class="text-muted small">Tidak ada lampiran PDF</span>
@@ -541,4 +547,30 @@
 </script>
 @endpush
 @endif
+
+@push('scripts')
+<script>
+    function copyPublicUndanganLink(url) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(url).then(function() {
+                alert('Tautan Surat Undangan Publik berhasil disalin:\n' + url + '\n\nTautan ini dapat langsung dibuka oleh siapa saja tanpa harus login.');
+            }).catch(function() {
+                fallbackCopyPublic(url);
+            });
+        } else {
+            fallbackCopyPublic(url);
+        }
+    }
+
+    function fallbackCopyPublic(url) {
+        const tempInput = document.createElement('input');
+        tempInput.value = url;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        alert('Tautan Surat Undangan Publik berhasil disalin:\n' + url + '\n\nTautan ini dapat langsung dibuka oleh siapa saja tanpa harus login.');
+    }
+</script>
+@endpush
 @endsection

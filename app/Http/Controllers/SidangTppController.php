@@ -12,6 +12,7 @@ use App\Services\WhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
@@ -755,6 +756,42 @@ class SidangTppController extends Controller
         }
 
         return response()->download($fullPath, $downloadName);
+    }
+
+    /**
+     * Akses Publik: Buka / Unduh Berkas Surat Undangan Sidang TPP tanpa harus login.
+     * Digunakan untuk tautan di notifikasi WhatsApp dan berbagi berkas ke anggota sidang.
+     */
+    public function publicUndangan(Request $request, int $id): Response|BinaryFileResponse
+    {
+        $sidang = SidangTpp::with('upt')->findOrFail($id);
+
+        $relativePath = $sidang->file_undangan;
+        $fullPath = ! empty($relativePath) ? public_path($relativePath) : null;
+
+        if (empty($fullPath) || ! File::exists($fullPath)) {
+            return response()->view('sidang_tpp.public_undangan_empty', [
+                'sidang' => $sidang,
+            ], 404);
+        }
+
+        $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION) ?: 'pdf');
+        $cleanUpt = preg_replace('/[^a-zA-Z0-9_-]/', '_', $sidang->upt?->nama_upt ?? 'UPT');
+        $cleanNomor = preg_replace('/[^a-zA-Z0-9_-]/', '_', $sidang->nomor_undangan ?: 'undangan');
+        $downloadName = "Undangan_TPP_{$cleanUpt}_{$cleanNomor}.{$extension}";
+
+        if ($request->boolean('download')) {
+            return response()->download($fullPath, $downloadName);
+        }
+
+        $mimeType = File::mimeType($fullPath) ?: 'application/pdf';
+
+        return response()->file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => "inline; filename=\"{$downloadName}\"",
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Cache-Control' => 'public, max-age=3600',
+        ]);
     }
 
     /**
