@@ -14,6 +14,9 @@
 @section('content')
 <div class="content-wrapper">
 
+    <!-- In-App Notification Mutasi untuk Operator UPT -->
+    @include('mutasi.partials.in_app_banner')
+
     <!-- Executive Glass Filter Bar -->
     <div class="exec-filter-bar mb-3">
         <form method="GET" action="{{ route('dashboard') }}" class="row g-2 align-items-center">

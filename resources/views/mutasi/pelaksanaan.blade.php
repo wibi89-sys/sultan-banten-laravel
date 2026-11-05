@@ -46,6 +46,9 @@
         </div>
     </div>
 
+    <!-- In-App Notification Mutasi untuk Operator UPT -->
+    @include('mutasi.partials.in_app_banner')
+
     <!-- Quick Stats Cards -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md">
@@ -223,8 +226,8 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-primary btn-sm px-2.5 shadow-sm" title="Buka Detail & Unggah Dokumen">
-                                    <i class="fas fa-folder-open me-1"></i> Buka / Unggah
+                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-primary btn-sm px-2.5 shadow-sm" title="{{ auth()->user()->isKanwil() ? 'Pantau Dokumen Mutasi' : 'Buka Detail & Unggah Dokumen' }}">
+                                    <i class="fas {{ auth()->user()->isKanwil() ? 'fa-eye' : 'fa-folder-open' }} me-1"></i> {{ auth()->user()->isKanwil() ? 'Pantau Dokumen' : 'Buka / Unggah' }}
                                 </a>
                             </td>
                         </tr>

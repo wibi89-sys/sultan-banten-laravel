@@ -428,9 +428,13 @@ class MutasiNarapidanaController extends Controller
             return back()->with('error', 'Laporan Pemindahan hanya dapat diunggah setelah ada persetujuan Kanwil.');
         }
 
-        // Hanya UPT Pengusul atau Admin
-        if ($user->isOperator() && $user->upt_id && (int) $user->upt_id !== (int) $mutasi->upt_asal_id) {
-            abort(403, 'Hanya UPT Pengusul yang berhak mengunggah Laporan Pemindahan.');
+        // Kewajiban operasional UPT Pengirim: Kanwil dilarang mengunggah
+        if ($user->isKanwil() || empty($user->upt_id)) {
+            abort(403, 'Akses ditolak. Pengunggahan Laporan Pemindahan/Pengawalan merupakan kewajiban operasional UPT Pengirim ('.($mutasi->uptAsal?->nama_upt ?? 'UPT Pengirim').'). Akun Kantor Wilayah hanya bertugas memantau.');
+        }
+
+        if ((int) $user->upt_id !== (int) $mutasi->upt_asal_id) {
+            abort(403, 'Hanya UPT Pengirim ('.($mutasi->uptAsal?->nama_upt ?? 'UPT Pengirim').') yang berhak mengunggah Laporan Pemindahan.');
         }
 
         $validated = $request->validate([
@@ -510,13 +514,18 @@ class MutasiNarapidanaController extends Controller
             $tujuan = $mutasi->tujuans->first();
         }
 
-        // Hak akses: hanya UPT Penerima terkait atau Admin/Kanwil
-        if ($user->isOperator() && $user->upt_id) {
-            $userUptId = (int) $user->upt_id;
-            $isTarget = ($tujuan && (int) $tujuan->upt_tujuan_id === $userUptId) || (int) $mutasi->upt_tujuan_id === $userUptId;
-            if (! $isTarget) {
-                abort(403, 'Hanya UPT Penerima yang berhak mengunggah Laporan Penerimaan.');
-            }
+        // Kewajiban operasional UPT Penerima: Kanwil dilarang mengunggah
+        if ($user->isKanwil() || empty($user->upt_id)) {
+            abort(403, 'Akses ditolak. Pengunggahan Laporan Penerimaan merupakan kewajiban operasional UPT Penerima. Akun Kantor Wilayah hanya bertugas memantau.');
+        }
+
+        $userUptId = (int) $user->upt_id;
+        $isTarget = ($tujuan && (int) $tujuan->upt_tujuan_id === $userUptId)
+            || ((int) $mutasi->upt_tujuan_id === $userUptId)
+            || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId);
+
+        if (! $isTarget) {
+            abort(403, 'Hanya UPT Penerima terkait yang berhak mengunggah Laporan Penerimaan.');
         }
 
         $validated = $request->validate([
@@ -587,17 +596,19 @@ class MutasiNarapidanaController extends Controller
             $tujuan = $mutasi->tujuans->first();
         }
 
-        // Validasi hak akses
-        if ($user->isOperator() && $user->upt_id) {
-            $userUptId = (int) $user->upt_id;
-            $allowed = ($userUptId === (int) $mutasi->upt_asal_id)
-                || ($tujuan && $userUptId === (int) $tujuan->upt_tujuan_id)
-                || ($userUptId === (int) $mutasi->upt_tujuan_id)
-                || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId);
+        // Kewajiban bersama UPT Pengirim dan UPT Penerima: Kanwil dilarang mengunggah BAST fisik
+        if ($user->isKanwil() || empty($user->upt_id)) {
+            abort(403, 'Akses ditolak. Pengunggahan scan Berita Acara Serah Terima (BAST) fisik merupakan kewajiban operasional bersama UPT Pengirim dan UPT Penerima. Akun Kantor Wilayah hanya bertugas memantau.');
+        }
 
-            if (! $allowed) {
-                abort(403, 'Anda tidak berhak mengunggah BAST untuk rute mutasi ini.');
-            }
+        $userUptId = (int) $user->upt_id;
+        $isPengirim = $userUptId === (int) $mutasi->upt_asal_id;
+        $isPenerima = ($tujuan && $userUptId === (int) $tujuan->upt_tujuan_id)
+            || ($userUptId === (int) $mutasi->upt_tujuan_id)
+            || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId);
+
+        if (! $isPengirim && ! $isPenerima) {
+            abort(403, 'Hanya UPT Pengirim atau UPT Penerima terkait yang berhak mengunggah Berita Acara Serah Terima (BAST).');
         }
 
         $validated = $request->validate([
@@ -642,15 +653,16 @@ class MutasiNarapidanaController extends Controller
 
         $mutasi->update($update);
 
+        $roleText = $isPengirim ? 'UPT Pengirim' : 'UPT Penerima';
         ActivityLog::log(
             'selesai',
             'mutasi',
-            "Mengunggah BAST pemindahan mutasi No: {$mutasi->nomor_surat}".($tujuan ? " (Rute: {$tujuan->uptTujuan?->nama_upt})" : '').' - Status: Selesai',
+            "Mengunggah BAST pemindahan mutasi No: {$mutasi->nomor_surat} oleh {$roleText} ({$user->upt?->nama_upt})".($tujuan ? " (Rute: {$tujuan->uptTujuan?->nama_upt})" : '').' - Tersinkronisasi Selesai',
             $mutasi->toArray()
         );
 
         return redirect()->route('mutasi.show', $mutasi->id)
-            ->with('success', 'Berita Acara Serah Terima (BAST) berhasil diunggah.');
+            ->with('success', 'Berita Acara Serah Terima (BAST) berhasil diunggah oleh '.$roleText.' dan tersinkronisasi untuk kedua belah pihak.');
     }
 
     public function downloadFile(Request $request, int $id, string $type): BinaryFileResponse

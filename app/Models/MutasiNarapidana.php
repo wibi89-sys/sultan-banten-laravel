@@ -205,4 +205,111 @@ class MutasiNarapidana extends Model
 
         return ! empty($this->file_bast) || $this->tujuans->contains(fn ($t) => $t->hasBast());
     }
+
+    /**
+     * Mengambil daftar tugas mutasi yang masih tertunda untuk UPT tertentu.
+     * Mengelompokkan menjadi: Laporan Pemindahan (Pengirim), Laporan Penerimaan (Penerima), dan BAST (Keduanya).
+     *
+     * @return array{laporan_pemindahan: array, laporan_penerimaan: array, bast: array, total: int}
+     */
+    public static function getPendingTasksForUpt(int $uptId): array
+    {
+        $mutasis = self::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
+            ->where('status', 'disetujui')
+            ->where(function ($q) use ($uptId) {
+                $q->where('upt_asal_id', $uptId)
+                    ->orWhere('upt_tujuan_id', $uptId)
+                    ->orWhereHas('tujuans', function ($tq) use ($uptId) {
+                        $tq->where('upt_tujuan_id', $uptId);
+                    });
+            })
+            ->orderByDesc('tanggal_surat_kanwil')
+            ->orderByDesc('id')
+            ->get();
+
+        $tasks = [
+            'laporan_pemindahan' => [],
+            'laporan_penerimaan' => [],
+            'bast' => [],
+            'total' => 0,
+        ];
+
+        foreach ($mutasis as $mutasi) {
+            $isPengirim = (int) $mutasi->upt_asal_id === $uptId;
+
+            if ($mutasi->tujuans->isNotEmpty()) {
+                foreach ($mutasi->tujuans as $tujuan) {
+                    $isTarget = (int) $tujuan->upt_tujuan_id === $uptId;
+
+                    // 1. Laporan Pemindahan: Khusus UPT Pengirim
+                    if ($isPengirim && empty($tujuan->file_laporan_pemindahan)) {
+                        $tasks['laporan_pemindahan'][] = [
+                            'mutasi' => $mutasi,
+                            'tujuan' => $tujuan,
+                            'nama_tujuan' => $tujuan->uptTujuan?->nama_upt ?? 'UPT Tujuan',
+                            'total_wbp' => $tujuan->total_disetujui,
+                        ];
+                    }
+
+                    // 2. Laporan Penerimaan: Khusus UPT Penerima
+                    if ($isTarget && empty($tujuan->file_laporan_penerimaan)) {
+                        $tasks['laporan_penerimaan'][] = [
+                            'mutasi' => $mutasi,
+                            'tujuan' => $tujuan,
+                            'nama_pengirim' => $mutasi->uptAsal?->nama_upt ?? 'UPT Pengirim',
+                            'total_wbp' => $tujuan->total_disetujui,
+                        ];
+                    }
+
+                    // 3. BAST Bersama: Dapat diunggah oleh Pengirim maupun Penerima
+                    if (($isPengirim || $isTarget) && empty($tujuan->file_bast)) {
+                        $tasks['bast'][] = [
+                            'mutasi' => $mutasi,
+                            'tujuan' => $tujuan,
+                            'role' => $isPengirim ? 'pengirim' : 'penerima',
+                            'mitra_upt' => $isPengirim ? ($tujuan->uptTujuan?->nama_upt ?? 'UPT Tujuan') : ($mutasi->uptAsal?->nama_upt ?? 'UPT Pengirim'),
+                            'total_wbp' => $tujuan->total_disetujui,
+                        ];
+                    }
+                }
+            } else {
+                $isTarget = (int) $mutasi->upt_tujuan_id === $uptId;
+
+                // 1. Laporan Pemindahan (Single UPT)
+                if ($isPengirim && empty($mutasi->file_laporan_pemindahan)) {
+                    $tasks['laporan_pemindahan'][] = [
+                        'mutasi' => $mutasi,
+                        'tujuan' => null,
+                        'nama_tujuan' => $mutasi->uptTujuan?->nama_upt ?? 'UPT Tujuan',
+                        'total_wbp' => $mutasi->total_disetujui,
+                    ];
+                }
+
+                // 2. Laporan Penerimaan (Single UPT)
+                if ($isTarget && empty($mutasi->file_laporan_penerimaan)) {
+                    $tasks['laporan_penerimaan'][] = [
+                        'mutasi' => $mutasi,
+                        'tujuan' => null,
+                        'nama_pengirim' => $mutasi->uptAsal?->nama_upt ?? 'UPT Pengirim',
+                        'total_wbp' => $mutasi->total_disetujui,
+                    ];
+                }
+
+                // 3. BAST (Single UPT)
+                if (($isPengirim || $isTarget) && empty($mutasi->file_bast)) {
+                    $tasks['bast'][] = [
+                        'mutasi' => $mutasi,
+                        'tujuan' => null,
+                        'role' => $isPengirim ? 'pengirim' : 'penerima',
+                        'mitra_upt' => $isPengirim ? ($mutasi->uptTujuan?->nama_upt ?? 'UPT Tujuan') : ($mutasi->uptAsal?->nama_upt ?? 'UPT Pengirim'),
+                        'total_wbp' => $mutasi->total_disetujui,
+                    ];
+                }
+            }
+        }
+
+        $tasks['total'] = count($tasks['laporan_pemindahan']) + count($tasks['laporan_penerimaan']) + count($tasks['bast']);
+
+        return $tasks;
+    }
 }

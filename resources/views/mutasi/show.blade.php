@@ -301,18 +301,26 @@
         <div class="col-lg-5">
             @php
                 $userUptId = auth()->user()->upt_id !== null ? (int) auth()->user()->upt_id : null;
-                $isKanwilOrAdmin = auth()->user()->isAdmin() || empty(auth()->user()->upt_id);
-                $isPengusul = $userUptId !== null && $userUptId === (int) $mutasi->upt_asal_id;
-                $isPenerima = $userUptId !== null && ($userUptId === (int) $mutasi->upt_tujuan_id || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId));
+                $isKanwilUser = auth()->user()->isKanwil();
+                $isKanwilOrAdmin = $isKanwilUser;
+                $isPengusul = ! $isKanwilUser && $userUptId !== null && $userUptId === (int) $mutasi->upt_asal_id;
+                $isPenerima = ! $isKanwilUser && $userUptId !== null && ($userUptId === (int) $mutasi->upt_tujuan_id || $mutasi->tujuans->contains('upt_tujuan_id', $userUptId));
                 $userTujuan = $userUptId !== null ? $mutasi->tujuans->firstWhere('upt_tujuan_id', $userUptId) : null;
 
-                $canUploadPemindahan = $isKanwilOrAdmin || $isPengusul;
-                $canUploadPenerimaan = $isKanwilOrAdmin || $isPenerima;
-                $canUploadBast = $isKanwilOrAdmin || $isPengusul || $isPenerima;
+                $canUploadPemindahan = $isPengusul;
+                $canUploadPenerimaan = $isPenerima;
+                $canUploadBast = $isPengusul || $isPenerima;
             @endphp
 
             @if(in_array($mutasi->status, ['disetujui', 'selesai']))
-                @if($isPengusul)
+                @if($isKanwilUser)
+                <div class="alert alert-secondary border-0 shadow-sm d-flex align-items-center mb-3">
+                    <i class="fas fa-shield-alt fa-lg me-2 text-primary"></i>
+                    <div class="small">
+                        <strong>Pemantauan Kantor Wilayah:</strong> Berkas mutasi telah disetujui. Akun Kanwil bertugas memantau pemenuhan dokumen operasional oleh UPT Pengirim ({{ $mutasi->uptAsal?->nama_upt }}), UPT Penerima ({{ $mutasi->daftar_tujuan_text }}), serta sinkronisasi Berita Acara Serah Terima (BAST).
+                    </div>
+                </div>
+                @elseif($isPengusul)
                 <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-3">
                     <i class="fas fa-truck-departure fa-lg me-2 text-primary"></i>
                     <div class="small">
@@ -672,8 +680,8 @@
                         $hasBastItem = is_callable([$target, 'hasBast']) ? $target->hasBast() : !empty($target->file_bast);
                         $targetSelesai = is_callable([$target, 'isSelesai']) ? $target->isSelesai() : ($hasBastItem || $target->status === 'selesai');
 
-                        $canUploadPenerimaanThis = $isKanwilOrAdmin || ($userUptId !== null && $userUptId === $targetUptId);
-                        $canUploadBastThis = $isKanwilOrAdmin || $isPengusul || ($userUptId !== null && $userUptId === $targetUptId);
+                        $canUploadPenerimaanThis = ! $isKanwilUser && ($userUptId !== null && $userUptId === $targetUptId);
+                        $canUploadBastThis = ! $isKanwilUser && ($userUptId !== null && ($isPengusul || $userUptId === $targetUptId));
                     @endphp
 
                     <div class="card border-0 shadow-sm rounded-3 mb-4 border-start border-4 {{ $targetSelesai ? 'border-success' : 'border-primary' }}">
@@ -754,7 +762,10 @@
                                     </button>
                                 </form>
                                 @else
-                                <p class="small text-muted mb-0 fst-italic">Menunggu laporan pengawalan diunggah oleh pihak {{ $mutasi->uptAsal?->nama_upt }}.</p>
+                                <div class="p-2 bg-white rounded border text-muted small fst-italic">
+                                    <i class="fas fa-info-circle me-1 text-primary"></i>
+                                    Menunggu Laporan Pemindahan/Pengawalan diunggah oleh pihak UPT Pengirim ({{ $mutasi->uptAsal?->nama_upt }}).
+                                </div>
                                 @endif
                             </div>
 
@@ -766,7 +777,7 @@
                                         <small class="text-muted d-block" style="font-size: 11px;">Oleh UPT Penerima: <strong>{{ $target->uptTujuan?->nama_upt }}</strong></small>
                                     </div>
                                     @if($hasPenerimaan)
-                                    <span class="badge bg-success" style="font-size: 10px;"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                                     <span class="badge bg-success" style="font-size: 10px;"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
                                     @else
                                     <span class="badge bg-warning text-dark" style="font-size: 10px;"><i class="fas fa-clock me-1"></i>Menunggu</span>
                                     @endif
@@ -812,7 +823,10 @@
                                     </button>
                                 </form>
                                 @else
-                                <p class="small text-muted mb-0 fst-italic">Menunggu laporan penerimaan diunggah oleh pihak {{ $target->uptTujuan?->nama_upt }}.</p>
+                                <div class="p-2 bg-white rounded border text-muted small fst-italic">
+                                    <i class="fas fa-info-circle me-1 text-info"></i>
+                                    Menunggu Laporan Penerimaan diunggah oleh pihak UPT Penerima ({{ $target->uptTujuan?->nama_upt }}).
+                                </div>
                                 @endif
                             </div>
 
@@ -821,7 +835,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <span class="fw-bold text-success small"><i class="fas fa-file-signature me-1"></i>3. Berita Acara Serah Terima (BAST)</span>
-                                        <small class="text-muted d-block" style="font-size: 11px;">Dokumen bersama fisik serah terima kedua UPT</small>
+                                        <small class="text-muted d-block" style="font-size: 11px;">Kewajiban bersama fisik serah terima kedua UPT (tersinkronisasi)</small>
                                     </div>
                                     @if($hasBastItem)
                                     <span class="badge bg-success" style="font-size: 10px;"><i class="fas fa-check-circle me-1"></i>Tuntas</span>
@@ -832,6 +846,12 @@
 
                                 @if($hasBastItem)
                                 <div class="p-2 bg-white rounded border mb-2 small">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted" style="font-size: 11px;">Status Sinkronisasi:</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">
+                                            <i class="fas fa-check-double me-1"></i>Tersinkronisasi Kedua UPT
+                                        </span>
+                                    </div>
                                     <div class="text-muted" style="font-size: 11px;">Nomor BAST:</div>
                                     <div class="fw-bold font-monospace mb-1">{{ $target->nomor_bast ?: '-' }}</div>
                                     <div class="text-muted" style="font-size: 11px;">Tanggal BAST:</div>
@@ -846,6 +866,10 @@
                                     </a>
                                 </div>
                                 @elseif($canUploadBastThis)
+                                <div class="alert alert-success border-0 py-1.5 px-2 mb-2 small" style="font-size: 11px;">
+                                    <i class="fas fa-handshake me-1 text-success"></i>
+                                    Dapat diunggah oleh <strong>UPT Pengirim</strong> maupun <strong>UPT Penerima</strong>. Sekali diunggah, dokumen otomatis tersinkronisasi untuk kedua belah pihak.
+                                </div>
                                 <form action="{{ route('mutasi.bast.store', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     @if(!empty($target->id))
@@ -870,7 +894,10 @@
                                     </button>
                                 </form>
                                 @else
-                                <p class="small text-muted mb-0 fst-italic">Menunggu dokumen BAST fisik diunggah oleh pihak UPT terkait.</p>
+                                <div class="p-2 bg-white rounded border text-muted small fst-italic">
+                                    <i class="fas fa-info-circle me-1 text-success"></i>
+                                    Menunggu scan fisik Berita Acara Serah Terima (BAST) diunggah oleh UPT Pengirim ({{ $mutasi->uptAsal?->nama_upt }}) atau UPT Penerima ({{ $target->uptTujuan?->nama_upt }}).
+                                </div>
                                 @endif
                             </div>
 
