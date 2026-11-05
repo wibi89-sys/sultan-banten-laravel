@@ -417,6 +417,62 @@ class MutasiNarapidanaController extends Controller
             ->with('success', 'Keputusan verifikasi dan penentuan UPT Tujuan berhasil disimpan dan didistribusikan.');
     }
 
+    public function uploadPersetujuanKanwil(Request $request, int $id): RedirectResponse
+    {
+        $this->checkAccess('full');
+        $user = auth()->user();
+
+        if (! $user->isKanwil()) {
+            abort(403, 'Hanya akun Kantor Wilayah / Administrator yang berhak mengunggah berkas Surat Persetujuan Kanwil.');
+        }
+
+        $mutasi = MutasiNarapidana::findOrFail($id);
+
+        $validated = $request->validate([
+            'file_persetujuan_kanwil' => 'required|file|mimes:pdf|max:10240',
+            'nomor_surat_kanwil' => 'nullable|string|max:100',
+            'tanggal_surat_kanwil' => 'nullable|date',
+            'catatan_kanwil' => 'nullable|string|max:1000',
+        ], [
+            'file_persetujuan_kanwil.required' => 'Berkas PDF Surat Persetujuan Kanwil wajib dipilih.',
+            'file_persetujuan_kanwil.mimes' => 'Format berkas harus berupa dokumen PDF.',
+            'file_persetujuan_kanwil.max' => 'Ukuran berkas maksimal 10 MB.',
+        ]);
+
+        $filePath = $this->handleUpload($request, 'file_persetujuan_kanwil', 'persetujuan_kanwil');
+
+        $updateData = [
+            'file_persetujuan_kanwil' => $filePath,
+        ];
+
+        if ($request->filled('nomor_surat_kanwil')) {
+            $updateData['nomor_surat_kanwil'] = $validated['nomor_surat_kanwil'];
+        }
+        if ($request->filled('tanggal_surat_kanwil')) {
+            $updateData['tanggal_surat_kanwil'] = $validated['tanggal_surat_kanwil'];
+        }
+        if ($request->filled('catatan_kanwil')) {
+            $updateData['catatan_kanwil'] = $validated['catatan_kanwil'];
+        }
+
+        $isReplace = ! empty($mutasi->file_persetujuan_kanwil);
+        $mutasi->update($updateData);
+
+        ActivityLog::log(
+            'persetujuan_kanwil',
+            'mutasi',
+            ($isReplace ? 'Memperbarui / mengganti' : 'Mengunggah')." berkas Surat Persetujuan Kanwil untuk usulan No: {$mutasi->nomor_surat}",
+            $mutasi->toArray()
+        );
+
+        $pesan = $isReplace
+            ? 'Berkas Surat Persetujuan Kanwil berhasil diganti / diperbarui.'
+            : 'Berkas Surat Persetujuan Kanwil berhasil diunggah.';
+
+        return redirect()->route('mutasi.show', $mutasi->id)
+            ->with('success', $pesan);
+    }
+
     public function laporanPemindahanStore(Request $request, int $id): RedirectResponse
     {
         $this->checkAccess('full');

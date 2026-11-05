@@ -478,4 +478,57 @@ class MutasiNarapidanaTest extends TestCase
         $this->assertGreaterThanOrEqual(1, count($tasksPenerima['laporan_penerimaan']));
         $this->assertGreaterThanOrEqual(1, count($tasksPenerima['bast']));
     }
+
+    public function test_kanwil_can_upload_and_replace_persetujuan_pdf_file(): void
+    {
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'USUL/KANWIL-PDF/'.uniqid(),
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'upt_tujuan_id' => $this->uptTujuan->id,
+            'kategori_mutasi' => 'Keamanan',
+            'jumlah_narkotika' => 5,
+            'jumlah_pidum' => 0,
+            'jumlah_korupsi' => 0,
+            'total_usulan' => 5,
+            'status' => 'disetujui',
+            'created_by' => $this->operator->id,
+        ]);
+
+        $initialPdf = UploadedFile::fake()->create('surat_kanwil_v1.pdf', 100, 'application/pdf');
+
+        // 1. Upload pertama oleh Kanwil
+        $response1 = $this->actingAs($this->admin)->post(route('mutasi.upload-persetujuan', $mutasi->id), [
+            'file_persetujuan_kanwil' => $initialPdf,
+            'nomor_surat_kanwil' => 'W.12.PAS-PK.01-01-REV1',
+            'tanggal_surat_kanwil' => now()->toDateString(),
+        ]);
+
+        $response1->assertRedirect(route('mutasi.show', $mutasi->id));
+        $response1->assertSessionHas('success');
+
+        $mutasi->refresh();
+        $this->assertNotNull($mutasi->file_persetujuan_kanwil);
+        $this->assertEquals('W.12.PAS-PK.01-01-REV1', $mutasi->nomor_surat_kanwil);
+
+        // 2. Ganti file PDF oleh Kanwil (Replace)
+        $replacementPdf = UploadedFile::fake()->create('surat_kanwil_v2_revisi.pdf', 150, 'application/pdf');
+
+        $response2 = $this->actingAs($this->admin)->post(route('mutasi.upload-persetujuan', $mutasi->id), [
+            'file_persetujuan_kanwil' => $replacementPdf,
+            'nomor_surat_kanwil' => 'W.12.PAS-PK.01-01-REV2',
+        ]);
+
+        $response2->assertRedirect(route('mutasi.show', $mutasi->id));
+        $response2->assertSessionHas('success');
+
+        $mutasi->refresh();
+        $this->assertEquals('W.12.PAS-PK.01-01-REV2', $mutasi->nomor_surat_kanwil);
+
+        // 3. Operator UPT tidak boleh mengakses upload persetujuan kanwil
+        $responseOperator = $this->actingAs($this->operator)->post(route('mutasi.upload-persetujuan', $mutasi->id), [
+            'file_persetujuan_kanwil' => $replacementPdf,
+        ]);
+        $responseOperator->assertStatus(403);
+    }
 }

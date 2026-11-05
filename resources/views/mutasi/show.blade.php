@@ -424,13 +424,24 @@
                         @endif
 
                         @if($mutasi->file_persetujuan_kanwil)
-                        <div class="d-flex gap-2 mb-2">
-                            <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm flex-fill shadow-sm fw-semibold">
+                        <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                            <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm flex-grow-1 shadow-sm fw-semibold">
                                 <i class="fas fa-external-link-alt me-1"></i> Buka Surat Persetujuan (Tab Baru)
                             </a>
                             <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}" class="btn btn-outline-success btn-sm shadow-sm" title="Unduh PDF">
                                 <i class="fas fa-download"></i>
                             </a>
+                            @if(auth()->user()->isKanwil())
+                            <button type="button" class="btn btn-primary btn-sm shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalUploadPersetujuanKanwil" title="Klik untuk mengganti berkas PDF Surat Persetujuan Kanwil">
+                                <i class="fas fa-upload me-1"></i> Ganti PDF
+                            </button>
+                            @endif
+                        </div>
+                        @elseif(auth()->user()->isKanwil() && in_array($mutasi->status, ['disetujui', 'selesai']))
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-primary btn-sm w-100 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalUploadPersetujuanKanwil">
+                                <i class="fas fa-upload me-1"></i> Upload Scan Surat Persetujuan Kanwil (PDF)
+                            </button>
                         </div>
                         @endif
 
@@ -621,9 +632,33 @@
 
                             <div class="mb-3">
                                 <label class="form-label small fw-semibold">Upload Scan Surat Persetujuan Kanwil (PDF) <span class="text-danger">*</span></label>
-                                <input type="file" name="file_persetujuan_kanwil" class="form-control form-control-sm" accept=".pdf">
                                 @if($mutasi->file_persetujuan_kanwil)
-                                <small class="text-success d-block mt-1" style="font-size: 11px;"><i class="fas fa-check me-1"></i>Sudah ada berkas persetujuan terunggah. Unggah baru jika ingin mengganti.</small>
+                                <div class="d-flex align-items-center justify-content-between gap-2 p-2 bg-light rounded border mb-2">
+                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                        <i class="fas fa-file-pdf text-danger fa-lg flex-shrink-0"></i>
+                                        <div class="text-truncate" style="font-size: 11.5px;">
+                                            <span class="fw-semibold text-dark d-block text-truncate">Surat Persetujuan Saat Ini</span>
+                                            <span class="text-muted font-monospace" style="font-size: 10px;">{{ $mutasi->nomor_surat_kanwil ?: 'Berkas Tersimpan' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary" style="font-size: 11px; padding: 2px 7px;">
+                                            <i class="fas fa-external-link-alt me-1"></i>Buka PDF
+                                        </a>
+                                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}" class="btn btn-xs btn-outline-secondary" style="font-size: 11px; padding: 2px 7px;" title="Unduh File">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                @endif
+                                <div class="input-group input-group-sm">
+                                    <input type="file" name="file_persetujuan_kanwil" class="form-control form-control-sm" accept=".pdf">
+                                    @if($mutasi->file_persetujuan_kanwil)
+                                    <span class="input-group-text bg-white text-muted small" style="font-size: 11px;">Pilih PDF baru untuk mengganti</span>
+                                    @endif
+                                </div>
+                                @if($mutasi->file_persetujuan_kanwil)
+                                <small class="text-muted d-block mt-1" style="font-size: 11px;"><i class="fas fa-info-circle me-1 text-primary"></i>Berkas PDF saat ini tetap dipertahankan jika tidak memilih berkas pengganti.</small>
                                 @endif
                             </div>
                         </div>
@@ -931,6 +966,69 @@
         </div>
     </div>
 </div>
+
+@if(auth()->user()->isKanwil())
+<!-- MODAL GANTI / UPLOAD SURAT PERSETUJUAN KANWIL -->
+<div class="modal fade" id="modalUploadPersetujuanKanwil" tabindex="-1" aria-labelledby="modalUploadPersetujuanKanwilLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white py-2.5">
+                <h6 class="modal-title fw-bold" id="modalUploadPersetujuanKanwilLabel">
+                    <i class="fas fa-file-pdf me-2"></i>{{ $mutasi->file_persetujuan_kanwil ? 'Ganti Berkas Surat Persetujuan Kanwil' : 'Unggah Surat Persetujuan Kanwil' }}
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('mutasi.upload-persetujuan', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body p-3">
+                    @if($mutasi->file_persetujuan_kanwil)
+                    <div class="alert alert-light border border-success-subtle bg-success bg-opacity-10 py-2 px-2.5 mb-3 rounded-2 small d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle text-success fa-lg"></i>
+                            <div>
+                                <span class="fw-bold text-dark d-block">Berkas PDF Saat Ini Sudah Terunggah</span>
+                                <small class="text-muted">Pilih berkas PDF baru di bawah untuk menimpa/menggantinya.</small>
+                            </div>
+                        </div>
+                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-success">
+                            <i class="fas fa-external-link-alt me-1"></i>Lihat PDF
+                        </a>
+                    </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Pilih File PDF Surat Persetujuan Kanwil <span class="text-danger">*</span></label>
+                        <input type="file" name="file_persetujuan_kanwil" class="form-control form-control-sm" accept=".pdf" required>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">Maksimal ukuran berkas 10 MB (Format berkas: .pdf)</small>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Nomor Surat Kanwil</label>
+                            <input type="text" name="nomor_surat_kanwil" class="form-control form-control-sm font-monospace" value="{{ old('nomor_surat_kanwil', $mutasi->nomor_surat_kanwil) }}" placeholder="No. Surat Kanwil">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Tanggal Surat Kanwil</label>
+                            <input type="date" name="tanggal_surat_kanwil" class="form-control form-control-sm" value="{{ old('tanggal_surat_kanwil', $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('Y-m-d') : date('Y-m-d')) }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-1">
+                        <label class="form-label small fw-semibold">Catatan Tambahan (Opsional)</label>
+                        <textarea name="catatan_kanwil" class="form-control form-control-sm" rows="2" placeholder="Catatan atau instruksi pelaksanaan dari Kanwil...">{{ old('catatan_kanwil', $mutasi->catatan_kanwil) }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold">
+                        <i class="fas fa-upload me-1"></i> {{ $mutasi->file_persetujuan_kanwil ? 'Ganti & Simpan Berkas Baru' : 'Unggah Berkas Persetujuan' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('scripts')
