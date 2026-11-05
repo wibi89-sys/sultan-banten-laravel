@@ -141,7 +141,7 @@
         </div>
         @if($sidangList->hasPages())
         <div class="card-footer bg-white border-0 py-3">
-            {{ $sidangList->links() }}
+            {{ $sidangList->links('pagination::bootstrap-5') }}
         </div>
         @endif
     </div>

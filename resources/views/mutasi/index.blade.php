@@ -310,7 +310,7 @@
 
         @if($mutasiList->hasPages())
         <div class="card-footer bg-white border-0 py-3">
-            {{ $mutasiList->links() }}
+            {{ $mutasiList->links('pagination::bootstrap-5') }}
         </div>
         @endif
     </div>

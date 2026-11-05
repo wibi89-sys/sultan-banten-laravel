@@ -206,7 +206,7 @@
 
             @if($mutasiList->hasPages())
             <div class="p-3 border-top d-flex justify-content-end">
-                {{ $mutasiList->links() }}
+                {{ $mutasiList->links('pagination::bootstrap-5') }}
             </div>
             @endif
         </div>

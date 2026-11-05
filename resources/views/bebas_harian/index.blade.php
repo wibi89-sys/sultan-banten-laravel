@@ -226,7 +226,7 @@
         </div>
         @if ($dataList->hasPages())
         <div class="card-footer bg-white border-0 py-3">
-            {{ $dataList->links() }}
+            {{ $dataList->links('pagination::bootstrap-5') }}
         </div>
         @endif
     </div>
