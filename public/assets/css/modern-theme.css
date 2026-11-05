@@ -2816,5 +2816,110 @@ svg.h-5 {
     color: #ffffff;
 }
 
+/* ============================================
+   TABLE ACTION BUTTONS & ICON BUTTONS (STANDARDIZED)
+   ============================================ */
+.table-actions {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+}
+
+.table-actions form {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+/* Tombol Aksi Ikon Proporsional & Presisi (32x32px) */
+.btn-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease-in-out !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    text-decoration: none !important;
+    flex-shrink: 0 !important;
+    vertical-align: middle !important;
+}
+
+.btn-action i {
+    font-size: 13px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    display: inline-block !important;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Tombol Aksi dengan Teks (e.g. Telaah, Buka Berkas) */
+.btn-action-text {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease-in-out !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    vertical-align: middle !important;
+}
+
+.btn-action-text i {
+    font-size: 12px !important;
+    line-height: 1 !important;
+}
+
+.btn-action-text:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Normalisasi Outline Success & Info */
+.btn-outline-success {
+    border: 1px solid var(--success-500, #22c55e);
+    color: var(--success-600, #16a34a);
+    background: transparent;
+}
+.btn-outline-success:hover {
+    background: var(--success-500, #22c55e);
+    color: #ffffff;
+}
+
+/* Dukungan Dark Mode */
+[data-theme="dark"] .btn-action,
+[data-theme="dark"] .btn-action-text {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+
 
 

@@ -118,7 +118,7 @@
                             <th width="20%">Pendataan Perkara WBP</th>
                             <th width="14%">Kelengkapan Berkas</th>
                             <th width="10%" class="text-center">Status</th>
-                            <th width="10%" class="text-center">Aksi</th>
+                            <th style="width: 110px; white-space: nowrap;" class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -185,8 +185,8 @@
                                     {{ $m->status_label }}
                                 </span>
                             </td>
-                            <td class="text-center">
-                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-outline-primary btn-sm px-2.5 shadow-sm" title="Telaah & Verifikasi Berkas">
+                            <td class="text-center text-nowrap">
+                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-outline-primary btn-action-text shadow-sm" title="Telaah & Verifikasi Berkas">
                                     <i class="fas fa-stamp me-1"></i> Telaah
                                 </a>
                             </td>

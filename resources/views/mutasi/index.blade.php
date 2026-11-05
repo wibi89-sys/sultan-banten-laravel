@@ -175,9 +175,9 @@
                         <th width="16%">UPT Pemohon &amp; Kategori</th>
                         <th width="18%">Rincian Perkara (Usulan)</th>
                         <th width="16%">Penetapan UPT Tujuan</th>
-                        <th class="text-center" width="12%">Status</th>
-                        <th class="text-center" width="8%">Berkas</th>
-                        <th class="text-center" width="8%">Aksi</th>
+                        <th class="text-center" width="10%">Status</th>
+                        <th class="text-center" style="width: 140px; white-space: nowrap;">Berkas</th>
+                        <th class="text-center" style="width: 90px; white-space: nowrap;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -250,45 +250,48 @@
                             </small>
                             @endif
                         </td>
-                        <td class="text-center">
-                            <div class="d-flex justify-content-center gap-1">
+                        <td class="text-center text-nowrap">
+                            <div class="table-actions">
                                 @if($m->file_surat_usulan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-0 px-1.5" title="Buka Surat Usulan di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-action" title="Buka Surat Usulan di Tab Baru">
                                     <i class="fas fa-file-pdf"></i>
                                 </a>
                                 @endif
                                 @if($m->file_persetujuan_kanwil)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm py-0 px-1.5" title="Buka Surat Persetujuan Kanwil di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-action" title="Buka Surat Persetujuan Kanwil di Tab Baru">
                                     <i class="fas fa-stamp"></i>
                                 </a>
                                 @endif
                                 @if($m->file_laporan_pemindahan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm py-0 px-1.5" title="Buka Laporan Pemindahan di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-action" title="Buka Laporan Pemindahan di Tab Baru">
                                     <i class="fas fa-truck-departure"></i>
                                 </a>
                                 @endif
                                 @if($m->file_laporan_penerimaan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-info btn-sm py-0 px-1.5" title="Buka Laporan Penerimaan di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-info btn-action" title="Buka Laporan Penerimaan di Tab Baru">
                                     <i class="fas fa-building"></i>
                                 </a>
                                 @endif
                                 @if($m->file_bast)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm py-0 px-1.5 text-white" title="Buka BAST di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-action text-white" title="Buka BAST di Tab Baru">
                                     <i class="fas fa-file-signature"></i>
                                 </a>
                                 @endif
+                                @if(!$m->file_surat_usulan && !$m->file_persetujuan_kanwil && !$m->file_laporan_pemindahan && !$m->file_laporan_penerimaan && !$m->file_bast)
+                                <span class="text-muted small">-</span>
+                                @endif
                             </div>
                         </td>
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-outline-info py-0 px-2" title="Lihat Rincian & Verifikasi">
+                        <td class="text-center text-nowrap">
+                            <div class="table-actions">
+                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-outline-info btn-action" title="Lihat Rincian & Verifikasi">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 @if(auth()->user()->isAdmin() || ($m->status === 'diajukan' && $m->created_by === auth()->id()))
-                                <form action="{{ route('mutasi.destroy', $m->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus berkas usulan mutasi ini?');">
+                                <form action="{{ route('mutasi.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus berkas usulan mutasi ini?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger py-0 px-2" title="Hapus Berkas">
+                                    <button type="submit" class="btn btn-outline-danger btn-action" title="Hapus Berkas">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>

@@ -93,7 +93,7 @@
                     Input: {{ $timeRestriction['jam_mulai'] }} - {{ $timeRestriction['jam_selesai'] }}
                 </span>
                 @endif
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambah" {{ !$canInput ? 'disabled' : '' }}>
+                <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambah" {{ !$canInput ? 'disabled' : '' }}>
                     <i class="fas fa-plus me-1"></i> Input Bebas &amp; Mutasi
                 </button>
             @else
@@ -140,7 +140,7 @@
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
                         <i class="fas fa-filter me-1"></i> Filter
                     </button>
-                    <a href="{{ route('bebas-harian.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <a href="{{ route('bebas-harian.index') }}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center" style="width: 36px;" title="Reset Filter">
                         <i class="fas fa-redo"></i>
                     </a>
                 </div>
@@ -172,7 +172,7 @@
                             <th class="text-center">Lainnya</th>
                             <th class="text-center bg-light fw-bold">Total</th>
                             <th>Keterangan</th>
-                            <th class="text-center" style="width: 120px;">Aksi</th>
+                            <th class="text-center" style="width: 100px; white-space: nowrap;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,20 +193,22 @@
                                     <span class="badge bg-success fs-6">{{ $row->grand_total }}</span>
                                 </td>
                                 <td><small class="text-muted">{{ $row->keterangan ?? '-' }}</small></td>
-                                <td class="text-center">
+                                <td class="text-center text-nowrap">
                                     @if(auth()->user()->canManage('bebas_harian'))
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data" aria-label="Edit Data Bebas &amp; Mutasi {{ $row->nama_upt }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <form method="POST" action="{{ route('bebas-harian.destroy') }}" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus seluruh data bebas & mutasi UPT ini pada tanggal {{ indonesianDate($row->tanggal) }}?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <input type="hidden" name="del_upt_id" value="{{ $row->upt_id }}">
-                                        <input type="hidden" name="del_tanggal" value="{{ $row->tanggal }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data" aria-label="Hapus Data Bebas &amp; Mutasi {{ $row->nama_upt }}">
-                                            <i class="fas fa-trash"></i>
+                                    <div class="table-actions">
+                                        <button type="button" class="btn btn-outline-primary btn-action" onclick="openEditModal({{ $row->upt_id }}, '{{ $row->tanggal }}', '{{ $row->nama_upt }}')" title="Edit Data Bebas &amp; Mutasi" aria-label="Edit Data Bebas &amp; Mutasi {{ $row->nama_upt }}">
+                                            <i class="fas fa-edit"></i>
                                         </button>
-                                    </form>
+                                        <form method="POST" action="{{ route('bebas-harian.destroy') }}" onsubmit="return confirm('Yakin ingin menghapus seluruh data bebas & mutasi UPT ini pada tanggal {{ indonesianDate($row->tanggal) }}?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="del_upt_id" value="{{ $row->upt_id }}">
+                                            <input type="hidden" name="del_tanggal" value="{{ $row->tanggal }}">
+                                            <button type="submit" class="btn btn-outline-danger btn-action" title="Hapus Data Bebas &amp; Mutasi" aria-label="Hapus Data Bebas &amp; Mutasi {{ $row->nama_upt }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                     @else
                                     <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
                                     @endif

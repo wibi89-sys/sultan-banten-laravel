@@ -197,20 +197,22 @@
                             </div>
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td class="text-center text-nowrap">
                         @if(auth()->user()->canManage('user'))
-                        <a href="{{ route('users.edit', $u->id) }}" class="btn btn-warning btn-sm py-0 px-2" title="Edit Pengguna" aria-label="Edit User {{ $u->username }}">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        @if($u->id != auth()->id())
-                        <form action="{{ route('users.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus" aria-label="Hapus User {{ $u->username }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                        @endif
+                        <div class="table-actions">
+                            <a href="{{ route('users.edit', $u->id) }}" class="btn btn-warning btn-action" title="Edit Pengguna" aria-label="Edit User {{ $u->username }}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            @if($u->id != auth()->id())
+                            <form action="{{ route('users.destroy', $u->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-action" title="Hapus" aria-label="Hapus User {{ $u->username }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            @endif
+                        </div>
                         @else
                         <span class="text-muted small fst-italic">-</span>
                         @endif

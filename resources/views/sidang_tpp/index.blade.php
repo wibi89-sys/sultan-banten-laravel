@@ -190,7 +190,7 @@
                         <th class="text-center">Usulan Warga Binaan</th>
                         <th class="text-center">Status Sidang</th>
                         <th class="text-center">Verifikasi Kesesuaian Dokumen</th>
-                        <th style="width: 140px;" class="text-center">Aksi</th>
+                        <th style="width: 140px; white-space: nowrap;" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -257,22 +257,22 @@
                             </div>
                             @endif
                         </td>
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-outline-info" title="Detail Lengkap Sidang">
+                        <td class="text-center text-nowrap">
+                            <div class="table-actions">
+                                <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-outline-info btn-action" title="Detail Lengkap Sidang">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <form action="{{ route('sidang-tpp.broadcast-wa', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirim notifikasi WhatsApp undangan sidang ini ke Grup?');">
+                                <form action="{{ route('sidang-tpp.broadcast-wa', $s->id) }}" method="POST" onsubmit="return confirm('Kirim notifikasi WhatsApp undangan sidang ini ke Grup?');">
                                     @csrf
-                                    <button type="submit" class="btn btn-outline-success" title="Kirim Notifikasi Undangan ke Grup WhatsApp">
+                                    <button type="submit" class="btn btn-outline-success btn-action" title="Kirim Notifikasi Undangan ke Grup WhatsApp">
                                         <i class="fab fa-whatsapp"></i>
                                     </button>
                                 </form>
                                 @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id) && auth()->user()->upt_id == $s->upt_id && !in_array($s->status_verifikasi_kanwil, ['sesuai', 'terverifikasi']))
-                                <form action="{{ route('sidang-tpp.destroy', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda sidang ini? Seluruh data usulan dan berkas terkait akan terhapus.');">
+                                <form action="{{ route('sidang-tpp.destroy', $s->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda sidang ini? Seluruh data usulan dan berkas terkait akan terhapus.');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger" title="Hapus Sidang">
+                                    <button type="submit" class="btn btn-outline-danger btn-action" title="Hapus Sidang">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>

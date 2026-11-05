@@ -107,18 +107,20 @@
                         Selalu Aktif
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td class="text-center text-nowrap">
                         @if(auth()->user()->canManage('pengumuman'))
-                        <button class="btn btn-warning btn-sm py-0 px-2" onclick="editData({{ json_encode($p) }})" title="Edit" aria-label="Edit Pengumuman {{ $p->judul }}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <form action="{{ route('pengumuman.destroy', $p->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus pengumuman ini?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2" title="Hapus" aria-label="Hapus Pengumuman {{ $p->judul }}">
-                                <i class="fas fa-trash"></i>
+                        <div class="table-actions">
+                            <button type="button" class="btn btn-warning btn-action" onclick="editData({{ json_encode($p) }})" title="Edit" aria-label="Edit Pengumuman {{ $p->judul }}">
+                                <i class="fas fa-edit"></i>
                             </button>
-                        </form>
+                            <form action="{{ route('pengumuman.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus pengumuman ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-action" title="Hapus" aria-label="Hapus Pengumuman {{ $p->judul }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                         @else
                         <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
                         @endif

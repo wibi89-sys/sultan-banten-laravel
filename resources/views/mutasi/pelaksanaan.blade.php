@@ -132,7 +132,7 @@
                             <th width="24%">Arus UPT (Asal &rarr; Tujuan)</th>
                             <th width="32%">Kelengkapan 3 Dokumen Pelaksanaan</th>
                             <th width="10%" class="text-center">Status</th>
-                            <th width="10%" class="text-center">Aksi</th>
+                            <th style="width: 130px; white-space: nowrap;" class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -225,8 +225,8 @@
                                     {{ $m->status_label }}
                                 </span>
                             </td>
-                            <td class="text-center">
-                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-primary btn-sm px-2.5 shadow-sm" title="{{ auth()->user()->isKanwil() ? 'Pantau Dokumen Mutasi' : 'Buka Detail & Unggah Dokumen' }}">
+                            <td class="text-center text-nowrap">
+                                <a href="{{ route('mutasi.show', $m->id) }}" class="btn btn-primary btn-action-text shadow-sm" title="{{ auth()->user()->isKanwil() ? 'Pantau Dokumen Mutasi' : 'Buka Detail & Unggah Dokumen' }}">
                                     <i class="fas {{ auth()->user()->isKanwil() ? 'fa-eye' : 'fa-folder-open' }} me-1"></i> {{ auth()->user()->isKanwil() ? 'Pantau Dokumen' : 'Buka / Unggah' }}
                                 </a>
                             </td>
