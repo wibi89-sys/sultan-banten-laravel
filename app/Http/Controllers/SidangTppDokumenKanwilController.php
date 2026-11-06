@@ -259,7 +259,7 @@ class SidangTppDokumenKanwilController extends Controller
 
         $request->validate([
             'file_signed' => 'required|file|mimes:pdf|max:20480', // max 20 MB
-            'jenis_dokumen' => 'required|in:nota_dinas,laporan_tpp',
+            'jenis_dokumen' => 'required|in:nota_dinas,laporan_tpp,surat_tugas',
             'nomor_dokumen' => 'nullable|string|max:150',
             'bubuhi_qr' => 'nullable',
             'qr_percent_x' => 'nullable|numeric|min:0|max:100',
@@ -356,11 +356,26 @@ class SidangTppDokumenKanwilController extends Controller
             $sidang->status_sidang = 'selesai_ttd_kakanwil';
             $sidang->tanggal_ttd_kakanwil = date('Y-m-d');
             $sidang->save();
+        } elseif ($jenis === 'surat_tugas') {
+            $sidang->file_surat_tugas = $filePath;
+            if (! empty($naskah->nomor_dokumen)) {
+                $sidang->nomor_surat_tugas = $naskah->nomor_dokumen;
+            }
+            if (empty($sidang->tanggal_surat_tugas)) {
+                $sidang->tanggal_surat_tugas = date('Y-m-d');
+            }
+            $sidang->save();
         }
 
-        ActivityLog::log('upload', 'tpp_naskah_kanwil', "Unggah berkas {$jenis} bertanda tangan untuk Sidang TPP ID: {$sidang->id}");
+        $jenisLabel = match ($jenis) {
+            'surat_tugas' => 'Surat Tugas Tim Kanwil',
+            'laporan_tpp' => 'Laporan Sidang TPP Kanwil',
+            default => 'Nota Dinas Permohonan Surat Tugas',
+        };
 
-        $msg = 'Berkas bertanda tangan berhasil diunggah'.($bubuhiQr ? ' dan dibubuhi cap QR Code otentifikasi resmi.' : '.');
+        ActivityLog::log('upload', 'tpp_naskah_kanwil', "Unggah berkas {$jenisLabel} bertanda tangan untuk Sidang TPP ID: {$sidang->id}");
+
+        $msg = "Berkas {$jenisLabel} berhasil diunggah".($bubuhiQr ? ' dan dibubuhi cap QR Code otentifikasi resmi.' : '.');
 
         return back()->with('success', $msg);
     }

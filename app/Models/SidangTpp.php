@@ -21,6 +21,9 @@ class SidangTpp extends Model
         'jam_mulai',
         'jam_selesai',
         'file_undangan',
+        'nomor_surat_tugas',
+        'tanggal_surat_tugas',
+        'file_surat_tugas',
         'agenda_kategori',
         'agenda_deskripsi',
         'agenda_sidang',
@@ -59,6 +62,7 @@ class SidangTpp extends Model
     {
         return [
             'tanggal_surat' => 'date',
+            'tanggal_surat_tugas' => 'date',
             'tanggal_sidang' => 'date',
             'tanggal_ttd_kakanwil' => 'date',
             'verified_at' => 'datetime',

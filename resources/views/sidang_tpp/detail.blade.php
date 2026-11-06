@@ -48,35 +48,12 @@
             <a href="{{ route('sidang-tpp.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Kembali
             </a>
-            @if(auth()->user()->isKanwil())
-                @php
-                    $ndTop = $sidang->naskahKanwil?->where('jenis_dokumen', 'nota_dinas')->first();
-                @endphp
-                @if(!empty($ndTop?->file_signed))
-                    <a href="{{ asset($ndTop->file_signed) }}" target="_blank" class="btn btn-success btn-sm shadow-sm fw-bold" title="Unduh Nota Dinas yang telah dibubuhi QR dan ditandatangani basah">
-                        <i class="fas fa-file-pdf me-1"></i>Unduh Nota Dinas (Ber-QR)
-                    </a>
-                @endif
-            @endif
-            @if($canUploadHasil)
-            <button type="button" class="btn btn-primary btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail">
-                <i class="fas fa-file-upload me-1"></i>Upload BA &amp; Rekomendasi Hasil
-            </button>
-            @endif
             <form action="{{ route('sidang-tpp.broadcast-wa', $sidang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirimkan notifikasi WhatsApp undangan sidang ini ke Grup sekarang?');">
                 @csrf
                 <button type="submit" class="btn btn-outline-success btn-sm shadow-sm" title="Kirim Notifikasi WhatsApp Undangan Sidang TPP ke Grup">
                     <i class="fab fa-whatsapp me-1"></i>Kirim Undangan ke Grup WA
                 </button>
             </form>
-            @if($sidang->hasLaporanKanwil())
-            <a href="{{ route('sidang-tpp.download-laporan-kanwil', ['id' => $sidang->id, 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm shadow-sm fw-bold">
-                <i class="fas fa-external-link-alt me-1"></i>Lihat Laporan
-            </a>
-            <a href="{{ route('sidang-tpp.download-laporan-kanwil', $sidang->id) }}" class="btn btn-success btn-sm shadow-sm fw-bold">
-                <i class="fas fa-download me-1"></i>Download Laporan Sidang TPP Kanwil
-            </a>
-            @endif
         </div>
     </div>
 
@@ -302,7 +279,10 @@
     @if(auth()->user()->isKanwil())
     @php
         $notaDinasKanwil = $sidang->naskahKanwil?->where('jenis_dokumen', 'nota_dinas')->first();
+        $stKanwil = $sidang->naskahKanwil?->where('jenis_dokumen', 'surat_tugas')->first();
         $lapKanwilDok = $sidang->naskahKanwil?->where('jenis_dokumen', 'laporan_tpp')->first();
+        $fileSt = !empty($sidang->file_surat_tugas) ? $sidang->file_surat_tugas : (!empty($stKanwil?->file_signed) ? $stKanwil->file_signed : null);
+        $noSt = $sidang->nomor_surat_tugas ?: ($stKanwil?->nomor_dokumen ?: '');
         $fileFinalLap = !empty($lapKanwilDok?->file_signed) ? $lapKanwilDok->file_signed : $sidang->file_laporan_kakanwil;
     @endphp
     <div class="card border-0 shadow-sm mb-4">
@@ -311,7 +291,7 @@
                 <h6 class="fw-bold mb-0 text-dark">
                     <i class="fas fa-stamp text-primary me-2"></i>3. Dokumen &amp; Naskah Kantor Wilayah
                 </h6>
-                <small class="text-muted">Pengelolaan Nota Dinas Permohonan Surat Tugas dan Laporan Hasil Sidang Kanwil</small>
+                <small class="text-muted">Pengelolaan Nota Dinas, Surat Tugas Tim Kanwil, dan Laporan Hasil Sidang Kanwil</small>
             </div>
             <a href="{{ route('sidang-tpp.dokumen-kanwil.index', ['search' => $sidang->nomor_undangan ?: ($sidang->upt?->nama_upt ?? '')]) }}" class="btn btn-outline-primary btn-sm fw-semibold">
                 <i class="fas fa-folder-open me-1"></i>Buka Menu Dokumen Kanwil
@@ -320,58 +300,60 @@
         <div class="card-body p-3">
             <div class="row g-3">
                 <!-- KOTAK 1: NOTA DINAS PERMOHONAN ST -->
-                <div class="col-md-6">
-                    <div class="border rounded p-3 h-100 bg-light-subtle">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1" style="font-size: 10px;">DOKUMEN 1</span>
-                                <h6 class="fw-bold mb-0 text-dark">Nota Dinas Permohonan Surat Tugas (ST)</h6>
-                            </div>
-                            @if(!empty($notaDinasKanwil?->file_signed))
-                                <span class="badge bg-success text-white"><i class="fas fa-qrcode me-1"></i>Sudah Ber-QR</span>
-                            @elseif($notaDinasKanwil)
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-file-word me-1 text-primary"></i>Draf Word Siap</span>
-                            @else
-                                <span class="badge bg-secondary-subtle text-muted border">Belum Dibuat</span>
-                            @endif
-                        </div>
-
-                        <div class="small text-muted mb-3">
-                            @if($notaDinasKanwil)
-                                Nomor: <b class="text-dark">{{ $notaDinasKanwil->nomor_dokumen ?: '-' }}</b>
-                                @if($notaDinasKanwil->kode_verifikasi)
-                                    &bull; Kode QR: <code class="text-primary">{{ $notaDinasKanwil->kode_verifikasi }}</code>
+                <div class="col-lg-4 col-md-6">
+                    <div class="border rounded p-3 h-100 bg-light-subtle d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1" style="font-size: 10px;">DOKUMEN 1</span>
+                                    <h6 class="fw-bold mb-0 text-dark">Nota Dinas Permohonan ST</h6>
+                                </div>
+                                @if(!empty($notaDinasKanwil?->file_signed))
+                                    <span class="badge bg-success text-white"><i class="fas fa-qrcode me-1"></i>Ber-QR</span>
+                                @elseif($notaDinasKanwil)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-file-word me-1 text-primary"></i>Draf Siap</span>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-muted border">Belum Dibuat</span>
                                 @endif
-                            @else
-                                Dibuat dari surat undangan UPT untuk permohonan penerbitan Surat Tugas pembinaan sidang.
-                            @endif
+                            </div>
+
+                            <div class="small text-muted mb-3">
+                                @if($notaDinasKanwil)
+                                    Nomor: <b class="text-dark">{{ $notaDinasKanwil->nomor_dokumen ?: '-' }}</b>
+                                    @if($notaDinasKanwil->kode_verifikasi)
+                                        <br><span class="text-muted">Kode QR:</span> <code class="text-primary">{{ $notaDinasKanwil->kode_verifikasi }}</code>
+                                    @endif
+                                @else
+                                    Dibuat dari surat undangan UPT untuk permohonan penerbitan Surat Tugas pembinaan sidang.
+                                @endif
+                            </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="d-flex flex-wrap gap-1.5 pt-2 border-top">
                             @if(!empty($notaDinasKanwil?->file_signed))
-                                <a href="{{ asset($notaDinasKanwil->file_signed) }}" target="_blank" class="btn btn-success btn-sm fw-bold shadow-sm">
-                                    <i class="fas fa-file-pdf me-1.5 fa-lg"></i>Unduh Nota Dinas (Ber-QR)
+                                <a href="{{ asset($notaDinasKanwil->file_signed) }}" target="_blank" class="btn btn-success btn-sm fw-bold shadow-sm w-100 mb-1">
+                                    <i class="fas fa-file-pdf me-1"></i>Unduh Nota Dinas
                                 </a>
                                 @if($notaDinasKanwil->kode_verifikasi)
-                                    <a href="{{ $notaDinasKanwil->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-sm" title="Periksa Keabsahan QR Code">
-                                        <i class="fas fa-qrcode me-1"></i>Verifikasi QR
+                                    <a href="{{ $notaDinasKanwil->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-xs py-1 px-2" title="Periksa Keabsahan QR Code">
+                                        <i class="fas fa-qrcode me-1"></i>QR
                                     </a>
                                 @endif
-                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNotaDinas" title="Edit Draf / Generate Ulang Word">
-                                    <i class="fas fa-edit me-1"></i>Edit Draf Word
+                                <button type="button" class="btn btn-outline-primary btn-xs py-1 px-2" data-bs-toggle="modal" data-bs-target="#modalNotaDinas" title="Edit Draf / Generate Ulang Word">
+                                    <i class="fas fa-edit me-1"></i>Edit Word
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'nota_dinas', '{{ $notaDinasKanwil->nomor_dokumen }}')" title="Upload Ulang Scan & Pembubuhan QR">
-                                    <i class="fas fa-sync-alt me-1"></i>Re-upload Scan
+                                <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'nota_dinas', '{{ addslashes($notaDinasKanwil->nomor_dokumen) }}')" title="Upload Ulang Scan & Pembubuhan QR">
+                                    <i class="fas fa-sync-alt me-1"></i>Re-upload
                                 </button>
                             @elseif($notaDinasKanwil)
-                                <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalNotaDinas">
-                                    <i class="fas fa-file-word me-1"></i>Edit / Unduh Word
+                                <button type="button" class="btn btn-outline-primary btn-sm fw-semibold flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalNotaDinas">
+                                    <i class="fas fa-file-word me-1"></i>Edit / Word
                                 </button>
-                                <button type="button" class="btn btn-warning btn-sm text-dark fw-bold shadow-sm" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'nota_dinas', '{{ $notaDinasKanwil->nomor_dokumen }}')">
-                                    <i class="fas fa-qrcode me-1"></i>Upload &amp; Bubuhi QR
+                                <button type="button" class="btn btn-warning btn-sm text-dark fw-bold shadow-sm flex-grow-1" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'nota_dinas', '{{ addslashes($notaDinasKanwil->nomor_dokumen) }}')">
+                                    <i class="fas fa-qrcode me-1"></i>Upload &amp; QR
                                 </button>
                             @else
-                                <button type="button" class="btn btn-primary btn-sm fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNotaDinas">
+                                <button type="button" class="btn btn-primary btn-sm fw-semibold shadow-sm w-100" data-bs-toggle="modal" data-bs-target="#modalNotaDinas">
                                     <i class="fas fa-magic me-1"></i>Buat Nota Dinas (ST)
                                 </button>
                             @endif
@@ -379,47 +361,101 @@
                     </div>
                 </div>
 
-                <!-- KOTAK 2: LAPORAN SIDANG TPP KANWIL -->
-                <div class="col-md-6">
-                    <div class="border rounded p-3 h-100 bg-light-subtle">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <span class="badge bg-success-subtle text-success border border-success-subtle mb-1" style="font-size: 10px;">DOKUMEN 2</span>
-                                <h6 class="fw-bold mb-0 text-dark">Laporan Sidang TPP Kantor Wilayah</h6>
-                            </div>
-                            @if(!empty($fileFinalLap))
-                                <span class="badge bg-success text-white"><i class="fas fa-check-double me-1"></i>Selesai TTD &amp; Ber-QR</span>
-                            @elseif($lapKanwilDok)
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-clock me-1"></i>Draf Siap</span>
-                            @else
-                                <span class="badge bg-secondary-subtle text-muted border">Belum Dibuat</span>
-                            @endif
-                        </div>
-
-                        <div class="small text-muted mb-3">
-                            @if($lapKanwilDok || $sidang->nomor_laporan_kanwil)
-                                Nomor: <b class="text-dark">{{ $lapKanwilDok?->nomor_dokumen ?: ($sidang->nomor_laporan_kanwil ?: '-') }}</b>
-                                @if($lapKanwilDok?->kode_verifikasi)
-                                    &bull; Kode QR: <code class="text-primary">{{ $lapKanwilDok->kode_verifikasi }}</code>
+                <!-- KOTAK 2: SURAT TUGAS TIM KANWIL (UPLOAD ADMIN KANWIL) -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="border rounded p-3 h-100 bg-light-subtle d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle mb-1" style="font-size: 10px;">DOKUMEN 2</span>
+                                    <h6 class="fw-bold mb-0 text-dark">Surat Tugas (ST) Tim Kanwil</h6>
+                                </div>
+                                @if(!empty($fileSt))
+                                    <span class="badge bg-success text-white"><i class="fas fa-file-pdf me-1"></i>Tersedia</span>
+                                @else
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-clock me-1"></i>Belum Diunggah</span>
                                 @endif
-                            @else
-                                Dibuat dari Berita Acara (BA) sidang UPT sebagai laporan pertanggungjawaban ke Kakanwil.
-                            @endif
+                            </div>
+
+                            <div class="small text-muted mb-3">
+                                Nomor: <b class="text-dark">{{ $noSt ?: '-' }}</b>
+                                @if($sidang->tanggal_surat_tugas)
+                                    <br><span class="text-muted"><i class="far fa-calendar-alt me-1"></i>Tanggal:</span> {{ $sidang->tanggal_surat_tugas->translatedFormat('d F Y') }}
+                                @endif
+                                @if($stKanwil?->kode_verifikasi)
+                                    <br><span class="text-muted">Kode QR:</span> <code class="text-primary">{{ $stKanwil->kode_verifikasi }}</code>
+                                @endif
+                                @if(empty($fileSt))
+                                    <div class="text-muted small mt-1">Diterbitkan oleh Pimpinan (Kakanwil/Kadivpas) berdasarkan Nota Dinas. Diunggah oleh Admin Kanwil.</div>
+                                @endif
+                            </div>
                         </div>
 
-                        <div class="d-flex flex-wrap gap-2">
-                            @if(!empty($fileFinalLap))
-                                <a href="{{ asset($fileFinalLap) }}" target="_blank" class="btn btn-success btn-sm fw-bold shadow-sm">
-                                    <i class="fas fa-file-pdf me-1.5 fa-lg"></i>Unduh Laporan (Ber-QR)
+                        <div class="d-flex flex-wrap gap-1.5 pt-2 border-top">
+                            @if(!empty($fileSt))
+                                <a href="{{ asset($fileSt) }}" target="_blank" class="btn btn-success btn-sm fw-bold shadow-sm w-100 mb-1">
+                                    <i class="fas fa-file-pdf me-1"></i>Unduh Surat Tugas
                                 </a>
-                                @if($lapKanwilDok?->kode_verifikasi)
-                                    <a href="{{ $lapKanwilDok->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-sm" title="Periksa Keabsahan QR Code">
+                                @if($stKanwil?->kode_verifikasi)
+                                    <a href="{{ $stKanwil->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-xs py-1 px-2" title="Periksa Keabsahan QR Code">
                                         <i class="fas fa-qrcode me-1"></i>Verifikasi QR
                                     </a>
                                 @endif
+                                <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 flex-grow-1" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Ulang / Timpa File Surat Tugas">
+                                    <i class="fas fa-sync-alt me-1"></i>Re-upload ST
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm w-100" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')">
+                                    <i class="fas fa-upload me-1"></i>Upload Surat Tugas Tim
+                                </button>
                             @endif
-                            <a href="{{ route('sidang-tpp.dokumen-kanwil.index', ['search' => $sidang->nomor_undangan ?: ($sidang->upt?->nama_upt ?? '')]) }}" class="btn btn-outline-primary btn-sm fw-semibold">
-                                <i class="fas fa-cog me-1"></i>Kelola di Dokumen Kanwil
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KOTAK 3: LAPORAN SIDANG TPP KANWIL -->
+                <div class="col-lg-4 col-md-12">
+                    <div class="border rounded p-3 h-100 bg-light-subtle d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle mb-1" style="font-size: 10px;">DOKUMEN 3</span>
+                                    <h6 class="fw-bold mb-0 text-dark">Laporan Sidang TPP Kanwil</h6>
+                                </div>
+                                @if(!empty($fileFinalLap))
+                                    <span class="badge bg-success text-white"><i class="fas fa-check-double me-1"></i>Selesai &amp; Ber-QR</span>
+                                @elseif($lapKanwilDok)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-clock me-1"></i>Draf Siap</span>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-muted border">Belum Dibuat</span>
+                                @endif
+                            </div>
+
+                            <div class="small text-muted mb-3">
+                                @if($lapKanwilDok || $sidang->nomor_laporan_kanwil)
+                                    Nomor: <b class="text-dark">{{ $lapKanwilDok?->nomor_dokumen ?: ($sidang->nomor_laporan_kanwil ?: '-') }}</b>
+                                    @if($lapKanwilDok?->kode_verifikasi)
+                                        <br><span class="text-muted">Kode QR:</span> <code class="text-primary">{{ $lapKanwilDok->kode_verifikasi }}</code>
+                                    @endif
+                                @else
+                                    Dibuat dari Berita Acara (BA) sidang UPT sebagai laporan pertanggungjawaban ke Kakanwil.
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-1.5 pt-2 border-top">
+                            @if(!empty($fileFinalLap))
+                                <a href="{{ asset($fileFinalLap) }}" target="_blank" class="btn btn-success btn-sm fw-bold shadow-sm w-100 mb-1">
+                                    <i class="fas fa-file-pdf me-1"></i>Unduh Laporan (Ber-QR)
+                                </a>
+                                @if($lapKanwilDok?->kode_verifikasi)
+                                    <a href="{{ $lapKanwilDok->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-xs py-1 px-2" title="Periksa Keabsahan QR Code">
+                                        <i class="fas fa-qrcode me-1"></i>QR
+                                    </a>
+                                @endif
+                            @endif
+                            <a href="{{ route('sidang-tpp.dokumen-kanwil.index', ['search' => $sidang->nomor_undangan ?: ($sidang->upt?->nama_upt ?? '')]) }}" class="btn btn-outline-primary btn-sm fw-semibold flex-grow-1">
+                                <i class="fas fa-cog me-1"></i>Kelola Laporan di Kanwil
                             </a>
                         </div>
                     </div>
@@ -929,7 +965,15 @@
         const upNo = document.getElementById('up_nomor_dokumen');
         if (upNo) upNo.value = noDokumen || '';
         const upLabel = document.getElementById('up_jenis_label');
-        if (upLabel) upLabel.innerText = jenis === 'laporan_tpp' ? 'Laporan Pelaksanaan Sidang TPP Kanwil' : 'Nota Dinas Permohonan Surat Tugas';
+        if (upLabel) {
+            if (jenis === 'surat_tugas') {
+                upLabel.innerText = 'Surat Tugas Tim Pembinaan Kanwil';
+            } else if (jenis === 'laporan_tpp') {
+                upLabel.innerText = 'Laporan Pelaksanaan Sidang TPP Kanwil';
+            } else {
+                upLabel.innerText = 'Nota Dinas Permohonan Surat Tugas';
+            }
+        }
         const fileIn = document.getElementById('file_signed');
         if (fileIn) fileIn.value = '';
         if (typeof setStampPosition === 'function') {

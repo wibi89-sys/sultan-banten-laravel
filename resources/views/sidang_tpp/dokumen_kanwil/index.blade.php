@@ -90,18 +90,22 @@
                 <table class="table table-hover align-middle mb-0" style="font-size: 12.5px;">
                     <thead class="table-light text-secondary text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
                         <tr>
-                            <th class="text-center py-3" style="width: 4%;">No</th>
-                            <th style="width: 20%;">Satker UPT &amp; Jadwal</th>
-                            <th style="width: 25%;">1. Nota Dinas Permohonan ST</th>
-                            <th style="width: 32%;">2. Laporan Sidang TPP Kanwil</th>
-                            <th class="text-center" style="width: 19%;">Aksi / Verifikasi</th>
+                            <th class="text-center py-3" style="width: 3%;">No</th>
+                            <th style="width: 19%;">Satker UPT &amp; Jadwal</th>
+                            <th style="width: 22%;">1. Nota Dinas Permohonan ST</th>
+                            <th style="width: 22%;">2. Surat Tugas Tim Kanwil</th>
+                            <th style="width: 22%;">3. Laporan Sidang TPP Kanwil</th>
+                            <th class="text-center" style="width: 12%;">Aksi / Verifikasi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($sidangList as $idx => $s)
                             @php
                                 $notaDinas = $s->naskahKanwil->where('jenis_dokumen', 'nota_dinas')->first();
+                                $suratTugas = $s->naskahKanwil->where('jenis_dokumen', 'surat_tugas')->first();
                                 $lapKanwil = $s->naskahKanwil->where('jenis_dokumen', 'laporan_tpp')->first();
+                                $fileSt = !empty($s->file_surat_tugas) ? $s->file_surat_tugas : (!empty($suratTugas?->file_signed) ? $suratTugas->file_signed : null);
+                                $noSt = $s->nomor_surat_tugas ?: ($suratTugas?->nomor_dokumen ?: '');
                                 $hasBa = !empty($s->file_berita_acara) && file_exists(public_path($s->file_berita_acara));
                                 $hasUndangan = !empty($s->file_undangan) && file_exists(public_path($s->file_undangan));
                             @endphp
@@ -134,7 +138,7 @@
                                 </td>
 
                                 <!-- Kolom Dokumen 1: Nota Dinas Permohonan ST -->
-                                <td style="min-width: 210px;">
+                                <td style="min-width: 190px;">
                                     @if($notaDinas)
                                         @if(!empty($notaDinas->file_signed))
                                             <!-- KONDISI 1: SUDAH UPLOAD SCAN & BER-QR -->
@@ -174,7 +178,7 @@
                                                     <i class="fas fa-file-word me-1 text-primary"></i>Draf Word Siap TTD
                                                 </span>
                                             </div>
-                                            <div class="small fw-semibold text-truncate mb-1.5" style="max-width: 210px;" title="{{ $notaDinas->nomor_dokumen }}">
+                                            <div class="small fw-semibold text-truncate mb-1.5" style="max-width: 190px;" title="{{ $notaDinas->nomor_dokumen }}">
                                                 No: {{ $notaDinas->nomor_dokumen ?: '-' }}
                                             </div>
                                             <div class="d-flex flex-column gap-1">
@@ -197,8 +201,52 @@
                                     @endif
                                 </td>
 
-                                <!-- Kolom Dokumen 2: Laporan Sidang TPP Kanwil -->
-                                <td style="min-width: 230px;">
+                                <!-- Kolom Dokumen 2: Surat Tugas Tim Kanwil -->
+                                <td style="min-width: 190px;">
+                                    @if(!empty($fileSt))
+                                        <div class="p-2 rounded bg-success-subtle border border-success-subtle mb-1.5">
+                                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                                <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10px;">
+                                                    <i class="fas fa-file-pdf me-1"></i>Tersedia
+                                                </span>
+                                                @if($suratTugas?->kode_verifikasi)
+                                                    <small class="font-monospace text-muted fw-semibold" style="font-size: 9.5px;">{{ $suratTugas->kode_verifikasi }}</small>
+                                                @endif
+                                            </div>
+                                            <div class="small fw-bold text-dark text-truncate" style="font-size: 11.5px;" title="{{ $noSt }}">
+                                                No: {{ $noSt ?: '-' }}
+                                            </div>
+                                            @if($s->tanggal_surat_tugas)
+                                                <div class="text-muted small" style="font-size: 10.5px;">
+                                                    <i class="far fa-calendar-alt me-1"></i>{{ $s->tanggal_surat_tugas->translatedFormat('d M Y') }}
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <!-- TOMBOL DOWNLOAD UTAMA -->
+                                        <a href="{{ asset($fileSt) }}" target="_blank" class="btn btn-success btn-sm w-100 fw-bold shadow-sm mb-1 d-flex align-items-center justify-content-center text-decoration-none" style="font-size: 11.5px; padding: 5px 8px;" title="Unduh Surat Tugas Tim Kanwil">
+                                            <i class="fas fa-file-pdf fa-lg me-1.5 text-white"></i>
+                                            <span>Unduh Surat Tugas</span>
+                                        </a>
+
+                                        <!-- AKSI SEKUNDER -->
+                                        <div class="d-flex gap-1 justify-content-between">
+                                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 w-100" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Ulang / Timpa Surat Tugas">
+                                                <i class="fas fa-sync-alt me-1"></i>Re-upload ST
+                                            </button>
+                                        </div>
+                                    @else
+                                        <div class="text-muted small mb-1.5">
+                                            <i class="fas fa-clock me-1 text-warning"></i>Belum diunggah
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm py-1 px-2.5 shadow-sm fw-semibold d-flex align-items-center" style="font-size: 11.5px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Surat Tugas dari Pimpinan (Format PDF)">
+                                            <i class="fas fa-upload me-1.5"></i>Upload Surat Tugas
+                                        </button>
+                                    @endif
+                                </td>
+
+                                <!-- Kolom Dokumen 3: Laporan Sidang TPP Kanwil -->
+                                <td style="min-width: 210px;">
                                     @php
                                         $finalLaporan = !empty($lapKanwil?->file_signed) ? $lapKanwil->file_signed : $s->file_laporan_kakanwil;
                                     @endphp
@@ -284,6 +332,11 @@
                                             <i class="fas fa-qrcode me-1"></i>QR Laporan
                                         </a>
                                     @endif
+                                    @if($suratTugas?->kode_verifikasi)
+                                        <a href="{{ $suratTugas->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-primary btn-xs py-1 px-2 mb-1 w-100 fw-semibold" style="font-size: 10.5px;" title="Buka Halaman Otentifikasi QR Surat Tugas">
+                                            <i class="fas fa-qrcode me-1"></i>QR Surat Tugas
+                                        </a>
+                                    @endif
                                     @if($notaDinas?->kode_verifikasi)
                                         <a href="{{ $notaDinas->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-xs py-1 px-2 mb-1 w-100 fw-semibold" style="font-size: 10.5px;" title="Buka Halaman Otentifikasi QR Nota Dinas">
                                             <i class="fas fa-qrcode me-1"></i>QR Nota Dinas
@@ -303,7 +356,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="6" class="text-center py-5 text-muted">
                                     <i class="fas fa-folder-open fa-3x mb-3 text-secondary opacity-50"></i>
                                     <div>Belum ada jadwal sidang TPP yang sesuai dengan kriteria filter.</div>
                                 </td>
@@ -631,7 +684,13 @@
         document.getElementById('formUploadSigned').action = '/sidang-tpp/' + sidangId + '/dokumen-kanwil/upload-signed';
         document.getElementById('up_jenis_dokumen').value = jenis;
         document.getElementById('up_nomor_dokumen').value = noDokumen || '';
-        document.getElementById('up_jenis_label').innerText = jenis === 'laporan_tpp' ? 'Laporan Pelaksanaan Sidang TPP Kanwil' : 'Nota Dinas Permohonan Surat Tugas';
+        if (jenis === 'surat_tugas') {
+            document.getElementById('up_jenis_label').innerText = 'Surat Tugas Tim Pembinaan Kanwil';
+        } else if (jenis === 'laporan_tpp') {
+            document.getElementById('up_jenis_label').innerText = 'Laporan Pelaksanaan Sidang TPP Kanwil';
+        } else {
+            document.getElementById('up_jenis_label').innerText = 'Nota Dinas Permohonan Surat Tugas';
+        }
         const fileIn = document.getElementById('file_signed');
         if (fileIn) fileIn.value = '';
         if (typeof setStampPosition === 'function') {
