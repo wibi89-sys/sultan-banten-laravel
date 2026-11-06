@@ -49,7 +49,10 @@ class PdfStamperService
             $pdf = new Fpdi;
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);
-            $pdf->SetAutoPageBreak(false);
+            $pdf->SetMargins(0, 0, 0);
+            $pdf->SetHeaderMargin(0);
+            $pdf->SetFooterMargin(0);
+            $pdf->SetAutoPageBreak(false, 0);
 
             $pageCount = $pdf->setSourceFile($sourcePdfPath);
             if ($pageCount < 1) {
@@ -75,7 +78,7 @@ class PdfStamperService
                 $size = $pdf->getTemplateSize($templateId);
 
                 $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                $pdf->useTemplate($templateId);
+                $pdf->useTemplate($templateId, 0, 0, $size['width'], $size['height']);
 
                 $pageWidth = $size['width'];
                 $pageHeight = $size['height'];
@@ -93,25 +96,26 @@ class PdfStamperService
                 }
 
                 if ($isTarget) {
-                    // Hitung koordinat mm dari persentase
+                    // Hitung koordinat mm dari persentase posisi di layar
                     $posX = ($percentX / 100.0) * $pageWidth;
                     $posY = ($percentY / 100.0) * $pageHeight;
 
-                    // Proteksi agar tidak keluar batas halaman
+                    // Ukuran kotak cap: badge = 65mm x 19mm, qr_only = 17mm x 17mm
                     $boxWidth = $withBadge ? ($qrSize + 48) : $qrSize;
                     $boxHeight = $withBadge ? ($qrSize + 2) : $qrSize;
 
-                    if ($posX + $boxWidth > $pageWidth - 5) {
-                        $posX = $pageWidth - $boxWidth - 5;
+                    // Proteksi agar cap tidak jatuh keluar tepi fisik kertas
+                    if ($posX + $boxWidth > $pageWidth) {
+                        $posX = max(0, $pageWidth - $boxWidth);
                     }
-                    if ($posX < 5) {
-                        $posX = 5;
+                    if ($posX < 0) {
+                        $posX = 0;
                     }
-                    if ($posY + $boxHeight > $pageHeight - 5) {
-                        $posY = $pageHeight - $boxHeight - 5;
+                    if ($posY + $boxHeight > $pageHeight) {
+                        $posY = max(0, $pageHeight - $boxHeight);
                     }
-                    if ($posY < 5) {
-                        $posY = 5;
+                    if ($posY < 0) {
+                        $posY = 0;
                     }
 
                     if ($withBadge) {
@@ -119,11 +123,11 @@ class PdfStamperService
                         $pdf->SetDrawColor(15, 71, 97); // Warna Cyan Gelap Sultan Banten
                         $pdf->SetFillColor(255, 255, 255);
                         $pdf->SetLineWidth(0.3);
-                        $pdf->RoundedRect($posX - 1, $posY - 1, $boxWidth, $boxHeight, 1.5, '1111', 'DF');
+                        $pdf->RoundedRect($posX, $posY, $boxWidth, $boxHeight, 1.5, '1111', 'DF');
 
                         // Garis aksen kiri
                         $pdf->SetFillColor(15, 71, 97);
-                        $pdf->Rect($posX - 1, $posY - 1, 1.5, $boxHeight, 'F');
+                        $pdf->Rect($posX, $posY, 1.5, $boxHeight, 'F');
                     }
 
                     // Gambar QR Code 2D Barcode
@@ -133,14 +137,16 @@ class PdfStamperService
                         'fgcolor' => [0, 0, 0],
                         'bgcolor' => [255, 255, 255],
                     ];
-                    $pdf->write2DBarcode($qrUrl, 'QRCODE,L', $posX + ($withBadge ? 1 : 0), $posY, $qrSize, $qrSize, $qrStyle, 'N');
+                    $qrX = $posX + ($withBadge ? 2.2 : 0);
+                    $qrY = $posY + ($withBadge ? 1.0 : 0);
+                    $pdf->write2DBarcode($qrUrl, 'QRCODE,L', $qrX, $qrY, $qrSize, $qrSize, $qrStyle, 'N');
 
                     if ($withBadge) {
                         // Teks Keterangan di samping QR Code
-                        $textX = $posX + $qrSize + 3;
-                        $textWidth = 44;
+                        $textX = $posX + $qrSize + 4.0;
+                        $textWidth = $boxWidth - $qrSize - 5.5;
 
-                        $pdf->SetXY($textX, $posY + 0.8);
+                        $pdf->SetXY($textX, $posY + 1.2);
                         $pdf->SetFont('helvetica', 'B', 6.2);
                         $pdf->SetTextColor(15, 71, 97);
                         $pdf->Cell($textWidth, 3, 'TEROTENTIFIKASI RESMI', 0, 1, 'L');
