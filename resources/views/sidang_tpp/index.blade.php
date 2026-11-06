@@ -271,10 +271,17 @@
                         <td class="text-center">
                             {!! $s->status_badge !!}
                             @if(empty($s->file_berita_acara))
-                            <div class="mt-1">
+                            <div class="mt-1 d-flex flex-column align-items-center gap-1">
                                 <span class="badge bg-warning text-dark border border-warning-subtle" style="font-size: 10px;">
                                     <i class="fas fa-exclamation-circle me-1"></i>Belum Ada BA
                                 </span>
+                                @if(auth()->user()->isKanwil() || auth()->user()->isAdmin())
+                                <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 fw-semibold shadow-xs" 
+                                        onclick="bukaModalWaPengingat('sidang_ba', {{ $s->id }}, {{ $s->upt_id }}, 'Tim Sidang TPP {{ addslashes($s->upt?->nama_upt ?? '') }}', { nomor_undangan: '{{ addslashes($s->nomor_undangan ?: '') }}', tanggal_sidang: '{{ $s->tanggal_sidang ? $s->tanggal_sidang->translatedFormat('d F Y') : '' }}' })" 
+                                        title="Kirim Pengingat WhatsApp ke Operator UPT untuk Unggah Berita Acara (BA)">
+                                    <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan BA
+                                </button>
+                                @endif
                             </div>
                             @else
                             <div class="mt-1">

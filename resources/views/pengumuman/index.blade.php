@@ -486,6 +486,44 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- PUSAT AKSES CEPAT PENGINGAT BERKAS PENDING -->
+                    <div class="card border border-success-subtle shadow-sm mt-3">
+                        <div class="card-header bg-success bg-opacity-10 py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold text-success" style="font-size: 12px;">
+                                <i class="fab fa-whatsapp me-1.5 fa-lg"></i>Pusat Pengingat Berkas Pending
+                            </span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">Tinggal Klik</span>
+                        </div>
+                        <div class="card-body p-2.5">
+                            <p class="small text-muted mb-2" style="font-size: 11px;">
+                                Mengingatkan satker yang belum unggah berkas? Klik menu di bawah untuk langsung kirim pengingat:
+                            </p>
+                            <div class="d-grid gap-1.5">
+                                <a href="{{ route('mutasi.pelaksanaan') }}" class="btn btn-outline-success btn-sm text-start py-1.5 px-2.5 d-flex justify-content-between align-items-center shadow-2xs" style="font-size: 11.5px;">
+                                    <div>
+                                        <div class="fw-bold"><i class="fas fa-truck-moving me-1.5 text-success"></i>1. Pelaksanaan Mutasi &amp; BAST</div>
+                                        <small class="text-muted" style="font-size: 10.5px;">Ingatkan Lap. Pemindahan, Penerimaan &amp; BAST</small>
+                                    </div>
+                                    <i class="fas fa-arrow-right text-success small"></i>
+                                </a>
+                                <a href="{{ route('sidang-tpp.dokumen-kanwil.index') }}" class="btn btn-outline-primary btn-sm text-start py-1.5 px-2.5 d-flex justify-content-between align-items-center shadow-2xs" style="font-size: 11.5px;">
+                                    <div>
+                                        <div class="fw-bold"><i class="fas fa-gavel me-1.5 text-primary"></i>2. Naskah Dokumen Sidang TPP</div>
+                                        <small class="text-muted" style="font-size: 10.5px;">Ingatkan Berita Acara (BA) Sidang UPT</small>
+                                    </div>
+                                    <i class="fas fa-arrow-right text-primary small"></i>
+                                </a>
+                                <a href="{{ route('sidang-tpp.index', ['status_ba' => 'belum_upload', 'periode' => 'semua']) }}" class="btn btn-outline-warning text-dark btn-sm text-start py-1.5 px-2.5 d-flex justify-content-between align-items-center shadow-2xs" style="font-size: 11.5px;">
+                                    <div>
+                                        <div class="fw-bold"><i class="fas fa-calendar-alt me-1.5 text-warning"></i>3. Jadwal Sidang (Belum Upload BA)</div>
+                                        <small class="text-muted" style="font-size: 10.5px;">Tabel agenda sidang yang belum ada BA</small>
+                                    </div>
+                                    <i class="fas fa-arrow-right text-dark small"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

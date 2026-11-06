@@ -111,6 +111,9 @@
                         <i class="fas fa-eye me-1"></i> Mode Lihat Saja
                     </span>
                     @endif
+                    <a href="{{ route('mutasi.pelaksanaan') }}" class="btn btn-outline-primary btn-sm px-3 shadow-sm">
+                        <i class="fas fa-truck-moving me-1"></i> Pelaksanaan &amp; BAST
+                    </a>
                     <a href="{{ route('mutasi.rekapitulasi') }}" class="btn btn-outline-success btn-sm px-3 shadow-sm">
                         <i class="fas fa-chart-pie me-1"></i> Rekapitulasi Mutasi
                     </a>
@@ -248,6 +251,13 @@
                             <small class="d-block text-muted mt-1" style="font-size: 10px;">
                                 BAST: {{ $m->tanggal_pelaksanaan->format('d/m/Y') }}
                             </small>
+                            @endif
+                            @if($m->status === 'disetujui' && (!$m->hasLaporanPemindahan() || !$m->hasLaporanPenerimaan() || !$m->hasBast()))
+                            <div class="mt-1">
+                                <a href="{{ route('mutasi.pelaksanaan') }}" class="btn btn-outline-success btn-xs py-0.5 px-1.5 fw-semibold shadow-xs" title="Buka menu Pelaksanaan Mutasi untuk Kirim Pengingat WA ke UPT Pengirim/Penerima">
+                                    <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan UPT
+                                </a>
+                            </div>
                             @endif
                         </td>
                         <td class="text-center text-nowrap">
