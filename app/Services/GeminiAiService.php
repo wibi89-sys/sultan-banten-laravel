@@ -9,6 +9,83 @@ use Illuminate\Support\Facades\Log;
 class GeminiAiService
 {
     /**
+     * Susun konfigurasi generationConfig yang kompatibel untuk model Gemini 1.5, 2.5, dan 3.x (termasuk 3.8 Flash).
+     *
+     * @param  array<string, mixed>  $extraConfig
+     * @return array<string, mixed>
+     */
+    public static function buildGenerationConfig(string $chosenModel, array $extraConfig = []): array
+    {
+        $lower = strtolower($chosenModel);
+        $config = array_merge([
+            'temperature' => 0.1,
+        ], $extraConfig);
+
+        // Gemini 2.5 Flash mendukung thinkingBudget = 0 untuk menonaktifkan reasoning
+        if (str_contains($lower, '2.5-flash')) {
+            $config['thinkingConfig'] = [
+                'thinkingBudget' => 0,
+            ];
+        }
+        // Gemini 3.x (misal gemini-3.8-flash, gemini-3.7-flash) menggunakan thinkingLevel ('LOW', 'MEDIUM', 'HIGH')
+        elseif (str_contains($lower, '3.') || str_contains($lower, '3-')) {
+            $config['thinkingConfig'] = [
+                'thinkingLevel' => 'LOW',
+            ];
+        }
+
+        return $config;
+    }
+
+    /**
+     * Ekstrak teks balasan utama dari candidates parts Gemini,
+     * mengabaikan part internal reasoning/thought bila ada (misal pada Gemini 3.8 Flash).
+     *
+     * @param  array<string, mixed>|null  $candidate
+     */
+    public static function extractTextFromCandidate(?array $candidate): ?string
+    {
+        if (! $candidate || empty($candidate['content']['parts'])) {
+            return null;
+        }
+
+        $parts = $candidate['content']['parts'];
+        $nonThoughtTexts = [];
+
+        foreach ($parts as $part) {
+            // Pada Gemini 3.8 Flash dan model reasoning, internal thought ditandai dengan 'thought' => true
+            if (empty($part['thought']) && isset($part['text']) && trim($part['text']) !== '') {
+                $nonThoughtTexts[] = $part['text'];
+            }
+        }
+
+        if (! empty($nonThoughtTexts)) {
+            return implode("\n", $nonThoughtTexts);
+        }
+
+        // Fallback jika semua part dianggap thought atau format lama
+        return $parts[count($parts) - 1]['text'] ?? ($parts[0]['text'] ?? null);
+    }
+
+    /**
+     * Bersihkan teks dari format markdown ```json ... ``` agar aman di-decode oleh json_decode.
+     */
+    public static function cleanJsonPayload(?string $text): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+
+        $clean = trim($text);
+        if (str_starts_with($clean, '```')) {
+            $clean = preg_replace('/^```(?:json)?\s*/i', '', $clean);
+            $clean = preg_replace('/\s*```$/', '', $clean);
+        }
+
+        return trim($clean);
+    }
+
+    /**
      * Uji koneksi ke Google Gemini API menggunakan API Key yang diberikan.
      *
      * @return array{success: bool, message: string, model: string}
@@ -30,16 +107,9 @@ class GeminiAiService
         try {
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$chosenModel}:generateContent?key={$key}";
 
-            $generationConfig = [
-                'temperature' => 0.1,
-                'maxOutputTokens' => 60,
-            ];
-
-            if (str_contains(strtolower($chosenModel), '2.5-flash')) {
-                $generationConfig['thinkingConfig'] = [
-                    'thinkingBudget' => 0,
-                ];
-            }
+            $generationConfig = self::buildGenerationConfig($chosenModel, [
+                'maxOutputTokens' => 1000,
+            ]);
 
             $response = Http::timeout(25)->connectTimeout(10)->post($endpoint, [
                 'contents' => [
@@ -54,7 +124,8 @@ class GeminiAiService
 
             if ($response->successful()) {
                 $body = $response->json();
-                $reply = $body['candidates'][0]['content']['parts'][0]['text'] ?? 'Koneksi berhasil.';
+                $candidate = $body['candidates'][0] ?? null;
+                $reply = self::extractTextFromCandidate($candidate) ?? 'Koneksi berhasil.';
 
                 return [
                     'success' => true,
@@ -209,16 +280,9 @@ Ekstrak data penting berikut dalam format JSON:
 Hanya kembalikan objek JSON valid tanpa penjelasan tambahan.
 PROMPT;
 
-            $generationConfig = [
-                'temperature' => 0.1,
+            $generationConfig = self::buildGenerationConfig($chosenModel, [
                 'responseMimeType' => 'application/json',
-            ];
-
-            if (str_contains(strtolower($chosenModel), '2.5-flash')) {
-                $generationConfig['thinkingConfig'] = [
-                    'thinkingBudget' => 0,
-                ];
-            }
+            ]);
 
             $payload = [
                 'contents' => [
@@ -251,9 +315,11 @@ PROMPT;
             }
 
             $resJson = $response->json();
-            $rawText = $resJson['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $candidate = $resJson['candidates'][0] ?? null;
+            $rawText = self::extractTextFromCandidate($candidate) ?? '';
+            $cleanedJson = self::cleanJsonPayload($rawText);
 
-            $data = json_decode($rawText, true);
+            $data = json_decode($cleanedJson, true);
             if (! is_array($data)) {
                 return [
                     'success' => false,
@@ -382,16 +448,9 @@ PENTING:
 - Hanya kembalikan teks JSON valid tanpa awalan atau akhiran markdown penjelasan.
 PROMPT;
 
-            $generationConfig = [
-                'temperature' => 0.1,
+            $generationConfig = self::buildGenerationConfig($chosenModel, [
                 'responseMimeType' => 'application/json',
-            ];
-
-            if (str_contains(strtolower($chosenModel), '2.5-flash')) {
-                $generationConfig['thinkingConfig'] = [
-                    'thinkingBudget' => 0,
-                ];
-            }
+            ]);
 
             $payload = [
                 'contents' => [
@@ -424,9 +483,11 @@ PROMPT;
             }
 
             $resJson = $response->json();
-            $rawText = $resJson['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $candidate = $resJson['candidates'][0] ?? null;
+            $rawText = self::extractTextFromCandidate($candidate) ?? '';
+            $cleanedJson = self::cleanJsonPayload($rawText);
 
-            $data = json_decode($rawText, true);
+            $data = json_decode($cleanedJson, true);
             if (! is_array($data)) {
                 return [
                     'success' => false,

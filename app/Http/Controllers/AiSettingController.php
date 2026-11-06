@@ -73,7 +73,7 @@ class AiSettingController extends Controller
         $setting->nomor_surat_prefix = $request->input('nomor_surat_prefix', 'WP.12-UM.01.01-');
         $setting->yth_tujuan = $request->input('yth_tujuan');
         $setting->dari_pengirim = $request->input('dari_pengirim');
-        $setting->hal_surat = $request->input('hal_surat');
+        $setting->hal_surat = $request->input('hal_surat') ?: 'Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP';
         $setting->penandatangan_nama = $request->input('penandatangan_nama');
         $setting->penandatangan_nip = $request->input('penandatangan_nip');
         $setting->penandatangan_jabatan = $request->input('penandatangan_jabatan');
