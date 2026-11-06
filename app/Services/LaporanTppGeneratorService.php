@@ -46,47 +46,51 @@ class LaporanTppGeneratorService
 
         $pdf = new class('P', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
         {
+            public $showQrCode = false;
+
             public $qrValidationUrl = '';
 
-            public $isQrActive = false;
+            public $kodeVerifikasi = '';
 
             public function Header() {}
 
             public function Footer()
             {
+                if ($this->showQrCode && ! empty($this->qrValidationUrl)) {
+                    $this->SetY(-24);
+                    $y = $this->GetY();
+                    $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
+                    // Tulis QR Code di margin kiri bawah persis seperti laporan lainnya di Sultan Banten
+                    $this->write2DBarcode($this->qrValidationUrl, 'QRCODE,L', 15, $y, 16, 16, $style, 'N');
+
+                    $this->SetXY(34, $y + 1);
+                    $this->SetFont('helvetica', '', 6.8);
+                    $this->SetTextColor(80, 80, 80);
+                    $this->MultiCell(110, 3.2, "Dokumen resmi terotentifikasi Sistem SULTAN BANTEN\nKode Verifikasi: ".($this->kodeVerifikasi ?: '-')."\nPindai QR Code untuk memeriksa keaslian naskah laporan.", 0, 'L');
+                }
+
                 $this->SetY(-15);
-                $this->SetFont('helvetica', 'I', 8);
+                $this->SetFont('helvetica', 'I', 7.5);
                 $this->SetTextColor(120, 120, 120);
-                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Laporan Sidang TPP Kanwil Ditjenpas Banten', 0, 0, 'C');
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Laporan Sidang TPP Kanwil Ditjenpas Banten', 0, 0, 'R');
+                $this->SetTextColor(0, 0, 0);
             }
         };
 
-        $pdf->isQrActive = $isDigitalQr;
+        $pdf->showQrCode = $isDigitalQr;
         $pdf->qrValidationUrl = $qrUrl;
+        $pdf->kodeVerifikasi = $params['kode_verifikasi'] ?? '';
 
         $pdf->SetCreator('Sultan Banten');
         $pdf->SetAuthor('Kanwil Kemenimipas Banten');
         $pdf->SetTitle('Laporan Pelaksanaan Sidang TPP - '.($params['upt_nama'] ?? 'Kanwil'));
         $pdf->SetMargins(18, 15, 18);
-        $pdf->SetAutoPageBreak(true, 20);
+        $pdf->SetAutoPageBreak(true, 25);
         $pdf->AddPage();
 
         // Render HTML Content
         $htmlContent = self::renderPdfHtml($params, $instansi);
         $pdf->writeHTML($htmlContent, true, false, true, false, '');
-
-        // Tulis QR Code jika mode digital QR aktif
-        if ($isDigitalQr && ! empty($qrUrl)) {
-            $curY = $pdf->GetY();
-            // Cek jika halaman hampir habis, tambah halaman jika perlu
-            if ($curY > 230) {
-                $pdf->AddPage();
-                $curY = $pdf->GetY();
-            }
-            $style = ['border' => false, 'padding' => 0, 'fgcolor' => [0, 0, 0], 'bgcolor' => false];
-            // Tulis QR Code di area tanda tangan kanan (x=135)
-            $pdf->write2DBarcode($qrUrl, 'QRCODE,L', 140, $curY - 32, 22, 22, $style, 'N');
-        }
 
         $cleanUpt = preg_replace('/[^a-zA-Z0-9_-]/', '_', $params['upt_nama'] ?? 'UPT');
         $filename = 'Laporan_Sidang_TPP_Kanwil_'.$cleanUpt.'_'.date('Ymd_His').'.pdf';
@@ -187,19 +191,38 @@ class LaporanTppGeneratorService
         }
         $saranHtml .= '</ol>';
 
-        // Dokumentasi Foto jika ada
+        // Dokumentasi 2 Foto
+        $fotoDokumentasi = (array) ($params['foto_dokumentasi'] ?? []);
+        $foto1 = $fotoDokumentasi[0] ?? null;
+        $foto2 = $fotoDokumentasi[1] ?? null;
+
+        $hasFoto1 = ! empty($foto1) && file_exists(public_path($foto1));
+        $hasFoto2 = ! empty($foto2) && file_exists(public_path($foto2));
+
         $dokumentasiHtml = '';
-        if (! empty($params['foto_dokumentasi']) && is_array($params['foto_dokumentasi'])) {
-            $dokumentasiHtml .= '<div style="margin-top:8pt;margin-bottom:12pt;text-align:center;">';
-            foreach ($params['foto_dokumentasi'] as $foto) {
-                if (! empty($foto) && file_exists(public_path($foto))) {
-                    $b64 = base64_encode(file_get_contents(public_path($foto)));
-                    $dokumentasiHtml .= '<img src="data:image/jpeg;base64,'.$b64.'" style="width:230pt;height:auto;margin:4pt;border:1px solid #ccc;" /> ';
-                }
+        if ($hasFoto1 || $hasFoto2) {
+            $dokumentasiHtml .= '<table width="100%" border="0" style="margin-top:6pt;margin-bottom:12pt;border-collapse:collapse;"><tr>';
+            if ($hasFoto1) {
+                $b64_1 = base64_encode(file_get_contents(public_path($foto1)));
+                $dokumentasiHtml .= '<td width="50%" align="center" valign="top" style="padding:4pt;">
+                    <img src="data:image/jpeg;base64,'.$b64_1.'" style="width:230pt;height:auto;border:1px solid #ccc;" /><br>
+                    <span style="font-size:9pt;font-style:italic;color:#555;">Dokumentasi 1: Pelaksanaan Sidang TPP</span>
+                </td>';
+            } else {
+                $dokumentasiHtml .= '<td width="50%"></td>';
             }
-            $dokumentasiHtml .= '</div>';
+            if ($hasFoto2) {
+                $b64_2 = base64_encode(file_get_contents(public_path($foto2)));
+                $dokumentasiHtml .= '<td width="50%" align="center" valign="top" style="padding:4pt;">
+                    <img src="data:image/jpeg;base64,'.$b64_2.'" style="width:230pt;height:auto;border:1px solid #ccc;" /><br>
+                    <span style="font-size:9pt;font-style:italic;color:#555;">Dokumentasi 2: Verifikasi &amp; Pengawasan Sidang</span>
+                </td>';
+            } else {
+                $dokumentasiHtml .= '<td width="50%"></td>';
+            }
+            $dokumentasiHtml .= '</tr></table>';
         } else {
-            $dokumentasiHtml = '<p style="font-size:10pt;font-style:italic;color:#666;margin-left:20pt;">(Dokumentasi terlampir dalam berkas Berita Acara pelaksanaan sidang)</p>';
+            $dokumentasiHtml = '<p style="font-size:10pt;font-style:italic;color:#666;margin-left:20pt;">(Dokumentasi pelaksanaan sidang terlampir dalam berkas Berita Acara UPT)</p>';
         }
 
         // Kop Surat
@@ -222,7 +245,7 @@ class LaporanTppGeneratorService
             </tr>
         </table>";
 
-        // Blok Tanda Tangan
+        // Blok Tanda Tangan (Standar Resmi Tanpa QR Menempel di Area TTD)
         $ttdPengawasHtml = "
             <b>Perwakilan Kantor Wilayah</b><br>
             {$pengawasJabatan}<br><br><br><br><br>
@@ -231,25 +254,29 @@ class LaporanTppGeneratorService
 
         $nipText = ($tampilkanNip && ! empty($penandatanganNip)) ? "<br><span style='font-size:10pt;'>NIP. {$penandatanganNip}</span>" : '';
 
-        $qrBlockHtml = '';
-        if ($metodeTtd === 'digital_qr' && ! empty($qrUrl)) {
-            $qrBlockHtml = "
-                <div style='border:1px dashed #0F4761;background:#f0f7fa;padding:5pt;margin-top:4pt;margin-bottom:4pt;text-align:center;font-size:8.5pt;color:#0F4761;'>
-                    <b>[ TANDA TANGAN DIGITAL RESMI ]</b><br>
-                    Tervalidasi secara elektronik melalui SULTAN BANTEN<br>
-                    <span style='font-size:7.5pt;color:#555;'>Pindai QR Code untuk verifikasi dokumen resmi</span>
-                </div>
-            ";
-        } else {
-            $qrBlockHtml = '<br><br><br><br>';
-        }
-
         $ttdKakanwilHtml = "
             {$kotaTanggal}<br>
-            <b>{$penandatanganJabatan}</b><br>
-            {$qrBlockHtml}
+            <b>{$penandatanganJabatan}</b><br><br><br><br><br>
             <u><b>{$penandatanganNama}</b></u>{$nipText}
         ";
+
+        $catatanValidasiHtml = '';
+        if ($metodeTtd === 'digital_qr' && ! empty($qrUrl)) {
+            $kodeVerifikasi = $params['kode_verifikasi'] ?? '-';
+            $catatanValidasiHtml = "
+            <table width='100%' border='0' style='margin-top:25pt;border-top:1px solid #ccc;padding-top:6pt;'>
+                <tr>
+                    <td width='70%' style='font-size:8pt;color:#666;line-height:1.3;'>
+                        <b>Dokumen Resmi Terotentifikasi SULTAN BANTEN</b><br>
+                        Kode Verifikasi: {$kodeVerifikasi}<br>
+                        Tautan Verifikasi: {$qrUrl}
+                    </td>
+                    <td width='30%' align='right' style='font-size:8pt;color:#888;'>
+                        Kantor Wilayah Banten
+                    </td>
+                </tr>
+            </table>";
+        }
 
         return <<<HTML
 <!DOCTYPE html>
@@ -327,6 +354,8 @@ class LaporanTppGeneratorService
             </td>
         </tr>
     </table>
+
+    {$catatanValidasiHtml}
 </body>
 </html>
 HTML;
@@ -410,6 +439,40 @@ HTML;
         }
         $saranHtml .= '</ol>';
 
+        // Dokumentasi 2 Foto
+        $fotoDokumentasi = (array) ($params['foto_dokumentasi'] ?? []);
+        $foto1 = $fotoDokumentasi[0] ?? null;
+        $foto2 = $fotoDokumentasi[1] ?? null;
+
+        $hasFoto1 = ! empty($foto1) && file_exists(public_path($foto1));
+        $hasFoto2 = ! empty($foto2) && file_exists(public_path($foto2));
+
+        $dokumentasiPdfHtml = '';
+        if ($hasFoto1 || $hasFoto2) {
+            $dokumentasiPdfHtml .= '<table width="100%" border="0" cellpadding="4" style="margin-top: 4pt; margin-bottom: 8pt;"><tr>';
+            if ($hasFoto1) {
+                $p1 = public_path($foto1);
+                $dokumentasiPdfHtml .= '<td width="50%" align="center" style="border: 1px solid #aaa; padding: 4px;">
+                    <img src="'.$p1.'" width="230" height="145" /><br>
+                    <span style="font-size: 8pt; color: #444;"><i>Dokumentasi 1: Pelaksanaan Sidang TPP</i></span>
+                </td>';
+            } else {
+                $dokumentasiPdfHtml .= '<td width="50%"></td>';
+            }
+            if ($hasFoto2) {
+                $p2 = public_path($foto2);
+                $dokumentasiPdfHtml .= '<td width="50%" align="center" style="border: 1px solid #aaa; padding: 4px;">
+                    <img src="'.$p2.'" width="230" height="145" /><br>
+                    <span style="font-size: 8pt; color: #444;"><i>Dokumentasi 2: Verifikasi &amp; Pengawasan Sidang</i></span>
+                </td>';
+            } else {
+                $dokumentasiPdfHtml .= '<td width="50%"></td>';
+            }
+            $dokumentasiPdfHtml .= '</tr></table>';
+        } else {
+            $dokumentasiPdfHtml = '<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>(Dokumentasi pelaksanaan sidang terlampir pada berkas Berita Acara UPT)</i></p>';
+        }
+
         $nipText = ($tampilkanNip && ! empty($penandatanganNip)) ? "<br>NIP. {$penandatanganNip}" : '';
 
         return <<<HTML
@@ -442,6 +505,9 @@ HTML;
 
 <h2>D. PENUTUP</h2>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{$penutup}</p>
+
+<h2>E. DOKUMENTASI KEGIATAN</h2>
+{$dokumentasiPdfHtml}
 
 <br><br>
 <table width="100%" border="0" cellpadding="2">

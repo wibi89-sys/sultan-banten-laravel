@@ -384,6 +384,47 @@
             btnAiBa.disabled = true;
         }
 
+        // Muat foto dokumentasi yang sudah ada (dari laporan kanwil tersimpan atau dari berkas dokumentasi sidang UPT)
+        let existingPhotos = [];
+        if (lapKanwil && lapKanwil.konten_data && lapKanwil.konten_data.foto_dokumentasi && lapKanwil.konten_data.foto_dokumentasi.length > 0) {
+            existingPhotos = lapKanwil.konten_data.foto_dokumentasi;
+        } else if (s.file_dokumentasi) {
+            try {
+                existingPhotos = typeof s.file_dokumentasi === 'string' ? JSON.parse(s.file_dokumentasi) : s.file_dokumentasi;
+            } catch(e) {
+                existingPhotos = [s.file_dokumentasi];
+            }
+        }
+        if (!Array.isArray(existingPhotos)) existingPhotos = [existingPhotos];
+
+        // Reset input file
+        if (document.getElementById('lap_foto_1')) document.getElementById('lap_foto_1').value = '';
+        if (document.getElementById('lap_foto_2')) document.getElementById('lap_foto_2').value = '';
+
+        // Tampilkan Foto 1
+        if (existingPhotos[0]) {
+            const path1 = existingPhotos[0].startsWith('http') ? existingPhotos[0] : '/' + existingPhotos[0].replace(/^\//, '');
+            document.getElementById('lap_existing_foto_1').value = existingPhotos[0];
+            document.getElementById('preview_foto_1').src = path1;
+            document.getElementById('wrapper_preview_1').classList.remove('d-none');
+        } else {
+            document.getElementById('lap_existing_foto_1').value = '';
+            document.getElementById('preview_foto_1').src = '';
+            document.getElementById('wrapper_preview_1').classList.add('d-none');
+        }
+
+        // Tampilkan Foto 2
+        if (existingPhotos[1]) {
+            const path2 = existingPhotos[1].startsWith('http') ? existingPhotos[1] : '/' + existingPhotos[1].replace(/^\//, '');
+            document.getElementById('lap_existing_foto_2').value = existingPhotos[1];
+            document.getElementById('preview_foto_2').src = path2;
+            document.getElementById('wrapper_preview_2').classList.remove('d-none');
+        } else {
+            document.getElementById('lap_existing_foto_2').value = '';
+            document.getElementById('preview_foto_2').src = '';
+            document.getElementById('wrapper_preview_2').classList.add('d-none');
+        }
+
         modalLaporanTpp.show();
     }
 
@@ -402,6 +443,31 @@
             `;
             wrapper.appendChild(div);
         });
+    }
+
+    function previewFotoLaporan(input, imgId, wrapperId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById(imgId);
+                const wrapper = document.getElementById(wrapperId);
+                if (img) img.src = e.target.result;
+                if (wrapper) wrapper.classList.remove('d-none');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function hapusFotoDokumentasi(num) {
+        const input = document.getElementById('lap_foto_' + num);
+        const existing = document.getElementById('lap_existing_foto_' + num);
+        const img = document.getElementById('preview_foto_' + num);
+        const wrapper = document.getElementById('wrapper_preview_' + num);
+
+        if (input) input.value = '';
+        if (existing) existing.value = '';
+        if (img) img.src = '';
+        if (wrapper) wrapper.classList.add('d-none');
     }
 
     function tambahBarisMateri() {

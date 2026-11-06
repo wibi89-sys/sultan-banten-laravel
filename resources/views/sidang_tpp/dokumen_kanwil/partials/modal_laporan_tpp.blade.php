@@ -2,7 +2,7 @@
 <div class="modal fade" id="modalLaporanTpp" tabindex="-1" aria-labelledby="modalLaporanTppTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
-            <form id="formLaporanTpp" method="POST" target="_blank">
+            <form id="formLaporanTpp" method="POST" target="_blank" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="sidang_id" id="lap_sidang_id">
 
@@ -174,7 +174,7 @@
                         </div>
 
                         <!-- BAGIAN D -->
-                        <div class="accordion-item border-0 shadow-sm rounded overflow-hidden">
+                        <div class="accordion-item border-0 shadow-sm mb-2 rounded overflow-hidden">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed py-2.5 px-3 fw-bold bg-white text-dark small" type="button" data-bs-toggle="collapse" data-bs-target="#collapseD">
                                     <i class="fas fa-flag-checkered text-secondary me-2"></i>D. PENUTUP
@@ -183,6 +183,63 @@
                             <div id="collapseD" class="accordion-collapse collapse">
                                 <div class="accordion-body p-3 bg-white">
                                     <textarea name="penutup" id="lap_penutup" rows="2" class="form-control form-control-sm"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BAGIAN E: DOKUMENTASI KEGIATAN (2 FOTO) -->
+                        <div class="accordion-item border-0 shadow-sm rounded overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2.5 px-3 fw-bold bg-white text-dark small" type="button" data-bs-toggle="collapse" data-bs-target="#collapseE">
+                                    <i class="fas fa-camera text-primary me-2"></i>E. DOKUMENTASI KEGIATAN (2 FOTO)
+                                </button>
+                            </h2>
+                            <div id="collapseE" class="accordion-collapse collapse">
+                                <div class="accordion-body p-3 bg-white">
+                                    <div class="alert alert-light border small text-muted py-2 px-3 mb-3 d-flex align-items-center">
+                                        <i class="fas fa-info-circle text-primary me-2 fa-lg"></i>
+                                        <div>
+                                            Unggah <b>2 foto dokumentasi</b> pelaksanaan sidang TPP untuk dilampirkan ke dalam dokumen resmi (Format: JPG/PNG, maks. 5MB). Foto yang sudah diunggah pihak UPT akan otomatis terisi sebagai pilihan awal, Anda dapat mengganti atau memperbaruinya di sini.
+                                        </div>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2.5 bg-light h-100">
+                                                <label class="form-label small fw-bold text-dark d-block mb-1">
+                                                    <i class="fas fa-image text-primary me-1"></i>Foto Dokumentasi 1
+                                                </label>
+                                                <input type="file" name="foto_dokumentasi_1" id="lap_foto_1" class="form-control form-control-sm" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewFotoLaporan(this, 'preview_foto_1', 'wrapper_preview_1')">
+                                                <input type="hidden" name="existing_foto_1" id="lap_existing_foto_1">
+                                                <div id="wrapper_preview_1" class="mt-2 text-center p-2 bg-white border rounded d-none">
+                                                    <img id="preview_foto_1" src="" class="img-thumbnail" style="max-height: 140px; object-fit: cover;">
+                                                    <div class="d-flex justify-content-between align-items-center mt-1.5 px-1">
+                                                        <span class="small text-muted" style="font-size: 11px;">Foto 1 Terpasang</span>
+                                                        <button type="button" class="btn btn-xs btn-outline-danger py-0 px-2" style="font-size: 10.5px;" onclick="hapusFotoDokumentasi(1)">
+                                                            <i class="fas fa-trash me-1"></i>Hapus
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2.5 bg-light h-100">
+                                                <label class="form-label small fw-bold text-dark d-block mb-1">
+                                                    <i class="fas fa-image text-primary me-1"></i>Foto Dokumentasi 2
+                                                </label>
+                                                <input type="file" name="foto_dokumentasi_2" id="lap_foto_2" class="form-control form-control-sm" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewFotoLaporan(this, 'preview_foto_2', 'wrapper_preview_2')">
+                                                <input type="hidden" name="existing_foto_2" id="lap_existing_foto_2">
+                                                <div id="wrapper_preview_2" class="mt-2 text-center p-2 bg-white border rounded d-none">
+                                                    <img id="preview_foto_2" src="" class="img-thumbnail" style="max-height: 140px; object-fit: cover;">
+                                                    <div class="d-flex justify-content-between align-items-center mt-1.5 px-1">
+                                                        <span class="small text-muted" style="font-size: 11px;">Foto 2 Terpasang</span>
+                                                        <button type="button" class="btn btn-xs btn-outline-danger py-0 px-2" style="font-size: 10.5px;" onclick="hapusFotoDokumentasi(2)">
+                                                            <i class="fas fa-trash me-1"></i>Hapus
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

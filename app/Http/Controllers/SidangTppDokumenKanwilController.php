@@ -9,6 +9,7 @@ use App\Models\SidangTpp;
 use App\Models\TppNaskahKanwil;
 use App\Models\Upt;
 use App\Services\GeminiAiService;
+use App\Services\ImageCompressionService;
 use App\Services\LaporanTppGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -140,7 +141,36 @@ class SidangTppDokumenKanwilController extends Controller
             'penandatangan_jabatan' => 'nullable|string|max:150',
             'tampilkan_nip' => 'nullable|boolean',
             'metode_ttd' => 'required|in:manual,digital_qr',
+            'foto_dokumentasi_1' => 'nullable|file|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'foto_dokumentasi_2' => 'nullable|file|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'existing_foto_1' => 'nullable|string',
+            'existing_foto_2' => 'nullable|string',
         ]);
+
+        // Proses Foto Dokumentasi (2 Foto)
+        $fotoDokumentasi = [];
+
+        // Foto 1
+        if ($request->hasFile('foto_dokumentasi_1')) {
+            $fotoDokumentasi[] = ImageCompressionService::compressToJpg($request->file('foto_dokumentasi_1'), 'uploads/sidang_tpp', 512000);
+        } elseif ($request->filled('existing_foto_1')) {
+            $fotoDokumentasi[] = $request->input('existing_foto_1');
+        }
+
+        // Foto 2
+        if ($request->hasFile('foto_dokumentasi_2')) {
+            $fotoDokumentasi[] = ImageCompressionService::compressToJpg($request->file('foto_dokumentasi_2'), 'uploads/sidang_tpp', 512000);
+        } elseif ($request->filled('existing_foto_2')) {
+            $fotoDokumentasi[] = $request->input('existing_foto_2');
+        }
+
+        // Fallback jika belum ada foto yang diunggah/dipilih, ambil dari foto UPT jika tersedia
+        if (empty($fotoDokumentasi) && ! empty($sidang->file_dokumentasi)) {
+            $uptPhotos = is_array($sidang->file_dokumentasi) ? $sidang->file_dokumentasi : (json_decode((string) $sidang->file_dokumentasi, true) ?: []);
+            if (! empty($uptPhotos)) {
+                $fotoDokumentasi = array_values(array_slice($uptPhotos, 0, 2));
+            }
+        }
 
         // Simpan / update record di tpp_naskah_kanwil
         $naskah = TppNaskahKanwil::firstOrNew([
@@ -179,6 +209,7 @@ class SidangTppDokumenKanwilController extends Controller
             'simpulan_poin' => array_values(array_filter((array) ($validated['simpulan_poin'] ?? []))),
             'saran_poin' => array_values(array_filter((array) ($validated['saran_poin'] ?? []))),
             'penutup' => $validated['penutup'] ?? '',
+            'foto_dokumentasi' => $fotoDokumentasi,
         ];
 
         $naskah->save();
@@ -206,8 +237,9 @@ class SidangTppDokumenKanwilController extends Controller
             'penandatangan_jabatan' => $naskah->penandatangan_jabatan,
             'tampilkan_nip' => $naskah->tampilkan_nip,
             'metode_ttd' => $naskah->metode_ttd,
+            'kode_verifikasi' => $naskah->kode_verifikasi,
             'qr_url' => $naskah->getPublicVerificationUrl(),
-            'foto_dokumentasi' => is_array($sidang->file_dokumentasi) ? $sidang->file_dokumentasi : (json_decode((string) $sidang->file_dokumentasi, true) ?: []),
+            'foto_dokumentasi' => $fotoDokumentasi,
         ]);
 
         if ($validated['format_output'] === 'word') {
