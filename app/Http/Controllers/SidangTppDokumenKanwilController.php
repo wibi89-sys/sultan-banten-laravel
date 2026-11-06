@@ -289,17 +289,17 @@ class SidangTppDokumenKanwilController extends Controller
             'jenis_dokumen' => $jenis,
         ]);
 
-        if (empty($naskah->kode_verifikasi)) {
-            $naskah->kode_verifikasi = TppNaskahKanwil::generateUniqueCode();
-        }
-
         if ($request->filled('nomor_dokumen')) {
             $naskah->nomor_dokumen = $request->input('nomor_dokumen');
         }
 
-        $bubuhiQr = $request->boolean('bubuhi_qr', true);
+        $bubuhiQr = $request->boolean('bubuhi_qr', false);
 
         if ($bubuhiQr) {
+            if (empty($naskah->kode_verifikasi)) {
+                $naskah->kode_verifikasi = TppNaskahKanwil::generateUniqueCode();
+            }
+
             $qrUrl = $naskah->getPublicVerificationUrl();
             $rawX = $request->input('qr_percent_x');
             $rawY = $request->input('qr_percent_y');
@@ -339,6 +339,7 @@ class SidangTppDokumenKanwilController extends Controller
         } else {
             rename($rawPath, $finalPath);
             $filePath = "uploads/sidang_tpp_signed/{$finalFilename}";
+            $naskah->kode_verifikasi = null;
         }
 
         $naskah->file_signed = $filePath;

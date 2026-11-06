@@ -67,6 +67,7 @@
                             <div class="card border border-primary-subtle shadow-sm flex-grow-1">
                                 <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
                                     <div class="form-check form-switch mb-0">
+                                        <input type="hidden" name="bubuhi_qr" value="0">
                                         <input class="form-check-input" type="checkbox" name="bubuhi_qr" id="up_bubuhi_qr" value="1" checked onchange="toggleStampingPanel(this.checked)">
                                         <label class="form-check-label fw-bold text-dark small" for="up_bubuhi_qr" style="font-size: 11.5px;">
                                             <i class="fas fa-qrcode text-primary me-1"></i>Bubuhkan Cap QR Otentifikasi
