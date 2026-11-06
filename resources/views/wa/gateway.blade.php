@@ -125,11 +125,11 @@
                             <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 10px;">Anti-Spam</span>
                         </label>
                         <div class="input-group input-group-sm">
-                            <input type="number" name="jeda_kirim" id="jeda_kirim" class="form-control" min="1" max="30"
-                                value="{{ $waSettings->jeda_kirim ?? 4 }}" required>
+                            <input type="number" name="jeda_kirim" id="jeda_kirim" class="form-control" min="1" max="120"
+                                value="{{ $waSettings->jeda_kirim ?? 10 }}" required>
                             <span class="input-group-text">detik</span>
                         </div>
-                        <small class="text-muted" style="font-size: 11px;">Jeda acak (&plusmn;1 dtk) per nomor.</small>
+                        <small class="text-muted" style="font-size: 11px;">Jeda acak (&plusmn;2 dtk) per nomor. Rekomendasi: <strong>8 - 15 detik</strong>.</small>
                     </div>
                 </div>
 

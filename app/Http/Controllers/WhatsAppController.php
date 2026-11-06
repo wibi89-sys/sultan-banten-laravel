@@ -104,7 +104,7 @@ class WhatsAppController extends Controller
         $waSettings->sender_number = trim($request->input('sender_number', ''));
         $waSettings->aktif = $request->has('aktif');
         if ($request->has('jeda_kirim')) {
-            $waSettings->jeda_kirim = max(1, min(30, (int) $request->input('jeda_kirim', 4)));
+            $waSettings->jeda_kirim = max(1, min(120, (int) $request->input('jeda_kirim', 10)));
         }
 
         // Otomatisasi Modul Terpusat (Sidang TPP & Mutasi Narapidana)
@@ -467,7 +467,7 @@ class WhatsAppController extends Controller
 
         if ($type === 'morning') {
             $setting->jam_reminder_pagi = $request->input('jam_reminder_pagi', '07:30');
-            $setting->jeda_kirim = max(1, min(30, (int) $request->input('jeda_kirim', 4)));
+            $setting->jeda_kirim = max(1, min(120, (int) $request->input('jeda_kirim', 10)));
             $setting->daftar_salam = trim((string) $request->input('daftar_salam', 'Selamat pagi, Semangat pagi, Yth., Halo Rekan, Salam hangat'));
             $setting->template_pagi = $request->input('template_pagi', '');
             $setting->save();

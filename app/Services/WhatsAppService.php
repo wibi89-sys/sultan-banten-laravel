@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
 
 class WhatsAppService
 {
-    public static function send(string $target, string $message): array
+    public static function send(string $target, string $message, ?int $delaySeconds = null): array
     {
         $settings = WaSetting::getFirst();
 
@@ -43,6 +43,8 @@ class WhatsAppService
         $apiKey = $settings->api_key;
         $apiUrl = $settings->api_url ?: 'https://api.fonnte.com/send';
         $gateway = $settings->gateway_name ?: 'fonnte';
+        $configuredDelay = (int) ($settings->jeda_kirim ?? 4);
+        $delayVal = (string) ($delaySeconds !== null ? max(0, $delaySeconds) : max(1, min(60, $configuredDelay)));
 
         $ch = curl_init();
 
@@ -55,7 +57,7 @@ class WhatsAppService
                     'target' => $target,
                     'message' => $message,
                     'countryCode' => '62',
-                    'delay' => '2',
+                    'delay' => $delayVal,
                 ]),
                 CURLOPT_HTTPHEADER => [
                     'Authorization: '.$apiKey,
@@ -71,6 +73,7 @@ class WhatsAppService
                 CURLOPT_POSTFIELDS => json_encode([
                     'target' => $target,
                     'message' => $message,
+                    'delay' => (int) $delayVal,
                 ]),
                 CURLOPT_HTTPHEADER => [
                     'Authorization: '.$apiKey,
@@ -110,6 +113,9 @@ class WhatsAppService
 
     public static function sendMorningReminder(): array
     {
+        @set_time_limit(0);
+        @ignore_user_abort(true);
+
         $settings = WaSetting::getFirst();
         if (! $settings || empty($settings->api_key) || empty($settings->aktif)) {
             return [
@@ -154,7 +160,7 @@ class WhatsAppService
 
         $rawSalam = trim((string) ($settings->daftar_salam ?? ''));
         $salamList = array_values(array_filter(array_map('trim', explode(',', $rawSalam ?: 'Selamat pagi, Semangat pagi, Yth., Halo Rekan, Salam hangat'))));
-        $delayBase = (int) ($settings->jeda_kirim ?? 4);
+        $delayBase = (int) ($settings->jeda_kirim ?? 8);
         if ($delayBase < 1) {
             $delayBase = 1;
         }
@@ -182,9 +188,12 @@ class WhatsAppService
                 continue;
             }
 
-            // Anti-Spam: Beri jeda acak manusiawi (jitter: delayBase +/- 1 detik) antar pengiriman pesan ke operator
+            // Anti-Spam: Beri jeda acak manusiawi (jitter: delayBase +/- 2 detik) antar pengiriman pesan ke operator
+            $jitter = $delayBase;
             if ($sent > 0 || $failed > 0) {
-                $jitter = random_int(max(1, $delayBase - 1), $delayBase + 2);
+                $minJitter = max(1, $delayBase - 2);
+                $maxJitter = $delayBase + 3;
+                $jitter = random_int($minJitter, $maxJitter);
                 sleep($jitter);
             }
 
@@ -203,7 +212,7 @@ class WhatsAppService
             // Terapkan spintax acak {opsi1|opsi2|opsi3} jika ada di template
             $message = self::parseSpintax($message);
 
-            $res = self::send($op->no_wa, $message);
+            $res = self::send($op->no_wa, $message, $jitter);
             if ($res['success']) {
                 $sent++;
             } else {
@@ -221,7 +230,7 @@ class WhatsAppService
             DB::table('wa_notification_logs')->insert([
                 'tipe' => 'reminder_pagi',
                 'target' => 'operator belum input',
-                'pesan' => "Smart reminder sent to {$sent} operators. {$skipped} operators skipped (already input).",
+                'pesan' => "Smart reminder terkirim ke {$sent} operator (jeda ~{$delayBase} dtk antar nomor). {$skipped} operator dilewati (sudah input).",
                 'status' => $sent > 0 ? 'success' : ($failed > 0 ? 'failed' : 'success'),
                 'jumlah_penerima' => $sent,
                 'tanggal_kirim' => now(),
@@ -430,21 +439,26 @@ class WhatsAppService
         }
 
         if (! empty($schedule->kirim_ke_pimpinan) && $res['success']) {
+            @set_time_limit(0);
+            @ignore_user_abort(true);
             $pimpinanList = WaPimpinan::where('aktif', 1)->orderBy('urutan')->get();
             $pimpinanSent = 0;
             $settings = WaSetting::getFirst();
-            $delayBase = (int) ($settings?->jeda_kirim ?? 4);
+            $delayBase = (int) ($settings?->jeda_kirim ?? 8);
             if ($delayBase < 1) {
                 $delayBase = 1;
             }
 
             foreach ($pimpinanList as $pimpinan) {
                 if (! empty($pimpinan->no_wa)) {
+                    $jitter = $delayBase;
                     if ($pimpinanSent > 0) {
-                        $jitter = random_int(max(1, $delayBase - 1), $delayBase + 2);
+                        $minJitter = max(1, $delayBase - 2);
+                        $maxJitter = $delayBase + 3;
+                        $jitter = random_int($minJitter, $maxJitter);
                         sleep($jitter);
                     }
-                    self::send($pimpinan->no_wa, $message);
+                    self::send($pimpinan->no_wa, $message, $jitter);
                     $pimpinanSent++;
                 }
             }
