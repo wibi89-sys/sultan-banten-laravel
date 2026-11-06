@@ -118,6 +118,68 @@ class GeminiAiServiceTest extends TestCase
         $this->assertStringContainsString('Koneksi Google Gemini API berhasil terhubung.', $result['message']);
     }
 
+    public function test_is_high_demand_error_detection(): void
+    {
+        $googleMsg = 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.';
+        $this->assertTrue(GeminiAiService::isHighDemandError($googleMsg, 503));
+        $this->assertTrue(GeminiAiService::isHighDemandError('Resource exhausted', 429));
+        $this->assertFalse(GeminiAiService::isHighDemandError('API key not valid. Please pass a valid API key.', 400));
+    }
+
+    public function test_test_connection_identifies_high_demand(): void
+    {
+        Http::fake([
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent*' => Http::response([
+                'error' => [
+                    'code' => 503,
+                    'message' => 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.',
+                    'status' => 'UNAVAILABLE',
+                ],
+            ], 503),
+        ]);
+
+        $result = GeminiAiService::testConnection('fake_key', 'gemini-3.8-flash');
+
+        $this->assertFalse($result['success']);
+        $this->assertTrue($result['is_high_demand']);
+        $this->assertEquals('gemini-2.5-flash', $result['suggested_model']);
+        $this->assertStringContainsString('High Demand', $result['message']);
+    }
+
+    public function test_post_generate_content_with_fallback_auto_switches_when_high_demand(): void
+    {
+        Http::fake([
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent*' => Http::response([
+                'error' => [
+                    'code' => 503,
+                    'message' => 'This model is currently experiencing high demand.',
+                ],
+            ], 503),
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => '{"nomor_undangan": "W12.PAS/123/2026"}'],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $res = GeminiAiService::postGenerateContentWithFallback(
+            apiKey: 'fake_key',
+            primaryModel: 'gemini-3.8-flash',
+            contents: [['parts' => [['text' => 'Test']]]],
+        );
+
+        $this->assertNotNull($res['response']);
+        $this->assertTrue($res['response']->successful());
+        $this->assertEquals('gemini-2.5-flash', $res['model_used']);
+        $this->assertTrue($res['is_fallback']);
+    }
+
     public function test_admin_can_update_ai_setting_to_gemini_3_8_flash(): void
     {
         $response = $this->actingAs($this->adminUser)

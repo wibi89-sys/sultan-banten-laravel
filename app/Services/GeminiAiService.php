@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AiSetting;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -86,9 +87,116 @@ class GeminiAiService
     }
 
     /**
+     * Dapatkan daftar model fallback jika model utama sedang mengalami lonjakan beban (High Demand) di server Google.
+     *
+     * @return array<int, string>
+     */
+    public static function getFallbackModels(string $primaryModel): array
+    {
+        $fallbacks = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+
+        return array_values(array_filter($fallbacks, fn ($m) => $m !== $primaryModel));
+    }
+
+    /**
+     * Cek apakah pesan error dari Google menandakan server overload / high demand.
+     */
+    public static function isHighDemandError(string $message, int $statusCode = 0): bool
+    {
+        $lower = strtolower($message);
+
+        return $statusCode === 503
+            || $statusCode === 429
+            || str_contains($lower, 'high demand')
+            || str_contains($lower, 'overloaded')
+            || str_contains($lower, 'temporarily unavailable')
+            || str_contains($lower, 'resource exhausted')
+            || str_contains($lower, 'spikes in demand');
+    }
+
+    /**
+     * Kirim permintaan ke Gemini API dengan dukungan auto-retry dan auto-fallback jika model utama mengalami High Demand.
+     *
+     * @param  array<int, array<string, mixed>>  $contents
+     * @param  array<string, mixed>  $extraConfig
+     * @return array{
+     *   response: Response|null,
+     *   model_used: string,
+     *   is_fallback: bool,
+     *   error: ?string
+     * }
+     */
+    public static function postGenerateContentWithFallback(
+        string $apiKey,
+        string $primaryModel,
+        array $contents,
+        array $extraConfig = [],
+        int $timeout = 60
+    ): array {
+        $modelsToTry = array_unique(array_merge([$primaryModel], self::getFallbackModels($primaryModel)));
+        $lastError = null;
+
+        foreach ($modelsToTry as $idx => $model) {
+            $isFallback = ($model !== $primaryModel);
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+            $config = self::buildGenerationConfig($model, $extraConfig);
+
+            try {
+                $response = Http::timeout($timeout)->connectTimeout(15)->post($endpoint, [
+                    'contents' => $contents,
+                    'generationConfig' => $config,
+                ]);
+
+                if ($response->successful()) {
+                    return [
+                        'response' => $response,
+                        'model_used' => $model,
+                        'is_fallback' => $isFallback,
+                        'error' => null,
+                    ];
+                }
+
+                $errJson = $response->json();
+                $rawMsg = $errJson['error']['message'] ?? ('HTTP '.$response->status().' '.$response->reason());
+                $lastError = $rawMsg;
+
+                // Jika error adalah high demand / overload / 503 / 429, coba model cadangan berikutnya
+                if (self::isHighDemandError($rawMsg, $response->status()) && isset($modelsToTry[$idx + 1])) {
+                    Log::warning("Gemini model '{$model}' mengalami high demand di Google ({$rawMsg}). Beralih otomatis ke model cadangan '{$modelsToTry[$idx + 1]}'.");
+
+                    continue;
+                }
+
+                // Jika error jenis lain (misal API key invalid 400/403), tidak perlu dicoba ke model lain
+                break;
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+                Log::warning("Gemini model '{$model}' mengalami kendala jaringan: ".$e->getMessage());
+                if (isset($modelsToTry[$idx + 1])) {
+                    continue;
+                }
+            }
+        }
+
+        return [
+            'response' => null,
+            'model_used' => $primaryModel,
+            'is_fallback' => false,
+            'error' => $lastError ?? 'Gagal menghubungi server Google Gemini.',
+        ];
+    }
+
+    /**
      * Uji koneksi ke Google Gemini API menggunakan API Key yang diberikan.
      *
-     * @return array{success: bool, message: string, model: string}
+     * @return array{
+     *   success: bool,
+     *   message: string,
+     *   model: string,
+     *   is_high_demand?: bool,
+     *   suggested_model?: string,
+     *   raw_error?: string
+     * }
      */
     public static function testConnection(?string $apiKey = null, ?string $model = null): array
     {
@@ -136,9 +244,25 @@ class GeminiAiService
 
             $errBody = $response->json();
             $errMsg = $errBody['error']['message'] ?? ('HTTP '.$response->status().' '.$response->reason());
+            $isHighDemand = self::isHighDemandError($errMsg, $response->status());
+
+            if ($isHighDemand) {
+                $fallbacks = self::getFallbackModels($chosenModel);
+                $suggestedFallback = $fallbacks[0] ?? 'gemini-2.5-flash';
+
+                return [
+                    'success' => false,
+                    'is_high_demand' => true,
+                    'suggested_model' => $suggestedFallback,
+                    'message' => "Model '{$chosenModel}' saat ini sedang mengalami lonjakan antrean trafik tinggi di server Google (High Demand). Lonjakan ini biasanya bersifat sementara di sisi Google.",
+                    'raw_error' => $errMsg,
+                    'model' => $chosenModel,
+                ];
+            }
 
             return [
                 'success' => false,
+                'is_high_demand' => false,
                 'message' => 'Gagal terhubung ke Gemini API: '.$errMsg,
                 'model' => $chosenModel,
             ];
@@ -280,41 +404,37 @@ Ekstrak data penting berikut dalam format JSON:
 Hanya kembalikan objek JSON valid tanpa penjelasan tambahan.
 PROMPT;
 
-            $generationConfig = self::buildGenerationConfig($chosenModel, [
-                'responseMimeType' => 'application/json',
-            ]);
-
-            $payload = [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt],
-                            [
-                                'inline_data' => [
-                                    'mime_type' => 'application/pdf',
-                                    'data' => $base64Data,
-                                ],
+            $contents = [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                        [
+                            'inline_data' => [
+                                'mime_type' => 'application/pdf',
+                                'data' => $base64Data,
                             ],
                         ],
                     ],
                 ],
-                'generationConfig' => $generationConfig,
             ];
 
-            @set_time_limit(120);
-            $response = Http::timeout(60)->connectTimeout(15)->post($endpoint, $payload);
+            @set_time_limit(180);
+            $res = self::postGenerateContentWithFallback(
+                apiKey: $setting->api_key,
+                primaryModel: $chosenModel,
+                contents: $contents,
+                extraConfig: ['responseMimeType' => 'application/json'],
+                timeout: 75
+            );
 
-            if (! $response->successful()) {
-                $err = $response->json();
-                $msg = $err['error']['message'] ?? ('HTTP '.$response->status());
-
+            if (! $res['response'] || ! $res['response']->successful()) {
                 return [
                     'success' => false,
-                    'message' => 'Gagal memproses PDF dengan AI: '.$msg,
+                    'message' => 'Gagal memproses PDF dengan AI: '.($res['error'] ?? 'Tidak ada balasan dari server Google.'),
                 ];
             }
 
-            $resJson = $response->json();
+            $resJson = $res['response']->json();
             $candidate = $resJson['candidates'][0] ?? null;
             $rawText = self::extractTextFromCandidate($candidate) ?? '';
             $cleanedJson = self::cleanJsonPayload($rawText);
@@ -327,9 +447,14 @@ PROMPT;
                 ];
             }
 
+            $msg = 'Surat undangan berhasil dianalisis oleh AI.';
+            if ($res['is_fallback']) {
+                $msg .= " (dialihkan otomatis ke model cadangan {$res['model_used']} karena {$chosenModel} sedang antre di server Google).";
+            }
+
             return [
                 'success' => true,
-                'message' => 'Surat undangan berhasil dianalisis oleh AI.',
+                'message' => $msg,
                 'data' => [
                     'nomor_undangan' => $data['nomor_undangan'] ?? '',
                     'tanggal_surat' => $data['tanggal_surat'] ?? '',
@@ -448,41 +573,37 @@ PENTING:
 - Hanya kembalikan teks JSON valid tanpa awalan atau akhiran markdown penjelasan.
 PROMPT;
 
-            $generationConfig = self::buildGenerationConfig($chosenModel, [
-                'responseMimeType' => 'application/json',
-            ]);
-
-            $payload = [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt],
-                            [
-                                'inline_data' => [
-                                    'mime_type' => 'application/pdf',
-                                    'data' => $base64Data,
-                                ],
+            $contents = [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                        [
+                            'inline_data' => [
+                                'mime_type' => 'application/pdf',
+                                'data' => $base64Data,
                             ],
                         ],
                     ],
                 ],
-                'generationConfig' => $generationConfig,
             ];
 
-            @set_time_limit(180);
-            $response = Http::timeout(90)->connectTimeout(15)->post($endpoint, $payload);
+            @set_time_limit(240);
+            $res = self::postGenerateContentWithFallback(
+                apiKey: $setting->api_key,
+                primaryModel: $chosenModel,
+                contents: $contents,
+                extraConfig: ['responseMimeType' => 'application/json'],
+                timeout: 90
+            );
 
-            if (! $response->successful()) {
-                $err = $response->json();
-                $msg = $err['error']['message'] ?? ('HTTP '.$response->status());
-
+            if (! $res['response'] || ! $res['response']->successful()) {
                 return [
                     'success' => false,
-                    'message' => 'Gagal memproses Berita Acara dengan AI: '.$msg,
+                    'message' => 'Gagal memproses Berita Acara dengan AI: '.($res['error'] ?? 'Tidak ada balasan dari server Google.'),
                 ];
             }
 
-            $resJson = $response->json();
+            $resJson = $res['response']->json();
             $candidate = $resJson['candidates'][0] ?? null;
             $rawText = self::extractTextFromCandidate($candidate) ?? '';
             $cleanedJson = self::cleanJsonPayload($rawText);
@@ -495,9 +616,14 @@ PROMPT;
                 ];
             }
 
+            $msg = 'Berita Acara berhasil dianalisis oleh AI Gemini.';
+            if ($res['is_fallback']) {
+                $msg .= " (dialihkan otomatis ke model cadangan {$res['model_used']} karena {$chosenModel} sedang antre di server Google).";
+            }
+
             return [
                 'success' => true,
-                'message' => 'Berita Acara berhasil dianalisis oleh AI Gemini.',
+                'message' => $msg,
                 'data' => $data,
             ];
         } catch (\Throwable $e) {

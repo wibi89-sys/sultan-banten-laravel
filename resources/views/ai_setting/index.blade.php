@@ -523,6 +523,32 @@
                         <div><b>Koneksi Berhasil (${data.model}):</b> ${data.message}</div>
                     </div>
                 `;
+            } else if (data.is_high_demand) {
+                const suggested = data.suggested_model || 'gemini-2.5-flash';
+                resultArea.innerHTML = `
+                    <div class="alert alert-warning py-2.5 px-3 small mt-2 mb-0 border border-warning shadow-xs">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle fa-lg me-2 text-warning mt-1"></i>
+                            <div>
+                                <b class="text-dark">Server Google Mengalami Lonjakan Beban (High Demand):</b>
+                                <div class="text-muted mt-1" style="font-size: 11.5px;">
+                                    ${data.message}
+                                </div>
+                                <div class="p-2 mt-2 rounded bg-white border small">
+                                    <span class="text-success fw-bold"><i class="fas fa-check me-1"></i>API Key Anda 100% Valid &amp; Aktif.</span><br>
+                                    <span class="text-secondary">Pesan ini murni karena kapasitas kluster model <code>${data.model}</code> di Google AI Studio sedang antre akibat tingginya penggunaan secara global.</span>
+                                </div>
+                                <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="fw-semibold text-dark">Solusi Praktis:</span>
+                                    <button type="button" class="btn btn-primary btn-xs py-1 px-2.5 fw-semibold shadow-xs" onclick="pilihModelFallback('${suggested}')">
+                                        <i class="fas fa-bolt me-1"></i>Beralih ke ${suggested}
+                                    </button>
+                                    <span class="text-muted" style="font-size: 11px;">(Atau tetap gunakan ${data.model}, sistem kami akan auto-fallback bila Google overload)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             } else {
                 resultArea.innerHTML = `
                     <div class="alert alert-danger py-2 px-3 small mt-2 d-flex align-items-center mb-0">
@@ -543,6 +569,30 @@
                 </div>
             `;
         });
+    }
+
+    function pilihModelFallback(modelName) {
+        const select = document.getElementById('model_select');
+        const hiddenModel = document.getElementById('model');
+        const customWrapper = document.getElementById('customModelWrapper');
+        
+        let found = false;
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === modelName) {
+                select.selectedIndex = i;
+                hiddenModel.value = modelName;
+                customWrapper.classList.add('d-none');
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            select.value = 'custom';
+            document.getElementById('model_custom').value = modelName;
+            hiddenModel.value = modelName;
+            customWrapper.classList.remove('d-none');
+        }
+        testKoneksiAi();
     }
 
     const modalEditPegawai = new bootstrap.Modal(document.getElementById('modalEditPegawai'));
