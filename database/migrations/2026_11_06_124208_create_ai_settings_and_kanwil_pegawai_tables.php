@@ -17,7 +17,7 @@ return new class extends Migration
                 $table->id();
                 $table->string('provider', 50)->default('gemini');
                 $table->text('api_key')->nullable();
-                $table->string('model', 100)->default('gemini-1.5-flash');
+                $table->string('model', 100)->default('gemini-3.8-flash');
                 $table->boolean('is_active')->default(false);
 
                 // Default Tata Naskah Nota Dinas
@@ -39,7 +39,7 @@ return new class extends Migration
             DB::table('ai_settings')->insert([
                 'provider' => 'gemini',
                 'api_key' => null,
-                'model' => 'gemini-1.5-flash',
+                'model' => 'gemini-3.8-flash',
                 'is_active' => false,
                 'nomor_surat_prefix' => 'WP.12-UM.01.01-',
                 'yth_tujuan' => 'Kepala Bagian Tata Usaha dan Umum',

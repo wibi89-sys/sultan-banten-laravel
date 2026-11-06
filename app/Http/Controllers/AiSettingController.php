@@ -104,6 +104,19 @@ class AiSettingController extends Controller
     }
 
     /**
+     * AJAX Ambil daftar model yang tersedia dari Google AI Studio
+     */
+    public function fetchModels(Request $request): JsonResponse
+    {
+        $this->checkKanwilAccess();
+
+        $apiKey = $request->input('api_key');
+        $result = GeminiAiService::getAvailableModels($apiKey);
+
+        return response()->json($result);
+    }
+
+    /**
      * Tambah Master Personil Pegawai Kanwil
      */
     public function pegawaiStore(Request $request): RedirectResponse

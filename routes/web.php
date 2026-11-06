@@ -200,6 +200,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pengaturan-ai', [AiSettingController::class, 'index'])->name('ai-setting.index');
     Route::put('/pengaturan-ai', [AiSettingController::class, 'updateSettings'])->name('ai-setting.update');
     Route::post('/pengaturan-ai/test-connection', [AiSettingController::class, 'testConnection'])->name('ai-setting.test');
+    Route::post('/pengaturan-ai/models', [AiSettingController::class, 'fetchModels'])->name('ai-setting.models');
     Route::post('/pengaturan-ai/pegawai', [AiSettingController::class, 'pegawaiStore'])->name('ai-setting.pegawai.store');
     Route::put('/pengaturan-ai/pegawai/{id}', [AiSettingController::class, 'pegawaiUpdate'])->name('ai-setting.pegawai.update');
     Route::delete('/pengaturan-ai/pegawai/{id}', [AiSettingController::class, 'pegawaiDestroy'])->name('ai-setting.pegawai.destroy');

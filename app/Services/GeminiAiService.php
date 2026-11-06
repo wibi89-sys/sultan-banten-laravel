@@ -17,7 +17,7 @@ class GeminiAiService
     {
         $setting = AiSetting::getFirst();
         $key = $apiKey ?: $setting->api_key;
-        $chosenModel = $model ?: ($setting->model ?: 'gemini-1.5-flash');
+        $chosenModel = $model ?: ($setting->model ?: 'gemini-3.8-flash');
 
         if (empty($key)) {
             return [
@@ -75,6 +75,70 @@ class GeminiAiService
     }
 
     /**
+     * Mengambil daftar model yang tersedia untuk API Key yang diberikan.
+     *
+     * @return array{success: bool, message: string, models: array<int, array{id: string, name: string, description: string}>}
+     */
+    public static function getAvailableModels(?string $apiKey = null): array
+    {
+        $setting = AiSetting::getFirst();
+        $key = $apiKey ?: $setting->api_key;
+
+        if (empty($key)) {
+            return [
+                'success' => false,
+                'message' => 'API Key belum diisi. Masukkan API Key terlebih dahulu untuk memuat daftar model.',
+                'models' => [],
+            ];
+        }
+
+        try {
+            $response = Http::timeout(15)->get("https://generativelanguage.googleapis.com/v1beta/models?key={$key}");
+
+            if (! $response->successful()) {
+                $err = $response->json();
+                $msg = $err['error']['message'] ?? ('HTTP '.$response->status().' '.$response->reason());
+
+                return [
+                    'success' => false,
+                    'message' => 'Gagal mengambil daftar model: '.$msg,
+                    'models' => [],
+                ];
+            }
+
+            $json = $response->json();
+            $rawModels = $json['models'] ?? [];
+            $models = [];
+
+            foreach ($rawModels as $m) {
+                $methods = $m['supportedGenerationMethods'] ?? [];
+                if (in_array('generateContent', $methods, true)) {
+                    $cleanId = str_replace('models/', '', $m['name'] ?? '');
+                    $models[] = [
+                        'id' => $cleanId,
+                        'name' => $m['displayName'] ?? $cleanId,
+                        'description' => $m['description'] ?? '',
+                    ];
+                }
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil memuat '.count($models).' model aktif dari Google AI Studio.',
+                'models' => $models,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Gemini getAvailableModels error: '.$e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
+                'models' => [],
+            ];
+        }
+    }
+
+    /**
      * Ekstraksi rincian surat undangan sidang TPP dari berkas PDF via Gemini AI.
      *
      * @return array{
@@ -119,7 +183,8 @@ class GeminiAiService
 
         try {
             $base64Data = base64_encode(file_get_contents($fullPath));
-            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$setting->model}:generateContent?key={$setting->api_key}";
+            $chosenModel = ! empty($setting->model) ? $setting->model : 'gemini-3.8-flash';
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$chosenModel}:generateContent?key={$setting->api_key}";
 
             $prompt = <<<'PROMPT'
 Anda adalah asisten cerdas tata naskah dinas Kementerian Imigrasi dan Pemasyarakatan RI (Ditjenpas / Kantor Wilayah).

@@ -80,12 +80,34 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="model" class="form-label small fw-semibold">Model AI <span class="text-danger">*</span></label>
-                                    <select name="model" id="model" class="form-select form-select-sm" required>
-                                        <option value="gemini-1.5-flash" {{ $setting->model == 'gemini-1.5-flash' ? 'selected' : '' }}>Gemini 1.5 Flash (Paling Direkomendasikan &bull; Cepat &amp; Kuota Gratis Besar)</option>
-                                        <option value="gemini-2.0-flash" {{ $setting->model == 'gemini-2.0-flash' ? 'selected' : '' }}>Gemini 2.0 Flash (Generasi Terbaru &bull; Sangat Cepat)</option>
-                                        <option value="gemini-1.5-pro" {{ $setting->model == 'gemini-1.5-pro' ? 'selected' : '' }}>Gemini 1.5 Pro (Penalaran Rumit &bull; Kuota Harian Lebih Sedikit)</option>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="model_select" class="form-label small fw-semibold mb-0">Model AI <span class="text-danger">*</span></label>
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-0 px-2" style="font-size: 11px;" id="btnMuatModel" onclick="muatModelGemini()" title="Sinkronkan daftar model aktif dari Google AI Studio menggunakan API Key">
+                                            <i class="fas fa-sync-alt me-1"></i>Muat Model dari API Key
+                                        </button>
+                                    </div>
+                                    @php
+                                        $knownModels = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+                                        $isCustom = !empty($setting->model) && !in_array($setting->model, $knownModels);
+                                    @endphp
+                                    <select id="model_select" class="form-select form-select-sm" onchange="onModelSelectChange(this.value)">
+                                        <option value="gemini-3.8-flash" {{ ($setting->model == 'gemini-3.8-flash' || empty($setting->model)) ? 'selected' : '' }}>Gemini 3.8 Flash (Paling Direkomendasikan Google &bull; Sangat Cepat)</option>
+                                        <option value="gemini-2.5-flash" {{ $setting->model == 'gemini-2.5-flash' ? 'selected' : '' }}>Gemini 2.5 Flash (Generasi Baru &bull; Cepat &amp; Responsif)</option>
+                                        <option value="gemini-1.5-flash" {{ $setting->model == 'gemini-1.5-flash' ? 'selected' : '' }}>Gemini 1.5 Flash (Versi Stabil &bull; Kuota Harian Besar)</option>
+                                        <option value="gemini-1.5-pro" {{ $setting->model == 'gemini-1.5-pro' ? 'selected' : '' }}>Gemini 1.5 Pro (Penalaran Kompleks &bull; Kuota Harian Lebih Sedikit)</option>
+                                        <option value="custom" {{ $isCustom ? 'selected' : '' }}>-- Input Model Manual / Kustom --</option>
                                     </select>
+                                    <div id="customModelWrapper" class="{{ $isCustom ? '' : 'd-none' }} mt-2">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light text-muted" style="font-size: 11px;">Nama Model:</span>
+                                            <input type="text" id="model_custom" class="form-control form-control-sm" value="{{ $isCustom ? $setting->model : '' }}" placeholder="Contoh: gemini-3.8-flash" oninput="document.getElementById('model').value = this.value">
+                                        </div>
+                                        <small class="text-muted" style="font-size: 10.5px;">Ketik kode model Google AI Studio yang ingin digunakan.</small>
+                                    </div>
+                                    <input type="hidden" name="model" id="model" value="{{ $setting->model ?: 'gemini-3.8-flash' }}">
+                                    <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                                        Google AI merekomendasikan <b>gemini-3.8-flash</b> untuk fitur terbaru dan performa terbaik. Anda juga dapat menekan <i>"Muat Model dari API Key"</i> untuk menampilkan semua model aktif yang didukung akun Anda.
+                                    </small>
                                 </div>
 
                                 <div class="mb-3">
@@ -360,6 +382,112 @@
         }
     }
 
+    function onModelSelectChange(val) {
+        const hiddenModel = document.getElementById('model');
+        const customWrapper = document.getElementById('customModelWrapper');
+        const customInput = document.getElementById('model_custom');
+
+        if (val === 'custom') {
+            customWrapper.classList.remove('d-none');
+            if (!customInput.value) {
+                customInput.value = hiddenModel.value || 'gemini-3.8-flash';
+            }
+            hiddenModel.value = customInput.value;
+            customInput.focus();
+        } else {
+            customWrapper.classList.add('d-none');
+            hiddenModel.value = val;
+        }
+    }
+
+    function muatModelGemini() {
+        const btn = document.getElementById('btnMuatModel');
+        const select = document.getElementById('model_select');
+        const hiddenModel = document.getElementById('model');
+        const apiKey = document.getElementById('api_key').value;
+        const resultArea = document.getElementById('testResultArea');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width: 10px; height: 10px;"></span>Memuat...';
+
+        fetch('{{ route("ai-setting.models") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                api_key: apiKey
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Muat Model dari API Key';
+
+            if (data.success && data.models && data.models.length > 0) {
+                const currentVal = hiddenModel.value;
+                select.innerHTML = '';
+
+                data.models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name + ' (' + m.id + ')';
+                    if (m.id === currentVal) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                const customOpt = document.createElement('option');
+                customOpt.value = 'custom';
+                customOpt.textContent = '-- Input Model Manual / Kustom --';
+                select.appendChild(customOpt);
+
+                if (!data.models.some(m => m.id === currentVal)) {
+                    if (data.models.some(m => m.id === 'gemini-3.8-flash')) {
+                        select.value = 'gemini-3.8-flash';
+                        hiddenModel.value = 'gemini-3.8-flash';
+                    } else if (data.models.some(m => m.id === 'gemini-2.5-flash')) {
+                        select.value = 'gemini-2.5-flash';
+                        hiddenModel.value = 'gemini-2.5-flash';
+                    } else {
+                        select.value = data.models[0].id;
+                        hiddenModel.value = data.models[0].id;
+                    }
+                }
+
+                resultArea.classList.remove('d-none');
+                resultArea.innerHTML = `
+                    <div class="alert alert-success py-2 px-3 small mt-2 d-flex align-items-center mb-0">
+                        <i class="fas fa-check-circle fa-lg me-2 text-success"></i>
+                        <div><b>Berhasil:</b> ${data.message}</div>
+                    </div>
+                `;
+            } else {
+                resultArea.classList.remove('d-none');
+                resultArea.innerHTML = `
+                    <div class="alert alert-warning py-2 px-3 small mt-2 d-flex align-items-center mb-0">
+                        <i class="fas fa-exclamation-triangle fa-lg me-2 text-warning"></i>
+                        <div>${data.message || 'Gagal memuat model.'}</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Muat Model dari API Key';
+            resultArea.classList.remove('d-none');
+            resultArea.innerHTML = `
+                <div class="alert alert-danger py-2 px-3 small mt-2 d-flex align-items-center mb-0">
+                    <i class="fas fa-times-circle fa-lg me-2 text-danger"></i>
+                    <div><b>Kesalahan Jaringan:</b> ${err.message}</div>
+                </div>
+            `;
+        });
+    }
+
     function testKoneksiAi() {
         const btn = document.getElementById('btnTestKoneksi');
         const resultArea = document.getElementById('testResultArea');
@@ -433,3 +561,4 @@
     }
 </script>
 @endpush
+

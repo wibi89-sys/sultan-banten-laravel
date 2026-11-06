@@ -39,7 +39,7 @@ class AiSetting extends Model
         return static::first() ?? static::create([
             'provider' => 'gemini',
             'api_key' => null,
-            'model' => 'gemini-1.5-flash',
+            'model' => 'gemini-3.8-flash',
             'is_active' => false,
             'nomor_surat_prefix' => 'WP.12-UM.01.01-',
             'yth_tujuan' => 'Kepala Bagian Tata Usaha dan Umum',
