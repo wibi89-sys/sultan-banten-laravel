@@ -88,10 +88,29 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Keterangan Tag Dinamis (Klik untuk menyisipkan ke kursor) -->
+                    <div class="p-2 mb-2 rounded bg-light border border-dashed" id="rem_tags_container">
+                        <div class="d-flex align-items-center justify-content-between mb-1.5">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <span class="badge bg-primary text-white" style="font-size: 10px;">
+                                    <i class="fas fa-tags me-1"></i>Tag Dinamis
+                                </span>
+                                <small class="fw-semibold text-secondary" style="font-size: 11px;">
+                                    Klik tag di bawah untuk menyisipkan otomatis ke teks:
+                                </small>
+                            </div>
+                            <small class="text-muted fst-italic" style="font-size: 10px;">Otomatis diganti data riil saat terkirim</small>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1" id="rem_tags_list">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
                     <textarea id="rem_message" class="form-control font-monospace" rows="8" style="font-size: 12px; line-height: 1.45;" placeholder="Tuliskan pesan pengingat bebas di sini..."></textarea>
                     <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-1">
                         <small class="text-muted" style="font-size: 10.5px;">
-                            <i class="fas fa-magic text-warning me-1"></i>Pesan disusun otomatis dari template pengingat. Anda bebas mengedit sebelum mengirim, atau klik <b>"Simpan sbg Template Default"</b> untuk menyimpannya sebagai format permanen.
+                            <i class="fas fa-magic text-warning me-1"></i>Pesan disusun otomatis dari template pengingat dokumen ini. Anda bebas mengedit sebelum mengirim, atau klik <b>"Simpan sbg Template Default"</b> agar perubahan tersimpan khusus untuk jenis dokumen ini.
                         </small>
                     </div>
                 </div>
@@ -130,8 +149,61 @@
         namaBerkas: '',
         namaUpt: '',
         template_sidang_ba: '',
-        template_mutasi: ''
+        template_mutasi: '',
+        template_mutasi_pemindahan: '',
+        template_mutasi_penerimaan: '',
+        template_mutasi_bast: ''
     };
+
+    /**
+     * Tampilkan tombol-tombol tag dinamis yang relevan sesuai konteks pengingat.
+     */
+    function updateTagsList(tipeKonteks) {
+        const container = document.getElementById('rem_tags_list');
+        if (!container) return;
+
+        let tags = [];
+        if (tipeKonteks === 'sidang_ba') {
+            tags = [
+                { tag: '{nama_upt}', desc: 'Nama UPT' },
+                { tag: '{nomor_undangan}', desc: 'No. Undangan Sidang' },
+                { tag: '{tanggal_sidang}', desc: 'Tanggal Sidang' },
+                { tag: '{link_sidang}', desc: 'Tautan Unggah BA' },
+            ];
+        } else {
+            tags = [
+                { tag: '{nama_berkas}', desc: 'Nama Berkas' },
+                { tag: '{nama_upt}', desc: 'Nama UPT' },
+                { tag: '{nomor_surat}', desc: 'No. Surat Kanwil' },
+                { tag: '{total_wbp}', desc: 'Jumlah Narapidana' },
+                { tag: '{link_mutasi}', desc: 'Tautan Unggah Berkas' },
+            ];
+        }
+
+        container.innerHTML = tags.map(t => `
+            <button type="button" class="btn btn-white btn-xs border py-0.5 px-2 shadow-2xs text-start text-dark d-inline-flex align-items-center gap-1" 
+                    onclick="insertWaTag('${t.tag}')" title="Klik untuk menyisipkan ${t.tag} ke posisi kursor editor">
+                <code class="text-primary fw-bold" style="font-size: 11px;">${t.tag}</code>
+                <span class="text-muted" style="font-size: 10px;">(${t.desc})</span>
+            </button>
+        `).join('');
+    }
+
+    /**
+     * Sisipkan tag variabel ke posisi kursor teks editor.
+     */
+    function insertWaTag(tag) {
+        const area = document.getElementById('rem_message');
+        if (!area) return;
+
+        const start = area.selectionStart;
+        const end = area.selectionEnd;
+        const text = area.value;
+
+        area.value = text.substring(0, start) + tag + text.substring(end);
+        area.focus();
+        area.setSelectionRange(start + tag.length, start + tag.length);
+    }
 
     /**
      * Buka modal pengingat WhatsApp dengan auto-detect operator dan pre-filled message kontekstual.
@@ -158,6 +230,9 @@
         document.getElementById('rem_target_phone').value = '';
         document.getElementById('rem_recipient_name').value = '';
 
+        // Tampilkan daftar tag yang sesuai konteks
+        updateTagsList(tipeKonteks);
+
         // Tentukan teks nama berkas
         let namaBerkas = 'Laporan Pelaksanaan';
         if (tipeKonteks === 'mutasi_pemindahan') {
@@ -165,7 +240,7 @@
         } else if (tipeKonteks === 'mutasi_penerimaan') {
             namaBerkas = 'Laporan Penerimaan Mutasi Narapidana (UPT Penerima)';
         } else if (tipeKonteks === 'mutasi_bast') {
-            namaBerkas = 'Berita Acara Serah Terima (BAST Bersama)';
+            namaBerkas = 'Berita Acara Serah Terima (BAST)';
         } else if (tipeKonteks === 'sidang_ba') {
             namaBerkas = 'Berita Acara (BA) Pelaksanaan Sidang TPP UPT';
         }
@@ -206,6 +281,9 @@
                     currentReminderContext.namaUpt = data.upt_nama || 'UPT Terkait';
                     currentReminderContext.template_sidang_ba = data.template_sidang_ba || '';
                     currentReminderContext.template_mutasi = data.template_mutasi || '';
+                    currentReminderContext.template_mutasi_pemindahan = data.template_mutasi_pemindahan || '';
+                    currentReminderContext.template_mutasi_penerimaan = data.template_mutasi_penerimaan || '';
+                    currentReminderContext.template_mutasi_bast = data.template_mutasi_bast || '';
 
                     document.getElementById('rem_label_upt').innerText = currentReminderContext.namaUpt;
 
@@ -283,23 +361,80 @@
                 .replace(/{link_sidang}/g, linkSidang);
 
             textarea.value = text;
-        } else if (ctx.tipeKonteks.startsWith('mutasi')) {
-            let tpl = ctx.template_mutasi || '';
-            if (!tpl) {
-                tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
-                      `*Divisi Pemasyarakatan*\n` +
-                      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                      `Hal: *Pengingat Unggah {nama_berkas}*\n\n` +
-                      `Yth. Rekan Operator *{nama_upt}*,\n\n` +
-                      `Sehubungan dengan pelaksanaan mutasi narapidana berikut:\n` +
-                      `• *No. Surat Kanwil:* {nomor_surat}\n` +
-                      `• *Jumlah Narapidana:* {total_wbp}\n` +
-                      `• *Status:* Memerlukan kelengkapan berkas pelaksanaan.\n\n` +
-                      `Mohon bantuan rekan operator untuk segera mengunggah berkas *{nama_berkas}* ke dalam Sistem SULTAN BANTEN agar proses verifikasi dan laporan rekapitulasi dapat dituntaskan.\n\n` +
-                      `🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n` +
-                      `Terima kasih atas dedikasi dan kerja sama yang baik.\n` +
-                      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                      `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+        } else {
+            let tpl = '';
+            if (ctx.tipeKonteks === 'mutasi_pemindahan') {
+                tpl = ctx.template_mutasi_pemindahan || '';
+                if (!tpl) {
+                    tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
+                          `*Divisi Pemasyarakatan*\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `Hal: *Pengingat Unggah Laporan Pemindahan Narapidana*\n\n` +
+                          `Yth. Rekan Operator & Tim Mutasi *{nama_upt}*,\n\n` +
+                          `Sehubungan dengan pelaksanaan mutasi narapidana berikut:\n` +
+                          `• *No. Surat Kanwil:* {nomor_surat}\n` +
+                          `• *Jumlah Narapidana:* {total_wbp}\n` +
+                          `• *Status:* Menunggu unggah Laporan Pemindahan dari UPT Pengirim.\n\n` +
+                          `Mohon bantuan rekan operator untuk segera mengunggah berkas *Laporan Pemindahan* ke dalam Sistem SULTAN BANTEN agar proses pemindahan terpantau secara real-time.\n\n` +
+                          `🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n` +
+                          `Terima kasih atas dedikasi dan kerja sama yang baik.\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+                }
+            } else if (ctx.tipeKonteks === 'mutasi_penerimaan') {
+                tpl = ctx.template_mutasi_penerimaan || '';
+                if (!tpl) {
+                    tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
+                          `*Divisi Pemasyarakatan*\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `Hal: *Pengingat Unggah Laporan Penerimaan Narapidana*\n\n` +
+                          `Yth. Rekan Operator & Tim Mutasi *{nama_upt}*,\n\n` +
+                          `Sehubungan dengan penerimaan mutasi narapidana berikut:\n` +
+                          `• *No. Surat Kanwil:* {nomor_surat}\n` +
+                          `• *Jumlah Narapidana:* {total_wbp}\n` +
+                          `• *Status:* Menunggu unggah Laporan Penerimaan dari UPT Tujuan.\n\n` +
+                          `Mohon bantuan rekan operator untuk segera mengunggah berkas *Laporan Penerimaan* ke dalam Sistem SULTAN BANTEN sebagai bukti fisik narapidana telah diterima dengan aman.\n\n` +
+                          `🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n` +
+                          `Terima kasih atas perhatian dan kerja sama yang baik.\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+                }
+            } else if (ctx.tipeKonteks === 'mutasi_bast') {
+                tpl = ctx.template_mutasi_bast || '';
+                if (!tpl) {
+                    tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
+                          `*Divisi Pemasyarakatan*\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `Hal: *Pengingat Unggah Berita Acara Serah Terima (BAST)*\n\n` +
+                          `Yth. Rekan Operator & Tim Mutasi *{nama_upt}*,\n\n` +
+                          `Sehubungan dengan penyelesaian mutasi narapidana berikut:\n` +
+                          `• *No. Surat Kanwil:* {nomor_surat}\n` +
+                          `• *Jumlah Narapidana:* {total_wbp}\n` +
+                          `• *Status:* Menunggu unggah Berita Acara Serah Terima (BAST).\n\n` +
+                          `Mohon kerja sama rekan operator untuk segera mengunggah dokumen *BAST* yang telah ditandatangani kedua belah pihak ke dalam Sistem SULTAN BANTEN untuk menuntaskan status mutasi narapidana.\n\n` +
+                          `🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n` +
+                          `Terima kasih atas kerja sama yang baik.\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+                }
+            } else {
+                tpl = ctx.template_mutasi || '';
+                if (!tpl) {
+                    tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
+                          `*Divisi Pemasyarakatan*\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `Hal: *Pengingat Unggah {nama_berkas}*\n\n` +
+                          `Yth. Rekan Operator *{nama_upt}*,\n\n` +
+                          `Sehubungan dengan pelaksanaan mutasi narapidana berikut:\n` +
+                          `• *No. Surat Kanwil:* {nomor_surat}\n` +
+                          `• *Jumlah Narapidana:* {total_wbp}\n` +
+                          `• *Status:* Memerlukan kelengkapan berkas pelaksanaan.\n\n` +
+                          `Mohon bantuan rekan operator untuk segera mengunggah berkas *{nama_berkas}* ke dalam Sistem SULTAN BANTEN agar proses verifikasi dan laporan rekapitulasi dapat dituntaskan.\n\n` +
+                          `🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n` +
+                          `Terima kasih atas dedikasi dan kerja sama yang baik.\n` +
+                          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                          `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+                }
             }
 
             const noSurat = ctx.detailData.nomor_surat || '(Sesuai Surat Persetujuan Kanwil)';
@@ -332,8 +467,8 @@
         }
 
         const ctx = currentReminderContext;
-        const isSidang = (ctx.tipeKonteks === 'sidang_ba');
-        const type = isSidang ? 'sidang_ba' : 'mutasi';
+        const type = ctx.tipeKonteks || 'mutasi';
+        const isSidang = (type === 'sidang_ba');
         const appUrl = window.location.origin;
 
         // Ubah nilai-nilai dinamis kembali menjadi tag variabel jika ada di dalam teks
@@ -378,9 +513,16 @@
             }
         }
 
-        const confirmMsg = isSidang 
-            ? 'Simpan isi pesan saat ini sebagai Template Default Pengingat Upload Berita Acara (BA) Sidang TPP?' 
-            : 'Simpan isi pesan saat ini sebagai Template Default Pengingat Kelengkapan Mutasi?';
+        let confirmMsg = 'Simpan isi pesan saat ini sebagai Template Default Pengingat?';
+        if (type === 'sidang_ba') {
+            confirmMsg = 'Simpan isi pesan saat ini sebagai Template Default Pengingat Upload Berita Acara (BA) Sidang TPP?';
+        } else if (type === 'mutasi_pemindahan') {
+            confirmMsg = 'Simpan isi pesan saat ini sebagai Template Default Pengingat Laporan Pemindahan (UPT Pengirim)?';
+        } else if (type === 'mutasi_penerimaan') {
+            confirmMsg = 'Simpan isi pesan saat ini sebagai Template Default Pengingat Laporan Penerimaan (UPT Penerima)?';
+        } else if (type === 'mutasi_bast') {
+            confirmMsg = 'Simpan isi pesan saat ini sebagai Template Default Pengingat Berita Acara Serah Terima (BAST)?';
+        }
 
         if (!confirm(confirmMsg)) {
             return;
@@ -440,8 +582,14 @@
             }
 
             if (data && data.success) {
-                if (isSidang) {
+                if (type === 'sidang_ba') {
                     ctx.template_sidang_ba = tplToSave;
+                } else if (type === 'mutasi_pemindahan') {
+                    ctx.template_mutasi_pemindahan = tplToSave;
+                } else if (type === 'mutasi_penerimaan') {
+                    ctx.template_mutasi_penerimaan = tplToSave;
+                } else if (type === 'mutasi_bast') {
+                    ctx.template_mutasi_bast = tplToSave;
                 } else {
                     ctx.template_mutasi = tplToSave;
                 }

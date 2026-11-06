@@ -35,7 +35,7 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-clipboard-check me-2 text-primary"></i>Tahap 4: Pelaporan Pelaksanaan &amp; Berita Acara Serah Terima</h5>
-                    <small class="text-muted">Kelola dan pantau 3 dokumen pelaksanaan pasca-persetujuan Kanwil: <strong>Laporan Pemindahan</strong> (UPT Pengirim), <strong>Laporan Penerimaan</strong> (UPT Penerima), dan <strong>BAST Bersama</strong>.</small>
+                    <small class="text-muted">Kelola dan pantau 3 dokumen pelaksanaan pasca-persetujuan Kanwil: <strong>Laporan Pemindahan</strong> (UPT Pengirim), <strong>Laporan Penerimaan</strong> (UPT Penerima), dan <strong>BAST</strong>.</small>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('mutasi.index') }}" class="btn btn-outline-secondary btn-sm px-3">
@@ -265,15 +265,15 @@
                                             </div>
                                         </div>
 
-                                        <!-- 3. BA Serah Terima (BAST Bersama) -->
+                                        <!-- 3. Berita Acara Serah Terima (BAST) -->
                                         <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded {{ $m->hasBast() ? 'bg-success bg-opacity-10 border border-success-subtle' : 'bg-light border' }}">
                                             <div class="d-flex align-items-center gap-2 text-truncate me-1">
                                                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $m->hasBast() ? 'bg-success text-white' : 'bg-warning bg-opacity-15 text-warning' }}" style="width: 22px; height: 22px; font-size: 10px;">
                                                     <i class="fas {{ $m->hasBast() ? 'fa-check' : 'fa-file-signature' }}"></i>
                                                 </div>
                                                 <div class="text-truncate">
-                                                    <div class="fw-semibold text-dark small" style="font-size: 11.5px; line-height: 1.2;">3. BA Serah Terima</div>
-                                                    <small class="text-muted d-block" style="font-size: 9.5px;">Kedua Belah Pihak (BAST Bersama)</small>
+                                                    <div class="fw-semibold text-dark small" style="font-size: 11.5px; line-height: 1.2;">3. Berita Acara Serah Terima (BAST)</div>
+                                                    <small class="text-muted d-block" style="font-size: 9.5px;">Kedua Belah Pihak (BAST)</small>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center gap-1 flex-shrink-0">

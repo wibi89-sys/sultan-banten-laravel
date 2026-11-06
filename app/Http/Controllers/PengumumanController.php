@@ -395,6 +395,9 @@ class PengumumanController extends Controller
             'upt_nama' => $upt?->nama_upt ?? 'UPT Terkait',
             'template_sidang_ba' => $setting?->template_pengingat_sidang_ba ?: WaSetting::getDefaultTppBaReminderTemplate(),
             'template_mutasi' => $setting?->template_pengingat_mutasi ?: WaSetting::getDefaultMutasiReminderTemplate(),
+            'template_mutasi_pemindahan' => $setting?->template_pengingat_mutasi_pemindahan ?: WaSetting::getDefaultMutasiPemindahanReminderTemplate(),
+            'template_mutasi_penerimaan' => $setting?->template_pengingat_mutasi_penerimaan ?: WaSetting::getDefaultMutasiPenerimaanReminderTemplate(),
+            'template_mutasi_bast' => $setting?->template_pengingat_mutasi_bast ?: WaSetting::getDefaultMutasiBastReminderTemplate(),
             'operators' => $operators->map(function ($op) {
                 $raw = $op->no_wa ?? '';
                 $clean = preg_replace('/[^0-9]/', '', $raw);

@@ -109,6 +109,9 @@ class WaBroadcastFeatureTest extends TestCase
         $response->assertJsonStructure([
             'template_sidang_ba',
             'template_mutasi',
+            'template_mutasi_pemindahan',
+            'template_mutasi_penerimaan',
+            'template_mutasi_bast',
         ]);
     }
 
@@ -146,6 +149,60 @@ class WaBroadcastFeatureTest extends TestCase
 
         $setting = WaSetting::getFirst();
         $this->assertEquals($customTemplate, $setting->template_pengingat_mutasi);
+    }
+
+    public function test_can_save_mutasi_pemindahan_reminder_template(): void
+    {
+        $customTemplate = 'Pengingat Pemindahan untuk {nama_upt}. Berkas: {nama_berkas}';
+
+        $response = $this->actingAs($this->adminUser)->postJson(route('wa.save-reminder-template'), [
+            'type' => 'mutasi_pemindahan',
+            'template' => $customTemplate,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $setting = WaSetting::getFirst();
+        $this->assertEquals($customTemplate, $setting->template_pengingat_mutasi_pemindahan);
+    }
+
+    public function test_can_save_mutasi_penerimaan_reminder_template(): void
+    {
+        $customTemplate = 'Pengingat Penerimaan untuk {nama_upt}. Berkas: {nama_berkas}';
+
+        $response = $this->actingAs($this->adminUser)->postJson(route('wa.save-reminder-template'), [
+            'type' => 'mutasi_penerimaan',
+            'template' => $customTemplate,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $setting = WaSetting::getFirst();
+        $this->assertEquals($customTemplate, $setting->template_pengingat_mutasi_penerimaan);
+    }
+
+    public function test_can_save_mutasi_bast_reminder_template(): void
+    {
+        $customTemplate = 'Pengingat BAST untuk {nama_upt}. Berkas: {nama_berkas}';
+
+        $response = $this->actingAs($this->adminUser)->postJson(route('wa.save-reminder-template'), [
+            'type' => 'mutasi_bast',
+            'template' => $customTemplate,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $setting = WaSetting::getFirst();
+        $this->assertEquals($customTemplate, $setting->template_pengingat_mutasi_bast);
     }
 
     public function test_can_update_builtin_settings_with_reminder_templates(): void

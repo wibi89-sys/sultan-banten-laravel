@@ -570,14 +570,15 @@ class WhatsAppController extends Controller
 
         try {
             $request->validate([
-                'type' => 'required|string|in:sidang_ba,mutasi',
+                'type' => 'required|string|in:sidang_ba,mutasi,mutasi_pemindahan,mutasi_penerimaan,mutasi_bast',
                 'template' => 'required|string',
             ]);
 
             WaSetting::ensureTppColumnsExist();
             $setting = WaSetting::getFirst() ?? new WaSetting;
+            $type = $request->input('type');
 
-            if ($request->input('type') === 'sidang_ba') {
+            if ($type === 'sidang_ba') {
                 $setting->template_pengingat_sidang_ba = $request->input('template');
                 $setting->save();
                 ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat Berita Acara (BA) Sidang TPP');
@@ -588,7 +589,40 @@ class WhatsAppController extends Controller
                 ]);
             }
 
-            if ($request->input('type') === 'mutasi') {
+            if ($type === 'mutasi_pemindahan') {
+                $setting->template_pengingat_mutasi_pemindahan = $request->input('template');
+                $setting->save();
+                ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat Laporan Pemindahan Mutasi');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Template Pengingat Laporan Pemindahan berhasil disimpan sebagai format default!',
+                ]);
+            }
+
+            if ($type === 'mutasi_penerimaan') {
+                $setting->template_pengingat_mutasi_penerimaan = $request->input('template');
+                $setting->save();
+                ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat Laporan Penerimaan Mutasi');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Template Pengingat Laporan Penerimaan berhasil disimpan sebagai format default!',
+                ]);
+            }
+
+            if ($type === 'mutasi_bast') {
+                $setting->template_pengingat_mutasi_bast = $request->input('template');
+                $setting->save();
+                ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat BAST Mutasi');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Template Pengingat BAST berhasil disimpan sebagai format default!',
+                ]);
+            }
+
+            if ($type === 'mutasi') {
                 $setting->template_pengingat_mutasi = $request->input('template');
                 $setting->save();
                 ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat kelengkapan mutasi');

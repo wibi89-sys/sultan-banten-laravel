@@ -35,6 +35,9 @@ class WaSetting extends Model
         'template_mutasi_usulan',
         'template_mutasi_disetujui',
         'template_pengingat_mutasi',
+        'template_pengingat_mutasi_pemindahan',
+        'template_pengingat_mutasi_penerimaan',
+        'template_pengingat_mutasi_bast',
     ];
 
     protected function casts(): array
@@ -93,6 +96,69 @@ class WaSetting extends Model
     }
 
     /**
+     * Template khusus pengingat Laporan Pemindahan (UPT Pengirim).
+     */
+    public static function getDefaultMutasiPemindahanReminderTemplate(): string
+    {
+        return "📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n".
+               "*Divisi Pemasyarakatan*\n".
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n".
+               "Hal: *Pengingat Unggah Laporan Pemindahan Narapidana*\n\n".
+               "Yth. Rekan Operator & Tim Mutasi *{nama_upt}*,\n\n".
+               "Sehubungan dengan pelaksanaan mutasi narapidana berikut:\n".
+               "• *No. Surat Kanwil:* {nomor_surat}\n".
+               "• *Jumlah Narapidana:* {total_wbp}\n".
+               "• *Status:* Menunggu unggah Laporan Pemindahan dari UPT Pengirim.\n\n".
+               "Mohon bantuan rekan operator untuk segera mengunggah berkas *Laporan Pemindahan* ke dalam Sistem SULTAN BANTEN agar proses pemindahan terpantau secara real-time.\n\n".
+               "🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n".
+               "Terima kasih atas dedikasi dan kerja sama yang baik.\n".
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n".
+               '_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._';
+    }
+
+    /**
+     * Template khusus pengingat Laporan Penerimaan (UPT Penerima).
+     */
+    public static function getDefaultMutasiPenerimaanReminderTemplate(): string
+    {
+        return "📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n".
+               "*Divisi Pemasyarakatan*\n".
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n".
+               "Hal: *Pengingat Unggah Laporan Penerimaan Narapidana*\n\n".
+               "Yth. Rekan Operator & Tim Mutasi *{nama_upt}*,\n\n".
+               "Sehubungan dengan penerimaan mutasi narapidana berikut:\n".
+               "• *No. Surat Kanwil:* {nomor_surat}\n".
+               "• *Jumlah Narapidana:* {total_wbp}\n".
+               "• *Status:* Menunggu unggah Laporan Penerimaan dari UPT Tujuan.\n\n".
+               "Mohon bantuan rekan operator untuk segera mengunggah berkas *Laporan Penerimaan* ke dalam Sistem SULTAN BANTEN sebagai bukti fisik narapidana telah diterima dengan aman.\n\n".
+               "🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n".
+               "Terima kasih atas perhatian dan kerja sama yang baik.\n".
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n".
+               '_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._';
+    }
+
+    /**
+     * Template khusus pengingat BAST (Kedua Belah Pihak).
+     */
+    public static function getDefaultMutasiBastReminderTemplate(): string
+    {
+        return "📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n".
+               "*Divisi Pemasyarakatan*\n".
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n".
+               "Hal: *Pengingat Unggah Berita Acara Serah Terima (BAST)*\n\n".
+               "Yth. Rekan Operator & Tim Mutasi *{nama_upt}*,\n\n".
+               "Sehubungan dengan penyelesaian mutasi narapidana berikut:\n".
+               "• *No. Surat Kanwil:* {nomor_surat}\n".
+               "• *Jumlah Narapidana:* {total_wbp}\n".
+               "• *Status:* Menunggu unggah Berita Acara Serah Terima (BAST).\n\n".
+               "Mohon kerja sama rekan operator untuk segera mengunggah dokumen *BAST* yang telah ditandatangani kedua belah pihak ke dalam Sistem SULTAN BANTEN untuk menuntaskan status mutasi narapidana.\n\n".
+               "🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n".
+               "Terima kasih atas kerja sama yang baik.\n".
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n".
+               '_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._';
+    }
+
+    /**
      * Memastikan kolom template_sidang_tpp, mutasi, dan toggle otomatis tersedia di database
      * untuk mencegah error jika migrasi belum sempat dieksekusi di server hosting.
      */
@@ -127,6 +193,15 @@ class WaSetting extends Model
                     }
                     if (! Schema::hasColumn('wa_settings', 'template_pengingat_mutasi')) {
                         $table->text('template_pengingat_mutasi')->nullable();
+                    }
+                    if (! Schema::hasColumn('wa_settings', 'template_pengingat_mutasi_pemindahan')) {
+                        $table->text('template_pengingat_mutasi_pemindahan')->nullable();
+                    }
+                    if (! Schema::hasColumn('wa_settings', 'template_pengingat_mutasi_penerimaan')) {
+                        $table->text('template_pengingat_mutasi_penerimaan')->nullable();
+                    }
+                    if (! Schema::hasColumn('wa_settings', 'template_pengingat_mutasi_bast')) {
+                        $table->text('template_pengingat_mutasi_bast')->nullable();
                     }
                 });
             }
