@@ -499,12 +499,12 @@
                 <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
             </a>
 
-            <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
+            <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>
                 <span>Master Data</span>
                 <i class="fas fa-chevron-down arrow"></i>
             </div>
-            <div class="collapse {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') ? 'show' : '' }}" id="menuMaster">
+            <div class="collapse {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? 'show' : '' }}" id="menuMaster">
                 <div class="sidebar-submenu">
                     @if($user->hasAccess('upt'))
                     <a href="{{ route('upt.index') }}" class="{{ request()->routeIs('upt.*') ? 'active' : '' }}"><i class="fas fa-building"></i><span>Data UPT</span></a>
@@ -514,6 +514,9 @@
                     @endif
                     @if($user->hasAccess('instansi'))
                     <a href="{{ route('instansi.index') }}" class="{{ request()->routeIs('instansi.*') ? 'active' : '' }}"><i class="fas fa-cog"></i><span>Pengaturan Instansi</span></a>
+                    @endif
+                    @if($user->isKanwil())
+                    <a href="{{ route('ai-setting.index') }}" class="{{ request()->routeIs('ai-setting.*') ? 'active' : '' }}"><i class="fas fa-robot text-primary"></i><span>Pengaturan AI &amp; Nota Dinas</span></a>
                     @endif
                     @if($user->hasAccess('pengumuman'))
                     <a href="{{ route('pengumuman.index') }}" class="{{ request()->routeIs('pengumuman.*') ? 'active' : '' }}"><i class="fas fa-bullhorn"></i><span>Pengumuman</span></a>

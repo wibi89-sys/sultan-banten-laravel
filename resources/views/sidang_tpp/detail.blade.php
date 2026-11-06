@@ -48,6 +48,11 @@
             <a href="{{ route('sidang-tpp.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Kembali
             </a>
+            @if(auth()->user()->isKanwil())
+            <button type="button" class="btn btn-outline-primary btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalNotaDinas" title="Buat Nota Dinas Permohonan Surat Tugas Pembinaan Sidang TPP">
+                <i class="fas fa-file-word me-1"></i>Buat Nota Dinas (ST)
+            </button>
+            @endif
             @if($canUploadHasil)
             <button type="button" class="btn btn-primary btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail">
                 <i class="fas fa-file-upload me-1"></i>Upload BA &amp; Rekomendasi Hasil
@@ -196,6 +201,11 @@
                                     <button type="button" class="btn btn-outline-success btn-sm py-0 px-2 fw-semibold" onclick="copyPublicUndanganLink('{{ route('sidang-tpp.public-undangan', $sidang->id) }}')" title="Salin tautan publik yang dapat dibuka siapa saja tanpa login">
                                         <i class="fas fa-share-alt me-1"></i>Salin Link Publik
                                     </button>
+                                    @if(auth()->user()->isKanwil())
+                                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalNotaDinas" title="Buat Nota Dinas Permohonan Surat Tugas dari berkas undangan ini">
+                                        <i class="fas fa-file-word me-1"></i>Nota Dinas ST
+                                    </button>
+                                    @endif
                                 </div>
                                 <div class="mt-1 small text-muted">
                                     <i class="fas fa-globe text-success me-1"></i>Link publik: <a href="{{ route('sidang-tpp.public-undangan', $sidang->id) }}" target="_blank" class="text-decoration-none font-monospace">{{ route('sidang-tpp.public-undangan', $sidang->id) }}</a> <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Bisa Dibuka Tanpa Login</span>
@@ -765,6 +775,10 @@
         </div>
     </div>
 </div>
+@endif
+
+@if(auth()->user()->isKanwil())
+    @include('sidang_tpp.partials.modal_nota_dinas', ['sidang' => $sidang])
 @endif
 
 @push('scripts')

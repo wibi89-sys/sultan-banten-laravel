@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AiSettingController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BebasHarianController;
 use App\Http\Controllers\DashboardController;
@@ -140,6 +141,10 @@ Route::middleware('auth')->group(function () {
         // Anak Menu 4: Rekap & Download Dokumen
         Route::get('/rekapitulasi', [SidangTppController::class, 'rekapitulasiIndex'])->name('rekapitulasi');
         Route::get('/export-excel', [SidangTppController::class, 'exportExcel'])->name('export-excel');
+
+        // Nota Dinas Permohonan Surat Tugas (AI & Manual)
+        Route::get('/{id}/nota-dinas/parse-ai', [AiSettingController::class, 'parseUndanganAi'])->whereNumber('id')->name('nota-dinas.parse-ai');
+        Route::post('/{id}/nota-dinas/generate', [AiSettingController::class, 'generateNotaDinas'])->whereNumber('id')->name('nota-dinas.generate');
     });
 
     // Mutasi Narapidana Antar-UPT Wilayah Banten
@@ -190,6 +195,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/pengumuman', [PengumumanController::class, 'store'])->name('pengumuman.store');
     Route::put('/pengumuman/{id}', [PengumumanController::class, 'update'])->name('pengumuman.update');
     Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
+
+    // Pengaturan AI & Master Personil Nota Dinas Kanwil
+    Route::get('/pengaturan-ai', [AiSettingController::class, 'index'])->name('ai-setting.index');
+    Route::put('/pengaturan-ai', [AiSettingController::class, 'updateSettings'])->name('ai-setting.update');
+    Route::post('/pengaturan-ai/test-connection', [AiSettingController::class, 'testConnection'])->name('ai-setting.test');
+    Route::post('/pengaturan-ai/pegawai', [AiSettingController::class, 'pegawaiStore'])->name('ai-setting.pegawai.store');
+    Route::put('/pengaturan-ai/pegawai/{id}', [AiSettingController::class, 'pegawaiUpdate'])->name('ai-setting.pegawai.update');
+    Route::delete('/pengaturan-ai/pegawai/{id}', [AiSettingController::class, 'pegawaiDestroy'])->name('ai-setting.pegawai.destroy');
 
     // ==========================================
     // Modul Otomatisasi WhatsApp Baru (Terstruktur)
