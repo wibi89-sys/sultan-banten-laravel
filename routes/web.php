@@ -129,6 +129,7 @@ Route::middleware('auth')->group(function () {
         // Anak Menu 2: Hasil Sidang UPT
         Route::get('/hasil', [SidangTppController::class, 'hasilIndex'])->name('hasil');
         Route::post('/{id}/hasil', [SidangTppController::class, 'hasilUpdate'])->whereNumber('id')->name('hasil.update');
+        Route::post('/{id}/destroy-dokumentasi', [SidangTppController::class, 'destroyDokumentasi'])->whereNumber('id')->name('destroy-dokumentasi');
 
         // Anak Menu 3: Verifikasi & TTD Kanwil (Bintorwasdal)
         Route::get('/kanwil', [SidangTppController::class, 'kanwilIndex'])->name('kanwil');

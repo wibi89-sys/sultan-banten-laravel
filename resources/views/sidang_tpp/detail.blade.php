@@ -28,6 +28,10 @@
 @endpush
 
 @section('content')
+@php
+    $currentUser = auth()->user();
+    $canUploadHasil = $currentUser->canManage('sidang_tpp') && ($currentUser->isAdmin() || (!empty($currentUser->upt_id) && (int) $currentUser->upt_id === (int) $sidang->upt_id));
+@endphp
 <div class="container-fluid px-0">
     <!-- Top Action Bar -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -40,10 +44,15 @@
             </nav>
             <h4 class="fw-bold mb-0">Sidang TPP: {{ $sidang->upt?->nama_upt }} ({{ $sidang->tanggal_sidang->translatedFormat('d F Y') }})</h4>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('sidang-tpp.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Kembali
             </a>
+            @if($canUploadHasil)
+            <button type="button" class="btn btn-primary btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail">
+                <i class="fas fa-file-upload me-1"></i>Upload BA &amp; Rekomendasi Hasil
+            </button>
+            @endif
             <form action="{{ route('sidang-tpp.broadcast-wa', $sidang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Kirimkan notifikasi WhatsApp undangan sidang ini ke Grup sekarang?');">
                 @csrf
                 <button type="submit" class="btn btn-outline-success btn-sm shadow-sm" title="Kirim Notifikasi WhatsApp Undangan Sidang TPP ke Grup">
@@ -256,8 +265,20 @@
                                     </a>
                                 </div>
                                 @endif
+                                @if($canUploadHasil)
+                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 ms-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail" title="Perbarui Berita Acara atau Ganti Berkas PDF">
+                                    <i class="fas fa-edit me-1"></i>Ganti / Edit BA
+                                </button>
+                                @endif
+                                @else
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle me-2">Belum Diunggah</span>
+                                @if($canUploadHasil)
+                                <button type="button" class="btn btn-primary btn-sm py-0 px-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail" title="Unggah Berita Acara Sidang TPP">
+                                    <i class="fas fa-file-upload me-1"></i>Upload BA Sekarang
+                                </button>
                                 @else
                                 <span class="text-muted small">-</span>
+                                @endif
                                 @endif
                             </td>
                         </tr>
@@ -274,7 +295,14 @@
                 <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-camera text-primary me-2"></i>Foto Dokumentasi Sidang TPP (Format JPG &bull; Maks. 500 KB / Foto)</h6>
                 <small class="text-muted">Foto kegiatan sidang yang telah dikompresi otomatis oleh sistem agar hemat kapasitas penyimpanan.</small>
             </div>
-            <span class="badge bg-light text-dark border">{{ count($sidang->dokumentasi_list) }} Foto Dokumentasi</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border">{{ count($sidang->dokumentasi_list) }} Foto Dokumentasi</span>
+                @if($canUploadHasil)
+                <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail">
+                    <i class="fas fa-plus me-1"></i>Tambah Foto
+                </button>
+                @endif
+            </div>
         </div>
         <div class="card-body p-3">
             @if(count($sidang->dokumentasi_list) > 0)
@@ -293,9 +321,20 @@
                         </a>
                         <div class="p-2 d-flex justify-content-between align-items-center bg-light border-top">
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Foto {{ $idx + 1 }} (.JPG)</span>
-                            <span class="small fw-semibold {{ $fileKb <= 500 ? 'text-success' : 'text-danger' }}" style="font-size: 11px;">
-                                <i class="fas fa-weight-hanging me-1"></i>{{ $fileKb }} KB
-                            </span>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="small fw-semibold {{ $fileKb <= 500 ? 'text-success' : 'text-danger' }}" style="font-size: 11px;">
+                                    <i class="fas fa-weight-hanging me-1"></i>{{ $fileKb }} KB
+                                </span>
+                                @if($canUploadHasil)
+                                <form action="{{ route('sidang-tpp.destroy-dokumentasi', $sidang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus foto dokumentasi ini?');">
+                                    @csrf
+                                    <input type="hidden" name="photo_index" value="{{ $idx }}">
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-1" title="Hapus Foto">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
                         </div>
                         @else
                         <div class="photo-thumb d-flex align-items-center justify-content-center bg-light text-muted">
@@ -309,8 +348,14 @@
             @else
             <div class="text-center py-4 text-muted">
                 <i class="fas fa-camera fa-2x mb-2 text-secondary opacity-50"></i>
-                <p class="small mb-0">Belum ada foto dokumentasi yang diunggah untuk sidang ini.</p>
-                <small class="text-muted">UPT dapat mengunggah foto melalui menu <b>2. Hasil Sidang UPT</b>.</small>
+                <p class="small mb-2">Belum ada foto dokumentasi yang diunggah untuk sidang ini.</p>
+                @if($canUploadHasil)
+                <button type="button" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail">
+                    <i class="fas fa-camera me-1"></i>Unggah Foto Dokumentasi Sekarang
+                </button>
+                @else
+                <small class="text-muted">UPT pelaksana dapat mengunggah foto melalui form Hasil Sidang.</small>
+                @endif
             </div>
             @endif
         </div>
@@ -318,7 +363,6 @@
 
     <!-- Tabel Daftar Usulan Warga Binaan -->
     @php
-        $currentUser = auth()->user();
         $canManagePeserta = $currentUser->canManage('sidang_tpp') && !empty($currentUser->upt_id) && ((int) $currentUser->upt_id === (int) $sidang->upt_id) && $sidang->status_sidang !== 'selesai_ttd_kakanwil';
     @endphp
 
@@ -326,7 +370,12 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
             <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-users text-primary me-2"></i>Daftar Warga Binaan Pemasyarakatan yang Disidangkan ({{ $sidang->usulan->count() }} Orang)</h6>
-            <div>
+            <div class="d-flex align-items-center gap-2">
+                @if($canUploadHasil)
+                <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalHasilSidangDetail">
+                    <i class="fas fa-clipboard-check me-1"></i>Input / Edit Rekomendasi Putusan
+                </button>
+                @endif
                 @if($canManagePeserta)
                 <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="bukaModalTambahPesertaDetail()">
                     <i class="fas fa-user-plus me-1"></i>Tambah Peserta Sidang
@@ -548,8 +597,184 @@
 @endpush
 @endif
 
+@if($canUploadHasil)
+<!-- MODAL: Upload Berita Acara, Dokumentasi & Hasil Rekomendasi Sidang TPP -->
+<div class="modal fade" id="modalHasilSidangDetail" tabindex="-1" aria-labelledby="modalHasilDetailTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <form action="{{ route('sidang-tpp.hasil.update', $sidang->id) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="redirect_to" value="detail">
+                <div class="modal-header bg-primary text-white py-3">
+                    <h5 class="modal-title fw-bold" id="modalHasilDetailTitle">
+                        <i class="fas fa-file-upload me-2"></i>Upload Berita Acara, Dokumentasi &amp; Hasil Sidang TPP
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Banner Informasi Sidang -->
+                    <div class="card bg-light border-0 p-3 mb-3">
+                        <div class="row g-2 small">
+                            <div class="col-md-3">
+                                <span class="text-muted d-block">Unit Pelaksana Teknis:</span>
+                                <b class="text-primary">{{ $sidang->upt?->nama_upt ?? '-' }}</b>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted d-block">Tanggal Pelaksanaan:</span>
+                                <b class="text-dark">{{ $sidang->tanggal_sidang->translatedFormat('d F Y') }}</b>
+                                @if($sidang->tanggal_sidang->isPast())
+                                <span class="badge bg-secondary-subtle text-secondary border ms-1"><i class="fas fa-history me-1"></i>Sidang Lalu</span>
+                                @endif
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted d-block">Agenda Sidang:</span>
+                                <b class="text-dark">{{ $sidang->agenda_sidang ?? $sidang->agenda_label }}</b>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted d-block">Total Warga Binaan:</span>
+                                <b class="text-dark">{{ $sidang->usulan->count() }} Orang</b>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($sidang->tanggal_sidang->isPast())
+                    <div class="alert alert-info py-2 px-3 small d-flex align-items-center mb-3">
+                        <i class="fas fa-info-circle fa-lg me-2 text-info"></i>
+                        <div>
+                            <b>Sidang Terlaksana / Masa Lalu:</b> Berita Acara, dokumentasi foto, maupun penetapan rekomendasi putusan tetap dapat diunggah dan disimpan kapan saja tanpa batasan tanggal.
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Bagian 1: Berita Acara & Dokumentasi -->
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="fas fa-file-alt text-primary me-2"></i>1. Berita Acara (BA) &amp; Foto Dokumentasi
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="detail_nomor_berita_acara" class="form-label small fw-semibold">Nomor Berita Acara (BA) Sidang TPP <span class="text-danger">*</span></label>
+                            <input type="text" name="nomor_berita_acara" id="detail_nomor_berita_acara" class="form-control" value="{{ old('nomor_berita_acara', $sidang->nomor_berita_acara) }}" placeholder="Contoh: W12.PAS.PAS.1-BA.01-085/2026" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="detail_file_berita_acara" class="form-label small fw-semibold">Unggah Berkas Berita Acara TPP Bertanda Tangan (PDF)</label>
+                            <input type="file" name="file_berita_acara" id="detail_file_berita_acara" class="form-control" accept=".pdf">
+                            @if(!empty($sidang->file_berita_acara))
+                            <div class="form-text small mt-1">
+                                <i class="fas fa-check-circle text-success me-1"></i>Berkas saat ini: 
+                                <a href="{{ route('sidang-tpp.download-file', ['id' => $sidang->id, 'type' => 'berita_acara', 'preview' => 1]) }}" target="_blank" class="fw-semibold text-decoration-none">
+                                    {{ basename($sidang->file_berita_acara) }}
+                                </a> (Pilih berkas baru jika ingin mengganti berkas ini).
+                            </div>
+                            @else
+                            <div class="form-text text-muted small" style="font-size: 11px;">
+                                Scan PDF Berita Acara TPP lengkap dengan tanda tangan Ketua, Sekretaris &amp; Anggota Tim (Maks. 15 MB).
+                            </div>
+                            @endif
+                        </div>
+                        <div class="col-md-12">
+                            <label for="detail_dokumentasi" class="form-label small fw-semibold">
+                                <i class="fas fa-camera text-primary me-1"></i>Unggah Foto Dokumentasi Sidang TPP (Bisa Pilih Sekaligus Beberapa Foto)
+                            </label>
+                            <input type="file" name="dokumentasi[]" id="detail_dokumentasi" class="form-control" accept="image/*" multiple>
+                            <div class="form-text text-muted" style="font-size: 11px;">
+                                <i class="fas fa-magic text-success me-1"></i>Sistem secara otomatis mengonversi ke format <b>JPG</b> dan mengompres resolusi agar ukuran file <b>maksimal 500 KB per foto dokumentasi</b>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bagian 2: Hasil Rekomendasi Putusan per WBP -->
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-gavel text-primary me-2"></i>2. Rekomendasi Hasil Putusan Sidang ({{ $sidang->usulan->count() }} Orang)
+                        </h6>
+                        <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm px-3" onclick="setSemuaSetujuDetail()" title="Otomatis pilih hasil 'Setuju' untuk seluruh Warga Binaan dalam sidang ini">
+                            <i class="fas fa-check-double me-1.5"></i>Pilih "Setuju" Untuk Semua
+                        </button>
+                    </div>
+
+                    <div class="table-responsive border rounded" style="max-height: 380px;">
+                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 12px;">
+                            <thead class="table-dark sticky-top small">
+                                <tr>
+                                    <th style="width: 35px;" class="text-center">No</th>
+                                    <th>Nama Warga Binaan &amp; Register</th>
+                                    <th>Perkara / Pidana</th>
+                                    <th class="text-center">Jenis Usulan</th>
+                                    <th class="text-center" style="width: 150px;">Atensi</th>
+                                    <th style="width: 175px;" class="text-center">Keputusan Sidang</th>
+                                    <th>Alasan / Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($sidang->usulan as $idx => $item)
+                                @php
+                                    $curKep = $item->keputusan;
+                                    if ($curKep === 'disetujui') $curKep = 'setuju';
+                                    if ($curKep === 'ditolak') $curKep = 'tidak_setuju';
+                                    if ($curKep === 'ditunda') $curKep = 'tunda';
+                                    if (empty($curKep) || $curKep === 'belum_putus') $curKep = 'setuju';
+                                @endphp
+                                <tr class="{{ $item->perlu_perhatian ? 'table-danger bg-opacity-25' : '' }}">
+                                    <td class="text-center text-muted">{{ $idx + 1 }}</td>
+                                    <td>
+                                        <b>{{ $item->nama_wbp }}</b><br>
+                                        <small class="text-muted"><code>{{ $item->nomor_register }}</code></small>
+                                    </td>
+                                    <td>
+                                        <small>{{ $item->perkara_pasal }}</small><br>
+                                        <small class="text-muted">{{ $item->lama_pidana }}</small>
+                                    </td>
+                                    <td class="text-center">{!! $item->jenis_usulan_badge !!}</td>
+                                    <td class="text-center">
+                                        @if($item->perlu_perhatian)
+                                            <span class="badge bg-danger text-white fw-bold shadow-sm"><i class="fas fa-exclamation-triangle me-1"></i>MENARIK PERHATIAN</span>
+                                            @if($item->catatan_perhatian)
+                                                <div class="small text-danger fw-semibold mt-1">{{ $item->catatan_perhatian }}</div>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-light text-muted border">Normal</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <select name="keputusan[{{ $item->id }}]" class="form-select form-select-sm keputusan-select-detail fw-semibold">
+                                            <option value="setuju" {{ $curKep === 'setuju' ? 'selected' : '' }} class="text-success fw-bold">🟢 Setuju</option>
+                                            <option value="tidak_setuju" {{ $curKep === 'tidak_setuju' ? 'selected' : '' }} class="text-danger fw-bold">🔴 Tidak Setuju</option>
+                                            <option value="tunda" {{ $curKep === 'tunda' ? 'selected' : '' }} class="text-warning fw-bold">🟡 Tunda</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="alasan_keterangan[{{ $item->id }}]" value="{{ $item->alasan_keterangan }}" class="form-control form-control-sm" placeholder="Catatan syarat / perbaikan jika ada">
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="7" class="text-center py-3 text-muted">Belum ada daftar usulan warga binaan. Silakan tambahkan peserta terlebih dahulu.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer py-2 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
+                        <i class="fas fa-paper-plane me-1"></i>Simpan BA &amp; Rekomendasi Hasil
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
 @push('scripts')
 <script>
+    function setSemuaSetujuDetail() {
+        document.querySelectorAll('.keputusan-select-detail').forEach(function(el) {
+            el.value = 'setuju';
+        });
+    }
+
     function copyPublicUndanganLink(url) {
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(url).then(function() {

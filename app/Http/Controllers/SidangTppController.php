@@ -47,8 +47,10 @@ class SidangTppController extends Controller
         $uptList = Upt::orderBy('nama_upt')->get();
         $filterUpt = $userUptFilter ?: (int) $request->query('upt_id', 0);
         $statusSidang = $request->query('status', '');
-        $tanggalMulai = $request->query('tanggal_mulai', date('Y-m-01'));
-        $tanggalSampai = $request->query('tanggal_sampai', date('Y-m-t'));
+        $statusBa = $request->query('status_ba', '');
+        $periode = $request->query('periode', '');
+        $tanggalMulai = $request->query('tanggal_mulai', date('Y-01-01'));
+        $tanggalSampai = $request->query('tanggal_sampai', date('Y-12-31'));
 
         $query = SidangTpp::with(['upt', 'creator'])->orderByDesc('tanggal_sidang')->orderByDesc('id');
 
@@ -60,7 +62,23 @@ class SidangTppController extends Controller
             $query->where('status_sidang', $statusSidang);
         }
 
-        if ($tanggalMulai && $tanggalSampai) {
+        if ($statusBa === 'belum_upload') {
+            $query->where(function ($q) {
+                $q->whereNull('file_berita_acara')->orWhere('file_berita_acara', '');
+            });
+        } elseif ($statusBa === 'sudah_upload') {
+            $query->whereNotNull('file_berita_acara')->where('file_berita_acara', '!=', '');
+        }
+
+        if ($periode === 'bulan_ini') {
+            $tanggalMulai = date('Y-m-01');
+            $tanggalSampai = date('Y-m-t');
+            $query->whereBetween('tanggal_sidang', [$tanggalMulai, $tanggalSampai]);
+        } elseif ($periode === 'semua') {
+            $tanggalMulai = '';
+            $tanggalSampai = '';
+            // Jangan batasi tanggal agar seluruh sidang masa lalu tampil
+        } elseif (! empty($tanggalMulai) && ! empty($tanggalSampai)) {
             $query->whereBetween('tanggal_sidang', [$tanggalMulai, $tanggalSampai]);
         }
 
@@ -82,6 +100,8 @@ class SidangTppController extends Controller
             'filterUpt',
             'userUptFilter',
             'statusSidang',
+            'statusBa',
+            'periode',
             'tanggalMulai',
             'tanggalSampai',
             'totalSidangBulanIni',
@@ -342,22 +362,68 @@ class SidangTppController extends Controller
 
         $uptList = Upt::orderBy('nama_upt')->get();
         $filterUpt = $userUptFilter ?: (int) $request->query('upt_id', 0);
+        $search = trim((string) $request->query('search', ''));
+        $statusBa = $request->query('status_ba', '');
+        $tanggalMulai = $request->query('tanggal_mulai', '');
+        $tanggalSampai = $request->query('tanggal_sampai', '');
 
-        $query = SidangTpp::with(['upt', 'creator'])->orderByDesc('tanggal_sidang');
+        $query = SidangTpp::with(['upt', 'creator', 'usulan'])->orderByDesc('tanggal_sidang')->orderByDesc('id');
 
         if ($filterUpt > 0) {
             $query->where('upt_id', $filterUpt);
         }
 
-        // Tampilkan sidang yang menunggu hasil atau sedang berjalan
+        if ($statusBa === 'belum_upload') {
+            $query->where(function ($q) {
+                $q->whereNull('file_berita_acara')->orWhere('file_berita_acara', '');
+            });
+        } elseif ($statusBa === 'sudah_upload') {
+            $query->whereNotNull('file_berita_acara')->where('file_berita_acara', '!=', '');
+        }
+
+        if (! empty($tanggalMulai) && ! empty($tanggalSampai)) {
+            $query->whereBetween('tanggal_sidang', [$tanggalMulai, $tanggalSampai]);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_undangan', 'like', "%{$search}%")
+                    ->orWhere('nomor_berita_acara', 'like', "%{$search}%")
+                    ->orWhere('agenda_sidang', 'like', "%{$search}%");
+            });
+        }
+
+        // Tampilkan seluruh sidang (termasuk sidang masa lalu)
         $sidangList = $query->paginate(20)->withQueryString();
 
-        return view('sidang_tpp.hasil', compact('sidangList', 'uptList', 'filterUpt', 'userUptFilter'));
+        // Hitung sidang yang belum upload Berita Acara untuk monitoring
+        $statsBaQuery = SidangTpp::query();
+        if ($filterUpt > 0) {
+            $statsBaQuery->where('upt_id', $filterUpt);
+        }
+        $totalBelumUploadBa = (clone $statsBaQuery)
+            ->where(function ($q) {
+                $q->whereNull('file_berita_acara')->orWhere('file_berita_acara', '');
+            })
+            ->count();
+
+        return view('sidang_tpp.hasil', compact(
+            'sidangList',
+            'uptList',
+            'filterUpt',
+            'userUptFilter',
+            'search',
+            'statusBa',
+            'tanggalMulai',
+            'tanggalSampai',
+            'totalBelumUploadBa'
+        ));
     }
 
     /**
      * Update Putusan Hasil Sidang oleh UPT & Upload BA
-     * Hanya dapat dilakukan oleh operator UPT pelaksana.
+     * Dapat dilakukan oleh operator UPT pelaksana atau Administrator.
+     * Sidang yang sudah lewat tetap dapat mengunggah atau memperbarui Berita Acara.
      */
     public function hasilUpdate(Request $request, int $id): RedirectResponse
     {
@@ -366,9 +432,9 @@ class SidangTppController extends Controller
 
         $sidang = SidangTpp::with('usulan')->findOrFail($id);
 
-        // Hanya UPT pemilik sidang yang berwenang mengisi hasil sidang
-        if (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id) {
-            abort(403, 'Akses ditolak. Pengisian hasil sidang, penetapan putusan Warga Binaan, dan pengunggahan Berita Acara hanya dapat dilakukan oleh operator UPT pelaksana.');
+        // Hanya UPT pemilik sidang atau Administrator yang berwenang mengisi hasil sidang
+        if (! $user->isAdmin() && (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id)) {
+            abort(403, 'Akses ditolak. Pengisian hasil sidang, penetapan putusan Warga Binaan, dan pengunggahan Berita Acara hanya dapat dilakukan oleh operator UPT pelaksana atau Administrator.');
         }
 
         $request->validate([
@@ -386,7 +452,7 @@ class SidangTppController extends Controller
                 File::makeDirectory($uploadDir, 0755, true);
             }
 
-            // Upload BA UPT
+            // Upload BA UPT (PDF)
             if ($request->hasFile('file_berita_acara')) {
                 $file = $request->file('file_berita_acara');
                 $filename = 'ba_'.$sidang->id.'_'.time().'.pdf';
@@ -432,18 +498,25 @@ class SidangTppController extends Controller
 
             // Hitung ulang dan update status
             $sidang->recalculateCounters();
-            $sidang->status_sidang = 'menunggu_verifikasi_kanwil';
-            $sidang->status_verifikasi_kanwil = 'menunggu_verifikasi';
+            if ($sidang->status_verifikasi_kanwil !== 'sesuai') {
+                $sidang->status_sidang = 'menunggu_verifikasi_kanwil';
+                $sidang->status_verifikasi_kanwil = 'menunggu_verifikasi';
+            }
             $sidang->save();
 
             ActivityLog::log(
                 'edit',
                 'sidang_tpp',
-                "UPT {$sidang->upt?->nama_upt} mengisi hasil sidang TPP No. BA {$sidang->nomor_berita_acara} (Setuju: {$sidang->total_setuju}, Tunda: {$sidang->total_tunda}, Tidak Setuju: {$sidang->total_tidak_setuju})",
+                "UPT {$sidang->upt?->nama_upt} mengisi/memperbarui hasil sidang TPP No. BA {$sidang->nomor_berita_acara} (Setuju: {$sidang->total_setuju}, Tunda: {$sidang->total_tunda}, Tidak Setuju: {$sidang->total_tidak_setuju})",
                 ['sidang_id' => $sidang->id]
             );
 
             DB::commit();
+
+            if ($request->input('redirect_to') === 'detail') {
+                return redirect()->route('sidang-tpp.show', $sidang->id)
+                    ->with('success', 'Berita Acara, dokumentasi, dan hasil keputusan sidang TPP berhasil disimpan.');
+            }
 
             return redirect()->route('sidang-tpp.hasil')
                 ->with('success', 'Hasil sidang TPP dan Berita Acara berhasil disimpan dan diajukan ke Kantor Wilayah untuk Verifikasi Kesesuaian Dokumen.');
@@ -452,6 +525,35 @@ class SidangTppController extends Controller
 
             return back()->withInput()->with('error', 'Gagal memperbarui hasil sidang: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Hapus satu foto dokumentasi sidang TPP
+     */
+    public function destroyDokumentasi(Request $request, int $id): RedirectResponse
+    {
+        $this->checkAccess('full');
+        $user = auth()->user();
+        $sidang = SidangTpp::findOrFail($id);
+
+        if (! $user->isAdmin() && (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id)) {
+            abort(403, 'Akses ditolak. Menghapus foto dokumentasi hanya dapat dilakukan oleh operator UPT pelaksana atau Administrator.');
+        }
+
+        $fotoIndex = (int) $request->input('photo_index', -1);
+        $photos = $sidang->dokumentasi_list;
+
+        if (isset($photos[$fotoIndex])) {
+            $path = public_path($photos[$fotoIndex]);
+            if (File::exists($path)) {
+                @File::delete($path);
+            }
+            unset($photos[$fotoIndex]);
+            $sidang->file_dokumentasi = json_encode(array_values($photos));
+            $sidang->save();
+        }
+
+        return back()->with('success', 'Foto dokumentasi sidang TPP berhasil dihapus.');
     }
 
     /**

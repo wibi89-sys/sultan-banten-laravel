@@ -27,31 +27,69 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                 <div>
                     <h5 class="fw-bold mb-1"><i class="fas fa-clipboard-check text-success me-2"></i>Penetapan Putusan Sidang &amp; Unggah Berita Acara (BA) UPT</h5>
-                    <p class="text-muted small mb-0">Input penetapan keputusan per-Warga Binaan (Setuju / Tidak Setuju / Tunda) serta unggah Berita Acara untuk diajukan ke Kantor Wilayah. <i>(Kewenangan Khusus Petugas UPT)</i></p>
+                    <p class="text-muted small mb-0">Input penetapan keputusan per-Warga Binaan (Setuju / Tidak Setuju / Tunda) serta unggah Berita Acara untuk diajukan ke Kantor Wilayah. <i>(Sidang masa lalu tetap dapat diunggah kapan saja)</i></p>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark border p-2">
+                        <i class="fas fa-calendar-alt text-primary me-1"></i>Total: <b>{{ $sidangList->total() }}</b> Sidang Terdata
+                    </span>
                 </div>
             </div>
 
-            <!-- Filter UPT jika Admin / Kanwil -->
-            @if(!$userUptFilter)
+            <!-- Form Filter & Pencarian -->
             <form method="GET" action="{{ route('sidang-tpp.hasil') }}" class="row g-2 align-items-end pt-2 border-top">
-                <div class="col-md-4">
-                    <label class="form-label small fw-semibold mb-1">Filter Berdasarkan UPT</label>
-                    <select name="upt_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                @if(!$userUptFilter)
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Filter UPT</label>
+                    <select name="upt_id" class="form-select form-select-sm">
                         <option value="">-- Seluruh UPT Pemasyarakatan --</option>
                         @foreach($uptList as $upt)
                         <option value="{{ $upt->id }}" {{ $filterUpt == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-8 text-md-end">
-                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle small p-2">
-                        <i class="fas fa-info-circle me-1 text-warning"></i>User Kanwil berada dalam mode <b>Monitoring / Lihat Data</b>. Pengisian hasil sidang dilakukan oleh user UPT terkait.
-                    </span>
+                @endif
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Status Berita Acara</label>
+                    <select name="status_ba" class="form-select form-select-sm">
+                        <option value="">-- Semua Status BA --</option>
+                        <option value="belum_upload" {{ $statusBa == 'belum_upload' ? 'selected' : '' }}>⚠️ Belum Upload BA</option>
+                        <option value="sudah_upload" {{ $statusBa == 'sudah_upload' ? 'selected' : '' }}>✅ Sudah Upload BA</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Dari Tanggal</label>
+                    <input type="date" name="tanggal_mulai" class="form-control form-control-sm" value="{{ $tanggalMulai }}" placeholder="Mulai">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Sampai Tanggal</label>
+                    <input type="date" name="tanggal_sampai" class="form-control form-control-sm" value="{{ $tanggalSampai }}" placeholder="Sampai">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Pencarian</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" class="form-control" placeholder="No. Undangan / BA / Agenda" value="{{ $search }}">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                        <a href="{{ route('sidang-tpp.hasil') }}" class="btn btn-light border text-secondary" title="Reset Filter"><i class="fas fa-undo"></i></a>
+                    </div>
                 </div>
             </form>
-            @endif
         </div>
     </div>
+
+    @if($totalBelumUploadBa > 0 && empty($statusBa))
+    <div class="alert alert-warning py-2.5 px-3 small d-flex flex-wrap align-items-center justify-content-between mb-3 shadow-sm">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-lg me-2 text-warning"></i>
+            <div>
+                Terdapat <b>{{ $totalBelumUploadBa }}</b> sidang TPP yang belum mengunggah berkas Berita Acara (BA). Sidang yang telah lewat tetap dapat diunggah Berita Acaranya kapan saja.
+            </div>
+        </div>
+        <a href="{{ route('sidang-tpp.hasil', array_merge(request()->query(), ['status_ba' => 'belum_upload'])) }}" class="btn btn-warning btn-sm fw-bold mt-1 mt-md-0 shadow-sm">
+            <i class="fas fa-filter me-1"></i>Tampilkan Sidang Belum Upload BA
+        </a>
+    </div>
+    @endif
 
     <!-- Daftar Sidang untuk Input Hasil -->
     <div class="card border-0 shadow-sm">
@@ -67,16 +105,23 @@
                         <th class="text-center">Usulan Warga Binaan</th>
                         <th class="text-center">Rincian Keputusan</th>
                         <th class="text-center">Verifikasi Kesesuaian Dokumen</th>
-                        <th style="width: 170px;" class="text-center">Aksi</th>
+                        <th style="width: 200px;" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($sidangList as $index => $s)
+                    @php
+                        $isPast = $s->tanggal_sidang->isPast();
+                        $canManageHasil = auth()->user()->isAdmin() || (!empty(auth()->user()->upt_id) && (int) auth()->user()->upt_id === (int) $s->upt_id);
+                    @endphp
                     <tr>
                         <td class="text-center text-muted small">{{ $sidangList->firstItem() + $index }}</td>
                         <td>
                             <div class="fw-bold">{{ $s->tanggal_sidang->format('d/m/Y') }}</div>
-                            <small class="text-muted">{{ substr((string)$s->jam_mulai, 0, 5) }} WIB</small>
+                            <small class="text-muted"><i class="far fa-clock me-1"></i>{{ substr((string)$s->jam_mulai, 0, 5) }} WIB</small>
+                            @if($isPast)
+                            <div><span class="badge bg-secondary-subtle text-secondary border mt-1" style="font-size: 10px;"><i class="fas fa-history me-1"></i>Sidang Lalu</span></div>
+                            @endif
                         </td>
                         <td>
                             <div class="fw-semibold text-primary">{{ $s->upt?->nama_upt ?? '-' }}</div>
@@ -114,25 +159,30 @@
                             {!! $s->verifikasi_badge !!}
                         </td>
                         <td class="text-center">
-                            @if(!empty(auth()->user()->upt_id) && auth()->user()->upt_id == $s->upt_id)
-                                <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="openModalHasil({{ $s->id }})">
-                                    <i class="fas fa-sliders-h me-1"></i>Kontrol Sidang
-                                </button>
-                            @elseif(empty(auth()->user()->upt_id))
-                                <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-sm btn-outline-secondary" title="Kanwil hanya memiliki hak verifikasi & melihat rincian">
-                                    <i class="fas fa-eye me-1"></i>Lihat Rincian
+                            <div class="d-flex align-items-center justify-content-center gap-1 flex-wrap">
+                                @if($canManageHasil)
+                                    @if(empty($s->file_berita_acara))
+                                    <button type="button" class="btn btn-sm btn-primary shadow-sm text-nowrap" onclick="openModalHasil({{ $s->id }})" title="Unggah Berita Acara dan Hasil Putusan Sidang">
+                                        <i class="fas fa-file-upload me-1"></i>Upload BA &amp; Hasil
+                                    </button>
+                                    @else
+                                    <button type="button" class="btn btn-sm btn-outline-primary shadow-sm text-nowrap" onclick="openModalHasil({{ $s->id }})" title="Perbarui Berita Acara atau Hasil Keputusan Sidang">
+                                        <i class="fas fa-edit me-1"></i>Edit Hasil &amp; BA
+                                    </button>
+                                    @endif
+                                @endif
+                                <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-sm btn-light border text-secondary" title="Lihat Detail Lengkap Sidang">
+                                    <i class="fas fa-eye"></i>
                                 </a>
-                            @else
-                                <span class="badge bg-secondary-subtle text-secondary">Hanya UPT Terkait</span>
-                            @endif
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
                         <td colspan="9" class="text-center py-5 text-muted">
                             <i class="fas fa-clipboard-check fa-3x mb-3 text-secondary opacity-50"></i>
-                            <h6>Belum Ada Sidang yang Memerlukan Input Hasil</h6>
-                            <p class="small mb-0">Seluruh jadwal sidang telah terisi hasil keputusannya atau belum ada agenda sidang terdaftar.</p>
+                            <h6>Tidak Ada Data Sidang TPP Sesuai Kriteria Filter</h6>
+                            <p class="small mb-0">Silakan ubah filter pencarian atau pastikan agenda sidang telah didaftarkan.</p>
                         </td>
                     </tr>
                     @endforelse
@@ -179,6 +229,9 @@
                                     <span class="text-muted">Total Usulan Warga Binaan:</span> <b id="lblTotalWbp">-</b> Orang
                                 </div>
                             </div>
+                            <div id="lblPastNoticeModal" class="alert alert-info py-1.5 px-2.5 small d-none mt-2 mb-0">
+                                <i class="fas fa-history me-1"></i><b>Sidang Telah Terlaksana / Masa Lalu:</b> Berita Acara (BA), foto dokumentasi, dan penetapan hasil sidang tetap dapat diunggah dan disimpan tanpa batasan tanggal.
+                            </div>
                         </div>
 
                         <!-- Data BA & Upload Dokumen -->
@@ -191,7 +244,9 @@
                             <div class="col-md-6">
                                 <label for="file_berita_acara" class="form-label small fw-semibold">Unggah Berkas Berita Acara TPP Bertanda Tangan (PDF)</label>
                                 <input type="file" name="file_berita_acara" id="file_berita_acara" class="form-control" accept=".pdf">
-                                <small class="text-muted" style="font-size: 11px;">Scan PDF BA TPP lengkap dengan tanda tangan Ketua &amp; Anggota Tim</small>
+                                <div id="lblCurrentBaFile" class="form-text small mt-1">
+                                    <span class="text-muted" style="font-size: 11px;">Scan PDF BA TPP lengkap dengan tanda tangan Ketua &amp; Anggota Tim (Maks. 15 MB)</span>
+                                </div>
                             </div>
                             <div class="col-md-12">
                                 <label for="dokumentasi" class="form-label small fw-semibold">
@@ -277,10 +332,30 @@
                 document.getElementById('lblTanggalSidang').innerText = s.tanggal_sidang ? new Date(s.tanggal_sidang).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-';
                 document.getElementById('lblTotalWbp').innerText = usulanList.length;
 
+                // Tampilkan banner sidang lalu jika tanggal sudah lewat
+                const pastNotice = document.getElementById('lblPastNoticeModal');
+                if (pastNotice) {
+                    if (s.tanggal_sidang && new Date(s.tanggal_sidang) < new Date()) {
+                        pastNotice.classList.remove('d-none');
+                    } else {
+                        pastNotice.classList.add('d-none');
+                    }
+                }
+
                 if (s.nomor_berita_acara) {
                     document.getElementById('nomor_berita_acara').value = s.nomor_berita_acara;
                 } else {
                     document.getElementById('nomor_berita_acara').value = '';
+                }
+
+                // Status berkas BA yang sudah diunggah
+                const lblBa = document.getElementById('lblCurrentBaFile');
+                if (lblBa) {
+                    if (s.file_berita_acara) {
+                        lblBa.innerHTML = `<span class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Berkas saat ini terunggah:</span> <a href="/sidang-tpp/${s.id}/download/berita_acara?preview=1" target="_blank" class="fw-bold text-decoration-none">Lihat BA (PDF)</a> <span class="text-muted">(Pilih file baru jika ingin mengganti)</span>`;
+                    } else {
+                        lblBa.innerHTML = `<span class="text-muted" style="font-size: 11px;">Scan PDF BA TPP lengkap dengan tanda tangan Ketua &amp; Anggota Tim (Maks. 15 MB)</span>`;
+                    }
                 }
 
                 tbody.innerHTML = '';

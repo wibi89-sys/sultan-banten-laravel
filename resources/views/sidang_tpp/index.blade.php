@@ -132,6 +132,19 @@
                 </div>
             </div>
 
+            <!-- Quick Presets -->
+            <div class="d-flex flex-wrap gap-1 mb-2">
+                <a href="{{ route('sidang-tpp.index', array_merge(request()->except(['periode', 'tanggal_mulai', 'tanggal_sampai']), ['periode' => 'semua'])) }}" class="btn btn-sm {{ $periode === 'semua' ? 'btn-primary' : 'btn-outline-secondary' }} py-0 px-2" style="font-size: 11px;">
+                    <i class="fas fa-history me-1"></i>Semua Sidang (Termasuk Sidang Lalu)
+                </a>
+                <a href="{{ route('sidang-tpp.index', array_merge(request()->except(['periode', 'tanggal_mulai', 'tanggal_sampai']), ['periode' => 'bulan_ini'])) }}" class="btn btn-sm {{ $periode === 'bulan_ini' ? 'btn-primary' : 'btn-outline-secondary' }} py-0 px-2" style="font-size: 11px;">
+                    <i class="fas fa-calendar-alt me-1"></i>Bulan Ini
+                </a>
+                <a href="{{ route('sidang-tpp.index', array_merge(request()->except(['status_ba', 'periode', 'tanggal_mulai', 'tanggal_sampai']), ['status_ba' => 'belum_upload', 'periode' => 'semua'])) }}" class="btn btn-sm {{ $statusBa === 'belum_upload' ? 'btn-warning text-dark fw-bold' : 'btn-outline-warning text-dark' }} py-0 px-2" style="font-size: 11px;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Belum Upload BA (Prioritas)
+                </a>
+            </div>
+
             <!-- Form Filter -->
             <form method="GET" action="{{ route('sidang-tpp.index') }}" class="row g-2 align-items-end pt-2 border-top">
                 @if(!$userUptFilter)
@@ -145,7 +158,7 @@
                     </select>
                 </div>
                 @endif
-                <div class="col-12 col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold mb-1">Status Sidang</label>
                     <select name="status" class="form-select form-select-sm" id="filter_status">
                         <option value="">-- Semua Status --</option>
@@ -156,6 +169,14 @@
                     </select>
                 </div>
                 <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Status Berita Acara</label>
+                    <select name="status_ba" class="form-select form-select-sm" id="filter_status_ba">
+                        <option value="">-- Semua Status BA --</option>
+                        <option value="belum_upload" {{ $statusBa == 'belum_upload' ? 'selected' : '' }}>Belum Upload BA</option>
+                        <option value="sudah_upload" {{ $statusBa == 'sudah_upload' ? 'selected' : '' }}>Sudah Upload BA</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold mb-1">Dari Tanggal</label>
                     <input type="date" name="tanggal_mulai" class="form-select form-select-sm" value="{{ $tanggalMulai }}" id="filter_tgl_mulai">
                 </div>
@@ -163,12 +184,12 @@
                     <label class="form-label small fw-semibold mb-1">Sampai Tanggal</label>
                     <input type="date" name="tanggal_sampai" class="form-select form-select-sm" value="{{ $tanggalSampai }}" id="filter_tgl_sampai">
                 </div>
-                <div class="col-12 col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm px-3" id="btnFilterApply">
-                        <i class="fas fa-filter me-1"></i>Filter
+                <div class="col-12 col-md-1 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary btn-sm px-2 w-100" id="btnFilterApply" title="Terapkan Filter">
+                        <i class="fas fa-filter"></i>
                     </button>
-                    <a href="{{ route('sidang-tpp.index') }}" class="btn btn-light btn-sm text-secondary border" id="btnFilterReset">
-                        <i class="fas fa-undo me-1"></i>Reset
+                    <a href="{{ route('sidang-tpp.index') }}" class="btn btn-light btn-sm text-secondary border px-2" id="btnFilterReset" title="Reset Filter">
+                        <i class="fas fa-undo"></i>
                     </a>
                 </div>
             </form>
@@ -200,6 +221,9 @@
                         <td>
                             <div class="fw-bold text-dark">{{ $s->tanggal_sidang->format('d/m/Y') }}</div>
                             <div class="small text-muted"><i class="far fa-clock me-1"></i>{{ substr((string)$s->jam_mulai, 0, 5) }} WIB</div>
+                            @if($s->tanggal_sidang->isPast())
+                            <div><span class="badge bg-secondary-subtle text-secondary border mt-1" style="font-size: 10px;"><i class="fas fa-history me-1"></i>Sidang Lalu</span></div>
+                            @endif
                         </td>
                         <td>
                             <div class="fw-semibold text-primary">{{ $s->upt?->nama_upt ?? '-' }}</div>
@@ -246,6 +270,19 @@
                         </td>
                         <td class="text-center">
                             {!! $s->status_badge !!}
+                            @if(empty($s->file_berita_acara))
+                            <div class="mt-1">
+                                <span class="badge bg-warning text-dark border border-warning-subtle" style="font-size: 10px;">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Belum Ada BA
+                                </span>
+                            </div>
+                            @else
+                            <div class="mt-1">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">
+                                    <i class="fas fa-check-circle me-1"></i>BA Terunggah
+                                </span>
+                            </div>
+                            @endif
                         </td>
                         <td class="text-center">
                             {!! $s->verifikasi_badge !!}
@@ -261,7 +298,15 @@
                             @endif
                         </td>
                         <td class="text-center text-nowrap">
+                            @php
+                                $canManageSdg = auth()->user()->isAdmin() || (!empty(auth()->user()->upt_id) && (int) auth()->user()->upt_id === (int) $s->upt_id);
+                            @endphp
                             <div class="table-actions">
+                                @if($canManageSdg && empty($s->file_berita_acara))
+                                <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-primary btn-action" title="Upload Berita Acara (BA) & Rekomendasi Hasil">
+                                    <i class="fas fa-file-upload"></i>
+                                </a>
+                                @endif
                                 <a href="{{ route('sidang-tpp.show', $s->id) }}" class="btn btn-outline-info btn-action" title="Detail Lengkap Sidang">
                                     <i class="fas fa-eye"></i>
                                 </a>
