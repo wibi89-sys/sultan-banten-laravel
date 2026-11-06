@@ -183,10 +183,25 @@
         const selectOp = document.getElementById('rem_operator_select');
         selectOp.innerHTML = '<option value="">Memuat operator UPT...</option>';
 
-        fetch('/wa/upt-operators/' + uptId)
-            .then(res => res.json())
+        const uptUrl = @json(url('/wa/upt-operators')) + '/' + uptId;
+        fetch(uptUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(async res => {
+                const text = await res.text();
+                let data = null;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`Gagal memuat operator UPT (status HTTP ${res.status}).`);
+                }
+                return data;
+            })
             .then(data => {
-                if (data.success && data.operators) {
+                if (data && data.success && data.operators) {
                     currentReminderOperators = data.operators;
                     currentReminderContext.namaUpt = data.upt_nama || 'UPT Terkait';
                     currentReminderContext.template_sidang_ba = data.template_sidang_ba || '';
@@ -210,11 +225,13 @@
 
                     // Susun draf pesan kontekstual
                     susunDrafPesanPengingat();
+                } else {
+                    selectOp.innerHTML = '<option value="">' + (data?.message || 'Data operator tidak ditemukan') + '</option>';
                 }
             })
             .catch(err => {
                 console.error(err);
-                selectOp.innerHTML = '<option value="">Gagal memuat operator</option>';
+                selectOp.innerHTML = '<option value="">Gagal memuat operator: ' + err.message + '</option>';
             });
 
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -376,26 +393,53 @@
         }
 
         const alertArea = document.getElementById('rem_alert_area');
+        const saveUrl = @json(route('wa.save-reminder-template'));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
-        fetch('/wa/save-reminder-template', {
+        fetch(saveUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
                 type: type,
                 template: tplToSave
             })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const text = await res.text();
+            let data = null;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                if (res.status === 419) {
+                    throw new Error('Sesi halaman telah kedaluwarsa (419 CSRF Token Expired). Silakan refresh/muat ulang halaman dan coba lagi.');
+                }
+                if (res.status === 404) {
+                    throw new Error('Alamat rute penyimpanan template belum terdaftar di cache (404). Silakan jalankan `php artisan optimize:clear` di hosting.');
+                }
+                if (res.status === 403) {
+                    throw new Error('Akses ditolak (403 Forbidden). Akun Anda tidak memiliki hak izin untuk mengubah template ini.');
+                }
+                throw new Error(`Server mengembalikan error status ${res.status}.`);
+            }
+
+            if (!res.ok) {
+                throw new Error((data && data.message) ? data.message : `Gagal menyimpan template (status HTTP ${res.status})`);
+            }
+
+            return data;
+        })
         .then(data => {
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save me-1"></i>Simpan sbg Template Default';
             }
 
-            if (data.success) {
+            if (data && data.success) {
                 if (isSidang) {
                     ctx.template_sidang_ba = tplToSave;
                 } else {
@@ -415,7 +459,7 @@
                     alert(data.message);
                 }
             } else {
-                alert('Gagal menyimpan template: ' + (data.message || 'Terjadi kesalahan sistem.'));
+                alert('Gagal menyimpan template: ' + (data?.message || 'Terjadi kesalahan sistem.'));
             }
         })
         .catch(err => {
@@ -480,11 +524,16 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Mengirim Pesan...';
 
-        fetch('/wa/send-pending-reminder', {
+        const sendUrl = @json(route('wa.send-pending-reminder'));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+        fetch(sendUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
                 target_phone: phone,
@@ -494,13 +543,25 @@
                 context_type: contextType
             })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const text = await res.text();
+            let data = null;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                if (res.status === 419) {
+                    throw new Error('Sesi halaman telah kedaluwarsa (419). Silakan refresh/muat ulang halaman.');
+                }
+                throw new Error(`Server mengembalikan error status ${res.status}.`);
+            }
+            return data;
+        })
         .then(data => {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-paper-plane me-1.5"></i>Kirim via Gateway';
 
             alertArea.classList.remove('d-none');
-            if (data.success) {
+            if (data && data.success) {
                 alertArea.innerHTML = `
                     <div class="alert alert-success py-2 px-3 small mb-0 d-flex align-items-center">
                         <i class="fas fa-check-circle fa-lg me-2 text-success"></i>
@@ -511,7 +572,7 @@
                 alertArea.innerHTML = `
                     <div class="alert alert-warning py-2 px-3 small mb-0 d-flex align-items-center">
                         <i class="fas fa-exclamation-triangle fa-lg me-2 text-warning"></i>
-                        <div><b>Pemberitahuan Gateway:</b> ${data.message || 'Gagal mengirim pesan.'}</div>
+                        <div><b>Pemberitahuan Gateway:</b> ${data?.message || 'Gagal mengirim pesan.'}</div>
                     </div>
                 `;
             }

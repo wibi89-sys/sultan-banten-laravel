@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class WhatsAppController extends Controller
 {
@@ -547,41 +548,71 @@ class WhatsAppController extends Controller
     public function saveReminderTemplate(Request $request): JsonResponse
     {
         $user = auth()->user();
-        if (! $user->canManage('wa_schedule') && ! $user->canManage('sidang_tpp') && ! $user->canManage('mutasi') && ! $user->isKanwil()) {
-            abort(403, 'Akses ditolak.');
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesi login telah berakhir. Silakan muat ulang halaman dan login kembali.',
+            ], 401);
         }
 
-        $request->validate([
-            'type' => 'required|string|in:sidang_ba,mutasi',
-            'template' => 'required|string',
-        ]);
+        // Cek izin akses: Admin, Kanwil, atau pengguna dengan hak akses wa_settings/wa_schedule/sidang_tpp/mutasi
+        if (! $user->isAdmin()
+            && ! $user->isKanwil()
+            && ! $user->hasAccess('wa_settings')
+            && ! $user->hasAccess('wa_schedule')
+            && ! $user->hasAccess('sidang_tpp')
+            && ! $user->hasAccess('mutasi')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk menyimpan template pengingat ini.',
+            ], 403);
+        }
 
-        WaSetting::ensureTppColumnsExist();
-        $setting = WaSetting::getFirst() ?? new WaSetting;
+        try {
+            $request->validate([
+                'type' => 'required|string|in:sidang_ba,mutasi',
+                'template' => 'required|string',
+            ]);
 
-        if ($request->input('type') === 'sidang_ba') {
-            $setting->template_pengingat_sidang_ba = $request->input('template');
-            $setting->save();
-            ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat Berita Acara (BA) Sidang TPP');
+            WaSetting::ensureTppColumnsExist();
+            $setting = WaSetting::getFirst() ?? new WaSetting;
+
+            if ($request->input('type') === 'sidang_ba') {
+                $setting->template_pengingat_sidang_ba = $request->input('template');
+                $setting->save();
+                ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat Berita Acara (BA) Sidang TPP');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Template Pengingat Upload BA Sidang TPP berhasil disimpan sebagai format default!',
+                ]);
+            }
+
+            if ($request->input('type') === 'mutasi') {
+                $setting->template_pengingat_mutasi = $request->input('template');
+                $setting->save();
+                ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat kelengkapan mutasi');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Template Pengingat Kelengkapan Mutasi berhasil disimpan sebagai format default!',
+                ]);
+            }
+
+            return response()->json(['success' => false, 'message' => 'Tipe pengingat tidak dikenali.'], 400);
+        } catch (ValidationException $ve) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: '.implode(', ', $ve->validator->errors()->all()),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('saveReminderTemplate error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Template Pengingat Upload BA Sidang TPP berhasil disimpan sebagai format default!',
-            ]);
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem saat menyimpan: '.$e->getMessage(),
+            ], 500);
         }
-
-        if ($request->input('type') === 'mutasi') {
-            $setting->template_pengingat_mutasi = $request->input('template');
-            $setting->save();
-            ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat kelengkapan mutasi');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Template Pengingat Kelengkapan Mutasi berhasil disimpan sebagai format default!',
-            ]);
-        }
-
-        return response()->json(['success' => false, 'message' => 'Tipe pengingat tidak dikenali.'], 400);
     }
 
     public function scheduleStore(Request $request)

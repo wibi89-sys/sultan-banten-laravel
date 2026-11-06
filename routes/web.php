@@ -213,7 +213,7 @@ Route::middleware('auth')->group(function () {
     // Pengingat WhatsApp Laporan Pending (Universal untuk Mutasi, Sidang TPP, dll)
     Route::get('/wa/upt-operators/{uptId}', [PengumumanController::class, 'getUptOperators'])->name('wa.upt-operators');
     Route::post('/wa/send-pending-reminder', [PengumumanController::class, 'sendPendingReminder'])->name('wa.send-pending-reminder');
-    Route::post('/wa/save-reminder-template', [WhatsAppController::class, 'saveReminderTemplate'])->name('wa.save-reminder-template');
+    Route::match(['post', 'put'], '/wa/save-reminder-template', [WhatsAppController::class, 'saveReminderTemplate'])->name('wa.save-reminder-template');
 
     // Pengaturan AI & Master Personil Nota Dinas Kanwil
     Route::get('/pengaturan-ai', [AiSettingController::class, 'index'])->name('ai-setting.index');
