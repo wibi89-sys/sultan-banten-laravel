@@ -318,9 +318,14 @@
                                             <div class="text-muted small mb-1.5" style="font-size: 11px;">
                                                 <i class="fas fa-hourglass-half me-1 text-warning"></i>Menunggu UPT Upload BA
                                             </div>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Buat Laporan secara manual tanpa BA">
-                                                <i class="fas fa-pen me-1"></i>Buat Manual
-                                            </button>
+                                            <div class="d-flex flex-column gap-1">
+                                                <button type="button" class="btn btn-outline-success btn-xs py-1 px-2 fw-semibold shadow-sm" onclick="bukaModalWaPengingat('sidang_ba', {{ $s->id }}, {{ $s->upt_id }}, 'Tim Sidang TPP {{ addslashes($s->upt?->nama_upt ?? '') }}', { nomor_undangan: '{{ addslashes($s->nomor_undangan ?: '') }}', tanggal_sidang: '{{ $s->tanggal_sidang ? $s->tanggal_sidang->translatedFormat('d F Y') : '' }}' })" title="Kirim Pengingat WhatsApp ke Operator UPT untuk Unggah Berita Acara (BA)">
+                                                    <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan Upload BA
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 10.5px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Buat Laporan secara manual tanpa BA">
+                                                    <i class="fas fa-pen me-1"></i>Buat Manual
+                                                </button>
+                                            </div>
                                         @endif
                                     @endif
                                 </td>

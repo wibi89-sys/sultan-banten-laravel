@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Pengumuman;
 use App\Models\Upt;
+use App\Models\User;
+use App\Models\WaBroadcast;
+use App\Services\WhatsAppService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -36,7 +41,10 @@ class PengumumanController extends Controller
 
         $pengumumanList = $query->paginate(20)->withQueryString();
 
-        return view('pengumuman.index', compact('pengumumanList', 'uptList'));
+        // Riwayat Siaran WhatsApp Massal
+        $broadcastList = WaBroadcast::with('creator')->orderByDesc('id')->paginate(10, ['*'], 'broadcast_page');
+
+        return view('pengumuman.index', compact('pengumumanList', 'uptList', 'broadcastList'));
     }
 
     public function store(Request $request)
@@ -166,5 +174,218 @@ class PengumumanController extends Controller
         ActivityLog::log('hapus', 'pengumuman', "Menghapus pengumuman: {$p->judul}", $old);
 
         return back()->with('success', 'Pengumuman berhasil dihapus.');
+    }
+
+    /**
+     * Kirim siaran pengumuman WhatsApp dinamis ke operator terdaftar.
+     */
+    public function broadcastWa(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+        if (! $user->canManage('pengumuman') && ! $user->canManage('wa_settings')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengirimkan siaran WhatsApp.');
+        }
+
+        $request->validate([
+            'judul' => 'required|string|max:255',
+            'pesan' => 'required|string',
+            'kategori' => 'required|string|max:50',
+            'target_type' => 'required|string|in:all,role,upt',
+            'target_roles' => 'nullable|array',
+            'target_upt_ids' => 'nullable|array',
+            'kirim_ke_grup' => 'nullable',
+            'pengumuman_id' => 'nullable|exists:pengumuman,id',
+        ]);
+
+        $targetType = $request->input('target_type', 'all');
+        $targetRoles = $request->input('target_roles', []);
+        $targetUptIds = $request->input('target_upt_ids', []);
+
+        $query = User::with('upt')->whereNotNull('id');
+
+        if ($targetType === 'role' && ! empty($targetRoles)) {
+            $query->whereIn('role', $targetRoles);
+            if (! empty($targetUptIds)) {
+                $query->whereIn('upt_id', $targetUptIds);
+            }
+        } elseif ($targetType === 'upt' && ! empty($targetUptIds)) {
+            $query->whereIn('upt_id', $targetUptIds);
+        }
+
+        $users = $query->get();
+
+        if ($users->isEmpty()) {
+            return back()->with('error', 'Tidak ditemukan operator / pengguna yang sesuai dengan kriteria filter sasaran.');
+        }
+
+        $broadcast = WaBroadcast::create([
+            'pengumuman_id' => $request->input('pengumuman_id'),
+            'judul' => $request->input('judul'),
+            'kategori' => $request->input('kategori'),
+            'pesan' => $request->input('pesan'),
+            'target_type' => $targetType,
+            'target_roles' => $targetRoles,
+            'target_upt_ids' => $targetUptIds,
+            'kirim_ke_grup' => $request->boolean('kirim_ke_grup'),
+            'total_target' => $users->count(),
+            'total_sent' => 0,
+            'total_failed' => 0,
+            'status' => 'processing',
+            'created_by' => $user->id,
+            'sent_at' => now(),
+        ]);
+
+        $result = WhatsAppService::sendBroadcastToUsers($broadcast, $users, $request->boolean('kirim_ke_grup'));
+
+        ActivityLog::log(
+            'tambah',
+            'wa_broadcast',
+            "Mengirimkan siaran pengumuman WhatsApp: {$broadcast->judul} ke {$result['total_sent']} dari {$result['total_target']} operator."
+        );
+
+        $msg = "Siaran pengumuman WhatsApp berhasil dikirim ke {$result['total_sent']} operator.";
+        if ($result['total_failed'] > 0) {
+            $msg .= " ({$result['total_failed']} nomor belum valid atau kosong di profil).";
+        }
+
+        return redirect()->route('pengumuman.index', ['tab' => 'broadcast'])->with('success', $msg);
+    }
+
+    /**
+     * Hitung live counter calon penerima siaran berdasarkan filter dinamis.
+     */
+    public function getRecipientsCount(Request $request): JsonResponse
+    {
+        $targetType = $request->input('target_type', 'all');
+        $targetRoles = $request->input('target_roles', []);
+        $targetUptIds = $request->input('target_upt_ids', []);
+
+        $query = User::with('upt')->whereNotNull('id');
+
+        if ($targetType === 'role' && ! empty($targetRoles)) {
+            $query->whereIn('role', $targetRoles);
+            if (! empty($targetUptIds)) {
+                $query->whereIn('upt_id', $targetUptIds);
+            }
+        } elseif ($targetType === 'upt' && ! empty($targetUptIds)) {
+            $query->whereIn('upt_id', $targetUptIds);
+        }
+
+        $users = $query->get();
+
+        $validCount = 0;
+        $missingCount = 0;
+        $userList = [];
+
+        foreach ($users as $u) {
+            $rawWa = $u->no_wa ?? '';
+            $cleanWa = preg_replace('/[^0-9]/', '', $rawWa);
+            $hasWa = ! empty($cleanWa) && strlen($cleanWa) >= 9;
+
+            if ($hasWa) {
+                $validCount++;
+            } else {
+                $missingCount++;
+            }
+
+            $userList[] = [
+                'id' => $u->id,
+                'nama' => $u->nama_lengkap ?: $u->username,
+                'role' => ucwords(str_replace('_', ' ', $u->role ?? 'Operator')),
+                'upt' => $u->upt?->nama_upt ?? 'Kantor Wilayah',
+                'has_wa' => $hasWa,
+                'no_wa' => $rawWa ?: '-',
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'total' => $users->count(),
+            'valid_wa' => $validCount,
+            'missing_wa' => $missingCount,
+            'users' => $userList,
+        ]);
+    }
+
+    /**
+     * Ambil rincian data broadcast beserta log pengirimannya.
+     */
+    public function showBroadcast(int $id): JsonResponse
+    {
+        $broadcast = WaBroadcast::with(['creator', 'logs'])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'broadcast' => $broadcast,
+        ]);
+    }
+
+    /**
+     * Ambil daftar operator dari suatu UPT untuk pengingat kontekstual.
+     */
+    public function getUptOperators(int $uptId): JsonResponse
+    {
+        $operators = User::where('upt_id', $uptId)
+            ->whereIn('role', ['operator', 'operator_wilayah', 'admin'])
+            ->get(['id', 'nama_lengkap', 'username', 'no_wa', 'role']);
+
+        $upt = Upt::find($uptId);
+
+        return response()->json([
+            'success' => true,
+            'upt_nama' => $upt?->nama_upt ?? 'UPT Terkait',
+            'operators' => $operators->map(function ($op) {
+                $raw = $op->no_wa ?? '';
+                $clean = preg_replace('/[^0-9]/', '', $raw);
+
+                return [
+                    'id' => $op->id,
+                    'nama' => $op->nama_lengkap ?: $op->username,
+                    'role' => ucwords(str_replace('_', ' ', $op->role)),
+                    'no_wa' => $raw ?: '-',
+                    'has_wa' => ! empty($clean) && strlen($clean) >= 9,
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Kirim pengingat laporan pending ke nomor WhatsApp operator.
+     */
+    public function sendPendingReminder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'target_phone' => 'required|string',
+            'message' => 'required|string',
+            'recipient_name' => 'nullable|string',
+            'upt_name' => 'nullable|string',
+            'context_type' => 'nullable|string',
+        ]);
+
+        $res = WhatsAppService::sendPendingReminder(
+            $request->input('target_phone'),
+            $request->input('message'),
+            $request->input('recipient_name'),
+            $request->input('upt_name'),
+            $request->input('context_type', 'laporan_pending')
+        );
+
+        if (! empty($res['success'])) {
+            ActivityLog::log(
+                'kirim_wa',
+                'wa_pengingat',
+                "Mengirimkan pesan pengingat laporan ke {$request->input('recipient_name')} ({$request->input('target_phone')}): {$request->input('context_type')}"
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesan pengingat WhatsApp berhasil dikirim.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $res['message'] ?? 'Gagal mengirim pesan melalui WhatsApp Gateway.',
+        ], 422);
     }
 }

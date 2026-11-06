@@ -1,151 +1,570 @@
 @extends('layouts.app')
 
-@section('title', 'Pengumuman - Sultan Banten')
+@section('title', 'Pengumuman & Siaran WhatsApp - Sultan Banten')
 @section('page_title')
-    <i class="fas fa-bullhorn me-2"></i>Pengumuman
+    <i class="fas fa-bullhorn me-2"></i>Pengumuman &amp; Siaran WhatsApp
 @endsection
 
 @section('content')
+@php
+    $activeTab = request('tab', 'web');
+@endphp
+
 <div class="content-card">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <div>
-            <h5 class="mb-1 fw-bold"><i class="fas fa-bullhorn text-primary me-2"></i>Daftar Pengumuman & Berita</h5>
-            <p class="text-muted small mb-0">Kelola pengumuman untuk marquee bar, banner pop-up, dan notifikasi wilayah</p>
-        </div>
-        @if(auth()->user()->canManage('pengumuman'))
-        <button class="btn btn-primary btn-sm px-3 mt-2 mt-md-0" data-bs-toggle="modal" data-bs-target="#modalAdd">
-            <i class="fas fa-plus me-1"></i> Tambah Pengumuman
-        </button>
-        @else
-        <span class="badge bg-secondary px-3 py-2 mt-2 mt-md-0">
-            <i class="fas fa-eye me-1"></i> Mode Lihat Saja
-        </span>
-        @endif
-    </div>
+    <!-- Top Nav Tabs: Pengumuman Web vs Siaran WhatsApp -->
+    <ul class="nav nav-pills mb-4 pb-2 border-bottom" id="pengumumanTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold {{ $activeTab !== 'broadcast' ? 'active' : '' }}" id="tab-web" data-bs-toggle="pill" data-bs-target="#content-web" type="button" role="tab" aria-controls="content-web" aria-selected="{{ $activeTab !== 'broadcast' ? 'true' : 'false' }}">
+                <i class="fas fa-desktop me-1.5"></i>1. Pengumuman Portal &amp; Marquee
+                <span class="badge bg-light text-secondary border ms-1">{{ $pengumumanList->total() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold {{ $activeTab === 'broadcast' ? 'active' : '' }}" id="tab-broadcast" data-bs-toggle="pill" data-bs-target="#content-broadcast" type="button" role="tab" aria-controls="content-broadcast" aria-selected="{{ $activeTab === 'broadcast' ? 'true' : 'false' }}">
+                <i class="fab fa-whatsapp me-1.5 text-success"></i>2. Siaran WhatsApp Operator (Broadcast WA)
+                <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Baru</span>
+            </button>
+        </li>
+    </ul>
 
-    <!-- Filter Form -->
-    <div class="card mb-3 bg-light border-0">
-        <div class="card-body py-2">
-            <form method="GET" action="{{ route('pengumuman.index') }}" class="row g-2 align-items-end">
-                <div class="col-6 col-md-3">
-                    <label for="filter_kategori" class="form-label small fw-semibold">Kategori</label>
-                    <select id="filter_kategori" name="kategori" class="form-select form-select-sm" aria-label="Filter Kategori">
-                        <option value="">-- Semua Kategori --</option>
-                        <option value="Penting" {{ request('kategori') == 'Penting' ? 'selected' : '' }}>Penting</option>
-                        <option value="Biasa" {{ request('kategori') == 'Biasa' ? 'selected' : '' }}>Biasa</option>
-                        <option value="Agenda" {{ request('kategori') == 'Agenda' ? 'selected' : '' }}>Agenda</option>
-                        <option value="Peringatan" {{ request('kategori') == 'Peringatan' ? 'selected' : '' }}>Peringatan</option>
-                    </select>
+    <div class="tab-content" id="pengumumanTabContent">
+        <!-- ============================================================== -->
+        <!-- TAB 1: PENGUMUMAN PORTAL & MARQUEE WEB -->
+        <!-- ============================================================== -->
+        <div class="tab-pane fade {{ $activeTab !== 'broadcast' ? 'show active' : '' }}" id="content-web" role="tabpanel" aria-labelledby="tab-web">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                <div>
+                    <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-bullhorn text-primary me-2"></i>Daftar Pengumuman Web &amp; Berita</h5>
+                    <p class="text-muted small mb-0">Kelola pengumuman untuk marquee bar bawah, banner selamat datang, dan portal wilayah</p>
                 </div>
-                <div class="col-6 col-md-3">
-                    <label for="filter_status" class="form-label small fw-semibold">Status</label>
-                    <select id="filter_status" name="status" class="form-select form-select-sm" aria-label="Filter Status">
-                        <option value="">-- Semua Status --</option>
-                        <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                        <option value="nonaktif" {{ request('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-fill" aria-label="Terapkan Filter Pengumuman"><i class="fas fa-search me-1"></i>Filter</button>
-                    <a href="{{ route('pengumuman.index') }}" class="btn btn-secondary btn-sm flex-fill" aria-label="Reset Filter">Reset</a>
-                </div>
-            </form>
-        </div>
-    </div>
+                @if(auth()->user()->canManage('pengumuman'))
+                <button class="btn btn-primary btn-sm px-3 mt-2 mt-md-0 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAdd">
+                    <i class="fas fa-plus me-1"></i> Tambah Pengumuman Web
+                </button>
+                @else
+                <span class="badge bg-secondary px-3 py-2 mt-2 mt-md-0">
+                    <i class="fas fa-eye me-1"></i> Mode Lihat Saja
+                </span>
+                @endif
+            </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle table-sm mb-0">
-            <thead class="bg-primary bg-opacity-10">
-                <tr>
-                    <th class="text-center" width="5%">No</th>
-                    <th width="30%">Judul & Isi</th>
-                    <th class="text-center" width="10%">Kategori</th>
-                    <th class="text-center" width="10%">Tipe / Sasaran</th>
-                    <th class="text-center" width="10%">Marquee</th>
-                    <th class="text-center" width="10%">Status</th>
-                    <th class="text-center" width="13%">Periode</th>
-                    <th class="text-center" width="12%">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($pengumumanList as $p)
-                <tr>
-                    <td class="text-center text-muted">{{ $loop->iteration + ($pengumumanList->currentPage() - 1) * $pengumumanList->perPage() }}</td>
-                    <td>
-                        <div class="fw-bold text-dark">{{ $p->judul }}</div>
-                        <div class="small text-muted text-truncate" style="max-width: 280px;">{{ strip_tags($p->isi) }}</div>
-                        @if($p->gambar)
-                        <small class="text-primary"><i class="fas fa-paperclip me-1"></i>Ada lampiran gambar</small>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        <span class="badge {{ $p->kategori == 'Penting' ? 'bg-danger' : ($p->kategori == 'Agenda' ? 'bg-info text-dark' : 'bg-primary') }}">
-                            {{ $p->kategori }}
-                        </span>
-                    </td>
-                    <td class="text-center small">
-                        {{ $p->tipe === 'UPT' ? ($p->upt?->nama_upt ?? 'UPT Spesifik') : 'Semua UPT' }}
-                    </td>
-                    <td class="text-center">
-                        @if($p->tampilkan_marquee)
-                        <span class="badge bg-success bg-opacity-25 text-success"><i class="fas fa-check"></i> Muncul</span>
-                        @else
-                        <span class="badge bg-secondary bg-opacity-25 text-secondary">-</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @if($p->aktif)
-                        <span class="badge bg-success">Aktif</span>
-                        @else
-                        <span class="badge bg-danger">Nonaktif</span>
-                        @endif
-                    </td>
-                    <td class="text-center small text-muted">
-                        @if($p->tanggal_mulai && $p->tanggal_selesai)
-                        {{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d/m/y') }} - {{ \Carbon\Carbon::parse($p->tanggal_selesai)->format('d/m/y') }}
-                        @else
-                        Selalu Aktif
-                        @endif
-                    </td>
-                    <td class="text-center text-nowrap">
-                        @if(auth()->user()->canManage('pengumuman'))
-                        <div class="table-actions">
-                            <button type="button" class="btn btn-warning btn-action" onclick="editData({{ json_encode($p) }})" title="Edit" aria-label="Edit Pengumuman {{ $p->judul }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <form action="{{ route('pengumuman.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus pengumuman ini?')">
+            <!-- Filter Form -->
+            <div class="card mb-3 bg-light border-0">
+                <div class="card-body py-2">
+                    <form method="GET" action="{{ route('pengumuman.index') }}" class="row g-2 align-items-end">
+                        <input type="hidden" name="tab" value="web">
+                        <div class="col-6 col-md-3">
+                            <label for="filter_kategori" class="form-label small fw-semibold">Kategori</label>
+                            <select id="filter_kategori" name="kategori" class="form-select form-select-sm" aria-label="Filter Kategori">
+                                <option value="">-- Semua Kategori --</option>
+                                <option value="Penting" {{ request('kategori') == 'Penting' ? 'selected' : '' }}>Penting</option>
+                                <option value="Biasa" {{ request('kategori') == 'Biasa' ? 'selected' : '' }}>Biasa</option>
+                                <option value="Agenda" {{ request('kategori') == 'Agenda' ? 'selected' : '' }}>Agenda</option>
+                                <option value="Peringatan" {{ request('kategori') == 'Peringatan' ? 'selected' : '' }}>Peringatan</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="filter_status" class="form-label small fw-semibold">Status</label>
+                            <select id="filter_status" name="status" class="form-select form-select-sm" aria-label="Filter Status">
+                                <option value="">-- Semua Status --</option>
+                                <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                <option value="nonaktif" {{ request('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm flex-fill" aria-label="Terapkan Filter Pengumuman"><i class="fas fa-search me-1"></i>Filter</button>
+                            <a href="{{ route('pengumuman.index', ['tab' => 'web']) }}" class="btn btn-secondary btn-sm flex-fill" aria-label="Reset Filter">Reset</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-sm mb-0" style="font-size: 13px;">
+                    <thead class="bg-primary bg-opacity-10 text-dark">
+                        <tr>
+                            <th class="text-center" width="4%">No</th>
+                            <th width="30%">Judul &amp; Isi</th>
+                            <th class="text-center" width="10%">Kategori</th>
+                            <th class="text-center" width="12%">Tipe / Sasaran</th>
+                            <th class="text-center" width="10%">Marquee</th>
+                            <th class="text-center" width="8%">Status</th>
+                            <th class="text-center" width="12%">Periode</th>
+                            <th class="text-center" width="14%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($pengumumanList as $p)
+                        <tr>
+                            <td class="text-center text-muted fw-semibold">{{ $loop->iteration + ($pengumumanList->currentPage() - 1) * $pengumumanList->perPage() }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ $p->judul }}</div>
+                                <div class="small text-muted text-truncate" style="max-width: 300px;">{{ strip_tags($p->isi) }}</div>
+                                @if($p->gambar)
+                                <small class="text-primary"><i class="fas fa-paperclip me-1"></i>Ada lampiran gambar</small>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {{ $p->kategori == 'Penting' ? 'bg-danger' : ($p->kategori == 'Agenda' ? 'bg-info text-dark' : 'bg-primary') }}">
+                                    {{ $p->kategori }}
+                                </span>
+                            </td>
+                            <td class="text-center small">
+                                {{ $p->tipe === 'UPT' ? ($p->upt?->nama_upt ?? 'UPT Spesifik') : 'Semua UPT' }}
+                            </td>
+                            <td class="text-center">
+                                @if($p->tampilkan_marquee)
+                                <span class="badge bg-success bg-opacity-25 text-success"><i class="fas fa-check"></i> Muncul</span>
+                                @else
+                                <span class="badge bg-secondary bg-opacity-25 text-secondary">-</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($p->aktif)
+                                <span class="badge bg-success">Aktif</span>
+                                @else
+                                <span class="badge bg-danger">Nonaktif</span>
+                                @endif
+                            </td>
+                            <td class="text-center small text-muted">
+                                @if($p->tanggal_mulai && $p->tanggal_selesai)
+                                {{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d/m/y') }} - {{ \Carbon\Carbon::parse($p->tanggal_selesai)->format('d/m/y') }}
+                                @else
+                                Selalu Aktif
+                                @endif
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <div class="d-flex justify-content-center align-items-center gap-1">
+                                    <!-- Tombol Cepat Siarkan ke WhatsApp -->
+                                    <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 fw-semibold" onclick="siarkanPengumumanKeWa({{ json_encode($p) }})" title="Kirimkan Pengumuman ini ke WhatsApp Operator">
+                                        <i class="fab fa-whatsapp me-1 text-success"></i>Siar WA
+                                    </button>
+
+                                    @if(auth()->user()->canManage('pengumuman'))
+                                    <button type="button" class="btn btn-warning btn-xs py-0.5 px-1.5" onclick="editData({{ json_encode($p) }})" title="Edit Pengumuman">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('pengumuman.destroy', $p->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus pengumuman ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-xs py-0.5 px-1.5" title="Hapus Pengumuman">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">Belum ada pengumuman portal web.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                {{ $pengumumanList->links('pagination::bootstrap-5') }}
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 2: SIARAN WHATSAPP OPERATOR TERDAFTAR (BROADCAST WA) -->
+        <!-- ============================================================== -->
+        <div class="tab-pane fade {{ $activeTab === 'broadcast' ? 'show active' : '' }}" id="content-broadcast" role="tabpanel" aria-labelledby="tab-broadcast">
+            <div class="row g-4">
+                <!-- FORM SIARAN PESAN BEBAS & FILTER DINAMIS (KOLOM KIRI) -->
+                <div class="col-lg-7">
+                    <div class="card border border-secondary-subtle shadow-sm mb-4">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">
+                                    <i class="fab fa-whatsapp text-success me-2 fa-lg"></i>Buat Siaran WhatsApp ke Operator
+                                </h6>
+                                <small class="text-muted">Kirimkan instruksi atau pengumuman massal langsung ke nomor WhatsApp pribadi operator</small>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">
+                                <i class="fas fa-satellite-dish me-1"></i>Fonnte Gateway
+                            </span>
+                        </div>
+
+                        <div class="card-body p-3">
+                            <form action="{{ route('pengumuman.broadcast-wa') }}" method="POST" id="formBroadcastWa" onsubmit="return confirmKirimBroadcast()">
                                 @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-action" title="Hapus" aria-label="Hapus Pengumuman {{ $p->judul }}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <input type="hidden" name="pengumuman_id" id="bc_pengumuman_id" value="">
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-8">
+                                        <label for="bc_judul" class="form-label small fw-semibold">Judul / Topik Pengumuman: <span class="text-danger">*</span></label>
+                                        <input type="text" name="judul" id="bc_judul" class="form-control form-control-sm" required placeholder="Contoh: Pengingat Batas Akhir Input Laporan Harian..." oninput="updateLiveMockup()">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="bc_kategori" class="form-label small fw-semibold">Kategori: <span class="text-danger">*</span></label>
+                                        <select name="kategori" id="bc_kategori" class="form-select form-select-sm" required onchange="updateLiveMockup()">
+                                            <option value="PENTING">🚨 PENTING</option>
+                                            <option value="PENGINGAT" selected>⏰ PENGINGAT</option>
+                                            <option value="EDARAN">📋 EDARAN</option>
+                                            <option value="AGENDA">📅 AGENDA</option>
+                                            <option value="INFORMASI">ℹ️ INFORMASI UMUM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- SELEKTOR TARGET DINAMIS (ROLE / UPT / SEMUA) -->
+                                <div class="p-3 rounded bg-light border mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label small fw-bold text-dark mb-0">
+                                            <i class="fas fa-users-cog text-primary me-1"></i>Sasaran Penerima WhatsApp:
+                                        </label>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" style="font-size: 11px;" onclick="bukaModalListPenerima()">
+                                            <i class="fas fa-list me-1"></i>Lihat Daftar Nama (<span id="count_badge_num">0</span>)
+                                        </button>
+                                    </div>
+
+                                    <!-- Mode Target: Radio -->
+                                    <div class="d-flex flex-wrap gap-3 mb-2.5">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="target_type" id="tt_role" value="role" checked onchange="handleTargetTypeChange()">
+                                            <label class="form-check-label small fw-semibold" for="tt_role">
+                                                Filter Berdasarkan Role
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="target_type" id="tt_all" value="all" onchange="handleTargetTypeChange()">
+                                            <label class="form-check-label small fw-semibold" for="tt_all">
+                                                Semua Pengguna Terdaftar
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="target_type" id="tt_upt" value="upt" onchange="handleTargetTypeChange()">
+                                            <label class="form-check-label small fw-semibold" for="tt_upt">
+                                                Khusus Satker UPT Tertentu
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Pilihan Checkbox Role (Muncul saat Mode Role) -->
+                                    <div id="containerRoles" class="mb-2">
+                                        <span class="small text-muted d-block mb-1" style="font-size: 11px;">Pilih Role yang Menerima:</span>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
+                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_operator" value="operator" checked onchange="fetchRecipientsCount()">
+                                                <label class="form-check-label small fw-semibold text-dark" for="role_operator">
+                                                    Operator UPT (Satker)
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
+                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_wilayah" value="operator_wilayah" checked onchange="fetchRecipientsCount()">
+                                                <label class="form-check-label small fw-semibold text-dark" for="role_wilayah">
+                                                    Operator Wilayah (Kanwil)
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
+                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_admin" value="admin" onchange="fetchRecipientsCount()">
+                                                <label class="form-check-label small fw-semibold text-dark" for="role_admin">
+                                                    Administrator
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
+                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_viewer" value="viewer" onchange="fetchRecipientsCount()">
+                                                <label class="form-check-label small fw-semibold text-dark" for="role_viewer">
+                                                    Viewer / Pemantau
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filter Satker UPT (Opsional atau Saat Mode UPT) -->
+                                    <div id="containerUpt" class="mb-2" style="display: none;">
+                                        <label for="bc_target_upts" class="form-label small fw-semibold mb-1" style="font-size: 11px;">Pilih Satker UPT Target (Bisa Multi-Pilih):</label>
+                                        <select name="target_upt_ids[]" id="bc_target_upts" class="form-select form-select-sm" multiple style="height: 100px; font-size: 12px;" onchange="fetchRecipientsCount()">
+                                            @foreach($uptList as $upt)
+                                            <option value="{{ $upt->id }}" selected>{{ $upt->nama_upt }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none" onclick="selectAllUpts(true)">Pilih Semua UPT</button>
+                                            <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none text-danger" onclick="selectAllUpts(false)">Hapus Pilihan</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Opsi Tembusan Grup WA -->
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" name="kirim_ke_grup" id="bc_kirim_grup" value="1" checked>
+                                        <label class="form-check-label small fw-semibold" for="bc_kirim_grup">
+                                            <i class="fab fa-whatsapp text-success me-1"></i>Kirimkan juga tembusan ke Grup WhatsApp Resmi
+                                        </label>
+                                    </div>
+
+                                    <!-- Live Target Counter Badge -->
+                                    <div class="alert alert-secondary py-1.5 px-2.5 mt-2 mb-0 d-flex justify-content-between align-items-center" style="font-size: 11.5px;">
+                                        <div>
+                                            <i class="fas fa-bullseye text-danger me-1"></i>
+                                            <b>Sasaran:</b> <span id="label_total_target">Memuat...</span>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-success" id="badge_valid_wa">0 Nomor Siap</span>
+                                            <span class="badge bg-warning text-dark d-none" id="badge_missing_wa">0 Tanpa WA</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- EDITOR PESAN WHATSAPP BEBAS (FREE-TEXT EDITOR) -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
+                                        <label for="bc_pesan" class="form-label small fw-semibold mb-0">
+                                            Isi Pesan Siaran WhatsApp: <span class="text-danger">*</span>
+                                        </label>
+                                        <!-- Template Cepat Dropdown -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-primary btn-xs dropdown-toggle py-0.5 px-2 fw-semibold" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 11px;">
+                                                <i class="fas fa-magic me-1 text-warning"></i>Muat Template Pesan
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow" style="font-size: 12px;">
+                                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="loadTemplateBc('laporan_harian')">⏰ Pengingat Laporan Harian (Bebas/Overstaying)</a></li>
+                                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="loadTemplateBc('mutasi_narapidana')">🚚 Instruksi Pelaksanaan Mutasi Narapidana</a></li>
+                                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="loadTemplateBc('sidang_tpp')">⚖️ Pengingat Berita Acara (BA) Sidang TPP</a></li>
+                                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="loadTemplateBc('maintenance')">🛠️ Pemberitahuan Pemeliharaan Sistem SULTAN</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Toolbar Format WhatsApp & Variabel Dinamis -->
+                                    <div class="d-flex flex-wrap gap-1 mb-1.5 p-1 bg-light rounded border">
+                                        <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-1.5" onclick="insertBcFormat('*', '*')" title="Format Tebal (*teks*)">
+                                            <i class="fas fa-bold"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-1.5" onclick="insertBcFormat('_', '_')" title="Format Miring (_teks_)">
+                                            <i class="fas fa-italic"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-1.5" onclick="insertBcFormat('~', '~')" title="Format Coret (~teks~)">
+                                            <i class="fas fa-strikethrough"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-1.5" onclick="insertBcFormat('```', '```')" title="Format Monospace">
+                                            <i class="fas fa-code"></i>
+                                        </button>
+                                        <div class="vr mx-1"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" onclick="insertBcVariable('{nama}')" title="Nama Operator Penerima">
+                                            + {nama}
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" onclick="insertBcVariable('{role}')" title="Role Akun">
+                                            + {role}
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" onclick="insertBcVariable('{satker}')" title="Nama Satker UPT">
+                                            + {satker}
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" onclick="insertBcVariable('{tanggal}')" title="Tanggal Hari Ini">
+                                            + {tanggal}
+                                        </button>
+                                    </div>
+
+                                    <textarea name="pesan" id="bc_pesan" class="form-control font-monospace" rows="9" style="font-size: 12px; line-height: 1.45;" placeholder="Tuliskan isi pengumuman atau instruksi bebas di sini..." required oninput="updateLiveMockup()"></textarea>
+                                    <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                                        Gunakan tanda bintang <code>*teks*</code> untuk huruf tebal dan garis bawah <code>_teks_</code> untuk huruf miring.
+                                    </small>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted" style="font-size: 11px;">
+                                        <i class="fas fa-shield-alt text-success me-1"></i>Dilengkapi jeda otomatis antar pesan (anti-spam)
+                                    </span>
+                                    <button type="submit" class="btn btn-success btn-sm px-4 fw-bold shadow-sm" id="btnSubmitBroadcast">
+                                        <i class="fas fa-paper-plane me-1.5"></i>Kirim Siaran ke WhatsApp
+                                    </button>
+                                </div>
                             </form>
                         </div>
-                        @else
-                        <span class="text-muted small"><i class="fas fa-lock text-secondary"></i></span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="text-center py-4 text-muted">Belum ada pengumuman.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                    </div>
+                </div>
 
-    <div class="mt-3">
-        {{ $pengumumanList->links('pagination::bootstrap-5') }}
+                <!-- LIVE PHONE SIMULATOR (KOLOM KANAN) -->
+                <div class="col-lg-5">
+                    <div class="card border border-secondary-subtle shadow-sm sticky-top" style="top: 80px;">
+                        <div class="card-header bg-dark text-white py-2 px-3 d-flex justify-content-between align-items-center">
+                            <span class="small fw-semibold" style="font-size: 12px;">
+                                <i class="fas fa-mobile-alt text-warning me-1.5"></i>Simulasi Tampilan WhatsApp
+                            </span>
+                            <span class="badge bg-success px-2 py-0.5" style="font-size: 10px;">Live Preview</span>
+                        </div>
+                        <div class="card-body p-3" style="background-color: #e5ddd5; min-height: 480px; background-image: radial-gradient(#d4cbbe 1px, transparent 1px); background-size: 16px 16px;">
+                            <!-- Balon Chat WhatsApp -->
+                            <div class="rounded-3 p-3 shadow-sm bg-white border" style="max-width: 95%; margin: 0 auto; position: relative;">
+                                <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                                    <div class="rounded-circle bg-success text-white p-1 text-center" style="width: 28px; height: 28px; font-size: 11px;">
+                                        <i class="fas fa-bullhorn"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 11.5px;">SULTAN BANTEN NOTIFIKASI</div>
+                                        <div class="text-muted" style="font-size: 9.5px;">Kantor Wilayah Ditjenpas Banten</div>
+                                    </div>
+                                </div>
+
+                                <!-- Konten Pesan Yang Dirender -->
+                                <div id="liveChatBubble" style="font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; color: #111827;">
+                                    Menunggu isi pesan diketik...
+                                </div>
+
+                                <div class="text-end mt-2 pt-1 border-top" style="font-size: 9.5px; color: #6b7280;">
+                                    <span>{{ now()->format('H:i') }}</span>
+                                    <i class="fas fa-check-double text-primary ms-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL RIWAYAT SIARAN WHATSAPP TERTENTU -->
+            <div class="card border border-secondary-subtle shadow-sm mt-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-history text-primary me-2"></i>Riwayat Siaran WhatsApp Operator</h6>
+                        <small class="text-muted">Daftar pengumuman yang telah disiarkan secara massal melalui WhatsApp</small>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 12.5px;">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th class="text-center" width="4%">No</th>
+                                    <th width="16%">Waktu Kirim</th>
+                                    <th width="32%">Judul &amp; Pesan</th>
+                                    <th class="text-center" width="12%">Kategori</th>
+                                    <th class="text-center" width="16%">Sasaran &amp; Status</th>
+                                    <th class="text-center" width="10%">Pengirim</th>
+                                    <th class="text-center" width="10%">Rincian</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($broadcastList as $idx => $bc)
+                                <tr>
+                                    <td class="text-center text-muted fw-semibold">{{ $broadcastList->firstItem() + $idx }}</td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ $bc->sent_at ? $bc->sent_at->translatedFormat('d M Y') : $bc->created_at->translatedFormat('d M Y') }}</div>
+                                        <small class="text-muted"><i class="far fa-clock me-1"></i>{{ $bc->sent_at ? $bc->sent_at->format('H:i') : $bc->created_at->format('H:i') }} WIB</small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark text-truncate" style="max-width: 320px;" title="{{ $bc->judul }}">{{ $bc->judul }}</div>
+                                        <small class="text-muted text-truncate d-block" style="max-width: 320px;">{{ Str::limit($bc->pesan, 75) }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">{{ $bc->kategori }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="mb-1">
+                                            <span class="badge bg-success text-white px-1.5 py-0.5"><i class="fas fa-check me-1"></i>{{ $bc->total_sent }} Terkirim</span>
+                                            @if($bc->total_failed > 0)
+                                            <span class="badge bg-danger text-white px-1.5 py-0.5"><i class="fas fa-times me-1"></i>{{ $bc->total_failed }} Gagal</span>
+                                            @endif
+                                        </div>
+                                        <small class="text-muted" style="font-size: 10px;">Total: {{ $bc->total_target }} Target</small>
+                                    </td>
+                                    <td class="text-center small text-muted">
+                                        {{ $bc->creator?->nama_lengkap ?: ($bc->creator?->username ?? 'Sistem') }}
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-1 px-2 fw-semibold" onclick="lihatLogBroadcast({{ $bc->id }})" title="Lihat rincian status pengiriman per operator">
+                                            <i class="fas fa-list-alt me-1"></i>Log Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">Belum ada riwayat siaran WhatsApp.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-2 border-top">
+                        {{ $broadcastList->appends(['tab' => 'broadcast'])->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal Add -->
+<!-- ============================================================== -->
+<!-- MODAL DETAIL LOG BROADCAST (DAFTAR PER OPERATOR) -->
+<!-- ============================================================== -->
+<div class="modal fade" id="modalBroadcastLogs" tabindex="-1" aria-labelledby="modalBroadcastLogsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white py-2 px-3">
+                <h6 class="modal-title fw-bold" id="modalBroadcastLogsTitle">
+                    <i class="fas fa-clipboard-list text-warning me-2"></i>Detail Log Pengiriman WhatsApp
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div id="logDetailHeader" class="p-2 rounded bg-light border mb-3">
+                    <div class="fw-bold text-dark fs-6" id="logJudul">-</div>
+                    <div class="small text-muted" id="logMeta">-</div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 12px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th width="5%" class="text-center">No</th>
+                                <th width="28%">Nama Operator</th>
+                                <th width="24%">Satuan Kerja (UPT)</th>
+                                <th width="20%">No. WhatsApp</th>
+                                <th width="13%" class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logDetailTbody">
+                            <tr>
+                                <td colspan="5" class="text-center py-3 text-muted">Memuat data log...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer py-1.5 px-3">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL PREVIEW CALON PENERIMA SEBELUM KIRIM -->
+<!-- ============================================================== -->
+<div class="modal fade" id="modalListRecipients" tabindex="-1" aria-labelledby="modalListRecipientsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white py-2 px-3">
+                <h6 class="modal-title fw-bold" id="modalListRecipientsTitle">
+                    <i class="fas fa-users text-white me-2"></i>Daftar Operator Sasaran Siaran
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                    <span class="small fw-semibold text-muted">Total Terpilih: <b id="modalRecipTotal">0</b> Operator</span>
+                    <span class="small text-success fw-bold" id="modalRecipValid">0 Nomor Siap</span>
+                </div>
+                <div class="list-group list-group-flush" id="modalRecipList" style="max-height: 350px; overflow-y: auto;">
+                    <div class="text-center py-3 text-muted small">Memuat daftar...</div>
+                </div>
+            </div>
+            <div class="modal-footer py-1.5 px-3">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Add Web Pengumuman -->
 <div class="modal fade" id="modalAdd" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header py-2 bg-primary text-white">
-                <h5 class="modal-title fs-6"><i class="fas fa-plus me-2"></i>Tambah Pengumuman Baru</h5>
+                <h5 class="modal-title fs-6"><i class="fas fa-plus me-2"></i>Tambah Pengumuman Web Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
             </div>
             <form method="POST" action="{{ route('pengumuman.store') }}" enctype="multipart/form-data">
@@ -160,7 +579,7 @@
                             <label for="add_kategori" class="form-label small fw-semibold">Kategori <span class="text-danger">*</span></label>
                             <select name="kategori" id="add_kategori" class="form-select form-select-sm" required aria-label="Kategori Pengumuman">
                                 <option value="Penting">Penting</option>
-                                <option value="Biasa">Biasa</option>
+                                <option value="Biasa" selected>Biasa</option>
                                 <option value="Agenda">Agenda</option>
                                 <option value="Peringatan">Peringatan</option>
                             </select>
@@ -168,7 +587,7 @@
                         <div class="col-md-6">
                             <label for="add_tipe" class="form-label small fw-semibold">Tipe Sasaran</label>
                             <select name="tipe" class="form-select form-select-sm" id="add_tipe" onchange="toggleUptSelect('add')" aria-label="Tipe Sasaran">
-                                <option value="Global">Global (Semua UPT & Publik)</option>
+                                <option value="Global">Global (Semua UPT &amp; Publik)</option>
                                 <option value="UPT">UPT Spesifik</option>
                             </select>
                         </div>
@@ -220,7 +639,7 @@
     </div>
 </div>
 
-<!-- Modal Edit -->
+<!-- Modal Edit Web Pengumuman -->
 <div class="modal fade" id="modalEdit" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -249,7 +668,7 @@
                         <div class="col-md-6">
                             <label for="edit_tipe" class="form-label small fw-semibold">Tipe Sasaran</label>
                             <select name="tipe" id="edit_tipe" class="form-select form-select-sm" onchange="toggleUptSelect('edit')" aria-label="Tipe Sasaran">
-                                <option value="Global">Global (Semua UPT & Publik)</option>
+                                <option value="Global">Global (Semua UPT &amp; Publik)</option>
                                 <option value="UPT">UPT Spesifik</option>
                             </select>
                         </div>
@@ -305,6 +724,8 @@
 
 @push('scripts')
 <script>
+    let cachedRecipientsData = [];
+
     function toggleUptSelect(prefix) {
         const tipe = document.getElementById(prefix + '_tipe').value;
         const container = document.getElementById(prefix + '_upt_container');
@@ -336,5 +757,354 @@
 
         new bootstrap.Modal(document.getElementById('modalEdit')).show();
     }
+
+    // ==========================================
+    // LOGIKA BROADCAST WHATSAPP
+    // ==========================================
+    function handleTargetTypeChange() {
+        const type = document.querySelector('input[name="target_type"]:checked')?.value || 'role';
+        const roleContainer = document.getElementById('containerRoles');
+        const uptContainer = document.getElementById('containerUpt');
+
+        if (roleContainer) roleContainer.style.display = (type === 'role') ? 'block' : 'none';
+        if (uptContainer) uptContainer.style.display = (type === 'upt') ? 'block' : 'none';
+
+        fetchRecipientsCount();
+    }
+
+    function selectAllUpts(isSelect) {
+        const select = document.getElementById('bc_target_upts');
+        if (!select) return;
+        for (let i = 0; i < select.options.length; i++) {
+            select.options[i].selected = isSelect;
+        }
+        fetchRecipientsCount();
+    }
+
+    function fetchRecipientsCount() {
+        const type = document.querySelector('input[name="target_type"]:checked')?.value || 'role';
+        const roles = [];
+        document.querySelectorAll('.role-check:checked').forEach(c => roles.push(c.value));
+
+        const uptSelect = document.getElementById('bc_target_upts');
+        const uptIds = [];
+        if (uptSelect) {
+            for (let i = 0; i < uptSelect.options.length; i++) {
+                if (uptSelect.options[i].selected) uptIds.push(uptSelect.options[i].value);
+            }
+        }
+
+        const labelTarget = document.getElementById('label_total_target');
+        const badgeValid = document.getElementById('badge_valid_wa');
+        const badgeMissing = document.getElementById('badge_missing_wa');
+        const countBadgeNum = document.getElementById('count_badge_num');
+
+        if (labelTarget) labelTarget.innerText = 'Menghitung...';
+
+        fetch('{{ route("pengumuman.recipients-count") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                target_type: type,
+                target_roles: roles,
+                target_upt_ids: uptIds
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                cachedRecipientsData = data.users || [];
+                if (labelTarget) labelTarget.innerText = `${data.total} Operator Terpilih`;
+                if (countBadgeNum) countBadgeNum.innerText = data.total;
+                if (badgeValid) badgeValid.innerText = `${data.valid_wa} Nomor Siap`;
+
+                if (badgeMissing) {
+                    if (data.missing_wa > 0) {
+                        badgeMissing.classList.remove('d-none');
+                        badgeMissing.innerText = `${data.missing_wa} Tanpa No. WA`;
+                    } else {
+                        badgeMissing.classList.add('d-none');
+                    }
+                }
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function bukaModalListPenerima() {
+        const modal = new bootstrap.Modal(document.getElementById('modalListRecipients'));
+        const listContainer = document.getElementById('modalRecipList');
+        const totalEl = document.getElementById('modalRecipTotal');
+        const validEl = document.getElementById('modalRecipValid');
+
+        totalEl.innerText = cachedRecipientsData.length;
+        let valid = 0;
+
+        if (cachedRecipientsData.length === 0) {
+            listContainer.innerHTML = '<div class="text-center py-4 text-muted">Tidak ada operator yang cocok dengan filter sasaran.</div>';
+        } else {
+            let html = '';
+            cachedRecipientsData.forEach(u => {
+                if (u.has_wa) valid++;
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-1">
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 12px;">${u.nama}</div>
+                            <small class="text-muted" style="font-size: 10.5px;">${u.upt} &bull; <span class="badge bg-light text-secondary border">${u.role}</span></small>
+                        </div>
+                        <div>
+                            ${u.has_wa 
+                                ? `<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10.5px;"><i class="fab fa-whatsapp me-1"></i>${u.no_wa}</span>`
+                                : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10.5px;"><i class="fas fa-times-circle me-1"></i>Belum Ada WA</span>`}
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+
+        validEl.innerText = `${valid} Nomor Siap Kirim`;
+        modal.show();
+    }
+
+    function insertBcFormat(startTag, endTag) {
+        const area = document.getElementById('bc_pesan');
+        if (!area) return;
+        const start = area.selectionStart;
+        const end = area.selectionEnd;
+        const text = area.value;
+        const selected = text.substring(start, end);
+
+        area.value = text.substring(0, start) + startTag + selected + endTag + text.substring(end);
+        area.focus();
+        area.setSelectionRange(start + startTag.length, end + startTag.length);
+        updateLiveMockup();
+    }
+
+    function insertBcVariable(tag) {
+        const area = document.getElementById('bc_pesan');
+        if (!area) return;
+        const start = area.selectionStart;
+        const end = area.selectionEnd;
+        const text = area.value;
+
+        area.value = text.substring(0, start) + tag + text.substring(end);
+        area.focus();
+        area.setSelectionRange(start + tag.length, start + tag.length);
+        updateLiveMockup();
+    }
+
+    function updateLiveMockup() {
+        const judul = document.getElementById('bc_judul')?.value.trim() || 'Judul Pengumuman';
+        const kategori = document.getElementById('bc_kategori')?.value.trim() || 'PENGINGAT';
+        const pesan = document.getElementById('bc_pesan')?.value || '';
+        const bubble = document.getElementById('liveChatBubble');
+        if (!bubble) return;
+
+        if (!pesan.trim()) {
+            bubble.innerHTML = '<span class="text-muted fst-italic">Menunggu isi pesan diketik di editor sebelah kiri...</span>';
+            return;
+        }
+
+        // Simulasi penggantian variabel untuk live preview
+        let previewText = pesan
+            .replace(/{nama}/g, 'Bapak/Ibu Operator')
+            .replace(/{nama_operator}/g, 'Bapak/Ibu Operator')
+            .replace(/{role}/g, 'Operator UPT')
+            .replace(/{satker}/g, 'Lapas Kelas IIA Serang')
+            .replace(/{nama_upt}/g, 'Lapas Kelas IIA Serang')
+            .replace(/{tanggal}/g, '{{ now()->translatedFormat("d F Y") }}')
+            .replace(/{judul}/g, judul)
+            .replace(/{kategori}/g, kategori);
+
+        // Escape HTML
+        let escaped = previewText
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Konversi format markdown WhatsApp
+        escaped = escaped
+            .replace(/\*(.*?)\*/g, '<b>$1</b>')
+            .replace(/_(.*?)_/g, '<i>$1</i>')
+            .replace(/~(.*?)~/g, '<strike>$1</strike>')
+            .replace(/```(.*?)```/g, '<code>$1</code>');
+
+        bubble.innerHTML = escaped;
+    }
+
+    function loadTemplateBc(type) {
+        const area = document.getElementById('bc_pesan');
+        const judulInput = document.getElementById('bc_judul');
+        const katInput = document.getElementById('bc_kategori');
+        if (!area) return;
+
+        const appUrl = window.location.origin;
+
+        if (type === 'laporan_harian') {
+            judulInput.value = 'Pengingat Batas Akhir Input Laporan Harian Satker';
+            katInput.value = 'PENGINGAT';
+            area.value = `📢 *PENGINGAT RESMI SULTAN BANTEN*\n` +
+                         `*Kantor Wilayah Ditjenpas Banten*\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `📌 *Kategori:* {kategori}\n` +
+                         `📅 *Tanggal:* {tanggal}\n` +
+                         `📝 *Perihal:* *{judul}*\n\n` +
+                         `Yth. Rekan *{nama}*\n` +
+                         `*{role}* - *{satker}*\n\n` +
+                         `Diberitahukan kepada seluruh jajaran operator satker untuk segera menyelesaikan penginputan data harian sebelum batas waktu pukul *15:00 WIB*:\n` +
+                         `1. Laporan Bebas Harian (PB/CB/CMB/Asimilasi/Bebas Murni)\n` +
+                         `2. Laporan Overstaying Tahanan\n` +
+                         `3. Rekapitulasi Fluktuasi & Isi Hunian\n\n` +
+                         `🔗 *Tautan Sistem SULTAN:* \n👉 ${appUrl}\n\n` +
+                         `Terima kasih atas kerja sama dan disiplin pelaporan rekan-rekan.\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `_Pesan otomatis disiarkan melalui Sistem SULTAN BANTEN._`;
+        } else if (type === 'mutasi_narapidana') {
+            judulInput.value = 'Instruksi Tindak Lanjut Berkas Pelaksanaan Mutasi Narapidana';
+            katInput.value = 'PENTING';
+            area.value = `📢 *PENGUMUMAN RESMI SULTAN BANTEN*\n` +
+                         `*Divisi Pemasyarakatan Kanwil Banten*\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `📌 *Kategori:* {kategori}\n` +
+                         `📅 *Tanggal:* {tanggal}\n` +
+                         `📝 *Perihal:* *{judul}*\n\n` +
+                         `Yth. Rekan *{nama}* ({satker}),\n\n` +
+                         `Menindaklanjuti usulan mutasi narapidana yang telah disetujui Kantor Wilayah, dimohon kepada:\n` +
+                         `• *UPT Pengirim:* Segera mengunggah *Laporan Pemindahan* dan dokumen pengawalan.\n` +
+                         `• *UPT Penerima:* Segera mengunggah *Laporan Penerimaan* setelah narapidana tiba di satker tujuan.\n` +
+                         `• *Kedua UPT:* Melengkapi Berita Acara Serah Terima (BAST).\n\n` +
+                         `🔗 *Modul Mutasi:* \n👉 ${appUrl}/mutasi/pelaksanaan\n\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `_Pesan resmi Divisi Pemasyarakatan Kanwil Kemenkumham Banten._`;
+        } else if (type === 'sidang_tpp') {
+            judulInput.value = 'Pengingat Unggah Berita Acara (BA) Hasil Sidang TPP';
+            katInput.value = 'PENGINGAT';
+            area.value = `📢 *PENGINGAT SIDANG TPP SULTAN BANTEN*\n` +
+                         `*Kantor Wilayah Ditjenpas Banten*\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `📌 *Kategori:* {kategori}\n` +
+                         `📅 *Tanggal:* {tanggal}\n` +
+                         `📝 *Perihal:* *{judul}*\n\n` +
+                         `Yth. Rekan Tim TPP *{satker}*,\n\n` +
+                         `Bagi Satker UPT yang telah selesai menyelenggarakan Sidang TPP sesuai jadwal undangan, dimohon untuk segera mengunggah *Berita Acara (BA) Sidang TPP* ke aplikasi SULTAN BANTEN guna verifikasi dan penyusunan naskah laporan ke Kakanwil.\n\n` +
+                         `🔗 *Tautan Dokumen Sidang TPP:* \n👉 ${appUrl}/sidang-tpp/dokumen-kanwil\n\n` +
+                         `Atas kerja sama rekan-rekan diucapkan terima kasih.\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+        } else if (type === 'maintenance') {
+            judulInput.value = 'Pemberitahuan Pemeliharaan & Pembaruan Sistem SULTAN BANTEN';
+            katInput.value = 'EDARAN';
+            area.value = `📢 *PEMBERITAHUAN PEMELIHARAAN SISTEM*\n` +
+                         `*Kantor Wilayah Ditjenpas Banten*\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `📌 *Kategori:* {kategori}\n` +
+                         `📅 *Tanggal:* {tanggal}\n` +
+                         `📝 *Perihal:* *{judul}*\n\n` +
+                         `Yth. Rekan *{nama}* ({satker}),\n\n` +
+                         `Diberitahukan bahwa sistem SULTAN BANTEN akan melakukan pembaruan berkala dan optimalisasi database. Selama proses ini, beberapa layanan mungkin mengalami jeda sejenak.\n\n` +
+                         `Mohon pastikan seluruh pengisian data yang sedang berlangsung telah disimpan terlebih dahulu.\n\n` +
+                         `🔗 *Situs Resmi:* ${appUrl}\n\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `_Tim IT & Pengembang Aplikasi SULTAN BANTEN._`;
+        }
+
+        updateLiveMockup();
+    }
+
+    function siarkanPengumumanKeWa(p) {
+        // Pindah ke tab broadcast
+        const tabEl = document.getElementById('tab-broadcast');
+        if (tabEl) {
+            bootstrap.Tab.getOrCreateInstance(tabEl).show();
+        }
+
+        // Isi form broadcast
+        document.getElementById('bc_pengumuman_id').value = p.id;
+        document.getElementById('bc_judul').value = p.judul;
+        document.getElementById('bc_kategori').value = (p.kategori || 'INFORMASI').toUpperCase();
+
+        const cleanIsi = (p.isi || '').replace(/<[^>]*>/g, '').trim();
+        const appUrl = window.location.origin;
+
+        document.getElementById('bc_pesan').value = 
+            `📢 *PENGUMUMAN RESMI SULTAN BANTEN*\n` +
+            `*Kantor Wilayah Kementerian Hukum dan HAM Banten*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `📌 *Kategori:* ${p.kategori}\n` +
+            `📅 *Tanggal:* {tanggal}\n` +
+            `📝 *Perihal:* *${p.judul}*\n\n` +
+            `Yth. Rekan *{nama}*\n` +
+            `*{role}* - *{satker}*\n\n` +
+            `${cleanIsi}\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🔗 *Tautan Informasi:* ${appUrl}\n` +
+            `_Pesan resmi disiarkan melalui Sistem SULTAN BANTEN._`;
+
+        updateLiveMockup();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function confirmKirimBroadcast() {
+        const total = cachedRecipientsData.length;
+        if (total === 0) {
+            alert('Tidak ada operator atau pengguna sasaran yang terpilih. Harap periksa kembali pilihan role atau UPT.');
+            return false;
+        }
+
+        return confirm(`Apakah Anda yakin ingin mengirimkan siaran WhatsApp pengumuman ini ke ${total} operator yang terpilih?`);
+    }
+
+    function lihatLogBroadcast(bcId) {
+        const modal = new bootstrap.Modal(document.getElementById('modalBroadcastLogs'));
+        const tbody = document.getElementById('logDetailTbody');
+        const judulEl = document.getElementById('logJudul');
+        const metaEl = document.getElementById('logMeta');
+
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">Memuat data log...</td></tr>';
+        modal.show();
+
+        fetch('/pengumuman/broadcast/' + bcId)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.broadcast) {
+                    const bc = data.broadcast;
+                    judulEl.innerText = bc.judul;
+                    metaEl.innerHTML = `Kategori: <b>${bc.kategori}</b> &bull; Terkirim: <b class="text-success">${bc.total_sent}</b> &bull; Gagal: <b class="text-danger">${bc.total_failed}</b> &bull; Waktu: ${bc.sent_at || '-'}`;
+
+                    if (!bc.logs || bc.logs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">Tidak ada data log detail.</td></tr>';
+                    } else {
+                        let html = '';
+                        bc.logs.forEach((log, idx) => {
+                            html += `
+                                <tr>
+                                    <td class="text-center text-muted">${idx + 1}</td>
+                                    <td><div class="fw-bold text-dark">${log.nama_penerima}</div><small class="text-muted">${log.role || '-'}</small></td>
+                                    <td>${log.nama_upt || 'Kantor Wilayah'}</td>
+                                    <td class="font-monospace">${log.no_wa}</td>
+                                    <td class="text-center">
+                                        ${log.status === 'sent' 
+                                            ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Terkirim</span>' 
+                                            : `<span class="badge bg-danger" title="${log.response_message || ''}"><i class="fas fa-times me-1"></i>Gagal</span>`}
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tbody.innerHTML = html;
+                    }
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-danger">Gagal memuat log detail.</td></tr>';
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchRecipientsCount();
+        updateLiveMockup();
+    });
 </script>
 @endpush

@@ -236,6 +236,9 @@ return new class extends Migration
                 $table->unsignedBigInteger('created_by')->index('created_by');
                 $table->timestamps();
 
+                $table->index(['aktif', 'tampilkan_marquee'], 'idx_pengumuman_aktif_marquee');
+                $table->index(['tanggal_mulai', 'tanggal_selesai'], 'idx_pengumuman_dates');
+
                 $table->foreign('upt_id')->references('id')->on('upt')->onDelete('cascade');
                 $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
             });
@@ -302,6 +305,8 @@ return new class extends Migration
                 $table->dateTime('last_sent')->nullable();
                 $table->dateTime('next_send')->nullable();
                 $table->timestamps();
+
+                $table->index(['aktif', 'jam_kirim'], 'idx_wa_reports_aktif_jam');
             });
         }
 
@@ -316,6 +321,9 @@ return new class extends Migration
                 $table->text('response')->nullable();
                 $table->integer('jumlah_penerima')->default(0);
                 $table->timestamp('tanggal_kirim')->nullable()->useCurrent();
+
+                $table->index(['tipe', 'tanggal_kirim'], 'idx_wa_logs_tipe_tanggal');
+                $table->index('tanggal_kirim', 'idx_wa_logs_tanggal');
             });
         }
 

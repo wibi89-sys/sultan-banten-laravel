@@ -866,6 +866,7 @@
         });
     </script>
     @include('partials.modal_preview_dokumen')
+    @include('wa.partials.modal_pending_reminder')
     @stack('scripts')
 </body>
 </html>

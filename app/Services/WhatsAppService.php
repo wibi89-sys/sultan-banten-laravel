@@ -10,11 +10,14 @@ use App\Models\MutasiNarapidana;
 use App\Models\SidangTpp;
 use App\Models\Upt;
 use App\Models\User;
+use App\Models\WaBroadcast;
+use App\Models\WaBroadcastLog;
 use App\Models\WaGroup;
 use App\Models\WaPimpinan;
 use App\Models\WaScheduledReport;
 use App\Models\WaSetting;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1385,5 +1388,159 @@ class WhatsAppService
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Kirim siaran pengumuman massal ke kumpulan user/operator terdaftar.
+     *
+     * @param  Collection|array  $users
+     */
+    public static function sendBroadcastToUsers(WaBroadcast $broadcast, $users, bool $sendToGroup = false): array
+    {
+        $totalTarget = count($users);
+        $totalSent = 0;
+        $totalFailed = 0;
+
+        $broadcast->update([
+            'status' => 'processing',
+            'sent_at' => now(),
+            'total_target' => $totalTarget,
+        ]);
+
+        foreach ($users as $user) {
+            $namaPenerima = $user->nama_lengkap ?: $user->username;
+            $rawWa = $user->no_wa ?? '';
+            $cleanWa = preg_replace('/[^0-9]/', '', $rawWa);
+            $namaUpt = $user->upt?->nama_upt ?? 'Kantor Wilayah';
+            $roleLabel = ucwords(str_replace('_', ' ', $user->role ?? 'Operator'));
+
+            if (empty($cleanWa) || strlen($cleanWa) < 9) {
+                $totalFailed++;
+                WaBroadcastLog::create([
+                    'broadcast_id' => $broadcast->id,
+                    'user_id' => $user->id,
+                    'nama_penerima' => $namaPenerima,
+                    'no_wa' => $rawWa ?: '-',
+                    'role' => $user->role,
+                    'nama_upt' => $namaUpt,
+                    'status' => 'failed',
+                    'response_message' => 'Nomor WhatsApp belum diisi atau tidak valid di profil akun.',
+                    'sent_at' => now(),
+                ]);
+
+                continue;
+            }
+
+            // Personalisasi pesan per penerima
+            $replacements = [
+                '{nama}' => $namaPenerima,
+                '{nama_operator}' => $namaPenerima,
+                '{role}' => $roleLabel,
+                '{satker}' => $namaUpt,
+                '{nama_upt}' => $namaUpt,
+                '{tanggal}' => now()->translatedFormat('d F Y'),
+                '{judul}' => $broadcast->judul,
+                '{kategori}' => $broadcast->kategori,
+            ];
+
+            $personalizedMessage = str_replace(array_keys($replacements), array_values($replacements), $broadcast->pesan);
+
+            // Kirim dengan jeda aman 2 detik
+            $res = self::send($cleanWa, $personalizedMessage, 2);
+
+            if (! empty($res['success'])) {
+                $totalSent++;
+                WaBroadcastLog::create([
+                    'broadcast_id' => $broadcast->id,
+                    'user_id' => $user->id,
+                    'nama_penerima' => $namaPenerima,
+                    'no_wa' => $cleanWa,
+                    'role' => $user->role,
+                    'nama_upt' => $namaUpt,
+                    'status' => 'sent',
+                    'response_message' => $res['message'] ?? 'Berhasil terkirim',
+                    'sent_at' => now(),
+                ]);
+            } else {
+                $totalFailed++;
+                WaBroadcastLog::create([
+                    'broadcast_id' => $broadcast->id,
+                    'user_id' => $user->id,
+                    'nama_penerima' => $namaPenerima,
+                    'no_wa' => $cleanWa,
+                    'role' => $user->role,
+                    'nama_upt' => $namaUpt,
+                    'status' => 'failed',
+                    'response_message' => $res['message'] ?? 'Gagal mengirim via gateway',
+                    'sent_at' => now(),
+                ]);
+            }
+        }
+
+        // Jika tembusan grup dicentang, kirimkan juga versi umum ke grup resmi
+        if ($sendToGroup) {
+            $generalReplacements = [
+                '{nama}' => 'Rekan-rekan Operator & Pimpinan',
+                '{nama_operator}' => 'Rekan-rekan Operator & Pimpinan',
+                '{role}' => 'Seluruh Jajaran Satker',
+                '{satker}' => 'Jajaran Kemenkumham Banten',
+                '{nama_upt}' => 'Jajaran Kemenkumham Banten',
+                '{tanggal}' => now()->translatedFormat('d F Y'),
+                '{judul}' => $broadcast->judul,
+                '{kategori}' => $broadcast->kategori,
+            ];
+            $groupMessage = str_replace(array_keys($generalReplacements), array_values($generalReplacements), $broadcast->pesan);
+            self::sendToDefaultGroup($groupMessage);
+        }
+
+        $broadcast->update([
+            'status' => 'completed',
+            'total_sent' => $totalSent,
+            'total_failed' => $totalFailed,
+        ]);
+
+        return [
+            'success' => true,
+            'total_target' => $totalTarget,
+            'total_sent' => $totalSent,
+            'total_failed' => $totalFailed,
+        ];
+    }
+
+    /**
+     * Kirim pesan pengingat langsung untuk laporan yang belum selesai (Pending Report Reminder).
+     */
+    public static function sendPendingReminder(
+        string $targetPhone,
+        string $message,
+        ?string $recipientName = null,
+        ?string $uptName = null,
+        ?string $contextType = 'laporan_pending'
+    ): array {
+        $cleanWa = preg_replace('/[^0-9]/', '', $targetPhone);
+        if (empty($cleanWa) || strlen($cleanWa) < 9) {
+            return [
+                'success' => false,
+                'message' => 'Nomor WhatsApp tujuan tidak valid.',
+            ];
+        }
+
+        $res = self::send($cleanWa, $message, 1);
+
+        try {
+            DB::table('wa_notification_logs')->insert([
+                'tipe' => $contextType ?: 'pengingat_laporan',
+                'target' => $cleanWa,
+                'pesan' => $message,
+                'status' => ! empty($res['success']) ? 'sukses' : 'gagal',
+                'response' => $res['message'] ?? ($res['response'] ?? null),
+                'jumlah_penerima' => 1,
+                'tanggal_kirim' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Gagal mencatat log wa_notification_logs pengingat: '.$e->getMessage());
+        }
+
+        return $res;
     }
 }

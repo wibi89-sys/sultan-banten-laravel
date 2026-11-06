@@ -14,7 +14,7 @@ return new class extends Migration
         if (! Schema::hasTable('sidang_tpp')) {
             Schema::create('sidang_tpp', function (Blueprint $table) {
                 $table->id();
-                $table->integer('upt_id')->index('idx_sidang_upt');
+                $table->unsignedInteger('upt_id')->index('idx_sidang_upt');
 
                 // 1. Undangan ke Kantor Wilayah
                 $table->string('nomor_undangan', 150);

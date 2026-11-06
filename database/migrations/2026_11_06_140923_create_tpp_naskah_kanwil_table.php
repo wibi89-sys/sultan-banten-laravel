@@ -34,7 +34,7 @@ return new class extends Migration
 
             // Otentifikasi Dokumen
             $table->enum('metode_ttd', ['manual', 'digital_qr'])->default('digital_qr');
-            $table->string('kode_verifikasi', 64)->unique();
+            $table->string('kode_verifikasi', 64)->nullable()->unique();
 
             // Berkas Terkait
             $table->string('file_word', 255)->nullable();

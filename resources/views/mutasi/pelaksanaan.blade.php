@@ -181,7 +181,16 @@
                                             <i class="fas fa-external-link-alt me-1"></i>Lihat
                                         </a>
                                         @else
-                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
+                                        <div class="d-inline-flex align-items-center">
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
+                                            @if(auth()->user()->isKanwil() || auth()->user()->isAdmin())
+                                            <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 ms-1 fw-semibold shadow-sm" 
+                                                    onclick="bukaModalWaPengingat('mutasi_pemindahan', {{ $m->id }}, {{ $m->upt_asal_id }}, 'UPT Pengirim / Asal ({{ addslashes($m->uptAsal?->nama_upt ?? '') }})', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
+                                                    title="Kirim Pengingat WhatsApp ke Operator UPT Pengirim ({{ addslashes($m->uptAsal?->nama_upt ?? '') }})">
+                                                <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan
+                                            </button>
+                                            @endif
+                                        </div>
                                         @endif
                                     </div>
                                 </div>
@@ -198,7 +207,22 @@
                                             <i class="fas fa-external-link-alt me-1"></i>Lihat
                                         </a>
                                         @else
-                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
+                                        <div class="d-inline-flex align-items-center">
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
+                                            @if(auth()->user()->isKanwil() || auth()->user()->isAdmin())
+                                            @php
+                                                $tujuanUptId = $m->tujuans->first()?->upt_tujuan_id ?: $m->upt_tujuan_id;
+                                                $tujuanUptNama = $m->tujuans->first()?->uptTujuan?->nama_upt ?: ($m->uptTujuan?->nama_upt ?? 'UPT Penerima');
+                                            @endphp
+                                            @if($tujuanUptId)
+                                            <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 ms-1 fw-semibold shadow-sm" 
+                                                    onclick="bukaModalWaPengingat('mutasi_penerimaan', {{ $m->id }}, {{ $tujuanUptId }}, 'UPT Penerima / Tujuan ({{ addslashes($tujuanUptNama) }})', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
+                                                    title="Kirim Pengingat WhatsApp ke Operator UPT Penerima ({{ addslashes($tujuanUptNama) }})">
+                                                <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan
+                                            </button>
+                                            @endif
+                                            @endif
+                                        </div>
                                         @endif
                                     </div>
                                 </div>
@@ -215,7 +239,16 @@
                                             <i class="fas fa-external-link-alt me-1"></i>Lihat
                                         </a>
                                         @else
-                                        <span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
+                                        <div class="d-inline-flex align-items-center">
+                                            <span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
+                                            @if(auth()->user()->isKanwil() || auth()->user()->isAdmin())
+                                            <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 ms-1 fw-semibold shadow-sm" 
+                                                    onclick="bukaModalWaPengingat('mutasi_bast', {{ $m->id }}, {{ $m->upt_asal_id }}, 'UPT Pengirim &amp; Penerima', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
+                                                    title="Kirim Pengingat WhatsApp untuk Pelaksanaan &amp; BAST">
+                                                <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan
+                                            </button>
+                                            @endif
+                                        </div>
                                         @endif
                                     </div>
                                 </div>

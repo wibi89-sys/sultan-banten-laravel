@@ -201,11 +201,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/instansi', [InstansiController::class, 'index'])->name('instansi.index');
     Route::match(['put', 'post'], '/instansi', [InstansiController::class, 'update'])->name('instansi.update');
 
-    // Pengumuman
+    // Pengumuman & Siaran WhatsApp Operator
     Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('pengumuman.index');
     Route::post('/pengumuman', [PengumumanController::class, 'store'])->name('pengumuman.store');
     Route::put('/pengumuman/{id}', [PengumumanController::class, 'update'])->name('pengumuman.update');
     Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
+    Route::post('/pengumuman/broadcast-wa', [PengumumanController::class, 'broadcastWa'])->name('pengumuman.broadcast-wa');
+    Route::post('/pengumuman/recipients-count', [PengumumanController::class, 'getRecipientsCount'])->name('pengumuman.recipients-count');
+    Route::get('/pengumuman/broadcast/{id}', [PengumumanController::class, 'showBroadcast'])->name('pengumuman.broadcast.show');
+
+    // Pengingat WhatsApp Laporan Pending (Universal untuk Mutasi, Sidang TPP, dll)
+    Route::get('/wa/upt-operators/{uptId}', [PengumumanController::class, 'getUptOperators'])->name('wa.upt-operators');
+    Route::post('/wa/send-pending-reminder', [PengumumanController::class, 'sendPendingReminder'])->name('wa.send-pending-reminder');
 
     // Pengaturan AI & Master Personil Nota Dinas Kanwil
     Route::get('/pengaturan-ai', [AiSettingController::class, 'index'])->name('ai-setting.index');
