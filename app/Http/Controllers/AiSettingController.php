@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\AiSetting;
 use App\Models\KanwilPegawai;
 use App\Models\SidangTpp;
+use App\Models\TppNaskahKanwil;
 use App\Services\GeminiAiService;
 use App\Services\NotaDinasGeneratorService;
 use Illuminate\Http\JsonResponse;
@@ -323,6 +324,28 @@ class AiSettingController extends Controller
             "Kanwil men-generate Nota Dinas Permohonan Surat Tugas Sidang TPP {$sidang->upt?->nama_upt} No. {$params['nomor_nota_dinas']}",
             ['sidang_id' => $sidang->id]
         );
+
+        // Rekam status naskah Nota Dinas di tpp_naskah_kanwil
+        $naskah = TppNaskahKanwil::firstOrNew([
+            'sidang_tpp_id' => $sidang->id,
+            'jenis_dokumen' => 'nota_dinas',
+        ]);
+        if (empty($naskah->kode_verifikasi)) {
+            $naskah->kode_verifikasi = TppNaskahKanwil::generateUniqueCode();
+        }
+        $naskah->nomor_dokumen = $params['nomor_nota_dinas'];
+        $naskah->tanggal_dokumen = date('Y-m-d');
+        $naskah->judul_naskah = 'Nota Dinas Permohonan Surat Tugas - '.($sidang->upt->nama_upt ?? 'Kanwil');
+        $naskah->materi_agenda = $params['hal_surat'];
+        $naskah->penandatangan_nama = $params['penandatangan_nama'];
+        $naskah->penandatangan_jabatan = $params['penandatangan_jabatan'];
+        $naskah->penandatangan_nip = $params['penandatangan_nip'];
+        $naskah->tampilkan_nip = $params['tampilkan_nip'];
+        $naskah->konten_data = $params;
+        $naskah->status = 'generated';
+        $naskah->created_by = auth()->id();
+        $naskah->signed_at = now();
+        $naskah->save();
 
         if ($request->input('preview') == '1') {
             return response(NotaDinasGeneratorService::renderHtmlTemplate($params));

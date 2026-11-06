@@ -1,14 +1,15 @@
 @php
     $aiSetting = \App\Models\AiSetting::getFirst();
     $pegawaiKanwil = \App\Models\KanwilPegawai::where('is_active', true)->orderBy('urutan')->orderBy('nama')->get();
-    $hasPdfUndangan = !empty($sidang->file_undangan);
+    $currentSidangId = isset($sidang) && $sidang ? $sidang->id : 0;
+    $hasPdfUndangan = isset($sidang) && $sidang && !empty($sidang->file_undangan);
 @endphp
 
 <!-- MODAL: Generate Nota Dinas Permohonan Surat Tugas -->
 <div class="modal fade" id="modalNotaDinas" tabindex="-1" aria-labelledby="modalNotaDinasTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-            <form action="{{ route('sidang-tpp.nota-dinas.generate', $sidang->id) }}" method="POST">
+            <form action="{{ $currentSidangId ? route('sidang-tpp.nota-dinas.generate', $currentSidangId) : '#' }}" method="POST" id="formNotaDinasModal" data-sidang-id="{{ $currentSidangId }}">
                 @csrf
                 <div class="modal-header bg-primary text-white py-2.5">
                     <h5 class="modal-title fw-bold" id="modalNotaDinasTitle" style="font-size: 15px;">
@@ -33,8 +34,7 @@
                                     </small>
                                 </div>
                                 <div>
-                                    @if($hasPdfUndangan && $aiSetting->is_active && !empty($aiSetting->api_key))
-                                    <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm" id="btnEkstrakAiModal" onclick="ekstrakUndanganAiModal({{ $sidang->id }})">
+                                    <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm" id="btnEkstrakAiModal" onclick="ekstrakUndanganAiModal({{ $currentSidangId }})">
                                         <i class="fas fa-magic me-1"></i>Analisis Undangan via AI
                                     </button>
                                     @elseif(!$hasPdfUndangan)
@@ -216,7 +216,49 @@
 </div>
 
 <script>
+    function openModalNotaDinas(sidangId) {
+        const form = document.getElementById('formNotaDinasModal');
+        if (form) {
+            form.action = '/sidang-tpp/' + sidangId + '/nota-dinas/generate';
+            form.dataset.sidangId = sidangId;
+        }
+        const btnAi = document.getElementById('btnEkstrakAiModal');
+        if (btnAi) {
+            btnAi.onclick = function() { ekstrakUndanganAiModal(sidangId); };
+        }
+
+        if (typeof getSidangById === 'function') {
+            const s = getSidangById(sidangId);
+            if (s) {
+                if (s.nomor_undangan) document.getElementById('nd_nomor_undangan').value = s.nomor_undangan;
+                if (s.tanggal_surat) document.getElementById('nd_tanggal_surat_upt').value = s.tanggal_surat;
+                if (s.upt) {
+                    document.getElementById('nd_upt_nama').value = s.upt.nama_upt;
+                    document.getElementById('nd_hal').value = 'Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di ' + s.upt.nama_upt;
+                }
+                if (s.tanggal_sidang) {
+                    document.getElementById('nd_hari_tanggal').value = new Date(s.tanggal_sidang).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                }
+                if (s.jam_mulai) {
+                    document.getElementById('nd_jam').value = s.jam_mulai.substring(0, 5) + ' WIB s.d selesai';
+                }
+                if (s.metode_sidang === 'daring') {
+                    document.getElementById('nd_tempat').value = 'Virtual / Zoom Cloud Meeting (' + (s.upt ? s.upt.nama_upt : '') + ')';
+                } else if (s.upt) {
+                    document.getElementById('nd_tempat').value = 'Ruang Sidang TPP ' + s.upt.nama_upt;
+                }
+            }
+        }
+
+        const modalEl = document.getElementById('modalNotaDinas');
+        if (modalEl) {
+            const m = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            m.show();
+        }
+    }
+
     function ekstrakUndanganAiModal(sidangId) {
+        const targetSidangId = sidangId || (document.getElementById('formNotaDinasModal') ? document.getElementById('formNotaDinasModal').dataset.sidangId : 0);
         const btn = document.getElementById('btnEkstrakAiModal');
         const alertArea = document.getElementById('aiExtractionAlert');
 
@@ -224,7 +266,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menganalisis PDF...';
         alertArea.classList.add('d-none');
 
-        fetch('/sidang-tpp/' + sidangId + '/nota-dinas/parse-ai', {
+        fetch('/sidang-tpp/' + targetSidangId + '/nota-dinas/parse-ai', {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'

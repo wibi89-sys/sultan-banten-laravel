@@ -83,6 +83,11 @@ class SidangTpp extends Model
         return $this->hasMany(SidangTppUsulan::class, 'sidang_tpp_id');
     }
 
+    public function naskahKanwil(): HasMany
+    {
+        return $this->hasMany(TppNaskahKanwil::class, 'sidang_tpp_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

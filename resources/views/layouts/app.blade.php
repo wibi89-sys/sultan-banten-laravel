@@ -440,12 +440,24 @@
                     <a href="{{ Route::has('sidang-tpp.hasil') ? route('sidang-tpp.hasil') : url('/sidang-tpp/hasil') }}" class="{{ request()->routeIs('sidang-tpp.hasil*') ? 'active' : '' }}">
                         <i class="fas fa-clipboard-check"></i><span>2. Hasil Sidang UPT</span>
                     </a>
+                    @if($user->isKanwil())
+                    <a href="{{ route('sidang-tpp.dokumen-kanwil.index') }}" class="{{ request()->routeIs('sidang-tpp.dokumen-kanwil.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-signature text-warning"></i><span>3. Naskah &amp; Laporan Kanwil</span>
+                    </a>
+                    <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
+                        <i class="fas fa-stamp"></i><span>4. Verifikasi &amp; TTD Kanwil</span>
+                    </a>
+                    <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
+                        <i class="fas fa-file-download"></i><span>5. Rekap &amp; Download Dokumen</span>
+                    </a>
+                    @else
                     <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
                         <i class="fas fa-stamp"></i><span>3. Verifikasi &amp; TTD Kanwil</span>
                     </a>
                     <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
                         <i class="fas fa-file-download"></i><span>4. Rekap &amp; Download Dokumen</span>
                     </a>
+                    @endif
                 </div>
             </div>
             @endif

@@ -16,9 +16,11 @@ use App\Http\Controllers\PenghuniController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SidangTppController;
+use App\Http\Controllers\SidangTppDokumenKanwilController;
 use App\Http\Controllers\TelramController;
 use App\Http\Controllers\UptController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VerifikasiDokumenController;
 use App\Http\Controllers\WhatsAppController;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
@@ -34,6 +36,9 @@ Route::get('/offline', function () {
 // Public Link Surat Undangan TPP (Dapat dibuka langsung tanpa login untuk pesan WhatsApp & anggota TPP)
 Route::get('/undangan-tpp/{id}', [SidangTppController::class, 'publicUndangan'])->whereNumber('id')->name('sidang-tpp.public-undangan');
 Route::get('/tpp/undangan/{id}', [SidangTppController::class, 'publicUndangan'])->whereNumber('id');
+
+// Public Otentifikasi Keabsahan Dokumen Digital Resmi (Scan QR Code via Smartphone)
+Route::get('/verifikasi-dokumen/{kode}', [VerifikasiDokumenController::class, 'show'])->name('verifikasi-dokumen.show');
 
 // Public Cron WhatsApp endpoint with throttle & secure key check
 Route::get('/cron-wa', function (Request $request) {
@@ -131,6 +136,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/hasil', [SidangTppController::class, 'hasilIndex'])->name('hasil');
         Route::post('/{id}/hasil', [SidangTppController::class, 'hasilUpdate'])->whereNumber('id')->name('hasil.update');
         Route::post('/{id}/destroy-dokumentasi', [SidangTppController::class, 'destroyDokumentasi'])->whereNumber('id')->name('destroy-dokumentasi');
+
+        // Submenu Khusus Kanwil: Naskah & Laporan Kanwil (Nota Dinas & Laporan Sidang TPP)
+        Route::get('/dokumen-kanwil', [SidangTppDokumenKanwilController::class, 'index'])->name('dokumen-kanwil.index');
+        Route::get('/{id}/dokumen-kanwil/analyze-ba-ai', [SidangTppDokumenKanwilController::class, 'analyzeBaAi'])->whereNumber('id')->name('dokumen-kanwil.analyze-ba-ai');
+        Route::post('/{id}/dokumen-kanwil/laporan-tpp/generate', [SidangTppDokumenKanwilController::class, 'generateLaporanTpp'])->whereNumber('id')->name('dokumen-kanwil.laporan-tpp.generate');
+        Route::post('/{id}/dokumen-kanwil/upload-signed', [SidangTppDokumenKanwilController::class, 'uploadSigned'])->whereNumber('id')->name('dokumen-kanwil.upload-signed');
 
         // Anak Menu 3: Verifikasi & TTD Kanwil (Bintorwasdal)
         Route::get('/kanwil', [SidangTppController::class, 'kanwilIndex'])->name('kanwil');

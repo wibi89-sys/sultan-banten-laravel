@@ -266,4 +266,155 @@ PROMPT;
             ];
         }
     }
+
+    /**
+     * Analisis cerdas berkas PDF Berita Acara (BA) Sidang TPP dari UPT via Gemini AI
+     * untuk menyusun draf Laporan Pelaksanaan Sidang TPP Kantor Wilayah yang adaptif sesuai materi sidang.
+     *
+     * @param  array<string, mixed>  $metaData
+     * @return array{
+     *   success: bool,
+     *   message: string,
+     *   data?: array<string, mixed>
+     * }
+     */
+    public static function analyzeBeritaAcaraPdf(string $pdfPath, array $metaData = []): array
+    {
+        $setting = AiSetting::getFirst();
+
+        if (! $setting->is_active || empty($setting->api_key)) {
+            return [
+                'success' => false,
+                'message' => 'Integrasi AI belum diaktifkan atau API Key belum diisi di Pengaturan Master Data AI.',
+            ];
+        }
+
+        $fullPath = public_path($pdfPath);
+        if (! file_exists($fullPath)) {
+            return [
+                'success' => false,
+                'message' => 'Berkas PDF Berita Acara sidang TPP tidak ditemukan di server.',
+            ];
+        }
+
+        if (filesize($fullPath) > 20971520) { // 20 MB
+            return [
+                'success' => false,
+                'message' => 'Ukuran berkas PDF melebihi batas 20 MB untuk pemrosesan AI.',
+            ];
+        }
+
+        try {
+            $base64Data = base64_encode(file_get_contents($fullPath));
+            $chosenModel = ! empty($setting->model) ? $setting->model : 'gemini-3.8-flash';
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$chosenModel}:generateContent?key={$setting->api_key}";
+
+            $uptNama = $metaData['upt_nama'] ?? 'UPT Pemasyarakatan';
+            $hariTgl = $metaData['hari_tanggal_sidang'] ?? '';
+            $metode = $metaData['metode_sidang'] ?? 'virtual Zoom Meeting';
+            $pengawas = $metaData['nama_pengawas'] ?? 'Perwakilan Kantor Wilayah';
+
+            $prompt = <<<PROMPT
+Anda adalah asisten cerdas tata naskah dinas Kantor Wilayah Kementerian Hukum dan HAM / Kementerian Imigrasi dan Pemasyarakatan RI.
+Tugas Anda adalah membaca dan menganalisis berkas PDF Berita Acara (BA) Sidang Tim Pengamat Pemasyarakatan (TPP) yang dilampirkan dari satuan kerja: "{$uptNama}".
+Konteks Sidang:
+- Hari / Tanggal: {$hariTgl}
+- Metode Pelaksanaan: {$metode}
+- Pengawas / Perwakilan Kanwil: {$pengawas}
+
+Susun draf resmi "LAPORAN PELAKSANAAN SIDANG TPP" Kantor Wilayah yang ADAPTIF dan SESUAI FAKTA materi sidang di dalam Berita Acara tersebut (apakah mengenai Remisi, Integrasi PB/CB, Asimilasi, Mutasi/Pemindahan, atau Penjatuhan Hukuman Disiplin).
+
+Kembalikan respon DALAM FORMAT JSON VALID dengan struktur persis seperti ini:
+{
+  "topik_sidang": "ringkasan 1 baris topik sidang, misal: Usulan Pemberian Hak Integrasi (PB dan CB)",
+  "materi_sidang_items": [
+    "butir 1 rincian usulan beserta jumlah narapidana, misal: Pembebasan Bersyarat (PB): 33 orang narapidana",
+    "butir 2..."
+  ],
+  "paragraf_a1": "Pada hari ..., Kantor Wilayah ... mengikuti pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) ... di {$uptNama}.",
+  "paragraf_a2": "Sidang TPP membahas usulan ... terhadap narapidana yang telah diusulkan oleh {$uptNama}.",
+  "paragraf_a3": "Perwakilan Kantor Wilayah hadir sebagai unsur pembina dan pengawas untuk melakukan verifikasi terhadap pemenuhan persyaratan substantif maupun administratif sesuai ketentuan peraturan perundang-undangan.",
+  "paragraf_a4": "Perwakilan Kantor Wilayah melakukan pencermatan terhadap kelengkapan dokumen usulan, data registrasi narapidana, perhitungan masa pidana, laporan perkembangan pembinaan, penilaian risiko, serta dokumen pendukung lainnya yang dipersyaratkan dalam Sistem Database Pemasyarakatan (SDP).",
+  "paragraf_b1": "Berdasarkan hasil pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) {$uptNama} pada tanggal ..., Tim Kantor Wilayah melakukan verifikasi terhadap usulan ... sesuai materi sidang.",
+  "paragraf_b2_poin": [
+    "Seluruh Narapidana yang dibahas telah memenuhi persyaratan substantif...",
+    "Seluruh persyaratan administratif telah lengkap dan sesuai dengan ketentuan serta telah tersedia dalam Sistem Database Pemasyarakatan (SDP).",
+    "Perhitungan masa pidana, tanggal 2/3 masa pidana, dan tanggal ekspirasi telah sesuai dengan data register narapidana.",
+    "Dengan terpenuhinya persyaratan substantif dan administratif, usulan tersebut direkomendasikan untuk diproses lebih lanjut sesuai mekanisme yang berlaku."
+  ],
+  "simpulan_poin": [
+    "Pelaksanaan Sidang Tim Pengamat Pemasyarakatan berjalan dengan tertib, lancar, dan sesuai dengan ketentuan yang berlaku.",
+    "Pembahasan dilakukan secara objektif dengan mempertimbangkan aspek administratif, substantif, keamanan, serta hasil pembinaan terhadap masing-masing narapidana."
+  ],
+  "saran_poin": [
+    "{$uptNama} agar tetap meningkatkan ketelitian dalam melakukan verifikasi administrasi sebelum usulan diajukan kepada Kantor Wilayah.",
+    "Seluruh dokumen pendukung agar dipastikan telah lengkap, valid, dan diunggah ke dalam Sistem Database Pemasyarakatan (SDP) sebelum proses pengusulan dilanjutkan.",
+    "Jika ada kendala, agar segera berkoordinasi dengan Kantor Wilayah.",
+    "Monitoring terhadap pelaksanaan usulan agar terus dilakukan sesuai ketentuan peraturan perundang-undangan guna menjamin tercapainya tujuan Sistem Pemasyarakatan."
+  ],
+  "penutup": "Demikian laporan pelaksanaan Sidang Tim Pengamat Pemasyarakatan ini disusun sebagai bentuk pertanggungjawaban pelaksanaan tugas serta sebagai bahan informasi bagi pimpinan dalam rangka pembinaan dan pengawasan penyelenggaraan tugas di lingkungan Pemasyarakatan."
+}
+
+PENTING:
+- Sesuaikan isi narasi dengan fakta di dalam PDF Berita Acara yang terlampir. Jika sidangnya bukan tentang PB/CB (misal tentang Remisi atau Mutasi), gantikan teks yang sesuai dengan isi BA tersebut.
+- Hanya kembalikan teks JSON valid tanpa awalan atau akhiran markdown penjelasan.
+PROMPT;
+
+            $payload = [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt],
+                            [
+                                'inline_data' => [
+                                    'mime_type' => 'application/pdf',
+                                    'data' => $base64Data,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.1,
+                    'responseMimeType' => 'application/json',
+                ],
+            ];
+
+            $response = Http::timeout(45)->post($endpoint, $payload);
+
+            if (! $response->successful()) {
+                $err = $response->json();
+                $msg = $err['error']['message'] ?? ('HTTP '.$response->status());
+
+                return [
+                    'success' => false,
+                    'message' => 'Gagal memproses Berita Acara dengan AI: '.$msg,
+                ];
+            }
+
+            $resJson = $response->json();
+            $rawText = $resJson['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+            $data = json_decode($rawText, true);
+            if (! is_array($data)) {
+                return [
+                    'success' => false,
+                    'message' => 'Format balasan AI tidak dapat dibaca sebagai JSON.',
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Berita Acara berhasil dianalisis oleh AI Gemini.',
+                'data' => $data,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Gemini analyzeBeritaAcaraPdf error: '.$e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem saat menganalisis BA: '.$e->getMessage(),
+            ];
+        }
+    }
 }
