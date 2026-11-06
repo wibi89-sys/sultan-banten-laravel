@@ -21,9 +21,11 @@ class LaporanTppGeneratorService
         $filename = 'Laporan_Sidang_TPP_Kanwil_'.$cleanUpt.'_'.date('Ymd_His').'.doc';
 
         return response($html, 200, [
-            'Content-Type' => 'application/vnd.ms-word; charset=utf-8',
+            'Content-Type' => 'application/msword; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            'Cache-Control' => 'max-age=0',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -260,24 +262,6 @@ class LaporanTppGeneratorService
             <u><b>{$penandatanganNama}</b></u>{$nipText}
         ";
 
-        $catatanValidasiHtml = '';
-        if ($metodeTtd === 'digital_qr' && ! empty($qrUrl)) {
-            $kodeVerifikasi = $params['kode_verifikasi'] ?? '-';
-            $catatanValidasiHtml = "
-            <table width='100%' border='0' style='margin-top:25pt;border-top:1px solid #ccc;padding-top:6pt;'>
-                <tr>
-                    <td width='70%' style='font-size:8pt;color:#666;line-height:1.3;'>
-                        <b>Dokumen Resmi Terotentifikasi SULTAN BANTEN</b><br>
-                        Kode Verifikasi: {$kodeVerifikasi}<br>
-                        Tautan Verifikasi: {$qrUrl}
-                    </td>
-                    <td width='30%' align='right' style='font-size:8pt;color:#888;'>
-                        Kantor Wilayah Banten
-                    </td>
-                </tr>
-            </table>";
-        }
-
         return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -354,8 +338,6 @@ class LaporanTppGeneratorService
             </td>
         </tr>
     </table>
-
-    {$catatanValidasiHtml}
 </body>
 </html>
 HTML;

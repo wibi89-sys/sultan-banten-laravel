@@ -2,9 +2,10 @@
 <div class="modal fade" id="modalLaporanTpp" tabindex="-1" aria-labelledby="modalLaporanTppTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
-            <form id="formLaporanTpp" method="POST" target="_blank" enctype="multipart/form-data">
+            <form id="formLaporanTpp" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="sidang_id" id="lap_sidang_id">
+                <input type="hidden" name="format_output" id="lap_format_output" value="word">
 
                 <div class="modal-header bg-dark text-white py-2.5 px-3">
                     <div class="d-flex align-items-center">
@@ -55,8 +56,8 @@
                                     <input type="text" name="nomor_dokumen" id="lap_nomor_dokumen" class="form-control form-control-sm font-monospace" placeholder="W.12.PAS.PK.02.02-...">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="lap_topik_sidang" class="form-label small fw-semibold">Topik Utama Sidang <span class="text-danger">*</span></label>
-                                    <input type="text" name="topik_sidang" id="lap_topik_sidang" class="form-control form-control-sm" placeholder="Contoh: Pemberian Hak Integrasi (PB dan CB)" required>
+                                    <label for="lap_topik_sidang" class="form-label small fw-semibold">Topik Utama Sidang</label>
+                                    <input type="text" name="topik_sidang" id="lap_topik_sidang" class="form-control form-control-sm" placeholder="Contoh: Pemberian Hak Integrasi (PB dan CB)">
                                 </div>
                                 <div class="col-md-3">
                                     <label for="lap_tanggal_laporan" class="form-label small fw-semibold">Tanggal Naskah</label>
@@ -255,8 +256,8 @@
                                 <div class="col-md-6 border-end pe-md-3">
                                     <h6 class="fw-bold small text-muted mb-2">Perwakilan Kantor Wilayah (Sisi Kiri)</h6>
                                     <div class="mb-2">
-                                        <label for="lap_pengawas_nama" class="form-label small fw-semibold">Nama Pegawai Kanwil yang Hadir <span class="text-danger">*</span></label>
-                                        <input type="text" name="pengawas_nama" id="lap_pengawas_nama" class="form-control form-control-sm" required>
+                                        <label for="lap_pengawas_nama" class="form-label small fw-semibold">Nama Pegawai Kanwil yang Hadir</label>
+                                        <input type="text" name="pengawas_nama" id="lap_pengawas_nama" class="form-control form-control-sm">
                                     </div>
                                     <div class="mb-1">
                                         <label for="lap_pengawas_jabatan" class="form-label small fw-semibold">Keterangan / Tim</label>
@@ -266,12 +267,12 @@
                                 <div class="col-md-6 ps-md-3">
                                     <h6 class="fw-bold small text-muted mb-2">Pejabat Pengesah / Pimpinan (Sisi Kanan)</h6>
                                     <div class="mb-2">
-                                        <label for="lap_penandatangan_nama" class="form-label small fw-semibold">Nama Pejabat <span class="text-danger">*</span></label>
-                                        <input type="text" name="penandatangan_nama" id="lap_penandatangan_nama" class="form-control form-control-sm" required>
+                                        <label for="lap_penandatangan_nama" class="form-label small fw-semibold">Nama Pejabat</label>
+                                        <input type="text" name="penandatangan_nama" id="lap_penandatangan_nama" class="form-control form-control-sm">
                                     </div>
                                     <div class="mb-2">
-                                        <label for="lap_penandatangan_jabatan" class="form-label small fw-semibold">Jabatan Pejabat <span class="text-danger">*</span></label>
-                                        <input type="text" name="penandatangan_jabatan" id="lap_penandatangan_jabatan" class="form-control form-control-sm" required>
+                                        <label for="lap_penandatangan_jabatan" class="form-label small fw-semibold">Jabatan Pejabat</label>
+                                        <input type="text" name="penandatangan_jabatan" id="lap_penandatangan_jabatan" class="form-control form-control-sm">
                                     </div>
                                     <div class="row g-2">
                                         <div class="col-8">
@@ -315,11 +316,11 @@
                 <div class="modal-footer bg-white py-2 px-3 justify-content-between">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
                     <div class="d-flex gap-2">
-                        <button type="submit" name="format_output" value="word" class="btn btn-outline-primary btn-sm px-3 shadow-sm fw-semibold">
-                            <i class="fas fa-file-word me-1 text-primary"></i>Unduh Word (.doc)
+                        <button type="submit" onclick="document.getElementById('lap_format_output').value='word'" class="btn btn-primary btn-sm px-4 shadow-sm fw-bold">
+                            <i class="fas fa-file-word me-1"></i>Unduh Draf Word (.doc)
                         </button>
-                        <button type="submit" name="format_output" value="pdf" class="btn btn-primary btn-sm px-3 shadow-sm fw-bold">
-                            <i class="fas fa-file-pdf me-1 text-white"></i>Terbitkan PDF Resmi (QR Code)
+                        <button type="submit" onclick="document.getElementById('lap_format_output').value='pdf'" class="btn btn-outline-secondary btn-sm px-3 shadow-sm fw-semibold">
+                            <i class="fas fa-file-pdf me-1 text-danger"></i>Pratinjau PDF
                         </button>
                     </div>
                 </div>

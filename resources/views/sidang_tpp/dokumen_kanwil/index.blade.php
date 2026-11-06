@@ -438,7 +438,7 @@
             div.className = 'input-group input-group-sm mb-1.5 item-materi-row';
             div.innerHTML = `
                 <span class="input-group-text bg-light text-muted fw-bold" style="font-size:11px;">&bull;</span>
-                <input type="text" name="materi_items[]" class="form-control form-control-sm" value="${item}" placeholder="Contoh: Pembebasan Bersyarat (PB): 33 orang narapidana" required>
+                <input type="text" name="materi_items[]" class="form-control form-control-sm" value="${item}" placeholder="Contoh: Pembebasan Bersyarat (PB): 33 orang narapidana">
                 <button type="button" class="btn btn-outline-danger" onclick="this.closest('.item-materi-row').remove()"><i class="fas fa-trash-alt"></i></button>
             `;
             wrapper.appendChild(div);
@@ -476,7 +476,7 @@
         div.className = 'input-group input-group-sm mb-1.5 item-materi-row';
         div.innerHTML = `
             <span class="input-group-text bg-light text-muted fw-bold" style="font-size:11px;">&bull;</span>
-            <input type="text" name="materi_items[]" class="form-control form-control-sm" placeholder="Contoh: Cuti Bersyarat (CB): 5 orang narapidana" required>
+            <input type="text" name="materi_items[]" class="form-control form-control-sm" placeholder="Contoh: Cuti Bersyarat (CB): 5 orang narapidana">
             <button type="button" class="btn btn-outline-danger" onclick="this.closest('.item-materi-row').remove()"><i class="fas fa-trash-alt"></i></button>
         `;
         wrapper.appendChild(div);
