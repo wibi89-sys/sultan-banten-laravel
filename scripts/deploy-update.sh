@@ -39,14 +39,20 @@ git pull origin main
 echo "2. Memberikan izin eksekusi pada script shell..."
 chmod +x cron-wa.sh scripts/*.sh 2>/dev/null || true
 
-echo "3. Membersihkan cache konfigurasi lama..."
+echo "3. Menjalankan migrasi database (jika ada)..."
+"$PHP_BIN" artisan migrate --force
+
+echo "4. Membersihkan cache lama..."
 "$PHP_BIN" artisan optimize:clear
 
-echo "4. Mengompilasi ulang cache Laravel untuk performa..."
+echo "5. Mengompilasi ulang cache Laravel untuk performa maksimal..."
 "$PHP_BIN" artisan optimize
 
-echo "5. Memeriksa status otomatisasi WhatsApp..."
-"$PHP_BIN" artisan wa:cron status
+echo "6. Memastikan tautan storage publik..."
+"$PHP_BIN" artisan storage:link 2>/dev/null || true
+
+echo "7. Memeriksa status otomatisasi WhatsApp..."
+"$PHP_BIN" artisan wa:cron status 2>/dev/null || true
 
 echo "=================================================="
 echo "✅ UPDATE BERHASIL DISELESAIKAN!"
