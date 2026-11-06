@@ -74,6 +74,7 @@ class WaBroadcastFeatureTest extends TestCase
             'total',
             'valid_wa',
             'missing_wa',
+            'role_counts' => ['operator', 'operator_wilayah', 'admin', 'viewer'],
             'users',
         ]);
     }

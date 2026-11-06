@@ -213,99 +213,173 @@
 
                                 <!-- SELEKTOR TARGET DINAMIS (ROLE / UPT / SEMUA) -->
                                 <div class="p-3 rounded bg-light border mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label small fw-bold text-dark mb-0">
-                                            <i class="fas fa-users-cog text-primary me-1"></i>Sasaran Penerima WhatsApp:
+                                    <div class="d-flex justify-content-between align-items-center mb-2.5">
+                                        <label class="form-label small fw-bold text-dark mb-0 fs-6">
+                                            <i class="fas fa-users-cog text-primary me-1.5"></i>Sasaran Penerima Siaran WhatsApp:
                                         </label>
-                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" style="font-size: 11px;" onclick="bukaModalListPenerima()">
-                                            <i class="fas fa-list me-1"></i>Lihat Daftar Nama (<span id="count_badge_num">0</span>)
+                                        <button type="button" class="btn btn-outline-primary btn-xs py-1 px-2.5 fw-semibold shadow-xs" onclick="bukaModalListPenerima()">
+                                            <i class="fas fa-user-check me-1"></i>Lihat Daftar Penerima (<span id="count_badge_num">{{ $roleCounts['total'] ?? 0 }}</span>)
                                         </button>
                                     </div>
 
-                                    <!-- Mode Target: Radio -->
-                                    <div class="d-flex flex-wrap gap-3 mb-2.5">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="target_type" id="tt_role" value="role" checked onchange="handleTargetTypeChange()">
-                                            <label class="form-check-label small fw-semibold" for="tt_role">
-                                                Filter Berdasarkan Role
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="target_type" id="tt_all" value="all" onchange="handleTargetTypeChange()">
-                                            <label class="form-check-label small fw-semibold" for="tt_all">
-                                                Semua Pengguna Terdaftar
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="target_type" id="tt_upt" value="upt" onchange="handleTargetTypeChange()">
-                                            <label class="form-check-label small fw-semibold" for="tt_upt">
-                                                Khusus Satker UPT Tertentu
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <!-- Pilihan Checkbox Role (Muncul saat Mode Role) -->
-                                    <div id="containerRoles" class="mb-2">
-                                        <span class="small text-muted d-block mb-1" style="font-size: 11px;">Pilih Role yang Menerima:</span>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
-                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_operator" value="operator" checked onchange="fetchRecipientsCount()">
-                                                <label class="form-check-label small fw-semibold text-dark" for="role_operator">
-                                                    Operator UPT (Satker)
+                                    <!-- Mode Target: Radio Card -->
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check p-2.5 rounded border bg-white h-100 shadow-xs">
+                                                <input class="form-check-input ms-1" type="radio" name="target_type" id="tt_role" value="role" checked onchange="handleTargetTypeChange()">
+                                                <label class="form-check-label ps-2 small fw-bold text-dark d-block cursor-pointer" for="tt_role">
+                                                    <span class="d-block text-primary"><i class="fas fa-id-badge me-1"></i>Pilih Berdasarkan Role</span>
+                                                    <span class="text-muted fw-normal" style="font-size: 11px;">Kirim ke role spesifik (Operator UPT, Operator Wilayah, Admin, dll)</span>
                                                 </label>
                                             </div>
-                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
-                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_wilayah" value="operator_wilayah" checked onchange="fetchRecipientsCount()">
-                                                <label class="form-check-label small fw-semibold text-dark" for="role_wilayah">
-                                                    Operator Wilayah (Kanwil)
-                                                </label>
-                                            </div>
-                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
-                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_admin" value="admin" onchange="fetchRecipientsCount()">
-                                                <label class="form-check-label small fw-semibold text-dark" for="role_admin">
-                                                    Administrator
-                                                </label>
-                                            </div>
-                                            <div class="form-check form-check-inline bg-white px-2 py-1 rounded border">
-                                                <input class="form-check-input role-check" type="checkbox" name="target_roles[]" id="role_viewer" value="viewer" onchange="fetchRecipientsCount()">
-                                                <label class="form-check-label small fw-semibold text-dark" for="role_viewer">
-                                                    Viewer / Pemantau
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check p-2.5 rounded border bg-white h-100 shadow-xs">
+                                                <input class="form-check-input ms-1" type="radio" name="target_type" id="tt_all" value="all" onchange="handleTargetTypeChange()">
+                                                <label class="form-check-label ps-2 small fw-bold text-dark d-block cursor-pointer" for="tt_all">
+                                                    <span class="d-block text-success"><i class="fas fa-globe me-1"></i>Semua Pengguna Terdaftar</span>
+                                                    <span class="text-muted fw-normal" style="font-size: 11px;">Kirimkan ke seluruh operator, admin, dan viewer di seluruh Satker</span>
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Filter Satker UPT (Opsional atau Saat Mode UPT) -->
-                                    <div id="containerUpt" class="mb-2" style="display: none;">
-                                        <label for="bc_target_upts" class="form-label small fw-semibold mb-1" style="font-size: 11px;">Pilih Satker UPT Target (Bisa Multi-Pilih):</label>
-                                        <select name="target_upt_ids[]" id="bc_target_upts" class="form-select form-select-sm" multiple style="height: 100px; font-size: 12px;" onchange="fetchRecipientsCount()">
-                                            @foreach($uptList as $upt)
-                                            <option value="{{ $upt->id }}" selected>{{ $upt->nama_upt }}</option>
-                                            @endforeach
-                                        </select>
-                                        <div class="d-flex justify-content-between mt-1">
-                                            <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none" onclick="selectAllUpts(true)">Pilih Semua UPT</button>
-                                            <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none text-danger" onclick="selectAllUpts(false)">Hapus Pilihan</button>
+                                    <!-- Pilihan Role (Muncul saat Mode Role) -->
+                                    <div id="containerRoles" class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
+                                            <span class="small fw-bold text-dark" style="font-size: 12px;">Pilih Role Sasaran:</span>
+                                            <div class="btn-group btn-group-xs">
+                                                <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none me-2" onclick="setRoleFilter('operators')" title="Pilih hanya Operator UPT & Operator Wilayah">
+                                                    <i class="fas fa-check-double me-1"></i>Hanya Operator
+                                                </button>
+                                                <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none me-2" onclick="setRoleFilter('all')">
+                                                    Pilih Semua
+                                                </button>
+                                                <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none text-danger" onclick="setRoleFilter('none')">
+                                                    Kosongkan
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2">
+                                            <!-- Operator UPT (Satker) -->
+                                            <div class="col-sm-6">
+                                                <label class="form-check d-flex align-items-center justify-content-between p-2 rounded border bg-white mb-0 cursor-pointer role-card" for="role_operator" id="card_role_operator">
+                                                    <div class="d-flex align-items-center">
+                                                        <input class="form-check-input role-check mt-0 me-2" type="checkbox" name="target_roles[]" id="role_operator" value="operator" checked onchange="fetchRecipientsCount()">
+                                                        <div>
+                                                            <div class="fw-bold text-dark" style="font-size: 12px;">Operator UPT</div>
+                                                            <small class="text-muted d-block" style="font-size: 10.5px;">Satker Lapas, Rutan, Bapas, Rupbasan</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge bg-primary rounded-pill px-2 py-1" id="badge_count_operator">{{ $roleCounts['operator'] ?? 0 }} Kontak</span>
+                                                </label>
+                                            </div>
+
+                                            <!-- Operator Wilayah (Kanwil) -->
+                                            <div class="col-sm-6">
+                                                <label class="form-check d-flex align-items-center justify-content-between p-2 rounded border bg-white mb-0 cursor-pointer role-card" for="role_wilayah" id="card_role_wilayah">
+                                                    <div class="d-flex align-items-center">
+                                                        <input class="form-check-input role-check mt-0 me-2" type="checkbox" name="target_roles[]" id="role_wilayah" value="operator_wilayah" checked onchange="fetchRecipientsCount()">
+                                                        <div>
+                                                            <div class="fw-bold text-dark" style="font-size: 12px;">Operator Wilayah</div>
+                                                            <small class="text-muted d-block" style="font-size: 10.5px;">Operator Kantor Wilayah Banten</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge bg-info text-dark rounded-pill px-2 py-1" id="badge_count_operator_wilayah">{{ $roleCounts['operator_wilayah'] ?? 0 }} Kontak</span>
+                                                </label>
+                                            </div>
+
+                                            <!-- Administrator -->
+                                            <div class="col-sm-6">
+                                                <label class="form-check d-flex align-items-center justify-content-between p-2 rounded border bg-white mb-0 cursor-pointer role-card" for="role_admin" id="card_role_admin">
+                                                    <div class="d-flex align-items-center">
+                                                        <input class="form-check-input role-check mt-0 me-2" type="checkbox" name="target_roles[]" id="role_admin" value="admin" onchange="fetchRecipientsCount()">
+                                                        <div>
+                                                            <div class="fw-bold text-dark" style="font-size: 12px;">Administrator</div>
+                                                            <small class="text-muted d-block" style="font-size: 10.5px;">Admin Wilayah / Superuser</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge bg-danger rounded-pill px-2 py-1" id="badge_count_admin">{{ $roleCounts['admin'] ?? 0 }} Kontak</span>
+                                                </label>
+                                            </div>
+
+                                            <!-- Viewer -->
+                                            <div class="col-sm-6">
+                                                <label class="form-check d-flex align-items-center justify-content-between p-2 rounded border bg-white mb-0 cursor-pointer role-card" for="role_viewer" id="card_role_viewer">
+                                                    <div class="d-flex align-items-center">
+                                                        <input class="form-check-input role-check mt-0 me-2" type="checkbox" name="target_roles[]" id="role_viewer" value="viewer" onchange="fetchRecipientsCount()">
+                                                        <div>
+                                                            <div class="fw-bold text-dark" style="font-size: 12px;">Viewer / Pemantau</div>
+                                                            <small class="text-muted d-block" style="font-size: 10.5px;">Pimpinan & Hak Akses Monitoring</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge bg-secondary rounded-pill px-2 py-1" id="badge_count_viewer">{{ $roleCounts['viewer'] ?? 0 }} Kontak</span>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- Opsi Tembusan Grup WA -->
-                                    <div class="form-check form-switch mt-2">
+                                    <!-- Opsi Pembatasan UPT (Opsional) -->
+                                    <div class="p-2.5 rounded bg-white border mb-3">
+                                        <div class="form-check form-switch mb-1">
+                                            <input class="form-check-input" type="checkbox" name="filter_upt" id="filter_upt_toggle" value="1" onchange="handleUptFilterToggle()">
+                                            <label class="form-check-label small fw-bold text-dark" for="filter_upt_toggle">
+                                                <i class="fas fa-building text-primary me-1"></i>Batasi Hanya Satker (UPT) Tertentu
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block mb-2" style="font-size: 10.5px;" id="desc_upt_filter">
+                                            Saat ini mencakup <b>Semua UPT Pemasyarakatan Banten + Kantor Wilayah</b>. Aktifkan switch jika ingin mengirim ke UPT tertentu saja.
+                                        </small>
+
+                                        <div id="containerUptList" style="display: none;">
+                                            <label for="bc_target_upts" class="form-label small fw-semibold mb-1" style="font-size: 11px;">Pilih UPT Sasaran:</label>
+                                            <select name="target_upt_ids[]" id="bc_target_upts" class="form-select form-select-sm" multiple style="height: 110px; font-size: 12px;" onchange="fetchRecipientsCount()">
+                                                @foreach($uptList as $upt)
+                                                <option value="{{ $upt->id }}" selected>{{ $upt->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                            <div class="d-flex justify-content-between mt-1">
+                                                <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none" onclick="selectAllUpts(true)">Pilih Semua UPT</button>
+                                                <button type="button" class="btn btn-link btn-xs p-0 text-decoration-none text-danger" onclick="selectAllUpts(false)">Hapus Semua Pilihan</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tembusan Grup WA -->
+                                    <div class="form-check form-switch mb-3">
                                         <input class="form-check-input" type="checkbox" name="kirim_ke_grup" id="bc_kirim_grup" value="1" checked>
                                         <label class="form-check-label small fw-semibold" for="bc_kirim_grup">
                                             <i class="fab fa-whatsapp text-success me-1"></i>Kirimkan juga tembusan ke Grup WhatsApp Resmi
                                         </label>
                                     </div>
 
-                                    <!-- Live Target Counter Badge -->
-                                    <div class="alert alert-secondary py-1.5 px-2.5 mt-2 mb-0 d-flex justify-content-between align-items-center" style="font-size: 11.5px;">
-                                        <div>
-                                            <i class="fas fa-bullseye text-danger me-1"></i>
-                                            <b>Sasaran:</b> <span id="label_total_target">Memuat...</span>
-                                        </div>
-                                        <div>
-                                            <span class="badge bg-success" id="badge_valid_wa">0 Nomor Siap</span>
-                                            <span class="badge bg-warning text-dark d-none" id="badge_missing_wa">0 Tanpa WA</span>
+                                    <!-- Live Target Summary Display (Menjawab: "tidak terlihat role apa yang kita tuju") -->
+                                    <div class="card border border-primary-subtle bg-white shadow-xs p-2.5 mb-0">
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div>
+                                                <div class="small fw-bold text-dark mb-1">
+                                                    <i class="fas fa-bullseye text-danger me-1"></i>Role Sasaran yang Dituju:
+                                                </div>
+                                                <div id="target_roles_display" class="d-flex flex-wrap gap-1 align-items-center">
+                                                    <span class="badge bg-primary px-2 py-1"><i class="fas fa-user-shield me-1"></i>Operator UPT</span>
+                                                    <span class="badge bg-info text-dark px-2 py-1"><i class="fas fa-building me-1"></i>Operator Wilayah</span>
+                                                </div>
+                                                <div class="small text-muted mt-1" id="target_upt_display" style="font-size: 11px;">
+                                                    <i class="fas fa-map-marker-alt text-secondary me-1"></i>Cakupan: <b>Semua Satker UPT Banten &amp; Kanwil</b>
+                                                </div>
+                                            </div>
+                                            <div class="text-md-end">
+                                                <span class="badge bg-success py-1.5 px-2.5 fs-6 shadow-sm" id="badge_valid_wa">
+                                                    <i class="fab fa-whatsapp me-1"></i><span id="badge_valid_num">0</span> Nomor Siap Kirim
+                                                </span>
+                                                <div class="small text-muted mt-1" id="label_total_target" style="font-size: 11px;">
+                                                    Menghitung sasaran...
+                                                </div>
+                                                <div class="badge bg-warning text-dark d-none mt-1" id="badge_missing_wa" style="font-size: 10px;">
+                                                    0 Tanpa Nomor WA
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -535,24 +609,50 @@
 <!-- MODAL PREVIEW CALON PENERIMA SEBELUM KIRIM -->
 <!-- ============================================================== -->
 <div class="modal fade" id="modalListRecipients" tabindex="-1" aria-labelledby="modalListRecipientsTitle" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white py-2 px-3">
-                <h6 class="modal-title fw-bold" id="modalListRecipientsTitle">
-                    <i class="fas fa-users text-white me-2"></i>Daftar Operator Sasaran Siaran
-                </h6>
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white py-2.5 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-users-cog fa-lg text-white"></i>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" id="modalListRecipientsTitle">
+                            Daftar Sasaran Penerima Siaran WhatsApp
+                        </h6>
+                        <small class="text-white-50" style="font-size: 11px;">Rincian nama, username, role, satker, dan nomor WhatsApp yang akan menerima siaran</small>
+                    </div>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-3">
-                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
-                    <span class="small fw-semibold text-muted">Total Terpilih: <b id="modalRecipTotal">0</b> Operator</span>
-                    <span class="small text-success fw-bold" id="modalRecipValid">0 Nomor Siap</span>
+                <!-- Search & Role Filter Tabs inside Modal -->
+                <div class="row g-2 mb-2.5 align-items-center">
+                    <div class="col-md-5">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchRecipInput" class="form-control form-control-sm border-start-0" placeholder="Cari nama, satker, atau nomor..." oninput="renderRecipientsList()">
+                        </div>
+                    </div>
+                    <div class="col-md-7 text-md-end">
+                        <div class="btn-group btn-group-xs flex-wrap" role="group">
+                            <button type="button" class="btn btn-primary btn-xs btn-filter-recip px-2 py-1 active" data-role="all" onclick="filterRecipientsModal('all')">Semua</button>
+                            <button type="button" class="btn btn-outline-primary btn-xs btn-filter-recip px-2 py-1" data-role="operator" onclick="filterRecipientsModal('operator')">Operator UPT</button>
+                            <button type="button" class="btn btn-outline-primary btn-xs btn-filter-recip px-2 py-1" data-role="operator_wilayah" onclick="filterRecipientsModal('operator_wilayah')">Op. Wilayah</button>
+                            <button type="button" class="btn btn-outline-primary btn-xs btn-filter-recip px-2 py-1" data-role="admin" onclick="filterRecipientsModal('admin')">Admin</button>
+                            <button type="button" class="btn btn-outline-primary btn-xs btn-filter-recip px-2 py-1" data-role="viewer" onclick="filterRecipientsModal('viewer')">Viewer</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="list-group list-group-flush" id="modalRecipList" style="max-height: 350px; overflow-y: auto;">
-                    <div class="text-center py-3 text-muted small">Memuat daftar...</div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2 px-2.5 py-1.5 bg-light rounded border">
+                    <span class="small fw-semibold text-dark">Total Terpilih: <b id="modalRecipTotal" class="text-primary fs-6">0</b> Pengguna</span>
+                    <span class="small text-success fw-bold" id="modalRecipValid">0 Nomor Siap Kirim</span>
+                </div>
+
+                <div class="list-group list-group-flush border rounded" id="modalRecipList" style="max-height: 380px; overflow-y: auto;">
+                    <div class="text-center py-4 text-muted small">Memuat daftar...</div>
                 </div>
             </div>
-            <div class="modal-footer py-1.5 px-3">
+            <div class="modal-footer py-2 px-3">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -761,14 +861,46 @@
     // ==========================================
     // LOGIKA BROADCAST WHATSAPP
     // ==========================================
+    let currentRecipientsFilter = 'all';
+
     function handleTargetTypeChange() {
         const type = document.querySelector('input[name="target_type"]:checked')?.value || 'role';
         const roleContainer = document.getElementById('containerRoles');
-        const uptContainer = document.getElementById('containerUpt');
 
-        if (roleContainer) roleContainer.style.display = (type === 'role') ? 'block' : 'none';
-        if (uptContainer) uptContainer.style.display = (type === 'upt') ? 'block' : 'none';
+        if (roleContainer) {
+            roleContainer.style.display = (type === 'role') ? 'block' : 'none';
+        }
 
+        fetchRecipientsCount();
+    }
+
+    function handleUptFilterToggle() {
+        const toggle = document.getElementById('filter_upt_toggle');
+        const container = document.getElementById('containerUptList');
+        const desc = document.getElementById('desc_upt_filter');
+
+        if (toggle && container) {
+            container.style.display = toggle.checked ? 'block' : 'none';
+            if (desc) {
+                desc.innerHTML = toggle.checked 
+                    ? 'Pilih satu atau beberapa UPT sasaran dari daftar di bawah:' 
+                    : 'Saat ini mencakup <b>Semua UPT Pemasyarakatan Banten + Kantor Wilayah</b>.';
+            }
+        }
+        fetchRecipientsCount();
+    }
+
+    function setRoleFilter(mode) {
+        const checks = document.querySelectorAll('.role-check');
+        checks.forEach(c => {
+            if (mode === 'all') {
+                c.checked = true;
+            } else if (mode === 'none') {
+                c.checked = false;
+            } else if (mode === 'operators') {
+                c.checked = (c.value === 'operator' || c.value === 'operator_wilayah');
+            }
+        });
         fetchRecipientsCount();
     }
 
@@ -786,20 +918,24 @@
         const roles = [];
         document.querySelectorAll('.role-check:checked').forEach(c => roles.push(c.value));
 
+        const isFilterUpt = document.getElementById('filter_upt_toggle')?.checked || false;
         const uptSelect = document.getElementById('bc_target_upts');
         const uptIds = [];
-        if (uptSelect) {
+        if (isFilterUpt && uptSelect) {
             for (let i = 0; i < uptSelect.options.length; i++) {
                 if (uptSelect.options[i].selected) uptIds.push(uptSelect.options[i].value);
             }
         }
 
+        // Tampilkan indikator visual peran yang dituju secara eksplisit
+        updateTargetRolesDisplay(type, roles, isFilterUpt, uptIds.length);
+
         const labelTarget = document.getElementById('label_total_target');
-        const badgeValid = document.getElementById('badge_valid_wa');
+        const badgeValidNum = document.getElementById('badge_valid_num');
         const badgeMissing = document.getElementById('badge_missing_wa');
         const countBadgeNum = document.getElementById('count_badge_num');
 
-        if (labelTarget) labelTarget.innerText = 'Menghitung...';
+        if (labelTarget) labelTarget.innerText = 'Menghitung sasaran...';
 
         fetch('{{ route("pengumuman.recipients-count") }}', {
             method: 'POST',
@@ -810,16 +946,17 @@
             body: JSON.stringify({
                 target_type: type,
                 target_roles: roles,
-                target_upt_ids: uptIds
+                target_upt_ids: uptIds,
+                filter_upt: isFilterUpt ? 1 : 0
             })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
                 cachedRecipientsData = data.users || [];
-                if (labelTarget) labelTarget.innerText = `${data.total} Operator Terpilih`;
+                if (labelTarget) labelTarget.innerText = `Total ${data.total} Pengguna Terpilih`;
                 if (countBadgeNum) countBadgeNum.innerText = data.total;
-                if (badgeValid) badgeValid.innerText = `${data.valid_wa} Nomor Siap`;
+                if (badgeValidNum) badgeValidNum.innerText = data.valid_wa;
 
                 if (badgeMissing) {
                     if (data.missing_wa > 0) {
@@ -829,44 +966,138 @@
                         badgeMissing.classList.add('d-none');
                     }
                 }
+
+                // Update badge jumlah kontak di masing-masing kartu role
+                if (data.role_counts) {
+                    const opBadge = document.getElementById('badge_count_operator');
+                    const wilBadge = document.getElementById('badge_count_operator_wilayah');
+                    const admBadge = document.getElementById('badge_count_admin');
+                    const viewBadge = document.getElementById('badge_count_viewer');
+
+                    if (opBadge) opBadge.innerText = `${data.role_counts.operator || 0} Kontak`;
+                    if (wilBadge) wilBadge.innerText = `${data.role_counts.operator_wilayah || 0} Kontak`;
+                    if (admBadge) admBadge.innerText = `${data.role_counts.admin || 0} Kontak`;
+                    if (viewBadge) viewBadge.innerText = `${data.role_counts.viewer || 0} Kontak`;
+                }
             }
         })
         .catch(err => console.error(err));
     }
 
+    function updateTargetRolesDisplay(type, roles, isFilterUpt, selectedUptCount) {
+        const displayEl = document.getElementById('target_roles_display');
+        const uptDisplayEl = document.getElementById('target_upt_display');
+        if (!displayEl) return;
+
+        if (type === 'all') {
+            displayEl.innerHTML = '<span class="badge bg-success px-2.5 py-1 fs-7"><i class="fas fa-users me-1"></i>Semua Role (Operator UPT, Operator Wilayah, Admin, Viewer)</span>';
+        } else {
+            if (roles.length === 0) {
+                displayEl.innerHTML = '<span class="badge bg-danger px-2.5 py-1 fs-7"><i class="fas fa-exclamation-triangle me-1"></i>Belum Ada Role Dipilih!</span>';
+            } else {
+                let badges = '';
+                if (roles.includes('operator')) {
+                    badges += '<span class="badge bg-primary px-2.5 py-1 me-1 fs-7"><i class="fas fa-user-shield me-1"></i>Operator UPT</span>';
+                }
+                if (roles.includes('operator_wilayah')) {
+                    badges += '<span class="badge bg-info text-dark px-2.5 py-1 me-1 fs-7"><i class="fas fa-building me-1"></i>Operator Wilayah</span>';
+                }
+                if (roles.includes('admin')) {
+                    badges += '<span class="badge bg-danger px-2.5 py-1 me-1 fs-7"><i class="fas fa-crown me-1"></i>Administrator</span>';
+                }
+                if (roles.includes('viewer')) {
+                    badges += '<span class="badge bg-secondary px-2.5 py-1 me-1 fs-7"><i class="fas fa-eye me-1"></i>Viewer</span>';
+                }
+                displayEl.innerHTML = badges;
+            }
+        }
+
+        if (uptDisplayEl) {
+            if (isFilterUpt) {
+                uptDisplayEl.innerHTML = `<i class="fas fa-filter text-primary me-1"></i>Cakupan: <b>Khusus ${selectedUptCount} Satker Terpilih</b>`;
+            } else {
+                uptDisplayEl.innerHTML = '<i class="fas fa-map-marker-alt text-secondary me-1"></i>Cakupan: <b>Semua Satker UPT Banten &amp; Kanwil</b>';
+            }
+        }
+    }
+
+    function filterRecipientsModal(roleKey) {
+        currentRecipientsFilter = roleKey;
+        document.querySelectorAll('.btn-filter-recip').forEach(btn => {
+            const isMatch = btn.dataset.role === roleKey;
+            btn.classList.toggle('active', isMatch);
+            btn.classList.toggle('btn-primary', isMatch);
+            btn.classList.toggle('btn-outline-primary', !isMatch);
+        });
+        renderRecipientsList();
+    }
+
+    function renderRecipientsList() {
+        const listContainer = document.getElementById('modalRecipList');
+        const searchInput = document.getElementById('searchRecipInput')?.value.toLowerCase().trim() || '';
+        if (!listContainer) return;
+
+        let filtered = cachedRecipientsData;
+
+        if (currentRecipientsFilter !== 'all') {
+            filtered = filtered.filter(u => u.role === currentRecipientsFilter);
+        }
+
+        if (searchInput) {
+            filtered = filtered.filter(u => 
+                (u.nama && u.nama.toLowerCase().includes(searchInput)) ||
+                (u.username && u.username.toLowerCase().includes(searchInput)) ||
+                (u.upt && u.upt.toLowerCase().includes(searchInput)) ||
+                (u.no_wa && u.no_wa.toLowerCase().includes(searchInput))
+            );
+        }
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-search me-1"></i>Tidak ditemukan kontak yang sesuai kriteria pencarian/filter role.</div>';
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(u => {
+            let roleBadgeClass = 'bg-secondary';
+            if (u.role === 'operator') roleBadgeClass = 'bg-primary';
+            else if (u.role === 'operator_wilayah') roleBadgeClass = 'bg-info text-dark';
+            else if (u.role === 'admin') roleBadgeClass = 'bg-danger';
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                    <div>
+                        <div class="fw-bold text-dark" style="font-size: 12.5px;">${u.nama} <small class="text-muted fw-normal">(@${u.username || '-'})</small></div>
+                        <div class="text-muted" style="font-size: 11px;">
+                            <span>${u.upt}</span> &bull; 
+                            <span class="badge ${roleBadgeClass}" style="font-size: 10px;">${u.role_label || u.role}</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        ${u.has_wa 
+                            ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 font-monospace" style="font-size: 11px;"><i class="fab fa-whatsapp me-1"></i>${u.no_wa}</span>`
+                            : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size: 10.5px;"><i class="fas fa-times-circle me-1"></i>Belum Ada WA</span>`}
+                    </div>
+                </div>
+            `;
+        });
+        listContainer.innerHTML = html;
+    }
+
     function bukaModalListPenerima() {
         const modal = new bootstrap.Modal(document.getElementById('modalListRecipients'));
-        const listContainer = document.getElementById('modalRecipList');
         const totalEl = document.getElementById('modalRecipTotal');
         const validEl = document.getElementById('modalRecipValid');
 
         totalEl.innerText = cachedRecipientsData.length;
-        let valid = 0;
-
-        if (cachedRecipientsData.length === 0) {
-            listContainer.innerHTML = '<div class="text-center py-4 text-muted">Tidak ada operator yang cocok dengan filter sasaran.</div>';
-        } else {
-            let html = '';
-            cachedRecipientsData.forEach(u => {
-                if (u.has_wa) valid++;
-                html += `
-                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-1">
-                        <div>
-                            <div class="fw-bold text-dark" style="font-size: 12px;">${u.nama}</div>
-                            <small class="text-muted" style="font-size: 10.5px;">${u.upt} &bull; <span class="badge bg-light text-secondary border">${u.role}</span></small>
-                        </div>
-                        <div>
-                            ${u.has_wa 
-                                ? `<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10.5px;"><i class="fab fa-whatsapp me-1"></i>${u.no_wa}</span>`
-                                : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10.5px;"><i class="fas fa-times-circle me-1"></i>Belum Ada WA</span>`}
-                        </div>
-                    </div>
-                `;
-            });
-            listContainer.innerHTML = html;
-        }
-
+        let valid = cachedRecipientsData.filter(u => u.has_wa).length;
         validEl.innerText = `${valid} Nomor Siap Kirim`;
+
+        currentRecipientsFilter = 'all';
+        const searchInput = document.getElementById('searchRecipInput');
+        if (searchInput) searchInput.value = '';
+
+        filterRecipientsModal('all');
         modal.show();
     }
 

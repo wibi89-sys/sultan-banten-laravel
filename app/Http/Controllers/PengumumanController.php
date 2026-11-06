@@ -41,10 +41,19 @@ class PengumumanController extends Controller
 
         $pengumumanList = $query->paginate(20)->withQueryString();
 
+        // Hitung total pengguna per role untuk indikator di antarmuka
+        $roleCounts = [
+            'operator' => User::where('role', 'operator')->count(),
+            'operator_wilayah' => User::where('role', 'operator_wilayah')->count(),
+            'admin' => User::where('role', 'admin')->count(),
+            'viewer' => User::where('role', 'viewer')->count(),
+            'total' => User::count(),
+        ];
+
         // Riwayat Siaran WhatsApp Massal
         $broadcastList = WaBroadcast::with('creator')->orderByDesc('id')->paginate(10, ['*'], 'broadcast_page');
 
-        return view('pengumuman.index', compact('pengumumanList', 'uptList', 'broadcastList'));
+        return view('pengumuman.index', compact('pengumumanList', 'uptList', 'broadcastList', 'roleCounts'));
     }
 
     public function store(Request $request)
@@ -193,26 +202,39 @@ class PengumumanController extends Controller
             'target_type' => 'required|string|in:all,role,upt',
             'target_roles' => 'nullable|array',
             'target_upt_ids' => 'nullable|array',
+            'filter_upt' => 'nullable',
             'kirim_ke_grup' => 'nullable',
             'pengumuman_id' => 'nullable|exists:pengumuman,id',
         ]);
 
-        $targetType = $request->input('target_type', 'all');
+        $targetType = $request->input('target_type', 'role');
         $targetRoles = $request->input('target_roles', []);
         $targetUptIds = $request->input('target_upt_ids', []);
+        $filterUpt = $request->boolean('filter_upt', false);
 
         $query = User::with('upt')->whereNotNull('id');
 
-        if ($targetType === 'role' && ! empty($targetRoles)) {
-            $query->whereIn('role', $targetRoles);
+        if ($targetType === 'all') {
+            // Semua pengguna terdaftar tanpa filter
+        } elseif ($targetType === 'upt') {
             if (! empty($targetUptIds)) {
                 $query->whereIn('upt_id', $targetUptIds);
             }
-        } elseif ($targetType === 'upt' && ! empty($targetUptIds)) {
-            $query->whereIn('upt_id', $targetUptIds);
+            if (! empty($targetRoles)) {
+                $query->whereIn('role', $targetRoles);
+            }
+        } else {
+            // target_type === 'role'
+            if (! empty($targetRoles)) {
+                $query->whereIn('role', $targetRoles);
+            }
+            // Hanya filter UPT jika user secara eksplisit mengaktifkan opsi filter UPT
+            if ($filterUpt && ! empty($targetUptIds)) {
+                $query->whereIn('upt_id', $targetUptIds);
+            }
         }
 
-        $users = $query->get();
+        $users = $query->orderBy('nama_lengkap')->get();
 
         if ($users->isEmpty()) {
             return back()->with('error', 'Tidak ditemukan operator / pengguna yang sesuai dengan kriteria filter sasaran.');
@@ -225,7 +247,7 @@ class PengumumanController extends Controller
             'pesan' => $request->input('pesan'),
             'target_type' => $targetType,
             'target_roles' => $targetRoles,
-            'target_upt_ids' => $targetUptIds,
+            'target_upt_ids' => $filterUpt ? $targetUptIds : null,
             'kirim_ke_grup' => $request->boolean('kirim_ke_grup'),
             'total_target' => $users->count(),
             'total_sent' => 0,
@@ -256,22 +278,42 @@ class PengumumanController extends Controller
      */
     public function getRecipientsCount(Request $request): JsonResponse
     {
-        $targetType = $request->input('target_type', 'all');
+        $targetType = $request->input('target_type', 'role');
         $targetRoles = $request->input('target_roles', []);
         $targetUptIds = $request->input('target_upt_ids', []);
+        $filterUpt = $request->boolean('filter_upt', false);
+
+        // Hitung total pengguna di database per masing-masing role
+        $roleCounts = [
+            'operator' => User::where('role', 'operator')->count(),
+            'operator_wilayah' => User::where('role', 'operator_wilayah')->count(),
+            'admin' => User::where('role', 'admin')->count(),
+            'viewer' => User::where('role', 'viewer')->count(),
+            'total' => User::count(),
+        ];
 
         $query = User::with('upt')->whereNotNull('id');
 
-        if ($targetType === 'role' && ! empty($targetRoles)) {
-            $query->whereIn('role', $targetRoles);
+        if ($targetType === 'all') {
+            // Semua pengguna tanpa filter
+        } elseif ($targetType === 'upt') {
             if (! empty($targetUptIds)) {
                 $query->whereIn('upt_id', $targetUptIds);
             }
-        } elseif ($targetType === 'upt' && ! empty($targetUptIds)) {
-            $query->whereIn('upt_id', $targetUptIds);
+            if (! empty($targetRoles)) {
+                $query->whereIn('role', $targetRoles);
+            }
+        } else {
+            // target_type === 'role'
+            if (! empty($targetRoles)) {
+                $query->whereIn('role', $targetRoles);
+            }
+            if ($filterUpt && ! empty($targetUptIds)) {
+                $query->whereIn('upt_id', $targetUptIds);
+            }
         }
 
-        $users = $query->get();
+        $users = $query->orderBy('nama_lengkap')->get();
 
         $validCount = 0;
         $missingCount = 0;
@@ -288,11 +330,22 @@ class PengumumanController extends Controller
                 $missingCount++;
             }
 
+            $roleLabel = match ($u->role) {
+                'operator' => 'Operator UPT',
+                'operator_wilayah' => 'Operator Wilayah',
+                'admin' => 'Administrator',
+                'viewer' => 'Viewer / Pemantau',
+                default => ucwords(str_replace('_', ' ', $u->role ?? 'Operator')),
+            };
+
             $userList[] = [
                 'id' => $u->id,
                 'nama' => $u->nama_lengkap ?: $u->username,
-                'role' => ucwords(str_replace('_', ' ', $u->role ?? 'Operator')),
+                'username' => $u->username,
+                'role' => $u->role,
+                'role_label' => $roleLabel,
                 'upt' => $u->upt?->nama_upt ?? 'Kantor Wilayah',
+                'upt_id' => $u->upt_id,
                 'has_wa' => $hasWa,
                 'no_wa' => $rawWa ?: '-',
             ];
@@ -303,6 +356,10 @@ class PengumumanController extends Controller
             'total' => $users->count(),
             'valid_wa' => $validCount,
             'missing_wa' => $missingCount,
+            'role_counts' => $roleCounts,
+            'target_type' => $targetType,
+            'target_roles' => $targetRoles,
+            'filter_upt' => $filterUpt,
             'users' => $userList,
         ]);
     }
