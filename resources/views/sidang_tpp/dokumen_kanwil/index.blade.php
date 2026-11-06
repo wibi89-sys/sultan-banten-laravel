@@ -134,92 +134,140 @@
                                 </td>
 
                                 <!-- Kolom Dokumen 1: Nota Dinas Permohonan ST -->
-                                <td>
+                                <td style="min-width: 210px;">
                                     @if($notaDinas)
-                                        <div class="d-flex align-items-center mb-1">
-                                            @if($notaDinas->status === 'signed')
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5" style="font-size: 10.5px;">
-                                                    <i class="fas fa-check-circle me-1"></i>Ditandatangani Basah
+                                        @if(!empty($notaDinas->file_signed))
+                                            <!-- KONDISI 1: SUDAH UPLOAD SCAN & BER-QR -->
+                                            <div class="p-2 rounded bg-success-subtle border border-success-subtle mb-1.5">
+                                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                                    <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10px;">
+                                                        <i class="fas fa-qrcode me-1"></i>Sudah Ber-QR
+                                                    </span>
+                                                    @if($notaDinas->kode_verifikasi)
+                                                        <small class="font-monospace text-muted fw-semibold" style="font-size: 9.5px;">{{ $notaDinas->kode_verifikasi }}</small>
+                                                    @endif
+                                                </div>
+                                                <div class="small fw-bold text-dark text-truncate" style="font-size: 11.5px;" title="{{ $notaDinas->nomor_dokumen }}">
+                                                    No: {{ $notaDinas->nomor_dokumen ?: '-' }}
+                                                </div>
+                                            </div>
+
+                                            <!-- TOMBOL DOWNLOAD UTAMA BER-QR -->
+                                            <a href="{{ asset($notaDinas->file_signed) }}" target="_blank" class="btn btn-success btn-sm w-100 fw-bold shadow-sm mb-1 d-flex align-items-center justify-content-center text-decoration-none" style="font-size: 11.5px; padding: 5px 8px;" title="Unduh / Buka Nota Dinas Resmi yang telah bertanda tangan dan dibubuhi QR">
+                                                <i class="fas fa-file-pdf fa-lg me-1.5 text-white"></i>
+                                                <span>Unduh Nota Dinas (Ber-QR)</span>
+                                            </a>
+
+                                            <!-- AKSI SEKUNDER -->
+                                            <div class="d-flex gap-1 justify-content-between">
+                                                <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Edit Data & Regenerate Draf Word">
+                                                    <i class="fas fa-edit me-1"></i>Edit Draf
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'nota_dinas', '{{ $notaDinas->nomor_dokumen }}')" title="Upload Ulang Scan & Pembubuhan QR">
+                                                    <i class="fas fa-sync-alt me-1"></i>Re-upload
+                                                </button>
+                                            </div>
+                                        @else
+                                            <!-- KONDISI 2: SUDAH ADA DRAF WORD TAPI BELUM SCAN TTD -->
+                                            <div class="d-flex align-items-center mb-1">
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-0.5" style="font-size: 10.5px;">
+                                                    <i class="fas fa-file-word me-1 text-primary"></i>Draf Word Siap TTD
                                                 </span>
-                                            @else
-                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" style="font-size: 10.5px;">
-                                                    <i class="fas fa-file-word me-1"></i>Draf Terbit (Word)
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="small fw-semibold text-truncate" style="max-width: 220px;" title="{{ $notaDinas->nomor_dokumen }}">
-                                            No: {{ $notaDinas->nomor_dokumen ?: '-' }}
-                                        </div>
-                                        <div class="mt-1.5 d-flex gap-1 flex-wrap">
-                                            <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Edit / Regenerate Nota Dinas">
-                                                <i class="fas fa-edit me-1"></i>Edit
-                                            </button>
-                                            @if(!empty($notaDinas->file_signed))
-                                                <a href="{{ asset($notaDinas->file_signed) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;" title="Lihat Scan PDF TTD Basah">
-                                                    <i class="fas fa-file-pdf me-1"></i>Scan TTD
-                                                </a>
-                                            @endif
-                                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'nota_dinas', '{{ $notaDinas->nomor_dokumen }}')" title="Upload berkas yang sudah ditandatangani basah">
-                                                <i class="fas fa-upload me-1"></i>Upload TTD
-                                            </button>
-                                        </div>
+                                            </div>
+                                            <div class="small fw-semibold text-truncate mb-1.5" style="max-width: 210px;" title="{{ $notaDinas->nomor_dokumen }}">
+                                                No: {{ $notaDinas->nomor_dokumen ?: '-' }}
+                                            </div>
+                                            <div class="d-flex flex-column gap-1">
+                                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2 fw-semibold d-flex align-items-center justify-content-center" style="font-size: 11px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Buka editor dan unduh draf Word">
+                                                    <i class="fas fa-file-word text-primary me-1.5"></i>Edit / Unduh Word
+                                                </button>
+                                                <button type="button" class="btn btn-warning btn-sm py-1 px-2 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'nota_dinas', '{{ $notaDinas->nomor_dokumen }}')" title="Upload scan PDF yang telah ditandatangani basah untuk dibubuhi QR">
+                                                    <i class="fas fa-qrcode me-1.5"></i>Upload &amp; Bubuhi QR
+                                                </button>
+                                            </div>
+                                        @endif
                                     @else
-                                        <div class="text-muted small mb-1">
+                                        <!-- KONDISI 3: BELUM DIBUAT SAMA SEKALI -->
+                                        <div class="text-muted small mb-1.5">
                                             <i class="fas fa-clock me-1 text-warning"></i>Belum dibuat
                                         </div>
-                                        <button type="button" class="btn btn-primary btn-sm py-1 px-2.5 shadow-sm fw-semibold" style="font-size: 11.5px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Buat Nota Dinas Permohonan Surat Tugas dari surat undangan UPT">
-                                            <i class="fas fa-magic me-1"></i>Buat Nota Dinas ST
+                                        <button type="button" class="btn btn-primary btn-sm py-1 px-2.5 shadow-sm fw-semibold d-flex align-items-center" style="font-size: 11.5px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Buat Nota Dinas Permohonan Surat Tugas dari surat undangan UPT">
+                                            <i class="fas fa-magic me-1.5"></i>Buat Nota Dinas ST
                                         </button>
                                     @endif
                                 </td>
 
                                 <!-- Kolom Dokumen 2: Laporan Sidang TPP Kanwil -->
-                                <td>
-                                    @if($lapKanwil)
-                                        <div class="d-flex align-items-center mb-1">
-                                            @if($lapKanwil->status === 'signed' || !empty($s->file_laporan_kakanwil))
-                                                <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10.5px;">
-                                                    <i class="fas fa-check-double me-1"></i>Selesai TTD
+                                <td style="min-width: 230px;">
+                                    @php
+                                        $finalLaporan = !empty($lapKanwil?->file_signed) ? $lapKanwil->file_signed : $s->file_laporan_kakanwil;
+                                    @endphp
+                                    @if(!empty($finalLaporan))
+                                        <!-- KONDISI 1: SUDAH ADA FILE FINAL / SUDAH BER-QR -->
+                                        <div class="p-2 rounded bg-success-subtle border border-success-subtle mb-1.5">
+                                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                                <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10px;">
+                                                    <i class="fas fa-qrcode me-1"></i>Sudah Ber-QR
                                                 </span>
-                                            @elseif($lapKanwil->metode_ttd === 'digital_qr')
-                                                <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-0.5" style="font-size: 10.5px;">
-                                                    <i class="fas fa-qrcode me-1"></i>Digital QR Terverifikasi
-                                                </span>
-                                            @else
-                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-0.5" style="font-size: 10.5px;">
-                                                    <i class="fas fa-file-signature me-1"></i>Siap TTD Manual
-                                                </span>
-                                            @endif
+                                                @if($lapKanwil?->kode_verifikasi)
+                                                    <small class="font-monospace text-muted fw-semibold" style="font-size: 9.5px;">{{ $lapKanwil->kode_verifikasi }}</small>
+                                                @endif
+                                            </div>
+                                            <div class="small fw-bold text-dark text-truncate" style="font-size: 11.5px;" title="{{ $lapKanwil?->nomor_dokumen ?: $s->nomor_laporan_kanwil }}">
+                                                No: {{ $lapKanwil?->nomor_dokumen ?: ($s->nomor_laporan_kanwil ?: 'Laporan Final') }}
+                                            </div>
+                                            <div class="text-muted text-truncate" style="font-size: 10.5px;">
+                                                {{ $lapKanwil?->materi_agenda ? Str::limit($lapKanwil->materi_agenda, 30) : 'Materi Sidang TPP' }}
+                                            </div>
                                         </div>
-                                        <div class="small fw-semibold text-truncate" style="max-width: 250px;" title="{{ $lapKanwil->nomor_dokumen }}">
-                                            No: {{ $lapKanwil->nomor_dokumen ?: ($s->nomor_laporan_kanwil ?: 'Belum bernomor') }}
-                                        </div>
-                                        <div class="text-muted" style="font-size: 11px;">
-                                            {{ $lapKanwil->materi_agenda ? Str::limit($lapKanwil->materi_agenda, 38) : 'Materi Sidang TPP' }}
-                                        </div>
-                                        <div class="mt-1.5 d-flex gap-1 flex-wrap">
-                                            <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Buka editor / perbarui Laporan Sidang TPP">
-                                                <i class="fas fa-edit me-1"></i>Edit Laporan
+
+                                        <!-- TOMBOL DOWNLOAD UTAMA BER-QR -->
+                                        <a href="{{ asset($finalLaporan) }}" target="_blank" class="btn btn-success btn-sm w-100 fw-bold shadow-sm mb-1 d-flex align-items-center justify-content-center text-decoration-none" style="font-size: 11.5px; padding: 5px 8px;" title="Unduh / Buka Laporan Sidang TPP Kanwil Resmi yang telah dibubuhi QR">
+                                            <i class="fas fa-file-pdf fa-lg me-1.5 text-white"></i>
+                                            <span>Unduh Laporan (Ber-QR)</span>
+                                        </a>
+
+                                        <!-- AKSI SEKUNDER -->
+                                        <div class="d-flex gap-1 justify-content-between">
+                                            <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Edit Laporan / Generate Ulang Word">
+                                                <i class="fas fa-edit me-1"></i>Edit Draf
                                             </button>
-                                            @if(!empty($s->file_laporan_kakanwil))
-                                                <a href="{{ asset($s->file_laporan_kakanwil) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;" title="Lihat Laporan Final">
-                                                    <i class="fas fa-file-pdf me-1"></i>Laporan Final
-                                                </a>
-                                            @endif
-                                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'laporan_tpp', '{{ $lapKanwil->nomor_dokumen }}')" title="Upload laporan yang telah ditandatangani basah">
-                                                <i class="fas fa-upload me-1"></i>Upload TTD
+                                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'laporan_tpp', '{{ $lapKanwil?->nomor_dokumen ?: $s->nomor_laporan_kanwil }}')" title="Upload Ulang Scan Laporan & Pembubuhan QR">
+                                                <i class="fas fa-sync-alt me-1"></i>Re-upload
+                                            </button>
+                                        </div>
+                                    @elseif($lapKanwil)
+                                        <!-- KONDISI 2: DRAF LAPORAN SUDAH DIBUAT TAPI BELUM SCAN TTD -->
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-0.5" style="font-size: 10.5px;">
+                                                <i class="fas fa-file-alt me-1 text-primary"></i>Draf Siap TTD Manual
+                                            </span>
+                                        </div>
+                                        <div class="small fw-semibold text-truncate mb-1" style="max-width: 230px;" title="{{ $lapKanwil->nomor_dokumen }}">
+                                            No: {{ $lapKanwil->nomor_dokumen ?: 'Belum bernomor' }}
+                                        </div>
+                                        <div class="text-muted text-truncate mb-1.5" style="font-size: 11px;">
+                                            {{ $lapKanwil->materi_agenda ? Str::limit($lapKanwil->materi_agenda, 30) : 'Materi Sidang TPP' }}
+                                        </div>
+                                        <div class="d-flex flex-column gap-1">
+                                            <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2 fw-semibold d-flex align-items-center justify-content-center" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Buka editor / perbarui Laporan Sidang TPP">
+                                                <i class="fas fa-edit me-1.5"></i>Edit / Unduh Word
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-sm py-1 px-2 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'laporan_tpp', '{{ $lapKanwil->nomor_dokumen }}')" title="Upload scan PDF yang telah ditandatangani basah untuk dibubuhi QR">
+                                                <i class="fas fa-qrcode me-1.5"></i>Upload &amp; Bubuhi QR
                                             </button>
                                         </div>
                                     @else
+                                        <!-- KONDISI 3: BELUM ADA LAPORAN KANWIL -->
                                         @if($hasBa)
-                                            <div class="text-success small mb-1">
+                                            <div class="text-success small mb-1.5">
                                                 <i class="fas fa-file-pdf text-danger me-1"></i>BA UPT Tersedia
                                             </div>
-                                            <button type="button" class="btn btn-success btn-sm py-1 px-2.5 shadow-sm fw-semibold" style="font-size: 11.5px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Generate Laporan Pelaksanaan Sidang TPP Kanwil dari Berita Acara UPT">
-                                                <i class="fas fa-bolt me-1"></i>Buat Laporan TPP (AI/Manual)
+                                            <button type="button" class="btn btn-success btn-sm py-1 px-2.5 shadow-sm fw-semibold d-flex align-items-center" style="font-size: 11.5px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Generate Laporan Pelaksanaan Sidang TPP Kanwil dari Berita Acara UPT">
+                                                <i class="fas fa-bolt me-1.5"></i>Buat Laporan TPP (AI/Manual)
                                             </button>
                                         @else
-                                            <div class="text-muted small mb-1" style="font-size: 11px;">
+                                            <div class="text-muted small mb-1.5" style="font-size: 11px;">
                                                 <i class="fas fa-hourglass-half me-1 text-warning"></i>Menunggu UPT Upload BA
                                             </div>
                                             <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Buat Laporan secara manual tanpa BA">
@@ -231,9 +279,14 @@
 
                                 <!-- Kolom Aksi & Otentifikasi -->
                                 <td class="text-center">
-                                    @if($lapKanwil)
-                                        <a href="{{ $lapKanwil->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-info btn-xs py-1 px-2 mb-1 w-100 fw-semibold" style="font-size: 11px;" title="Buka Halaman Otentifikasi QR Code">
-                                            <i class="fas fa-qrcode me-1"></i>Cek Otentifikasi QR
+                                    @if($lapKanwil?->kode_verifikasi)
+                                        <a href="{{ $lapKanwil->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-info btn-xs py-1 px-2 mb-1 w-100 fw-semibold" style="font-size: 10.5px;" title="Buka Halaman Otentifikasi QR Laporan">
+                                            <i class="fas fa-qrcode me-1"></i>QR Laporan
+                                        </a>
+                                    @endif
+                                    @if($notaDinas?->kode_verifikasi)
+                                        <a href="{{ $notaDinas->getPublicVerificationUrl() }}" target="_blank" class="btn btn-outline-secondary btn-xs py-1 px-2 mb-1 w-100 fw-semibold" style="font-size: 10.5px;" title="Buka Halaman Otentifikasi QR Nota Dinas">
+                                            <i class="fas fa-qrcode me-1"></i>QR Nota Dinas
                                         </a>
                                     @endif
                                     <div class="d-flex justify-content-center gap-1 mt-1">

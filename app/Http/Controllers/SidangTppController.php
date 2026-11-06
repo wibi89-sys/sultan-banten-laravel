@@ -338,7 +338,7 @@ class SidangTppController extends Controller
     public function show(Request $request, int $id): View|JsonResponse
     {
         $this->checkAccess();
-        $sidang = SidangTpp::with(['upt', 'creator', 'verifier', 'usulan'])->findOrFail($id);
+        $sidang = SidangTpp::with(['upt', 'creator', 'verifier', 'usulan', 'naskahKanwil'])->findOrFail($id);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

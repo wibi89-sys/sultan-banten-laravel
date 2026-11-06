@@ -25,9 +25,12 @@ class SidangTppFeatureTest extends TestCase
         $this->upt = Upt::where('nama_upt', 'like', '%Pandeglang%')->first()
             ?? Upt::firstOrCreate(['nama_upt' => 'RUTAN PANDEGLANG TEST'], ['alamat' => 'Test', 'kapasitas' => 100]);
 
-        // Kanwil user: upt_id is null
-        $this->userKanwil = User::whereNull('upt_id')->first()
-            ?? User::factory()->create(['upt_id' => null, 'role' => 'admin']);
+        // Kanwil user: upt_id is null, non-admin operator wilayah
+        $this->userKanwil = User::whereNull('upt_id')->where('role', 'operator_wilayah')->first()
+            ?? User::factory()->create(['upt_id' => null, 'role' => 'operator_wilayah']);
+        $this->userKanwil->role = 'operator_wilayah';
+        $this->userKanwil->akses_sidang_tpp = true;
+        $this->userKanwil->save();
 
         // UPT user: upt_id is set
         $this->userUpt = User::where('upt_id', $this->upt->id)->first()
