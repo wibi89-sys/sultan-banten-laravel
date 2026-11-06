@@ -30,7 +30,18 @@ class GeminiAiService
         try {
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$chosenModel}:generateContent?key={$key}";
 
-            $response = Http::timeout(15)->post($endpoint, [
+            $generationConfig = [
+                'temperature' => 0.1,
+                'maxOutputTokens' => 60,
+            ];
+
+            if (str_contains(strtolower($chosenModel), '2.5-flash')) {
+                $generationConfig['thinkingConfig'] = [
+                    'thinkingBudget' => 0,
+                ];
+            }
+
+            $response = Http::timeout(25)->connectTimeout(10)->post($endpoint, [
                 'contents' => [
                     [
                         'parts' => [
@@ -38,10 +49,7 @@ class GeminiAiService
                         ],
                     ],
                 ],
-                'generationConfig' => [
-                    'temperature' => 0.1,
-                    'maxOutputTokens' => 60,
-                ],
+                'generationConfig' => $generationConfig,
             ]);
 
             if ($response->successful()) {
@@ -201,6 +209,17 @@ Ekstrak data penting berikut dalam format JSON:
 Hanya kembalikan objek JSON valid tanpa penjelasan tambahan.
 PROMPT;
 
+            $generationConfig = [
+                'temperature' => 0.1,
+                'responseMimeType' => 'application/json',
+            ];
+
+            if (str_contains(strtolower($chosenModel), '2.5-flash')) {
+                $generationConfig['thinkingConfig'] = [
+                    'thinkingBudget' => 0,
+                ];
+            }
+
             $payload = [
                 'contents' => [
                     [
@@ -215,13 +234,11 @@ PROMPT;
                         ],
                     ],
                 ],
-                'generationConfig' => [
-                    'temperature' => 0.1,
-                    'responseMimeType' => 'application/json',
-                ],
+                'generationConfig' => $generationConfig,
             ];
 
-            $response = Http::timeout(35)->post($endpoint, $payload);
+            @set_time_limit(120);
+            $response = Http::timeout(60)->connectTimeout(15)->post($endpoint, $payload);
 
             if (! $response->successful()) {
                 $err = $response->json();
@@ -260,9 +277,14 @@ PROMPT;
         } catch (\Throwable $e) {
             Log::error('Gemini extractUndanganPdf error: '.$e->getMessage());
 
+            $errMsg = $e->getMessage();
+            if (str_contains($errMsg, 'timed out') || str_contains($errMsg, 'cURL error 28')) {
+                $errMsg = 'Waktu analisis AI habis (timeout). Silakan periksa ukuran PDF atau lanjutkan dengan pengisian form secara manual.';
+            }
+
             return [
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: '.$e->getMessage(),
+                'message' => 'Kendala Analisis AI: '.$errMsg,
             ];
         }
     }
@@ -360,6 +382,17 @@ PENTING:
 - Hanya kembalikan teks JSON valid tanpa awalan atau akhiran markdown penjelasan.
 PROMPT;
 
+            $generationConfig = [
+                'temperature' => 0.1,
+                'responseMimeType' => 'application/json',
+            ];
+
+            if (str_contains(strtolower($chosenModel), '2.5-flash')) {
+                $generationConfig['thinkingConfig'] = [
+                    'thinkingBudget' => 0,
+                ];
+            }
+
             $payload = [
                 'contents' => [
                     [
@@ -374,13 +407,11 @@ PROMPT;
                         ],
                     ],
                 ],
-                'generationConfig' => [
-                    'temperature' => 0.1,
-                    'responseMimeType' => 'application/json',
-                ],
+                'generationConfig' => $generationConfig,
             ];
 
-            $response = Http::timeout(45)->post($endpoint, $payload);
+            @set_time_limit(180);
+            $response = Http::timeout(90)->connectTimeout(15)->post($endpoint, $payload);
 
             if (! $response->successful()) {
                 $err = $response->json();
@@ -411,9 +442,14 @@ PROMPT;
         } catch (\Throwable $e) {
             Log::error('Gemini analyzeBeritaAcaraPdf error: '.$e->getMessage());
 
+            $errMsg = $e->getMessage();
+            if (str_contains($errMsg, 'timed out') || str_contains($errMsg, 'cURL error 28')) {
+                $errMsg = 'Waktu analisis AI habis (timeout). Berkas PDF Berita Acara mungkin terlalu tebal/banyak halaman, atau server Google AI sedang lambat. Silakan gunakan template draf yang sudah tersedia dan lengkapi secara manual, atau coba beberapa saat lagi.';
+            }
+
             return [
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem saat menganalisis BA: '.$e->getMessage(),
+                'message' => 'Kendala Analisis AI: '.$errMsg,
             ];
         }
     }
