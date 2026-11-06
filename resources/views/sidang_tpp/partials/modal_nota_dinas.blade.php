@@ -1,8 +1,9 @@
 @php
+    $sidang = $sidang ?? null;
     $aiSetting = \App\Models\AiSetting::getFirst();
     $pegawaiKanwil = \App\Models\KanwilPegawai::where('is_active', true)->orderBy('urutan')->orderBy('nama')->get();
-    $currentSidangId = isset($sidang) && $sidang ? $sidang->id : 0;
-    $hasPdfUndangan = isset($sidang) && $sidang && !empty($sidang->file_undangan);
+    $currentSidangId = $sidang ? $sidang->id : 0;
+    $hasPdfUndangan = $sidang && !empty($sidang->file_undangan);
 @endphp
 
 <!-- MODAL: Generate Nota Dinas Permohonan Surat Tugas -->
@@ -34,17 +35,14 @@
                                     </small>
                                 </div>
                                 <div>
-                                    <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm" id="btnEkstrakAiModal" onclick="ekstrakUndanganAiModal({{ $currentSidangId }})">
-                                        <i class="fas fa-magic me-1"></i>Analisis Undangan via AI
-                                    </button>
-                                    @elseif(!$hasPdfUndangan)
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle py-1.5 px-2">
-                                        <i class="fas fa-exclamation-circle me-1"></i>Belum Ada Berkas PDF Undangan (Gunakan Input Manual)
-                                    </span>
+                                    @if($aiSetting->is_active && !empty($aiSetting->api_key))
+                                        <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm" id="btnEkstrakAiModal" onclick="ekstrakUndanganAiModal()">
+                                            <i class="fas fa-magic me-1"></i>Analisis Undangan via AI
+                                        </button>
                                     @else
-                                    <span class="badge bg-light text-secondary border py-1.5 px-2">
-                                        <i class="fas fa-keyboard me-1"></i>Input Manual Siap Digunakan
-                                    </span>
+                                        <span class="badge bg-light text-secondary border py-1.5 px-2">
+                                            <i class="fas fa-keyboard me-1"></i>Input Manual Siap Digunakan
+                                        </span>
                                     @endif
                                 </div>
                             </div>
@@ -75,7 +73,7 @@
                         </div>
                         <div class="col-md-8">
                             <label for="nd_hal" class="form-label small fw-semibold">Hal / Perihal <span class="text-danger">*</span></label>
-                            <input type="text" name="hal_surat" id="nd_hal" class="form-control form-control-sm" value="Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di {{ $sidang->upt?->nama_upt }}" required>
+                            <input type="text" name="hal_surat" id="nd_hal" class="form-control form-control-sm" value="Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di {{ $sidang?->upt?->nama_upt }}" required>
                         </div>
                     </div>
 
@@ -86,15 +84,15 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
                             <label for="nd_upt_nama" class="form-label small fw-semibold">Nama UPT Pengirim <span class="text-danger">*</span></label>
-                            <input type="text" name="upt_nama" id="nd_upt_nama" class="form-control form-control-sm" value="{{ $sidang->upt?->nama_upt }}" required>
+                            <input type="text" name="upt_nama" id="nd_upt_nama" class="form-control form-control-sm" value="{{ $sidang?->upt?->nama_upt }}" required>
                         </div>
                         <div class="col-md-4">
                             <label for="nd_nomor_undangan" class="form-label small fw-semibold">Nomor Surat Undangan UPT <span class="text-danger">*</span></label>
-                            <input type="text" name="nomor_undangan" id="nd_nomor_undangan" class="form-control form-control-sm" value="{{ $sidang->nomor_undangan }}" required>
+                            <input type="text" name="nomor_undangan" id="nd_nomor_undangan" class="form-control form-control-sm" value="{{ $sidang?->nomor_undangan }}" required>
                         </div>
                         <div class="col-md-4">
                             <label for="nd_tanggal_surat_upt" class="form-label small fw-semibold">Tanggal Surat Undangan <span class="text-danger">*</span></label>
-                            <input type="text" name="tanggal_surat_upt" id="nd_tanggal_surat_upt" class="form-control form-control-sm" value="{{ $sidang->tanggal_surat ? $sidang->tanggal_surat->translatedFormat('d F Y') : '-' }}" required>
+                            <input type="text" name="tanggal_surat_upt" id="nd_tanggal_surat_upt" class="form-control form-control-sm" value="{{ $sidang?->tanggal_surat ? $sidang->tanggal_surat->translatedFormat('d F Y') : '-' }}" required>
                         </div>
                         <div class="col-md-12">
                             <label for="nd_hal_undangan" class="form-label small fw-semibold">Perihal Surat Undangan</label>
@@ -109,15 +107,15 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
                             <label for="nd_hari_tanggal" class="form-label small fw-semibold">Hari / Tanggal Sidang <span class="text-danger">*</span></label>
-                            <input type="text" name="hari_tanggal_pelaksanaan" id="nd_hari_tanggal" class="form-control form-control-sm" value="{{ $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-' }}" required>
+                            <input type="text" name="hari_tanggal_pelaksanaan" id="nd_hari_tanggal" class="form-control form-control-sm" value="{{ $sidang?->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-' }}" required>
                         </div>
                         <div class="col-md-4">
                             <label for="nd_jam" class="form-label small fw-semibold">Pukul / Jam Sidang <span class="text-danger">*</span></label>
-                            <input type="text" name="jam_pelaksanaan" id="nd_jam" class="form-control form-control-sm" value="{{ substr((string)$sidang->jam_mulai, 0, 5) }} s.d selesai" required>
+                            <input type="text" name="jam_pelaksanaan" id="nd_jam" class="form-control form-control-sm" value="{{ $sidang ? (substr((string)$sidang->jam_mulai, 0, 5) . ' s.d selesai') : '09:00 s.d selesai' }}" required>
                         </div>
                         <div class="col-md-4">
                             <label for="nd_tempat" class="form-label small fw-semibold">Tempat / Ruangan Pelaksanaan <span class="text-danger">*</span></label>
-                            <input type="text" name="tempat_pelaksanaan" id="nd_tempat" class="form-control form-control-sm" value="{{ !empty($sidang->link_daring) ? 'Daring / Zoom Cloud Meeting' : 'Ruang Sidang TPP ' . $sidang->upt?->nama_upt }}" required>
+                            <input type="text" name="tempat_pelaksanaan" id="nd_tempat" class="form-control form-control-sm" value="{{ $sidang ? (!empty($sidang->link_daring) ? 'Daring / Zoom Cloud Meeting' : 'Ruang Sidang TPP ' . ($sidang->upt?->nama_upt ?? '')) : '' }}" required>
                         </div>
                     </div>
 

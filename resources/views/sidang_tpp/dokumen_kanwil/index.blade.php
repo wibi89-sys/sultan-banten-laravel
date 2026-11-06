@@ -517,15 +517,45 @@
     }
 
     function bukaModalNotaDinas(sidangId) {
-        // Panggil fungsi modal nota dinas yang sudah ada
-        if (typeof openModalNotaDinas === 'function') {
-            openModalNotaDinas(sidangId);
-        } else {
-            const modalEl = document.getElementById('modalNotaDinas');
-            if (modalEl) {
-                const m = new bootstrap.Modal(modalEl);
-                m.show();
-            }
+        const s = getSidangById(sidangId);
+        if (!s) return;
+
+        const form = document.getElementById('formNotaDinasModal');
+        if (form) {
+            form.action = '/sidang-tpp/' + sidangId + '/nota-dinas/generate';
+            form.dataset.sidangId = sidangId;
+        }
+
+        const uptNama = s.upt ? s.upt.nama_upt : '';
+        if (document.getElementById('nd_upt_nama')) document.getElementById('nd_upt_nama').value = uptNama;
+        if (document.getElementById('nd_hal')) document.getElementById('nd_hal').value = 'Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di ' + uptNama;
+        if (document.getElementById('nd_nomor_undangan')) document.getElementById('nd_nomor_undangan').value = s.nomor_undangan || '';
+
+        if (document.getElementById('nd_tanggal_surat_upt')) {
+            document.getElementById('nd_tanggal_surat_upt').value = s.tanggal_surat ? new Date(s.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+        }
+        if (document.getElementById('nd_hari_tanggal')) {
+            document.getElementById('nd_hari_tanggal').value = s.tanggal_sidang ? new Date(s.tanggal_sidang).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+        }
+        if (document.getElementById('nd_jam')) {
+            document.getElementById('nd_jam').value = s.jam_mulai ? (s.jam_mulai.substring(0, 5) + ' s.d selesai') : '09:00 s.d selesai';
+        }
+        if (document.getElementById('nd_tempat')) {
+            document.getElementById('nd_tempat').value = s.link_daring ? 'Daring / Zoom Cloud Meeting' : ('Ruang Sidang TPP ' + uptNama);
+        }
+
+        const notaDinas = s.naskah_kanwil ? s.naskah_kanwil.find(n => n.jenis_dokumen === 'nota_dinas') : null;
+        if (notaDinas && notaDinas.nomor_dokumen) {
+            if (document.getElementById('nd_nomor')) document.getElementById('nd_nomor').value = notaDinas.nomor_dokumen;
+        }
+
+        const alertArea = document.getElementById('aiExtractionAlert');
+        if (alertArea) alertArea.classList.add('d-none');
+
+        const modalEl = document.getElementById('modalNotaDinas');
+        if (modalEl) {
+            const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+            m.show();
         }
     }
 </script>
