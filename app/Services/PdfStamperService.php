@@ -37,6 +37,14 @@ class PdfStamperService
             require_once $tcpdfPath;
         }
 
+        // Pastikan FPDI selalu dimuat dari app/Libraries/fpdi jika belum tersedia dari Composer
+        if (! class_exists('\setasign\Fpdi\Tcpdf\Fpdi')) {
+            $fpdiAutoload = app_path('Libraries/fpdi/autoload.php');
+            if (file_exists($fpdiAutoload)) {
+                require_once $fpdiAutoload;
+            }
+        }
+
         try {
             $pdf = new Fpdi;
             $pdf->setPrintHeader(false);
@@ -51,6 +59,14 @@ class PdfStamperService
             $targetPage = $options['target_page'] ?? 'last';
             $percentX = isset($options['percent_x']) ? (float) $options['percent_x'] : 6.0;
             $percentY = isset($options['percent_y']) ? (float) $options['percent_y'] : 86.0;
+
+            // Proteksi nilai non-finite / NaN / Infinity / di luar batas persentase
+            if (! is_finite($percentX) || $percentX < 0 || $percentX > 100) {
+                $percentX = 6.0;
+            }
+            if (! is_finite($percentY) || $percentY < 0 || $percentY > 100) {
+                $percentY = 86.0;
+            }
             $qrSize = isset($options['qr_size']) ? (float) $options['qr_size'] : 17.0;
             $withBadge = ! isset($options['with_badge']) || (bool) $options['with_badge'];
 

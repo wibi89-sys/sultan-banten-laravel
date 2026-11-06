@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\SidangTpp;
+use App\Models\TppNaskahKanwil;
 use App\Models\Upt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class SidangTppFeatureTest extends TestCase
@@ -347,5 +349,71 @@ class SidangTppFeatureTest extends TestCase
         $resKanwil->assertOk();
         $resKanwil->assertSee('modalRincianWbpKanwil');
         $resKanwil->assertSee('Lihat Rincian Warga Binaan');
+    }
+
+    public function test_kanwil_can_upload_signed_pdf_and_stamp_qr(): void
+    {
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-STAMP-TEST-01',
+            'tanggal_surat' => '2026-10-23',
+            'tanggal_sidang' => '2026-10-24',
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Test Stamping QR Sidang',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'status_sidang' => 'dijadwalkan',
+        ]);
+
+        // Generate dummy valid PDF using TCPDF
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->setPrintHeader(false);
+        $tcpdf->setPrintFooter(false);
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Surat Scan Tanda Tangan Basah Asli');
+        $tempPdf = storage_path('app/temp_upload_test.pdf');
+        $tcpdf->Output($tempPdf, 'F');
+
+        $uploadedFile = new UploadedFile(
+            $tempPdf,
+            'scan_nota_dinas_ttd.pdf',
+            'application/pdf',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->userKanwil)->post(
+            route('sidang-tpp.dokumen-kanwil.upload-signed', $sidang->id),
+            [
+                'file_signed' => $uploadedFile,
+                'jenis_dokumen' => 'nota_dinas',
+                'nomor_dokumen' => 'ND-STAMP-001',
+                'bubuhi_qr' => '1',
+                'qr_percent_x' => 10,
+                'qr_percent_y' => 85,
+                'qr_target_page' => 'last',
+                'qr_style' => 'badge',
+            ]
+        );
+
+        $response->assertSessionHas('success');
+
+        $naskah = TppNaskahKanwil::where('sidang_tpp_id', $sidang->id)
+            ->where('jenis_dokumen', 'nota_dinas')
+            ->first();
+
+        $this->assertNotNull($naskah);
+        $this->assertEquals('signed', $naskah->status);
+        $this->assertEquals('digital_qr', $naskah->metode_ttd);
+        $this->assertNotEmpty($naskah->file_signed);
+
+        $fullPath = public_path($naskah->file_signed);
+        $this->assertFileExists($fullPath);
+        $this->assertGreaterThan(0, filesize($fullPath));
+
+        // Cleanup
+        @unlink($tempPdf);
+        @unlink($fullPath);
     }
 }

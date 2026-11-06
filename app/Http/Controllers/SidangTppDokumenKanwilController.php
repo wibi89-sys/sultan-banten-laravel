@@ -301,8 +301,18 @@ class SidangTppDokumenKanwilController extends Controller
 
         if ($bubuhiQr) {
             $qrUrl = $naskah->getPublicVerificationUrl();
-            $percentX = (float) $request->input('qr_percent_x', 6.0);
-            $percentY = (float) $request->input('qr_percent_y', 86.0);
+            $rawX = $request->input('qr_percent_x');
+            $rawY = $request->input('qr_percent_y');
+            $percentX = is_numeric($rawX) ? (float) $rawX : 6.0;
+            $percentY = is_numeric($rawY) ? (float) $rawY : 86.0;
+
+            if (! is_finite($percentX) || $percentX < 0 || $percentX > 100) {
+                $percentX = 6.0;
+            }
+            if (! is_finite($percentY) || $percentY < 0 || $percentY > 100) {
+                $percentY = 86.0;
+            }
+
             $targetPage = $request->input('qr_target_page', 'last');
             $withBadge = ($request->input('qr_style', 'badge') === 'badge');
 

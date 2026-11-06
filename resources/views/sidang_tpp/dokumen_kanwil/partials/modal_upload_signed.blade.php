@@ -223,13 +223,24 @@
         document.removeEventListener('touchend', onStampTouchEnd);
     }
 
+    function getPaperDimensions() {
+        const paper = document.getElementById('stampPaperSheet');
+        const w = (paper && paper.clientWidth > 50) ? paper.clientWidth : 210;
+        const h = (paper && paper.clientHeight > 50) ? paper.clientHeight : 297;
+        return { w, h };
+    }
+
     function moveStampBadgeTo(targetLeft, targetTop) {
         const paper = document.getElementById('stampPaperSheet');
         const badge = document.getElementById('stampBadgeItem');
         if (!paper || !badge) return;
 
-        const maxLeft = paper.clientWidth - badge.offsetWidth;
-        const maxTop = paper.clientHeight - badge.offsetHeight;
+        const dim = getPaperDimensions();
+        const badgeW = badge.offsetWidth || 72;
+        const badgeH = badge.offsetHeight || 28;
+
+        const maxLeft = Math.max(10, dim.w - badgeW);
+        const maxTop = Math.max(10, dim.h - badgeH);
 
         const clampedLeft = Math.max(2, Math.min(maxLeft - 2, targetLeft));
         const clampedTop = Math.max(2, Math.min(maxTop - 2, targetTop));
@@ -237,15 +248,21 @@
         badge.style.left = clampedLeft + 'px';
         badge.style.top = clampedTop + 'px';
 
-        const percentX = Math.round((clampedLeft / paper.clientWidth) * 100);
-        const percentY = Math.round((clampedTop / paper.clientHeight) * 100);
+        let percentX = Math.round((clampedLeft / dim.w) * 100);
+        let percentY = Math.round((clampedTop / dim.h) * 100);
+
+        if (!isFinite(percentX) || isNaN(percentX) || percentX < 0 || percentX > 100) percentX = 6;
+        if (!isFinite(percentY) || isNaN(percentY) || percentY < 0 || percentY > 100) percentY = 86;
 
         document.getElementById('up_qr_percent_x').value = percentX;
         document.getElementById('up_qr_percent_y').value = percentY;
 
-        document.getElementById('stampCoordIndicator').innerHTML = `
-            <i class="fas fa-crosshairs text-danger me-1"></i>Posisi Cap: X: ${percentX}%, Y: ${percentY}% (Kustom)
-        `;
+        const indicator = document.getElementById('stampCoordIndicator');
+        if (indicator) {
+            indicator.innerHTML = `
+                <i class="fas fa-crosshairs text-danger me-1"></i>Posisi Cap: X: ${percentX}%, Y: ${percentY}% (Kustom)
+            `;
+        }
     }
 
     function handlePaperClick(e) {
@@ -258,8 +275,10 @@
         const clickY = e.clientY - rect.top;
 
         // Pusatkan badge pada titik klik
-        const targetLeft = clickX - (badge.offsetWidth / 2);
-        const targetTop = clickY - (badge.offsetHeight / 2);
+        const badgeW = badge.offsetWidth || 72;
+        const badgeH = badge.offsetHeight || 28;
+        const targetLeft = clickX - (badgeW / 2);
+        const targetTop = clickY - (badgeH / 2);
 
         moveStampBadgeTo(targetLeft, targetTop);
     }
@@ -269,14 +288,18 @@
         const badge = document.getElementById('stampBadgeItem');
         if (!paper || !badge) return;
 
-        const targetLeft = (percentX / 100) * paper.clientWidth;
-        const targetTop = (percentY / 100) * paper.clientHeight;
+        const dim = getPaperDimensions();
+        const targetLeft = (percentX / 100) * dim.w;
+        const targetTop = (percentY / 100) * dim.h;
 
         moveStampBadgeTo(targetLeft, targetTop);
 
-        document.getElementById('stampCoordIndicator').innerHTML = `
-            <i class="fas fa-crosshairs text-danger me-1"></i>Posisi Cap: ${label} (X: ${percentX}%, Y: ${percentY}%)
-        `;
+        const indicator = document.getElementById('stampCoordIndicator');
+        if (indicator) {
+            indicator.innerHTML = `
+                <i class="fas fa-crosshairs text-danger me-1"></i>Posisi Cap: ${label} (X: ${percentX}%, Y: ${percentY}%)
+            `;
+        }
     }
 
     function updateStampModelPreview(model) {
@@ -320,5 +343,14 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         initStampDraggable();
+
+        const modalEl = document.getElementById('modalUploadSigned');
+        if (modalEl) {
+            modalEl.addEventListener('shown.bs.modal', function() {
+                const curX = parseFloat(document.getElementById('up_qr_percent_x').value) || 6;
+                const curY = parseFloat(document.getElementById('up_qr_percent_y').value) || 86;
+                setStampPosition(curX, curY, 'Kiri Bawah');
+            });
+        }
     });
 </script>
