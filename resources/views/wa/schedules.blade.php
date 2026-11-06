@@ -265,32 +265,73 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="form-label small fw-semibold mb-0">Template Pesan Undangan Sidang TPP</label>
-                        <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetTppTemplate()">
-                            <i class="fas fa-undo me-1"></i>Reset ke Default
+                <ul class="nav nav-tabs nav-tabs-sm mb-3" id="tabTppTemplate" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active small py-1.5 px-3 fw-semibold" id="tab-tpp-undangan-tab" data-bs-toggle="tab" data-bs-target="#tab-tpp-undangan" type="button" role="tab">
+                            <i class="fas fa-bullhorn me-1 text-primary"></i>1. Template Undangan Sidang (Ke Grup WA)
                         </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link small py-1.5 px-3 fw-semibold" id="tab-tpp-ba-tab" data-bs-toggle="tab" data-bs-target="#tab-tpp-ba" type="button" role="tab">
+                            <i class="fas fa-file-upload me-1 text-warning"></i>2. Template Pengingat Upload BA (Ke Operator UPT)
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="tabTppContent">
+                    <!-- Tab 1: Template Undangan Sidang (Grup) -->
+                    <div class="tab-pane fade show active" id="tab-tpp-undangan" role="tabpanel">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold mb-0 text-primary">Format Pesan: Undangan Sidang TPP ke Grup WhatsApp</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetTppTemplate()">
+                                    <i class="fas fa-undo me-1"></i>Reset ke Default
+                                </button>
+                            </div>
+                            <textarea name="template_sidang_tpp" id="textarea_template_sidang_tpp" class="form-control form-control-sm font-monospace" rows="9">{{ $waSettings->template_sidang_tpp ?: $defaultTppTemplate }}</textarea>
+                            
+                            <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
+                                <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-primary"></i>Variabel Tag Tersedia:</span>
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-white text-dark border"><code>{nama_upt}</code> Nama UPT</span>
+                                    <span class="badge bg-white text-dark border"><code>{hari_tanggal}</code> Hari &amp; Tanggal</span>
+                                    <span class="badge bg-white text-dark border"><code>{jam_mulai}</code> Jam Mulai</span>
+                                    <span class="badge bg-white text-dark border"><code>{jam_selesai}</code> Jam Selesai</span>
+                                    <span class="badge bg-white text-dark border"><code>{agenda}</code> Agenda Sidang</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_surat}</code> Link Unduh Surat (PDF)</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_daring}</code> Link Daring (Zoom/Meet)</span>
+                                    <span class="badge bg-white text-dark border"><code>{meeting_id}</code> Meeting ID</span>
+                                    <span class="badge bg-white text-dark border"><code>{passcode}</code> Passcode</span>
+                                    <span class="badge bg-white text-dark border"><code>{blok_online}</code> Blok Info Sidang Daring</span>
+                                    <span class="badge bg-white text-dark border"><code>{nomor_undangan}</code> No. Surat</span>
+                                    <span class="badge bg-white text-dark border"><code>{metode}</code> Metode Sidang</span>
+                                    <span class="badge bg-white text-dark border"><code>{total_usulan}</code> Total WBP</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_detail}</code> Link Web Sultan Banten</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <textarea name="template_sidang_tpp" id="textarea_template_sidang_tpp" class="form-control form-control-sm font-monospace" rows="9" required>{{ $waSettings->template_sidang_tpp ?: $defaultTppTemplate }}</textarea>
-                    
-                    <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
-                        <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-primary"></i>Variabel Tag Tersedia:</span>
-                        <div class="mt-1 d-flex flex-wrap gap-1">
-                            <span class="badge bg-white text-dark border"><code>{nama_upt}</code> Nama UPT</span>
-                            <span class="badge bg-white text-dark border"><code>{hari_tanggal}</code> Hari &amp; Tanggal</span>
-                            <span class="badge bg-white text-dark border"><code>{jam_mulai}</code> Jam Mulai</span>
-                            <span class="badge bg-white text-dark border"><code>{jam_selesai}</code> Jam Selesai</span>
-                            <span class="badge bg-white text-dark border"><code>{agenda}</code> Agenda Sidang</span>
-                            <span class="badge bg-white text-dark border"><code>{link_surat}</code> Link Unduh Surat (PDF)</span>
-                            <span class="badge bg-white text-dark border"><code>{link_daring}</code> Link Daring (Zoom/Meet)</span>
-                            <span class="badge bg-white text-dark border"><code>{meeting_id}</code> Meeting ID</span>
-                            <span class="badge bg-white text-dark border"><code>{passcode}</code> Passcode</span>
-                            <span class="badge bg-white text-dark border"><code>{blok_online}</code> Blok Info Sidang Daring</span>
-                            <span class="badge bg-white text-dark border"><code>{nomor_undangan}</code> No. Surat</span>
-                            <span class="badge bg-white text-dark border"><code>{metode}</code> Metode Sidang</span>
-                            <span class="badge bg-white text-dark border"><code>{total_usulan}</code> Total WBP</span>
-                            <span class="badge bg-white text-dark border"><code>{link_detail}</code> Link Web Sultan Banten</span>
+
+                    <!-- Tab 2: Template Pengingat Upload BA Sidang TPP (Operator UPT) -->
+                    <div class="tab-pane fade" id="tab-tpp-ba" role="tabpanel">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold mb-0 text-warning">Format Pesan: Pengingat Upload Berita Acara (BA) ke Operator UPT</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetTppBaReminderTemplate()">
+                                    <i class="fas fa-undo me-1"></i>Reset ke Default
+                                </button>
+                            </div>
+                            <textarea name="template_pengingat_sidang_ba" id="textarea_template_pengingat_sidang_ba" class="form-control form-control-sm font-monospace" rows="9">{{ $waSettings->template_pengingat_sidang_ba ?: $defaultTppBaReminderTemplate }}</textarea>
+                            
+                            <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
+                                <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-warning"></i>Variabel Tag Tersedia:</span>
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-white text-dark border"><code>{nama_upt}</code> Nama Satker UPT</span>
+                                    <span class="badge bg-white text-dark border"><code>{nomor_undangan}</code> Nomor Undangan Sidang</span>
+                                    <span class="badge bg-white text-dark border"><code>{tanggal_sidang}</code> Tanggal Sidang</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_sidang}</code> Tautan Akses Berkas Sidang TPP</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -370,6 +411,11 @@
                             <i class="fas fa-stamp me-1 text-success"></i>2. Template Persetujuan Kanwil
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link small py-1.5 px-3 fw-semibold" id="tab-pengingat-mutasi-tab" data-bs-toggle="tab" data-bs-target="#tab-pengingat-mutasi" type="button" role="tab">
+                            <i class="fas fa-bell me-1 text-warning"></i>3. Template Pengingat Kelengkapan (Ke Operator UPT)
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="tab-content" id="tabMutasiContent">
@@ -426,6 +472,30 @@
                                     <span class="badge bg-white text-dark border"><code>{jumlah_disetujui_korupsi}</code> Disetujui Korupsi</span>
                                     <span class="badge bg-white text-dark border"><code>{catatan_kanwil}</code> Catatan Kanwil</span>
                                     <span class="badge bg-white text-dark border"><code>{link_detail}</code> Link Berkas Mutasi</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Template Pengingat Kelengkapan Pelaksanaan Mutasi (Operator UPT) -->
+                    <div class="tab-pane fade" id="tab-pengingat-mutasi" role="tabpanel">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold mb-0 text-warning">Format Pesan: Pengingat Kelengkapan Dokumen Pelaksanaan ke Operator UPT</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" style="font-size: 11.5px;" onclick="resetMutasiReminderTemplate()">
+                                    <i class="fas fa-undo me-1"></i>Reset ke Default
+                                </button>
+                            </div>
+                            <textarea name="template_pengingat_mutasi" id="textarea_template_pengingat_mutasi" class="form-control form-control-sm font-monospace" rows="8">{{ $waSettings->template_pengingat_mutasi ?: $defaultMutasiReminderTemplate }}</textarea>
+
+                            <div class="p-2 bg-light rounded mt-2 border" style="font-size: 11.5px;">
+                                <span class="fw-semibold text-dark"><i class="fas fa-tags me-1 text-warning"></i>Variabel Tag Tersedia:</span>
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-white text-dark border"><code>{nama_berkas}</code> Jenis Berkas (Lap. Pemindahan / Penerimaan / BAST)</span>
+                                    <span class="badge bg-white text-dark border"><code>{nama_upt}</code> Satuan Kerja (UPT) Terkait</span>
+                                    <span class="badge bg-white text-dark border"><code>{nomor_surat}</code> No. Surat Persetujuan Kanwil</span>
+                                    <span class="badge bg-white text-dark border"><code>{total_wbp}</code> Jumlah Narapidana / WBP</span>
+                                    <span class="badge bg-white text-dark border"><code>{link_mutasi}</code> Tautan Akses Berkas Mutasi</span>
                                 </div>
                             </div>
                         </div>
@@ -859,6 +929,13 @@ function resetTppTemplate() {
     }
 }
 
+function resetTppBaReminderTemplate() {
+    if (confirm('Kembalikan template Pengingat Upload BA Sidang TPP ke teks bawaan sistem?')) {
+        const defaultText = @json($defaultTppBaReminderTemplate);
+        document.getElementById('textarea_template_pengingat_sidang_ba').value = defaultText;
+    }
+}
+
 function resetMutasiUsulanTemplate() {
     if (confirm('Kembalikan template Usulan Mutasi Baru ke teks bawaan sistem?')) {
         const defaultText = @json($defaultMutasiUsulanTemplate);
@@ -870,6 +947,13 @@ function resetMutasiDisetujuiTemplate() {
     if (confirm('Kembalikan template Persetujuan Mutasi Kanwil ke teks bawaan sistem?')) {
         const defaultText = @json($defaultMutasiDisetujuiTemplate);
         document.getElementById('textarea_template_mutasi_disetujui').value = defaultText;
+    }
+}
+
+function resetMutasiReminderTemplate() {
+    if (confirm('Kembalikan template Pengingat Kelengkapan Mutasi ke teks bawaan sistem?')) {
+        const defaultText = @json($defaultMutasiReminderTemplate);
+        document.getElementById('textarea_template_pengingat_mutasi').value = defaultText;
     }
 }
 </script>

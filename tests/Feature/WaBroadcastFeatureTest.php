@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Upt;
 use App\Models\User;
+use App\Models\WaSetting;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -105,5 +106,74 @@ class WaBroadcastFeatureTest extends TestCase
         $response->assertJsonFragment([
             'nama' => 'Operator Rutan Test Reminder',
         ]);
+        $response->assertJsonStructure([
+            'template_sidang_ba',
+            'template_mutasi',
+        ]);
+    }
+
+    public function test_can_save_sidang_ba_reminder_template(): void
+    {
+        $customTemplate = 'Pengingat Khusus BA TPP untuk {nama_upt}. Link: {link_sidang}';
+
+        $response = $this->actingAs($this->adminUser)->postJson(route('wa.save-reminder-template'), [
+            'type' => 'sidang_ba',
+            'template' => $customTemplate,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $setting = WaSetting::getFirst();
+        $this->assertEquals($customTemplate, $setting->template_pengingat_sidang_ba);
+    }
+
+    public function test_can_save_mutasi_reminder_template(): void
+    {
+        $customTemplate = 'Pengingat Khusus Mutasi untuk {nama_upt}. Berkas: {nama_berkas}';
+
+        $response = $this->actingAs($this->adminUser)->postJson(route('wa.save-reminder-template'), [
+            'type' => 'mutasi',
+            'template' => $customTemplate,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $setting = WaSetting::getFirst();
+        $this->assertEquals($customTemplate, $setting->template_pengingat_mutasi);
+    }
+
+    public function test_can_update_builtin_settings_with_reminder_templates(): void
+    {
+        $tppBaTemplate = 'Format Baru BA TPP dari Halaman Pengaturan {nama_upt}';
+        $mutasiTemplate = 'Format Baru Mutasi dari Halaman Pengaturan {nama_upt}';
+
+        // Test update sidang TPP
+        $resTpp = $this->actingAs($this->adminUser)->post(route('wa.schedules.builtin.update'), [
+            'type' => 'sidang_tpp',
+            'template_sidang_tpp' => 'Undangan Sidang TPP',
+            'template_pengingat_sidang_ba' => $tppBaTemplate,
+        ]);
+        $resTpp->assertRedirect();
+
+        $setting = WaSetting::getFirst();
+        $this->assertEquals($tppBaTemplate, $setting->template_pengingat_sidang_ba);
+
+        // Test update mutasi
+        $resMutasi = $this->actingAs($this->adminUser)->post(route('wa.schedules.builtin.update'), [
+            'type' => 'mutasi',
+            'template_mutasi_usulan' => 'Usulan Mutasi',
+            'template_mutasi_disetujui' => 'Persetujuan Mutasi',
+            'template_pengingat_mutasi' => $mutasiTemplate,
+        ]);
+        $resMutasi->assertRedirect();
+
+        $setting->refresh();
+        $this->assertEquals($mutasiTemplate, $setting->template_pengingat_mutasi);
     }
 }

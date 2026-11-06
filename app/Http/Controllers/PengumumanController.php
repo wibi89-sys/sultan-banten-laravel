@@ -7,6 +7,7 @@ use App\Models\Pengumuman;
 use App\Models\Upt;
 use App\Models\User;
 use App\Models\WaBroadcast;
+use App\Models\WaSetting;
 use App\Services\WhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -387,10 +388,13 @@ class PengumumanController extends Controller
             ->get(['id', 'nama_lengkap', 'username', 'no_wa', 'role']);
 
         $upt = Upt::find($uptId);
+        $setting = WaSetting::getFirst();
 
         return response()->json([
             'success' => true,
             'upt_nama' => $upt?->nama_upt ?? 'UPT Terkait',
+            'template_sidang_ba' => $setting?->template_pengingat_sidang_ba ?: WaSetting::getDefaultTppBaReminderTemplate(),
+            'template_mutasi' => $setting?->template_pengingat_mutasi ?: WaSetting::getDefaultMutasiReminderTemplate(),
             'operators' => $operators->map(function ($op) {
                 $raw = $op->no_wa ?? '';
                 $clean = preg_replace('/[^0-9]/', '', $raw);

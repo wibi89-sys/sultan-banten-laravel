@@ -65,11 +65,18 @@
 
                 <!-- Editor Pesan WhatsApp Bebas (Bisa Di-edit Bebas) -->
                 <div class="mb-2">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
                         <label for="rem_message" class="form-label small fw-semibold mb-0" style="font-size: 11.5px;">
                             Isi Pesan Pengingat WhatsApp (Dapat Disunting Bebas): <span class="text-danger">*</span>
                         </label>
-                        <div class="d-flex gap-1">
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 fw-semibold" id="btnSimpanTemplateDefault" onclick="simpanSebagaiTemplateDefault()" title="Simpan isi pesan saat ini sebagai format default ke depan" style="font-size: 11px;">
+                                <i class="fas fa-save me-1"></i>Simpan sbg Template Default
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-1.5" onclick="resetDrafPengingatKeBaku()" title="Kembalikan isi pesan ke template sistem" style="font-size: 11px;">
+                                <i class="fas fa-undo me-1"></i>Reset Pesan
+                            </button>
+                            <div class="vr mx-1"></div>
                             <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-1.5" onclick="insertFormatReminder('*', '*')" title="Format Tebal (*teks*)">
                                 <i class="fas fa-bold"></i>
                             </button>
@@ -82,9 +89,11 @@
                         </div>
                     </div>
                     <textarea id="rem_message" class="form-control font-monospace" rows="8" style="font-size: 12px; line-height: 1.45;" placeholder="Tuliskan pesan pengingat bebas di sini..."></textarea>
-                    <small class="text-muted d-block mt-1" style="font-size: 10.5px;">
-                        <i class="fas fa-magic text-warning me-1"></i>Pesan telah disusun otomatis sesuai data laporan, Anda bebas menambah arahan atau catatan khusus sebelum mengirim.
-                    </small>
+                    <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-1">
+                        <small class="text-muted" style="font-size: 10.5px;">
+                            <i class="fas fa-magic text-warning me-1"></i>Pesan disusun otomatis dari template pengingat. Anda bebas mengedit sebelum mengirim, atau klik <b>"Simpan sbg Template Default"</b> untuk menyimpannya sebagai format permanen.
+                        </small>
+                    </div>
                 </div>
 
                 <input type="hidden" id="rem_recipient_name" value="">
@@ -112,6 +121,17 @@
 
 <script>
     let currentReminderOperators = [];
+    let currentReminderContext = {
+        tipeKonteks: '',
+        refId: null,
+        uptId: null,
+        peranUpt: '',
+        detailData: {},
+        namaBerkas: '',
+        namaUpt: '',
+        template_sidang_ba: '',
+        template_mutasi: ''
+    };
 
     /**
      * Buka modal pengingat WhatsApp dengan auto-detect operator dan pre-filled message kontekstual.
@@ -151,6 +171,14 @@
         }
         document.getElementById('rem_label_berkas').innerText = namaBerkas;
 
+        // Simpan state kontekstual
+        currentReminderContext.tipeKonteks = tipeKonteks;
+        currentReminderContext.refId = refId;
+        currentReminderContext.uptId = uptId;
+        currentReminderContext.peranUpt = peranUpt;
+        currentReminderContext.detailData = detailData || {};
+        currentReminderContext.namaBerkas = namaBerkas;
+
         // Load operators dari server via AJAX
         const selectOp = document.getElementById('rem_operator_select');
         selectOp.innerHTML = '<option value="">Memuat operator UPT...</option>';
@@ -160,7 +188,11 @@
             .then(data => {
                 if (data.success && data.operators) {
                     currentReminderOperators = data.operators;
-                    document.getElementById('rem_label_upt').innerText = data.upt_nama || 'UPT';
+                    currentReminderContext.namaUpt = data.upt_nama || 'UPT Terkait';
+                    currentReminderContext.template_sidang_ba = data.template_sidang_ba || '';
+                    currentReminderContext.template_mutasi = data.template_mutasi || '';
+
+                    document.getElementById('rem_label_upt').innerText = currentReminderContext.namaUpt;
 
                     selectOp.innerHTML = '';
                     if (data.operators.length === 0) {
@@ -177,7 +209,7 @@
                     }
 
                     // Susun draf pesan kontekstual
-                    susunDrafPesanPengingat(tipeKonteks, data.upt_nama, namaBerkas, refId, detailData);
+                    susunDrafPesanPengingat();
                 }
             })
             .catch(err => {
@@ -198,53 +230,201 @@
         }
     }
 
-    function susunDrafPesanPengingat(tipe, namaUpt, namaBerkas, refId, detail) {
+    function susunDrafPesanPengingat() {
         const textarea = document.getElementById('rem_message');
         if (!textarea) return;
 
+        const ctx = currentReminderContext;
         const appUrl = window.location.origin;
-        let template = '';
 
-        if (tipe.startsWith('mutasi')) {
-            const noSurat = detail.nomor_surat || '(Sesuai Surat Persetujuan Kanwil)';
-            const totalWbp = detail.total_wbp ? `${detail.total_wbp} Orang WBP` : 'WBP Terkait';
-            const linkMutasi = `${appUrl}/mutasi/${refId}`;
+        if (ctx.tipeKonteks === 'sidang_ba') {
+            let tpl = ctx.template_sidang_ba || '';
+            if (!tpl) {
+                tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
+                      `*Divisi Pemasyarakatan*\n` +
+                      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                      `Hal: *Pengingat Unggah Berita Acara (BA) Sidang TPP*\n\n` +
+                      `Yth. Rekan Operator & Tim TPP *{nama_upt}*,\n\n` +
+                      `Berdasarkan jadwal pelaksanaan Sidang TPP UPT:\n` +
+                      `• *No. Undangan Sidang:* {nomor_undangan}\n` +
+                      `• *Tanggal Pelaksanaan:* {tanggal_sidang}\n\n` +
+                      `Kami memohon kesediaan rekan operator untuk segera mengunggah berkas *Berita Acara (BA) Hasil Sidang TPP* ke dalam sistem SULTAN BANTEN guna penyusunan Surat Tugas dan Laporan Pembinaan Sidang Tingkat Wilayah.\n\n` +
+                      `🔗 *Tautan Unggah BA:* \n👉 {link_sidang}\n\n` +
+                      `Atas perhatian dan kerja samanya, diucapkan terima kasih.\n` +
+                      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                      `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+            }
 
-            template = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
-                       `*Divisi Pemasyarakatan*\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                       `Hal: *Pengingat Unggah ${namaBerkas}*\n\n` +
-                       `Yth. Rekan Operator *${namaUpt}*,\n\n` +
-                       `Sehubungan dengan pelaksanaan mutasi narapidana berikut:\n` +
-                       `• *No. Surat Kanwil:* ${noSurat}\n` +
-                       `• *Jumlah Narapidana:* ${totalWbp}\n` +
-                       `• *Status:* Memerlukan kelengkapan berkas pelaksanaan.\n\n` +
-                       `Mohon bantuan rekan operator untuk segera mengunggah berkas *${namaBerkas}* ke dalam Sistem SULTAN BANTEN agar proses verifikasi dan laporan rekapitulasi dapat dituntaskan.\n\n` +
-                       `🔗 *Tautan Unggah Dokumen:* \n👉 ${linkMutasi}\n\n` +
-                       `Terima kasih atas dedikasi dan kerja sama yang baik.\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                       `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
-        } else if (tipe === 'sidang_ba') {
-            const noUndangan = detail.nomor_undangan || '-';
-            const tglSidang = detail.tanggal_sidang || 'Jadwal Terdaftar';
-            const linkSidang = `${appUrl}/sidang-tpp/${refId}`;
+            const noUndangan = ctx.detailData.nomor_undangan || '-';
+            const tglSidang = ctx.detailData.tanggal_sidang || 'Jadwal Terdaftar';
+            const linkSidang = `${appUrl}/sidang-tpp/${ctx.refId}`;
 
-            template = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
-                       `*Divisi Pemasyarakatan*\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                       `Hal: *Pengingat Unggah Berita Acara (BA) Sidang TPP*\n\n` +
-                       `Yth. Rekan Operator & Tim TPP *${namaUpt}*,\n\n` +
-                       `Berdasarkan jadwal pelaksanaan Sidang TPP UPT:\n` +
-                       `• *No. Undangan Sidang:* ${noUndangan}\n` +
-                       `• *Tanggal Pelaksanaan:* ${tglSidang}\n\n` +
-                       `Kami memohon kesediaan rekan operator untuk segera mengunggah berkas *Berita Acara (BA) Hasil Sidang TPP* ke dalam sistem SULTAN BANTEN guna penyusunan Surat Tugas dan Laporan Pembinaan Sidang Tingkat Wilayah.\n\n` +
-                       `🔗 *Tautan Unggah BA:* \n👉 ${linkSidang}\n\n` +
-                       `Atas perhatian dan kerja samanya, diucapkan terima kasih.\n` +
-                       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                       `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+            let text = tpl
+                .replace(/{nama_upt}/g, ctx.namaUpt)
+                .replace(/{nomor_undangan}/g, noUndangan)
+                .replace(/{tanggal_sidang}/g, tglSidang)
+                .replace(/{link_sidang}/g, linkSidang);
+
+            textarea.value = text;
+        } else if (ctx.tipeKonteks.startsWith('mutasi')) {
+            let tpl = ctx.template_mutasi || '';
+            if (!tpl) {
+                tpl = `📢 *PENGINGAT RESMI KANWIL KEMENKUMHAM BANTEN*\n` +
+                      `*Divisi Pemasyarakatan*\n` +
+                      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                      `Hal: *Pengingat Unggah {nama_berkas}*\n\n` +
+                      `Yth. Rekan Operator *{nama_upt}*,\n\n` +
+                      `Sehubungan dengan pelaksanaan mutasi narapidana berikut:\n` +
+                      `• *No. Surat Kanwil:* {nomor_surat}\n` +
+                      `• *Jumlah Narapidana:* {total_wbp}\n` +
+                      `• *Status:* Memerlukan kelengkapan berkas pelaksanaan.\n\n` +
+                      `Mohon bantuan rekan operator untuk segera mengunggah berkas *{nama_berkas}* ke dalam Sistem SULTAN BANTEN agar proses verifikasi dan laporan rekapitulasi dapat dituntaskan.\n\n` +
+                      `🔗 *Tautan Unggah Dokumen:* \n👉 {link_mutasi}\n\n` +
+                      `Terima kasih atas dedikasi dan kerja sama yang baik.\n` +
+                      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                      `_Pesan otomatis dikirim melalui Sistem Informasi Terpadu Pemasyarakatan SULTAN BANTEN._`;
+            }
+
+            const noSurat = ctx.detailData.nomor_surat || '(Sesuai Surat Persetujuan Kanwil)';
+            const totalWbp = ctx.detailData.total_wbp ? `${ctx.detailData.total_wbp} Orang WBP` : 'WBP Terkait';
+            const linkMutasi = `${appUrl}/mutasi/${ctx.refId}`;
+
+            let text = tpl
+                .replace(/{nama_berkas}/g, ctx.namaBerkas)
+                .replace(/{nama_upt}/g, ctx.namaUpt)
+                .replace(/{nomor_surat}/g, noSurat)
+                .replace(/{total_wbp}/g, totalWbp)
+                .replace(/{link_mutasi}/g, linkMutasi);
+
+            textarea.value = text;
+        }
+    }
+
+    function resetDrafPengingatKeBaku() {
+        if (confirm('Kembalikan teks pesan pengingat ke format template sistem?')) {
+            susunDrafPesanPengingat();
+        }
+    }
+
+    function simpanSebagaiTemplateDefault() {
+        const textarea = document.getElementById('rem_message');
+        const msg = textarea ? textarea.value.trim() : '';
+        if (!msg) {
+            alert('Isi pesan tidak boleh kosong.');
+            return;
         }
 
-        textarea.value = template;
+        const ctx = currentReminderContext;
+        const isSidang = (ctx.tipeKonteks === 'sidang_ba');
+        const type = isSidang ? 'sidang_ba' : 'mutasi';
+        const appUrl = window.location.origin;
+
+        // Ubah nilai-nilai dinamis kembali menjadi tag variabel jika ada di dalam teks
+        let tplToSave = msg;
+
+        if (isSidang) {
+            const linkSidang = `${appUrl}/sidang-tpp/${ctx.refId}`;
+            const noUndangan = ctx.detailData.nomor_undangan || '';
+            const tglSidang = ctx.detailData.tanggal_sidang || '';
+
+            if (ctx.namaUpt) {
+                tplToSave = tplToSave.split(ctx.namaUpt).join('{nama_upt}');
+            }
+            if (linkSidang) {
+                tplToSave = tplToSave.split(linkSidang).join('{link_sidang}');
+            }
+            if (noUndangan && noUndangan !== '-') {
+                tplToSave = tplToSave.split(noUndangan).join('{nomor_undangan}');
+            }
+            if (tglSidang && tglSidang !== 'Jadwal Terdaftar') {
+                tplToSave = tplToSave.split(tglSidang).join('{tanggal_sidang}');
+            }
+        } else {
+            const linkMutasi = `${appUrl}/mutasi/${ctx.refId}`;
+            const noSurat = ctx.detailData.nomor_surat || '';
+            const totalWbp = ctx.detailData.total_wbp ? `${ctx.detailData.total_wbp} Orang WBP` : '';
+
+            if (ctx.namaBerkas) {
+                tplToSave = tplToSave.split(ctx.namaBerkas).join('{nama_berkas}');
+            }
+            if (ctx.namaUpt) {
+                tplToSave = tplToSave.split(ctx.namaUpt).join('{nama_upt}');
+            }
+            if (linkMutasi) {
+                tplToSave = tplToSave.split(linkMutasi).join('{link_mutasi}');
+            }
+            if (noSurat && noSurat !== '(Sesuai Surat Persetujuan Kanwil)') {
+                tplToSave = tplToSave.split(noSurat).join('{nomor_surat}');
+            }
+            if (totalWbp) {
+                tplToSave = tplToSave.split(totalWbp).join('{total_wbp}');
+            }
+        }
+
+        const confirmMsg = isSidang 
+            ? 'Simpan isi pesan saat ini sebagai Template Default Pengingat Upload Berita Acara (BA) Sidang TPP?' 
+            : 'Simpan isi pesan saat ini sebagai Template Default Pengingat Kelengkapan Mutasi?';
+
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        const btn = document.getElementById('btnSimpanTemplateDefault');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Menyimpan...';
+        }
+
+        const alertArea = document.getElementById('rem_alert_area');
+
+        fetch('/wa/save-reminder-template', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                type: type,
+                template: tplToSave
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-1"></i>Simpan sbg Template Default';
+            }
+
+            if (data.success) {
+                if (isSidang) {
+                    ctx.template_sidang_ba = tplToSave;
+                } else {
+                    ctx.template_mutasi = tplToSave;
+                }
+
+                if (alertArea) {
+                    alertArea.classList.remove('d-none');
+                    alertArea.innerHTML = `
+                        <div class="alert alert-success alert-dismissible fade show py-2 px-3 small mb-0 d-flex align-items-center" role="alert">
+                            <i class="fas fa-check-circle fa-lg me-2 text-success"></i>
+                            <div><b>Berhasil Disimpan:</b> ${data.message}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                } else {
+                    alert(data.message);
+                }
+            } else {
+                alert('Gagal menyimpan template: ' + (data.message || 'Terjadi kesalahan sistem.'));
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-1"></i>Simpan sbg Template Default';
+            }
+            alert('Gagal menyimpan template: ' + err.message);
+        });
     }
 
     function insertFormatReminder(startTag, endTag) {

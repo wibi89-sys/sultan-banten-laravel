@@ -9,6 +9,7 @@ use App\Models\WaPimpinan;
 use App\Models\WaScheduledReport;
 use App\Models\WaSetting;
 use App\Services\WhatsAppService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -431,6 +432,8 @@ class WhatsAppController extends Controller
         $variables = WhatsAppService::getTemplateVariables();
         $defaultTemplate = WhatsAppService::getDefaultTemplate();
         $defaultTppTemplate = WhatsAppService::getDefaultSidangTppTemplate();
+        $defaultTppBaReminderTemplate = WaSetting::getDefaultTppBaReminderTemplate();
+        $defaultMutasiReminderTemplate = WaSetting::getDefaultMutasiReminderTemplate();
         $defaultMutasiUsulanTemplate = WhatsAppService::getDefaultMutasiUsulanTemplate();
         $defaultMutasiDisetujuiTemplate = WhatsAppService::getDefaultMutasiDisetujuiTemplate();
 
@@ -442,6 +445,8 @@ class WhatsAppController extends Controller
             'groupedVariables',
             'defaultTemplate',
             'defaultTppTemplate',
+            'defaultTppBaReminderTemplate',
+            'defaultMutasiReminderTemplate',
             'defaultMutasiUsulanTemplate',
             'defaultMutasiDisetujuiTemplate'
         ));
@@ -497,13 +502,16 @@ class WhatsAppController extends Controller
             if (Schema::hasColumn('wa_settings', 'template_sidang_tpp')) {
                 $setting->template_sidang_tpp = $request->input('template_sidang_tpp', '');
             }
+            if (Schema::hasColumn('wa_settings', 'template_pengingat_sidang_ba')) {
+                $setting->template_pengingat_sidang_ba = $request->input('template_pengingat_sidang_ba', '');
+            }
             if (Schema::hasColumn('wa_settings', 'group_id_tpp') && $request->has('group_id_tpp')) {
                 $setting->group_id_tpp = trim($request->input('group_id_tpp'));
             }
             $setting->save();
-            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui pengaturan notifikasi Undangan Sidang TPP');
+            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui pengaturan notifikasi Undangan Sidang TPP & Pengingat BA');
 
-            return back()->with('success', 'Pengaturan Notifikasi Undangan Sidang TPP berhasil diperbarui!');
+            return back()->with('success', 'Pengaturan Notifikasi & Template Pengingat Sidang TPP berhasil diperbarui!');
         }
 
         if ($type === 'mutasi') {
@@ -521,13 +529,59 @@ class WhatsAppController extends Controller
             if (Schema::hasColumn('wa_settings', 'template_mutasi_disetujui')) {
                 $setting->template_mutasi_disetujui = $request->input('template_mutasi_disetujui', '');
             }
+            if (Schema::hasColumn('wa_settings', 'template_pengingat_mutasi')) {
+                $setting->template_pengingat_mutasi = $request->input('template_pengingat_mutasi', '');
+            }
             $setting->save();
-            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui pengaturan notifikasi Mutasi Narapidana');
+            ActivityLog::log('edit', 'wa_builtin_schedule', 'Memperbarui pengaturan notifikasi Mutasi Narapidana & Pengingat Pelaksanaan');
 
-            return back()->with('success', 'Pengaturan Notifikasi Mutasi Narapidana berhasil diperbarui!');
+            return back()->with('success', 'Pengaturan Notifikasi & Template Pengingat Mutasi Narapidana berhasil diperbarui!');
         }
 
         return back();
+    }
+
+    /**
+     * Simpan template pengingat laporan langsung dari popup modal.
+     */
+    public function saveReminderTemplate(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        if (! $user->canManage('wa_schedule') && ! $user->canManage('sidang_tpp') && ! $user->canManage('mutasi') && ! $user->isKanwil()) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $request->validate([
+            'type' => 'required|string|in:sidang_ba,mutasi',
+            'template' => 'required|string',
+        ]);
+
+        WaSetting::ensureTppColumnsExist();
+        $setting = WaSetting::getFirst() ?? new WaSetting;
+
+        if ($request->input('type') === 'sidang_ba') {
+            $setting->template_pengingat_sidang_ba = $request->input('template');
+            $setting->save();
+            ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat Berita Acara (BA) Sidang TPP');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template Pengingat Upload BA Sidang TPP berhasil disimpan sebagai format default!',
+            ]);
+        }
+
+        if ($request->input('type') === 'mutasi') {
+            $setting->template_pengingat_mutasi = $request->input('template');
+            $setting->save();
+            ActivityLog::log('edit', 'wa_setting', 'Memperbarui template default pengingat kelengkapan mutasi');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template Pengingat Kelengkapan Mutasi berhasil disimpan sebagai format default!',
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Tipe pengingat tidak dikenali.'], 400);
     }
 
     public function scheduleStore(Request $request)
