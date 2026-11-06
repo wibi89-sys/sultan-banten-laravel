@@ -129,14 +129,20 @@
                         <tr>
                             <th width="4%" class="text-center">No</th>
                             <th width="20%">Surat Persetujuan Kanwil</th>
-                            <th width="24%">Arus UPT (Asal &rarr; Tujuan)</th>
-                            <th width="32%">Kelengkapan 3 Dokumen Pelaksanaan</th>
-                            <th width="10%" class="text-center">Status</th>
-                            <th style="width: 130px; white-space: nowrap;" class="text-center">Aksi</th>
+                            <th width="22%">Arus UPT (Asal &rarr; Tujuan)</th>
+                            <th width="36%">Kelengkapan 3 Dokumen Pelaksanaan</th>
+                            <th width="8%" class="text-center">Status</th>
+                            <th style="width: 110px; white-space: nowrap;" class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($mutasiList as $m)
+                        @php
+                            $completedDocs = ($m->hasLaporanPemindahan() ? 1 : 0) + ($m->hasLaporanPenerimaan() ? 1 : 0) + ($m->hasBast() ? 1 : 0);
+                            $percentDocs = round(($completedDocs / 3) * 100);
+                            $tujuanUptId = $m->tujuans->first()?->upt_tujuan_id ?: $m->upt_tujuan_id;
+                            $tujuanUptNama = $m->tujuans->first()?->uptTujuan?->nama_upt ?: ($m->uptTujuan?->nama_upt ?? 'UPT Penerima');
+                        @endphp
                         <tr>
                             <td class="text-center fw-semibold text-muted">{{ $loop->iteration + ($mutasiList->currentPage() - 1) * $mutasiList->perPage() }}</td>
                             <td>
@@ -169,87 +175,129 @@
                                 </div>
                             </td>
                             <td>
-                                <!-- 1. Laporan Pemindahan -->
-                                <div class="d-flex justify-content-between align-items-center mb-1.5 p-1.5 rounded bg-light border">
-                                    <div>
-                                        <i class="fas fa-truck-departure text-primary me-1"></i>
-                                        <span class="small fw-semibold">1. Lap. Pemindahan (Pengirim)</span>
-                                    </div>
-                                    <div>
-                                        @if($m->hasLaporanPemindahan())
-                                        <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-success border-0 text-white py-1 px-1.5 text-decoration-none" title="Buka Laporan Pemindahan di Tab Baru">
-                                            <i class="fas fa-external-link-alt me-1"></i>Lihat
-                                        </a>
-                                        @else
-                                        <div class="d-inline-flex align-items-center">
-                                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
-                                            @if(auth()->user()->isKanwil() || auth()->user()->isAdmin() || auth()->user()->canManage('mutasi'))
-                                            <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 ms-1 fw-semibold shadow-sm" 
-                                                    onclick="bukaModalWaPengingat('mutasi_pemindahan', {{ $m->id }}, {{ $m->upt_asal_id }}, 'UPT Pengirim / Asal ({{ addslashes($m->uptAsal?->nama_upt ?? '') }}', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
-                                                    title="Kirim Pengingat WhatsApp ke Operator UPT Pengirim ({{ addslashes($m->uptAsal?->nama_upt ?? '') }})">
-                                                <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan
-                                            </button>
-                                            @endif
+                                <!-- KELENGKAPAN 3 DOKUMEN PELAKSANAAN (CARD TERSTRUKTUR & RAPI) -->
+                                <div class="card border rounded-3 p-2 bg-white shadow-xs">
+                                    <!-- Header Ringkasan & Progress Bar -->
+                                    <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+                                        <span class="small fw-bold text-dark d-flex align-items-center gap-1" style="font-size: 11px;">
+                                            <i class="fas fa-clipboard-check text-primary"></i> Progres Dokumen
+                                        </span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress" style="width: 70px; height: 6px; background-color: #e9ecef;" title="{{ $completedDocs }}/3 Dokumen Lengkap">
+                                                <div class="progress-bar {{ $completedDocs === 3 ? 'bg-success' : ($completedDocs > 0 ? 'bg-primary' : 'bg-secondary') }}" 
+                                                     style="width: {{ $percentDocs }}%"></div>
+                                            </div>
+                                            <span class="badge {{ $completedDocs === 3 ? 'bg-success text-white' : ($completedDocs > 0 ? 'bg-warning text-dark' : 'bg-secondary text-white') }}" style="font-size: 9.5px; min-width: 34px; text-align: center;">
+                                                {{ $completedDocs }}/3
+                                            </span>
                                         </div>
-                                        @endif
                                     </div>
-                                </div>
 
-                                <!-- 2. Laporan Penerimaan -->
-                                <div class="d-flex justify-content-between align-items-center mb-1.5 p-1.5 rounded bg-light border">
-                                    <div>
-                                        <i class="fas fa-building text-info me-1"></i>
-                                        <span class="small fw-semibold">2. Lap. Penerimaan (Penerima)</span>
-                                    </div>
-                                    <div>
-                                        @if($m->hasLaporanPenerimaan())
-                                        <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-success border-0 text-white py-1 px-1.5 text-decoration-none" title="Buka Laporan Penerimaan di Tab Baru">
-                                            <i class="fas fa-external-link-alt me-1"></i>Lihat
-                                        </a>
-                                        @else
-                                        <div class="d-inline-flex align-items-center">
-                                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
-                                            @if(auth()->user()->isKanwil() || auth()->user()->isAdmin() || auth()->user()->canManage('mutasi'))
-                                            @php
-                                                $tujuanUptId = $m->tujuans->first()?->upt_tujuan_id ?: $m->upt_tujuan_id;
-                                                $tujuanUptNama = $m->tujuans->first()?->uptTujuan?->nama_upt ?: ($m->uptTujuan?->nama_upt ?? 'UPT Penerima');
-                                            @endphp
-                                            @if($tujuanUptId)
-                                            <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 ms-1 fw-semibold shadow-sm" 
-                                                    onclick="bukaModalWaPengingat('mutasi_penerimaan', {{ $m->id }}, {{ $tujuanUptId }}, 'UPT Penerima / Tujuan ({{ addslashes($tujuanUptNama) }})', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
-                                                    title="Kirim Pengingat WhatsApp ke Operator UPT Penerima ({{ addslashes($tujuanUptNama) }})">
-                                                <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan
-                                            </button>
-                                            @endif
-                                            @endif
+                                    <!-- 3 Item Dokumen Terstruktur -->
+                                    <div class="d-flex flex-column gap-1">
+                                        <!-- 1. Laporan Pemindahan -->
+                                        <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded {{ $m->hasLaporanPemindahan() ? 'bg-success bg-opacity-10 border border-success-subtle' : 'bg-light border' }}">
+                                            <div class="d-flex align-items-center gap-2 text-truncate me-1">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $m->hasLaporanPemindahan() ? 'bg-success text-white' : 'bg-primary bg-opacity-10 text-primary' }}" style="width: 22px; height: 22px; font-size: 10px;">
+                                                    <i class="fas {{ $m->hasLaporanPemindahan() ? 'fa-check' : 'fa-truck-departure' }}"></i>
+                                                </div>
+                                                <div class="text-truncate">
+                                                    <div class="fw-semibold text-dark small" style="font-size: 11.5px; line-height: 1.2;">1. Lap. Pemindahan</div>
+                                                    <small class="text-muted d-block" style="font-size: 9.5px;">UPT Pengirim: {{ Str::limit($m->uptAsal?->nama_upt ?? '-', 22) }}</small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                @if($m->hasLaporanPemindahan())
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-1.5" style="font-size: 10px;">
+                                                        <i class="fas fa-check-circle me-1"></i>Lengkap
+                                                    </span>
+                                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" title="Buka Laporan Pemindahan di Tab Baru">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                @else
+                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-1 px-1.5" style="font-size: 10px;">
+                                                        <i class="fas fa-clock me-1"></i>Belum
+                                                    </span>
+                                                    @if(auth()->user()->isKanwil() || auth()->user()->isAdmin() || auth()->user()->canManage('mutasi'))
+                                                    <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 shadow-2xs fw-semibold" 
+                                                            onclick="bukaModalWaPengingat('mutasi_pemindahan', {{ $m->id }}, {{ $m->upt_asal_id }}, 'UPT Pengirim / Asal ({{ addslashes($m->uptAsal?->nama_upt ?? '') }})', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
+                                                            title="Kirim Pengingat WhatsApp ke Operator UPT Pengirim ({{ addslashes($m->uptAsal?->nama_upt ?? '') }})">
+                                                        <i class="fab fa-whatsapp me-0.5 text-success"></i>Ingatkan
+                                                    </button>
+                                                    @endif
+                                                @endif
+                                            </div>
                                         </div>
-                                        @endif
-                                    </div>
-                                </div>
 
-                                <!-- 3. BAST Bersama -->
-                                <div class="d-flex justify-content-between align-items-center p-1.5 rounded bg-light border">
-                                    <div>
-                                        <i class="fas fa-file-signature text-success me-1"></i>
-                                        <span class="small fw-semibold">3. BA Serah Terima (BAST)</span>
-                                    </div>
-                                    <div>
-                                        @if($m->hasBast())
-                                        <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-success border-0 text-white py-1 px-1.5 text-decoration-none" title="Buka BAST di Tab Baru">
-                                            <i class="fas fa-external-link-alt me-1"></i>Lihat
-                                        </a>
-                                        @else
-                                        <div class="d-inline-flex align-items-center">
-                                            <span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Belum Unggah</span>
-                                            @if(auth()->user()->isKanwil() || auth()->user()->isAdmin() || auth()->user()->canManage('mutasi'))
-                                            <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 ms-1 fw-semibold shadow-sm" 
-                                                    onclick="bukaModalWaPengingat('mutasi_bast', {{ $m->id }}, {{ $m->upt_asal_id }}, 'UPT Pengirim &amp; Penerima', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
-                                                    title="Kirim Pengingat WhatsApp untuk Pelaksanaan &amp; BAST">
-                                                <i class="fab fa-whatsapp me-1 text-success"></i>Ingatkan
-                                            </button>
-                                            @endif
+                                        <!-- 2. Laporan Penerimaan -->
+                                        <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded {{ $m->hasLaporanPenerimaan() ? 'bg-success bg-opacity-10 border border-success-subtle' : 'bg-light border' }}">
+                                            <div class="d-flex align-items-center gap-2 text-truncate me-1">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $m->hasLaporanPenerimaan() ? 'bg-success text-white' : 'bg-info bg-opacity-10 text-info' }}" style="width: 22px; height: 22px; font-size: 10px;">
+                                                    <i class="fas {{ $m->hasLaporanPenerimaan() ? 'fa-check' : 'fa-building' }}"></i>
+                                                </div>
+                                                <div class="text-truncate">
+                                                    <div class="fw-semibold text-dark small" style="font-size: 11.5px; line-height: 1.2;">2. Lap. Penerimaan</div>
+                                                    <small class="text-muted d-block" style="font-size: 9.5px;">UPT Penerima: {{ Str::limit($tujuanUptNama, 22) }}</small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                @if($m->hasLaporanPenerimaan())
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-1.5" style="font-size: 10px;">
+                                                        <i class="fas fa-check-circle me-1"></i>Lengkap
+                                                    </span>
+                                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" title="Buka Laporan Penerimaan di Tab Baru">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                @else
+                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-1 px-1.5" style="font-size: 10px;">
+                                                        <i class="fas fa-clock me-1"></i>Belum
+                                                    </span>
+                                                    @if(auth()->user()->isKanwil() || auth()->user()->isAdmin() || auth()->user()->canManage('mutasi'))
+                                                        @if($tujuanUptId)
+                                                        <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 shadow-2xs fw-semibold" 
+                                                                onclick="bukaModalWaPengingat('mutasi_penerimaan', {{ $m->id }}, {{ $tujuanUptId }}, 'UPT Penerima / Tujuan ({{ addslashes($tujuanUptNama) }})', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
+                                                                title="Kirim Pengingat WhatsApp ke Operator UPT Penerima ({{ addslashes($tujuanUptNama) }})">
+                                                            <i class="fab fa-whatsapp me-0.5 text-success"></i>Ingatkan
+                                                        </button>
+                                                        @endif
+                                                    @endif
+                                                @endif
+                                            </div>
                                         </div>
-                                        @endif
+
+                                        <!-- 3. BA Serah Terima (BAST Bersama) -->
+                                        <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded {{ $m->hasBast() ? 'bg-success bg-opacity-10 border border-success-subtle' : 'bg-light border' }}">
+                                            <div class="d-flex align-items-center gap-2 text-truncate me-1">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $m->hasBast() ? 'bg-success text-white' : 'bg-warning bg-opacity-15 text-warning' }}" style="width: 22px; height: 22px; font-size: 10px;">
+                                                    <i class="fas {{ $m->hasBast() ? 'fa-check' : 'fa-file-signature' }}"></i>
+                                                </div>
+                                                <div class="text-truncate">
+                                                    <div class="fw-semibold text-dark small" style="font-size: 11.5px; line-height: 1.2;">3. BA Serah Terima</div>
+                                                    <small class="text-muted d-block" style="font-size: 9.5px;">Kedua Belah Pihak (BAST Bersama)</small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                @if($m->hasBast())
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-1.5" style="font-size: 10px;">
+                                                        <i class="fas fa-check-circle me-1"></i>Lengkap
+                                                    </span>
+                                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-xs py-0.5 px-1.5" title="Buka BAST di Tab Baru">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                @else
+                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-1 px-1.5" style="font-size: 10px;">
+                                                        <i class="fas fa-clock me-1"></i>Belum
+                                                    </span>
+                                                    @if(auth()->user()->isKanwil() || auth()->user()->isAdmin() || auth()->user()->canManage('mutasi'))
+                                                    <button type="button" class="btn btn-outline-success btn-xs py-0.5 px-1.5 shadow-2xs fw-semibold" 
+                                                            onclick="bukaModalWaPengingat('mutasi_bast', {{ $m->id }}, {{ $m->upt_asal_id }}, 'UPT Pengirim &amp; Penerima', { nomor_surat: '{{ addslashes($m->nomor_surat_kanwil ?: $m->nomor_surat) }}', total_wbp: {{ $m->total_disetujui ?? $m->total_usulan }} })" 
+                                                            title="Kirim Pengingat WhatsApp untuk Pelaksanaan &amp; BAST">
+                                                        <i class="fab fa-whatsapp me-0.5 text-success"></i>Ingatkan
+                                                    </button>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
