@@ -579,6 +579,11 @@
         document.getElementById('up_jenis_dokumen').value = jenis;
         document.getElementById('up_nomor_dokumen').value = noDokumen || '';
         document.getElementById('up_jenis_label').innerText = jenis === 'laporan_tpp' ? 'Laporan Pelaksanaan Sidang TPP Kanwil' : 'Nota Dinas Permohonan Surat Tugas';
+        const fileIn = document.getElementById('file_signed');
+        if (fileIn) fileIn.value = '';
+        if (typeof setStampPosition === 'function') {
+            setStampPosition(6, 86, 'Kiri Bawah');
+        }
         modalUploadSigned.show();
     }
 

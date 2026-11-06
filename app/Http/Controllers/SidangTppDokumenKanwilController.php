@@ -11,6 +11,7 @@ use App\Models\Upt;
 use App\Services\GeminiAiService;
 use App\Services\ImageCompressionService;
 use App\Services\LaporanTppGeneratorService;
+use App\Services\PdfStamperService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -260,6 +261,11 @@ class SidangTppDokumenKanwilController extends Controller
             'file_signed' => 'required|file|mimes:pdf|max:20480', // max 20 MB
             'jenis_dokumen' => 'required|in:nota_dinas,laporan_tpp',
             'nomor_dokumen' => 'nullable|string|max:150',
+            'bubuhi_qr' => 'nullable',
+            'qr_percent_x' => 'nullable|numeric|min:0|max:100',
+            'qr_percent_y' => 'nullable|numeric|min:0|max:100',
+            'qr_target_page' => 'nullable|string',
+            'qr_style' => 'nullable|string|in:badge,qr_only',
         ]);
 
         $sidang = SidangTpp::findOrFail($id);
@@ -271,9 +277,12 @@ class SidangTppDokumenKanwilController extends Controller
         }
 
         $file = $request->file('file_signed');
-        $filename = "{$jenis}_signed_{$sidang->id}_".time().'.pdf';
-        $file->move($uploadDir, $filename);
-        $filePath = "uploads/sidang_tpp_signed/{$filename}";
+        $rawFilename = "raw_{$jenis}_signed_{$sidang->id}_".time().'.pdf';
+        $finalFilename = "{$jenis}_signed_{$sidang->id}_".time().'.pdf';
+        $rawPath = "{$uploadDir}/{$rawFilename}";
+        $finalPath = "{$uploadDir}/{$finalFilename}";
+
+        $file->move($uploadDir, $rawFilename);
 
         $naskah = TppNaskahKanwil::firstOrNew([
             'sidang_tpp_id' => $sidang->id,
@@ -288,8 +297,43 @@ class SidangTppDokumenKanwilController extends Controller
             $naskah->nomor_dokumen = $request->input('nomor_dokumen');
         }
 
+        $bubuhiQr = $request->boolean('bubuhi_qr', true);
+
+        if ($bubuhiQr) {
+            $qrUrl = $naskah->getPublicVerificationUrl();
+            $percentX = (float) $request->input('qr_percent_x', 6.0);
+            $percentY = (float) $request->input('qr_percent_y', 86.0);
+            $targetPage = $request->input('qr_target_page', 'last');
+            $withBadge = ($request->input('qr_style', 'badge') === 'badge');
+
+            $stamped = PdfStamperService::stampQr(
+                $rawPath,
+                $finalPath,
+                $qrUrl,
+                $naskah->kode_verifikasi,
+                [
+                    'percent_x' => $percentX,
+                    'percent_y' => $percentY,
+                    'target_page' => $targetPage,
+                    'with_badge' => $withBadge,
+                ]
+            );
+
+            if ($stamped) {
+                @unlink($rawPath);
+                $filePath = "uploads/sidang_tpp_signed/{$finalFilename}";
+            } else {
+                rename($rawPath, $finalPath);
+                $filePath = "uploads/sidang_tpp_signed/{$finalFilename}";
+            }
+        } else {
+            rename($rawPath, $finalPath);
+            $filePath = "uploads/sidang_tpp_signed/{$finalFilename}";
+        }
+
         $naskah->file_signed = $filePath;
         $naskah->status = 'signed';
+        $naskah->metode_ttd = $bubuhiQr ? 'digital_qr' : 'manual';
         $naskah->signed_at = now();
         $naskah->save();
 
@@ -306,6 +350,8 @@ class SidangTppDokumenKanwilController extends Controller
 
         ActivityLog::log('upload', 'tpp_naskah_kanwil', "Unggah berkas {$jenis} bertanda tangan untuk Sidang TPP ID: {$sidang->id}");
 
-        return back()->with('success', 'Berkas bertanda tangan berhasil diunggah dan disimpan ke arsip naskah resmi.');
+        $msg = 'Berkas bertanda tangan berhasil diunggah'.($bubuhiQr ? ' dan dibubuhi cap QR Code otentifikasi resmi.' : '.');
+
+        return back()->with('success', $msg);
     }
 }

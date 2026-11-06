@@ -36,6 +36,12 @@ fi
 echo "1. Menarik commit terbaru dari GitHub (origin main)..."
 git pull origin main
 
+COMPOSER_BIN="$(which composer 2>/dev/null || which composer.phar 2>/dev/null || echo '')"
+if [ -n "$COMPOSER_BIN" ]; then
+    echo "1b. Menginstal dependensi Composer baru (termasuk setasign/fpdi)..."
+    "$COMPOSER_BIN" install --no-dev --optimize-autoloader --no-interaction
+fi
+
 echo "2. Memberikan izin eksekusi pada script shell..."
 chmod +x cron-wa.sh scripts/*.sh 2>/dev/null || true
 
