@@ -75,9 +75,13 @@ class PdfStamperService
             $protectDocument = ! isset($options['protect_document']) || (bool) $options['protect_document'];
 
             if ($protectDocument) {
-                // Proteksi berkas PDF: Read-only, dapat dicetak dan disalin, tetapi dikunci dari pengeditan/modifikasi
+                // Proteksi berkas PDF dengan enkripsi AES-128 bit (Mode 2):
+                // Parameter permissions pada TCPDF adalah hak akses yang DIBLOKIR (specify the ones you want to block).
+                // Blokir modifikasi konten, penyalinan/ekstraksi, anotasi, pengisian form, dan manipulasi halaman,
+                // namun tetap mengizinkan dokumen dibuka tanpa password ('') dan dapat dicetak (print & print-high).
                 $ownerPassword = bin2hex(random_bytes(16));
-                $pdf->SetProtection(['print', 'print-high', 'copy'], '', $ownerPassword, 0);
+                $permissionsToBlock = ['modify', 'copy', 'annot-forms', 'fill-forms', 'extract', 'assemble'];
+                $pdf->SetProtection($permissionsToBlock, '', $ownerPassword, 2);
             }
 
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
