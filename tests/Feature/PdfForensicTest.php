@@ -298,4 +298,37 @@ class PdfForensicTest extends TestCase
 
         @unlink($tempPdf);
     }
+
+    public function test_forensic_extracts_embedded_files_and_detects_unlinked_attachment(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->SetCreator('Microsoft Word 2021');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Surat Pengantar Mutasi.');
+        $tempPdf = storage_path('app/temp_test_embedded_nusakambangan.pdf');
+        $tcpdf->Output($tempPdf, 'F');
+
+        // Sisipkan objek Filespec dan EmbeddedFile lampiran nusakambangan
+        $raw = file_get_contents($tempPdf);
+        $embeddedAttachment = "\n20 0 obj\n<< /Type /Filespec /F (lampiran_nusakambangan.pdf) /UF (lampiran_nusakambangan.pdf) /Desc (Daftar WBP Nusakambangan) /EF << /F 21 0 R >> >>\nendobj\n"
+            ."21 0 obj\n<< /Type /EmbeddedFile /Length 85 /Params << /Size 85 >> >>\nstream\nBT /F1 12 Tf (DAFTAR NARAPIDANA YANG DIMUTASI KE LAPAS NUSAKAMBANGAN) Tj ET\nendstream\nendobj\n%%EOF\n";
+        file_put_contents($tempPdf, $raw.$embeddedAttachment);
+
+        $result = PdfForensicService::inspect($tempPdf);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('embedded_files', $result);
+        $this->assertNotEmpty($result['embedded_files']);
+
+        $firstFile = $result['embedded_files'][0];
+        $this->assertEquals('lampiran_nusakambangan.pdf', $firstFile['filename']);
+        $this->assertEquals('terhapus', $firstFile['status']); // Karena tidak ada di active catalog
+        $this->assertStringContainsStringIgnoringCase('Nusakambangan', $firstFile['text_sample']);
+
+        // Verifikasi bahwa deletionAnalysis juga mendeteksi berkas lampiran ini
+        $this->assertTrue($result['deleted_content']['has_deletion']);
+
+        @unlink($tempPdf);
+    }
 }

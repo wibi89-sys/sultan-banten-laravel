@@ -976,11 +976,24 @@ PROMPT;
                 .'  "recommendation": "Saran langkah tindak lanjut bagi pimpinan/petugas pemeriksa."'."\n"
                 .'}';
 
-            $res = self::callGeminiApi($setting, $prompt, [
-                'temperature' => 0.1,
-            ]);
+            $chosenModel = ! empty($setting->model) ? $setting->model : 'gemini-2.5-flash';
+            $contents = [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                    ],
+                ],
+            ];
 
-            if (! $res['success']) {
+            $res = self::postGenerateContentWithFallback(
+                apiKey: $setting->api_key,
+                primaryModel: $chosenModel,
+                contents: $contents,
+                extraConfig: ['responseMimeType' => 'application/json', 'temperature' => 0.1],
+                timeout: 45
+            );
+
+            if (! $res['response'] || ! $res['response']->successful()) {
                 throw new \Exception($res['error'] ?? 'Gagal menghubungi Gemini API.');
             }
 

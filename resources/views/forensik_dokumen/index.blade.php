@@ -207,6 +207,19 @@
                             </div>
                         </div>
 
+                        <!-- KARTU 2.5: BERKAS LAMPIRAN TERTANAM (EMBEDDED FILES & LAMPIRAN) -->
+                        <div class="card border-0 shadow-sm" id="cardEmbeddedFiles">
+                            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                                <span class="fw-bold text-dark small" style="font-size: 12px;">
+                                    <i class="fas fa-paperclip text-warning me-1.5"></i>Berkas Lampiran Digital (Embedded Files &amp; Jejak Lampiran)
+                                </span>
+                                <span class="badge bg-light text-secondary border" id="badgeEmbeddedCount">0 Berkas</span>
+                            </div>
+                            <div class="card-body p-3" id="boxEmbeddedFilesContainer">
+                                <!-- Konten Lampiran diisi oleh JavaScript -->
+                            </div>
+                        </div>
+
                         <!-- KARTU 3: VERIFIKASI QR CODE / BARCODE SULTAN BANTEN -->
                         <div class="card border-0 shadow-sm" id="cardQrVerification">
                             <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
@@ -505,6 +518,45 @@
             li.innerText = a;
             listAnomalies.appendChild(li);
         });
+
+        // 2.5. Berkas Lampiran Digital (Embedded Files)
+        const embeddedFiles = data.embedded_files || [];
+        const badgeEmbedded = document.getElementById('badgeEmbeddedCount');
+        const boxEmbedded = document.getElementById('boxEmbeddedFilesContainer');
+        if (badgeEmbedded) badgeEmbedded.innerText = `${embeddedFiles.length} Berkas Lampiran`;
+
+        if (boxEmbedded) {
+            if (embeddedFiles.length === 0) {
+                boxEmbedded.innerHTML = `
+                    <div class="alert alert-light border py-2 px-3 small mb-0 text-muted d-flex align-items-center gap-2">
+                        <i class="fas fa-info-circle fa-lg"></i>
+                        <div>Tidak ditemukan berkas lampiran digital (Embedded Files) yang tersemat di dalam dokumen ini.</div>
+                    </div>
+                `;
+            } else {
+                let html = '<div class="table-responsive"><table class="table table-sm table-bordered mb-0 align-middle">';
+                html += '<thead class="table-light small"><tr><th style="width: 30%;">Nama Berkas Lampiran</th><th style="width: 15%;">Ukuran</th><th style="width: 25%;">Status Keterikatan</th><th>Pratinjau Isi Dokumen</th></tr></thead><tbody>';
+                embeddedFiles.forEach(f => {
+                    const isDel = f.status === 'terhapus';
+                    const badgeClass = isDel ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-success-subtle text-success border border-success-subtle';
+                    const statusIcon = isDel ? '<i class="fas fa-cut me-1"></i>Dihapus / Terlepas' : '<i class="fas fa-check-circle me-1"></i>Terlampir Aktif';
+                    let preview = f.text_sample 
+                        ? `<div class="font-monospace text-secondary p-1.5 rounded bg-light border" style="font-size: 10.5px; max-height: 85px; overflow-y: auto; line-height: 1.35;">${f.text_sample}</div>` 
+                        : '<em class="text-muted small">Tidak ada cuplikan teks digital</em>';
+                    html += `<tr>
+                        <td>
+                            <div class="fw-bold ${isDel ? 'text-danger' : 'text-primary'}"><i class="fas fa-paperclip me-1.5"></i>${f.filename}</div>
+                            ${f.description ? `<div class="text-muted" style="font-size: 10px;">${f.description}</div>` : ''}
+                        </td>
+                        <td class="small font-monospace">${f.size_formatted || '-'}</td>
+                        <td><span class="badge ${badgeClass} py-1.5 px-2">${statusIcon}</span></td>
+                        <td>${preview}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+                boxEmbedded.innerHTML = html;
+            }
+        }
 
         // 3. QR Code Analysis Box
         const qrContainer = document.getElementById('boxQrResultsContainer');

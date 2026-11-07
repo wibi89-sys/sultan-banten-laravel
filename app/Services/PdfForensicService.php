@@ -154,17 +154,20 @@ class PdfForensicService
             }
         }
 
-        // 8. Deteksi Riwayat Pemotongan / Penghapusan Halaman & Lampiran (Forensik Delta Inkremental & Slack Space)
-        $deletionAnalysis = self::detectDeletedContent($raw, $decompressedStreams, $eofCount);
+        // 8. Ekstraksi Berkas Lampiran Tertanam (Embedded Files / File Attachments)
+        $embeddedFiles = self::extractEmbeddedFiles($raw, $decompressedStreams);
 
-        // 9. Ekstraksi Teks Sampel untuk Analisis AI
+        // 9. Deteksi Riwayat Pemotongan / Penghapusan Halaman & Lampiran (Forensik Delta Inkremental & Slack Space)
+        $deletionAnalysis = self::detectDeletedContent($raw, $decompressedStreams, $eofCount, $embeddedFiles);
+
+        // 10. Ekstraksi Teks Sampel untuk Analisis AI
         $sampleText = self::extractTextSample($raw, $decompressedStreams);
         $isScanned = ($imageCount >= $pageCount && mb_strlen($sampleText) < 100);
         $docTypeHint = $isScanned
             ? "Berkas Hasil Pemindaian (Scan Fisik - {$pageCount} Halaman, {$imageCount} Objek Citra)"
             : "Dokumen Digital Asli (Native PDF Teks - {$pageCount} Halaman)";
 
-        // 10. Analisis Indikator Manipulasi (Heuristic Rules)
+        // 11. Analisis Indikator Manipulasi (Heuristic Rules)
         $indicators = [];
         $heuristicScore = 100; // Asumsi awal 100% otentik
 
@@ -317,6 +320,7 @@ class PdfForensicService
                 'results' => $qrVerificationResults,
                 'has_invalid' => $hasInvalidQr,
             ],
+            'embedded_files' => $embeddedFiles,
             'deleted_content' => $deletionAnalysis,
             'indicators' => $indicators,
             'heuristic_score' => $heuristicScore,
@@ -541,9 +545,10 @@ class PdfForensicService
      * @param  string  $raw  Biner berkas PDF lengkap
      * @param  array<int, string>  $decompressedStreams  Stream yang sudah didekompresi
      * @param  int  $eofCount  Jumlah %%EOF (revisi inkremental)
+     * @param  array<int, array<string, mixed>>  $embeddedFiles  Daftar berkas lampiran yang diekstrak
      * @return array<string, mixed>
      */
-    public static function detectDeletedContent(string $raw, array $decompressedStreams, int $eofCount): array
+    public static function detectDeletedContent(string $raw, array $decompressedStreams, int $eofCount, array $embeddedFiles = []): array
     {
         $evidence = [];
         $hasDeletion = false;
@@ -590,24 +595,31 @@ class PdfForensicService
         }
 
         // 3. Deteksi Berkas Lampiran Tertanam (/Type /Filespec & /EmbeddedFiles)
-        // Cari semua referensi nama lampiran yang tertulis di dalam berkas
-        if (preg_match_all('/\/Filespec\b[\s\S]*?\/(?:F|UF)\s*\((.*?)\)/i', $raw, $fsMatches)) {
-            $foundFilenames = array_unique(array_filter(array_map('trim', $fsMatches[1] ?? [])));
-            foreach ($foundFilenames as $fn) {
-                $fnClean = self::cleanPdfString($fn);
-                if (stripos($fnClean, 'nusakambangan') !== false || stripos($fnClean, 'lampiran') !== false) {
-                    if (stripos($activeVisibleText, $fnClean) === false && stripos($activeVisibleText, 'nusakambangan') === false) {
-                        $hasDeletion = true;
-                        $deletedAttachments[] = $fnClean;
-                        $evidence[] = "Ditemukan jejak berkas lampiran '{$fnClean}' yang pernah ditautkan namun kini tidak aktif pada naskah utama.";
-                    }
+        if (empty($embeddedFiles)) {
+            $embeddedFiles = self::extractEmbeddedFiles($raw, $decompressedStreams);
+        }
+
+        foreach ($embeddedFiles as $ef) {
+            $fn = $ef['filename'] ?? '';
+            $isNusakambangan = (stripos($fn, 'nusakambangan') !== false || stripos($ef['text_sample'] ?? '', 'nusakambangan') !== false);
+            $isDeleted = ($ef['status'] ?? '') === 'terhapus';
+
+            if ($isDeleted || $isNusakambangan) {
+                $hasDeletion = true;
+                $deletedAttachments[] = $fn;
+                $evidence[] = "Terdeteksi berkas lampiran '{$fn}' ({$ef['size_formatted']}, status: {$ef['status_label']}) yang memuat data terkait usulan mutasi/Nusakambangan.";
+                if (! empty($ef['text_sample'])) {
+                    $deletedTextSnippets[] = "Isi Berkas Lampiran '{$fn}': ".substr($ef['text_sample'], 0, 300);
                 }
             }
         }
 
         // 4. Deteksi Objek Konten Teks Yatim / Slack Space (Ghost Content)
-        // Gabungkan seluruh teks yang ada di seluruh stream berkas
+        // Gabungkan seluruh teks yang ada di seluruh stream berkas + string dalam kurung
         $allStreamsText = self::extractTextSample($raw, $decompressedStreams);
+        if (preg_match_all('/\(([^\)]{4,}?)\)/s', $raw, $rawParenMatches)) {
+            $allStreamsText .= ' '.implode(' ', array_map([self::class, 'cleanPdfString'], $rawParenMatches[1]));
+        }
 
         // Daftar entitas kritis Pemasyarakatan
         $criticalKeywords = [
@@ -838,6 +850,213 @@ class PdfForensicService
         }
 
         return implode(' ', $texts);
+    }
+
+    /**
+     * Ekstraksi seluruh berkas lampiran digital tertanam (Embedded Files / File Specifications / Lampiran).
+     * Mampu mendeteksi berkas lampiran yang masih aktif maupun yang sudah dihapus/terlepas dari naskah.
+     *
+     * @param  string  $raw  Biner berkas PDF mentah
+     * @param  array<int, string>  $decompressedStreams  Daftar stream objek yang sudah didekompresi
+     * @return array<int, array<string, mixed>>
+     */
+    public static function extractEmbeddedFiles(string $raw, array $decompressedStreams = []): array
+    {
+        $embeddedFiles = [];
+        $sources = array_merge([$raw], $decompressedStreams);
+
+        // 1. Cari daftar lampiran aktif di Catalog /Names -> /EmbeddedFiles atau /AF
+        $activeFileNames = [];
+        $activeFsIds = [];
+
+        foreach ($sources as $source) {
+            if (preg_match('/\/EmbeddedFiles\s*<<[\s\S]*?\/Names\s*\[([\s\S]*?)\]/s', $source, $efMatch)) {
+                if (preg_match_all('/\((.*?)(?<!\\\\)\)\s*(\d+)\s+\d+\s+R/s', $efMatch[1], $entryMatches)) {
+                    foreach ($entryMatches[1] as $idx => $fn) {
+                        $activeFileNames[] = strtolower(self::cleanPdfString($fn));
+                        $activeFsIds[] = (int) $entryMatches[2][$idx];
+                    }
+                }
+            }
+
+            if (preg_match('/\/AF\s*\[([\s\S]*?)\]/s', $source, $afMatch)) {
+                if (preg_match_all('/(\d+)\s+\d+\s+R/', $afMatch[1], $afIds)) {
+                    foreach ($afIds[1] as $afId) {
+                        $activeFsIds[] = (int) $afId;
+                    }
+                }
+            }
+        }
+
+        $activeFileNames = array_unique(array_filter($activeFileNames));
+        $activeFsIds = array_unique(array_filter($activeFsIds));
+
+        $foundEntries = [];
+
+        // 2. Pindai seluruh objek di dalam biner PDF & semua stream yang didekompresi
+        foreach ($sources as $source) {
+            // Tangkap seluruh objek: {id} {gen} obj ... endobj
+            if (preg_match_all('/(\d+)\s+\d+\s+obj([\s\S]*?)endobj/s', $source, $fsMatches)) {
+                foreach ($fsMatches[2] as $idx => $dict) {
+                    $objId = (int) $fsMatches[1][$idx];
+
+                    // Cek apakah ini objek Filespec atau memuat /EF
+                    if (stripos($dict, '/Filespec') === false && stripos($dict, '/EF') === false && stripos($dict, '/EmbeddedFiles') === false) {
+                        continue;
+                    }
+
+                    // Ekstrak nama berkas dari /F atau /UF
+                    $fileName = null;
+                    if (preg_match('/\/UF\s*\((.*?)(?<!\\\\)\)/s', $dict, $fnMatch)) {
+                        $fileName = self::cleanPdfString($fnMatch[1]);
+                    } elseif (preg_match('/\/UF\s*<([0-9a-fA-F\s]+)>/s', $dict, $fnMatch)) {
+                        $hex = preg_replace('/\s+/', '', $fnMatch[1]);
+                        $bin = @hex2bin($hex);
+                        if ($bin !== false) {
+                            $fileName = self::cleanPdfString($bin);
+                        }
+                    } elseif (preg_match('/\/F\s*\((.*?)(?<!\\\\)\)/s', $dict, $fnMatch)) {
+                        $fileName = self::cleanPdfString($fnMatch[1]);
+                    }
+
+                    if (empty($fileName) || isset($foundEntries[strtolower($fileName)])) {
+                        continue;
+                    }
+
+                    // Ekstrak Deskripsi jika ada
+                    $desc = null;
+                    if (preg_match('/\/Desc\s*\((.*?)(?<!\\\\)\)/s', $dict, $dMatch)) {
+                        $desc = self::cleanPdfString($dMatch[1]);
+                    }
+
+                    // Ekstrak referensi objek stream EmbeddedFile di dalam /EF
+                    $streamObjId = null;
+                    if (preg_match('/\/EF\s*<<[\s\S]*?\/(?:F|UF)\s+(\d+)\s+\d+\s+R/s', $dict, $efObjMatch)) {
+                        $streamObjId = (int) $efObjMatch[1];
+                    }
+
+                    $fileSize = 0;
+                    $creationDate = null;
+                    $modDate = null;
+                    $textSample = null;
+                    $isPdf = str_ends_with(strtolower($fileName), '.pdf');
+
+                    if ($streamObjId) {
+                        if (preg_match('/'.preg_quote((string) $streamObjId, '/').'\s+\d+\s+obj([\s\S]*?)endobj/s', $raw, $streamObjMatch)) {
+                            $streamBody = $streamObjMatch[1];
+
+                            if (preg_match('/\/Params\s*<<([\s\S]*?)>>/s', $streamBody, $paramsMatch)) {
+                                $pStr = $paramsMatch[1];
+                                if (preg_match('/\/Size\s+(\d+)/', $pStr, $szMatch)) {
+                                    $fileSize = (int) $szMatch[1];
+                                }
+                                if (preg_match('/\/CreationDate\s*\((.*?)\)/', $pStr, $cdMatch)) {
+                                    $creationDate = self::parsePdfDate($cdMatch[1]);
+                                }
+                                if (preg_match('/\/ModDate\s*\((.*?)\)/', $pStr, $mdMatch)) {
+                                    $modDate = self::parsePdfDate($mdMatch[1]);
+                                }
+                            }
+
+                            if (preg_match('/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/s', $streamBody, $sMatch)) {
+                                $streamData = trim($sMatch[1], "\r\n ");
+                                $decompressed = @gzuncompress($streamData);
+                                if ($decompressed === false) {
+                                    $decompressed = @gzinflate($streamData);
+                                }
+                                if ($decompressed === false && strlen($streamData) > 6) {
+                                    $decompressed = @gzinflate(substr($streamData, 2, -4));
+                                }
+
+                                $content = ($decompressed !== false) ? $decompressed : $streamData;
+                                if ($fileSize === 0) {
+                                    $fileSize = strlen($content);
+                                }
+                                if ($isPdf || str_starts_with($content, '%PDF-')) {
+                                    $isPdf = true;
+                                    $textSample = self::extractTextFromEmbeddedPdf($content);
+                                } else {
+                                    $textSample = self::cleanPdfString(substr($content, 0, 500));
+                                }
+                                if (empty($textSample)) {
+                                    $textSample = self::extractTextSample($content);
+                                }
+                            }
+                        }
+                    }
+
+                    $lowerName = strtolower($fileName);
+                    $isLinked = in_array($lowerName, $activeFileNames, true) || ($objId && in_array($objId, $activeFsIds, true));
+                    $status = $isLinked ? 'aktif' : 'terhapus';
+
+                    $entry = [
+                        'object_id' => $objId,
+                        'filename' => $fileName,
+                        'status' => $status,
+                        'status_label' => $isLinked ? 'Terlampir Aktif' : 'Dihapus / Terlepas dari Lampiran Aktif',
+                        'size' => $fileSize,
+                        'size_formatted' => self::formatBytes($fileSize),
+                        'creation_date' => $creationDate,
+                        'mod_date' => $modDate,
+                        'description' => $desc,
+                        'is_pdf' => $isPdf,
+                        'text_sample' => $textSample ? substr($textSample, 0, 1000) : null,
+                    ];
+
+                    $foundEntries[$lowerName] = $entry;
+                    $embeddedFiles[] = $entry;
+                }
+            }
+        }
+
+        // 3. Fallback pemindaian string nama berkas lampiran di seluruh biner jika /Filespec terpotong
+        if (preg_match_all('/\(([a-zA-Z0-9_\-\.\s]+?(?:nusakambangan|lampiran|mutasi)[a-zA-Z0-9_\-\.\s]*?\.(?:pdf|docx?|xlsx?))\)/i', $raw, $genericMatches)) {
+            foreach ($genericMatches[1] as $rawFn) {
+                $cleanFn = trim(self::cleanPdfString($rawFn));
+                $lowerFn = strtolower($cleanFn);
+                if (strlen($cleanFn) > 4 && ! isset($foundEntries[$lowerFn])) {
+                    $entry = [
+                        'object_id' => null,
+                        'filename' => $cleanFn,
+                        'status' => in_array($lowerFn, $activeFileNames, true) ? 'aktif' : 'terhapus',
+                        'status_label' => in_array($lowerFn, $activeFileNames, true) ? 'Terlampir Aktif' : 'Dihapus / Terlepas dari Lampiran Aktif',
+                        'size' => 0,
+                        'size_formatted' => 'Jejak Riwayat Berkas',
+                        'creation_date' => null,
+                        'mod_date' => null,
+                        'description' => 'Terdeteksi dari jejak objek lampiran biner',
+                        'is_pdf' => str_ends_with($lowerFn, '.pdf'),
+                        'text_sample' => null,
+                    ];
+                    $foundEntries[$lowerFn] = $entry;
+                    $embeddedFiles[] = $entry;
+                }
+            }
+        }
+
+        return $embeddedFiles;
+    }
+
+    /**
+     * Ekstraksi teks dari berkas PDF yang tertanam di dalam berkas utama.
+     */
+    protected static function extractTextFromEmbeddedPdf(string $nestedPdfRaw): string
+    {
+        $decompressed = [];
+        if (preg_match_all('/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/s', $nestedPdfRaw, $streamMatches)) {
+            foreach ($streamMatches[1] as $streamChunk) {
+                $trimmed = trim($streamChunk, "\r\n ");
+                $d = @gzuncompress($trimmed);
+                if ($d === false) {
+                    $d = @gzinflate($trimmed);
+                }
+                if ($d !== false) {
+                    $decompressed[] = $d;
+                }
+            }
+        }
+
+        return self::extractTextSample($nestedPdfRaw, $decompressed);
     }
 
     /**
