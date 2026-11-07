@@ -154,16 +154,29 @@ class PdfForensicService
             }
         }
 
-        // 8. Ekstraksi Teks Sampel untuk Analisis AI
+        // 8. Deteksi Riwayat Pemotongan / Penghapusan Halaman & Lampiran (Forensik Delta Inkremental & Slack Space)
+        $deletionAnalysis = self::detectDeletedContent($raw, $decompressedStreams, $eofCount);
+
+        // 9. Ekstraksi Teks Sampel untuk Analisis AI
         $sampleText = self::extractTextSample($raw, $decompressedStreams);
         $isScanned = ($imageCount >= $pageCount && mb_strlen($sampleText) < 100);
         $docTypeHint = $isScanned
             ? "Berkas Hasil Pemindaian (Scan Fisik - {$pageCount} Halaman, {$imageCount} Objek Citra)"
             : "Dokumen Digital Asli (Native PDF Teks - {$pageCount} Halaman)";
 
-        // 9. Analisis Indikator Manipulasi (Heuristic Rules)
+        // 10. Analisis Indikator Manipulasi (Heuristic Rules)
         $indicators = [];
         $heuristicScore = 100; // Asumsi awal 100% otentik
+
+        // Cek temuan penghapusan halaman / lampiran berkas
+        if ($deletionAnalysis['has_deletion']) {
+            $heuristicScore -= 70; // Penalti berat: terbukti manipulasi / pemotongan berkas
+            $indicators[] = [
+                'kategori' => 'danger',
+                'judul' => 'Terdeteksi Riwayat Pemotongan / Penghapusan Lampiran Naskah',
+                'deskripsi' => implode(' ', $deletionAnalysis['evidence']),
+            ];
+        }
 
         // Cek software mencurigakan
         $combinedSoftware = strtolower(($creator ?? '').' '.($producer ?? '').' '.implode(' ', $xmpData['software_agents'] ?? []));
@@ -265,6 +278,7 @@ class PdfForensicService
             'detected_suspicious_software' => $detectedSuspicious,
             'detected_qr_codes' => $detectedCodes,
             'qr_verification_results' => $qrVerificationResults,
+            'deleted_content' => $deletionAnalysis,
             'fonts_used' => array_slice($fontsUsed, 0, 10),
             'sample_text' => substr($sampleText, 0, 3000),
         ]);
@@ -303,6 +317,7 @@ class PdfForensicService
                 'results' => $qrVerificationResults,
                 'has_invalid' => $hasInvalidQr,
             ],
+            'deleted_content' => $deletionAnalysis,
             'indicators' => $indicators,
             'heuristic_score' => $heuristicScore,
             'ai_analysis' => $aiAnalysis,
@@ -518,6 +533,311 @@ class PdfForensicService
         $sample = trim(preg_replace('/\s+/', ' ', $sample));
 
         return $sample;
+    }
+
+    /**
+     * Deteksi riwayat penghapusan halaman, berkas lampiran, atau konten tersembunyi (Slack Space).
+     *
+     * @param  string  $raw  Biner berkas PDF lengkap
+     * @param  array<int, string>  $decompressedStreams  Stream yang sudah didekompresi
+     * @param  int  $eofCount  Jumlah %%EOF (revisi inkremental)
+     * @return array<string, mixed>
+     */
+    public static function detectDeletedContent(string $raw, array $decompressedStreams, int $eofCount): array
+    {
+        $evidence = [];
+        $hasDeletion = false;
+        $deletedPagesCount = 0;
+        $deletedAttachments = [];
+        $deletedTextSnippets = [];
+
+        // 1. Ekstraksi teks halaman AKTIF (halaman yang benar-benar ditampilkan oleh PDF reader)
+        $activePagesInfo = self::getActivePagesInfo($raw);
+        $activeVisibleText = $activePagesInfo['active_text'] ?? '';
+        $activePageCount = $activePagesInfo['page_count'] ?? 1;
+
+        // 2. Analisis Delta Antar-Revisi Inkremental (Jika %%EOF >= 2)
+        if ($eofCount >= 2) {
+            $eofPositions = [];
+            $offset = 0;
+            while (($pos = strpos($raw, '%%EOF', $offset)) !== false) {
+                $eofPositions[] = $pos;
+                $offset = $pos + 5;
+            }
+
+            if (! empty($eofPositions)) {
+                // Revisi 1: dari byte 0 sampai %%EOF pertama
+                $rev1Raw = substr($raw, 0, $eofPositions[0] + 5);
+                $rev1PagesInfo = self::getActivePagesInfo($rev1Raw);
+                $rev1PageCount = $rev1PagesInfo['page_count'] ?? 0;
+
+                // Periksa apakah halaman berkurang antara Revisi 1 dan Revisi Final
+                if ($rev1PageCount > $activePageCount) {
+                    $hasDeletion = true;
+                    $diff = $rev1PageCount - $activePageCount;
+                    $deletedPagesCount += $diff;
+
+                    // Cari teks dari halaman yang hilang
+                    $missingPageIds = array_diff($rev1PagesInfo['page_ids'] ?? [], $activePagesInfo['page_ids'] ?? []);
+                    $missingText = self::extractTextFromPageIds($raw, $missingPageIds);
+                    if (! empty($missingText)) {
+                        $deletedTextSnippets[] = $missingText;
+                    }
+
+                    $evidence[] = "Terdeteksi pemotongan {$diff} lembar halaman pada riwayat revisi inkremental berkas (Revisi awal memiliki {$rev1PageCount} halaman, sedangkan naskah saat ini hanya tersisa {$activePageCount} halaman).";
+                }
+            }
+        }
+
+        // 3. Deteksi Berkas Lampiran Tertanam (/Type /Filespec & /EmbeddedFiles)
+        // Cari semua referensi nama lampiran yang tertulis di dalam berkas
+        if (preg_match_all('/\/Filespec\b[\s\S]*?\/(?:F|UF)\s*\((.*?)\)/i', $raw, $fsMatches)) {
+            $foundFilenames = array_unique(array_filter(array_map('trim', $fsMatches[1] ?? [])));
+            foreach ($foundFilenames as $fn) {
+                $fnClean = self::cleanPdfString($fn);
+                if (stripos($fnClean, 'nusakambangan') !== false || stripos($fnClean, 'lampiran') !== false) {
+                    if (stripos($activeVisibleText, $fnClean) === false && stripos($activeVisibleText, 'nusakambangan') === false) {
+                        $hasDeletion = true;
+                        $deletedAttachments[] = $fnClean;
+                        $evidence[] = "Ditemukan jejak berkas lampiran '{$fnClean}' yang pernah ditautkan namun kini tidak aktif pada naskah utama.";
+                    }
+                }
+            }
+        }
+
+        // 4. Deteksi Objek Konten Teks Yatim / Slack Space (Ghost Content)
+        // Gabungkan seluruh teks yang ada di seluruh stream berkas
+        $allStreamsText = self::extractTextSample($raw, $decompressedStreams);
+
+        // Daftar entitas kritis Pemasyarakatan
+        $criticalKeywords = [
+            'nusakambangan' => 'Lapas Nusakambangan',
+            'lampiran usulan' => 'Lampiran Usulan Mutasi',
+            'daftar narapidana' => 'Daftar Narapidana / WBP',
+            'daftar wbp' => 'Daftar WBP',
+            'pasir putih' => 'Lapas Pasir Putih',
+            'batu nusakambangan' => 'Lapas Batu Nusakambangan',
+            'karanganyar' => 'Lapas Karanganyar',
+            'besi nusakambangan' => 'Lapas Besi',
+            'kembangkuning' => 'Lapas Kembangkuning',
+            'permisan' => 'Lapas Permisan',
+        ];
+
+        $ghostFindings = [];
+        foreach ($criticalKeywords as $keyword => $label) {
+            $inAll = (stripos($allStreamsText, $keyword) !== false);
+            $inActive = (stripos($activeVisibleText, $keyword) !== false);
+
+            // Jika kata kunci ada di berkas fisik (riwayat/slack space), tapi TIDAK ADA sama sekali di teks naskah aktif:
+            if ($inAll && ! $inActive) {
+                $ghostFindings[] = $label;
+            }
+        }
+
+        if (! empty($ghostFindings)) {
+            $hasDeletion = true;
+            $evidence[] = 'Ditemukan jejak konten teks tersembunyi (slack space / objek terputus) yang memuat entitas: '
+                .implode(', ', array_unique($ghostFindings))
+                .'. Konten ini tersimpan dalam objek biner berkas tetapi TIDAK ditampilkan pada halaman naskah aktif!';
+
+            // Ambil cuplikan teks di sekitar kata kunci untuk pembuktian
+            foreach ($criticalKeywords as $keyword => $label) {
+                $pos = stripos($allStreamsText, $keyword);
+                if ($pos !== false && stripos($activeVisibleText, $keyword) === false) {
+                    $start = max(0, $pos - 80);
+                    $len = 220;
+                    $snippet = substr($allStreamsText, $start, $len);
+                    $deletedTextSnippets[] = '...'.trim($snippet).'...';
+                    break;
+                }
+            }
+        }
+
+        // 5. Analisis XMP History (xmpMM:History)
+        if (preg_match('/<x:xmpmeta[\s\S]*?<\/x:xmpmeta>/s', $raw, $xmpMatch)) {
+            $xml = $xmpMatch[0];
+            if (preg_match_all('/<stEvt:action>(.*?)<\/stEvt:action>/i', $xml, $actMatches)) {
+                foreach ($actMatches[1] as $act) {
+                    $cleanAct = strtolower(trim($act));
+                    if (in_array($cleanAct, ['deleted', 'removed', 'cropped'])) {
+                        $hasDeletion = true;
+                        $evidence[] = "Riwayat XMP mencatat tindakan penyuntingan destruktif: '{$cleanAct}'.";
+                    }
+                }
+            }
+        }
+
+        return [
+            'has_deletion' => $hasDeletion,
+            'deleted_pages_count' => $deletedPagesCount,
+            'deleted_attachments' => array_values(array_unique($deletedAttachments)),
+            'evidence' => array_values(array_unique($evidence)),
+            'deleted_text_sample' => ! empty($deletedTextSnippets) ? implode("\n", array_slice($deletedTextSnippets, 0, 2)) : null,
+            'active_pages_count' => $activePageCount,
+            'active_text_preview' => substr($activeVisibleText, 0, 500),
+        ];
+    }
+
+    /**
+     * Dapatkan informasi halaman aktif dan teks halaman naskah utama.
+     *
+     * @return array{
+     *   page_count: int,
+     *   page_ids: array<int, int>,
+     *   content_stream_ids: array<int, int>,
+     *   active_text: string
+     * }
+     */
+    protected static function getActivePagesInfo(string $raw): array
+    {
+        $pageIds = [];
+        $contentIds = [];
+        $activeTextParts = [];
+
+        // 1. Cari Root Catalog dari trailer terakhir atau /Type /Catalog
+        $rootObjId = null;
+        if (preg_match_all('/trailer\s*<<[\s\S]*?\/Root\s+(\d+)\s+\d+\s+R[\s\S]*?>>/s', $raw, $trMatches)) {
+            $lastIndex = count($trMatches[1]) - 1;
+            $rootObjId = (int) $trMatches[1][$lastIndex];
+        }
+
+        if (! $rootObjId && preg_match('/(\d+)\s+\d+\s+obj\s*<<[\s\S]*?\/Type\s*\/Catalog[\s\S]*?>>/s', $raw, $catMatch)) {
+            $rootObjId = (int) $catMatch[1];
+        }
+
+        // 2. Dari Catalog, cari objek /Pages
+        $pagesObjId = null;
+        if ($rootObjId) {
+            if (preg_match_all('/'.preg_quote((string) $rootObjId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $catObjMatches)) {
+                $lastCat = end($catObjMatches[1]);
+                if (preg_match('/\/Pages\s+(\d+)\s+\d+\s+R/', $lastCat, $pMatch)) {
+                    $pagesObjId = (int) $pMatch[1];
+                }
+            }
+        }
+
+        if (! $pagesObjId && preg_match('/(\d+)\s+\d+\s+obj\s*<<[\s\S]*?\/Type\s*\/Pages\b[\s\S]*?>>/s', $raw, $pMatch)) {
+            $pagesObjId = (int) $pMatch[1];
+        }
+
+        // 3. Dari objek Pages, ekstrak /Kids dan /Count
+        $pageCount = 0;
+        if ($pagesObjId) {
+            if (preg_match_all('/'.preg_quote((string) $pagesObjId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pagesObjMatches)) {
+                $lastPagesObj = end($pagesObjMatches[1]);
+                if (preg_match('/\/Count\s+(\d+)/', $lastPagesObj, $cMatch)) {
+                    $pageCount = (int) $cMatch[1];
+                }
+                if (preg_match('/\/Kids\s*\[([\s\S]*?)\]/', $lastPagesObj, $kidsMatch)) {
+                    if (preg_match_all('/(\d+)\s+\d+\s+R/', $kidsMatch[1], $kMatches)) {
+                        $pageIds = array_map('intval', $kMatches[1]);
+                    }
+                }
+            }
+        }
+
+        // Fallback jika tidak terurai dari hierarki /Pages
+        if (empty($pageIds)) {
+            if (preg_match_all('/(\d+)\s+\d+\s+obj\s*<<[\s\S]*?\/Type\s*\/Page(?![sA-Za-z])[\s\S]*?>>/s', $raw, $allPageMatches)) {
+                $pageIds = array_map('intval', $allPageMatches[1]);
+            }
+            if ($pageCount === 0) {
+                $pageCount = count($pageIds);
+            }
+        }
+
+        // 4. Untuk setiap Page ID, cari objek /Contents
+        foreach ($pageIds as $pId) {
+            if (preg_match_all('/'.preg_quote((string) $pId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pageDefMatches)) {
+                $lastPageDef = end($pageDefMatches[1]);
+                if (preg_match('/\/Contents\s+(\d+)\s+\d+\s+R/', $lastPageDef, $cMatch)) {
+                    $contentIds[] = (int) $cMatch[1];
+                } elseif (preg_match('/\/Contents\s*\[([\s\S]*?)\]/', $lastPageDef, $cArrMatch)) {
+                    if (preg_match_all('/(\d+)\s+\d+\s+R/', $cArrMatch[1], $cMatches)) {
+                        foreach ($cMatches[1] as $cid) {
+                            $contentIds[] = (int) $cid;
+                        }
+                    }
+                }
+            }
+        }
+
+        $contentIds = array_values(array_unique($contentIds));
+
+        // 5. Ekstrak dan dekompresi teks HANYA dari stream konten halaman aktif
+        foreach ($contentIds as $cId) {
+            $streamText = self::extractObjectContentText($raw, $cId);
+            if (! empty($streamText)) {
+                $activeTextParts[] = $streamText;
+            }
+        }
+
+        $activeText = implode(' ', $activeTextParts);
+        $activeText = trim(preg_replace('/\s+/', ' ', $activeText));
+
+        return [
+            'page_count' => max(1, $pageCount ?: count($pageIds)),
+            'page_ids' => $pageIds,
+            'content_stream_ids' => $contentIds,
+            'active_text' => $activeText,
+        ];
+    }
+
+    /**
+     * Ekstraksi teks dari objek stream tertentu berdasarkan ID objek.
+     */
+    protected static function extractObjectContentText(string $raw, int $objId): string
+    {
+        if (preg_match_all('/'.preg_quote((string) $objId, '/').'\s+\d+\s+obj([\s\S]*?)endobj/s', $raw, $matches)) {
+            $lastObjDef = end($matches[1]);
+            if (preg_match('/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/s', $lastObjDef, $streamMatch)) {
+                $chunk = trim($streamMatch[1], "\r\n ");
+                $decompressed = @gzuncompress($chunk);
+                if ($decompressed === false) {
+                    $decompressed = @gzinflate($chunk);
+                }
+                if ($decompressed === false && strlen($chunk) > 6) {
+                    $decompressed = @gzinflate(substr($chunk, 2, -4));
+                }
+                $content = ($decompressed !== false) ? $decompressed : $chunk;
+
+                return self::extractTextSample($content);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Ekstraksi teks gabungan dari daftar ID halaman tertentu.
+     *
+     * @param  array<int, int>  $pageIds
+     */
+    protected static function extractTextFromPageIds(string $raw, array $pageIds): string
+    {
+        $texts = [];
+        foreach ($pageIds as $pId) {
+            if (preg_match_all('/'.preg_quote((string) $pId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pageDefMatches)) {
+                $lastPageDef = end($pageDefMatches[1]);
+                $cIds = [];
+                if (preg_match('/\/Contents\s+(\d+)\s+\d+\s+R/', $lastPageDef, $cMatch)) {
+                    $cIds[] = (int) $cMatch[1];
+                } elseif (preg_match('/\/Contents\s*\[([\s\S]*?)\]/', $lastPageDef, $cArrMatch)) {
+                    if (preg_match_all('/(\d+)\s+\d+\s+R/', $cArrMatch[1], $cMatches)) {
+                        $cIds = array_map('intval', $cMatches[1]);
+                    }
+                }
+
+                foreach ($cIds as $cId) {
+                    $t = self::extractObjectContentText($raw, $cId);
+                    if (! empty($t)) {
+                        $texts[] = $t;
+                    }
+                }
+            }
+        }
+
+        return implode(' ', $texts);
     }
 
     /**

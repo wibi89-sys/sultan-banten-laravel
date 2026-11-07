@@ -158,6 +158,17 @@
                                 <div class="progress mt-2.5" style="height: 8px;">
                                     <div class="progress-bar bg-success" role="progressbar" id="barScore" style="width: 95%;"></div>
                                 </div>
+
+                                <!-- Alert Deteksi Pemotongan / Penghapusan Lampiran -->
+                                <div id="boxDeletionAlert" class="alert alert-danger py-2 px-3 small mt-2.5 mb-0 d-none align-items-start gap-2 border border-danger">
+                                    <i class="fas fa-cut fa-lg mt-1 text-danger"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-danger mb-1" style="font-size: 12px;">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Peringatan Forensik: Terdeteksi Pemotongan / Penghapusan Lampiran Naskah!
+                                        </div>
+                                        <div id="txtDeletionEvidence" class="text-dark" style="font-size: 11.5px; line-height: 1.45;">-</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -455,6 +466,25 @@
         }
 
         document.getElementById('forensicSource').innerText = ai.source === 'gemini_ai' ? '🤖 Gemini AI Forensic Analysis' : '⚖️ Internal Rule-based Forensic Engine';
+
+        // Tampilkan Alert Khusus jika Terdeteksi Pemotongan/Penghapusan Lampiran
+        const del = data.deleted_content || {};
+        const boxDel = document.getElementById('boxDeletionAlert');
+        const txtDel = document.getElementById('txtDeletionEvidence');
+        if (boxDel && txtDel) {
+            if (del.has_deletion) {
+                boxDel.classList.remove('d-none');
+                boxDel.classList.add('d-flex');
+                let html = (del.evidence || []).map(e => `<div>• ${e}</div>`).join('');
+                if (del.deleted_text_sample) {
+                    html += `<div class="mt-1.5 p-2 bg-white rounded border font-monospace text-secondary" style="font-size: 11px;"><b>Cuplikan Teks yang Dihapus / Tersembunyi:</b><br>${del.deleted_text_sample}</div>`;
+                }
+                txtDel.innerHTML = html;
+            } else {
+                boxDel.classList.add('d-none');
+                boxDel.classList.remove('d-flex');
+            }
+        }
 
         // 2. Rekomendasi & Temuan
         document.getElementById('txtRecommendation').innerText = ai.recommendation || 'Lakukan verifikasi fisik langsung.';

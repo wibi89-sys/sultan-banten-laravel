@@ -849,15 +849,21 @@ PROMPT;
             }
         }
 
+        $deletedContent = $forensicData['deleted_content'] ?? [];
+        $hasDeletedContent = ! empty($deletedContent['has_deletion']);
+
         // Skor awal heuristik
         $baselineScore = 95;
+        if ($hasDeletedContent) {
+            $baselineScore = 25; // Penalti berat bila ada bukti penghapusan halaman/lampiran
+        }
         if ($hasSuspiciousSoftware) {
             $baselineScore -= 45;
         }
         if ($hasInvalidQr) {
             $baselineScore -= 60;
         }
-        if ($hasValidQr) {
+        if ($hasValidQr && ! $hasDeletedContent) {
             $baselineScore = 100;
         }
         if (($forensicData['revisions_count'] ?? 1) > 3) {
@@ -866,13 +872,20 @@ PROMPT;
         $baselineScore = max(5, min(100, $baselineScore));
 
         $defaultRisk = $baselineScore >= 80 ? 'rendah' : ($baselineScore >= 50 ? 'sedang' : 'tinggi');
-        $defaultStatus = $baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu');
+        $defaultStatus = $hasDeletedContent
+            ? 'Terindikasi Manipulasi (Lampiran Dihapus)'
+            : ($baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu'));
 
         // Fallback jika API key belum aktif
         if (! $setting || ! $setting->is_active || empty($setting->api_key)) {
             $findings = [];
             $anomalies = [];
 
+            if ($hasDeletedContent) {
+                foreach ($deletedContent['evidence'] ?? [] as $ev) {
+                    $anomalies[] = $ev;
+                }
+            }
             if ($hasSuspiciousSoftware) {
                 $anomalies[] = 'Terdeteksi jejak software editor grafis/online: '.implode(', ', $suspiciousSoftware).'.';
             }
@@ -894,14 +907,18 @@ PROMPT;
                 'authenticity_score' => $baselineScore,
                 'risk_level' => $defaultRisk,
                 'status_label' => $defaultStatus,
-                'summary' => $baselineScore >= 80
-                    ? 'Berdasarkan ekstraksi teknis metadata, dokumen tidak menunjukkan tanda-tanda manipulasi perangkat lunak grafis yang mencurigakan.'
-                    : 'Berdasarkan ekstraksi teknis, ditemukan anomali signifikan pada berkas ini yang mengindikasikan kemungkinan rekayasa berkas atau kloning naskah.',
+                'summary' => $hasDeletedContent
+                    ? 'Berdasarkan audit forensik struktur PDF, terdeteksi bukti kuat pemotongan/penghapusan lembar lampiran pada naskah ini sebelum diserahkan.'
+                    : ($baselineScore >= 80
+                        ? 'Berdasarkan ekstraksi teknis metadata, dokumen tidak menunjukkan tanda-tanda manipulasi perangkat lunak grafis yang mencurigakan.'
+                        : 'Berdasarkan ekstraksi teknis, ditemukan anomali signifikan pada berkas ini yang mengindikasikan kemungkinan rekayasa berkas atau kloning naskah.'),
                 'key_findings' => $findings,
                 'anomalies' => $anomalies,
-                'recommendation' => $baselineScore >= 80
-                    ? 'Dokumen dapat diterima dengan tetap memverifikasi nomor dan stempel fisik sesuai prosedur standar.'
-                    : 'Lakukan konfirmasi fisik langsung ke Satuan Kerja penerbit dan jangan memproses usulan sebelum naskah asli fisik ditunjukkan.',
+                'recommendation' => $hasDeletedContent
+                    ? 'TOLAK DAN INVESTIGASI: Berkas terbukti dipotong. Mintakan berkas fisik asli yang memuat seluruh lembar lampiran lengkap.'
+                    : ($baselineScore >= 80
+                        ? 'Dokumen dapat diterima dengan tetap memverifikasi nomor dan stempel fisik sesuai prosedur standar.'
+                        : 'Lakukan konfirmasi fisik langsung ke Satuan Kerja penerbit dan jangan memproses usulan sebelum naskah asli fisik ditunjukkan.'),
             ];
         }
 
@@ -921,12 +938,22 @@ PROMPT;
                 .'- Jumlah Simpan Ulang (Revisions %%EOF): '.($forensicData['revisions_count'] ?? 1)."\n"
                 .'- Indikasi Software Grafis/Online: '.(empty($suspiciousSoftware) ? 'Tidak terdeteksi (Normal)' : implode(', ', $suspiciousSoftware))."\n"
                 .'- Status Barcode / QR Sultan Banten: '.(empty($qrResults) ? 'Tidak memuat QR Sultan Banten (Wajar untuk surat masuk UPT / naskah draf)' : json_encode($qrResults))."\n"
-                .'- Cuplikan Teks Naskah: "'.($forensicData['sample_text'] ?? '-')."\"\n\n"
-                ."ATURAN & PANDUAN FORENSIK (WAJIB DIPATUHI SECARA KETAT TANPA KOMPROMI):\n"
-                ."1. INTEGRITAS FAKTUAL & DILARANG KERAS MENGARANG / BERHALUSINASI:\n"
+                .'- Cuplikan Teks Naskah: "'.($forensicData['sample_text'] ?? '-')."\"\n";
+
+            if ($hasDeletedContent) {
+                $prompt .= "\nTEMUAN FORENSIK KRITIS (TERBUKTI SECARA TEKNIS PADA STRUKTUR BERKAS):\n"
+                    ."- TERBUKTI ADANYA PENGHAPUSAN HALAMAN / LAMPIRAN BERKAS!\n"
+                    .'- Bukti Struktural: '.implode('; ', $deletedContent['evidence'] ?? [])."\n";
+                if (! empty($deletedContent['deleted_text_sample'])) {
+                    $prompt .= '- Cuplikan Teks yang Dihapus / Tersembunyi di Slack Space: "'.$deletedContent['deleted_text_sample']."\"\n";
+                }
+                $prompt .= "PERINGATAN UNTUK AI: Karena bukti struktural ini NYATA, Anda WAJIB memberikan skor rendah (15 - 35), risiko TINGGI, status 'Terindikasi Manipulasi (Lampiran Dihapus)', dan nyatakan dengan lugas di ringkasan dan anomali bahwa berkas ini telah dipotong/dihapus lampirannya (termasuk usulan mutasi ke Nusakambangan jika tercatat)!\n";
+            }
+
+            $prompt .= "\nATURAN & PANDUAN FORENSIK (WAJIB DIPATUHI SECARA KETAT TANPA KOMPROMI):\n"
+                ."1. INTEGRITAS FAKTUAL & DILARANG KERAS MENGARANG BILA TIDAK ADA BUKTI:\n"
                 ."   - Penilaian HANYA didasarkan pada bukti teknis objektif yang tercantum di atas.\n"
-                ."   - DILARANG KERAS menyimpulkan atau berspekulasi bahwa ada 'penghapusan lampiran', 'penghapusan lampiran nusakambangan', 'halaman dihilangkan', atau manipulasi isi berkas tanpa adanya bukti struktural PDF yang membuktikannya!\n"
-                ."   - Nama satker/lokasi (seperti Nusakambangan, Banten, Cilegon, Serang) atau kata 'Mutasi' / 'Sidang TPP' dalam cuplikan teks atau nama berkas adalah konteks administratif kedinasan biasa, SAMA SEKALI BUKAN bukti manipulasi atau pelanggaran.\n"
+                ."   - JIKA TIDAK ADA temuan penghapusan halaman struktural di atas, jangan berspekulasi.\n"
                 ."2. EVALUASI PERANGKAT LUNAK:\n"
                 ."   - Microsoft Word, Adobe Acrobat, scanner fisik (Canon, Epson, HP, Ricoh, Brother), TCPDF, dan generator resmi pemerintah adalah software SAH kedinasan.\n"
                 ."   - Hanya anggap mencurigakan bila terbukti menggunakan software manipulasi grafis (Canva, Photoshop, Illustrator, Corel, iLovePDF, Sejda).\n"
@@ -935,9 +962,9 @@ PROMPT;
                 ."4. EVALUASI KODE QR:\n"
                 ."   - Jika QR Sultan Banten valid terdaftar di database: Berkas SAH terverifikasi (skor 95-100%).\n"
                 ."   - Jika ada kode QR SB-... tapi TIDAK terdaftar di database: Indikasi kuat QR palsu / kloning (skor 10-35%, risiko tinggi).\n"
-                ."   - Jika tidak ada QR Sultan Banten: Berkas surat masuk/UPT biasa yang belum ber-QR, hal ini normal (skor 85-95% jika software wajar).\n"
+                ."   - Jika tidak ada QR Sultan Banten: Berkas surat masuk/UPT biasa yang belum ber-QR, hal ini normal.\n"
                 ."5. STANDARISASI HASIL:\n"
-                ."   - Jika tidak ditemukan software grafis terlarang dan tidak ada pemalsuan QR, berikan status 'Dokumen Terindikasi Wajar / Asli', skor keaslian tinggi (85-100), risiko 'rendah', dan kosongkan anomali [].\n\n"
+                ."   - Jika tidak ditemukan pemotongan berkas, tidak ada software grafis terlarang, dan tidak ada pemalsuan QR, berikan status 'Dokumen Terindikasi Wajar / Asli', skor keaslian tinggi (85-100), risiko 'rendah', dan kosongkan anomali [].\n\n"
                 ."Berikan penilaian Anda dalam format JSON VALID tanpa markdown atau teks tambahan:\n"
                 ."{\n"
                 .'  "authenticity_score": 0 sampai 100,'."\n"
@@ -967,7 +994,7 @@ PROMPT;
                 throw new \Exception('Respon AI bukan format JSON valid.');
             }
 
-            // Post-processing safety filter: cegah anomali halusinasi seperti 'penghapusan lampiran nusakambangan'
+            // Post-processing safety filter
             $rawAnomalies = $data['anomalies'] ?? [];
             $sanitizedAnomalies = [];
             foreach ($rawAnomalies as $anomaly) {
@@ -975,26 +1002,43 @@ PROMPT;
                     continue;
                 }
                 $lowerA = strtolower($anomaly);
-                // Cegah halusinasi penghapusan lampiran / nusakambangan jika tidak ada software manipulasi & tidak ada QR palsu
+                // Hanya buang spekulasi jika TIDAK ADA bukti teknis sama sekali ($hasDeletedContent == false)
                 if (str_contains($lowerA, 'penghapusan lampiran') || str_contains($lowerA, 'lampiran nusakambangan') || (str_contains($lowerA, 'dihapus') && str_contains($lowerA, 'lampiran'))) {
-                    if (! $hasSuspiciousSoftware && ! $hasInvalidQr) {
+                    if (! $hasDeletedContent && ! $hasSuspiciousSoftware && ! $hasInvalidQr) {
                         continue;
                     }
                 }
                 $sanitizedAnomalies[] = $anomaly;
             }
 
-            $score = isset($data['authenticity_score']) ? (int) $data['authenticity_score'] : $baselineScore;
-            $score = max(0, min(100, $score));
-
-            // Jika tidak ada software berbahaya, tidak ada QR palsu, dan anomali bersih, pastikan skor tetap tinggi
-            if (! $hasSuspiciousSoftware && ! $hasInvalidQr && empty($sanitizedAnomalies)) {
-                $score = max(85, $score);
-                $risk = 'rendah';
-                $status = 'Dokumen Terindikasi Wajar / Asli';
+            if ($hasDeletedContent) {
+                // Pastikan anomali pemotongan lampiran selalu ada pada hasil
+                $foundDeletionNote = false;
+                foreach ($sanitizedAnomalies as $sa) {
+                    if (stripos($sa, 'hapus') !== false || stripos($sa, 'lampiran') !== false || stripos($sa, 'potong') !== false) {
+                        $foundDeletionNote = true;
+                        break;
+                    }
+                }
+                if (! $foundDeletionNote) {
+                    $sanitizedAnomalies = array_merge($deletedContent['evidence'] ?? ['Terdeteksi riwayat pemotongan lembar lampiran pada naskah ini.'], $sanitizedAnomalies);
+                }
+                $score = min(35, isset($data['authenticity_score']) ? (int) $data['authenticity_score'] : 25);
+                $risk = 'tinggi';
+                $status = 'Terindikasi Manipulasi (Lampiran Dihapus)';
             } else {
-                $risk = $data['risk_level'] ?? $defaultRisk;
-                $status = $data['status_label'] ?? $defaultStatus;
+                $score = isset($data['authenticity_score']) ? (int) $data['authenticity_score'] : $baselineScore;
+                $score = max(0, min(100, $score));
+
+                // Jika tidak ada software berbahaya, tidak ada QR palsu, dan anomali bersih, pastikan skor tetap tinggi
+                if (! $hasSuspiciousSoftware && ! $hasInvalidQr && empty($sanitizedAnomalies)) {
+                    $score = max(85, $score);
+                    $risk = 'rendah';
+                    $status = 'Dokumen Terindikasi Wajar / Asli';
+                } else {
+                    $risk = $data['risk_level'] ?? $defaultRisk;
+                    $status = $data['status_label'] ?? $defaultStatus;
+                }
             }
 
             return [
@@ -1011,19 +1055,33 @@ PROMPT;
         } catch (\Throwable $e) {
             Log::warning('Gemini analyzeForensicPdf fallback: '.$e->getMessage());
 
+            $fallbackAnomalies = [];
+            if ($hasDeletedContent) {
+                foreach ($deletedContent['evidence'] ?? [] as $ev) {
+                    $fallbackAnomalies[] = $ev;
+                }
+            }
+            if ($hasSuspiciousSoftware) {
+                $fallbackAnomalies[] = 'Terdeteksi software grafis: '.implode(', ', $suspiciousSoftware);
+            }
+
             return [
                 'success' => true,
                 'source' => 'heuristic_engine_fallback',
                 'authenticity_score' => $baselineScore,
                 'risk_level' => $defaultRisk,
                 'status_label' => $defaultStatus,
-                'summary' => 'Analisis forensik dihitung menggunakan mesin aturan internal (Rule-based Forensic Engine).',
+                'summary' => $hasDeletedContent
+                    ? 'Analisis forensik mendeteksi bukti struktural adanya pemotongan lembar lampiran pada berkas ini.'
+                    : 'Analisis forensik dihitung menggunakan mesin aturan internal (Rule-based Forensic Engine).',
                 'key_findings' => [
                     'Software asal: '.($forensicData['creator'] ?? 'Tidak tertera').'.',
                     'Waktu pembuatan: '.($forensicData['creation_date'] ?? 'Tidak tertera').'.',
                 ],
-                'anomalies' => $hasSuspiciousSoftware ? ['Terdeteksi software grafis: '.implode(', ', $suspiciousSoftware)] : [],
-                'recommendation' => 'Pastikan berkas asli fisik diverifikasi langsung ke pihak yang menerbitkan.',
+                'anomalies' => $fallbackAnomalies,
+                'recommendation' => $hasDeletedContent
+                    ? 'TOLAK BERKAS: Berkas terbukti dipotong atau tidak utuh. Minta berkas fisik asli lengkap.'
+                    : 'Pastikan berkas asli fisik diverifikasi langsung ke pihak yang menerbitkan.',
             ];
         }
     }

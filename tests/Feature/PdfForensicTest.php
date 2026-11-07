@@ -261,4 +261,41 @@ class PdfForensicTest extends TestCase
         $this->assertEquals('rendah', $result['risk_level']);
         $this->assertEquals('Dokumen Terindikasi Wajar / Asli', $result['status_label']);
     }
+
+    public function test_forensic_detects_actual_deleted_nusakambangan_attachment(): void
+    {
+        // Buat PDF yang memiliki 1 halaman aktif (Surat Pengantar), namun di dalam stream tersembunyi (slack space)
+        // memuat naskah lampiran narapidana Nusakambangan yang telah dipotong/dihapus
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->SetCreator('Microsoft Word 2021');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Surat Pengantar Usulan Mutasi Narapidana Kanwil Banten.');
+        $tempPdf = storage_path('app/temp_test_tampered_nusakambangan.pdf');
+        $tcpdf->Output($tempPdf, 'F');
+
+        // Simulasikan penyuntingan/penghapusan lampiran dengan menyisipkan objek stream lampiran Nusakambangan
+        // yang tertinggal dalam berkas (orphan / slack space) dengan revisi baru
+        $originalRaw = file_get_contents($tempPdf);
+        $orphanStream = "15 0 obj\n<< /Length 120 >>\nstream\nBT /F1 12 Tf (Lampiran Usulan Pemindahan Narapidana ke Lapas Nusakambangan: 1. Terpidana A 2. Terpidana B) Tj ET\nendstream\nendobj\n";
+        $simulatedIncremental = $originalRaw."\n".$orphanStream."%%EOF\n";
+        file_put_contents($tempPdf, $simulatedIncremental);
+
+        $result = PdfForensicService::inspect($tempPdf);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('deleted_content', $result);
+        $this->assertTrue($result['deleted_content']['has_deletion']);
+
+        // Verifikasi bahwa bukti memuat kata Nusakambangan
+        $evidenceStr = implode(' ', $result['deleted_content']['evidence']);
+        $this->assertStringContainsStringIgnoringCase('Nusakambangan', $evidenceStr);
+
+        // Verifikasi skor anjlok karena terbukti ada pemotongan
+        $this->assertLessThanOrEqual(35, $result['ai_analysis']['authenticity_score']);
+        $this->assertEquals('tinggi', $result['ai_analysis']['risk_level']);
+        $this->assertStringContainsStringIgnoringCase('Manipulasi', $result['ai_analysis']['status_label']);
+
+        @unlink($tempPdf);
+    }
 }
