@@ -135,6 +135,8 @@
                             Kalimat Pengantar / Dasar Rujukan Surat Tugas (Bisa disesuaikan manual atau dikosongkan untuk redaksi default):
                         </label>
                         <textarea name="narasi_pengantar" id="nd_narasi_pengantar" class="form-control form-control-sm" rows="3" placeholder="Menindaklanjuti Surat Kepala [UPT] Nomor: [No] Tanggal [Tgl] Hal : [Hal], Bersama ini kami mohon untuk dapat dibuatkan Surat Tugas bagi Pejabat/Pegawai sebagai berikut:"></textarea>
+                        <input type="hidden" name="narasi_pelaksanaan" id="nd_narasi_pelaksanaan" value="">
+                        <input type="hidden" name="penutup" id="nd_penutup" value="">
                         <div class="d-flex justify-content-between align-items-center mt-1">
                             <small class="text-muted" style="font-size: 11px;">
                                 <i class="fas fa-info-circle me-1"></i>Bila dikosongkan, sistem otomatis menerapkan redaksi baku tata naskah dinas Kementerian.
@@ -264,10 +266,19 @@
                 if (s.jam_mulai) {
                     document.getElementById('nd_jam').value = s.jam_mulai.substring(0, 5) + ' WIB s.d selesai';
                 }
-                if (s.metode_sidang === 'daring') {
-                    document.getElementById('nd_tempat').value = 'Virtual / Zoom Cloud Meeting (' + (s.upt ? s.upt.nama_upt : '') + ')';
+                let tempatVal = '';
+                if (s.metode_sidang === 'daring' || s.link_daring) {
+                    tempatVal = 'Virtual / Zoom Cloud Meeting (' + (s.upt ? s.upt.nama_upt : '') + ')';
                 } else if (s.upt) {
-                    document.getElementById('nd_tempat').value = 'Ruang Sidang TPP ' + s.upt.nama_upt;
+                    tempatVal = 'Ruang Sidang TPP ' + s.upt.nama_upt;
+                }
+                if (tempatVal) document.getElementById('nd_tempat').value = tempatVal;
+
+                const uptNamaVal = s.upt ? s.upt.nama_upt : 'UPT Pemasyarakatan';
+                const nomorUndanganVal = s.nomor_undangan || '-';
+                const tanggalSuratVal = s.tanggal_surat || '-';
+                if (document.getElementById('nd_narasi_pengantar')) {
+                    document.getElementById('nd_narasi_pengantar').value = 'Menindaklanjuti Surat Kepala ' + uptNamaVal + ' Nomor ' + nomorUndanganVal + ' tanggal ' + tanggalSuratVal + ' perihal Undangan Sidang TPP, dalam rangka pelaksanaan pembinaan, monitoring, pengawasan, dan pengendalian pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) yang diselenggarakan di ' + (tempatVal || 'UPT Pemasyarakatan') + ', bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai Kantor Wilayah sebagai berikut:';
                 }
             }
         }
@@ -391,9 +402,15 @@
                 if (res.data.hal_surat && document.getElementById('nd_hal')) {
                     document.getElementById('nd_hal').value = res.data.hal_surat;
                 }
+                if (res.data.narasi_pelaksanaan && document.getElementById('nd_narasi_pelaksanaan')) {
+                    document.getElementById('nd_narasi_pelaksanaan').value = res.data.narasi_pelaksanaan;
+                }
+                if (res.data.penutup && document.getElementById('nd_penutup')) {
+                    document.getElementById('nd_penutup').value = res.data.penutup;
+                }
                 if (statusEl) {
                     statusEl.classList.remove('d-none');
-                    statusEl.innerText = '✓ Narasi berhasil disusun AI sesuai Tata Naskah & EYD V';
+                    statusEl.innerText = '✓ Narasi terpadu (rujukan, pembinaan, tempat pelaksanaan, & pengantar susunan pegawai) berhasil disusun AI.';
                 }
             } else {
                 alert(res.message || 'Gagal menyusun narasi AI.');

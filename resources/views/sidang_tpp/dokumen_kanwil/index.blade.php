@@ -735,9 +735,20 @@
         if (document.getElementById('nd_jam')) {
             document.getElementById('nd_jam').value = s.jam_mulai ? (s.jam_mulai.substring(0, 5) + ' s.d selesai') : '09:00 s.d selesai';
         }
+        const tempatVal = s.link_daring ? 'Daring / Zoom Cloud Meeting' : ('Ruang Sidang TPP ' + uptNama);
         if (document.getElementById('nd_tempat')) {
-            document.getElementById('nd_tempat').value = s.link_daring ? 'Daring / Zoom Cloud Meeting' : ('Ruang Sidang TPP ' + uptNama);
+            document.getElementById('nd_tempat').value = tempatVal;
         }
+
+        const nomorUndanganVal = s.nomor_undangan || '-';
+        const tanggalSuratVal = s.tanggal_surat ? new Date(s.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+
+        if (document.getElementById('nd_narasi_pengantar')) {
+            document.getElementById('nd_narasi_pengantar').value = 'Menindaklanjuti Surat Kepala ' + uptNama + ' Nomor ' + nomorUndanganVal + ' tanggal ' + tanggalSuratVal + ' perihal Undangan Sidang TPP, dalam rangka pelaksanaan pembinaan, monitoring, pengawasan, dan pengendalian pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) yang diselenggarakan di ' + tempatVal + ', bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai Kantor Wilayah sebagai berikut:';
+        }
+
+        const statusEl = document.getElementById('aiNdDraftStatus');
+        if (statusEl) statusEl.classList.add('d-none');
 
         const notaDinas = s.naskah_kanwil ? s.naskah_kanwil.find(n => n.jenis_dokumen === 'nota_dinas') : null;
         if (notaDinas && notaDinas.nomor_dokumen) {

@@ -12,7 +12,6 @@ use App\Services\GeminiAiService;
 use App\Services\ImageCompressionService;
 use App\Services\LaporanTppGeneratorService;
 use App\Services\PdfStamperService;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -135,14 +134,24 @@ class SidangTppDokumenKanwilController extends Controller
             ], 404);
         }
 
+        $uptNama = $request->input('upt_nama') ?: ($sidang->upt->nama_upt ?? 'UPT Pemasyarakatan');
+        $tempatDefault = ! empty($sidang->link_daring)
+            ? 'Virtual / Zoom Cloud Meeting'
+            : ($sidang->tempat_sidang ?: 'Ruang Sidang TPP '.$uptNama);
+        $tempat = $request->input('tempat_pelaksanaan') ?: $tempatDefault;
+
+        $pukulDefault = $sidang->jam_mulai
+            ? substr((string) $sidang->jam_mulai, 0, 5).' WIB s.d selesai'
+            : '09.00 WIB s.d selesai';
+
         $params = [
-            'upt_nama' => $sidang->upt->nama_upt ?? 'UPT Pemasyarakatan',
-            'nomor_undangan' => $request->input('nomor_undangan', $sidang->nomor_undangan ?? '-'),
-            'tanggal_surat_upt' => $request->input('tanggal_surat_upt', $sidang->tanggal_surat ? $sidang->tanggal_surat->translatedFormat('d F Y') : '-'),
-            'hal_undangan' => $request->input('hal_undangan', 'Undangan Sidang TPP'),
-            'hari_tanggal' => $request->input('hari_tanggal_pelaksanaan', $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-'),
-            'pukul' => $request->input('jam_pelaksanaan', $sidang->waktu_mulai ? Carbon::parse($sidang->waktu_mulai)->format('H.i').' WIB s.d selesai' : '09.00 WIB s.d selesai'),
-            'tempat' => $request->input('tempat_pelaksanaan', $sidang->tempat_sidang ?: ($sidang->upt->nama_upt ?? 'Ruang Sidang TPP')),
+            'upt_nama' => $uptNama,
+            'nomor_undangan' => $request->input('nomor_undangan') ?: ($sidang->nomor_undangan ?? '-'),
+            'tanggal_surat_upt' => $request->input('tanggal_surat_upt') ?: ($sidang->tanggal_surat ? $sidang->tanggal_surat->translatedFormat('d F Y') : '-'),
+            'hal_undangan' => $request->input('hal_undangan') ?: 'Undangan Sidang TPP',
+            'hari_tanggal' => $request->input('hari_tanggal_pelaksanaan') ?: ($sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-'),
+            'pukul' => $request->input('jam_pelaksanaan') ?: $pukulDefault,
+            'tempat' => $tempat,
             'instruksi_khusus' => $request->input('instruksi_khusus', ''),
             'gaya_penulisan' => $request->input('gaya_penulisan', 'standar'),
         ];

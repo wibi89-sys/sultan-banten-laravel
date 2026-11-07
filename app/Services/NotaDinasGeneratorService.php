@@ -84,7 +84,16 @@ class NotaDinasGeneratorService
         // Narasi Pengantar / Rujukan Nota Dinas yang dinamis & sesuai tata naskah
         $narasiPengantar = ! empty($params['narasi_pengantar'])
             ? trim((string) $params['narasi_pengantar'])
-            : "Menindaklanjuti Surat Kepala {$uptNama} Nomor: {$nomorUndangan} Tanggal {$tanggalSuratUpt} Hal : {$halUndangan}, Bersama ini kami mohon untuk dapat dibuatkan Surat Tugas bagi Pejabat/Pegawai sebagai berikut:";
+            : "Menindaklanjuti Surat Kepala {$uptNama} Nomor {$nomorUndangan} tanggal {$tanggalSuratUpt} perihal {$halUndangan}, dalam rangka pelaksanaan pembinaan, monitoring, pengawasan, dan pengendalian pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) yang diselenggarakan di {$tempat}, bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai Kantor Wilayah sebagai berikut:";
+
+        // Narasi Transisi Rincian Pelaksanaan & Penutup Dokumen
+        $narasiPelaksanaan = ! empty($params['narasi_pelaksanaan'])
+            ? trim((string) $params['narasi_pelaksanaan'])
+            : 'Adapun pelaksanaan kegiatan pembinaan dan pengawasan sidang TPP dimaksud dilaksanakan dengan rincian jadwal dan tempat sebagai berikut :';
+
+        $penutup = ! empty($params['penutup'])
+            ? trim((string) $params['penutup'])
+            : 'Demikian kami sampaikan, mohon perkenan dan petunjuk lebih lanjut. Atas perhatian dan kerja samanya diucapkan terima kasih.';
 
         // Render baris tabel pegawai
         $pegawaiRows = '';
@@ -274,7 +283,7 @@ class NotaDinasGeneratorService
     </table>
 
     <!-- Rincian Pelaksanaan -->
-    <p style="margin-bottom: 4pt; font-weight: normal;">Adapun pelaksanaan Kegiatan sebagai berikut :</p>
+    <p style="margin-bottom: 4pt; font-weight: normal;">{$narasiPelaksanaan}</p>
     <table class="table-jadwal" border="0" cellspacing="0" cellpadding="0">
         <tr>
             <td style="width: 90pt;">Hari/tanggal</td>
@@ -295,7 +304,7 @@ class NotaDinasGeneratorService
 
     <!-- Penutup -->
     <p class="content-p" style="margin-top: 10pt;">
-        Demikian kami sampaikan, atas kerja samanya diucapkan terima kasih.
+        {$penutup}
     </p>
 
     <!-- Tanda Tangan -->

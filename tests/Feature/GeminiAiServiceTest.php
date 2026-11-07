@@ -250,22 +250,31 @@ class GeminiAiServiceTest extends TestCase
         $this->assertTrue($res['success']);
         $this->assertNotEmpty($res['data']['hal_surat']);
         $this->assertStringContainsString('Menindaklanjuti', $res['data']['narasi_pengantar']);
+        $this->assertNotEmpty($res['data']['narasi_pelaksanaan']);
+        $this->assertNotEmpty($res['data']['penutup']);
     }
 
     public function test_nota_dinas_generator_service_uses_dynamic_narasi_pengantar(): void
     {
-        $customNarasi = 'Sehubungan dengan surat permohonan resmi dan dalam rangka penguatan pengawasan teknis pemasyarakatan, kami mohon diterbitkan surat tugas bagi personil berikut:';
+        $customNarasi = 'Sehubungan dengan surat permohonan resmi dan dalam rangka penguatan pengawasan teknis pemasyarakatan yang diselenggarakan di Ruang Sidang TPP Lapas Pemuda Tangerang, bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai Kantor Wilayah sebagai berikut:';
+        $customPelaksanaan = 'Adapun kegiatan pembinaan dan pengawasan sidang TPP dimaksud dilaksanakan sesuai jadwal berikut :';
+        $customPenutup = 'Demikian kami sampaikan, mohon perkenan dan petunjuk lebih lanjut.';
 
         $html = NotaDinasGeneratorService::renderHtmlTemplate([
             'nomor_nota_dinas' => 'WP.12-UM.01.01-999',
             'upt_nama' => 'Lapas Pemuda Tangerang',
+            'tempat_pelaksanaan' => 'Ruang Sidang TPP Lapas Pemuda Tangerang',
             'narasi_pengantar' => $customNarasi,
+            'narasi_pelaksanaan' => $customPelaksanaan,
+            'penutup' => $customPenutup,
             'pegawai_list' => [
                 ['nama' => 'Budi Santoso', 'nip' => '198501012010011001', 'jabatan' => 'Pembina Narapidana'],
             ],
         ]);
 
         $this->assertStringContainsString($customNarasi, $html);
+        $this->assertStringContainsString($customPelaksanaan, $html);
+        $this->assertStringContainsString($customPenutup, $html);
         $this->assertStringContainsString('Budi Santoso', $html);
     }
 }

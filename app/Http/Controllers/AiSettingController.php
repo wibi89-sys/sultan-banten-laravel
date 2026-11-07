@@ -259,6 +259,8 @@ class AiSettingController extends Controller
             'penandatangan_nip' => 'nullable|string|max:50',
             'tampilkan_nip' => 'nullable|boolean',
             'narasi_pengantar' => 'nullable|string',
+            'narasi_pelaksanaan' => 'nullable|string',
+            'penutup' => 'nullable|string',
             'pegawai_ids' => 'nullable|array',
             'pegawai_ids.*' => 'integer',
         ]);
@@ -317,6 +319,8 @@ class AiSettingController extends Controller
             'penandatangan_nip' => $request->input('penandatangan_nip'),
             'tampilkan_nip' => $request->boolean('tampilkan_nip'),
             'narasi_pengantar' => $request->input('narasi_pengantar'),
+            'narasi_pelaksanaan' => $request->input('narasi_pelaksanaan'),
+            'penutup' => $request->input('penutup'),
             'pegawai_list' => $pegawaiList,
         ];
 

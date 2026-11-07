@@ -713,30 +713,55 @@ PROMPT;
 
         $prompt = <<<PROMPT
 Anda adalah Perancang Peraturan dan Analis Tata Naskah Dinas Senior Kantor Wilayah Kementerian Hukum dan HAM / Kementerian Imigrasi dan Pemasyarakatan RI.
-Tugas Anda adalah merumuskan narasi pengantar dan hal surat untuk NOTA DINAS Permohonan Surat Tugas kepada Pimpinan / Kepala Bagian Tata Usaha dan Umum.
+Tugas Anda adalah merumuskan redaksi resmi NOTA DINAS Permohonan Surat Tugas kepada Pimpinan / Kepala Bagian Tata Usaha dan Umum.
 
-DATA RUJUKAN:
+STRUKTUR ANATOMI TEMPLATE DOKUMEN NOTA DINAS KANWIL:
+1. Bagian Metadata: Yth, Dari, Hal, Lampiran, Tanggal.
+2. Narasi Pengantar / Rujukan Surat Tugas (narasi_pengantar).
+3. [TABEL DAFTAR PEJABAT/PEGAWAI KANWIL YANG DIMOHONKAN SURAT TUGAS - No, Nama, NIP, Jabatan].
+4. Kalimat Pengantar Jadwal Pelaksanaan (narasi_pelaksanaan).
+5. [TABEL RINCIAN JADWAL & TEMPAT: Hari/tanggal, Pukul, Tempat].
+6. Paragraf Penutup (penutup).
+7. Kolom Tanda Tangan Pejabat.
+
+DATA RUJUKAN KEGIATAN:
 - Asal Surat / UPT: {$uptNama}
 - Nomor Surat Undangan UPT: {$nomorUndangan}
 - Tanggal Surat UPT: {$tanggalSuratUpt}
 - Hal Surat Undangan: {$halUndangan}
 - Rencana Waktu Pelaksanaan: {$hariTanggal}, Pukul {$pukul}
-- Tempat Pelaksanaan: {$tempat}
+- Rincian Tempat Pelaksanaan: {$tempat}
 {$instruksiPrompt}
 
-KAIDAH TATA NASKAH & BAHASA (EYD V):
-1. Rumuskan 'hal_surat' yang lugas, resmi, dan mencerminkan tugas Bintorwasdal Sidang TPP di {$uptNama}.
-2. Rumuskan 'narasi_pengantar' dalam 1 atau 2 paragraf dinas yang luwes, santun, dan mengalir alami:
-   - Merujuk pada surat permohonan/undangan dari UPT.
-   - Menjelaskan urgensi kehadiran tim perwakilan Kantor Wilayah dalam rangka pembinaan, monitoring, pengawasan, dan pengendalian teknis penyelenggaraan Sidang TPP.
-   - Mengajukan permohonan penerbitan Surat Tugas bagi pejabat/pegawai yang ditunjuk.
-3. Hindari gaya kalimat kaku atau kalimat terpotong-potong. Gunakan bahasa dinas yang berwibawa dan bernas.
+PANDUAN PENYUSUNAN TATA NASKAH DINAS & EYD V:
+1. 'hal_surat':
+   - Rumuskan perihal surat yang lugas, resmi, dan mencerminkan tugas Bintorwasdal Sidang TPP di {$uptNama}.
+   - Contoh: "Permohonan Surat Tugas Pembinaan, Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di {$uptNama}"
+2. 'narasi_pengantar':
+   - Paragraf ini DITEMPATKAN PERSIS DI ATAS TABEL DAFTAR PEGAWAI.
+   - Paragraf HARUS mengalir utuh dan memuat 3 unsur:
+     a) Rujukan surat undangan dari UPT (nomor, tanggal, perihal).
+     b) Maksud & urgensi kegiatan pembinaan, pengawasan, pengendalian, dan monitoring teknis pelaksanaan Sidang TPP, DILENGKAPI DENGAN TEMPAT PELAKSANAAN ({$tempat}).
+     c) Kalimat pengantar permohonan penerbitan surat tugas bagi pejabat/pegawai yang ditugaskan.
+   - PENTING / KRUSIAL: Kalimat penutup paragraf pengantar HARUS menjadi kalimat penghubung langsung ke tabel susunan pegawai di bawahnya!
+     Gunakan kalimat penutup seperti: "...bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai Kantor Wilayah sebagai berikut:"
+   - DILARANG mengakhiri paragraf pengantar dengan "yang akan diselenggarakan pada:" karena elemen tepat di bawah paragraf ini adalah TABEL DAFTAR PEGAWAI (bukan jadwal)!
+3. 'narasi_pelaksanaan':
+   - Kalimat penghubung antara Tabel Daftar Pegawai dan Tabel Rincian Jadwal di bawahnya.
+   - Contoh: "Adapun pelaksanaan kegiatan pembinaan dan pengawasan sidang TPP dimaksud dilaksanakan dengan rincian jadwal dan tempat sebagai berikut :"
+4. 'penutup':
+   - Paragraf penutup resmi nota dinas sesuai tata naskah.
+   - Contoh: "Demikian kami sampaikan, mohon perkenan dan petunjuk lebih lanjut. Atas perhatian dan kerja samanya diucapkan terima kasih."
+5. 'catatan_urgensi':
+   - Ringkasan singkat poin urgensi pembinaan dan verifikasi usulan hak integrasi warga binaan.
 
 Kembalikan hasil dalam format JSON VALID:
 {
-  "hal_surat": "Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di {$uptNama}",
-  "narasi_pengantar": "Menindaklanjuti Surat Kepala {$uptNama} Nomor {$nomorUndangan} tanggal {$tanggalSuratUpt} perihal {$halUndangan}, dalam rangka optimalisasi pembinaan, monitoring, pengawasan, dan pengendalian pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP), bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai terlampir guna mengikuti kegiatan dimaksud yang akan diselenggarakan pada:",
-  "catatan_urgensi": "Kegiatan ini penting guna memastikan seluruh tahapan dan persyaratan usulan hak warga binaan telah terverifikasi secara akuntabel sesuai ketentuan perundang-undangan."
+  "hal_surat": "Permohonan Surat Tugas Pembinaan, Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di {$uptNama}",
+  "narasi_pengantar": "Menindaklanjuti Surat Kepala {$uptNama} Nomor {$nomorUndangan} tanggal {$tanggalSuratUpt} perihal {$halUndangan}, dalam rangka pelaksanaan pembinaan, monitoring, pengawasan, dan pengendalian pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) yang diselenggarakan di {$tempat}, bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai Kantor Wilayah sebagai berikut:",
+  "narasi_pelaksanaan": "Adapun pelaksanaan kegiatan pembinaan dan pengawasan sidang TPP dimaksud dilaksanakan dengan rincian jadwal dan tempat sebagai berikut :",
+  "penutup": "Demikian kami sampaikan, mohon perkenan dan petunjuk lebih lanjut. Atas perhatian dan kerja samanya diucapkan terima kasih.",
+  "catatan_urgensi": "Kegiatan pembinaan dan pengawasan ini penting untuk memastikan pelaksanaan sidang TPP dan verifikasi usulan hak integrasi warga binaan berjalan akuntabel sesuai peraturan perundang-undangan."
 }
 
 Hanya kembalikan objek JSON valid tanpa penjelasan tambahan.
@@ -786,6 +811,8 @@ PROMPT;
                 'data' => [
                     'hal_surat' => $data['hal_surat'] ?? '',
                     'narasi_pengantar' => $data['narasi_pengantar'] ?? '',
+                    'narasi_pelaksanaan' => $data['narasi_pelaksanaan'] ?? 'Adapun pelaksanaan kegiatan pembinaan dan pengawasan sidang TPP dimaksud dilaksanakan dengan rincian jadwal dan tempat sebagai berikut :',
+                    'penutup' => $data['penutup'] ?? 'Demikian kami sampaikan, mohon perkenan dan petunjuk lebih lanjut. Atas perhatian dan kerja samanya diucapkan terima kasih.',
                     'catatan_urgensi' => $data['catatan_urgensi'] ?? '',
                 ],
             ];
