@@ -12,6 +12,7 @@ use App\Services\GeminiAiService;
 use App\Services\ImageCompressionService;
 use App\Services\LaporanTppGeneratorService;
 use App\Services\PdfStamperService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,7 +85,7 @@ class SidangTppDokumenKanwilController extends Controller
     /**
      * AJAX: Analisis Berita Acara PDF menggunakan AI Gemini untuk Draf Laporan TPP Kanwil
      */
-    public function analyzeBaAi(int $id): JsonResponse
+    public function analyzeBaAi(Request $request, int $id): JsonResponse
     {
         $this->checkKanwilAccess();
 
@@ -102,9 +103,37 @@ class SidangTppDokumenKanwilController extends Controller
             'hari_tanggal_sidang' => $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-',
             'metode_sidang' => $sidang->metode_sidang === 'daring' ? 'secara virtual melalui media Zoom Meeting' : 'secara tatap muka langsung',
             'nama_pengawas' => $sidang->nama_pengawas_kanwil ?: 'Perwakilan Kantor Wilayah',
+            'instruksi_khusus' => $request->input('instruksi_khusus', ''),
+            'gaya_penulisan' => $request->input('gaya_penulisan', 'standar'),
         ];
 
         $result = GeminiAiService::analyzeBeritaAcaraPdf($sidang->file_berita_acara, $meta);
+
+        return response()->json($result);
+    }
+
+    /**
+     * AJAX: Susun Narasi Nota Dinas Permohonan Surat Tugas cerdas via AI Gemini
+     */
+    public function draftNotaDinasAi(Request $request, int $id): JsonResponse
+    {
+        $this->checkKanwilAccess();
+
+        $sidang = SidangTpp::with(['upt'])->findOrFail($id);
+
+        $params = [
+            'upt_nama' => $sidang->upt->nama_upt ?? 'UPT Pemasyarakatan',
+            'nomor_undangan' => $request->input('nomor_undangan', $sidang->nomor_undangan ?? '-'),
+            'tanggal_surat_upt' => $request->input('tanggal_surat_upt', $sidang->tanggal_surat ? $sidang->tanggal_surat->translatedFormat('d F Y') : '-'),
+            'hal_undangan' => $request->input('hal_undangan', 'Undangan Sidang TPP'),
+            'hari_tanggal' => $request->input('hari_tanggal_pelaksanaan', $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-'),
+            'pukul' => $request->input('jam_pelaksanaan', $sidang->waktu_mulai ? Carbon::parse($sidang->waktu_mulai)->format('H.i').' WIB s.d selesai' : '09.00 WIB s.d selesai'),
+            'tempat' => $request->input('tempat_pelaksanaan', $sidang->tempat_sidang ?: ($sidang->upt->nama_upt ?? 'Ruang Sidang TPP')),
+            'instruksi_khusus' => $request->input('instruksi_khusus', ''),
+            'gaya_penulisan' => $request->input('gaya_penulisan', 'standar'),
+        ];
+
+        $result = GeminiAiService::draftNotaDinasNarasi($params);
 
         return response()->json($result);
     }

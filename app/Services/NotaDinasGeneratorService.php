@@ -81,6 +81,11 @@ class NotaDinasGeneratorService
 
         $penandatanganNip = $params['penandatangan_nip'] ?? ($setting->penandatangan_nip ?? '');
 
+        // Narasi Pengantar / Rujukan Nota Dinas yang dinamis & sesuai tata naskah
+        $narasiPengantar = ! empty($params['narasi_pengantar'])
+            ? trim((string) $params['narasi_pengantar'])
+            : "Menindaklanjuti Surat Kepala {$uptNama} Nomor: {$nomorUndangan} Tanggal {$tanggalSuratUpt} Hal : {$halUndangan}, Bersama ini kami mohon untuk dapat dibuatkan Surat Tugas bagi Pejabat/Pegawai sebagai berikut:";
+
         // Render baris tabel pegawai
         $pegawaiRows = '';
         foreach ($pegawaiList as $idx => $p) {
@@ -248,9 +253,9 @@ class NotaDinasGeneratorService
 
     <div class="divider"></div>
 
-    <!-- Isi Rujukan -->
+    <!-- Isi Rujukan / Narasi Pengantar -->
     <p class="content-p">
-        Menindaklanjuti Surat Kepala {$uptNama} Nomor: {$nomorUndangan} Tanggal {$tanggalSuratUpt} Hal : {$halUndangan}, Bersama ini kami mohon untuk dapat dibuatkan Surat Tugas bagi Pejabat/Pegawai sebagai berikut:
+        {$narasiPengantar}
     </p>
 
     <!-- Tabel Daftar Personil -->

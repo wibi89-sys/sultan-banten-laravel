@@ -526,50 +526,81 @@ PROMPT;
             $hariTgl = $metaData['hari_tanggal_sidang'] ?? '';
             $metode = $metaData['metode_sidang'] ?? 'virtual Zoom Meeting';
             $pengawas = $metaData['nama_pengawas'] ?? 'Perwakilan Kantor Wilayah';
+            $instruksiKhusus = trim($metaData['instruksi_khusus'] ?? '');
+            $gayaPenulisan = $metaData['gaya_penulisan'] ?? 'standar';
+
+            $instruksiKhususPrompt = '';
+            if (! empty($instruksiKhusus)) {
+                $instruksiKhususPrompt = <<<INTRUKSI
+
+CATATAN KHUSUS / DINAMIKA DARI OPERATOR KANWIL:
+"{$instruksiKhusus}"
+(PENTING: Integrasikan catatan ini secara luwes, alami, dan relevan ke dalam narasi pembahasan, butir temuan, atau rekomendasi saran).
+INTRUKSI;
+            }
+
+            $gayaPenulisanPrompt = match ($gayaPenulisan) {
+                'pengawasan' => 'GAYA PENULISAN: Tegas, evaluatif, menitikberatkan pada aspek audit kepatuhan regulasi, akurasi data SDP, dan mitigasi risiko keamanan.',
+                'ringkas' => 'GAYA PENULISAN: Ringkas, padat, lugas (eksekutif), langsung menyajikan fakta esensial tanpa uraian berlebihan.',
+                default => 'GAYA PENULISAN: Standar Kedinasan Kementerian, formal, objektif, seimbang, dan mengalir santun.',
+            };
 
             $prompt = <<<PROMPT
-Anda adalah asisten cerdas tata naskah dinas Kantor Wilayah Kementerian Hukum dan HAM / Kementerian Imigrasi dan Pemasyarakatan RI.
-Tugas Anda adalah membaca dan menganalisis berkas PDF Berita Acara (BA) Sidang Tim Pengamat Pemasyarakatan (TPP) yang dilampirkan dari satuan kerja: "{$uptNama}".
-Konteks Sidang:
-- Hari / Tanggal: {$hariTgl}
+Anda adalah Perancang Peraturan dan Analis Tata Naskah Dinas Senior pada Kantor Wilayah Kementerian Hukum dan HAM / Kementerian Imigrasi dan Pemasyarakatan RI.
+Tugas Anda adalah membaca, menganalisis, dan menyarikan berkas PDF Berita Acara (BA) Sidang Tim Pengamat Pemasyarakatan (TPP) yang dilampirkan dari satuan kerja: "{$uptNama}".
+
+KONTEKS DASAR KEGIATAN:
+- Satuan Kerja / UPT: {$uptNama}
+- Hari & Tanggal Sidang: {$hariTgl}
 - Metode Pelaksanaan: {$metode}
 - Pengawas / Perwakilan Kanwil: {$pengawas}
+- {$gayaPenulisanPrompt}
+{$instruksiKhususPrompt}
 
-Susun draf resmi "LAPORAN PELAKSANAAN SIDANG TPP" Kantor Wilayah yang ADAPTIF dan SESUAI FAKTA materi sidang di dalam Berita Acara tersebut (apakah mengenai Remisi, Integrasi PB/CB, Asimilasi, Mutasi/Pemindahan, atau Penjatuhan Hukuman Disiplin).
+PRINSIP PENYUSUNAN NASKAH & TATA BAHASA (EYD V):
+1. KEPATUHAN TATA NASKAH DINAS:
+   - Susun naskah laporan kedinasan yang utuh, berwibawa, dan terstruktur sesuai Pedoman Tata Naskah Dinas resmi instansi pemerintah (Permenkumham No. 31 Tahun 2020 / Permenimipas).
+   - Laporan harus mencerminkan fungsi pembinaan, monitoring, pengawasan, dan pengendalian (Bintorwasdal) teknis pemasyarakatan.
+2. BAHASA BAKU, LUWES, DAN TIDAK KAKU:
+   - JANGAN mengulang-ulang kalimat template klise yang kaku ("Pada hari..., Kantor Wilayah mengikuti..."). Susun kalimat dengan variasi aktif dan pasif kedinasan yang mengalir alami dan enak dibaca.
+   - Hindari pleonasme ("adalah merupakan", "demi untuk").
+   - Gunakan terminologi hukum dan pemasyarakatan yang presisi (misal: "persyaratan substantif dan administratif", "penilaian risiko faktor kriminogenik", "penelitian kemasyarakatan (Litmas) Bapas", "register F", "penghitungan 2/3 masa pidana", "asimilasi kerja sosial/kerja luar", "Sistem Database Pemasyarakatan (SDP)").
+3. ADAPTIF TERHADAP FAKTA SUBSTANTIF BERITA ACARA:
+   - Ekstrak seluruh data angka dan materi riil yang tertulis di dalam BA: apakah mengenai Usulan Hak Integrasi (PB, CB, CMB), Asimilasi, Remisi, Mutasi Narapidana, Pengangkatan Pemuka/Tamping, atau Penjatuhan Hukuman Disiplin.
+   - Catat rincian jumlah narapidana per kategori usulan.
+   - JIKA ADA CATATAN DINAMIKA (misal: ada usulan yang ditunda, perbaikan litmas, penjamin belum diverifikasi, atau catatan keamanan khusus), JELASKAN secara objektif dan konstruktif pada butir temuan dan rekomendasi. Jangan memaksakan klaim "semua memenuhi syarat" jika BA menyatakan ada kendala/penundaan.
 
-Kembalikan respon DALAM FORMAT JSON VALID dengan struktur persis seperti ini:
+Kembalikan respon DALAM FORMAT JSON VALID dengan struktur berikut:
 {
-  "topik_sidang": "ringkasan 1 baris topik sidang, misal: Usulan Pemberian Hak Integrasi (PB dan CB)",
+  "topik_sidang": "ringkasan 1 baris topik sidang, misal: 'Pemberian Hak Integrasi (PB dan CB) dan Asimilasi di Rumah' atau 'Penjatuhan Hukuman Disiplin Pelanggaran Tata Tertib'",
   "materi_sidang_items": [
-    "butir 1 rincian usulan beserta jumlah narapidana, misal: Pembebasan Bersyarat (PB): 33 orang narapidana",
-    "butir 2..."
+    "rincian butir 1 jenis usulan beserta jumlah orang, misal: 'Pembebasan Bersyarat (PB): 33 orang narapidana'",
+    "rincian butir 2..."
   ],
-  "paragraf_a1": "Pada hari ..., Kantor Wilayah ... mengikuti pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) ... di {$uptNama}.",
-  "paragraf_a2": "Sidang TPP membahas usulan ... terhadap narapidana yang telah diusulkan oleh {$uptNama}.",
-  "paragraf_a3": "Perwakilan Kantor Wilayah hadir sebagai unsur pembina dan pengawas untuk melakukan verifikasi terhadap pemenuhan persyaratan substantif maupun administratif sesuai ketentuan peraturan perundang-undangan.",
-  "paragraf_a4": "Perwakilan Kantor Wilayah melakukan pencermatan terhadap kelengkapan dokumen usulan, data registrasi narapidana, perhitungan masa pidana, laporan perkembangan pembinaan, penilaian risiko, serta dokumen pendukung lainnya yang dipersyaratkan dalam Sistem Database Pemasyarakatan (SDP).",
-  "paragraf_b1": "Berdasarkan hasil pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) {$uptNama} pada tanggal ..., Tim Kantor Wilayah melakukan verifikasi terhadap usulan ... sesuai materi sidang.",
+  "paragraf_a1": "Narasi pembuka yang mengalir alami mengenai keikutsertaan perwakilan Kantor Wilayah dalam pelaksanaan Sidang TPP di {$uptNama} pada hari dan tanggal tersebut sebagai wujud akuntabilitas pelaksanaan fungsi pengawasan teknis.",
+  "paragraf_a2": "Narasi komprehensif mengenai latar belakang pembahasan sidang, program pembinaan narapidana yang dibahas, urgensi pengusulan hak/program tersebut, serta kaitannya dengan tujuan Sistem Pemasyarakatan.",
+  "paragraf_a3": "Narasi mengenai peran strategis perwakilan Kantor Wilayah sebagai unsur pembina dan pengawas dalam memastikan seluruh tahapan pengambilan keputusan berjalan transparan, akuntabel, dan bebas dari diskriminasi.",
+  "paragraf_a4": "Narasi teknis mengenai proses pencermatan terhadap pemenuhan syarat administratif dan substantif, sinkronisasi data pada SDP, hasil penilaian instrumen SPPN, laporan Litmas Bapas, serta mitigasi risiko keamanan.",
+  "paragraf_b1": "Narasi pengantar hasil telaahan terhadap jalannya sidang dan Berita Acara yang dihasilkan oleh Tim TPP {$uptNama}.",
   "paragraf_b2_poin": [
-    "Seluruh Narapidana yang dibahas telah memenuhi persyaratan substantif...",
-    "Seluruh persyaratan administratif telah lengkap dan sesuai dengan ketentuan serta telah tersedia dalam Sistem Database Pemasyarakatan (SDP).",
-    "Perhitungan masa pidana, tanggal 2/3 masa pidana, dan tanggal ekspirasi telah sesuai dengan data register narapidana.",
-    "Dengan terpenuhinya persyaratan substantif dan administratif, usulan tersebut direkomendasikan untuk diproses lebih lanjut sesuai mekanisme yang berlaku."
+    "Butir temuan 1 mengenai pemenuhan syarat substantif (perilaku, kepatuhan program pembinaan, catatan disiplin narapidana).",
+    "Butir temuan 2 mengenai keabsahan berkas administratif dan keterbaruan data pada Sistem Database Pemasyarakatan (SDP).",
+    "Butir temuan 3 mengenai hasil rekomendasi sidang secara riil (termasuk penjelasan narapidana yang disetujui, atau catatan khusus bagi yang ditunda/bersyarat bila tercantum dalam BA)."
   ],
   "simpulan_poin": [
-    "Pelaksanaan Sidang Tim Pengamat Pemasyarakatan berjalan dengan tertib, lancar, dan sesuai dengan ketentuan yang berlaku.",
-    "Pembahasan dilakukan secara objektif dengan mempertimbangkan aspek administratif, substantif, keamanan, serta hasil pembinaan terhadap masing-masing narapidana."
+    "Simpulan objektif 1 mengenai kualitas penyelenggaraan sidang TPP di {$uptNama}.",
+    "Simpulan objektif 2 mengenai ketepatan pertimbangan pembinaan dan keamanan terhadap materi usulan yang diajukan."
   ],
   "saran_poin": [
-    "{$uptNama} agar tetap meningkatkan ketelitian dalam melakukan verifikasi administrasi sebelum usulan diajukan kepada Kantor Wilayah.",
-    "Seluruh dokumen pendukung agar dipastikan telah lengkap, valid, dan diunggah ke dalam Sistem Database Pemasyarakatan (SDP) sebelum proses pengusulan dilanjutkan.",
-    "Jika ada kendala, agar segera berkoordinasi dengan Kantor Wilayah.",
-    "Monitoring terhadap pelaksanaan usulan agar terus dilakukan sesuai ketentuan peraturan perundang-undangan guna menjamin tercapainya tujuan Sistem Pemasyarakatan."
+    "Rekomendasi tindak lanjut 1 untuk jajaran {$uptNama} terkait penyempurnaan kelengkapan berkas dan pengunggahan dokumen ke SDP.",
+    "Rekomendasi tindak lanjut 2 terkait monitoring evaluasi pasca-sidang serta koordinasi berkala dengan Kantor Wilayah."
   ],
-  "penutup": "Demikian laporan pelaksanaan Sidang Tim Pengamat Pemasyarakatan ini disusun sebagai bentuk pertanggungjawaban pelaksanaan tugas serta sebagai bahan informasi bagi pimpinan dalam rangka pembinaan dan pengawasan penyelenggaraan tugas di lingkungan Pemasyarakatan."
+  "penutup": "Paragraf penutup naskah dinas resmi yang santun, lugas, dan akuntabel sebagai bentuk pertanggungjawaban pelaksanaan tugas kepada pimpinan."
 }
 
 PENTING:
-- Sesuaikan isi narasi dengan fakta di dalam PDF Berita Acara yang terlampir. Jika sidangnya bukan tentang PB/CB (misal tentang Remisi atau Mutasi), gantikan teks yang sesuai dengan isi BA tersebut.
+- Buat narasinya hidup, berbobot, dan mengalir alami sesuai EYD V.
+- Sesuaikan isi seluruh bagian dengan isi fakta dalam PDF Berita Acara yang dilampirkan.
 - Hanya kembalikan teks JSON valid tanpa awalan atau akhiran markdown penjelasan.
 PROMPT;
 
@@ -637,6 +668,133 @@ PROMPT;
             return [
                 'success' => false,
                 'message' => 'Kendala Analisis AI: '.$errMsg,
+            ];
+        }
+    }
+
+    /**
+     * Susun draf narasi Nota Dinas Permohonan Surat Tugas cerdas via Gemini AI
+     * berlandaskan Tata Naskah Dinas Kementerian dan Bahasa Indonesia Baku (EYD V).
+     *
+     * @param  array<string, mixed>  $params
+     * @return array{
+     *   success: bool,
+     *   message: string,
+     *   data?: array{
+     *     hal_surat: string,
+     *     narasi_pengantar: string,
+     *     catatan_urgensi: string
+     *   }
+     * }
+     */
+    public static function draftNotaDinasNarasi(array $params): array
+    {
+        $setting = AiSetting::getFirst();
+
+        if (! $setting->is_active || empty($setting->api_key)) {
+            return [
+                'success' => false,
+                'message' => 'Integrasi AI belum diaktifkan atau API Key belum diisi di Pengaturan Master Data AI.',
+            ];
+        }
+
+        $uptNama = $params['upt_nama'] ?? 'Lembaga Pemasyarakatan';
+        $nomorUndangan = $params['nomor_undangan'] ?? 'WP.12.PAS...';
+        $tanggalSuratUpt = $params['tanggal_surat_upt'] ?? '-';
+        $halUndangan = $params['hal_undangan'] ?? 'Undangan Sidang TPP';
+        $hariTanggal = $params['hari_tanggal'] ?? '-';
+        $pukul = $params['pukul'] ?? '09.00 WIB s.d selesai';
+        $tempat = $params['tempat'] ?? 'Ruang Sidang TPP';
+        $instruksiKhusus = trim($params['instruksi_khusus'] ?? '');
+
+        $instruksiPrompt = ! empty($instruksiKhusus)
+            ? "\nCATATAN / INSTRUKSI TAMBAHAN DARI PEMOHON:\n\"{$instruksiKhusus}\"\n"
+            : '';
+
+        $prompt = <<<PROMPT
+Anda adalah Perancang Peraturan dan Analis Tata Naskah Dinas Senior Kantor Wilayah Kementerian Hukum dan HAM / Kementerian Imigrasi dan Pemasyarakatan RI.
+Tugas Anda adalah merumuskan narasi pengantar dan hal surat untuk NOTA DINAS Permohonan Surat Tugas kepada Pimpinan / Kepala Bagian Tata Usaha dan Umum.
+
+DATA RUJUKAN:
+- Asal Surat / UPT: {$uptNama}
+- Nomor Surat Undangan UPT: {$nomorUndangan}
+- Tanggal Surat UPT: {$tanggalSuratUpt}
+- Hal Surat Undangan: {$halUndangan}
+- Rencana Waktu Pelaksanaan: {$hariTanggal}, Pukul {$pukul}
+- Tempat Pelaksanaan: {$tempat}
+{$instruksiPrompt}
+
+KAIDAH TATA NASKAH & BAHASA (EYD V):
+1. Rumuskan 'hal_surat' yang lugas, resmi, dan mencerminkan tugas Bintorwasdal Sidang TPP di {$uptNama}.
+2. Rumuskan 'narasi_pengantar' dalam 1 atau 2 paragraf dinas yang luwes, santun, dan mengalir alami:
+   - Merujuk pada surat permohonan/undangan dari UPT.
+   - Menjelaskan urgensi kehadiran tim perwakilan Kantor Wilayah dalam rangka pembinaan, monitoring, pengawasan, dan pengendalian teknis penyelenggaraan Sidang TPP.
+   - Mengajukan permohonan penerbitan Surat Tugas bagi pejabat/pegawai yang ditunjuk.
+3. Hindari gaya kalimat kaku atau kalimat terpotong-potong. Gunakan bahasa dinas yang berwibawa dan bernas.
+
+Kembalikan hasil dalam format JSON VALID:
+{
+  "hal_surat": "Permohonan Surat Tugas Pembinaan Monitoring, Pengawasan dan Pengendalian Pelaksanaan Sidang TPP di {$uptNama}",
+  "narasi_pengantar": "Menindaklanjuti Surat Kepala {$uptNama} Nomor {$nomorUndangan} tanggal {$tanggalSuratUpt} perihal {$halUndangan}, dalam rangka optimalisasi pembinaan, monitoring, pengawasan, dan pengendalian pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP), bersama ini kami mohon perkenan Bapak/Ibu untuk dapat menerbitkan Surat Tugas bagi pejabat/pegawai terlampir guna mengikuti kegiatan dimaksud yang akan diselenggarakan pada:",
+  "catatan_urgensi": "Kegiatan ini penting guna memastikan seluruh tahapan dan persyaratan usulan hak warga binaan telah terverifikasi secara akuntabel sesuai ketentuan perundang-undangan."
+}
+
+Hanya kembalikan objek JSON valid tanpa penjelasan tambahan.
+PROMPT;
+
+        try {
+            $chosenModel = ! empty($setting->model) ? $setting->model : 'gemini-3.8-flash';
+            $contents = [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                    ],
+                ],
+            ];
+
+            $res = self::postGenerateContentWithFallback(
+                apiKey: $setting->api_key,
+                primaryModel: $chosenModel,
+                contents: $contents,
+                extraConfig: ['responseMimeType' => 'application/json'],
+                timeout: 45
+            );
+
+            if (! $res['response'] || ! $res['response']->successful()) {
+                return [
+                    'success' => false,
+                    'message' => 'Gagal menyusun narasi dengan AI: '.($res['error'] ?? 'Tidak ada respon server.'),
+                ];
+            }
+
+            $resJson = $res['response']->json();
+            $candidate = $resJson['candidates'][0] ?? null;
+            $rawText = self::extractTextFromCandidate($candidate) ?? '';
+            $cleanedJson = self::cleanJsonPayload($rawText);
+
+            $data = json_decode($cleanedJson, true);
+            if (! is_array($data)) {
+                return [
+                    'success' => false,
+                    'message' => 'Format balasan AI tidak dapat dibaca sebagai JSON.',
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Narasi Nota Dinas berhasil disusun oleh AI sesuai tata naskah dinas.',
+                'data' => [
+                    'hal_surat' => $data['hal_surat'] ?? '',
+                    'narasi_pengantar' => $data['narasi_pengantar'] ?? '',
+                    'catatan_urgensi' => $data['catatan_urgensi'] ?? '',
+                ],
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Gemini draftNotaDinasNarasi error: '.$e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Kendala AI: '.$e->getMessage(),
             ];
         }
     }

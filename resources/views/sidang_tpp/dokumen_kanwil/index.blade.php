@@ -627,12 +627,19 @@
         const sidangId = document.getElementById('lap_sidang_id').value;
         const btn = document.getElementById('btnAnalisisBaAi');
         const alertArea = document.getElementById('lapAiAlertArea');
+        const instruksiKhusus = document.getElementById('lap_instruksi_khusus') ? document.getElementById('lap_instruksi_khusus').value : '';
+        const gayaPenulisan = document.getElementById('lap_gaya_penulisan') ? document.getElementById('lap_gaya_penulisan').value : 'standar';
 
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>AI Sedang Menganalisis Berita Acara PDF...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>AI Sedang Menganalisis BA & Menyusun Naskah...';
         alertArea.classList.add('d-none');
 
-        fetch('/sidang-tpp/' + sidangId + '/dokumen-kanwil/analyze-ba-ai', {
+        const params = new URLSearchParams({
+            instruksi_khusus: instruksiKhusus,
+            gaya_penulisan: gayaPenulisan
+        });
+
+        fetch('/sidang-tpp/' + sidangId + '/dokumen-kanwil/analyze-ba-ai?' + params.toString(), {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         })

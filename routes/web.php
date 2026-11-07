@@ -139,7 +139,7 @@ Route::middleware('auth')->group(function () {
 
         // Submenu Khusus Kanwil: Naskah & Laporan Kanwil (Nota Dinas & Laporan Sidang TPP)
         Route::get('/dokumen-kanwil', [SidangTppDokumenKanwilController::class, 'index'])->name('dokumen-kanwil.index');
-        Route::get('/{id}/dokumen-kanwil/analyze-ba-ai', [SidangTppDokumenKanwilController::class, 'analyzeBaAi'])->whereNumber('id')->name('dokumen-kanwil.analyze-ba-ai');
+        Route::match(['get', 'post'], '/{id}/dokumen-kanwil/analyze-ba-ai', [SidangTppDokumenKanwilController::class, 'analyzeBaAi'])->whereNumber('id')->name('dokumen-kanwil.analyze-ba-ai');
         Route::post('/{id}/dokumen-kanwil/laporan-tpp/generate', [SidangTppDokumenKanwilController::class, 'generateLaporanTpp'])->whereNumber('id')->name('dokumen-kanwil.laporan-tpp.generate');
         Route::post('/{id}/dokumen-kanwil/upload-signed', [SidangTppDokumenKanwilController::class, 'uploadSigned'])->whereNumber('id')->name('dokumen-kanwil.upload-signed');
 
@@ -155,6 +155,7 @@ Route::middleware('auth')->group(function () {
 
         // Nota Dinas Permohonan Surat Tugas (AI & Manual)
         Route::get('/{id}/nota-dinas/parse-ai', [AiSettingController::class, 'parseUndanganAi'])->whereNumber('id')->name('nota-dinas.parse-ai');
+        Route::post('/{id}/nota-dinas/draft-ai', [SidangTppDokumenKanwilController::class, 'draftNotaDinasAi'])->whereNumber('id')->name('nota-dinas.draft-ai');
         Route::post('/{id}/nota-dinas/generate', [AiSettingController::class, 'generateNotaDinas'])->whereNumber('id')->name('nota-dinas.generate');
     });
 

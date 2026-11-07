@@ -119,10 +119,34 @@
                         </div>
                     </div>
 
-                    <!-- 4. Pilih Pejabat / Pegawai Kanwil yang Ditugaskan -->
+                    <!-- 4. Redaksi Pengantar / Rujukan Nota Dinas (Kontekstual & AI Drafter) -->
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                         <h6 class="fw-bold text-dark mb-0">
-                            <i class="fas fa-users text-primary me-2"></i>4. Pejabat / Pegawai Kanwil yang Ditugaskan
+                            <i class="fas fa-feather-alt text-primary me-2"></i>4. Redaksi Pengantar / Rujukan Nota Dinas
+                        </h6>
+                        @if($aiSetting->is_active && !empty($aiSetting->api_key))
+                        <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2.5 shadow-sm fw-semibold" id="btnDraftNdAi" onclick="draftNotaDinasAiModal()" title="Susun narasi resmi yang mengalir dan berwibawa dengan AI">
+                            <i class="fas fa-magic me-1 text-primary"></i>Susun Narasi dengan AI
+                        </button>
+                        @endif
+                    </div>
+                    <div class="mb-4">
+                        <label for="nd_narasi_pengantar" class="form-label small fw-semibold text-muted">
+                            Kalimat Pengantar / Dasar Rujukan Surat Tugas (Bisa disesuaikan manual atau dikosongkan untuk redaksi default):
+                        </label>
+                        <textarea name="narasi_pengantar" id="nd_narasi_pengantar" class="form-control form-control-sm" rows="3" placeholder="Menindaklanjuti Surat Kepala [UPT] Nomor: [No] Tanggal [Tgl] Hal : [Hal], Bersama ini kami mohon untuk dapat dibuatkan Surat Tugas bagi Pejabat/Pegawai sebagai berikut:"></textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="text-muted" style="font-size: 11px;">
+                                <i class="fas fa-info-circle me-1"></i>Bila dikosongkan, sistem otomatis menerapkan redaksi baku tata naskah dinas Kementerian.
+                            </small>
+                            <div id="aiNdDraftStatus" class="small fw-semibold text-success d-none"></div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Pilih Pejabat / Pegawai Kanwil yang Ditugaskan -->
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-users text-primary me-2"></i>5. Pejabat / Pegawai Kanwil yang Ditugaskan
                         </h6>
                         <a href="{{ route('ai-setting.index') }}" target="_blank" class="small text-decoration-none">
                             <i class="fas fa-cog me-1"></i>Kelola Master Pegawai
@@ -165,9 +189,9 @@
                         </div>
                     </div>
 
-                    <!-- 5. Pejabat Penandatangan & Toggle NIP -->
+                    <!-- 6. Pejabat Penandatangan & Toggle NIP -->
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                        <i class="fas fa-signature text-primary me-2"></i>5. Tanda Tangan Nota Dinas
+                        <i class="fas fa-signature text-primary me-2"></i>6. Tanda Tangan Nota Dinas
                     </h6>
                     <div class="row g-3 align-items-center">
                         <div class="col-md-4">
@@ -314,6 +338,73 @@
                     <div><b>Terjadi Kesalahan:</b> ${err.message}. Silakan isi form rujukan secara manual.</div>
                 </div>
             `;
+        });
+    }
+
+    function draftNotaDinasAiModal() {
+        const form = document.getElementById('formNotaDinasModal');
+        const sidangId = form.getAttribute('data-sidang-id');
+        if (!sidangId || sidangId === '0') {
+            alert('Pilih sidang TPP terlebih dahulu.');
+            return;
+        }
+
+        const btn = document.getElementById('btnDraftNdAi');
+        const statusEl = document.getElementById('aiNdDraftStatus');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyusun Narasi...';
+        }
+        if (statusEl) statusEl.classList.add('d-none');
+
+        const payload = {
+            nomor_undangan: document.getElementById('nd_nomor_undangan') ? document.getElementById('nd_nomor_undangan').value : '',
+            tanggal_surat_upt: document.getElementById('nd_tanggal_surat_upt') ? document.getElementById('nd_tanggal_surat_upt').value : '',
+            hal_undangan: document.getElementById('nd_hal_undangan') ? document.getElementById('nd_hal_undangan').value : '',
+            upt_nama: document.getElementById('nd_upt_nama') ? document.getElementById('nd_upt_nama').value : '',
+            hari_tanggal_pelaksanaan: document.getElementById('nd_hari_tanggal') ? document.getElementById('nd_hari_tanggal').value : '',
+            jam_pelaksanaan: document.getElementById('nd_jam') ? document.getElementById('nd_jam').value : '',
+            tempat_pelaksanaan: document.getElementById('nd_tempat') ? document.getElementById('nd_tempat').value : '',
+            _token: document.querySelector('input[name="_token"]') ? document.querySelector('input[name="_token"]').value : ''
+        };
+
+        fetch('/sidang-tpp/' + sidangId + '/nota-dinas/draft-ai', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': payload._token
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic me-1 text-primary"></i>Susun Narasi dengan AI';
+            }
+
+            if (res.success && res.data) {
+                if (res.data.narasi_pengantar) {
+                    document.getElementById('nd_narasi_pengantar').value = res.data.narasi_pengantar;
+                }
+                if (res.data.hal_surat && document.getElementById('nd_hal')) {
+                    document.getElementById('nd_hal').value = res.data.hal_surat;
+                }
+                if (statusEl) {
+                    statusEl.classList.remove('d-none');
+                    statusEl.innerText = '✓ Narasi berhasil disusun AI sesuai Tata Naskah & EYD V';
+                }
+            } else {
+                alert(res.message || 'Gagal menyusun narasi AI.');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic me-1 text-primary"></i>Susun Narasi dengan AI';
+            }
+            alert('Terjadi kesalahan: ' + err.message);
         });
     }
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AiSetting;
 use App\Models\User;
 use App\Services\GeminiAiService;
+use App\Services\NotaDinasGeneratorService;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
@@ -205,5 +206,66 @@ class GeminiAiServiceTest extends TestCase
         $this->assertEquals('gemini-3.8-flash', $setting->model);
         $this->assertEquals('AIzaSyTestApiKey38', $setting->api_key);
         $this->assertTrue($setting->is_active);
+    }
+
+    public function test_draft_nota_dinas_narasi_generates_formal_eyd_compliant_output(): void
+    {
+        $setting = AiSetting::getFirst();
+        $setting->update([
+            'is_active' => true,
+            'api_key' => 'fake_api_key',
+            'model' => 'gemini-3.8-flash',
+        ]);
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'hal_surat' => 'Permohonan Surat Tugas Bintorwasdal Sidang TPP di Lapas Kelas I Tangerang',
+                                        'narasi_pengantar' => 'Menindaklanjuti Surat Kepala Lapas Kelas I Tangerang Nomor WP.12.PAS1/123/2026, bersama ini kami mohon perkenan Bapak untuk menerbitkan Surat Tugas.',
+                                        'catatan_urgensi' => 'Penting untuk verifikasi berkas usulan hak integrasi.',
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $res = GeminiAiService::draftNotaDinasNarasi([
+            'upt_nama' => 'Lapas Kelas I Tangerang',
+            'nomor_undangan' => 'WP.12.PAS1/123/2026',
+            'tanggal_surat_upt' => '05 November 2026',
+            'hal_undangan' => 'Undangan Sidang TPP',
+            'hari_tanggal' => 'Jumat, 06 November 2026',
+            'pukul' => '09.00 WIB s.d selesai',
+            'tempat' => 'Ruang Sidang TPP',
+        ]);
+
+        $this->assertTrue($res['success']);
+        $this->assertNotEmpty($res['data']['hal_surat']);
+        $this->assertStringContainsString('Menindaklanjuti', $res['data']['narasi_pengantar']);
+    }
+
+    public function test_nota_dinas_generator_service_uses_dynamic_narasi_pengantar(): void
+    {
+        $customNarasi = 'Sehubungan dengan surat permohonan resmi dan dalam rangka penguatan pengawasan teknis pemasyarakatan, kami mohon diterbitkan surat tugas bagi personil berikut:';
+
+        $html = NotaDinasGeneratorService::renderHtmlTemplate([
+            'nomor_nota_dinas' => 'WP.12-UM.01.01-999',
+            'upt_nama' => 'Lapas Pemuda Tangerang',
+            'narasi_pengantar' => $customNarasi,
+            'pegawai_list' => [
+                ['nama' => 'Budi Santoso', 'nip' => '198501012010011001', 'jabatan' => 'Pembina Narapidana'],
+            ],
+        ]);
+
+        $this->assertStringContainsString($customNarasi, $html);
+        $this->assertStringContainsString('Budi Santoso', $html);
     }
 }

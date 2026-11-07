@@ -26,19 +26,42 @@
                     <!-- Banner AI -->
                     <div class="card border-0 shadow-sm mb-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #16a34a !important;">
                         <div class="card-body p-3">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-2">
                                 <div>
                                     <div class="fw-bold text-success mb-1" style="font-size: 13px;">
-                                        <i class="fas fa-magic me-1"></i>Otomatisasi Cerdas dengan AI Gemini
+                                        <i class="fas fa-magic me-1"></i>Penyusun Cerdas Tata Naskah Dinas &amp; EYD V (AI Gemini)
                                     </div>
                                     <div class="text-muted small" style="font-size: 11.5px;">
-                                        AI akan membaca berkas Berita Acara (BA) PDF dari UPT, mendeteksi materi usulan faktual (PB, CB, Asimilasi, Remisi, dll.), dan menyusun narasi laporan dinas secara otomatis.
+                                        AI menganalisis berkas Berita Acara (BA) PDF riil dan merumuskan draf laporan dinas yang luwes, bernas, dan adaptif terhadap dinamika sidang tanpa kaku terpaku template.
                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-success btn-sm px-3 shadow-sm fw-bold text-nowrap" id="btnAnalisisBaAi" onclick="triggerAnalisisBaAi()">
                                     <i class="fas fa-robot me-1 text-warning"></i>Analisis Berita Acara (BA) dengan AI
                                 </button>
                             </div>
+
+                            <!-- Opsi Kontekstual & Catatan Khusus Operator -->
+                            <div class="bg-white bg-opacity-75 rounded p-2.5 border border-success-subtle mt-2">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-8">
+                                        <label for="lap_instruksi_khusus" class="form-label small fw-semibold text-dark mb-1" style="font-size: 11.5px;">
+                                            <i class="fas fa-comment-dots text-success me-1"></i>Catatan Khusus / Dinamika Sidang Operator (Opsional):
+                                        </label>
+                                        <input type="text" id="lap_instruksi_khusus" class="form-control form-control-sm" style="font-size: 11.5px;" placeholder="Misal: Tekankan ada 2 narapidana ditunda karena berkas litmas belum lengkap, atau kendala overkapasitas...">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="lap_gaya_penulisan" class="form-label small fw-semibold text-dark mb-1" style="font-size: 11.5px;">
+                                            <i class="fas fa-feather-alt text-success me-1"></i>Gaya Penulisan:
+                                        </label>
+                                        <select id="lap_gaya_penulisan" class="form-select form-select-sm" style="font-size: 11.5px;">
+                                            <option value="standar" selected>Standar Kedinasan (Formal &amp; Seimbang)</option>
+                                            <option value="pengawasan">Tegas &amp; Evaluatif (Audit &amp; Kepatuhan)</option>
+                                            <option value="ringkas">Ringkas &amp; Padat (Atensi Eksekutif)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div id="bannerNoBa" class="text-danger small mt-2 d-none fw-semibold">
                                 <i class="fas fa-exclamation-circle me-1"></i>Pihak UPT belum mengunggah Berita Acara (BA) untuk sidang ini. Anda tetap dapat mengisi dan menyusun laporan secara manual di bawah.
                             </div>
