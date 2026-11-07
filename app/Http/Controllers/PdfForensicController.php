@@ -47,13 +47,13 @@ class PdfForensicController extends Controller
     {
         $this->checkAccess();
 
-        $request->validate([
-            'file_pdf' => 'required|file|mimes:pdf|max:30720', // Maks. 30 MB
-        ], [
-            'file_pdf.required' => 'Silakan pilih berkas PDF yang ingin diinspeksi.',
-            'file_pdf.mimes' => 'Berkas harus dalam format PDF.',
-            'file_pdf.max' => 'Ukuran berkas PDF maksimal 30 MB.',
-        ]);
+        $validationError = $this->validateUploadedPdf($request, 'file_pdf');
+        if ($validationError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $validationError,
+            ], 422);
+        }
 
         $file = $request->file('file_pdf');
         $tempDir = storage_path('app/temp_forensic');
@@ -97,16 +97,16 @@ class PdfForensicController extends Controller
     {
         $this->checkAccess();
 
+        $validationError = $this->validateUploadedPdf($request, 'file_pdf');
+        if ($validationError !== null) {
+            return back()->with('error', $validationError);
+        }
+
         $request->validate([
-            'file_pdf' => 'required|file|mimes:pdf|max:30720',
             'custom_title' => 'nullable|string|max:200',
             'custom_creator' => 'nullable|string|max:150',
             'lock_document' => 'nullable',
             'clean_metadata' => 'nullable',
-        ], [
-            'file_pdf.required' => 'Silakan pilih berkas PDF yang ingin disanitasi.',
-            'file_pdf.mimes' => 'Berkas harus dalam format PDF.',
-            'file_pdf.max' => 'Ukuran berkas PDF maksimal 30 MB.',
         ]);
 
         $file = $request->file('file_pdf');
@@ -151,5 +151,76 @@ class PdfForensicController extends Controller
 
             return back()->with('error', 'Gagal melakukan sanitasi berkas: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Validasi komprehensif berkas PDF yang diunggah
+     */
+    protected function validateUploadedPdf(Request $request, string $fieldName = 'file_pdf'): ?string
+    {
+        // 1. Cek jika muatan request melampaui post_max_size server (dimana PHP mengosongkan $_POST dan $_FILES)
+        if (! $request->hasFile($fieldName) && empty($_FILES) && empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && (int) $_SERVER['CONTENT_LENGTH'] > 0) {
+            $postMaxSize = ini_get('post_max_size');
+
+            return "Ukuran berkas melebihi batas muatan server (post_max_size: {$postMaxSize}). Harap perkecil ukuran berkas Anda.";
+        }
+
+        // 2. Cek galat upload PHP bawaan jika ada
+        if (isset($_FILES[$fieldName]['error']) && $_FILES[$fieldName]['error'] !== UPLOAD_ERR_OK) {
+            $errCode = $_FILES[$fieldName]['error'];
+            $uploadMax = ini_get('upload_max_filesize');
+
+            return match ($errCode) {
+                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas unggah PHP server (upload_max_filesize: {$uploadMax}). Harap perkecil berkas.",
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Proses unggah berkas terputus di tengah jalan. Silakan ulangi kembali.',
+                UPLOAD_ERR_NO_FILE => 'Tidak ada berkas yang dipilih. Silakan pilih berkas PDF terlebih dahulu.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Folder sementara server tidak ditemukan.',
+                UPLOAD_ERR_CANT_WRITE => 'Gagal menulis berkas ke penyimpanan server.',
+                default => "Terjadi kesalahan saat mengunggah berkas (Kode: {$errCode}).",
+            };
+        }
+
+        // 3. Cek keberadaan berkas
+        if (! $request->hasFile($fieldName)) {
+            return 'Silakan pilih berkas PDF yang ingin diuji / diunggah.';
+        }
+
+        $file = $request->file($fieldName);
+
+        if (! $file || ! $file->isValid()) {
+            return 'Berkas PDF yang diunggah tidak valid atau gagal ditransmisikan.';
+        }
+
+        // 4. Validasi ukuran (maksimal 30 MB)
+        $maxSizeBytes = 30 * 1024 * 1024;
+        if ($file->getSize() > $maxSizeBytes) {
+            $sizeMb = round($file->getSize() / (1024 * 1024), 2);
+
+            return "Ukuran berkas ({$sizeMb} MB) melebihi batas maksimal 30 MB.";
+        }
+
+        // 5. Validasi ekstensi nama berkas
+        $ext = strtolower($file->getClientOriginalExtension());
+        if ($ext !== 'pdf') {
+            return "Format berkas harus berformat PDF (.pdf). Format berkas Anda: .{$ext}";
+        }
+
+        // 6. Validasi Magic Header PDF (%PDF-)
+        $realPath = $file->getRealPath();
+        $header = '';
+        if ($realPath && file_exists($realPath)) {
+            $fp = @fopen($realPath, 'rb');
+            if ($fp) {
+                $header = fread($fp, 1024);
+                fclose($fp);
+            }
+        }
+
+        if (empty($header) || ! str_contains($header, '%PDF-')) {
+            return 'Format berkas tidak valid. Berkas bukan merupakan dokumen PDF standar (header %PDF- tidak ditemukan).';
+        }
+
+        return null;
     }
 }

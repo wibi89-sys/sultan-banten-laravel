@@ -83,13 +83,22 @@
                                     <label for="inspect_file_pdf" class="form-label small fw-semibold text-dark mb-1">
                                         Pilih Berkas PDF yang Dicurigai / Ingin Diuji: <span class="text-danger">*</span>
                                     </label>
-                                    <div class="border border-2 border-dashed rounded-3 p-3 text-center bg-light" id="inspectDropZone" style="cursor: pointer;">
+                                    <div class="rounded-3 p-3 text-center position-relative" id="inspectDropZone" style="cursor: pointer; border: 2px dashed #cbd5e1; background-color: #f8fafc; transition: all 0.2s ease-in-out;">
                                         <i class="fas fa-file-pdf fa-3x text-danger mb-2 opacity-75"></i>
-                                        <div class="small fw-bold text-dark mb-1" id="inspectFileName">Pilih berkas atau seret ke sini</div>
-                                        <div class="text-muted small" style="font-size: 10.5px;">Format berkas harus PDF asli (.pdf)</div>
-                                        <input type="file" name="file_pdf" id="inspect_file_pdf" class="d-none" accept=".pdf,application/pdf" required onchange="handleInspectFileChange(this)">
+                                        <div class="small fw-bold text-dark mb-1" id="inspectFileName">Pilih berkas atau seret berkas ke sini</div>
+                                        <div class="text-muted small" style="font-size: 10.5px;">Format berkas harus PDF asli (.pdf) &bull; Maks 30MB</div>
+                                        <div class="mt-2" id="inspectFileAction" style="display: none;">
+                                            <button type="button" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 10.5px;" onclick="resetInspectFileInput(event)">
+                                                <i class="fas fa-times me-1"></i>Ganti / Hapus Berkas
+                                            </button>
+                                        </div>
                                     </div>
+                                    <!-- Input file ditempatkan di luar drop zone dan tanpa attribute required untuk mencegah konflik Chromium focusable -->
+                                    <input type="file" name="file_pdf" id="inspect_file_pdf" class="d-none" accept=".pdf,application/pdf" onchange="handleInspectFileChange(this)">
                                 </div>
+
+                                <!-- Alert Pesan Validasi Form -->
+                                <div id="inspectFormAlert" class="alert alert-danger py-2 px-2.5 small mb-3 d-none" style="font-size: 11px;"></div>
 
                                 <div class="alert alert-secondary py-2 px-2.5 small mb-3" style="font-size: 11px;">
                                     <i class="fas fa-info-circle text-primary me-1"></i>
@@ -423,21 +432,154 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function handleInspectFileChange(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-            document.getElementById('inspectFileName').innerHTML = `<span class="text-primary">${file.name}</span> <span class="badge bg-secondary ms-1">${sizeMb} MB</span>`;
+    // Reset / Hapus Berkas yang Dipilih
+    function resetInspectFileInput(e) {
+        if (e) {
+            e.stopPropagation();
+        }
+        const fileInput = document.getElementById('inspect_file_pdf');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        document.getElementById('inspectFileName').innerHTML = 'Pilih berkas atau seret berkas ke sini';
+        const actionBox = document.getElementById('inspectFileAction');
+        if (actionBox) {
+            actionBox.style.display = 'none';
+        }
+        const alertBox = document.getElementById('inspectFormAlert');
+        if (alertBox) {
+            alertBox.classList.add('d-none');
         }
     }
 
-    document.getElementById('inspectDropZone')?.addEventListener('click', function() {
-        document.getElementById('inspect_file_pdf')?.click();
+    // Tangani Perubahan Pilihan Berkas Inspeksi
+    function handleInspectFileChange(input) {
+        const alertBox = document.getElementById('inspectFormAlert');
+        if (alertBox) alertBox.classList.add('d-none');
+
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            // Validasi ekstensi di sisi klien
+            if (ext !== 'pdf') {
+                const msg = 'Format berkas tidak didukung. Harap pilih berkas dokumen berekstensi .pdf!';
+                if (alertBox) {
+                    alertBox.innerText = msg;
+                    alertBox.classList.remove('d-none');
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Format Tidak Sesuai', text: msg, confirmButtonColor: '#dc3545' });
+                } else {
+                    alert(msg);
+                }
+                resetInspectFileInput();
+                return;
+            }
+
+            // Validasi batas ukuran 30 MB di sisi klien
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+            if (file.size > 30 * 1024 * 1024) {
+                const msg = `Ukuran berkas (${sizeMb} MB) melebihi batas maksimal yang diizinkan (30 MB).`;
+                if (alertBox) {
+                    alertBox.innerText = msg;
+                    alertBox.classList.remove('d-none');
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Ukuran Berkas Terlalu Besar', text: msg, confirmButtonColor: '#dc3545' });
+                } else {
+                    alert(msg);
+                }
+                resetInspectFileInput();
+                return;
+            }
+
+            document.getElementById('inspectFileName').innerHTML = `<span class="text-primary fw-bold">${file.name}</span> <span class="badge bg-secondary ms-1">${sizeMb} MB</span>`;
+            const actionBox = document.getElementById('inspectFileAction');
+            if (actionBox) {
+                actionBox.style.display = 'block';
+            }
+        }
+    }
+
+    // Inisialisasi Drag & Drop dan Event Listener Drop Zone
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropZone = document.getElementById('inspectDropZone');
+        const fileInput = document.getElementById('inspect_file_pdf');
+
+        if (dropZone && fileInput) {
+            // Klik pada area drop zone memicu input file
+            dropZone.addEventListener('click', function(e) {
+                if (e.target.closest('#inspectFileAction')) return;
+                fileInput.click();
+            });
+
+            // Efek dragover / dragenter
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#dc3545';
+                    dropZone.style.backgroundColor = '#fee2e2';
+                }, false);
+            });
+
+            // Efek dragleave / dragend
+            ['dragleave', 'dragend'].forEach(eventName => {
+                dropZone.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#cbd5e1';
+                    dropZone.style.backgroundColor = '#f8fafc';
+                }, false);
+            });
+
+            // Event saat file di-drop
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.style.borderColor = '#cbd5e1';
+                dropZone.style.backgroundColor = '#f8fafc';
+
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    fileInput.files = dt.files;
+                    handleInspectFileChange(fileInput);
+                }
+            }, false);
+        }
     });
 
+    // Validasi pemilihan berkas pada Tab Sanitasi
     function handleSanitizeFileChange(input) {
-        // file selected feedback
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'pdf') {
+                const msg = 'Format berkas tidak didukung. Harap pilih berkas PDF!';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Format Tidak Sesuai', text: msg, confirmButtonColor: '#0d6efd' });
+                } else {
+                    alert(msg);
+                }
+                input.value = '';
+                return;
+            }
+
+            if (file.size > 30 * 1024 * 1024) {
+                const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                const msg = `Ukuran berkas (${sizeMb} MB) melebihi batas maksimal 30 MB.`;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Ukuran Terlalu Besar', text: msg, confirmButtonColor: '#0d6efd' });
+                } else {
+                    alert(msg);
+                }
+                input.value = '';
+                return;
+            }
+        }
     }
 
     // Handle AJAX Form Inspeksi Forensik
@@ -445,15 +587,32 @@
         e.preventDefault();
 
         const fileInput = document.getElementById('inspect_file_pdf');
+        const alertBox = document.getElementById('inspectFormAlert');
+        if (alertBox) alertBox.classList.add('d-none');
+
         if (!fileInput.files || fileInput.files.length === 0) {
-            alert('Silakan pilih berkas PDF terlebih dahulu.');
+            const msg = 'Silakan pilih atau seret berkas PDF terlebih dahulu sebelum memulai uji forensik.';
+            if (alertBox) {
+                alertBox.innerText = msg;
+                alertBox.classList.remove('d-none');
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Berkas Belum Dipilih',
+                    text: msg,
+                    confirmButtonColor: '#dc3545'
+                });
+            } else {
+                alert(msg);
+            }
             return;
         }
 
         const formData = new FormData(this);
         const btn = document.getElementById('btnStartInspect');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Memproses Forensik...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Sedang Membedah &amp; Menganalisis...';
 
         document.getElementById('inspectEmptyState')?.classList.add('d-none');
         document.getElementById('inspectResultContainer')?.classList.add('d-none');
@@ -464,31 +623,71 @@
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             }
         })
-        .then(res => res.json())
+        .then(async (response) => {
+            let resData = null;
+            try {
+                resData = await response.json();
+            } catch (err) {
+                resData = null;
+            }
+
+            if (!response.ok) {
+                let errorMsg = 'Gagal melakukan analisis berkas.';
+                if (resData && resData.message) {
+                    errorMsg = resData.message;
+                } else if (resData && resData.errors && resData.errors.file_pdf) {
+                    errorMsg = resData.errors.file_pdf[0];
+                } else if (response.status === 413) {
+                    errorMsg = 'Ukuran berkas melebihi batas muatan server (HTTP 413 Payload Too Large). Silakan perkecil berkas.';
+                } else if (response.status === 419) {
+                    errorMsg = 'Sesi keamanan Anda telah kedaluwarsa (CSRF expired). Silakan muat ulang (refresh) halaman ini.';
+                } else {
+                    errorMsg = `Terjadi kesalahan pada server (Status HTTP ${response.status}: ${response.statusText || 'Error'}).`;
+                }
+                throw new Error(errorMsg);
+            }
+
+            if (!resData || !resData.success) {
+                throw new Error(resData?.message || 'Gagal melakukan analisis berkas.');
+            }
+
+            return resData;
+        })
         .then(res => {
             document.getElementById('inspectLoadingState')?.classList.add('d-none');
             document.getElementById('inspectLoadingState')?.classList.remove('d-flex');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-microscope me-1.5"></i>Jalankan Uji Forensik &amp; Analisis AI';
 
-            if (res.success) {
-                renderForensicResult(res.data);
-                document.getElementById('inspectResultContainer')?.classList.remove('d-none');
-            } else {
-                alert(res.message || 'Gagal melakukan analisis berkas.');
-                document.getElementById('inspectEmptyState')?.classList.remove('d-none');
-            }
+            renderForensicResult(res.data);
+            document.getElementById('inspectResultContainer')?.classList.remove('d-none');
         })
         .catch(err => {
             document.getElementById('inspectLoadingState')?.classList.add('d-none');
             document.getElementById('inspectLoadingState')?.classList.remove('d-flex');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-microscope me-1.5"></i>Jalankan Uji Forensik &amp; Analisis AI';
-            alert('Terjadi kesalahan jaringan atau server saat memproses berkas.');
             document.getElementById('inspectEmptyState')?.classList.remove('d-none');
+
+            if (alertBox) {
+                alertBox.innerText = err.message;
+                alertBox.classList.remove('d-none');
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memproses Berkas',
+                    text: err.message,
+                    confirmButtonColor: '#dc3545'
+                });
+            } else {
+                alert('Gagal Memproses Berkas:\n' + err.message);
+            }
         });
     });
 
@@ -831,13 +1030,19 @@
         const box = document.getElementById('boxRecoveredText');
         if (!box || !box.innerText) return;
         navigator.clipboard.writeText(box.innerText).then(() => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Teks Berhasil Disalin!',
-                text: 'Teks halaman yang dipulihkan telah disalin ke clipboard Anda.',
-                timer: 2000,
-                showConfirmButton: false
-            });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Teks Berhasil Disalin!',
+                    text: 'Teks halaman yang dipulihkan telah disalin ke clipboard Anda.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert('Teks berhasil disalin ke clipboard!');
+            }
+        }).catch(() => {
+            alert('Gagal menyalin teks ke clipboard. Silakan salin teks secara manual.');
         });
     }
 
@@ -854,7 +1059,6 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-    }
     }
 </script>
 @endsection

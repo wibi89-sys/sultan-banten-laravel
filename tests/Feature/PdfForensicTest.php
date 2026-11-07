@@ -605,4 +605,77 @@ class PdfForensicTest extends TestCase
 
         @unlink($testPdf);
     }
+
+    public function test_inspect_fails_gracefully_when_no_file_uploaded(): void
+    {
+        $response = $this->actingAs($this->forensicUser)->postJson(
+            route('forensik-dokumen.inspect'),
+            []
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $this->assertStringContainsString('Silakan pilih berkas PDF', $response->json('message'));
+    }
+
+    public function test_inspect_fails_when_file_is_not_pdf_extension(): void
+    {
+        $fakeDoc = UploadedFile::fake()->create('dokumen_palsu.docx', 500, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+        $response = $this->actingAs($this->forensicUser)->post(
+            route('forensik-dokumen.inspect'),
+            ['file_pdf' => $fakeDoc],
+            ['HTTP_X-Requested-With' => 'XMLHttpRequest']
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $this->assertStringContainsString('Format berkas harus berformat PDF', $response->json('message'));
+    }
+
+    public function test_inspect_fails_when_file_is_corrupted_or_fake_pdf(): void
+    {
+        // Berkas bernama .pdf tetapi isinya bukan PDF (%PDF-)
+        $fakePdf = UploadedFile::fake()->createWithContent('bukan_pdf.pdf', 'Ini adalah teks biasa, bukan binary PDF standar.');
+
+        $response = $this->actingAs($this->forensicUser)->post(
+            route('forensik-dokumen.inspect'),
+            ['file_pdf' => $fakePdf],
+            ['HTTP_X-Requested-With' => 'XMLHttpRequest']
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $this->assertStringContainsString('Format berkas tidak valid', $response->json('message'));
+    }
+
+    public function test_inspect_fails_when_file_exceeds_30mb(): void
+    {
+        $tempPath = storage_path('app/temp_oversized_test.pdf');
+        $fp = fopen($tempPath, 'wb');
+        fwrite($fp, "%PDF-1.4\n");
+        fseek($fp, 32 * 1024 * 1024);
+        fwrite($fp, "%%EOF\n");
+        fclose($fp);
+
+        $oversizedPdf = new UploadedFile(
+            $tempPath,
+            'oversized.pdf',
+            'application/pdf',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->forensicUser)->post(
+            route('forensik-dokumen.inspect'),
+            ['file_pdf' => $oversizedPdf],
+            ['HTTP_X-Requested-With' => 'XMLHttpRequest']
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $this->assertStringContainsString('melebihi batas maksimal 30 MB', $response->json('message'));
+
+        @unlink($tempPath);
+    }
 }
