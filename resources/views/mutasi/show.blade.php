@@ -238,7 +238,7 @@
 
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
                             <div>
-                                <i class="fas fa-shield-alt text-warning me-2"></i>
+                                <i class="fas fa-file-contract text-warning me-2"></i>
                                 <span class="fw-semibold small">3. Berita Acara Pemeriksaan (BAP)</span>
                             </div>
                             @if($mutasi->file_bap)
@@ -276,7 +276,7 @@
 
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
                             <div>
-                                <i class="fas fa-users-cog text-info me-2"></i>
+                                <i class="fas fa-users text-info me-2"></i>
                                 <span class="fw-semibold small">5. Daftar Wargabinaan yang diusulkan</span>
                             </div>
                             @if($mutasi->file_lampiran_wbp)
@@ -329,7 +329,7 @@
                 </div>
                 @elseif($isPenerima)
                 <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-3">
-                    <i class="fas fa-building fa-lg me-2 text-success"></i>
+                    <i class="fas fa-file-import fa-lg me-2 text-success"></i>
                     <div class="small">
                         <strong>Pemberitahuan UPT Penerima:</strong> UPT Anda telah ditunjuk sebagai penerima mutasi dari <strong>{{ $mutasi->uptAsal?->nama_upt }}</strong>@if($userTujuan) dengan alokasi <strong>{{ $userTujuan->total_disetujui }} WBP</strong>@endif. Silakan unduh Surat Persetujuan Kanwil dan unggah Laporan Penerimaan saat narapidana tiba.
                     </div>
@@ -501,7 +501,7 @@
                                 @endif
                                 @if($mutasi->file_bap)
                                 <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-warning text-dark rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
-                                    <i class="fas fa-shield-alt me-1"></i>3. BAP
+                                    <i class="fas fa-file-contract me-1"></i>3. BAP
                                 </a>
                                 @endif
                                 @if($mutasi->file_reg_f)
@@ -808,7 +808,7 @@
                             <div class="border rounded-3 p-3 mb-3 bg-light">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
-                                        <span class="fw-bold text-info small"><i class="fas fa-building me-1"></i>2. Laporan Penerimaan</span>
+                                        <span class="fw-bold text-info small"><i class="fas fa-file-import me-1"></i>2. Laporan Penerimaan</span>
                                         <small class="text-muted d-block" style="font-size: 11px;">Oleh UPT Penerima: <strong>{{ $target->uptTujuan?->nama_upt }}</strong></small>
                                     </div>
                                     @if($hasPenerimaan)

@@ -233,7 +233,7 @@
                                         <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded {{ $m->hasLaporanPenerimaan() ? 'bg-success bg-opacity-10 border border-success-subtle' : 'bg-light border' }}">
                                             <div class="d-flex align-items-center gap-2 text-truncate me-1">
                                                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $m->hasLaporanPenerimaan() ? 'bg-success text-white' : 'bg-info bg-opacity-10 text-info' }}" style="width: 22px; height: 22px; font-size: 10px;">
-                                                    <i class="fas {{ $m->hasLaporanPenerimaan() ? 'fa-check' : 'fa-building' }}"></i>
+                                                    <i class="fas {{ $m->hasLaporanPenerimaan() ? 'fa-check' : 'fa-file-import' }}"></i>
                                                 </div>
                                                 <div class="text-truncate">
                                                     <div class="fw-semibold text-dark small" style="font-size: 11.5px; line-height: 1.2;">2. Lap. Penerimaan</div>

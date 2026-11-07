@@ -32,6 +32,33 @@
         padding: 3px 7px;
         border-radius: 6px;
     }
+    .btn-berkas {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        padding: 0 !important;
+        font-size: 12px !important;
+        line-height: 1 !important;
+        border-radius: 7px !important;
+        transition: all 0.15s ease-in-out !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        border-width: 1px !important;
+        border-style: solid !important;
+        text-decoration: none !important;
+    }
+    .btn-berkas i {
+        font-size: 12.5px !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+    }
+    .btn-berkas:hover {
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 3px 6px -1px rgba(0,0,0,0.15) !important;
+    }
 </style>
 @endpush
 
@@ -261,34 +288,71 @@
                             @endif
                         </td>
                         <td class="text-center text-nowrap">
-                            <div class="table-actions">
+                            <div class="d-inline-flex flex-wrap justify-content-center align-items-center gap-1" style="max-width: 165px;">
                                 @if($m->file_surat_usulan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-action" title="Buka Surat Usulan di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" 
+                                   target="_blank" rel="noopener noreferrer" 
+                                   class="btn btn-outline-danger btn-berkas" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" 
+                                   data-bs-title="1. Surat Usulan Resmi UPT (PDF)">
                                     <i class="fas fa-file-pdf"></i>
                                 </a>
                                 @endif
+
+                                @php
+                                    $syaratCount = ($m->file_asesmen ? 1 : 0) + ($m->file_bap ? 1 : 0) + ($m->file_reg_f ? 1 : 0) + ($m->file_lampiran_wbp ? 1 : 0);
+                                @endphp
+                                @if($syaratCount > 0)
+                                <a href="{{ route('mutasi.show', $m->id) }}" 
+                                   class="btn btn-outline-secondary btn-berkas" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" 
+                                   data-bs-title="2. Lampiran Persyaratan Terlampir ({{ $syaratCount }} Berkas: Asesmen/BAP/Reg F/WBP)">
+                                    <i class="fas fa-paperclip"></i>
+                                </a>
+                                @endif
+
                                 @if($m->file_persetujuan_kanwil)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-action" title="Buka Surat Persetujuan Kanwil di Tab Baru">
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" 
+                                   target="_blank" rel="noopener noreferrer" 
+                                   class="btn btn-success btn-berkas text-white" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" 
+                                   data-bs-title="3. Surat Persetujuan Kanwil (SK)">
                                     <i class="fas fa-stamp"></i>
                                 </a>
                                 @endif
-                                @if($m->file_laporan_pemindahan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-action" title="Buka Laporan Pemindahan di Tab Baru">
-                                    <i class="fas fa-truck-departure"></i>
+
+                                @if($m->hasLaporanPemindahan())
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_pemindahan', 'preview' => 1]) }}" 
+                                   target="_blank" rel="noopener noreferrer" 
+                                   class="btn btn-outline-primary btn-berkas" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" 
+                                   data-bs-title="4. Laporan Pemindahan (UPT Pengirim)">
+                                    <i class="fas fa-truck-moving"></i>
                                 </a>
                                 @endif
-                                @if($m->file_laporan_penerimaan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-info btn-action" title="Buka Laporan Penerimaan di Tab Baru">
-                                    <i class="fas fa-building"></i>
+
+                                @if($m->hasLaporanPenerimaan())
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'laporan_penerimaan', 'preview' => 1]) }}" 
+                                   target="_blank" rel="noopener noreferrer" 
+                                   class="btn btn-outline-info btn-berkas" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" 
+                                   data-bs-title="5. Laporan Penerimaan (UPT Penerima)">
+                                    <i class="fas fa-file-import"></i>
                                 </a>
                                 @endif
-                                @if($m->file_bast)
-                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-action text-white" title="Buka BAST di Tab Baru">
+
+                                @if($m->hasBast())
+                                <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bast', 'preview' => 1]) }}" 
+                                   target="_blank" rel="noopener noreferrer" 
+                                   class="btn btn-info btn-berkas text-white" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" 
+                                   data-bs-title="6. Berita Acara Serah Terima (BAST)">
                                     <i class="fas fa-file-signature"></i>
                                 </a>
                                 @endif
-                                @if(!$m->file_surat_usulan && !$m->file_persetujuan_kanwil && !$m->file_laporan_pemindahan && !$m->file_laporan_penerimaan && !$m->file_bast)
-                                <span class="text-muted small">-</span>
+
+                                @if(!$m->file_surat_usulan && !$m->file_persetujuan_kanwil && !$m->hasLaporanPemindahan() && !$m->hasLaporanPenerimaan() && !$m->hasBast() && $syaratCount === 0)
+                                <span class="text-muted small fst-italic">-</span>
                                 @endif
                             </div>
                         </td>
@@ -321,6 +385,24 @@
             </table>
         </div>
 
+        <!-- Legenda Icon Berkas -->
+        <div class="card-footer bg-light border-top py-2.5 px-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 small">
+                <div class="d-flex flex-wrap align-items-center gap-3 text-muted" style="font-size: 11.5px;">
+                    <span class="fw-bold text-dark"><i class="fas fa-layer-group me-1 text-primary"></i>Keterangan Berkas:</span>
+                    <span><i class="fas fa-file-pdf text-danger me-1"></i>1. Surat Usulan</span>
+                    <span><i class="fas fa-paperclip text-secondary me-1"></i>2. Lampiran Persyaratan</span>
+                    <span><i class="fas fa-stamp text-success me-1"></i>3. Persetujuan Kanwil</span>
+                    <span><i class="fas fa-truck-moving text-primary me-1"></i>4. Lap. Pemindahan</span>
+                    <span><i class="fas fa-file-import text-info me-1"></i>5. Lap. Penerimaan</span>
+                    <span><i class="fas fa-file-signature text-info me-1"></i>6. BAST</span>
+                </div>
+                <div class="text-muted fst-italic" style="font-size: 11px;">
+                    <i class="fas fa-mouse-pointer me-1 text-primary"></i>Arahkan kursor atau klik icon untuk membuka berkas PDF di tab baru
+                </div>
+            </div>
+        </div>
+
         @if($mutasiList->hasPages())
         <div class="card-footer bg-white border-0 py-3">
             {{ $mutasiList->links('pagination::bootstrap-5') }}
@@ -329,3 +411,14 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+@endpush

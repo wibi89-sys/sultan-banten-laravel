@@ -137,20 +137,20 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">1. Surat Usulan Resmi UPT <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-semibold"><i class="fas fa-file-pdf text-danger me-1"></i>1. Surat Usulan Resmi UPT <span class="text-danger">*</span></label>
                         <input type="file" name="file_surat_usulan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Format: PDF/Gambar (Maks. 10 MB)</small>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">2. Asesmen Penempatan Narapidana</label>
+                        <label class="form-label small fw-semibold"><i class="fas fa-file-alt text-primary me-1"></i>2. Asesmen Penempatan Narapidana</label>
                         <input type="file" name="file_asesmen" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Hasil asesmen risiko &amp; kebutuhan (PDF, Maks. 10 MB)</small>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">
-                            3. Berita Acara Pemeriksaan (BAP)
+                            <i class="fas fa-file-contract text-warning me-1"></i>3. Berita Acara Pemeriksaan (BAP)
                             <span class="text-danger" id="reqStarBap" style="display: none;">*</span>
                         </label>
                         <input type="file" name="file_bap" id="inputFileBap" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
@@ -158,13 +158,13 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">4. Buku Catatan Pelanggaran Disiplin (Register F)</label>
+                        <label class="form-label small fw-semibold"><i class="fas fa-clipboard-list text-secondary me-1"></i>4. Buku Catatan Pelanggaran Disiplin (Register F)</label>
                         <input type="file" name="file_reg_f" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Catatan riwayat disiplin WBP (PDF, Maks. 10 MB)</small>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">5. Daftar Wargabinaan yang diusulkan</label>
+                        <label class="form-label small fw-semibold"><i class="fas fa-users text-info me-1"></i>5. Daftar Wargabinaan yang diusulkan</label>
                         <input type="file" name="file_lampiran_wbp" class="form-control form-control-sm" accept=".pdf,.xls,.xlsx,.csv">
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Daftar nama, nomor register, perkara, ekspirasi, dan sisa pidana (PDF / Excel / CSV, Maks. 10 MB)</small>
                     </div>
