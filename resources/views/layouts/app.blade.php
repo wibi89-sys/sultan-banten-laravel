@@ -507,14 +507,21 @@
             </div>
             @endif
 
-            <a href="{{ route('telram.index') }}" class="{{ request()->routeIs('telram.*') ? 'active' : '' }}">
-                <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
-            </a>
-
-            <a href="{{ route('pembersih-pdf.index') }}" class="{{ request()->routeIs('pembersih-pdf.*') ? 'active' : '' }}">
-                <i class="fas fa-broom text-primary"></i><span>Pembersih PDF</span>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-auto" style="font-size: 9px;">Utilitas</span>
-            </a>
+            <div class="menu-parent {{ request()->routeIs('telram.*') || request()->routeIs('pembersih-pdf.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuUtilitas">
+                <i class="fas fa-toolbox"></i>
+                <span>Utilitas</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="collapse {{ request()->routeIs('telram.*') || request()->routeIs('pembersih-pdf.*') ? 'show' : '' }}" id="menuUtilitas">
+                <div class="sidebar-submenu">
+                    <a href="{{ route('telram.index') }}" class="{{ request()->routeIs('telram.*') ? 'active' : '' }}">
+                        <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
+                    </a>
+                    <a href="{{ route('pembersih-pdf.index') }}" class="{{ request()->routeIs('pembersih-pdf.*') ? 'active' : '' }}">
+                        <i class="fas fa-broom text-primary"></i><span>Pembersih PDF</span>
+                    </a>
+                </div>
+            </div>
 
             <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>
