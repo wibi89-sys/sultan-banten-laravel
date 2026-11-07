@@ -26,6 +26,13 @@ class PdfForensicService
         'foxit' => 'Foxit PDF Editor',
         'inkscape' => 'Inkscape Vector Editor',
         'paint.net' => 'Paint.NET Image Editor',
+        'skia' => 'Google Chrome / Skia PDF Engine (Cetak ke PDF / Ekspor Ulang)',
+        'pdfium' => 'Chromium PDFium Engine (Cetak ke PDF / Ekspor Ulang Browser)',
+        'pdfcreator' => 'PDFCreator (Virtual Printer)',
+        'cutepdf' => 'CutePDF Writer (Virtual Printer)',
+        'bullzip' => 'Bullzip PDF Printer (Virtual Printer)',
+        'wps' => 'WPS Office PDF',
+        'dopdf' => 'doPDF Virtual Printer',
     ];
 
     /**
@@ -86,10 +93,14 @@ class PdfForensicService
         $fontsUsed = array_values(array_unique($fontMatches[1] ?? []));
 
         // 6. Analisis Halaman dan Objek Citra (Deteksi Berkas Pindaian / Scan Fisik)
-        preg_match_all('/\/Type\s*\/Page(?![sA-Za-z])/', $raw, $pageMatches);
-        $pageCount = count($pageMatches[0] ?? []);
-        if ($pageCount === 0 && preg_match('/\/Count\s+(\d+)/', $raw, $countMatch)) {
-            $pageCount = (int) $countMatch[1];
+        $activePagesInfo = self::getActivePagesInfo($raw);
+        $pageCount = $activePagesInfo['page_count'] ?? 0;
+        if ($pageCount === 0) {
+            preg_match_all('/\/Type\s*\/Page(?![sA-Za-z])/', $raw, $pageMatches);
+            $pageCount = count($pageMatches[0] ?? []);
+            if ($pageCount === 0 && preg_match('/\/Count\s+(\d+)/', $raw, $countMatch)) {
+                $pageCount = (int) $countMatch[1];
+            }
         }
         $pageCount = max(1, $pageCount);
 
@@ -594,6 +605,40 @@ class PdfForensicService
             }
         }
 
+        // 2b. Deteksi Objek Halaman Fisik Yatim (/Type /Page yang tidak terhubung pada /Kids naskah aktif)
+        $activePageIds = $activePagesInfo['page_ids'] ?? [];
+        $allPageObjIds = [];
+        if (preg_match_all('/(\d+)\s+\d+\s+obj\s*<<[\s\S]*?\/Type\s*\/Page(?![sA-Za-z])[\s\S]*?>>/s', $raw, $allPageObjMatches)) {
+            $allPageObjIds = array_map('intval', $allPageObjMatches[1]);
+        }
+        if (! empty($activePageIds) && ! empty($allPageObjIds)) {
+            $orphanedPageIds = array_values(array_diff($allPageObjIds, $activePageIds));
+            if (! empty($orphanedPageIds)) {
+                $hasDeletion = true;
+                $orphanedCount = count($orphanedPageIds);
+                $deletedPagesCount += $orphanedCount;
+                $orphanedText = self::extractTextFromPageIds($raw, $orphanedPageIds);
+                if (! empty($orphanedText)) {
+                    $deletedTextSnippets[] = $orphanedText;
+                }
+                $evidence[] = "Terdeteksi {$orphanedCount} lembar objek halaman fisik (/Type /Page objek #".implode(', #', $orphanedPageIds).') yang telah diputus/dihapus dari hierarki naskah aktif (Halaman Yatim / Orphaned Pages).';
+            }
+        }
+
+        // 2c. Deteksi Entri Objek Dihapus pada Tabel Cross-Reference (Xref Freelist)
+        if (preg_match_all('/\b\d{10}\s+(\d{5})\s+f\b/', $raw, $fMatches)) {
+            $freedCount = 0;
+            foreach ($fMatches[1] as $gen) {
+                if ($gen !== '65535') {
+                    $freedCount++;
+                }
+            }
+            if ($freedCount > 0) {
+                $hasDeletion = true;
+                $evidence[] = "Tabel indeks objek berkas (Xref Table) mencatat {$freedCount} entri objek yang telah dihapus/dilepaskan dari naskah (status: freed objects).";
+            }
+        }
+
         // 3. Deteksi Berkas Lampiran Tertanam (/Type /Filespec & /EmbeddedFiles)
         if (empty($embeddedFiles)) {
             $embeddedFiles = self::extractEmbeddedFiles($raw, $decompressedStreams);
@@ -763,7 +808,7 @@ class PdfForensicService
         // 2. Dari Catalog, cari objek /Pages
         $pagesObjId = null;
         if ($rootObjId) {
-            if (preg_match_all('/'.preg_quote((string) $rootObjId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $catObjMatches)) {
+            if (preg_match_all('/(?<!\d)'.preg_quote((string) $rootObjId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $catObjMatches)) {
                 $lastCat = end($catObjMatches[1]);
                 if (preg_match('/\/Pages\s+(\d+)\s+\d+\s+R/', $lastCat, $pMatch)) {
                     $pagesObjId = (int) $pMatch[1];
@@ -778,7 +823,7 @@ class PdfForensicService
         // 3. Dari objek Pages, ekstrak /Kids dan /Count
         $pageCount = 0;
         if ($pagesObjId) {
-            if (preg_match_all('/'.preg_quote((string) $pagesObjId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pagesObjMatches)) {
+            if (preg_match_all('/(?<!\d)'.preg_quote((string) $pagesObjId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pagesObjMatches)) {
                 $lastPagesObj = end($pagesObjMatches[1]);
                 if (preg_match('/\/Count\s+(\d+)/', $lastPagesObj, $cMatch)) {
                     $pageCount = (int) $cMatch[1];
@@ -803,7 +848,7 @@ class PdfForensicService
 
         // 4. Untuk setiap Page ID, cari objek /Contents
         foreach ($pageIds as $pId) {
-            if (preg_match_all('/'.preg_quote((string) $pId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pageDefMatches)) {
+            if (preg_match_all('/(?<!\d)'.preg_quote((string) $pId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pageDefMatches)) {
                 $lastPageDef = end($pageDefMatches[1]);
                 if (preg_match('/\/Contents\s+(\d+)\s+\d+\s+R/', $lastPageDef, $cMatch)) {
                     $contentIds[] = (int) $cMatch[1];
@@ -843,7 +888,7 @@ class PdfForensicService
      */
     protected static function extractObjectContentText(string $raw, int $objId): string
     {
-        if (preg_match_all('/'.preg_quote((string) $objId, '/').'\s+\d+\s+obj([\s\S]*?)endobj/s', $raw, $matches)) {
+        if (preg_match_all('/(?<!\d)'.preg_quote((string) $objId, '/').'\s+\d+\s+obj([\s\S]*?)endobj/s', $raw, $matches)) {
             $lastObjDef = end($matches[1]);
             if (preg_match('/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/s', $lastObjDef, $streamMatch)) {
                 $chunk = trim($streamMatch[1], "\r\n ");
@@ -872,7 +917,7 @@ class PdfForensicService
     {
         $texts = [];
         foreach ($pageIds as $pId) {
-            if (preg_match_all('/'.preg_quote((string) $pId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pageDefMatches)) {
+            if (preg_match_all('/(?<!\d)'.preg_quote((string) $pId, '/').'\s+\d+\s+obj\s*<<([\s\S]*?)>>\s*endobj/s', $raw, $pageDefMatches)) {
                 $lastPageDef = end($pageDefMatches[1]);
                 $cIds = [];
                 if (preg_match('/\/Contents\s+(\d+)\s+\d+\s+R/', $lastPageDef, $cMatch)) {
@@ -985,7 +1030,7 @@ class PdfForensicService
                     $isPdf = str_ends_with(strtolower($fileName), '.pdf');
 
                     if ($streamObjId) {
-                        if (preg_match('/'.preg_quote((string) $streamObjId, '/').'\s+\d+\s+obj([\s\S]*?)endobj/s', $raw, $streamObjMatch)) {
+                        if (preg_match('/(?<!\d)'.preg_quote((string) $streamObjId, '/').'\s+\d+\s+obj([\s\S]*?)endobj/s', $raw, $streamObjMatch)) {
                             $streamBody = $streamObjMatch[1];
 
                             if (preg_match('/\/Params\s*<<([\s\S]*?)>>/s', $streamBody, $paramsMatch)) {

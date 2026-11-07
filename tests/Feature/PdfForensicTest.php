@@ -331,4 +331,40 @@ class PdfForensicTest extends TestCase
 
         @unlink($tempPdf);
     }
+
+    public function test_forensic_detects_orphaned_page_objects_when_page_is_unlinked(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->SetCreator('Microsoft Word 2021');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Halaman 1: Naskah Resmi');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Halaman 2: Lampiran yang dihapus');
+        $tempPdf = storage_path('app/temp_test_orphaned_page.pdf');
+        $tcpdf->Output($tempPdf, 'F');
+
+        $raw = file_get_contents($tempPdf);
+        // Modifikasi objek Pages agar hanya memuat halaman 1, menyisakan halaman 2 sebagai objek yatim (orphan)
+        preg_match('/(\d+)\s+\d+\s+obj\s*<<[\s\S]*?\/Type\s*\/Pages\b[\s\S]*?>>/s', $raw, $pMatch);
+        $pagesId = $pMatch[1] ?? '1';
+
+        // Unlink halaman kedua dari /Kids
+        $tamperedRaw = preg_replace(
+            '/(\/Kids\s*\[\s*\d+\s+\d+\s+R\s+)(\d+\s+\d+\s+R)(\s*\]\s*\/Count\s+)2/',
+            '$1$3 1',
+            $raw
+        );
+        file_put_contents($tempPdf, $tamperedRaw);
+
+        $result = PdfForensicService::inspect($tempPdf);
+
+        $this->assertIsArray($result);
+        $this->assertEquals(1, $result['file_info']['page_count']);
+        $this->assertTrue($result['deleted_content']['has_deletion']);
+        $evidenceStr = implode(' ', $result['deleted_content']['evidence']);
+        $this->assertStringContainsStringIgnoringCase('Halaman Yatim', $evidenceStr);
+
+        @unlink($tempPdf);
+    }
 }
