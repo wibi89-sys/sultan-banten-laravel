@@ -168,18 +168,13 @@
                 </tbody>
             </table>
 
+            @if(!empty($naskah->file_pdf) && file_exists(public_path($naskah->file_pdf)))
             <div class="text-center pt-2 border-top">
-                @if(!empty($naskah->file_pdf) && file_exists(public_path($naskah->file_pdf)))
-                    <a href="{{ asset($naskah->file_pdf) }}" target="_blank" class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-semibold me-2">
-                        <i class="fas fa-file-pdf me-1 text-danger"></i>Lihat Berkas Resmi (PDF)
-                    </a>
-                @endif
-                @if(!empty($naskah->file_signed) && file_exists(public_path($naskah->file_signed)))
-                    <a href="{{ asset($naskah->file_signed) }}" target="_blank" class="btn btn-outline-success btn-sm px-3 rounded-pill fw-semibold">
-                        <i class="fas fa-file-signature me-1"></i>Lihat Hasil Scan TTD Basah
-                    </a>
-                @endif
+                <a href="{{ asset($naskah->file_pdf) }}" target="_blank" class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-semibold">
+                    <i class="fas fa-file-pdf me-1 text-danger"></i>Lihat Berkas Resmi (PDF)
+                </a>
             </div>
+            @endif
         </div>
     @else
         <div class="cert-header bg-danger">

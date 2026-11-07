@@ -416,4 +416,41 @@ class SidangTppFeatureTest extends TestCase
         @unlink($tempPdf);
         @unlink($fullPath);
     }
+
+    public function test_public_verifikasi_dokumen_page_does_not_show_lihat_hasil_scan_button(): void
+    {
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-VERIF-'.time(),
+            'tanggal_surat' => '2026-10-23',
+            'tanggal_sidang' => '2026-10-25',
+            'jam_mulai' => '09:00',
+            'agenda_sidang' => 'Agenda Sidang Verif Test',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+        ]);
+
+        $naskah = TppNaskahKanwil::create([
+            'sidang_tpp_id' => $sidang->id,
+            'jenis_dokumen' => 'laporan_tpp',
+            'kode_verifikasi' => 'VERIF-TEST-'.time(),
+            'nomor_dokumen' => 'LAP-VERIF-001',
+            'tanggal_dokumen' => '2026-10-25',
+            'judul_naskah' => 'Laporan TPP Kanwil',
+            'materi_agenda' => 'Materi Agenda',
+            'penandatangan_nama' => 'Surya Dharma',
+            'penandatangan_jabatan' => 'Kepala Bidang',
+            'file_signed' => 'uploads/sidang_tpp_signed/dummy.pdf',
+            'status' => 'signed',
+            'metode_ttd' => 'digital_qr',
+        ]);
+
+        $response = $this->get(route('verifikasi-dokumen.show', $naskah->kode_verifikasi));
+        $response->assertStatus(200);
+        $response->assertSee('LEMBAR OTENTIFIKASI DOKUMEN DIGITAL');
+        $response->assertSee('DOKUMEN RESMI TERVERIFIKASI');
+        $response->assertSee($naskah->kode_verifikasi);
+        $response->assertDontSee('Lihat Hasil Scan');
+        $response->assertDontSee('Lihat Hasil Scan TTD Basah');
+    }
 }
