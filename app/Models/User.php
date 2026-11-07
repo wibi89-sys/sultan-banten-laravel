@@ -35,7 +35,6 @@ class User extends Authenticatable
         'akses_wa_settings',
         'akses_wa_schedule',
         'akses_activity_log',
-        'akses_forensik_dokumen',
     ];
 
     protected $hidden = [
@@ -147,14 +146,6 @@ class User extends Authenticatable
     public function canManage(string $menu): bool
     {
         return $this->hasAccess($menu, 'full');
-    }
-
-    /**
-     * Cek apakah pengguna diizinkan mengakses modul Forensik & Inspeksi Dokumen.
-     */
-    public function canAccessForensikDokumen(): bool
-    {
-        return $this->isAdmin() || $this->hasAccess('forensik_dokumen', 'view');
     }
 
     public function getAvatarHtml(int $size = 32): string
