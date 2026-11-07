@@ -569,6 +569,10 @@ PRINSIP PENYUSUNAN NASKAH & TATA BAHASA (EYD V):
    - Ekstrak seluruh data angka dan materi riil yang tertulis di dalam BA: apakah mengenai Usulan Hak Integrasi (PB, CB, CMB), Asimilasi, Remisi, Mutasi Narapidana, Pengangkatan Pemuka/Tamping, atau Penjatuhan Hukuman Disiplin.
    - Catat rincian jumlah narapidana per kategori usulan.
    - JIKA ADA CATATAN DINAMIKA (misal: ada usulan yang ditunda, perbaikan litmas, penjamin belum diverifikasi, atau catatan keamanan khusus), JELASKAN secara objektif dan konstruktif pada butir temuan dan rekomendasi. Jangan memaksakan klaim "semua memenuhi syarat" jika BA menyatakan ada kendala/penundaan.
+4. KELUWESAN TRANSISI & KETERHUBUNGAN KALIMAT (KOHESI & KOHERENSI):
+   - JANGAN biarkan narasi terputus secara mendadak sebelum rincian butir materi sidang.
+   - WAJIB: Antara Paragraf A3 dengan rincian materi sidang (PB, CB, Asimilasi, dll.), Paragraf A3 HARUS DITUTUP DENGAN KALIMAT PENGHUBUNG/PENGANTAR yang mengalir wajar dan berakhiran tanda titik dua ':' menuju butir rincian materi sidang (misal: 'Dalam rangka pengawasan tersebut, perwakilan Kantor Wilayah mencermati dan menelaah pokok materi usulan sidang yang dibahas dengan rincian sebagai berikut:' atau 'Adapun pokok materi sidang dan rincian kuota usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:').
+   - Paragraf A4 sesudahnya harus menyambung secara wajar dengan merujuk materi yang telah disebutkan (misal diawali: 'Terhadap seluruh materi usulan yang diajukan tersebut, perwakilan Kantor Wilayah melakukan pencermatan mendalam...').
 
 Kembalikan respon DALAM FORMAT JSON VALID dengan struktur berikut:
 {
@@ -579,8 +583,8 @@ Kembalikan respon DALAM FORMAT JSON VALID dengan struktur berikut:
   ],
   "paragraf_a1": "Narasi pembuka yang mengalir alami mengenai keikutsertaan perwakilan Kantor Wilayah dalam pelaksanaan Sidang TPP di {$uptNama} pada hari dan tanggal tersebut sebagai wujud akuntabilitas pelaksanaan fungsi pengawasan teknis.",
   "paragraf_a2": "Narasi komprehensif mengenai latar belakang pembahasan sidang, program pembinaan narapidana yang dibahas, urgensi pengusulan hak/program tersebut, serta kaitannya dengan tujuan Sistem Pemasyarakatan.",
-  "paragraf_a3": "Narasi mengenai peran strategis perwakilan Kantor Wilayah sebagai unsur pembina dan pengawas dalam memastikan seluruh tahapan pengambilan keputusan berjalan transparan, akuntabel, dan bebas dari diskriminasi.",
-  "paragraf_a4": "Narasi teknis mengenai proses pencermatan terhadap pemenuhan syarat administratif dan substantif, sinkronisasi data pada SDP, hasil penilaian instrumen SPPN, laporan Litmas Bapas, serta mitigasi risiko keamanan.",
+  "paragraf_a3": "Narasi mengenai peran strategis perwakilan Kantor Wilayah sebagai unsur pembina dan pengawas dalam memastikan seluruh tahapan pengambilan keputusan berjalan transparan, akuntabel, dan bebas dari diskriminasi. WAJIB DITUTUP DENGAN KALIMAT PENGHUBUNG RESMI menuju rincian materi sidang (contoh: '...Adapun pokok materi sidang dan rincian usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:').",
+  "paragraf_a4": "Narasi teknis yang menyambung setelah rincian materi usulan sidang (diawali: 'Terhadap seluruh materi usulan yang diajukan tersebut, perwakilan Kantor Wilayah melakukan pencermatan mendalam terhadap...'). Narasi mencakup pemenuhan syarat administratif dan substantif, sinkronisasi data pada SDP, hasil penilaian instrumen SPPN, laporan Litmas Bapas, serta mitigasi risiko keamanan.",
   "paragraf_b1": "Narasi pengantar hasil telaahan terhadap jalannya sidang dan Berita Acara yang dihasilkan oleh Tim TPP {$uptNama}.",
   "paragraf_b2_poin": [
     "Butir temuan 1 mengenai pemenuhan syarat substantif (perilaku, kepatuhan program pembinaan, catatan disiplin narapidana).",

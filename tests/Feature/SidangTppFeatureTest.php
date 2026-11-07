@@ -6,6 +6,7 @@ use App\Models\SidangTpp;
 use App\Models\TppNaskahKanwil;
 use App\Models\Upt;
 use App\Models\User;
+use App\Services\LaporanTppGeneratorService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -546,5 +547,36 @@ class SidangTppFeatureTest extends TestCase
         $response->assertSee($naskah->kode_verifikasi);
         $response->assertDontSee('Lihat Hasil Scan');
         $response->assertDontSee('Lihat Hasil Scan TTD Basah');
+    }
+
+    public function test_laporan_tpp_generator_connects_paragraf_a3_with_materi_items_naturally(): void
+    {
+        $rawParagrafA3 = 'Kehadiran perwakilan Kantor Wilayah dalam forum sidang ini menegaskan posisi strategis struktur pengawas sebagai unsur pembina yang memastikan seluruh rangkaian proses pengambilan keputusan berjalan objektif dan bebas dari segala bentuk diskriminasi. Peran pengawasan ini difokuskan untuk menguji objektivitas Tim TPP UPT dalam menilai rekam jejak perilaku narapidana selama menjalani masa pidana di dalam lapas.';
+
+        $materiItems = [
+            'Cuti Bersyarat (CB): 4 orang narapidana',
+            'Pembebasan Bersyarat (PB): 7 orang narapidana',
+        ];
+
+        // 1. Kasus tanpa kalimat penghubung (otomatis disambungkan secara alami)
+        $html = LaporanTppGeneratorService::renderHtmlTemplate([
+            'paragraf_a3' => $rawParagrafA3,
+            'materi_sidang_items' => $materiItems,
+        ]);
+
+        $this->assertStringContainsString('Adapun pokok materi dan rincian kuota usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:', $html);
+        $this->assertStringContainsString('Cuti Bersyarat (CB): 4 orang narapidana', $html);
+        $this->assertStringContainsString('Pembebasan Bersyarat (PB): 7 orang narapidana', $html);
+
+        // 2. Kasus jika paragraf A3 sudah memiliki klausa pengantar resmi sendiri
+        $customConnectorA3 = 'Perwakilan Kanwil mengawasi jalannya sidang dengan rincian materi sebagai berikut:';
+        $htmlCustom = LaporanTppGeneratorService::renderHtmlTemplate([
+            'paragraf_a3' => $customConnectorA3,
+            'materi_sidang_items' => $materiItems,
+        ]);
+
+        $this->assertStringContainsString('Perwakilan Kanwil mengawasi jalannya sidang dengan rincian materi sebagai berikut:', $htmlCustom);
+        // Pastikan tidak terjadi pengulangan kalimat ganda
+        $this->assertEquals(1, substr_count($htmlCustom, 'sebagai berikut:'));
     }
 }

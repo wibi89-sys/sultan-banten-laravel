@@ -110,19 +110,23 @@
                                         <textarea name="paragraf_a2" id="lap_paragraf_a2" rows="2" class="form-control form-control-sm"></textarea>
                                     </div>
                                     <div class="mb-2">
-                                        <label class="form-label small fw-semibold text-muted">Paragraf 3 (Kehadiran Perwakilan Kanwil &amp; Pengawasan)</label>
-                                        <textarea name="paragraf_a3" id="lap_paragraf_a3" rows="2" class="form-control form-control-sm"></textarea>
+                                        <label class="form-label small fw-semibold text-muted">Paragraf 3 (Kehadiran Perwakilan Kanwil &amp; Pengantar Rincian Materi)</label>
+                                        <textarea name="paragraf_a3" id="lap_paragraf_a3" rows="3" class="form-control form-control-sm"></textarea>
+                                        <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;">*Diakhiri kalimat pengantar resmi (misal: "...Adapun pokok materi sidang dan rincian kuota usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:")</small>
                                     </div>
                                     
                                     <!-- Materi Sidang Items Dinamis -->
                                     <div class="mb-2 p-2.5 rounded bg-light border">
-                                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
                                             <label class="form-label small fw-bold mb-0 text-dark">
                                                 <i class="fas fa-list-ul text-primary me-1"></i>Rincian Butir Materi Sidang (Jumlah Usulan Faktual)
                                             </label>
                                             <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisMateri()">
                                                 <i class="fas fa-plus me-1"></i>Tambah Baris Usulan
                                             </button>
+                                        </div>
+                                        <div class="text-muted small mb-1.5" style="font-size: 10.5px;">
+                                            *Rincian butir ini tersambung langsung dari kalimat penghubung Paragraf 3 di atas.
                                         </div>
                                         <div id="wrapperMateriItems"></div>
                                     </div>

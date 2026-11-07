@@ -681,7 +681,18 @@
                 if (d.materi_sidang_items && d.materi_sidang_items.length > 0) renderMateriInput(d.materi_sidang_items);
                 if (d.paragraf_a1) document.getElementById('lap_paragraf_a1').value = d.paragraf_a1;
                 if (d.paragraf_a2) document.getElementById('lap_paragraf_a2').value = d.paragraf_a2;
-                if (d.paragraf_a3) document.getElementById('lap_paragraf_a3').value = d.paragraf_a3;
+
+                let pA3 = d.paragraf_a3 || '';
+                if (d.materi_sidang_items && d.materi_sidang_items.length > 0 && pA3) {
+                    const hasConn = /(?:sebagai berikut|meliputi|adalah|yaitu)\s*:?\s*$/i.test(pA3.trim());
+                    if (!hasConn) {
+                        pA3 = pA3.trim().replace(/\.+$/, '') + '. Adapun pokok materi dan rincian kuota usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:';
+                    } else if (!pA3.trim().endsWith(':')) {
+                        pA3 = pA3.trim() + ':';
+                    }
+                }
+                if (pA3) document.getElementById('lap_paragraf_a3').value = pA3;
+
                 if (d.paragraf_a4) document.getElementById('lap_paragraf_a4').value = d.paragraf_a4;
                 if (d.paragraf_b1) document.getElementById('lap_paragraf_b1').value = d.paragraf_b1;
                 if (d.paragraf_b2_poin && d.paragraf_b2_poin.length > 0) renderPoinList('wrapperB2Poin', d.paragraf_b2_poin, 'paragraf_b2_poin[]');

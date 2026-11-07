@@ -125,7 +125,21 @@ class LaporanTppGeneratorService
 
         $paragrafA1 = $params['paragraf_a1'] ?? "Pada hari {$hariTanggal}, Kantor Wilayah Direktorat Jenderal Pemasyarakatan Banten mengikuti pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) {$metode} di {$uptNama}.";
         $paragrafA2 = $params['paragraf_a2'] ?? "Sidang TPP membahas usulan {$topikSidang} terhadap narapidana yang telah diusulkan oleh {$uptNama}.";
-        $paragrafA3 = $params['paragraf_a3'] ?? 'Perwakilan Kantor Wilayah hadir sebagai unsur pembina dan pengawas untuk melakukan verifikasi terhadap pemenuhan persyaratan substantif maupun administratif sesuai ketentuan peraturan perundang-undangan. Adapun materi sidang hari ini adalah sebagai berikut:';
+        $paragrafA3 = $params['paragraf_a3'] ?? 'Perwakilan Kantor Wilayah hadir sebagai unsur pembina dan pengawas untuk melakukan verifikasi terhadap pemenuhan persyaratan substantif maupun administratif sesuai ketentuan peraturan perundang-undangan.';
+
+        // Pastikan ada kalimat penghubung alami jika terdapat butir rincian materi sidang
+        if (! empty($materiItems)) {
+            $trimmedA3 = trim($paragrafA3);
+            $hasConnector = (bool) preg_match('/(?:sebagai berikut|meliputi|adalah|yaitu)\s*:?\s*$/i', $trimmedA3);
+            if (! $hasConnector) {
+                $trimmedA3 = rtrim($trimmedA3, " \t\n\r\0\x0B.");
+                $trimmedA3 .= '. Adapun pokok materi dan rincian kuota usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:';
+            } elseif (! str_ends_with($trimmedA3, ':')) {
+                $trimmedA3 .= ':';
+            }
+            $paragrafA3 = $trimmedA3;
+        }
+
         $paragrafA4 = $params['paragraf_a4'] ?? 'Perwakilan Kantor Wilayah melakukan pencermatan terhadap kelengkapan dokumen usulan, data registrasi narapidana, perhitungan masa pidana, laporan perkembangan pembinaan, penilaian risiko, serta dokumen pendukung lainnya yang dipersyaratkan dalam Sistem Database Pemasyarakatan (SDP).';
 
         $paragrafB1 = $params['paragraf_b1'] ?? "Berdasarkan hasil pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) {$uptNama} pada tanggal {$hariTanggal}, Tim Kantor Wilayah melakukan verifikasi terhadap usulan materi sidang.";
@@ -358,7 +372,21 @@ HTML;
 
         $paragrafA1 = $params['paragraf_a1'] ?? "Pada hari {$hariTanggal}, Kantor Wilayah Direktorat Jenderal Pemasyarakatan Banten mengikuti pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) {$metode} di {$uptNama}.";
         $paragrafA2 = $params['paragraf_a2'] ?? "Sidang TPP membahas usulan {$topikSidang} terhadap narapidana yang telah diusulkan oleh {$uptNama}.";
-        $paragrafA3 = $params['paragraf_a3'] ?? 'Perwakilan Kantor Wilayah hadir sebagai unsur pembina dan pengawas untuk melakukan verifikasi terhadap pemenuhan persyaratan substantif maupun administratif sesuai ketentuan peraturan perundang-undangan. Adapun materi sidang hari ini adalah sebagai berikut:';
+        $paragrafA3 = $params['paragraf_a3'] ?? 'Perwakilan Kantor Wilayah hadir sebagai unsur pembina dan pengawas untuk melakukan verifikasi terhadap pemenuhan persyaratan substantif maupun administratif sesuai ketentuan peraturan perundang-undangan.';
+
+        // Pastikan ada kalimat penghubung alami jika terdapat butir rincian materi sidang
+        if (! empty($materiItems)) {
+            $trimmedA3 = trim($paragrafA3);
+            $hasConnector = (bool) preg_match('/(?:sebagai berikut|meliputi|adalah|yaitu)\s*:?\s*$/i', $trimmedA3);
+            if (! $hasConnector) {
+                $trimmedA3 = rtrim($trimmedA3, " \t\n\r\0\x0B.");
+                $trimmedA3 .= '. Adapun pokok materi dan rincian kuota usulan narapidana yang dibahas serta ditelaah dalam forum sidang TPP ini meliputi sebagai berikut:';
+            } elseif (! str_ends_with($trimmedA3, ':')) {
+                $trimmedA3 .= ':';
+            }
+            $paragrafA3 = $trimmedA3;
+        }
+
         $paragrafA4 = $params['paragraf_a4'] ?? 'Perwakilan Kantor Wilayah melakukan pencermatan terhadap kelengkapan dokumen usulan, data registrasi narapidana, perhitungan masa pidana, laporan perkembangan pembinaan, penilaian risiko, serta dokumen pendukung lainnya yang dipersyaratkan dalam Sistem Database Pemasyarakatan (SDP).';
 
         $paragrafB1 = $params['paragraf_b1'] ?? "Berdasarkan hasil pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) {$uptNama} pada tanggal {$hariTanggal}, Tim Kantor Wilayah melakukan verifikasi terhadap usulan materi sidang.";
