@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class SidangTppDokumenKanwilController extends Controller
@@ -413,9 +414,11 @@ class SidangTppDokumenKanwilController extends Controller
         $naskah->status = 'signed';
         $naskah->metode_ttd = $bubuhiQr ? 'digital_qr' : 'manual';
         $naskah->signed_at = now();
-        $naskah->is_locked = true;
-        $naskah->locked_at = now();
-        $naskah->locked_by_id = auth()->id();
+        if (Schema::hasColumn('tpp_naskah_kanwil', 'is_locked')) {
+            $naskah->is_locked = true;
+            $naskah->locked_at = now();
+            $naskah->locked_by_id = auth()->id();
+        }
         $naskah->save();
 
         // Jika laporan TPP, sinkronkan juga dengan sidang_tpp.file_laporan_kakanwil

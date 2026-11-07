@@ -73,7 +73,7 @@ class TppNaskahKanwil extends Model
      */
     public function isLocked(): bool
     {
-        return (bool) $this->is_locked;
+        return ! empty($this->getAttribute('is_locked'));
     }
 
     /**
