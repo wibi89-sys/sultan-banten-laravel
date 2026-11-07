@@ -339,12 +339,18 @@
                                         <i class="fas fa-qrcode me-1"></i>QR
                                     </a>
                                 @endif
-                                <button type="button" class="btn btn-outline-primary btn-xs py-1 px-2" data-bs-toggle="modal" data-bs-target="#modalNotaDinas" title="Edit Draf / Generate Ulang Word">
-                                    <i class="fas fa-edit me-1"></i>Edit Word
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'nota_dinas', '{{ addslashes($notaDinasKanwil->nomor_dokumen) }}')" title="Upload Ulang Scan & Pembubuhan QR">
-                                    <i class="fas fa-sync-alt me-1"></i>Re-upload
-                                </button>
+                                @if($notaDinasKanwil->canBeReplacedBy(auth()->user()))
+                                    <button type="button" class="btn btn-outline-primary btn-xs py-1 px-2" data-bs-toggle="modal" data-bs-target="#modalNotaDinas" title="Edit Draf / Generate Ulang Word">
+                                        <i class="fas fa-edit me-1"></i>Edit Word
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'nota_dinas', '{{ addslashes($notaDinasKanwil->nomor_dokumen) }}')" title="Upload Ulang Scan & Pembubuhan QR (Khusus Admin Kanwil)">
+                                        <i class="fas fa-sync-alt me-1"></i>Re-upload
+                                    </button>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle py-1 px-2 small" title="Dokumen ini terkunci setelah dibubuhi QR Code resmi. Hanya Admin Kanwil yang dapat mengganti berkas.">
+                                        <i class="fas fa-lock me-1 text-danger"></i>Terkunci (Khusus Admin)
+                                    </span>
+                                @endif
                             @elseif($notaDinasKanwil)
                                 <button type="button" class="btn btn-outline-primary btn-sm fw-semibold flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalNotaDinas">
                                     <i class="fas fa-file-word me-1"></i>Edit / Word
@@ -401,9 +407,15 @@
                                         <i class="fas fa-qrcode me-1"></i>Verifikasi QR
                                     </a>
                                 @endif
-                                <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 flex-grow-1" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Ulang / Timpa File Surat Tugas">
-                                    <i class="fas fa-sync-alt me-1"></i>Re-upload ST
-                                </button>
+                                @if(! $stKanwil || $stKanwil->canBeReplacedBy(auth()->user()))
+                                    <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 flex-grow-1" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Ulang / Timpa File Surat Tugas (Khusus Admin Kanwil)">
+                                        <i class="fas fa-sync-alt me-1"></i>Re-upload ST
+                                    </button>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle py-1 px-2 small flex-grow-1 text-center" title="Surat Tugas terkunci. Hanya Admin Kanwil yang dapat mengganti berkas.">
+                                        <i class="fas fa-lock me-1 text-danger"></i>Terkunci (Khusus Admin)
+                                    </span>
+                                @endif
                             @else
                                 <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm w-100" onclick="bukaModalUploadSignedDetail({{ $sidang->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')">
                                     <i class="fas fa-upload me-1"></i>Upload Surat Tugas Tim

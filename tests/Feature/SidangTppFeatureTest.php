@@ -406,6 +406,8 @@ class SidangTppFeatureTest extends TestCase
         $this->assertNotNull($naskah);
         $this->assertEquals('signed', $naskah->status);
         $this->assertEquals('digital_qr', $naskah->metode_ttd);
+        $this->assertTrue($naskah->is_locked);
+        $this->assertNotNull($naskah->locked_at);
         $this->assertNotEmpty($naskah->file_signed);
 
         $fullPath = public_path($naskah->file_signed);
@@ -415,6 +417,98 @@ class SidangTppFeatureTest extends TestCase
         // Cleanup
         @unlink($tempPdf);
         @unlink($fullPath);
+    }
+
+    public function test_non_admin_cannot_replace_locked_naskah_but_admin_can(): void
+    {
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-LOCK-TEST-01',
+            'tanggal_surat' => '2026-10-23',
+            'tanggal_sidang' => '2026-10-24',
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Test Lock Document Protection',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'status_sidang' => 'dijadwalkan',
+        ]);
+
+        $naskah = TppNaskahKanwil::create([
+            'sidang_tpp_id' => $sidang->id,
+            'jenis_dokumen' => 'nota_dinas',
+            'nomor_dokumen' => 'ND-LOCKED-001',
+            'file_signed' => 'uploads/sidang_tpp_signed/test_locked.pdf',
+            'status' => 'signed',
+            'metode_ttd' => 'digital_qr',
+            'kode_verifikasi' => 'SB-LOCKTEST01',
+            'is_locked' => true,
+            'locked_at' => now(),
+            'locked_by_id' => $this->userKanwil->id,
+        ]);
+
+        // Siapkan dummy file upload
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->setPrintHeader(false);
+        $tcpdf->setPrintFooter(false);
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Percobaan Ganti Dokumen');
+        $tempPdf = storage_path('app/temp_replace_test.pdf');
+        $tcpdf->Output($tempPdf, 'F');
+
+        $uploadedFile = new UploadedFile(
+            $tempPdf,
+            'replace_test.pdf',
+            'application/pdf',
+            null,
+            true
+        );
+
+        // 1. Non-admin operator wilayah mencoba upload ulang file terkunci -> HARUS 403
+        $resForbidden = $this->actingAs($this->userKanwil)->post(
+            route('sidang-tpp.dokumen-kanwil.upload-signed', $sidang->id),
+            [
+                'file_signed' => $uploadedFile,
+                'jenis_dokumen' => 'nota_dinas',
+                'nomor_dokumen' => 'ND-LOCKED-REPLACED',
+            ]
+        );
+        $resForbidden->assertStatus(403);
+
+        // 2. Admin Kanwil (role = 'admin') mencoba upload ulang -> HARUS BERHASIL
+        $adminUser = User::whereNull('upt_id')->where('role', 'admin')->first()
+            ?? User::factory()->create(['upt_id' => null, 'role' => 'admin']);
+        $adminUser->role = 'admin';
+        $adminUser->akses_sidang_tpp = true;
+        $adminUser->save();
+
+        $uploadedFileAdmin = new UploadedFile(
+            $tempPdf,
+            'replace_admin.pdf',
+            'application/pdf',
+            null,
+            true
+        );
+
+        $resAdmin = $this->actingAs($adminUser)->post(
+            route('sidang-tpp.dokumen-kanwil.upload-signed', $sidang->id),
+            [
+                'file_signed' => $uploadedFileAdmin,
+                'jenis_dokumen' => 'nota_dinas',
+                'nomor_dokumen' => 'ND-LOCKED-REPLACED',
+                'bubuhi_qr' => '1',
+            ]
+        );
+        $resAdmin->assertSessionHas('success');
+
+        $naskah->refresh();
+        $this->assertEquals('ND-LOCKED-REPLACED', $naskah->nomor_dokumen);
+        $this->assertTrue($naskah->is_locked);
+
+        @unlink($tempPdf);
+        if ($naskah->file_signed && file_exists(public_path($naskah->file_signed))) {
+            @unlink(public_path($naskah->file_signed));
+        }
     }
 
     public function test_public_verifikasi_dokumen_page_does_not_show_lihat_hasil_scan_button(): void

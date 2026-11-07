@@ -72,6 +72,13 @@ class PdfStamperService
             }
             $qrSize = isset($options['qr_size']) ? (float) $options['qr_size'] : 17.0;
             $withBadge = ! isset($options['with_badge']) || (bool) $options['with_badge'];
+            $protectDocument = ! isset($options['protect_document']) || (bool) $options['protect_document'];
+
+            if ($protectDocument) {
+                // Proteksi berkas PDF: Read-only, dapat dicetak dan disalin, tetapi dikunci dari pengeditan/modifikasi
+                $ownerPassword = bin2hex(random_bytes(16));
+                $pdf->SetProtection(['print', 'print-high', 'copy'], '', $ownerPassword, 0);
+            }
 
             for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
                 $templateId = $pdf->importPage($pageNo);

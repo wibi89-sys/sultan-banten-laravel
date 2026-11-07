@@ -323,6 +323,15 @@ class SidangTppDokumenKanwilController extends Controller
         $sidang = SidangTpp::findOrFail($id);
         $jenis = $request->input('jenis_dokumen');
 
+        $existingNaskah = TppNaskahKanwil::where('sidang_tpp_id', $sidang->id)
+            ->where('jenis_dokumen', $jenis)
+            ->first();
+
+        // Validasi proteksi berkas: jika dokumen sudah disahkan/terkunci, hanya Admin Kanwil yang dapat mengganti berkas
+        if ($existingNaskah && $existingNaskah->isLocked() && ! auth()->user()->isAdmin()) {
+            abort(403, 'Akses ditolak. Dokumen ini telah disahkan dengan QR Code dan berstatus terkunci. Hanya Administrator Kanwil yang memiliki wewenang untuk melakukan unggah ulang atau mengganti berkas.');
+        }
+
         $uploadDir = public_path('uploads/sidang_tpp_signed');
         if (! File::isDirectory($uploadDir)) {
             File::makeDirectory($uploadDir, 0755, true);
@@ -336,10 +345,15 @@ class SidangTppDokumenKanwilController extends Controller
 
         $file->move($uploadDir, $rawFilename);
 
-        $naskah = TppNaskahKanwil::firstOrNew([
+        $naskah = $existingNaskah ?? new TppNaskahKanwil([
             'sidang_tpp_id' => $sidang->id,
             'jenis_dokumen' => $jenis,
         ]);
+
+        // Hapus file fisik lama jika ada penggantian berkas oleh Admin Kanwil
+        if (! empty($naskah->file_signed) && File::exists(public_path($naskah->file_signed))) {
+            @unlink(public_path($naskah->file_signed));
+        }
 
         if ($request->filled('nomor_dokumen')) {
             $naskah->nomor_dokumen = $request->input('nomor_dokumen');
@@ -378,6 +392,7 @@ class SidangTppDokumenKanwilController extends Controller
                     'percent_y' => $percentY,
                     'target_page' => $targetPage,
                     'with_badge' => $withBadge,
+                    'protect_document' => true,
                 ]
             );
 
@@ -398,6 +413,9 @@ class SidangTppDokumenKanwilController extends Controller
         $naskah->status = 'signed';
         $naskah->metode_ttd = $bubuhiQr ? 'digital_qr' : 'manual';
         $naskah->signed_at = now();
+        $naskah->is_locked = true;
+        $naskah->locked_at = now();
+        $naskah->locked_by_id = auth()->id();
         $naskah->save();
 
         // Jika laporan TPP, sinkronkan juga dengan sidang_tpp.file_laporan_kakanwil

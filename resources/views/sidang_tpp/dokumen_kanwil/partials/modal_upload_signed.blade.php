@@ -291,6 +291,75 @@
     </div>
 </div>
 
+<!-- Modal Konfirmasi Pembubuhan QR & Proteksi Dokumen (Admin Kanwil) -->
+<div class="modal fade" id="modalKonfirmasiStamping" tabindex="-1" aria-labelledby="modalKonfirmasiStampingTitle" aria-hidden="true" data-bs-backdrop="static" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white py-2.5 px-3">
+                <h6 class="modal-title fw-bold mb-0 text-white" id="modalKonfirmasiStampingTitle" style="font-size: 13.5px;">
+                    <i class="fas fa-shield-alt text-warning me-1.5"></i>Konfirmasi Pembubuhan QR &amp; Penguncian Dokumen
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center p-3 mb-2 shadow-sm" style="width: 58px; height: 58px;">
+                        <i class="fas fa-stamp fa-2x text-warning"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">Pastikan Berkas PDF Sudah Benar</h6>
+                    <p class="text-muted small mb-0" style="font-size: 12px;">
+                        Periksa rincian naskah dan letak cap otentifikasi sebelum berkas diproteksi dan dikunci.
+                    </p>
+                </div>
+
+                <div class="card border border-secondary-subtle bg-light mb-3">
+                    <div class="card-body p-2.5" style="font-size: 11.5px;">
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Jenis Dokumen:</span>
+                            <span class="fw-bold text-dark text-end" id="konfirmasiJenisLabel">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Nomor Surat:</span>
+                            <span class="fw-bold text-dark font-monospace text-end" id="konfirmasiNomorSurat">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Nama Berkas:</span>
+                            <span class="fw-bold text-primary text-truncate ms-2 text-end" id="konfirmasiNamaFile" style="max-width: 230px;">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Ukuran &amp; Halaman:</span>
+                            <span class="fw-bold text-dark text-end" id="konfirmasiInfoHalaman">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Titik Cap QR:</span>
+                            <span class="badge bg-success" id="konfirmasiPosisiQr">Halaman Terakhir</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning py-2 px-2.5 mb-0 d-flex gap-2 border border-warning-subtle">
+                    <i class="fas fa-lock fa-lg text-warning mt-1 flex-shrink-0"></i>
+                    <div style="font-size: 11.5px;">
+                        <strong class="text-dark">Ketentuan Proteksi &amp; Hak Akses:</strong>
+                        <ul class="mb-0 ps-3 mt-1 text-secondary" style="line-height: 1.45;">
+                            <li>Berkas PDF hasil unduhan setelah ber-QR akan <b>terproteksi (Read-Only)</b> dari pengeditan atau manipulasi isi teks.</li>
+                            <li>Dokumen berstatus <b>terkunci</b>. Hanya <b>Administrator Kanwil</b> yang dapat melakukan penggantian berkas di kemudian hari jika diperlukan revisi.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2 px-3 justify-content-between">
+                <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">
+                    <i class="fas fa-undo me-1"></i>Periksa Kembali
+                </button>
+                <button type="button" class="btn btn-primary btn-sm px-3 fw-bold shadow-sm" id="btnKonfirmasiLanjutSubmit">
+                    <i class="fas fa-lock me-1"></i>Ya, Bubuhkan QR &amp; Kunci Dokumen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Muat PDF.js dari direktori lokal vendor, dengan fallback ke CDN jika diperlukan -->
 <script src="{{ asset('assets/vendor/pdfjs/pdf.min.js') }}"></script>
 <script>
@@ -841,6 +910,20 @@
         // Reset file input & state render jika dokumen berganti
         const fileIn = document.getElementById('file_signed');
         if (fileIn) fileIn.value = '';
+        if (form) delete form.dataset.confirmed;
+
+        const submitBtn = document.getElementById('btnSubmitUploadSigned');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-stamp me-1.5"></i>Simpan &amp; Bubuhkan QR';
+        }
+
+        const btnKonfirmasiSubmit = document.getElementById('btnKonfirmasiLanjutSubmit');
+        if (btnKonfirmasiSubmit) {
+            btnKonfirmasiSubmit.disabled = false;
+            btnKonfirmasiSubmit.innerHTML = '<i class="fas fa-lock me-1"></i>Ya, Bubuhkan QR &amp; Kunci Dokumen';
+        }
+
         currentPdfDoc = null;
         totalPdfPages = 0;
         currentPdfPage = 1;
@@ -862,5 +945,90 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         initStampDraggable();
+
+        const formUpload = document.getElementById('formUploadSigned');
+        if (formUpload) {
+            formUpload.addEventListener('submit', function(e) {
+                const fileInput = document.getElementById('file_signed');
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    alert('Silakan pilih berkas PDF terlebih dahulu.');
+                    e.preventDefault();
+                    return;
+                }
+
+                if (!formUpload.dataset.confirmed) {
+                    e.preventDefault();
+
+                    const file = fileInput.files[0];
+                    const fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                    const upLabel = document.getElementById('up_jenis_label')?.innerText || 'Dokumen Sidang';
+                    const upNomor = document.getElementById('up_nomor_dokumen')?.value || '';
+                    const qrX = document.getElementById('up_qr_percent_x')?.value || '6';
+                    const qrY = document.getElementById('up_qr_percent_y')?.value || '86';
+                    const qrTarget = document.getElementById('up_qr_target_page')?.value || 'last';
+                    const isBubuhiQr = document.getElementById('up_bubuhi_qr')?.checked;
+
+                    let targetLabel = 'Halaman Terakhir';
+                    if (qrTarget === 'first') {
+                        targetLabel = 'Halaman Pertama';
+                    } else if (qrTarget === 'all') {
+                        targetLabel = 'Semua Halaman';
+                    } else if (!isNaN(qrTarget)) {
+                        targetLabel = `Halaman ${qrTarget}`;
+                    }
+
+                    document.getElementById('konfirmasiJenisLabel').innerText = upLabel;
+                    document.getElementById('konfirmasiNomorSurat').innerText = upNomor.trim() !== '' ? upNomor : '(Otomatis / Belum diisi)';
+                    document.getElementById('konfirmasiNamaFile').innerText = file.name;
+                    document.getElementById('konfirmasiNamaFile').title = file.name;
+                    document.getElementById('konfirmasiInfoHalaman').innerText = `${fileSizeMb} MB (${totalPdfPages > 0 ? totalPdfPages + ' Halaman' : 'PDF'})`;
+                    document.getElementById('konfirmasiPosisiQr').innerText = isBubuhiQr ? `${targetLabel} (X: ${qrX}%, Y: ${qrY}%)` : 'Tanpa QR (Unggah Manual)';
+
+                    const modalKonfirmasiEl = document.getElementById('modalKonfirmasiStamping');
+                    if (modalKonfirmasiEl) {
+                        const modalKonfirmasi = bootstrap.Modal.getOrCreateInstance(modalKonfirmasiEl);
+                        modalKonfirmasi.show();
+                    }
+                }
+            });
+        }
+
+        const btnKonfirmasiSubmit = document.getElementById('btnKonfirmasiLanjutSubmit');
+        if (btnKonfirmasiSubmit) {
+            btnKonfirmasiSubmit.addEventListener('click', function() {
+                btnKonfirmasiSubmit.disabled = true;
+                btnKonfirmasiSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Memproses Pembubuhan...';
+
+                const modalKonfirmasiEl = document.getElementById('modalKonfirmasiStamping');
+                if (modalKonfirmasiEl) {
+                    const modalKonfirmasi = bootstrap.Modal.getInstance(modalKonfirmasiEl);
+                    if (modalKonfirmasi) modalKonfirmasi.hide();
+                }
+
+                const submitBtn = document.getElementById('btnSubmitUploadSigned');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Menyimpan & Membubuhkan QR...';
+                }
+
+                const formUpload = document.getElementById('formUploadSigned');
+                if (formUpload) {
+                    formUpload.dataset.confirmed = 'true';
+                    formUpload.submit();
+                }
+            });
+        }
+
+        const modalKonfirmasiEl = document.getElementById('modalKonfirmasiStamping');
+        if (modalKonfirmasiEl) {
+            modalKonfirmasiEl.addEventListener('show.bs.modal', function () {
+                setTimeout(() => {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    if (backdrops.length > 1) {
+                        backdrops[backdrops.length - 1].style.zIndex = '1065';
+                    }
+                }, 10);
+            });
+        }
     });
 </script>

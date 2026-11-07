@@ -34,6 +34,9 @@ class TppNaskahKanwil extends Model
         'file_pdf',
         'file_signed',
         'status',
+        'is_locked',
+        'locked_at',
+        'locked_by_id',
         'created_by',
         'signed_at',
     ];
@@ -43,6 +46,8 @@ class TppNaskahKanwil extends Model
         return [
             'konten_data' => 'array',
             'tampilkan_nip' => 'boolean',
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
             'tanggal_dokumen' => 'date',
             'signed_at' => 'datetime',
         ];
@@ -56,6 +61,32 @@ class TppNaskahKanwil extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function lockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by_id');
+    }
+
+    /**
+     * Cek apakah dokumen ini berstatus terkunci setelah dibubuhi QR Code / disahkan.
+     */
+    public function isLocked(): bool
+    {
+        return (bool) $this->is_locked;
+    }
+
+    /**
+     * Cek apakah dokumen terkunci ini diizinkan untuk diunggah ulang / diganti oleh user tertentu.
+     * Aturan: Jika sudah terkunci, hanya Administrator Kanwil (isAdmin()) yang dapat mengganti berkas.
+     */
+    public function canBeReplacedBy(?User $user): bool
+    {
+        if (! $this->isLocked()) {
+            return true;
+        }
+
+        return $user !== null && $user->isAdmin();
     }
 
     /**

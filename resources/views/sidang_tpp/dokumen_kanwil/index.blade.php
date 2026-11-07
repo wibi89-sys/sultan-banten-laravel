@@ -146,6 +146,9 @@
                                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                                     <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10px;">
                                                         <i class="fas fa-qrcode me-1"></i>Sudah Ber-QR
+                                                        @if($notaDinas->isLocked())
+                                                            <i class="fas fa-lock ms-1 text-warning" title="Dokumen Terkunci &amp; Terproteksi"></i>
+                                                        @endif
                                                     </span>
                                                     @if($notaDinas->kode_verifikasi)
                                                         <small class="font-monospace text-muted fw-semibold" style="font-size: 9.5px;">{{ $notaDinas->kode_verifikasi }}</small>
@@ -164,12 +167,18 @@
 
                                             <!-- AKSI SEKUNDER -->
                                             <div class="d-flex gap-1 justify-content-between">
-                                                <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Edit Data & Regenerate Draf Word">
-                                                    <i class="fas fa-edit me-1"></i>Edit Draf
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'nota_dinas', '{{ $notaDinas->nomor_dokumen }}')" title="Upload Ulang Scan & Pembubuhan QR">
-                                                    <i class="fas fa-sync-alt me-1"></i>Re-upload
-                                                </button>
+                                                @if($notaDinas->canBeReplacedBy(auth()->user()))
+                                                    <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalNotaDinas({{ $s->id }})" title="Edit Data & Regenerate Draf Word">
+                                                        <i class="fas fa-edit me-1"></i>Edit Draf
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'nota_dinas', '{{ $notaDinas->nomor_dokumen }}')" title="Upload Ulang Scan & Pembubuhan QR (Khusus Admin Kanwil)">
+                                                        <i class="fas fa-sync-alt me-1"></i>Re-upload
+                                                    </button>
+                                                @else
+                                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle w-100 py-1" style="font-size: 10px;" title="Dokumen ini berstatus terkunci setelah dibubuhi QR Code resmi. Hanya Admin Kanwil yang dapat mengganti berkas.">
+                                                        <i class="fas fa-lock me-1 text-danger"></i>Terkunci (Khusus Admin)
+                                                    </span>
+                                                @endif
                                             </div>
                                         @else
                                             <!-- KONDISI 2: SUDAH ADA DRAF WORD TAPI BELUM SCAN TTD -->
@@ -208,6 +217,9 @@
                                             <div class="d-flex align-items-center justify-content-between mb-1">
                                                 <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10px;">
                                                     <i class="fas fa-file-pdf me-1"></i>Tersedia
+                                                    @if($suratTugas?->isLocked())
+                                                        <i class="fas fa-lock ms-1 text-warning" title="Dokumen Terkunci &amp; Terproteksi"></i>
+                                                    @endif
                                                 </span>
                                                 @if($suratTugas?->kode_verifikasi)
                                                     <small class="font-monospace text-muted fw-semibold" style="font-size: 9.5px;">{{ $suratTugas->kode_verifikasi }}</small>
@@ -231,9 +243,15 @@
 
                                         <!-- AKSI SEKUNDER -->
                                         <div class="d-flex gap-1 justify-content-between">
-                                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 w-100" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Ulang / Timpa Surat Tugas">
-                                                <i class="fas fa-sync-alt me-1"></i>Re-upload ST
-                                            </button>
+                                            @if(! $suratTugas || $suratTugas->canBeReplacedBy(auth()->user()))
+                                                <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 w-100" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'surat_tugas', '{{ addslashes($noSt) }}')" title="Upload Ulang / Timpa Surat Tugas (Khusus Admin Kanwil)">
+                                                    <i class="fas fa-sync-alt me-1"></i>Re-upload ST
+                                                </button>
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle w-100 py-1" style="font-size: 10px;" title="Surat Tugas berstatus terkunci. Hanya Admin Kanwil yang dapat mengganti berkas.">
+                                                    <i class="fas fa-lock me-1 text-danger"></i>Terkunci (Khusus Admin)
+                                                </span>
+                                            @endif
                                         </div>
                                     @else
                                         <div class="text-muted small mb-1.5">
@@ -256,6 +274,9 @@
                                             <div class="d-flex align-items-center justify-content-between mb-1">
                                                 <span class="badge bg-success text-white px-2 py-0.5" style="font-size: 10px;">
                                                     <i class="fas fa-qrcode me-1"></i>Sudah Ber-QR
+                                                    @if($lapKanwil?->isLocked())
+                                                        <i class="fas fa-lock ms-1 text-warning" title="Dokumen Terkunci &amp; Terproteksi"></i>
+                                                    @endif
                                                 </span>
                                                 @if($lapKanwil?->kode_verifikasi)
                                                     <small class="font-monospace text-muted fw-semibold" style="font-size: 9.5px;">{{ $lapKanwil->kode_verifikasi }}</small>
@@ -277,12 +298,18 @@
 
                                         <!-- AKSI SEKUNDER -->
                                         <div class="d-flex gap-1 justify-content-between">
-                                            <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Edit Laporan / Generate Ulang Word">
-                                                <i class="fas fa-edit me-1"></i>Edit Draf
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'laporan_tpp', '{{ $lapKanwil?->nomor_dokumen ?: $s->nomor_laporan_kanwil }}')" title="Upload Ulang Scan Laporan & Pembubuhan QR">
-                                                <i class="fas fa-sync-alt me-1"></i>Re-upload
-                                            </button>
+                                            @if(! $lapKanwil || $lapKanwil->canBeReplacedBy(auth()->user()))
+                                                <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalLaporanTpp({{ $s->id }})" title="Edit Laporan / Generate Ulang Word">
+                                                    <i class="fas fa-edit me-1"></i>Edit Draf
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2 flex-grow-1" style="font-size: 11px;" onclick="bukaModalUploadSigned({{ $s->id }}, 'laporan_tpp', '{{ $lapKanwil?->nomor_dokumen ?: $s->nomor_laporan_kanwil }}')" title="Upload Ulang Scan Laporan & Pembubuhan QR (Khusus Admin Kanwil)">
+                                                    <i class="fas fa-sync-alt me-1"></i>Re-upload
+                                                </button>
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle w-100 py-1" style="font-size: 10px;" title="Laporan TPP berstatus terkunci setelah dibubuhi QR Code resmi. Hanya Admin Kanwil yang dapat mengganti berkas.">
+                                                    <i class="fas fa-lock me-1 text-danger"></i>Terkunci (Khusus Admin)
+                                                </span>
+                                            @endif
                                         </div>
                                     @elseif($lapKanwil)
                                         <!-- KONDISI 2: DRAF LAPORAN SUDAH DIBUAT TAPI BELUM SCAN TTD -->
