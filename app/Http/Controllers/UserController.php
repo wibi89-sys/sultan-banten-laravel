@@ -30,6 +30,7 @@ class UserController extends Controller
         'akses_wa_settings',
         'akses_wa_schedule',
         'akses_activity_log',
+        'akses_forensik_dokumen',
     ];
 
     private function ensurePermissionColumns(): void
@@ -333,6 +334,11 @@ class UserController extends Controller
                     'label' => 'Log Aktivitas Pengguna',
                     'desc' => 'Audit jejak rekam login, penambahan, pengubahan, dan penghapusan data.',
                     'icon' => 'fas fa-history text-muted',
+                ],
+                'forensik_dokumen' => [
+                    'label' => 'Forensik & Inspeksi Dokumen Digital',
+                    'desc' => 'Inspeksi metadata berkas PDF, deteksi dokumen/cap palsu via AI, sanitasi riwayat & penguncian dokumen.',
+                    'icon' => 'fas fa-fingerprint text-danger',
                 ],
             ],
             'Master Data & Pengaturan Wilayah' => [

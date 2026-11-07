@@ -511,6 +511,12 @@
                 <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
             </a>
 
+            @if($user->canAccessForensikDokumen())
+            <a href="{{ route('forensik-dokumen.index') }}" class="{{ request()->routeIs('forensik-dokumen.*') ? 'active' : '' }}">
+                <i class="fas fa-fingerprint text-danger"></i><span>Forensik &amp; Sanitasi PDF</span>
+            </a>
+            @endif
+
             <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>
                 <span>Master Data</span>

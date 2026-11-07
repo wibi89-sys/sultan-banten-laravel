@@ -825,4 +825,152 @@ PROMPT;
             ];
         }
     }
+
+    /**
+     * Analisis Forensik Dokumen PDF menggunakan AI Gemini untuk mendeteksi keaslian,
+     * anomali metadata, riwayat software penyunting, dan indikasi pemalsuan naskah.
+     *
+     * @param  array<string, mixed>  $forensicData
+     * @return array<string, mixed>
+     */
+    public static function analyzeForensicPdf(array $forensicData): array
+    {
+        $setting = AiSetting::getFirst();
+        $suspiciousSoftware = $forensicData['detected_suspicious_software'] ?? [];
+        $hasSuspiciousSoftware = ! empty($suspiciousSoftware);
+        $qrResults = $forensicData['qr_verification_results'] ?? [];
+        $hasInvalidQr = false;
+        foreach ($qrResults as $qr) {
+            if (($qr['status'] ?? '') === 'tidak_terdaftar') {
+                $hasInvalidQr = true;
+                break;
+            }
+        }
+
+        // Skor awal heuristik
+        $baselineScore = 95;
+        if ($hasSuspiciousSoftware) {
+            $baselineScore -= 45;
+        }
+        if ($hasInvalidQr) {
+            $baselineScore -= 60;
+        }
+        if (($forensicData['revisions_count'] ?? 1) > 1) {
+            $baselineScore -= 10;
+        }
+        $baselineScore = max(5, min(100, $baselineScore));
+
+        $defaultRisk = $baselineScore >= 80 ? 'rendah' : ($baselineScore >= 50 ? 'sedang' : 'tinggi');
+        $defaultStatus = $baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu');
+
+        // Fallback jika API key belum aktif
+        if (! $setting || ! $setting->is_active || empty($setting->api_key)) {
+            $findings = [];
+            $anomalies = [];
+
+            if ($hasSuspiciousSoftware) {
+                $anomalies[] = 'Terdeteksi jejak software editor grafis/online: '.implode(', ', $suspiciousSoftware).'.';
+            }
+            if ($hasInvalidQr) {
+                $anomalies[] = 'Kode QR/Barcode yang tertera pada naskah tidak terdaftar dalam database resmi Sultan Banten.';
+            }
+            if (($forensicData['revisions_count'] ?? 1) > 1) {
+                $findings[] = "Dokumen memiliki {$forensicData['revisions_count']} revisi struktur (disimpan ulang secara berulang).";
+            }
+            $findings[] = 'Software pembuat asal: '.($forensicData['creator'] ?? 'Tidak tertera').'.';
+            $findings[] = 'Waktu pembuatan file: '.($forensicData['creation_date'] ?? 'Tidak tertera').'.';
+
+            return [
+                'success' => true,
+                'source' => 'heuristic_engine',
+                'authenticity_score' => $baselineScore,
+                'risk_level' => $defaultRisk,
+                'status_label' => $defaultStatus,
+                'summary' => $baselineScore >= 80
+                    ? 'Berdasarkan ekstraksi teknis metadata, dokumen tidak menunjukkan tanda-tanda manipulasi perangkat lunak grafis yang mencurigakan.'
+                    : 'Berdasarkan ekstraksi teknis, ditemukan anomali signifikan pada berkas ini yang mengindikasikan kemungkinan rekayasa berkas atau kloning naskah.',
+                'key_findings' => $findings,
+                'anomalies' => $anomalies,
+                'recommendation' => $baselineScore >= 80
+                    ? 'Dokumen dapat diterima dengan tetap memverifikasi nomor dan stempel fisik sesuai prosedur standar.'
+                    : 'Lakukan konfirmasi fisik langsung ke Satuan Kerja penerbit dan jangan memproses usulan sebelum naskah asli fisik ditunjukkan.',
+            ];
+        }
+
+        try {
+            $prompt = 'Anda adalah Analis Ahli Forensik Dokumen Digital Kementerian Imigrasi dan Pemasyarakatan Republik Indonesia. '
+                ."Tugas Anda adalah menilai keaslian berkas PDF naskah dinas berdasarkan rincian teknis berikut:\n\n"
+                .'- Nama Berkas: '.($forensicData['file_name'] ?? '-')."\n"
+                .'- Ukuran: '.($forensicData['file_size'] ?? '-')."\n"
+                .'- Versi PDF: '.($forensicData['pdf_version'] ?? '-')."\n"
+                .'- Software Pembuat (Creator): '.($forensicData['creator'] ?? 'Tidak ada')."\n"
+                .'- Mesin PDF (Producer): '.($forensicData['producer'] ?? 'Tidak ada')."\n"
+                .'- Tanggal Dibuat: '.($forensicData['creation_date'] ?? 'Tidak ada')."\n"
+                .'- Tanggal Terakhir Diedit: '.($forensicData['mod_date'] ?? 'Tidak ada')."\n"
+                .'- Jumlah Simpan Ulang (Revisions): '.($forensicData['revisions_count'] ?? 1)."\n"
+                .'- Indikasi Software Grafis/Online: '.(empty($suspiciousSoftware) ? 'Tidak terdeteksi' : implode(', ', $suspiciousSoftware))."\n"
+                .'- Status Barcode / QR Sultan Banten: '.(empty($qrResults) ? 'Tidak memuat barcode Sultan Banten' : json_encode($qrResults))."\n"
+                .'- Cuplikan Teks Naskah: "'.($forensicData['sample_text'] ?? '-')."\"\n\n"
+                ."Berikan penilaian Anda dalam format JSON VALID tanpa tag tambahan:\n"
+                ."{\n"
+                .'  "authenticity_score": 0 sampai 100,'."\n"
+                .'  "risk_level": "rendah" ATAU "sedang" ATAU "tinggi",'."\n"
+                .'  "status_label": "Ringkasan status (maksimal 6 kata)",'."\n"
+                .'  "summary": "Ringkasan hasil telaah forensik 2-3 kalimat lugas bahasa Indonesia resmi kedinasan.",'."\n"
+                .'  "key_findings": ["Poin temuan teknis 1", "Poin temuan teknis 2"],'."\n"
+                .'  "anomalies": ["Poin anomali atau kejanggalan jika ada"],'."\n"
+                .'  "recommendation": "Saran langkah tindak lanjut bagi pimpinan/petugas pemeriksa."'."\n"
+                .'}';
+
+            $res = self::callGeminiApi($setting, $prompt, [
+                'temperature' => 0.1,
+            ]);
+
+            if (! $res['success']) {
+                throw new \Exception($res['error'] ?? 'Gagal menghubungi Gemini API.');
+            }
+
+            $resJson = $res['response']->json();
+            $candidate = $resJson['candidates'][0] ?? null;
+            $rawText = self::extractTextFromCandidate($candidate) ?? '';
+            $cleanJson = self::cleanJsonPayload($rawText);
+
+            $data = json_decode($cleanJson, true);
+            if (! is_array($data)) {
+                throw new \Exception('Respon AI bukan format JSON valid.');
+            }
+
+            $score = isset($data['authenticity_score']) ? (int) $data['authenticity_score'] : $baselineScore;
+            $score = max(0, min(100, $score));
+
+            return [
+                'success' => true,
+                'source' => 'gemini_ai',
+                'authenticity_score' => $score,
+                'risk_level' => $data['risk_level'] ?? $defaultRisk,
+                'status_label' => $data['status_label'] ?? $defaultStatus,
+                'summary' => $data['summary'] ?? 'Analisis forensik selesai dilakukan oleh AI.',
+                'key_findings' => $data['key_findings'] ?? [],
+                'anomalies' => $data['anomalies'] ?? [],
+                'recommendation' => $data['recommendation'] ?? 'Lakukan konfirmasi silang fisik jika ditemukan keraguan.',
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('Gemini analyzeForensicPdf fallback: '.$e->getMessage());
+
+            return [
+                'success' => true,
+                'source' => 'heuristic_engine_fallback',
+                'authenticity_score' => $baselineScore,
+                'risk_level' => $defaultRisk,
+                'status_label' => $defaultStatus,
+                'summary' => 'Analisis forensik dihitung menggunakan mesin aturan internal (Rule-based Forensic Engine).',
+                'key_findings' => [
+                    'Software asal: '.($forensicData['creator'] ?? 'Tidak tertera').'.',
+                    'Waktu pembuatan: '.($forensicData['creation_date'] ?? 'Tidak tertera').'.',
+                ],
+                'anomalies' => $hasSuspiciousSoftware ? ['Terdeteksi software grafis: '.implode(', ', $suspiciousSoftware)] : [],
+                'recommendation' => 'Pastikan berkas asli fisik diverifikasi langsung ke pihak yang menerbitkan.',
+            ];
+        }
+    }
 }
