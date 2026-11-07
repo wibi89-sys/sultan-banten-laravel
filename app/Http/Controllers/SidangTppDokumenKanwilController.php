@@ -89,7 +89,14 @@ class SidangTppDokumenKanwilController extends Controller
     {
         $this->checkKanwilAccess();
 
-        $sidang = SidangTpp::with(['upt', 'usulan'])->findOrFail($id);
+        $sidang = SidangTpp::with(['upt', 'usulan'])->find($id);
+
+        if (! $sidang) {
+            return response()->json([
+                'success' => false,
+                'message' => "Data Sidang TPP dengan ID #{$id} tidak ditemukan di database.",
+            ], 404);
+        }
 
         if (empty($sidang->file_berita_acara)) {
             return response()->json([
@@ -119,7 +126,14 @@ class SidangTppDokumenKanwilController extends Controller
     {
         $this->checkKanwilAccess();
 
-        $sidang = SidangTpp::with(['upt'])->findOrFail($id);
+        $sidang = SidangTpp::with(['upt'])->find($id);
+
+        if (! $sidang) {
+            return response()->json([
+                'success' => false,
+                'message' => "Data Sidang TPP dengan ID #{$id} tidak ditemukan di database.",
+            ], 404);
+        }
 
         $params = [
             'upt_nama' => $sidang->upt->nama_upt ?? 'UPT Pemasyarakatan',
