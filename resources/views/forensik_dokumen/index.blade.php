@@ -222,7 +222,11 @@
                                     <table class="table table-sm table-bordered mb-0 align-middle">
                                         <tbody>
                                             <tr>
-                                                <th class="bg-light text-secondary" style="width: 25%;">Software Pembuat (Creator)</th>
+                                                <th class="bg-light text-secondary" style="width: 25%;">Karakteristik Berkas</th>
+                                                <td class="fw-bold text-dark" id="metaDocType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light text-secondary">Software Pembuat (Creator)</th>
                                                 <td class="fw-bold" id="metaCreator">-</td>
                                             </tr>
                                             <tr>
@@ -526,6 +530,10 @@
 
         // 4. Metadata Teknis
         document.getElementById('txtPdfVersion').innerText = `Versi: ${fileInfo.version || '1.7'}`;
+        const docTypeEl = document.getElementById('metaDocType');
+        if (docTypeEl) {
+            docTypeEl.innerText = fileInfo.doc_type_hint || (fileInfo.is_scanned ? 'Berkas Hasil Pemindaian (Scan Fisik)' : 'Dokumen Digital Asli (Teks)');
+        }
         document.getElementById('metaCreator').innerHTML = meta.creator;
         document.getElementById('metaProducer').innerText = meta.producer;
         document.getElementById('metaCreationDate').innerText = meta.creation_date;

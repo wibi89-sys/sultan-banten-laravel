@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\AiSetting;
 use App\Models\Upt;
 use App\Models\User;
+use App\Services\GeminiAiService;
 use App\Services\PdfForensicService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PdfForensicTest extends TestCase
@@ -164,5 +167,98 @@ class PdfForensicTest extends TestCase
         $this->assertEquals('application/pdf', $response->headers->get('content-type'));
 
         @unlink($tempPdf);
+    }
+
+    public function test_normal_document_with_nusakambangan_text_does_not_hallucinate_attachment_deletion(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->SetCreator('Microsoft Word 2021');
+        $tcpdf->SetAuthor('Kementerian Imigrasi dan Pemasyarakatan');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Surat Usulan Mutasi Narapidana ke Lapas Nusakambangan. Naskah dinas resmi dan sah.');
+        $tempPdf = storage_path('app/temp_test_nusakambangan.pdf');
+        $tcpdf->Output($tempPdf, 'F');
+
+        $result = PdfForensicService::inspect($tempPdf);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('file_info', $result);
+        $this->assertArrayHasKey('ai_analysis', $result);
+
+        $ai = $result['ai_analysis'];
+        $score = $ai['authenticity_score'] ?? $result['heuristic_score'];
+
+        // Dokumen wajar harus memiliki skor keaslian tinggi (>= 85)
+        $this->assertGreaterThanOrEqual(85, $score);
+        $this->assertEquals('rendah', $ai['risk_level']);
+
+        // Pastikan tidak ada anomali palsu tentang penghapusan lampiran
+        $anomalies = $ai['anomalies'] ?? [];
+        foreach ($anomalies as $anomaly) {
+            $this->assertStringNotContainsStringIgnoringCase('penghapusan lampiran', $anomaly);
+            $this->assertStringNotContainsStringIgnoringCase('nusakambangan', $anomaly);
+        }
+
+        @unlink($tempPdf);
+    }
+
+    public function test_gemini_forensic_filter_purges_hallucinated_nusakambangan_deletion(): void
+    {
+        // Simulasi respon Gemini AI dengan HTTP Fake
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'authenticity_score' => 60,
+                                        'risk_level' => 'sedang',
+                                        'status_label' => 'Perlu Klarifikasi',
+                                        'summary' => 'Ditemukan indikasi penghapusan lampiran berkas.',
+                                        'key_findings' => ['Dokumen dibuat oleh Microsoft Word.'],
+                                        'anomalies' => [
+                                            'Terdeteksi penghapusan lampiran nusakambangan pada naskah.',
+                                        ],
+                                        'recommendation' => 'Periksa fisik dokumen.',
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $setting = AiSetting::getFirst();
+        if ($setting) {
+            $setting->update([
+                'is_active' => true,
+                'api_key' => 'fake_api_key_for_testing',
+            ]);
+        }
+
+        $result = GeminiAiService::analyzeForensicPdf([
+            'file_name' => 'usulan_mutasi_nusakambangan.pdf',
+            'file_size' => '250 KB',
+            'doc_type_hint' => 'Dokumen Digital Asli',
+            'pdf_version' => '1.7',
+            'creator' => 'Microsoft Word 2019',
+            'producer' => 'Microsoft: Print to PDF',
+            'creation_date' => '2026-11-07 10:00:00',
+            'mod_date' => '2026-11-07 10:00:00',
+            'revisions_count' => 1,
+            'detected_suspicious_software' => [],
+            'qr_verification_results' => [],
+            'sample_text' => 'Mutasi Narapidana ke Lapas Nusakambangan',
+        ]);
+
+        // Verifikasi anomali palsu 'penghapusan lampiran nusakambangan' berhasil dibersihkan
+        $this->assertEmpty($result['anomalies']);
+        $this->assertGreaterThanOrEqual(85, $result['authenticity_score']);
+        $this->assertEquals('rendah', $result['risk_level']);
+        $this->assertEquals('Dokumen Terindikasi Wajar / Asli', $result['status_label']);
     }
 }

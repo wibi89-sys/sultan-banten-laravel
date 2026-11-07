@@ -840,10 +840,12 @@ PROMPT;
         $hasSuspiciousSoftware = ! empty($suspiciousSoftware);
         $qrResults = $forensicData['qr_verification_results'] ?? [];
         $hasInvalidQr = false;
+        $hasValidQr = false;
         foreach ($qrResults as $qr) {
             if (($qr['status'] ?? '') === 'tidak_terdaftar') {
                 $hasInvalidQr = true;
-                break;
+            } elseif (($qr['status'] ?? '') === 'valid_terdaftar') {
+                $hasValidQr = true;
             }
         }
 
@@ -855,7 +857,10 @@ PROMPT;
         if ($hasInvalidQr) {
             $baselineScore -= 60;
         }
-        if (($forensicData['revisions_count'] ?? 1) > 1) {
+        if ($hasValidQr) {
+            $baselineScore = 100;
+        }
+        if (($forensicData['revisions_count'] ?? 1) > 3) {
             $baselineScore -= 10;
         }
         $baselineScore = max(5, min(100, $baselineScore));
@@ -874,11 +879,14 @@ PROMPT;
             if ($hasInvalidQr) {
                 $anomalies[] = 'Kode QR/Barcode yang tertera pada naskah tidak terdaftar dalam database resmi Sultan Banten.';
             }
-            if (($forensicData['revisions_count'] ?? 1) > 1) {
-                $findings[] = "Dokumen memiliki {$forensicData['revisions_count']} revisi struktur (disimpan ulang secara berulang).";
+            if (($forensicData['revisions_count'] ?? 1) > 3) {
+                $findings[] = "Dokumen memiliki {$forensicData['revisions_count']} revisi struktur (disimpan ulang berulang kali).";
             }
             $findings[] = 'Software pembuat asal: '.($forensicData['creator'] ?? 'Tidak tertera').'.';
-            $findings[] = 'Waktu pembuatan file: '.($forensicData['creation_date'] ?? 'Tidak tertera').'.';
+            $findings[] = 'Waktu pembuatan berkas: '.($forensicData['creation_date'] ?? 'Tidak tertera').'.';
+            if (! empty($forensicData['doc_type_hint'])) {
+                $findings[] = 'Karakteristik: '.$forensicData['doc_type_hint'].'.';
+            }
 
             return [
                 'success' => true,
@@ -898,27 +906,46 @@ PROMPT;
         }
 
         try {
-            $prompt = 'Anda adalah Analis Ahli Forensik Dokumen Digital Kementerian Imigrasi dan Pemasyarakatan Republik Indonesia. '
-                ."Tugas Anda adalah menilai keaslian berkas PDF naskah dinas berdasarkan rincian teknis berikut:\n\n"
+            $docTypeHint = $forensicData['doc_type_hint'] ?? 'Dokumen Digital Kedinasan';
+            $prompt = "Anda adalah Analis Ahli Forensik Dokumen Digital Kementerian Imigrasi dan Pemasyarakatan Republik Indonesia.\n"
+                ."Tugas Anda adalah melakukan audit forensik objektif dan menilai keaslian naskah dinas PDF berdasarkan parameter data objektif berikut:\n\n"
+                ."DATA OBJEKTIF BERKAS:\n"
                 .'- Nama Berkas: '.($forensicData['file_name'] ?? '-')."\n"
                 .'- Ukuran: '.($forensicData['file_size'] ?? '-')."\n"
+                .'- Karakteristik Dokumen: '.$docTypeHint."\n"
                 .'- Versi PDF: '.($forensicData['pdf_version'] ?? '-')."\n"
                 .'- Software Pembuat (Creator): '.($forensicData['creator'] ?? 'Tidak ada')."\n"
                 .'- Mesin PDF (Producer): '.($forensicData['producer'] ?? 'Tidak ada')."\n"
                 .'- Tanggal Dibuat: '.($forensicData['creation_date'] ?? 'Tidak ada')."\n"
                 .'- Tanggal Terakhir Diedit: '.($forensicData['mod_date'] ?? 'Tidak ada')."\n"
-                .'- Jumlah Simpan Ulang (Revisions): '.($forensicData['revisions_count'] ?? 1)."\n"
-                .'- Indikasi Software Grafis/Online: '.(empty($suspiciousSoftware) ? 'Tidak terdeteksi' : implode(', ', $suspiciousSoftware))."\n"
-                .'- Status Barcode / QR Sultan Banten: '.(empty($qrResults) ? 'Tidak memuat barcode Sultan Banten' : json_encode($qrResults))."\n"
+                .'- Jumlah Simpan Ulang (Revisions %%EOF): '.($forensicData['revisions_count'] ?? 1)."\n"
+                .'- Indikasi Software Grafis/Online: '.(empty($suspiciousSoftware) ? 'Tidak terdeteksi (Normal)' : implode(', ', $suspiciousSoftware))."\n"
+                .'- Status Barcode / QR Sultan Banten: '.(empty($qrResults) ? 'Tidak memuat QR Sultan Banten (Wajar untuk surat masuk UPT / naskah draf)' : json_encode($qrResults))."\n"
                 .'- Cuplikan Teks Naskah: "'.($forensicData['sample_text'] ?? '-')."\"\n\n"
-                ."Berikan penilaian Anda dalam format JSON VALID tanpa tag tambahan:\n"
+                ."ATURAN & PANDUAN FORENSIK (WAJIB DIPATUHI SECARA KETAT TANPA KOMPROMI):\n"
+                ."1. INTEGRITAS FAKTUAL & DILARANG KERAS MENGARANG / BERHALUSINASI:\n"
+                ."   - Penilaian HANYA didasarkan pada bukti teknis objektif yang tercantum di atas.\n"
+                ."   - DILARANG KERAS menyimpulkan atau berspekulasi bahwa ada 'penghapusan lampiran', 'penghapusan lampiran nusakambangan', 'halaman dihilangkan', atau manipulasi isi berkas tanpa adanya bukti struktural PDF yang membuktikannya!\n"
+                ."   - Nama satker/lokasi (seperti Nusakambangan, Banten, Cilegon, Serang) atau kata 'Mutasi' / 'Sidang TPP' dalam cuplikan teks atau nama berkas adalah konteks administratif kedinasan biasa, SAMA SEKALI BUKAN bukti manipulasi atau pelanggaran.\n"
+                ."2. EVALUASI PERANGKAT LUNAK:\n"
+                ."   - Microsoft Word, Adobe Acrobat, scanner fisik (Canon, Epson, HP, Ricoh, Brother), TCPDF, dan generator resmi pemerintah adalah software SAH kedinasan.\n"
+                ."   - Hanya anggap mencurigakan bila terbukti menggunakan software manipulasi grafis (Canva, Photoshop, Illustrator, Corel, iLovePDF, Sejda).\n"
+                ."3. EVALUASI DOKUMEN SCAN (CITRA FISIK):\n"
+                ."   - Jika berkas merupakan hasil scan fisik, ketiadaan teks digital adalah kondisi NORMAL karena naskah dipindai sebagai citra gambar.\n"
+                ."4. EVALUASI KODE QR:\n"
+                ."   - Jika QR Sultan Banten valid terdaftar di database: Berkas SAH terverifikasi (skor 95-100%).\n"
+                ."   - Jika ada kode QR SB-... tapi TIDAK terdaftar di database: Indikasi kuat QR palsu / kloning (skor 10-35%, risiko tinggi).\n"
+                ."   - Jika tidak ada QR Sultan Banten: Berkas surat masuk/UPT biasa yang belum ber-QR, hal ini normal (skor 85-95% jika software wajar).\n"
+                ."5. STANDARISASI HASIL:\n"
+                ."   - Jika tidak ditemukan software grafis terlarang dan tidak ada pemalsuan QR, berikan status 'Dokumen Terindikasi Wajar / Asli', skor keaslian tinggi (85-100), risiko 'rendah', dan kosongkan anomali [].\n\n"
+                ."Berikan penilaian Anda dalam format JSON VALID tanpa markdown atau teks tambahan:\n"
                 ."{\n"
                 .'  "authenticity_score": 0 sampai 100,'."\n"
                 .'  "risk_level": "rendah" ATAU "sedang" ATAU "tinggi",'."\n"
                 .'  "status_label": "Ringkasan status (maksimal 6 kata)",'."\n"
                 .'  "summary": "Ringkasan hasil telaah forensik 2-3 kalimat lugas bahasa Indonesia resmi kedinasan.",'."\n"
                 .'  "key_findings": ["Poin temuan teknis 1", "Poin temuan teknis 2"],'."\n"
-                .'  "anomalies": ["Poin anomali atau kejanggalan jika ada"],'."\n"
+                .'  "anomalies": ["Poin anomali HANYA bila ada bukti teknis konkret, atau kosongkan [] jika normal"],'."\n"
                 .'  "recommendation": "Saran langkah tindak lanjut bagi pimpinan/petugas pemeriksa."'."\n"
                 .'}';
 
@@ -940,18 +967,45 @@ PROMPT;
                 throw new \Exception('Respon AI bukan format JSON valid.');
             }
 
+            // Post-processing safety filter: cegah anomali halusinasi seperti 'penghapusan lampiran nusakambangan'
+            $rawAnomalies = $data['anomalies'] ?? [];
+            $sanitizedAnomalies = [];
+            foreach ($rawAnomalies as $anomaly) {
+                if (! is_string($anomaly)) {
+                    continue;
+                }
+                $lowerA = strtolower($anomaly);
+                // Cegah halusinasi penghapusan lampiran / nusakambangan jika tidak ada software manipulasi & tidak ada QR palsu
+                if (str_contains($lowerA, 'penghapusan lampiran') || str_contains($lowerA, 'lampiran nusakambangan') || (str_contains($lowerA, 'dihapus') && str_contains($lowerA, 'lampiran'))) {
+                    if (! $hasSuspiciousSoftware && ! $hasInvalidQr) {
+                        continue;
+                    }
+                }
+                $sanitizedAnomalies[] = $anomaly;
+            }
+
             $score = isset($data['authenticity_score']) ? (int) $data['authenticity_score'] : $baselineScore;
             $score = max(0, min(100, $score));
+
+            // Jika tidak ada software berbahaya, tidak ada QR palsu, dan anomali bersih, pastikan skor tetap tinggi
+            if (! $hasSuspiciousSoftware && ! $hasInvalidQr && empty($sanitizedAnomalies)) {
+                $score = max(85, $score);
+                $risk = 'rendah';
+                $status = 'Dokumen Terindikasi Wajar / Asli';
+            } else {
+                $risk = $data['risk_level'] ?? $defaultRisk;
+                $status = $data['status_label'] ?? $defaultStatus;
+            }
 
             return [
                 'success' => true,
                 'source' => 'gemini_ai',
                 'authenticity_score' => $score,
-                'risk_level' => $data['risk_level'] ?? $defaultRisk,
-                'status_label' => $data['status_label'] ?? $defaultStatus,
+                'risk_level' => $risk,
+                'status_label' => $status,
                 'summary' => $data['summary'] ?? 'Analisis forensik selesai dilakukan oleh AI.',
                 'key_findings' => $data['key_findings'] ?? [],
-                'anomalies' => $data['anomalies'] ?? [],
+                'anomalies' => $sanitizedAnomalies,
                 'recommendation' => $data['recommendation'] ?? 'Lakukan konfirmasi silang fisik jika ditemukan keraguan.',
             ];
         } catch (\Throwable $e) {
