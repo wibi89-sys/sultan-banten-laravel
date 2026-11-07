@@ -12,6 +12,7 @@ use App\Http\Controllers\KroscekController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MutasiNarapidanaController;
 use App\Http\Controllers\OverstayingController;
+use App\Http\Controllers\PembersihPdfController;
 use App\Http\Controllers\PenghuniController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\ProfileController;
@@ -279,6 +280,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/activity-log/ranking', [ActivityLogController::class, 'ranking'])->name('activity-log.ranking');
     Route::get('/activity-log/ranking/export-excel', [ActivityLogController::class, 'exportRankingExcel'])->name('activity-log.ranking.excel');
     Route::get('/activity-log/ranking/detail-pdf', [ActivityLogController::class, 'rankingUptDetailPdf'])->name('activity-log.ranking.detail-pdf');
+
+    // Utilitas Pembersih PDF (Sanitasi Naskah Srikandi & Sultan Banten)
+    Route::get('/pembersih-pdf', [PembersihPdfController::class, 'index'])->name('pembersih-pdf.index');
+    Route::post('/pembersih-pdf/clean', [PembersihPdfController::class, 'clean'])->name('pembersih-pdf.clean');
+    Route::get('/pembersih-pdf/download/{token}', [PembersihPdfController::class, 'download'])->name('pembersih-pdf.download');
 
     // Profil
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

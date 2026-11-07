@@ -511,6 +511,11 @@
                 <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
             </a>
 
+            <a href="{{ route('pembersih-pdf.index') }}" class="{{ request()->routeIs('pembersih-pdf.*') ? 'active' : '' }}">
+                <i class="fas fa-broom text-primary"></i><span>Pembersih PDF</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-auto" style="font-size: 9px;">Utilitas</span>
+            </a>
+
             <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>
                 <span>Master Data</span>
