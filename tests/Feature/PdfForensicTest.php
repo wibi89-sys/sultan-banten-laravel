@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\AiSetting;
+use App\Models\SidangTpp;
+use App\Models\TppNaskahKanwil;
 use App\Models\Upt;
 use App\Models\User;
 use App\Services\GeminiAiService;
@@ -366,5 +368,113 @@ class PdfForensicTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('Halaman Yatim', $evidenceStr);
 
         @unlink($tempPdf);
+    }
+
+    public function test_forensic_detects_authentic_sultan_document_matching_master_archive(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+        $tcpdf = new \TCPDF;
+        $tcpdf->SetCreator('Microsoft Word 2021');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Surat Tugas Resmi. Kode: SB-AUTHTEST12345');
+        $masterPdf = storage_path('app/master_test_auth.pdf');
+        $tcpdf->Output($masterPdf, 'F');
+
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-AUTH-'.uniqid(),
+            'tanggal_surat' => now(),
+            'tanggal_sidang' => now(),
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Agenda Test',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+        ]);
+
+        // Buat record naskah kanwil di database
+        $naskah = TppNaskahKanwil::create([
+            'sidang_tpp_id' => $sidang->id,
+            'kode_verifikasi' => 'SB-AUTHTEST12345',
+            'jenis_dokumen' => 'surat_pengantar',
+            'nomor_dokumen' => 'W12.PAS.123-PK.01',
+            'tanggal_dokumen' => now(),
+            'penandatangan_nama' => 'Kepala Kanwil Banten',
+            'file_signed' => 'master_test_auth.pdf',
+            'status' => 'signed',
+            'is_locked' => true,
+        ]);
+
+        // Simulasikan file master disimpan di storage_path('app/master_test_auth.pdf')
+        $result = PdfForensicService::inspect($masterPdf);
+
+        $this->assertIsArray($result);
+        $this->assertTrue($result['qr_analysis']['has_authentic_sultan']);
+        $this->assertFalse($result['qr_analysis']['has_tampered']);
+        $this->assertEquals('otentik_asli_sultan', $result['qr_analysis']['results'][0]['status']);
+        $this->assertEquals(100, $result['heuristic_score']);
+
+        @unlink($masterPdf);
+        $naskah->delete();
+        $sidang->delete();
+    }
+
+    public function test_forensic_detects_tampered_document_with_grafted_sultan_qr(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+
+        // 1. Buat master asli
+        $tcpdfMaster = new \TCPDF;
+        $tcpdfMaster->AddPage();
+        $tcpdfMaster->Write(0, 'Surat Asli dari Sultan. Kode: SB-GRAFTED99999');
+        $masterPdf = storage_path('app/master_grafted_original.pdf');
+        $tcpdfMaster->Output($masterPdf, 'F');
+
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-GRAFT-'.uniqid(),
+            'tanggal_surat' => now(),
+            'tanggal_sidang' => now(),
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Agenda Test',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+        ]);
+
+        // Buat record naskah kanwil
+        $naskah = TppNaskahKanwil::create([
+            'sidang_tpp_id' => $sidang->id,
+            'kode_verifikasi' => 'SB-GRAFTED99999',
+            'jenis_dokumen' => 'surat_pengantar',
+            'nomor_dokumen' => 'W12.PAS.999-PK.01',
+            'tanggal_dokumen' => now(),
+            'penandatangan_nama' => 'Kepala Kanwil Banten',
+            'file_signed' => 'master_grafted_original.pdf',
+            'status' => 'signed',
+            'is_locked' => true,
+        ]);
+
+        // 2. Buat file palsu/rekayasa yang menempelkan kode QR asli tersebut
+        $tcpdfFake = new \TCPDF;
+        $tcpdfFake->AddPage();
+        $tcpdfFake->Write(0, 'Surat Rekayasa yang Menggunakan Kode Curian: SB-GRAFTED99999. Konten sudah dimanipulasi!');
+        $fakePdf = storage_path('app/fake_tampered_document.pdf');
+        $tcpdfFake->Output($fakePdf, 'F');
+
+        $result = PdfForensicService::inspect($fakePdf);
+
+        $this->assertIsArray($result);
+        $this->assertTrue($result['qr_analysis']['has_tampered']);
+        $this->assertEquals('qr_dicatut_berkas_dimanipulasi', $result['qr_analysis']['results'][0]['status']);
+        $this->assertLessThanOrEqual(25, $result['heuristic_score']);
+
+        $evidenceStr = implode(' ', array_column($result['indicators'], 'deskripsi'));
+        $this->assertStringContainsStringIgnoringCase('TIDAK IDENTIK', $evidenceStr);
+
+        @unlink($masterPdf);
+        @unlink($fakePdf);
+        $naskah->delete();
+        $sidang->delete();
     }
 }

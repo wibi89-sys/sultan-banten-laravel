@@ -841,10 +841,18 @@ PROMPT;
         $qrResults = $forensicData['qr_verification_results'] ?? [];
         $hasInvalidQr = false;
         $hasValidQr = false;
+        $hasTamperedQr = false;
+        $hasAuthenticSultan = false;
+
         foreach ($qrResults as $qr) {
-            if (($qr['status'] ?? '') === 'tidak_terdaftar') {
+            $st = $qr['status'] ?? '';
+            if ($st === 'tidak_terdaftar') {
                 $hasInvalidQr = true;
-            } elseif (($qr['status'] ?? '') === 'valid_terdaftar') {
+            } elseif ($st === 'qr_dicatut_berkas_dimanipulasi') {
+                $hasTamperedQr = true;
+            } elseif ($st === 'otentik_asli_sultan') {
+                $hasAuthenticSultan = true;
+            } elseif ($st === 'valid_terdaftar') {
                 $hasValidQr = true;
             }
         }
@@ -857,14 +865,19 @@ PROMPT;
         if ($hasDeletedContent) {
             $baselineScore = 25; // Penalti berat bila ada bukti penghapusan halaman/lampiran
         }
+        if ($hasTamperedQr) {
+            $baselineScore = 15; // Penalti kritis bila QR dicatut pada file editan
+        }
         if ($hasSuspiciousSoftware) {
             $baselineScore -= 45;
         }
         if ($hasInvalidQr) {
             $baselineScore -= 60;
         }
-        if ($hasValidQr && ! $hasDeletedContent) {
+        if ($hasAuthenticSultan && ! $hasDeletedContent && ! $hasTamperedQr) {
             $baselineScore = 100;
+        } elseif ($hasValidQr && ! $hasDeletedContent && ! $hasTamperedQr) {
+            $baselineScore = 95;
         }
         if (($forensicData['revisions_count'] ?? 1) > 3) {
             $baselineScore -= 10;
@@ -872,9 +885,11 @@ PROMPT;
         $baselineScore = max(5, min(100, $baselineScore));
 
         $defaultRisk = $baselineScore >= 80 ? 'rendah' : ($baselineScore >= 50 ? 'sedang' : 'tinggi');
-        $defaultStatus = $hasDeletedContent
-            ? 'Terindikasi Manipulasi (Lampiran Dihapus)'
-            : ($baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu'));
+        $defaultStatus = $hasTamperedQr
+            ? 'Terindikasi Pemalsuan (QR Dicatut)'
+            : ($hasDeletedContent
+                ? 'Terindikasi Manipulasi (Lampiran Dihapus)'
+                : ($baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu')));
 
         // Fallback jika API key belum aktif
         if (! $setting || ! $setting->is_active || empty($setting->api_key)) {
@@ -885,6 +900,9 @@ PROMPT;
                 foreach ($deletedContent['evidence'] ?? [] as $ev) {
                     $anomalies[] = $ev;
                 }
+            }
+            if ($hasTamperedQr) {
+                $anomalies[] = 'Kode QR resmi Sultan Banten dicatut pada berkas yang telah dimodifikasi (Integritas berkas tidak cocok dengan master server).';
             }
             if ($hasSuspiciousSoftware) {
                 $anomalies[] = 'Terdeteksi jejak software editor grafis/online: '.implode(', ', $suspiciousSoftware).'.';
@@ -950,6 +968,13 @@ PROMPT;
                 $prompt .= "PERINGATAN UNTUK AI: Karena bukti struktural ini NYATA, Anda WAJIB memberikan skor rendah (15 - 35), risiko TINGGI, status 'Terindikasi Manipulasi (Lampiran Dihapus)', dan nyatakan dengan lugas di ringkasan dan anomali bahwa berkas ini telah dipotong/dihapus lampirannya (termasuk usulan mutasi ke Nusakambangan jika tercatat)!\n";
             }
 
+            if ($hasTamperedQr) {
+                $prompt .= "\nTEMUAN FORENSIK KRITIS (PEMALSUAN DOKUMEN / QR RESMI DICATUT):\n"
+                    ."- Kode QR terdaftar di database resmi Sultan Banten, TETAPI integritas fisik berkas yang diunggah TIDAK IDENTIK DENGAN MASTER RESMI SERVER (Hash SHA-256 berbeda atau rincian halaman/ukuran berbeda)!\n"
+                    ."- KESIMPULAN: Berkas ini adalah dokumen yang telah diedit/dimodifikasi setelah diunduh, atau kode QR resmi dicatut/ditempelkan ke naskah lain yang telah direkayasa.\n"
+                    ."PERINGATAN UNTUK AI: Karena ini adalah PEMALSUAN/REKAYASA DOKUMEN, Anda WAJIB memberikan skor rendah (10 - 25), risiko TINGGI, status 'Terindikasi Pemalsuan (QR Dicatut)', dan rekomendasikan penolakan dokumen serta investigasi!\n";
+            }
+
             $prompt .= "\nATURAN & PANDUAN FORENSIK (WAJIB DIPATUHI SECARA KETAT TANPA KOMPROMI):\n"
                 ."1. INTEGRITAS FAKTUAL & DILARANG KERAS MENGARANG BILA TIDAK ADA BUKTI:\n"
                 ."   - Penilaian HANYA didasarkan pada bukti teknis objektif yang tercantum di atas.\n"
@@ -959,9 +984,10 @@ PROMPT;
                 ."   - Hanya anggap mencurigakan bila terbukti menggunakan software manipulasi grafis (Canva, Photoshop, Illustrator, Corel, iLovePDF, Sejda).\n"
                 ."3. EVALUASI DOKUMEN SCAN (CITRA FISIK):\n"
                 ."   - Jika berkas merupakan hasil scan fisik, ketiadaan teks digital adalah kondisi NORMAL karena naskah dipindai sebagai citra gambar.\n"
-                ."4. EVALUASI KODE QR:\n"
-                ."   - Jika QR Sultan Banten valid terdaftar di database: Berkas SAH terverifikasi (skor 95-100%).\n"
-                ."   - Jika ada kode QR SB-... tapi TIDAK terdaftar di database: Indikasi kuat QR palsu / kloning (skor 10-35%, risiko tinggi).\n"
+                ."4. EVALUASI KODE QR & KEASLIAN DOKUMEN SULTAN:\n"
+                ."   - Jika QR Sultan Banten terverifikasi identik dengan master arsip digital (Hash cocok): Dokumen SAH 100% ASLI terbitan Sultan Banten (skor 95-100%).\n"
+                ."   - Jika QR Sultan Banten terdaftar di database TETAPI berkas TIDAK IDENTIK dengan master server: INDIKASI PEMALSUAN / QR DICATUT! Berkas telah diedit setelah diunduh (skor 10-25%, risiko TINGGI, status 'Rekayasa / QR Dicatut').\n"
+                ."   - Jika ada kode QR SB-... tapi TIDAK terdaftar di database: Indikasi kuat QR palsu / kloning (skor 10-25%, risiko tinggi).\n"
                 ."   - Jika tidak ada QR Sultan Banten: Berkas surat masuk/UPT biasa yang belum ber-QR, hal ini normal.\n"
                 ."5. STANDARISASI HASIL:\n"
                 ."   - Jika tidak ditemukan pemotongan berkas, tidak ada software grafis terlarang, dan tidak ada pemalsuan QR, berikan status 'Dokumen Terindikasi Wajar / Asli', skor keaslian tinggi (85-100), risiko 'rendah', dan kosongkan anomali [].\n\n"

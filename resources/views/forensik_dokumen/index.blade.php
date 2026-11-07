@@ -490,7 +490,18 @@
                 boxDel.classList.add('d-flex');
                 let html = (del.evidence || []).map(e => `<div>• ${e}</div>`).join('');
                 if (del.deleted_text_sample) {
-                    html += `<div class="mt-1.5 p-2 bg-white rounded border font-monospace text-secondary" style="font-size: 11px;"><b>Cuplikan Teks yang Dihapus / Tersembunyi:</b><br>${del.deleted_text_sample}</div>`;
+                    html += `
+                        <div class="mt-2.5 p-2.5 bg-white rounded border border-danger-subtle">
+                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                <span class="fw-bold text-danger" style="font-size: 11.5px;">
+                                    <i class="fas fa-trash-restore text-danger me-1"></i>Isi Teks Halaman yang Dihapus (Dipulihkan dari Biner Berkas):
+                                </span>
+                                <span class="badge bg-danger text-white" style="font-size: 10px;">Teks Berhasil Dipulihkan</span>
+                            </div>
+                            <div class="font-monospace text-dark p-2 bg-light rounded border" style="font-size: 11px; max-height: 160px; overflow-y: auto; white-space: pre-wrap; line-height: 1.45;">${del.deleted_text_sample}</div>
+                            <small class="text-muted d-block mt-1" style="font-size: 10px;">*Teks di atas berhasil diekstraksi dari objek halaman yatim / riwayat revisi biner berkas yang dihapus pengguna.</small>
+                        </div>
+                    `;
                 }
                 txtDel.innerHTML = html;
             } else {
@@ -574,12 +585,58 @@
         } else {
             let html = '';
             qrResults.forEach(qr => {
-                if (qr.status === 'valid_terdaftar') {
+                if (qr.status === 'otentik_asli_sultan') {
                     html += `
-                        <div class="p-3 rounded bg-success-subtle border border-success-subtle mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>KODE QR TERDAFTAR RESMI</span>
+                        <div class="p-3 rounded bg-success-subtle border border-success mb-2.5 shadow-xs">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success text-white py-1.5 px-2.5" style="font-size: 11px;">
+                                    <i class="fas fa-shield-alt me-1"></i>100% ASLI &amp; IDENTIK DENGAN MASTER SULTAN BANTEN
+                                </span>
                                 <code class="fw-bold text-success fs-6">${qr.kode}</code>
+                            </div>
+                            <div class="p-2.5 bg-white rounded border mb-2 text-success small" style="font-size: 11px;">
+                                <i class="fas fa-check-double me-1"></i><b>Verifikasi Kriptografi Lulus:</b> Hash SHA-256 berkas yang diunggah cocok persis (bit-for-bit) dengan master arsip digital server. Berkas ini murni langsung dari unduhan resmi Sultan Banten tanpa ada 1 karakter pun yang diubah.
+                            </div>
+                            <div class="row g-2 small text-dark">
+                                <div class="col-md-6"><b>Satker UPT:</b> ${qr.satker_upt}</div>
+                                <div class="col-md-6"><b>Jenis Naskah:</b> ${qr.jenis_dokumen}</div>
+                                <div class="col-md-6"><b>No. Dokumen:</b> ${qr.nomor_dokumen}</div>
+                                <div class="col-md-6"><b>Waktu Pengesahan:</b> ${qr.signed_at}</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (qr.status === 'qr_dicatut_berkas_dimanipulasi') {
+                    let diffList = (qr.diff_details || []).map(d => `<li>${d}</li>`).join('');
+                    html += `
+                        <div class="p-3 rounded bg-danger-subtle border border-danger mb-2.5 shadow-xs">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-danger text-white py-1.5 px-2.5" style="font-size: 11px;">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>PERINGATAN KRITIS: PEMALSUAN DOKUMEN / QR RESMI DICATUT
+                                </span>
+                                <code class="fw-bold text-danger fs-6">${qr.kode}</code>
+                            </div>
+                            <div class="p-2.5 bg-white rounded border border-danger mb-2 text-danger small">
+                                <div class="fw-bold mb-1"><i class="fas fa-times-circle me-1"></i>Hasil Komparasi Integritas dengan Master Resmi Server:</div>
+                                <div class="mb-1.5" style="font-size: 11px;">${qr.pesan}</div>
+                                ${diffList ? `<ul class="mb-0 ps-3 font-monospace text-dark" style="font-size: 10.5px;">${diffList}</ul>` : ''}
+                            </div>
+                            <div class="row g-2 small text-dark">
+                                <div class="col-md-6"><b>Satker UPT Terdaftar:</b> ${qr.satker_upt}</div>
+                                <div class="col-md-6"><b>Jenis Naskah Asli:</b> ${qr.jenis_dokumen}</div>
+                                <div class="col-md-6"><b>No. Dokumen Asli:</b> ${qr.nomor_dokumen}</div>
+                                <div class="col-md-6"><b>Waktu Pengesahan Asli:</b> ${qr.signed_at}</div>
+                            </div>
+                            <div class="alert alert-danger py-1.5 px-2 mt-2 mb-0 small" style="font-size: 11px;">
+                                <i class="fas fa-ban me-1"></i><b>REKOMENDASI:</b> TOLAK DOKUMEN INI! Berkas ini terbukti merupakan hasil suntingan/rekayasa yang menempelkan cap QR resmi untuk mengelabui verifikator.
+                            </div>
+                        </div>
+                    `;
+                } else if (qr.status === 'valid_terdaftar') {
+                    html += `
+                        <div class="p-3 rounded bg-info-subtle border border-info-subtle mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                <span class="badge bg-info text-dark"><i class="fas fa-check-circle me-1"></i>KODE QR TERDAFTAR RESMI</span>
+                                <code class="fw-bold text-primary fs-6">${qr.kode}</code>
                             </div>
                             <div class="row g-2 small text-dark mt-1">
                                 <div class="col-md-6"><b>Satker UPT:</b> ${qr.satker_upt}</div>
@@ -589,7 +646,7 @@
                             </div>
                             <div class="alert alert-warning py-1.5 px-2 mt-2 mb-0 small" style="font-size: 11px;">
                                 <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                                <b>Uji Kloning Cap:</b> Periksa apakah nomor surat, nama pejabat, dan nama warga binaan pada kertas PDF fisik sama persis dengan rincian di atas. Jika berbeda, dokumen ini menggunakan <b>cap hasil kloning (curian)</b>.
+                                <b>Catatan:</b> Master berkas fisik belum diarsipkan pada server lokal ini. Silakan bandingkan nomor surat, tanggal, dan nama satker pada kertas fisik dengan rincian di atas.
                             </div>
                         </div>
                     `;

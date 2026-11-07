@@ -134,6 +134,10 @@ class PdfForensicService
         $qrVerificationResults = [];
         $hasInvalidQr = false;
         $hasValidQr = false;
+        $hasTamperedQr = false;
+        $hasAuthenticSultan = false;
+
+        $uploadedHash = hash_file('sha256', $filePath);
 
         foreach ($detectedCodes as $code) {
             $naskah = TppNaskahKanwil::where('kode_verifikasi', $code)
@@ -142,24 +146,135 @@ class PdfForensicService
 
             if ($naskah) {
                 $hasValidQr = true;
-                $qrVerificationResults[] = [
-                    'kode' => $code,
-                    'status' => 'valid_terdaftar',
-                    'naskah_id' => $naskah->id,
-                    'jenis_dokumen' => $naskah->jenis_dokumen,
-                    'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
-                    'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
-                    'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
-                    'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
-                    'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
-                    'is_locked' => $naskah->isLocked(),
-                    'pesan' => 'Kode terdaftar resmi di database Sultan Banten. Silakan bandingkan rincian nomor surat, tanggal, dan nama satker pada kertas fisik dengan data resmi ini.',
-                ];
+
+                // Cari master arsip dokumen asli pada server
+                $masterPath = null;
+                if (! empty($naskah->file_signed)) {
+                    if (file_exists(public_path($naskah->file_signed))) {
+                        $masterPath = public_path($naskah->file_signed);
+                    } elseif (file_exists(storage_path('app/'.$naskah->file_signed))) {
+                        $masterPath = storage_path('app/'.$naskah->file_signed);
+                    }
+                }
+                if (! $masterPath && ! empty($naskah->file_pdf)) {
+                    if (file_exists(public_path($naskah->file_pdf))) {
+                        $masterPath = public_path($naskah->file_pdf);
+                    } elseif (file_exists(storage_path('app/'.$naskah->file_pdf))) {
+                        $masterPath = storage_path('app/'.$naskah->file_pdf);
+                    }
+                }
+
+                $isMasterAvailable = ($masterPath !== null && file_exists($masterPath));
+                $isIdentical = false;
+                $masterHash = null;
+                $masterSizeFormatted = null;
+                $masterPageCount = null;
+                $diffDetails = [];
+
+                if ($isMasterAvailable) {
+                    $masterHash = hash_file('sha256', $masterPath);
+                    $masterSize = filesize($masterPath);
+                    $masterSizeFormatted = self::formatBytes($masterSize);
+                    $masterRaw = file_get_contents($masterPath);
+                    $masterPagesInfo = self::getActivePagesInfo($masterRaw);
+                    $masterPageCount = $masterPagesInfo['page_count'] ?? 1;
+
+                    if ($uploadedHash === $masterHash) {
+                        $isIdentical = true;
+                        $hasAuthenticSultan = true;
+                    } else {
+                        $hasTamperedQr = true;
+                        if ($masterPageCount !== $pageCount) {
+                            $diffDetails[] = "Jumlah halaman berbeda (Master arsip server: {$masterPageCount} halaman, Berkas yang diunggah: {$pageCount} halaman).";
+                        }
+                        if ($masterSize !== filesize($filePath)) {
+                            $diffDetails[] = "Ukuran berkas berbeda (Master arsip server: {$masterSizeFormatted}, Berkas yang diunggah: ".self::formatBytes(filesize($filePath)).').';
+                        }
+                        $diffDetails[] = 'Hash integritas kriptografi SHA-256 berbeda bit dengan master arsip digital server.';
+                    }
+                } else {
+                    // Jika file fisik master belum tersimpan di disk lokal, lakukan verifikasi silang terhadap metadata database
+                    $textLower = strtolower($searchableText);
+                    if ($naskah->nomor_dokumen && ! str_contains($textLower, strtolower($naskah->nomor_dokumen))) {
+                        $diffDetails[] = "Nomor dokumen resmi '{$naskah->nomor_dokumen}' tidak ditemukan pada teks berkas.";
+                    }
+                    if ($naskah->penandatangan_nama && ! str_contains($textLower, strtolower($naskah->penandatangan_nama))) {
+                        $diffDetails[] = "Nama pejabat penandatangan '{$naskah->penandatangan_nama}' tidak ditemukan pada teks berkas.";
+                    }
+                    if (! empty($diffDetails)) {
+                        $hasTamperedQr = true;
+                    }
+                }
+
+                if ($isMasterAvailable && $isIdentical) {
+                    $qrVerificationResults[] = [
+                        'kode' => $code,
+                        'status' => 'otentik_asli_sultan',
+                        'status_label' => 'ASLI 100% IDENTIK DENGAN MASTER SULTAN',
+                        'badge_class' => 'success',
+                        'is_tampered' => false,
+                        'naskah_id' => $naskah->id,
+                        'jenis_dokumen' => $naskah->jenis_dokumen,
+                        'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
+                        'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
+                        'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
+                        'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
+                        'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
+                        'is_locked' => $naskah->isLocked(),
+                        'master_hash' => $masterHash,
+                        'uploaded_hash' => $uploadedHash,
+                        'master_page_count' => $masterPageCount,
+                        'master_size_formatted' => $masterSizeFormatted,
+                        'pesan' => 'TERVERIFIKASI 100% ASLI & IDENTIK DENGAN MASTER SULTAN BANTEN. Hash SHA-256 berkas yang diunggah cocok persis (bit-for-bit) dengan master arsip digital server. Berkas ini murni langsung dari unduhan resmi tanpa modifikasi apa pun.',
+                    ];
+                } elseif ($hasTamperedQr) {
+                    $qrVerificationResults[] = [
+                        'kode' => $code,
+                        'status' => 'qr_dicatut_berkas_dimanipulasi',
+                        'status_label' => 'TERINDIKASI PEMALSUAN / QR DICATUT',
+                        'badge_class' => 'danger',
+                        'is_tampered' => true,
+                        'naskah_id' => $naskah->id,
+                        'jenis_dokumen' => $naskah->jenis_dokumen,
+                        'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
+                        'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
+                        'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
+                        'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
+                        'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
+                        'is_locked' => $naskah->isLocked(),
+                        'master_hash' => $masterHash,
+                        'uploaded_hash' => $uploadedHash,
+                        'master_page_count' => $masterPageCount,
+                        'master_size_formatted' => $masterSizeFormatted,
+                        'diff_details' => $diffDetails,
+                        'pesan' => "PERINGATAN KRITIS: Kode QR '{$code}' memang terdaftar di database untuk naskah [{$naskah->nomor_dokumen}], TETAPI isi berkas fisik yang diunggah TIDAK IDENTIK DENGAN MASTER RESMI SULTAN BANTEN! Dokumen ini terindikasi kuat telah diedit setelah diunduh, atau kode QR resmi dicatut/ditempelkan ke naskah lain yang telah dimanipulasi.",
+                    ];
+                } else {
+                    $qrVerificationResults[] = [
+                        'kode' => $code,
+                        'status' => 'valid_terdaftar',
+                        'status_label' => 'Terdaftar Resmi di Database',
+                        'badge_class' => 'info',
+                        'is_tampered' => false,
+                        'naskah_id' => $naskah->id,
+                        'jenis_dokumen' => $naskah->jenis_dokumen,
+                        'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
+                        'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
+                        'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
+                        'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
+                        'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
+                        'is_locked' => $naskah->isLocked(),
+                        'pesan' => 'Kode terdaftar resmi di database Sultan Banten. Silakan bandingkan rincian nomor surat, tanggal, dan nama satker pada kertas fisik dengan data resmi ini.',
+                    ];
+                }
             } else {
                 $hasInvalidQr = true;
                 $qrVerificationResults[] = [
                     'kode' => $code,
                     'status' => 'tidak_terdaftar',
+                    'status_label' => 'QR Palsu / Tidak Terdaftar',
+                    'badge_class' => 'danger',
+                    'is_tampered' => true,
                     'pesan' => 'KODE TIDAK DITEMUKAN PADA DATABASE RESMI SULTAN BANTEN! Dokumen ini terindikasi kuat menggunakan kode QR palsu atau rekayasa mandiri.',
                 ];
             }
@@ -251,17 +366,30 @@ class PdfForensicService
             ];
         }
 
-        // Cek QR Code tidak terdaftar
-        if ($hasInvalidQr) {
-            $heuristicScore -= 60;
+        // Cek QR Code tidak terdaftar / QR Dicatut
+        if ($hasTamperedQr) {
+            $heuristicScore -= 80;
+            $indicators[] = [
+                'kategori' => 'danger',
+                'judul' => 'Pemalsuan Dokumen: Kode QR Resmi Sultan Dicatut / Berkas Telah Dimanipulasi',
+                'deskripsi' => 'Kode QR tercatat di database resmi Sultan Banten, namun integritas fisik berkas yang diunggah TIDAK IDENTIK dengan master arsip digital server. Terbukti berkas telah diedit setelah diunduh atau kode QR resmi dicatut pada naskah yang dimanipulasi.',
+            ];
+        } elseif ($hasInvalidQr) {
+            $heuristicScore -= 65;
             $indicators[] = [
                 'kategori' => 'danger',
                 'judul' => 'Cap QR Code Tidak Terdaftar di Database Resmi',
                 'deskripsi' => 'Kode verifikasi yang tertanam pada dokumen tidak terdata pada server Sultan Banten. Sangat dimungkinkan ini adalah dokumen palsu atau QR tiruan.',
             ];
-        } elseif ($hasValidQr) {
+        } elseif ($hasAuthenticSultan) {
             $indicators[] = [
                 'kategori' => 'success',
+                'judul' => 'Dokumen 100% Asli & Sah Terbitan Sultan Banten',
+                'deskripsi' => 'Berkas terbukti identik bit-for-bit dengan master arsip digital yang tersimpan di server. Tidak ada manipulasi atau pemotongan berkas sejak diterbitkan.',
+            ];
+        } elseif ($hasValidQr) {
+            $indicators[] = [
+                'kategori' => 'info',
                 'judul' => 'Kode Verifikasi QR Terdaftar Resmi',
                 'deskripsi' => 'Naskah memuat kode tanda tangan resmi Sultan Banten yang tercatat di database instansi.',
             ];
@@ -329,7 +457,9 @@ class PdfForensicService
             'qr_analysis' => [
                 'detected_codes' => $detectedCodes,
                 'results' => $qrVerificationResults,
-                'has_invalid' => $hasInvalidQr,
+                'has_invalid' => $hasInvalidQr || $hasTamperedQr,
+                'has_tampered' => $hasTamperedQr,
+                'has_authentic_sultan' => $hasAuthenticSultan,
             ],
             'embedded_files' => $embeddedFiles,
             'deleted_content' => $deletionAnalysis,
