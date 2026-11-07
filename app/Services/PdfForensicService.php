@@ -677,6 +677,49 @@ class PdfForensicService
                     }
                 }
             }
+
+            // Cek jumlah halaman asli di XMP (xmpTPg:NPages)
+            if (preg_match('/<xmpTPg:NPages>(\d+)<\/xmpTPg:NPages>/i', $xml, $npMatch) || preg_match('/NPages="(\d+)"/i', $xml, $npMatch)) {
+                $xmpNPages = (int) $npMatch[1];
+                if ($xmpNPages > $activePageCount) {
+                    $hasDeletion = true;
+                    $diff = $xmpNPages - $activePageCount;
+                    $evidence[] = "Metadata Adobe XMP (xmpTPg:NPages) mencatat dokumen ini aslinya diproduksi dengan {$xmpNPages} halaman, namun berkas yang diunggah saat ini hanya memiliki {$activePageCount} halaman. Terbukti ada {$diff} halaman yang telah dihilangkan/dipotong.";
+                }
+            }
+        }
+
+        // 6. Analisis Ketidaksesuaian Penomoran Halaman pada Teks (Page Numbering Splicing)
+        // Contoh: "Halaman 1 dari 3" atau "Hal 1 / 3" atau "Page 1 of 3"
+        if (preg_match('/(?:Halaman|Hal|Page)\s+(\d+)\s*(?:dari|\/|of)\s*(\d+)/i', $activeVisibleText, $pageStrMatch)) {
+            $printedCurrent = (int) $pageStrMatch[1];
+            $printedTotal = (int) $pageStrMatch[2];
+            if ($printedTotal > $activePageCount) {
+                $hasDeletion = true;
+                $diff = $printedTotal - $activePageCount;
+                $evidence[] = "Teks penomoran pada kaki naskah (footer) mencantumkan 'Halaman {$printedCurrent} dari {$printedTotal}', namun berkas PDF ini hanya memuat {$activePageCount} halaman. Terbukti {$diff} lembar halaman kelanjutan/lampiran telah dihilangkan.";
+            }
+        }
+
+        // 7. Analisis Administrasi Tata Naskah Dinas (Klausa 'Lampiran :' vs Fisik Halaman)
+        // Surat dinas resmi: "Lampiran : 1 (satu) Berkas" atau "Lampiran : 1 Lembar"
+        if ($activePageCount <= 2 && empty($embeddedFiles)) {
+            if (preg_match('/(?:Lampiran|Lamp\.)\s*:\s*([^\r\n]{2,35})/i', $activeVisibleText, $lampMatch)) {
+                $lampVal = trim($lampMatch[1]);
+                $lampLower = strtolower($lampVal);
+                if (! in_array($lampLower, ['-', '–', '—', 'nihil', 'tidak ada', 'kosong', '0']) && (str_contains($lampLower, 'berkas') || str_contains($lampLower, 'lembar') || str_contains($lampLower, 'gabung') || preg_match('/\b(?:1|2|3|4|5|satu|dua|tiga)\b/', $lampLower))) {
+                    $hasDeletion = true;
+                    $evidence[] = "Tata naskah dinas secara eksplisit menyatakan 'Lampiran: {$lampVal}', namun naskah fisik yang diunggah hanya memiliki {$activePageCount} lembar surat pengantar tanpa adanya lembar daftar lampiran.";
+                }
+            }
+
+            // Cek frasa rujukan lampiran di badan surat
+            if (preg_match('/(?:sebagaimana|pada)\s+(?:daftar\s+)?lampiran/i', $activeVisibleText) || preg_match('/daftar\s+nama\s+(?:terlampir|pada\s+lampiran)/i', $activeVisibleText) || preg_match('/rincian\s+(?:nama|jadwal)\s+(?:sebagaimana\s+)?terlampir/i', $activeVisibleText)) {
+                if (stripos($activeVisibleText, 'nama') === false && stripos($activeVisibleText, 'terlampir') !== false) {
+                    $hasDeletion = true;
+                    $evidence[] = "Badan surat secara tegas merujuk pada 'daftar lampiran', namun lembar rincian lampiran tersebut tidak disertakan di dalam berkas.";
+                }
+            }
         }
 
         return [
