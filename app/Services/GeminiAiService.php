@@ -842,12 +842,16 @@ PROMPT;
         $hasInvalidQr = false;
         $hasValidQr = false;
         $hasTamperedQr = false;
+        $hasEditedSultan = false;
         $hasAuthenticSultan = false;
 
         foreach ($qrResults as $qr) {
             $st = $qr['status'] ?? '';
             if ($st === 'tidak_terdaftar') {
                 $hasInvalidQr = true;
+            } elseif ($st === 'dokumen_sultan_diedit_kembali') {
+                $hasEditedSultan = true;
+                $hasTamperedQr = true;
             } elseif ($st === 'qr_dicatut_berkas_dimanipulasi') {
                 $hasTamperedQr = true;
             } elseif ($st === 'otentik_asli_sultan') {
@@ -866,7 +870,7 @@ PROMPT;
             $baselineScore = 25; // Penalti berat bila ada bukti penghapusan halaman/lampiran
         }
         if ($hasTamperedQr) {
-            $baselineScore = 15; // Penalti kritis bila QR dicatut pada file editan
+            $baselineScore = $hasEditedSultan ? 20 : 15; // Penalti kritis bila QR diedit / dicatut
         }
         if ($hasSuspiciousSoftware) {
             $baselineScore -= 45;
@@ -886,10 +890,12 @@ PROMPT;
 
         $defaultRisk = $baselineScore >= 80 ? 'rendah' : ($baselineScore >= 50 ? 'sedang' : 'tinggi');
         $defaultStatus = $hasTamperedQr
-            ? 'Terindikasi Pemalsuan (QR Dicatut)'
+            ? ($hasEditedSultan ? 'Dokumen Resmi Terindikasi Diedit Ulang / Dimanipulasi' : 'Terindikasi Pemalsuan (QR Dicatut)')
             : ($hasDeletedContent
                 ? 'Terindikasi Manipulasi (Lampiran Dihapus)'
-                : ($baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu')));
+                : ($hasAuthenticSultan || $hasValidQr
+                    ? 'Dokumen Sah & Asli Terdaftar Sultan Banten'
+                    : ($baselineScore >= 80 ? 'Dokumen Terindikasi Wajar / Asli' : ($baselineScore >= 50 ? 'Dokumen Mencurigakan (Perlu Klarifikasi)' : 'Dokumen Terindikasi Kuat Manipulasi / Palsu'))));
 
         // Fallback jika API key belum aktif
         if (! $setting || ! $setting->is_active || empty($setting->api_key)) {
@@ -901,7 +907,9 @@ PROMPT;
                     $anomalies[] = $ev;
                 }
             }
-            if ($hasTamperedQr) {
+            if ($hasEditedSultan) {
+                $anomalies[] = 'Dokumen naskah resmi Sultan Banten telah diedit ulang atau halamannya dipotong setelah diterbitkan.';
+            } elseif ($hasTamperedQr) {
                 $anomalies[] = 'Kode QR resmi Sultan Banten dicatut pada berkas yang telah dimodifikasi (Integritas berkas tidak cocok dengan master server).';
             }
             if ($hasSuspiciousSoftware) {
@@ -925,11 +933,19 @@ PROMPT;
                 'authenticity_score' => $baselineScore,
                 'risk_level' => $defaultRisk,
                 'status_label' => $defaultStatus,
-                'summary' => $hasDeletedContent
-                    ? 'Berdasarkan audit forensik struktur PDF, terdeteksi bukti kuat pemotongan/penghapusan lembar lampiran pada naskah ini sebelum diserahkan.'
-                    : ($baselineScore >= 80
-                        ? 'Berdasarkan ekstraksi teknis metadata, dokumen tidak menunjukkan tanda-tanda manipulasi perangkat lunak grafis yang mencurigakan.'
-                        : 'Berdasarkan ekstraksi teknis, ditemukan anomali signifikan pada berkas ini yang mengindikasikan kemungkinan rekayasa berkas atau kloning naskah.'),
+                'summary' => $hasEditedSultan
+                    ? 'Dokumen memiliki kode QR resmi Sultan Banten, namun terbukti telah dibuka, disunting ulang, atau dipotong halamannya setelah diunduh.'
+                    : ($hasTamperedQr
+                        ? 'Peringatan: Dokumen ini terindikasi mencatut kode QR resmi Sultan Banten pada berkas yang telah dimanipulasi.'
+                        : ($hasDeletedContent
+                            ? 'Berdasarkan audit forensik struktur PDF, terdeteksi bukti kuat pemotongan/penghapusan lembar lampiran pada naskah ini sebelum diserahkan.'
+                            : ($hasAuthenticSultan
+                                ? 'Dokumen terverifikasi 100% asli dan identik bit-for-bit dengan master arsip digital server Sultan Banten.'
+                                : ($hasValidQr
+                                    ? 'Naskah terdaftar sah dan resmi pada database Sultan Banten dengan struktur dokumen yang bersih.'
+                                    : ($baselineScore >= 80
+                                        ? 'Berdasarkan ekstraksi teknis metadata, dokumen tidak menunjukkan tanda-tanda manipulasi perangkat lunak grafis yang mencurigakan.'
+                                        : 'Berdasarkan ekstraksi teknis, ditemukan anomali signifikan pada berkas ini yang mengindikasikan kemungkinan rekayasa berkas atau kloning naskah.'))))),
                 'key_findings' => $findings,
                 'anomalies' => $anomalies,
                 'recommendation' => $hasDeletedContent

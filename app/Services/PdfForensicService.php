@@ -21,8 +21,10 @@ class PdfForensicService
         'ilovepdf' => 'iLovePDF (Layanan Modifikasi/Penyunting PDF Online)',
         'sejda' => 'Sejda PDF Editor (Editor PDF Daring)',
         'smallpdf' => 'Smallpdf (Layanan Modifikasi PDF Online)',
-        'pdf24' => 'PDF24 Tools (Editor PDF Online)',
-        'nitro' => 'Nitro Pro PDF Editor',
+        'pdf24' => 'PDF24 Creator / Tools (Software Editor & Pemotong PDF)',
+        'nitro' => 'Nitro Pro PDF Editor (Aplikasi Modifikasi & Pemotong Dokumen)',
+        'acrobat pro' => 'Adobe Acrobat Pro (Software Editor PDF Berbayar)',
+        'acrobat dc' => 'Adobe Acrobat DC Editor (Software Penyunting Dokumen)',
         'foxit' => 'Foxit PDF Editor',
         'inkscape' => 'Inkscape Vector Editor',
         'paint.net' => 'Paint.NET Image Editor',
@@ -33,6 +35,7 @@ class PdfForensicService
         'bullzip' => 'Bullzip PDF Printer (Virtual Printer)',
         'wps' => 'WPS Office PDF',
         'dopdf' => 'doPDF Virtual Printer',
+        'pdf-xchange' => 'PDF-XChange Editor',
     ];
 
     /**
@@ -107,8 +110,7 @@ class PdfForensicService
         preg_match_all('/\/Subtype\s*\/Image\b/', $raw, $imageMatches);
         $imageCount = count($imageMatches[0] ?? []);
 
-        // 7. Deteksi Barcode & Kode Verifikasi Sultan Banten (SB-...)
-        // Dekompresi stream objek agar teks terkompresi FlateDecode dapat dideteksi secara komprehensif
+        // 7. Dekompresi stream objek agar teks terkompresi FlateDecode dapat dideteksi secara komprehensif
         $searchableText = $raw;
         $decompressedStreams = [];
         if (preg_match_all('/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/s', $raw, $streamMatches)) {
@@ -128,8 +130,39 @@ class PdfForensicService
             }
         }
 
+        // 8. Ekstraksi Berkas Lampiran Tertanam (Embedded Files / File Attachments)
+        $embeddedFiles = self::extractEmbeddedFiles($raw, $decompressedStreams);
+
+        // 9. Deteksi Riwayat Pemotongan / Penghapusan Halaman & Lampiran (Forensik Delta Inkremental & Slack Space)
+        $deletionAnalysis = self::detectDeletedContent($raw, $decompressedStreams, $eofCount, $embeddedFiles);
+
+        // 10. Ekstraksi Teks Sampel untuk Analisis Konten & AI
+        $sampleText = self::extractTextSample($raw, $decompressedStreams);
+        $isScanned = ($imageCount >= $pageCount && mb_strlen($sampleText) < 100);
+        $docTypeHint = $isScanned
+            ? "Berkas Hasil Pemindaian (Scan Fisik - {$pageCount} Halaman, {$imageCount} Objek Citra)"
+            : "Dokumen Digital Asli (Native PDF Teks - {$pageCount} Halaman)";
+
+        // 11. Analisis Jejak Software Editor Khusus (Nitro Pro, Adobe Acrobat, PDF24, dll.)
+        $editorProfile = self::analyzeEditorProfile($raw, $infoData, $xmpData, $eofCount, $creationDate, $modDate);
+
+        // Cek software mencurigakan
+        $combinedSoftware = strtolower(($creator ?? '').' '.($producer ?? '').' '.implode(' ', $xmpData['software_agents'] ?? []));
+        $detectedSuspicious = [];
+        foreach (self::$suspiciousSoftware as $keyword => $desc) {
+            if (str_contains($combinedSoftware, $keyword)) {
+                $detectedSuspicious[] = $desc;
+            }
+        }
+        if ($editorProfile['has_editor'] && ! in_array($editorProfile['software_name'], $detectedSuspicious)) {
+            $detectedSuspicious[] = $editorProfile['software_name'];
+        }
+        $detectedSuspicious = array_values(array_unique($detectedSuspicious));
+
+        // 12. Deteksi Barcode & Kode Verifikasi Sultan Banten (SB-...)
         preg_match_all('/SB-[A-Z0-9]{8,16}/', $searchableText, $sbMatches);
-        $detectedCodes = array_values(array_unique($sbMatches[0] ?? []));
+        preg_match_all('/(?:verifikasi-dokumen|kode_verifikasi|verify)\/(SB-[A-Z0-9]{8,16})/i', $searchableText, $urlMatches);
+        $detectedCodes = array_values(array_unique(array_merge($sbMatches[0] ?? [], $urlMatches[1] ?? [])));
 
         $qrVerificationResults = [];
         $hasInvalidQr = false;
@@ -145,22 +178,25 @@ class PdfForensicService
                 ->first();
 
             if ($naskah) {
-                $hasValidQr = true;
-
                 // Cari master arsip dokumen asli pada server
                 $masterPath = null;
-                if (! empty($naskah->file_signed)) {
-                    if (file_exists(public_path($naskah->file_signed))) {
-                        $masterPath = public_path($naskah->file_signed);
-                    } elseif (file_exists(storage_path('app/'.$naskah->file_signed))) {
-                        $masterPath = storage_path('app/'.$naskah->file_signed);
-                    }
-                }
-                if (! $masterPath && ! empty($naskah->file_pdf)) {
-                    if (file_exists(public_path($naskah->file_pdf))) {
-                        $masterPath = public_path($naskah->file_pdf);
-                    } elseif (file_exists(storage_path('app/'.$naskah->file_pdf))) {
-                        $masterPath = storage_path('app/'.$naskah->file_pdf);
+                $candidates = array_filter([
+                    $naskah->file_signed,
+                    $naskah->file_pdf,
+                    $naskah->sidangTpp?->file_laporan_kakanwil,
+                    $naskah->sidangTpp?->file_surat_tugas,
+                ]);
+
+                foreach ($candidates as $cand) {
+                    if (file_exists(public_path($cand))) {
+                        $masterPath = public_path($cand);
+                        break;
+                    } elseif (file_exists(storage_path('app/'.$cand))) {
+                        $masterPath = storage_path('app/'.$cand);
+                        break;
+                    } elseif (file_exists(storage_path('app/public/'.$cand))) {
+                        $masterPath = storage_path('app/public/'.$cand);
+                        break;
                     }
                 }
 
@@ -182,91 +218,137 @@ class PdfForensicService
                     if ($uploadedHash === $masterHash) {
                         $isIdentical = true;
                         $hasAuthenticSultan = true;
+                        $qrStatus = 'otentik_asli_sultan';
+                        $qrStatusLabel = 'ASLI 100% IDENTIK DENGAN MASTER SULTAN';
+                        $qrBadgeClass = 'success';
+                        $qrIsTampered = false;
+                        $qrPesan = 'TERVERIFIKASI 100% ASLI & IDENTIK DENGAN MASTER SULTAN BANTEN. Hash SHA-256 berkas yang diunggah cocok persis (bit-for-bit) dengan master arsip digital server. Berkas ini murni langsung dari unduhan resmi tanpa modifikasi apa pun.';
                     } else {
-                        $hasTamperedQr = true;
-                        if ($masterPageCount !== $pageCount) {
-                            $diffDetails[] = "Jumlah halaman berbeda (Master arsip server: {$masterPageCount} halaman, Berkas yang diunggah: {$pageCount} halaman).";
+                        // Periksa bukti forensik manipulasi
+                        $isPageCut = ($masterPageCount > $pageCount);
+                        $hasDeleted = $deletionAnalysis['has_deletion'];
+                        $hasEditor = ! empty($detectedSuspicious);
+
+                        // Cek apakah konten teks berbeda drastis (Grafted QR / QR Dicatut)
+                        $isTextMismatch = false;
+                        if ($masterRaw) {
+                            $masterDecompressed = [];
+                            if (preg_match_all('/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/s', $masterRaw, $mMatches)) {
+                                foreach ($mMatches[1] as $sChunk) {
+                                    $trimmed = trim($sChunk, "\r\n ");
+                                    $dec = @gzuncompress($trimmed);
+                                    if ($dec === false) {
+                                        $dec = @gzinflate($trimmed);
+                                    }
+                                    if ($dec === false && strlen($trimmed) > 6) {
+                                        $dec = @gzinflate(substr($trimmed, 2, -4));
+                                    }
+                                    if ($dec !== false) {
+                                        $masterDecompressed[] = $dec;
+                                    }
+                                }
+                            }
+                            $masterSampleText = self::extractTextSample($masterRaw, $masterDecompressed);
+                            $isTextEdited = false;
+                            if (mb_strlen($sampleText) >= 10 && mb_strlen($masterSampleText) >= 10) {
+                                similar_text(substr($sampleText, 0, 1000), substr($masterSampleText, 0, 1000), $simPercent);
+                                if ($simPercent < 80.0) {
+                                    $isTextMismatch = true;
+                                } elseif ($simPercent < 98.0) {
+                                    $isTextEdited = true;
+                                }
+                            } elseif (mb_strlen($sampleText) >= 10 || mb_strlen($masterSampleText) >= 10) {
+                                $isTextMismatch = true;
+                            }
                         }
-                        if ($masterSize !== filesize($filePath)) {
-                            $diffDetails[] = "Ukuran berkas berbeda (Master arsip server: {$masterSizeFormatted}, Berkas yang diunggah: ".self::formatBytes(filesize($filePath)).').';
+
+                        if ($isPageCut || $hasDeleted || $hasEditor || $isTextEdited) {
+                            $hasTamperedQr = true;
+                            if ($isPageCut) {
+                                $diffDetails[] = "Jumlah halaman berkurang dari master arsip server (Master: {$masterPageCount} halaman, Berkas diunggah: {$pageCount} halaman). Terbukti halaman lampiran telah dipotong.";
+                            }
+                            if ($hasDeleted) {
+                                $diffDetails[] = 'Terdeteksi riwayat pemotongan/penghapusan objek halaman atau lampiran pada biner berkas.';
+                            }
+                            if ($hasEditor) {
+                                $diffDetails[] = 'Terdeteksi jejak penyuntingan berkas menggunakan software editor pihak ketiga: '.implode(', ', array_unique($detectedSuspicious)).'.';
+                            }
+                            if ($isTextEdited) {
+                                $diffDetails[] = 'Isi teks naskah mengalami modifikasi sebagian dibandingkan master arsip server.';
+                            }
+                            $qrStatus = 'dokumen_sultan_diedit_kembali';
+                            $qrStatusLabel = 'DOKUMEN RESMI TELAH DIEDIT / DIMANIPULASI';
+                            $qrBadgeClass = 'danger';
+                            $qrIsTampered = true;
+                            $qrPesan = "PERINGATAN: Kode QR '{$code}' terdaftar resmi untuk naskah [{$naskah->nomor_dokumen}], TETAPI berkas fisik yang diunggah terbukti telah disunting ulang atau halamannya dipotong setelah diterbitkan oleh Sultan Banten.";
+                        } elseif ($isTextMismatch) {
+                            $hasTamperedQr = true;
+                            $diffDetails[] = 'Isi teks naskah TIDAK IDENTIK dan berbeda drastis dengan master arsip digital server (Terindikasi kode QR dicatut/ditempelkan ke naskah lain).';
+                            $qrStatus = 'qr_dicatut_berkas_dimanipulasi';
+                            $qrStatusLabel = 'TERINDIKASI PEMALSUAN / QR DICATUT';
+                            $qrBadgeClass = 'danger';
+                            $qrIsTampered = true;
+                            $qrPesan = "PERINGATAN KRITIS: Kode QR '{$code}' memang terdaftar untuk naskah [{$naskah->nomor_dokumen}], TETAPI isi teks dokumen fisik yang diunggah TIDAK IDENTIK DENGAN MASTER RESMI SERVER! Kode QR resmi dicatut pada dokumen lain yang telah direkayasa.";
+                        } else {
+                            // Struktur bersih, jumlah halaman cocok, tidak ada jejak editor destruktif
+                            $hasValidQr = true;
+                            $diffDetails[] = "Struktur dokumen wajar dan jumlah halaman sama persis ({$pageCount} halaman).";
+                            $qrStatus = 'valid_terdaftar';
+                            $qrStatusLabel = 'ASLI & SAH TERDAFTAR SULTAN BANTEN';
+                            $qrBadgeClass = 'success';
+                            $qrIsTampered = false;
+                            $qrPesan = "Dokumen terdaftar sah dan resmi di database Sultan Banten [{$naskah->nomor_dokumen}]. Integritas struktur dan jumlah halaman cocok dengan data resmi server.";
                         }
-                        $diffDetails[] = 'Hash integritas kriptografi SHA-256 berbeda bit dengan master arsip digital server.';
                     }
                 } else {
-                    // Jika file fisik master belum tersimpan di disk lokal, lakukan verifikasi silang terhadap metadata database
-                    $textLower = strtolower($searchableText);
-                    if ($naskah->nomor_dokumen && ! str_contains($textLower, strtolower($naskah->nomor_dokumen))) {
-                        $diffDetails[] = "Nomor dokumen resmi '{$naskah->nomor_dokumen}' tidak ditemukan pada teks berkas.";
-                    }
-                    if ($naskah->penandatangan_nama && ! str_contains($textLower, strtolower($naskah->penandatangan_nama))) {
-                        $diffDetails[] = "Nama pejabat penandatangan '{$naskah->penandatangan_nama}' tidak ditemukan pada teks berkas.";
-                    }
-                    if (! empty($diffDetails)) {
+                    // Master fisik belum tersimpan di disk lokal server ini
+                    $hasDeleted = $deletionAnalysis['has_deletion'];
+                    $hasEditor = ! empty($detectedSuspicious);
+
+                    if ($hasDeleted || $hasEditor) {
                         $hasTamperedQr = true;
+                        if ($hasDeleted) {
+                            $diffDetails[] = 'Terdeteksi riwayat pemotongan/penghapusan objek halaman atau lampiran pada biner berkas.';
+                        }
+                        if ($hasEditor) {
+                            $diffDetails[] = 'Terdeteksi jejak software editor: '.implode(', ', $detectedSuspicious).'.';
+                        }
+                        $qrStatus = 'dokumen_sultan_diedit_kembali';
+                        $qrStatusLabel = 'DOKUMEN RESMI TELAH DIEDIT / DIMANIPULASI';
+                        $qrBadgeClass = 'danger';
+                        $qrIsTampered = true;
+                        $qrPesan = "Dokumen memiliki kode QR resmi [{$naskah->nomor_dokumen}], namun terbukti telah dibuka dan dimanipulasi dengan software editor pihak ketiga.";
+                    } else {
+                        $hasValidQr = true;
+                        $qrStatus = 'valid_terdaftar';
+                        $qrStatusLabel = 'ASLI & SAH TERDAFTAR SULTAN BANTEN';
+                        $qrBadgeClass = 'success';
+                        $qrIsTampered = false;
+                        $qrPesan = "Dokumen terdaftar sah dan resmi di database Sultan Banten [{$naskah->nomor_dokumen}]. Struktur berkas bersih tanpa indikasi pemotongan atau modifikasi pihak ketiga.";
                     }
                 }
 
-                if ($isMasterAvailable && $isIdentical) {
-                    $qrVerificationResults[] = [
-                        'kode' => $code,
-                        'status' => 'otentik_asli_sultan',
-                        'status_label' => 'ASLI 100% IDENTIK DENGAN MASTER SULTAN',
-                        'badge_class' => 'success',
-                        'is_tampered' => false,
-                        'naskah_id' => $naskah->id,
-                        'jenis_dokumen' => $naskah->jenis_dokumen,
-                        'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
-                        'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
-                        'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
-                        'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
-                        'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
-                        'is_locked' => $naskah->isLocked(),
-                        'master_hash' => $masterHash,
-                        'uploaded_hash' => $uploadedHash,
-                        'master_page_count' => $masterPageCount,
-                        'master_size_formatted' => $masterSizeFormatted,
-                        'pesan' => 'TERVERIFIKASI 100% ASLI & IDENTIK DENGAN MASTER SULTAN BANTEN. Hash SHA-256 berkas yang diunggah cocok persis (bit-for-bit) dengan master arsip digital server. Berkas ini murni langsung dari unduhan resmi tanpa modifikasi apa pun.',
-                    ];
-                } elseif ($hasTamperedQr) {
-                    $qrVerificationResults[] = [
-                        'kode' => $code,
-                        'status' => 'qr_dicatut_berkas_dimanipulasi',
-                        'status_label' => 'TERINDIKASI PEMALSUAN / QR DICATUT',
-                        'badge_class' => 'danger',
-                        'is_tampered' => true,
-                        'naskah_id' => $naskah->id,
-                        'jenis_dokumen' => $naskah->jenis_dokumen,
-                        'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
-                        'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
-                        'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
-                        'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
-                        'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
-                        'is_locked' => $naskah->isLocked(),
-                        'master_hash' => $masterHash,
-                        'uploaded_hash' => $uploadedHash,
-                        'master_page_count' => $masterPageCount,
-                        'master_size_formatted' => $masterSizeFormatted,
-                        'diff_details' => $diffDetails,
-                        'pesan' => "PERINGATAN KRITIS: Kode QR '{$code}' memang terdaftar di database untuk naskah [{$naskah->nomor_dokumen}], TETAPI isi berkas fisik yang diunggah TIDAK IDENTIK DENGAN MASTER RESMI SULTAN BANTEN! Dokumen ini terindikasi kuat telah diedit setelah diunduh, atau kode QR resmi dicatut/ditempelkan ke naskah lain yang telah dimanipulasi.",
-                    ];
-                } else {
-                    $qrVerificationResults[] = [
-                        'kode' => $code,
-                        'status' => 'valid_terdaftar',
-                        'status_label' => 'Terdaftar Resmi di Database',
-                        'badge_class' => 'info',
-                        'is_tampered' => false,
-                        'naskah_id' => $naskah->id,
-                        'jenis_dokumen' => $naskah->jenis_dokumen,
-                        'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
-                        'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
-                        'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
-                        'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
-                        'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
-                        'is_locked' => $naskah->isLocked(),
-                        'pesan' => 'Kode terdaftar resmi di database Sultan Banten. Silakan bandingkan rincian nomor surat, tanggal, dan nama satker pada kertas fisik dengan data resmi ini.',
-                    ];
-                }
+                $qrVerificationResults[] = [
+                    'kode' => $code,
+                    'status' => $qrStatus,
+                    'status_label' => $qrStatusLabel,
+                    'badge_class' => $qrBadgeClass,
+                    'is_tampered' => $qrIsTampered,
+                    'naskah_id' => $naskah->id,
+                    'jenis_dokumen' => $naskah->jenis_dokumen,
+                    'nomor_dokumen' => $naskah->nomor_dokumen ?: '(Belum bernomor)',
+                    'satker_upt' => $naskah->sidangTpp?->upt?->nama_upt ?? 'Kantor Wilayah Banten',
+                    'tanggal_dokumen' => $naskah->tanggal_dokumen ? $naskah->tanggal_dokumen->format('d-m-Y') : '-',
+                    'penandatangan' => $naskah->penandatangan_nama ?: 'Pimpinan Kanwil',
+                    'signed_at' => $naskah->signed_at ? $naskah->signed_at->format('d-m-Y H:i:s') : '-',
+                    'is_locked' => $naskah->isLocked(),
+                    'master_hash' => $masterHash,
+                    'uploaded_hash' => $uploadedHash,
+                    'master_page_count' => $masterPageCount,
+                    'master_size_formatted' => $masterSizeFormatted,
+                    'diff_details' => $diffDetails,
+                    'pesan' => $qrPesan,
+                ];
             } else {
                 $hasInvalidQr = true;
                 $qrVerificationResults[] = [
@@ -275,25 +357,12 @@ class PdfForensicService
                     'status_label' => 'QR Palsu / Tidak Terdaftar',
                     'badge_class' => 'danger',
                     'is_tampered' => true,
-                    'pesan' => 'KODE TIDAK DITEMUKAN PADA DATABASE RESMI SULTAN BANTEN! Dokumen ini terindikasi kuat menggunakan kode QR palsu atau rekayasa mandiri.',
+                    'pesan' => "KODE VERIFIKASI '{$code}' TIDAK DITEMUKAN PADA DATABASE RESMI SULTAN BANTEN SERVER INI! Dokumen ini terindikasi kuat menggunakan kode QR palsu atau rekayasa mandiri.",
                 ];
             }
         }
 
-        // 8. Ekstraksi Berkas Lampiran Tertanam (Embedded Files / File Attachments)
-        $embeddedFiles = self::extractEmbeddedFiles($raw, $decompressedStreams);
-
-        // 9. Deteksi Riwayat Pemotongan / Penghapusan Halaman & Lampiran (Forensik Delta Inkremental & Slack Space)
-        $deletionAnalysis = self::detectDeletedContent($raw, $decompressedStreams, $eofCount, $embeddedFiles);
-
-        // 10. Ekstraksi Teks Sampel untuk Analisis AI
-        $sampleText = self::extractTextSample($raw, $decompressedStreams);
-        $isScanned = ($imageCount >= $pageCount && mb_strlen($sampleText) < 100);
-        $docTypeHint = $isScanned
-            ? "Berkas Hasil Pemindaian (Scan Fisik - {$pageCount} Halaman, {$imageCount} Objek Citra)"
-            : "Dokumen Digital Asli (Native PDF Teks - {$pageCount} Halaman)";
-
-        // 11. Analisis Indikator Manipulasi (Heuristic Rules)
+        // 13. Analisis Indikator Manipulasi (Heuristic Rules)
         $indicators = [];
         $heuristicScore = 100; // Asumsi awal 100% otentik
 
@@ -308,14 +377,6 @@ class PdfForensicService
         }
 
         // Cek software mencurigakan
-        $combinedSoftware = strtolower(($creator ?? '').' '.($producer ?? '').' '.implode(' ', $xmpData['software_agents'] ?? []));
-        $detectedSuspicious = [];
-        foreach (self::$suspiciousSoftware as $keyword => $desc) {
-            if (str_contains($combinedSoftware, $keyword)) {
-                $detectedSuspicious[] = $desc;
-            }
-        }
-
         if (! empty($detectedSuspicious)) {
             $heuristicScore -= 45;
             $indicators[] = [
@@ -356,7 +417,6 @@ class PdfForensicService
         }
 
         // Cek inkremental revisi (%%EOF)
-        // Note: 1 = struktur tunggal, 2 = 1 revisi inkremental (sangat lazim pada berkas tertanda tangan/bercap)
         if ($eofCount > 3) {
             $heuristicScore -= 10;
             $indicators[] = [
@@ -368,12 +428,28 @@ class PdfForensicService
 
         // Cek QR Code tidak terdaftar / QR Dicatut
         if ($hasTamperedQr) {
-            $heuristicScore -= 80;
-            $indicators[] = [
-                'kategori' => 'danger',
-                'judul' => 'Pemalsuan Dokumen: Kode QR Resmi Sultan Dicatut / Berkas Telah Dimanipulasi',
-                'deskripsi' => 'Kode QR tercatat di database resmi Sultan Banten, namun integritas fisik berkas yang diunggah TIDAK IDENTIK dengan master arsip digital server. Terbukti berkas telah diedit setelah diunduh atau kode QR resmi dicatut pada naskah yang dimanipulasi.',
-            ];
+            $isGrafted = false;
+            foreach ($qrVerificationResults as $qRes) {
+                if ($qRes['status'] === 'qr_dicatut_berkas_dimanipulasi') {
+                    $isGrafted = true;
+                    break;
+                }
+            }
+            if ($isGrafted) {
+                $heuristicScore -= 85;
+                $indicators[] = [
+                    'kategori' => 'danger',
+                    'judul' => 'Pemalsuan Dokumen: Kode QR Resmi Sultan Dicatut pada Berkas Palsu',
+                    'deskripsi' => 'Kode QR tercatat di database resmi Sultan Banten, namun integritas fisik dan isi berkas yang diunggah TIDAK IDENTIK dan berbeda total dengan master arsip digital server. Kode QR resmi dicatut pada dokumen rekayasa lain.',
+                ];
+            } else {
+                $heuristicScore -= 75;
+                $indicators[] = [
+                    'kategori' => 'danger',
+                    'judul' => 'Dokumen Resmi Sultan Telah Diedit Ulang / Halaman Dipotong',
+                    'deskripsi' => 'Kode QR tercatat di database resmi Sultan Banten, namun berkas fisik TIDAK IDENTIK dan terbukti telah dibuka, disunting ulang, atau dipotong halamannya menggunakan software pihak ketiga.',
+                ];
+            }
         } elseif ($hasInvalidQr) {
             $heuristicScore -= 65;
             $indicators[] = [
@@ -389,9 +465,9 @@ class PdfForensicService
             ];
         } elseif ($hasValidQr) {
             $indicators[] = [
-                'kategori' => 'info',
-                'judul' => 'Kode Verifikasi QR Terdaftar Resmi',
-                'deskripsi' => 'Naskah memuat kode tanda tangan resmi Sultan Banten yang tercatat di database instansi.',
+                'kategori' => 'success',
+                'judul' => 'Dokumen Sah Terdaftar Resmi di Sultan Banten',
+                'deskripsi' => 'Naskah memuat kode verifikasi sah yang tercatat di database instansi dengan struktur dokumen wajar dan bersih.',
             ];
         } else {
             $indicators[] = [
@@ -403,7 +479,7 @@ class PdfForensicService
 
         $heuristicScore = max(5, min(100, $heuristicScore));
 
-        // 10. Panggil Analisis AI Gemini
+        // 14. Panggil Analisis AI Gemini
         $aiAnalysis = GeminiAiService::analyzeForensicPdf([
             'file_name' => $fileName,
             'file_size' => self::formatBytes($fileSize),
@@ -421,6 +497,7 @@ class PdfForensicService
             'detected_qr_codes' => $detectedCodes,
             'qr_verification_results' => $qrVerificationResults,
             'deleted_content' => $deletionAnalysis,
+            'editor_profile' => $editorProfile,
             'fonts_used' => array_slice($fontsUsed, 0, 10),
             'sample_text' => substr($sampleText, 0, 3000),
         ]);
@@ -453,6 +530,7 @@ class PdfForensicService
                 'raw_mod' => $modDateRaw,
             ],
             'xmp' => $xmpData,
+            'editor_profile' => $editorProfile,
             'fonts' => $fontsUsed,
             'qr_analysis' => [
                 'detected_codes' => $detectedCodes,
@@ -513,6 +591,7 @@ class PdfForensicService
             'metadata_date' => null,
             'software_agents' => [],
             'history' => [],
+            'history_events' => [],
         ];
 
         if (preg_match('/<x:xmpmeta.*?<\/x:xmpmeta>/s', $raw, $xmpMatch)) {
@@ -548,9 +627,203 @@ class PdfForensicService
             if (preg_match_all('/<stEvt:action>(.*?)<\/stEvt:action>/s', $xmlString, $actMatches)) {
                 $result['history'] = array_map('trim', $actMatches[1]);
             }
+
+            // Ekstrak struktur detail riwayat xmpMM:History
+            if (preg_match('/<xmpMM:History>[\s\S]*?<rdf:Seq>([\s\S]*?)<\/rdf:Seq>[\s\S]*?<\/xmpMM:History>/i', $xmlString, $seqMatch)) {
+                if (preg_match_all('/<rdf:li[\s\S]*?<\/rdf:li>/i', $seqMatch[1], $liMatches)) {
+                    foreach ($liMatches[0] as $li) {
+                        $action = null;
+                        $agent = null;
+                        $when = null;
+                        $changed = null;
+
+                        if (preg_match('/<stEvt:action>(.*?)<\/stEvt:action>/i', $li, $m) || preg_match('/stEvt:action="([^"]+)"/i', $li, $m)) {
+                            $action = trim(strip_tags($m[1]));
+                        }
+                        if (preg_match('/<stEvt:softwareAgent>(.*?)<\/stEvt:softwareAgent>/i', $li, $m) || preg_match('/stEvt:softwareAgent="([^"]+)"/i', $li, $m)) {
+                            $agent = trim(strip_tags($m[1]));
+                        }
+                        if (preg_match('/<stEvt:when>(.*?)<\/stEvt:when>/i', $li, $m) || preg_match('/stEvt:when="([^"]+)"/i', $li, $m)) {
+                            $when = trim(strip_tags($m[1]));
+                        }
+                        if (preg_match('/<stEvt:changed>(.*?)<\/stEvt:changed>/i', $li, $m) || preg_match('/stEvt:changed="([^"]+)"/i', $li, $m)) {
+                            $changed = trim(strip_tags($m[1]));
+                        }
+
+                        if ($action || $agent || $when) {
+                            $result['history_events'][] = [
+                                'action' => $action ?: 'saved',
+                                'software' => $agent ?: 'PDF Tool',
+                                'when' => $when,
+                                'changed' => $changed,
+                            ];
+                        }
+                    }
+                }
+            }
         }
 
         return $result;
+    }
+
+    /**
+     * Analisis jejak software editor (Nitro Pro, Adobe Acrobat, PDF24, dll.) dan kronologi revisi dokumen.
+     *
+     * @param  array<string, string>  $infoData
+     * @param  array<string, mixed>  $xmpData
+     * @return array<string, mixed>
+     */
+    protected static function analyzeEditorProfile(
+        string $raw,
+        array $infoData,
+        array $xmpData,
+        int $eofCount,
+        ?string $creationDate,
+        ?string $modDate
+    ): array {
+        $creator = $infoData['Creator'] ?? $xmpData['creator_tool'] ?? '';
+        $producer = $infoData['Producer'] ?? $xmpData['producer'] ?? '';
+        $agents = $xmpData['software_agents'] ?? [];
+        $combined = strtolower($creator.' '.$producer.' '.implode(' ', $agents));
+
+        $detectedName = 'Tidak Terdeteksi (Mesin Dokumen Standar)';
+        $family = 'standard';
+        $dangerLevel = 'safe';
+        $badgeClass = 'secondary';
+        $description = 'Dokumen diproduksi oleh software atau pemindai standar tanpa jejak editor mencurigakan.';
+        $markersFound = [];
+
+        if (str_contains($combined, 'nitro')) {
+            $family = 'nitro';
+            $dangerLevel = 'danger';
+            $badgeClass = 'danger';
+            if (preg_match('/Nitro Pro\s*([0-9\.]+)/i', $combined, $m)) {
+                $detectedName = "Nitro Pro {$m[1]}";
+            } else {
+                $detectedName = 'Nitro Pro PDF Editor';
+            }
+            $description = "Dokumen ini terbukti telah dibuka, disunting, atau disimpan ulang menggunakan aplikasi Nitro Pro PDF Editor ({$detectedName}). Perangkat lunak ini lazim digunakan untuk menghapus/menyisipkan lembaran halaman secara manual.";
+            $markersFound[] = 'Nitro PDF Software Signature';
+        } elseif (preg_match('/Acrobat Pro|Adobe Acrobat|Adobe PDF Library|Acrobat Distiller/i', $combined)) {
+            $family = 'adobe';
+            $dangerLevel = 'danger';
+            $badgeClass = 'danger';
+            if (preg_match('/Adobe Acrobat(?: Pro)?\s*([0-9A-Za-z\.]+)/i', $combined, $m)) {
+                $detectedName = "Adobe Acrobat {$m[1]}";
+            } else {
+                $detectedName = 'Adobe Acrobat Pro / DC';
+            }
+            $description = "Dokumen ini disunting menggunakan Adobe Acrobat Pro ({$detectedName}), yang memiliki kemampuan manipulasi halaman dan konten dokumen.";
+            $markersFound[] = 'Adobe Acrobat / PDF Library';
+        } elseif (preg_match('/PDF24|pdf24\.org/i', $combined)) {
+            $family = 'pdf24';
+            $dangerLevel = 'danger';
+            $badgeClass = 'danger';
+            $detectedName = 'PDF24 Creator / Tools';
+            $description = 'Dokumen ini diproses menggunakan aplikasi PDF24 Creator/Tools. Software ini sering digunakan untuk memotong (split), menggabungkan, atau menghapus halaman PDF.';
+            $markersFound[] = 'PDF24 Tools Marker';
+        } elseif (str_contains($combined, 'foxit')) {
+            $family = 'foxit';
+            $dangerLevel = 'danger';
+            $badgeClass = 'danger';
+            $detectedName = 'Foxit PDF Editor';
+            $description = 'Dokumen disunting menggunakan Foxit PDF Editor.';
+            $markersFound[] = 'Foxit Software Signature';
+        } elseif (str_contains($combined, 'sejda')) {
+            $family = 'sejda';
+            $dangerLevel = 'danger';
+            $badgeClass = 'danger';
+            $detectedName = 'Sejda PDF Editor (Online)';
+            $description = 'Dokumen disunting menggunakan layanan web Sejda PDF Editor.';
+            $markersFound[] = 'Sejda PDF Service';
+        } elseif (str_contains($combined, 'canva') || str_contains($combined, 'photoshop') || str_contains($combined, 'corel')) {
+            $family = 'graphics';
+            $dangerLevel = 'danger';
+            $badgeClass = 'danger';
+            $detectedName = 'Software Desain Grafis (Canva / Photoshop / Corel)';
+            $description = 'Dokumen dibuat atau dimodifikasi menggunakan software pengolah grafis/gambar, sangat tidak lazim untuk surat dinas resmi.';
+            $markersFound[] = 'Graphic Design Software';
+        } elseif (str_contains($combined, 'skia') || str_contains($combined, 'pdfium')) {
+            $family = 'browser';
+            $dangerLevel = 'warning';
+            $badgeClass = 'warning';
+            $detectedName = 'Google Chrome / Skia PDF Engine';
+            $description = 'Dokumen ini dicetak ke PDF (Print to PDF) atau diekspor ulang melalui peramban web Chromium/Google Chrome.';
+            $markersFound[] = 'Chromium Skia Virtual Printer';
+        } elseif (str_contains($combined, 'tcpdf') || str_contains($combined, 'sultan') || str_contains($combined, 'fpdi')) {
+            $family = 'sultan_tcpdf';
+            $dangerLevel = 'safe';
+            $badgeClass = 'success';
+            $detectedName = 'Sistem Kedinasan Sultan Banten (TCPDF / FPDI Engine)';
+            $description = 'Dokumen diproduksi murni oleh mesin penomoran dan pembubuhan resmi Sultan Banten. Struktur naskah asli tanpa jejak software editor pihak ketiga.';
+            $markersFound[] = 'Sultan Banten Official Document Engine';
+        } elseif (str_contains($combined, 'word') || str_contains($combined, 'microsoft')) {
+            $family = 'word';
+            $dangerLevel = 'safe';
+            $badgeClass = 'primary';
+            $detectedName = 'Microsoft Word (Dokumen Kedinasan Standar)';
+            $description = 'Dokumen diproduksi oleh aplikasi perkantoran resmi Microsoft Word.';
+            $markersFound[] = 'Microsoft Office Word';
+        }
+
+        // Susun Timeline Riwayat Revisi
+        $timeline = [];
+        $events = $xmpData['history_events'] ?? [];
+
+        if (! empty($events)) {
+            foreach ($events as $idx => $ev) {
+                $timeline[] = [
+                    'step' => $idx + 1,
+                    'action' => ucfirst($ev['action'] ?? 'Disimpan'),
+                    'software' => $ev['software'] ?? 'PDF Tool',
+                    'when' => self::parsePdfDate($ev['when'] ?? '') ?: ($ev['when'] ?? '-'),
+                    'changed' => $ev['changed'] ?? 'Dokumen',
+                ];
+            }
+        } else {
+            // Sintesis dari metadata CreationDate & ModDate
+            $step = 1;
+            if ($creationDate) {
+                $timeline[] = [
+                    'step' => $step++,
+                    'action' => 'Pembuatan Awal Naskah',
+                    'software' => $creator ?: ($producer ?: 'Sistem Pembuat Dokumen'),
+                    'when' => $creationDate,
+                    'changed' => 'Struktur Berkas Baru',
+                ];
+            }
+            if ($modDate && $modDate !== $creationDate) {
+                $timeline[] = [
+                    'step' => $step++,
+                    'action' => 'Modifikasi / Simpan Ulang',
+                    'software' => ($family !== 'standard' ? $detectedName : ($producer ?: 'Software PDF')),
+                    'when' => $modDate,
+                    'changed' => 'Penyimpanan Ulang Konten Berkas',
+                ];
+            }
+            if ($eofCount > 1) {
+                $timeline[] = [
+                    'step' => $step++,
+                    'action' => 'Penyimpanan Inkremental',
+                    'software' => "Terdeteksi {$eofCount} Penanda Akhir Berkas (%%EOF)",
+                    'when' => 'Riwayat Biner',
+                    'changed' => "Dokumen pernah dibuka dan disimpan sebanyak {$eofCount} kali.",
+                ];
+            }
+        }
+
+        return [
+            'has_editor' => ($dangerLevel === 'danger'),
+            'detected' => ($family !== 'standard'),
+            'software_name' => $detectedName,
+            'software_family' => $family,
+            'danger_level' => $dangerLevel,
+            'badge_class' => $badgeClass,
+            'description' => $description,
+            'markers_found' => $markersFound,
+            'timeline' => $timeline,
+            'eof_count' => $eofCount,
+        ];
     }
 
     /**
@@ -776,15 +1049,14 @@ class PdfForensicService
 
         foreach ($embeddedFiles as $ef) {
             $fn = $ef['filename'] ?? '';
-            $isNusakambangan = (stripos($fn, 'nusakambangan') !== false || stripos($ef['text_sample'] ?? '', 'nusakambangan') !== false);
             $isDeleted = ($ef['status'] ?? '') === 'terhapus';
 
-            if ($isDeleted || $isNusakambangan) {
+            if ($isDeleted) {
                 $hasDeletion = true;
                 $deletedAttachments[] = $fn;
-                $evidence[] = "Terdeteksi berkas lampiran '{$fn}' ({$ef['size_formatted']}, status: {$ef['status_label']}) yang memuat data terkait usulan mutasi/Nusakambangan.";
+                $evidence[] = "Terdeteksi berkas lampiran '{$fn}' ({$ef['size_formatted']}, status: {$ef['status_label']}) yang telah dilepaskan/dihapus dari naskah.";
                 if (! empty($ef['text_sample'])) {
-                    $deletedTextSnippets[] = "Isi Berkas Lampiran '{$fn}': ".substr($ef['text_sample'], 0, 300);
+                    $deletedTextSnippets[] = "Isi Berkas Lampiran '{$fn}': ".substr($ef['text_sample'], 0, 500);
                 }
             }
         }
@@ -877,32 +1149,17 @@ class PdfForensicService
         }
 
         // 7. Analisis Administrasi Tata Naskah Dinas (Klausa 'Lampiran :' vs Fisik Halaman)
-        // Surat dinas resmi: "Lampiran : 1 (satu) Berkas" atau "Lampiran : 1 Lembar"
-        if ($activePageCount <= 2 && empty($embeddedFiles)) {
-            if (preg_match('/(?:Lampiran|Lamp\.)\s*:\s*([^\r\n]{2,35})/i', $activeVisibleText, $lampMatch)) {
-                $lampVal = trim($lampMatch[1]);
-                $lampLower = strtolower($lampVal);
-                if (! in_array($lampLower, ['-', '–', '—', 'nihil', 'tidak ada', 'kosong', '0']) && (str_contains($lampLower, 'berkas') || str_contains($lampLower, 'lembar') || str_contains($lampLower, 'gabung') || preg_match('/\b(?:1|2|3|4|5|satu|dua|tiga)\b/', $lampLower))) {
-                    $hasDeletion = true;
-                    $evidence[] = "Tata naskah dinas secara eksplisit menyatakan 'Lampiran: {$lampVal}', namun naskah fisik yang diunggah hanya memiliki {$activePageCount} lembar surat pengantar tanpa adanya lembar daftar lampiran.";
-                }
-            }
-
-            // Cek frasa rujukan lampiran di badan surat
-            if (preg_match('/(?:sebagaimana|pada)\s+(?:daftar\s+)?lampiran/i', $activeVisibleText) || preg_match('/daftar\s+nama\s+(?:terlampir|pada\s+lampiran)/i', $activeVisibleText) || preg_match('/rincian\s+(?:nama|jadwal)\s+(?:sebagaimana\s+)?terlampir/i', $activeVisibleText)) {
-                if (stripos($activeVisibleText, 'nama') === false && stripos($activeVisibleText, 'terlampir') !== false) {
-                    $hasDeletion = true;
-                    $evidence[] = "Badan surat secara tegas merujuk pada 'daftar lampiran', namun lembar rincian lampiran tersebut tidak disertakan di dalam berkas.";
-                }
-            }
-        }
+        // Catatan: Dalam tata naskah dinas Indonesia, surat pengantar lazim mencantumkan 'Lampiran: 1 (satu) Berkas'
+        // meskipun berkas lampirannya dipisahkan atau berupa fisik terpisah.
+        // Oleh karena itu, klausa ini TIDAK dijadikan bukti pemotongan biner ($hasDeletion = true) agar tidak
+        // menimbulkan alarm palsu pada surat dinas yang sah.
 
         return [
             'has_deletion' => $hasDeletion,
             'deleted_pages_count' => $deletedPagesCount,
             'deleted_attachments' => array_values(array_unique($deletedAttachments)),
             'evidence' => array_values(array_unique($evidence)),
-            'deleted_text_sample' => ! empty($deletedTextSnippets) ? implode("\n", array_slice($deletedTextSnippets, 0, 2)) : null,
+            'deleted_text_sample' => ! empty($deletedTextSnippets) ? implode("\n\n--- [REKONSTRUKSI TEKS / OBJEK TERHAPUS] ---\n\n", $deletedTextSnippets) : null,
             'active_pages_count' => $activePageCount,
             'active_text_preview' => substr($activeVisibleText, 0, 500),
         ];

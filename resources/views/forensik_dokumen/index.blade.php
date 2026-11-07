@@ -207,6 +207,35 @@
                             </div>
                         </div>
 
+                        <!-- KARTU 2: REKONSTRUKSI & TEKS HALAMAN YANG DIHAPUS (DIPULIHKAN DARI BINER PDF) -->
+                        <div class="card border-0 shadow-sm border-danger-subtle d-none mb-3" id="cardRecoveredContent">
+                            <div class="card-header bg-danger text-white py-2 px-3 d-flex align-items-center justify-content-between">
+                                <span class="fw-bold small" style="font-size: 12.5px;">
+                                    <i class="fas fa-trash-restore me-1.5"></i>Rekonstruksi &amp; Teks Halaman yang Dihapus (Dipulihkan dari Biner Berkas)
+                                </span>
+                                <span class="badge bg-white text-danger fw-bold" id="badgeRecoveredCount">Teks Berhasil Dipulihkan</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="alert alert-danger-subtle border border-danger-subtle py-2 px-2.5 mb-2.5 small" style="font-size: 11px;">
+                                    <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+                                    <b>Temuan Forensik Berkas:</b> Objek halaman berikut telah sengaja dihapus/dipotong dari naskah menggunakan software editor (seperti Nitro Pro / Acrobat / PDF24). Namun, isi teks biner aslinya berhasil diekstraksi dan dipulihkan secara utuh dari slack space berkas PDF.
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                    <span class="text-muted small fw-semibold" id="txtRecoveredStats" style="font-size: 11px;">Isi Teks Rekonstruksi:</span>
+                                    <div class="d-flex gap-1.5">
+                                        <button type="button" class="btn btn-outline-danger btn-xs py-1 px-2 fw-semibold" style="font-size: 11px;" onclick="copyRecoveredText()">
+                                            <i class="fas fa-copy me-1"></i>Salin Teks
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-xs py-1 px-2 fw-semibold" style="font-size: 11px;" onclick="downloadRecoveredText()">
+                                            <i class="fas fa-file-download me-1"></i>Unduh Berkas Teks (.txt)
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="font-monospace text-dark p-2.5 bg-light rounded border border-secondary-subtle" id="boxRecoveredText" style="font-size: 11.5px; max-height: 240px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; user-select: text;"></div>
+                                <small class="text-muted d-block mt-1.5" style="font-size: 10.5px;">*Teks di atas dapat Anda gunakan sebagai bukti otentik forensik mengenai lampiran atau narapidana yang sengaja dihilangkan.</small>
+                            </div>
+                        </div>
+
                         <!-- KARTU 2.5: BERKAS LAMPIRAN TERTANAM (EMBEDDED FILES & LAMPIRAN) -->
                         <div class="card border-0 shadow-sm" id="cardEmbeddedFiles">
                             <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
@@ -230,6 +259,28 @@
                             </div>
                             <div class="card-body p-3" id="boxQrResultsContainer">
                                 <!-- Konten QR diisi oleh JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- KARTU 3.5: INSPEKTUR RIWAYAT MODIFIKASI & SOFTWARE EDITOR (NITRO, ADOBE, PDF24) -->
+                        <div class="card border-0 shadow-sm" id="cardEditorInspector">
+                            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                                <span class="fw-bold text-dark small" style="font-size: 12px;">
+                                    <i class="fas fa-user-secret text-danger me-1.5"></i>Inspektur Riwayat Modifikasi &amp; Software Editor (Nitro, Adobe, PDF24)
+                                </span>
+                                <span class="badge bg-light text-secondary border" id="badgeEditorStatus">Mesin Dokumen</span>
+                            </div>
+                            <div class="card-body p-3 small">
+                                <div id="boxEditorProfileBanner" class="p-2.5 rounded border mb-2.5">
+                                    <!-- Banner diisi oleh JavaScript -->
+                                </div>
+
+                                <div class="fw-bold text-dark mb-2" style="font-size: 11.5px;">
+                                    <i class="fas fa-history text-primary me-1"></i>Kronologi Garis Waktu Modifikasi Berkas:
+                                </div>
+                                <div id="boxEditorTimeline" class="list-group list-group-flush border rounded mb-1">
+                                    <!-- Timeline diisi oleh JavaScript -->
+                                </div>
                             </div>
                         </div>
 
@@ -489,24 +540,27 @@
                 boxDel.classList.remove('d-none');
                 boxDel.classList.add('d-flex');
                 let html = (del.evidence || []).map(e => `<div>• ${e}</div>`).join('');
-                if (del.deleted_text_sample) {
-                    html += `
-                        <div class="mt-2.5 p-2.5 bg-white rounded border border-danger-subtle">
-                            <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                <span class="fw-bold text-danger" style="font-size: 11.5px;">
-                                    <i class="fas fa-trash-restore text-danger me-1"></i>Isi Teks Halaman yang Dihapus (Dipulihkan dari Biner Berkas):
-                                </span>
-                                <span class="badge bg-danger text-white" style="font-size: 10px;">Teks Berhasil Dipulihkan</span>
-                            </div>
-                            <div class="font-monospace text-dark p-2 bg-light rounded border" style="font-size: 11px; max-height: 160px; overflow-y: auto; white-space: pre-wrap; line-height: 1.45;">${del.deleted_text_sample}</div>
-                            <small class="text-muted d-block mt-1" style="font-size: 10px;">*Teks di atas berhasil diekstraksi dari objek halaman yatim / riwayat revisi biner berkas yang dihapus pengguna.</small>
-                        </div>
-                    `;
-                }
                 txtDel.innerHTML = html;
             } else {
                 boxDel.classList.add('d-none');
                 boxDel.classList.remove('d-flex');
+            }
+        }
+
+        // Tampilkan Kartu Rekonstruksi Halaman Terhapus
+        const cardRec = document.getElementById('cardRecoveredContent');
+        const boxRecText = document.getElementById('boxRecoveredText');
+        const txtRecStats = document.getElementById('txtRecoveredStats');
+        if (cardRec && boxRecText) {
+            if (del.has_deletion && del.deleted_text_sample) {
+                cardRec.classList.remove('d-none');
+                boxRecText.innerText = del.deleted_text_sample;
+                const len = del.deleted_text_sample.length;
+                const words = del.deleted_text_sample.trim().split(/\s+/).length;
+                if (txtRecStats) txtRecStats.innerText = `Isi Teks Rekonstruksi (${len} karakter, ~${words} kata):`;
+            } else {
+                cardRec.classList.add('d-none');
+                boxRecText.innerText = '';
             }
         }
 
@@ -605,6 +659,32 @@
                             </div>
                         </div>
                     `;
+                } else if (qr.status === 'dokumen_sultan_diedit_kembali') {
+                    let diffList = (qr.diff_details || []).map(d => `<li>${d}</li>`).join('');
+                    html += `
+                        <div class="p-3 rounded bg-danger-subtle border border-danger mb-2.5 shadow-xs">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-danger text-white py-1.5 px-2.5" style="font-size: 11px;">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>PERINGATAN: DOKUMEN RESMI SULTAN TELAH DIEDIT / DIMANIPULASI
+                                </span>
+                                <code class="fw-bold text-danger fs-6">${qr.kode}</code>
+                            </div>
+                            <div class="p-2.5 bg-white rounded border border-danger mb-2 text-danger small">
+                                <div class="fw-bold mb-1"><i class="fas fa-times-circle me-1"></i>Temuan Manipulasi Dokumen Resmi:</div>
+                                <div class="mb-1.5" style="font-size: 11px;">${qr.pesan}</div>
+                                ${diffList ? `<ul class="mb-0 ps-3 font-monospace text-dark" style="font-size: 10.5px;">${diffList}</ul>` : ''}
+                            </div>
+                            <div class="row g-2 small text-dark">
+                                <div class="col-md-6"><b>Satker UPT Terdaftar:</b> ${qr.satker_upt}</div>
+                                <div class="col-md-6"><b>Jenis Naskah Asli:</b> ${qr.jenis_dokumen}</div>
+                                <div class="col-md-6"><b>No. Dokumen Asli:</b> ${qr.nomor_dokumen}</div>
+                                <div class="col-md-6"><b>Waktu Pengesahan Asli:</b> ${qr.signed_at}</div>
+                            </div>
+                            <div class="alert alert-danger py-1.5 px-2 mt-2 mb-0 small" style="font-size: 11px;">
+                                <i class="fas fa-ban me-1"></i><b>REKOMENDASI:</b> TOLAK DOKUMEN INI! Naskah ini memang memiliki cap QR resmi, namun telah disunting ulang atau halamannya dipotong setelah diterbitkan oleh Kanwil.
+                            </div>
+                        </div>
+                    `;
                 } else if (qr.status === 'qr_dicatut_berkas_dimanipulasi') {
                     let diffList = (qr.diff_details || []).map(d => `<li>${d}</li>`).join('');
                     html += `
@@ -632,21 +712,24 @@
                         </div>
                     `;
                 } else if (qr.status === 'valid_terdaftar') {
+                    let diffList = (qr.diff_details || []).map(d => `<li>${d}</li>`).join('');
                     html += `
-                        <div class="p-3 rounded bg-info-subtle border border-info-subtle mb-2">
+                        <div class="p-3 rounded bg-success-subtle border border-success-subtle mb-2.5 shadow-xs">
                             <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                <span class="badge bg-info text-dark"><i class="fas fa-check-circle me-1"></i>KODE QR TERDAFTAR RESMI</span>
-                                <code class="fw-bold text-primary fs-6">${qr.kode}</code>
+                                <span class="badge bg-success text-white py-1.5 px-2.5" style="font-size: 11px;">
+                                    <i class="fas fa-check-circle me-1"></i>ASLI &amp; SAH TERDAFTAR DI DATABASE SULTAN BANTEN
+                                </span>
+                                <code class="fw-bold text-success fs-6">${qr.kode}</code>
                             </div>
-                            <div class="row g-2 small text-dark mt-1">
+                            <div class="p-2 bg-white rounded border mb-2 text-success small" style="font-size: 11px;">
+                                <i class="fas fa-check-double me-1"></i>${qr.pesan}
+                                ${diffList ? `<ul class="mb-0 ps-3 mt-1 font-monospace text-secondary" style="font-size: 10px;">${diffList}</ul>` : ''}
+                            </div>
+                            <div class="row g-2 small text-dark">
                                 <div class="col-md-6"><b>Satker UPT:</b> ${qr.satker_upt}</div>
                                 <div class="col-md-6"><b>Jenis Naskah:</b> ${qr.jenis_dokumen}</div>
                                 <div class="col-md-6"><b>No. Dokumen:</b> ${qr.nomor_dokumen}</div>
                                 <div class="col-md-6"><b>Waktu Pengesahan:</b> ${qr.signed_at}</div>
-                            </div>
-                            <div class="alert alert-warning py-1.5 px-2 mt-2 mb-0 small" style="font-size: 11px;">
-                                <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                                <b>Catatan:</b> Master berkas fisik belum diarsipkan pada server lokal ini. Silakan bandingkan nomor surat, tanggal, dan nama satker pada kertas fisik dengan rincian di atas.
                             </div>
                         </div>
                     `;
@@ -665,6 +748,61 @@
                 }
             });
             qrContainer.innerHTML = html;
+        }
+
+        // 3.5. Inspektur Editor Profile & Timeline
+        const ed = data.editor_profile || {};
+        const badgeEd = document.getElementById('badgeEditorStatus');
+        const boxEdBanner = document.getElementById('boxEditorProfileBanner');
+        const boxEdTimeline = document.getElementById('boxEditorTimeline');
+
+        if (badgeEd) {
+            badgeEd.className = `badge bg-${ed.badge_class || 'secondary'}-subtle text-${ed.badge_class || 'secondary'} border border-${ed.badge_class || 'secondary'}-subtle`;
+            badgeEd.innerText = ed.software_name || 'Standar';
+        }
+
+        if (boxEdBanner) {
+            const isDan = ed.danger_level === 'danger';
+            const isWarn = ed.danger_level === 'warning';
+            const bgClass = isDan ? 'bg-danger-subtle border-danger text-danger' : (isWarn ? 'bg-warning-subtle border-warning text-warning-emphasis' : 'bg-success-subtle border-success text-success');
+            const icon = isDan ? 'fa-exclamation-triangle' : (isWarn ? 'fa-info-circle' : 'fa-check-circle');
+            boxEdBanner.className = `p-2.5 rounded border mb-2.5 ${bgClass}`;
+            boxEdBanner.innerHTML = `
+                <div class="fw-bold d-flex align-items-center gap-1.5 mb-1" style="font-size: 11.5px;">
+                    <i class="fas ${icon}"></i>
+                    <span>Analisis Perangkat Lunak: <b>${ed.software_name || 'Standar'}</b></span>
+                </div>
+                <div class="small" style="font-size: 11px; line-height: 1.45;">
+                    ${ed.description || '-'}
+                </div>
+            `;
+        }
+
+        if (boxEdTimeline) {
+            const timeline = ed.timeline || [];
+            if (timeline.length === 0) {
+                boxEdTimeline.innerHTML = '<div class="list-group-item text-muted small py-2">Tidak ditemukan rekaman timeline revisi pada berkas.</div>';
+            } else {
+                let tHtml = '';
+                timeline.forEach(t => {
+                    tHtml += `
+                        <div class="list-group-item py-2 px-2.5 d-flex align-items-start gap-2.5">
+                            <span class="badge bg-secondary rounded-pill mt-0.5" style="font-size: 10px;">#${t.step}</span>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-dark" style="font-size: 11.5px;">${t.action}</span>
+                                    <span class="text-muted font-monospace" style="font-size: 10px;">${t.when}</span>
+                                </div>
+                                <div class="text-secondary small mt-0.5" style="font-size: 11px;">
+                                    <b>Software:</b> <span class="text-primary font-monospace">${t.software}</span>
+                                    ${t.changed ? ` &bull; <b>Bagian:</b> <code>${t.changed}</code>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                boxEdTimeline.innerHTML = tHtml;
+            }
         }
 
         // 4. Metadata Teknis
@@ -686,6 +824,37 @@
             : '(Tidak ditemukan riwayat agen XMP)';
         document.getElementById('metaXmpAgents').innerText = xmpAgents;
         document.getElementById('metaSha256').innerText = fileInfo.sha256 || '-';
+    }
+
+    // Salin Teks Pemulihan ke Clipboard
+    function copyRecoveredText() {
+        const box = document.getElementById('boxRecoveredText');
+        if (!box || !box.innerText) return;
+        navigator.clipboard.writeText(box.innerText).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Teks Berhasil Disalin!',
+                text: 'Teks halaman yang dipulihkan telah disalin ke clipboard Anda.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        });
+    }
+
+    // Unduh Teks Pemulihan sebagai file .txt
+    function downloadRecoveredText() {
+        const box = document.getElementById('boxRecoveredText');
+        if (!box || !box.innerText) return;
+        const blob = new Blob([box.innerText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pemulihan_halaman_terhapus_forensik.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
     }
 </script>
 @endsection

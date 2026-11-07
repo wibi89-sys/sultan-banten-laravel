@@ -477,4 +477,132 @@ class PdfForensicTest extends TestCase
         $naskah->delete();
         $sidang->delete();
     }
+
+    public function test_forensic_detects_authentic_sultan_document_as_valid_when_master_file_not_on_disk(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+
+        $tcpdf = new \TCPDF;
+        $tcpdf->SetCreator('Sultan Banten Official Document Engine');
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, 'Surat Keputusan Resmi Sultan Banten. Kode: SB-VALIDNODISK01');
+        $testPdf = storage_path('app/test_valid_no_disk.pdf');
+        $tcpdf->Output($testPdf, 'F');
+
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-NODISK-'.uniqid(),
+            'tanggal_surat' => now(),
+            'tanggal_sidang' => now(),
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Agenda Test',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+        ]);
+
+        $naskah = TppNaskahKanwil::create([
+            'sidang_tpp_id' => $sidang->id,
+            'kode_verifikasi' => 'SB-VALIDNODISK01',
+            'jenis_dokumen' => 'surat_pengantar',
+            'nomor_dokumen' => 'W12.PAS.NODISK-PK.01',
+            'tanggal_dokumen' => now(),
+            'penandatangan_nama' => 'Kepala Kanwil Banten',
+            'file_signed' => 'non_existent_file_on_disk.pdf',
+            'status' => 'signed',
+            'is_locked' => true,
+        ]);
+
+        $result = PdfForensicService::inspect($testPdf);
+
+        $this->assertIsArray($result);
+        $this->assertFalse($result['qr_analysis']['has_tampered']);
+        $this->assertFalse($result['qr_analysis']['has_invalid']);
+        $this->assertEquals('valid_terdaftar', $result['qr_analysis']['results'][0]['status']);
+        $this->assertGreaterThanOrEqual(90, $result['heuristic_score']);
+
+        @unlink($testPdf);
+        $naskah->delete();
+        $sidang->delete();
+    }
+
+    public function test_forensic_detects_sultan_document_tampered_via_nitro_pro_and_page_deletion(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+
+        // Master 2 halaman
+        $tcpdfMaster = new \TCPDF;
+        $tcpdfMaster->AddPage();
+        $tcpdfMaster->Write(0, 'Halaman 1: Surat Pengantar. Kode: SB-NITROTAMPER01');
+        $tcpdfMaster->AddPage();
+        $tcpdfMaster->Write(0, 'Halaman 2: Lampiran Rahasia Mutasi WBP');
+        $masterPdf = storage_path('app/master_nitro_test.pdf');
+        $tcpdfMaster->Output($masterPdf, 'F');
+
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-NITRO-'.uniqid(),
+            'tanggal_surat' => now(),
+            'tanggal_sidang' => now(),
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Agenda Test',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+        ]);
+
+        $naskah = TppNaskahKanwil::create([
+            'sidang_tpp_id' => $sidang->id,
+            'kode_verifikasi' => 'SB-NITROTAMPER01',
+            'jenis_dokumen' => 'surat_pengantar',
+            'nomor_dokumen' => 'W12.PAS.NITRO-PK.01',
+            'tanggal_dokumen' => now(),
+            'penandatangan_nama' => 'Kepala Kanwil Banten',
+            'file_signed' => 'master_nitro_test.pdf',
+            'status' => 'signed',
+            'is_locked' => true,
+        ]);
+
+        // Berkas editan Nitro Pro (hanya 1 halaman tersisa, Creator Nitro Pro)
+        $tcpdfEdited = new \TCPDF;
+        $tcpdfEdited->SetCreator('Nitro Pro 13.70.4.50');
+        $tcpdfEdited->AddPage();
+        $tcpdfEdited->Write(0, 'Halaman 1: Surat Pengantar. Kode: SB-NITROTAMPER01');
+        $tamperedPdf = storage_path('app/tampered_nitro.pdf');
+        $tcpdfEdited->Output($tamperedPdf, 'F');
+
+        $result = PdfForensicService::inspect($tamperedPdf);
+
+        $this->assertIsArray($result);
+        $this->assertTrue($result['qr_analysis']['has_tampered']);
+        $this->assertEquals('dokumen_sultan_diedit_kembali', $result['qr_analysis']['results'][0]['status']);
+        $this->assertArrayHasKey('editor_profile', $result);
+        $this->assertEquals('nitro', $result['editor_profile']['software_family']);
+        $this->assertLessThanOrEqual(30, $result['heuristic_score']);
+
+        @unlink($masterPdf);
+        @unlink($tamperedPdf);
+        $naskah->delete();
+        $sidang->delete();
+    }
+
+    public function test_forensic_does_not_falsely_flag_single_page_letter_with_administrative_lampiran_clause(): void
+    {
+        require_once app_path('Libraries/tcpdf/tcpdf.php');
+
+        $tcpdf = new \TCPDF;
+        $tcpdf->AddPage();
+        $tcpdf->Write(0, "KEMENTERIAN HUKUM DAN HAM\nNomor: W12.PAS-123\nLampiran: 1 (satu) Berkas\nPerihal: Usulan sebagaimana terlampir.");
+        $testPdf = storage_path('app/test_single_page_lampiran.pdf');
+        $tcpdf->Output($testPdf, 'F');
+
+        $result = PdfForensicService::inspect($testPdf);
+
+        $this->assertIsArray($result);
+        $this->assertFalse($result['deleted_content']['has_deletion']);
+        $this->assertNull($result['deleted_content']['deleted_text_sample']);
+        $this->assertGreaterThanOrEqual(90, $result['heuristic_score']);
+
+        @unlink($testPdf);
+    }
 }
