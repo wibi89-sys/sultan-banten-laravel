@@ -1076,9 +1076,9 @@ class TelramCalculatorService
 
                 // Format besaran remisi
                 if ($eligible) {
-                    $besaranHtml = '<b style="color: #1e40af; font-size: 7.8pt;">'.$evBesaran.'</b>';
+                    $besaranHtml = '<b style="color: #1e40af; font-size: 8.5pt;">'.$evBesaran.'</b>';
                 } else {
-                    $besaranHtml = '<span style="color: #e11d48; font-weight: bold; font-size: 7.5pt;">0 Hari</span><br><span style="color: #9f1239; font-size: 6.5pt;">(Belum 6 Bln)</span>';
+                    $besaranHtml = '<span style="color: #e11d48; font-weight: bold; font-size: 8pt;">0 Hari</span><br><span style="color: #9f1239; font-size: 6.8pt;">(Belum 6 Bln)</span>';
                 }
 
                 // Format Subtitle Tahap Remisi
@@ -1089,23 +1089,23 @@ class TelramCalculatorService
                         'RT' => '#047857',
                         default => '#0284c7',
                     };
-                    $tahapBadge = '<br><span style="font-size: 6.8pt; color: '.$badgeColor.'; font-weight: bold;">[Tahap: '.$tahap.']</span>';
+                    $tahapBadge = '<br><span style="font-size: 7.2pt; color: '.$badgeColor.'; font-weight: bold;">[Tahap: '.$tahap.']</span>';
                 }
 
                 $ledgerRowsHtml .= <<<ROW
                 <tr bgcolor="{$bgColor}">
-                    <td width="4%" align="center" style="font-weight: bold; border: 0.5px solid #cbd5e1; padding: 4px 2px; color: #475569; font-size: 7.5pt;">{$no}</td>
-                    <td width="23%" style="border: 0.5px solid #cbd5e1; padding: 4px 5px; font-size: 7.5pt;">
+                    <td width="4%" align="center" style="font-weight: bold; border: 0.5px solid #cbd5e1; padding: 5px 2px; color: #475569; font-size: 8pt;">{$no}</td>
+                    <td width="23%" style="border: 0.5px solid #cbd5e1; padding: 5px 5px; font-size: 8.2pt;">
                         <b>{$evNama}</b>{$tahapBadge}
                     </td>
-                    <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.2pt; color: #1e293b;">{$evTgl}</td>
-                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.2pt;">
-                        <b>{$evDijalani} hr</b><br><span style="font-size: 6.3pt; color: #64748b;">({$evMasaTeks})</span>
+                    <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8pt; color: #1e293b;">{$evTgl}</td>
+                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8pt;">
+                        <b>{$evDijalani} hr</b><br><span style="font-size: 6.8pt; color: #64748b;">({$evMasaTeks})</span>
                     </td>
-                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px;">{$besaranHtml}</td>
-                    <td width="10%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-weight: bold; color: #047857; font-size: 7.5pt;">{$evAkumulasi}</td>
-                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-weight: bold; color: #b91c1c; font-size: 7.2pt;">{$evEkspirasiBaru}</td>
-                    <td width="16%" style="border: 0.5px solid #cbd5e1; padding: 4px 5px; font-size: 6.8pt; color: #334155; line-height: 1.25;">{$evAlasan}</td>
+                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px;">{$besaranHtml}</td>
+                    <td width="10%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #047857; font-size: 8.5pt;">{$evAkumulasi}</td>
+                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #b91c1c; font-size: 8.2pt;">{$evEkspirasiBaru}</td>
+                    <td width="16%" style="border: 0.5px solid #cbd5e1; padding: 5px 5px; font-size: 7.2pt; color: #334155; line-height: 1.25;">{$evAlasan}</td>
                 </tr>
 ROW;
             }
@@ -1113,10 +1113,10 @@ ROW;
 
         return <<<HTML
 <style>
-    body { font-family: helvetica, sans-serif; font-size: 8pt; color: #0f172a; line-height: 1.35; }
-    h1 { font-size: 11pt; font-weight: bold; text-align: center; margin: 0; padding: 0; text-transform: uppercase; letter-spacing: 0.3px; }
-    .table-identitas td { padding: 3px 5px; font-size: 8pt; }
-    .table-ledger th { background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: center; border: 0.5px solid #475569; padding: 5px 2px; font-size: 7.3pt; }
+    body { font-family: helvetica, sans-serif; font-size: 8.5pt; color: #0f172a; line-height: 1.35; }
+    h1 { font-size: 13pt; font-weight: bold; text-align: center; margin: 0; padding: 0; text-transform: uppercase; letter-spacing: 0.3px; }
+    .table-identitas td { padding: 4px 6px; font-size: 9pt; }
+    .table-ledger th { background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: center; border: 0.5px solid #475569; padding: 6px 2px; font-size: 8pt; }
 </style>
 
 <!-- KOP SURAT RESMI KANWIL KEMENIMIPAS BANTEN -->
@@ -1126,113 +1126,129 @@ ROW;
             {$logoHtml}
         </td>
         <td width="86%" align="center" valign="middle">
-            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
-            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
-            <span style="font-size: 11pt; font-weight: bold; color: #0f172a;">KANTOR WILAYAH BANTEN</span><br>
-            <span style="font-size: 7.8pt; color: #334155;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span>
+            <span style="font-size: 9.5pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
+            <span style="font-size: 9.5pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
+            <span style="font-size: 12pt; font-weight: bold; color: #0f172a;">KANTOR WILAYAH BANTEN</span><br>
+            <span style="font-size: 8.5pt; color: #334155;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span>
         </td>
     </tr>
 </table>
-<hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 8px;">
+<hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
+<br>
 
-<h1 style="color: #0f172a; margin-bottom: 12px;">LEMBAR PERKIRAAN PERHITUNGAN</h1>
+<h1 style="color: #0f172a;">LEMBAR PERKIRAAN PERHITUNGAN</h1>
+<br>
 
 <!-- I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS -->
-<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; border-collapse: collapse; margin-bottom: 14px;">
+<table width="100%" cellpadding="4" cellspacing="0" class="table-identitas" style="border: 0.5px solid #cbd5e1; border-collapse: collapse;">
     <tr style="background-color: #f1f5f9;">
-        <td colspan="4" style="font-weight: bold; font-size: 8pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 4px 6px;">
+        <td colspan="4" style="font-weight: bold; font-size: 9.5pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 5px 8px;">
             I. IDENTITAS WARGA BINAAN PEMASYARAKATAN &amp; PARAMETER VONIS
         </td>
     </tr>
     <tr>
-        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Nama WBP</td>
-        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$namaWbp}</td>
-        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Tgl. Mulai Ditahan</td>
-        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$tglAwal}</td>
+        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Nama WBP</td>
+        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$namaWbp}</td>
+        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Tgl. Mulai Ditahan</td>
+        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglAwal}</td>
     </tr>
     <tr>
-        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Nomor Register</td>
-        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$noRegister}</td>
-        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Pidana Pokok</td>
-        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$lamaVonis}</td>
+        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Nomor Register</td>
+        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$noRegister}</td>
+        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana Pokok</td>
+        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$lamaVonis}</td>
     </tr>
     <tr>
-        <td width="20%" style="color: #475569; padding: 3px 6px;">Pidana / Pasal</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$perkaraPasal}</td>
-        <td width="22%" style="color: #475569; padding: 3px 6px;">Ekspirasi</td>
-        <td width="28%" style="font-weight: bold; color: #b91c1c; padding: 3px 6px;">: {$tglEkspirasiDef}</td>
+        <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana / Pasal</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$perkaraPasal}</td>
+        <td width="22%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi</td>
+        <td width="28%" style="font-weight: bold; color: #b91c1c; padding: 4px 8px; font-size: 10pt;">: {$tglEkspirasiDef}</td>
     </tr>
 </table>
 
+<br><br>
+
 <!-- II. PERHITUNGAN PERKIRAAN INTEGRASI -->
-<div style="font-weight: bold; font-size: 8pt; color: #0f172a; margin-bottom: 4px;">
-    II. PERHITUNGAN PERKIRAAN INTEGRASI
-</div>
-<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #94a3b8; border-collapse: collapse; margin-bottom: 12px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td style="font-weight: bold; font-size: 9.5pt; color: #0f172a; padding-bottom: 4px;">
+            II. PERHITUNGAN PERKIRAAN INTEGRASI
+        </td>
+    </tr>
+</table>
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #94a3b8; border-collapse: collapse;">
     <thead>
-        <tr style="background-color: #0f172a; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.5pt;">
-            <th width="20%" style="border: 0.5px solid #475569; padding: 5px 2px;">1/3</th>
-            <th width="20%" style="border: 0.5px solid #475569; padding: 5px 2px;">1/2</th>
-            <th width="20%" style="border: 0.5px solid #475569; padding: 5px 2px;">2/3</th>
-            <th width="20%" style="border: 0.5px solid #475569; padding: 5px 2px;">Ekspirasi</th>
-            <th width="20%" style="border: 0.5px solid #475569; padding: 5px 2px;">Jumlah Remisi</th>
+        <tr style="background-color: #0f172a; color: #ffffff; text-align: center; font-weight: bold; font-size: 8.5pt;">
+            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">1/3</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">1/2</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">2/3</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">Jumlah Remisi</th>
         </tr>
     </thead>
     <tbody>
-        <tr style="text-align: center; font-size: 8.5pt; background-color: #f8fafc;">
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 6px 2px;">
-                <b style="color: #0284c7; font-size: 8.5pt;">{$tgl13Murni}</b>
+        <tr style="text-align: center; font-size: 9.5pt; background-color: #f8fafc;">
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px;">
+                <b style="color: #0284c7; font-size: 9.5pt;">{$tgl13Murni}</b>
             </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 6px 2px;">
-                <b style="color: #d97706; font-size: 8.5pt;">{$tgl12Def}</b>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px;">
+                <b style="color: #d97706; font-size: 9.5pt;">{$tgl12Def}</b>
             </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 6px 2px; background-color: #ecfdf5;">
-                <b style="color: #047857; font-size: 9pt;">{$tgl23Def}</b>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px; background-color: #ecfdf5;">
+                <b style="color: #047857; font-size: 10pt;">{$tgl23Def}</b>
             </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 6px 2px; background-color: #fef2f2;">
-                <b style="color: #b91c1c; font-size: 9pt;">{$tglEkspirasiDef}</b>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px; background-color: #fef2f2;">
+                <b style="color: #b91c1c; font-size: 10pt;">{$tglEkspirasiDef}</b>
             </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 6px 2px; background-color: #fffbeb;">
-                <b style="color: #b45309; font-size: 9pt;">{$totalRemisiHari} Hari</b><br>
-                <span style="font-size: 6.8pt; color: #92400e;">({$totalRemisiTeks})</span>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px; background-color: #fffbeb;">
+                <b style="color: #b45309; font-size: 10pt;">{$totalRemisiHari} Hari</b><br>
+                <span style="font-size: 7.5pt; color: #92400e;">({$totalRemisiTeks})</span>
             </td>
         </tr>
     </tbody>
 </table>
 
+<br>
+
 <!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3) -->
-<table width="100%" cellpadding="4" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 14px;">
+<table width="100%" cellpadding="5" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb;">
     <tr>
-        <td width="73%" valign="middle" style="padding: 5px 8px;">
-            <span style="font-size: 7.5pt; font-weight: bold; color: #92400e; text-transform: uppercase;">
+        <td width="73%" valign="middle" style="padding: 6px 10px;">
+            <span style="font-size: 8.5pt; font-weight: bold; color: #92400e; text-transform: uppercase;">
                 MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3):
             </span><br>
-            <span style="font-size: 10.5pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
-            <span style="font-size: 7.2pt; color: #78350f;">{$statusPesan}</span>
+            <span style="font-size: 12pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
+            <span style="font-size: 8pt; color: #78350f;">{$statusPesan}</span>
         </td>
-        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 5px 6px;">
-            <span style="font-size: 7pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br>
-            <span style="font-size: 10.5pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
-            <span style="font-size: 6.5pt; color: #555;">(2/3 Murni - Full Remisi)</span>
+        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 6px 8px;">
+            <span style="font-size: 8pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br>
+            <span style="font-size: 12pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
+            <span style="font-size: 7.5pt; color: #555;">(2/3 Murni - Full Remisi)</span>
         </td>
     </tr>
 </table>
 
+<br><br>
+
 <!-- III. PERKIRAAN PEROLEHAN REMISI -->
-<div style="font-weight: bold; font-size: 8pt; color: #0f172a; margin-bottom: 4px;">
-    III. PERKIRAAN PEROLEHAN REMISI
-</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td style="font-weight: bold; font-size: 9.5pt; color: #0f172a; padding-bottom: 4px;">
+            III. PERKIRAAN PEROLEHAN REMISI
+        </td>
+    </tr>
+</table>
 <table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
     <thead>
-        <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.3pt;">
-            <th width="4%" style="border: 0.5px solid #475569; padding: 5px 2px;">#</th>
-            <th width="23%" style="border: 0.5px solid #475569; padding: 5px 4px; text-align: left;">Nama Event &amp; Tahapan</th>
-            <th width="12%" style="border: 0.5px solid #475569; padding: 5px 2px;">Tgl. Event</th>
-            <th width="11%" style="border: 0.5px solid #475569; padding: 5px 2px;">Masa Dijalani</th>
-            <th width="11%" style="border: 0.5px solid #475569; padding: 5px 2px;">Besaran Remisi</th>
-            <th width="10%" style="border: 0.5px solid #475569; padding: 5px 2px;">Akumulasi</th>
-            <th width="13%" style="border: 0.5px solid #475569; padding: 5px 2px;">Ekspirasi Baru</th>
-            <th width="16%" style="border: 0.5px solid #475569; padding: 5px 4px; text-align: left;">Keterangan &amp; Landasan</th>
+        <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 8pt;">
+            <th width="4%" style="border: 0.5px solid #475569; padding: 6px 2px;">#</th>
+            <th width="23%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Nama Event &amp; Tahapan</th>
+            <th width="12%" style="border: 0.5px solid #475569; padding: 6px 2px;">Tgl. Event</th>
+            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Masa Dijalani</th>
+            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Besaran Remisi</th>
+            <th width="10%" style="border: 0.5px solid #475569; padding: 6px 2px;">Akumulasi</th>
+            <th width="13%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi Baru</th>
+            <th width="16%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Keterangan &amp; Landasan</th>
         </tr>
     </thead>
     <tbody>
@@ -1240,19 +1256,19 @@ ROW;
     </tbody>
     <tfoot>
         <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #475569;">
-            <td colspan="4" width="50%" align="right" style="border: 0.5px solid #cbd5e1; padding: 4px 6px; font-size: 7.5pt; color: #0f172a;">
+            <td colspan="4" width="50%" align="right" style="border: 0.5px solid #cbd5e1; padding: 5px 6px; font-size: 8.2pt; color: #0f172a;">
                 TOTAL AKUMULASI REMISI YANG DIPEROLEH:
             </td>
-            <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.8pt; color: #1e40af;">
+            <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #1e40af;">
                 <b>{$totalRemisiTeks}</b>
             </td>
-            <td width="10%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.8pt; color: #047857;">
+            <td width="10%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #047857;">
                 <b>{$totalRemisiHari} hr</b>
             </td>
-            <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.8pt; color: #b91c1c;">
+            <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #b91c1c;">
                 <b>{$tglEkspirasiDef}</b>
             </td>
-            <td width="16%" style="border: 0.5px solid #cbd5e1; padding: 4px 5px; font-size: 6.8pt; color: #475569;">
+            <td width="16%" style="border: 0.5px solid #cbd5e1; padding: 5px 5px; font-size: 7.2pt; color: #475569;">
                 <i>*Ekspirasi Akhir Definitif</i>
             </td>
         </tr>
