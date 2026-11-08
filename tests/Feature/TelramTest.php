@@ -46,7 +46,7 @@ class TelramTest extends TestCase
         $response = $this->actingAs($user)->get('/telram');
         $response->assertStatus(200);
         $response->assertSee('Kalkulator Telram');
-        $response->assertSee('Proyeksi Remisi');
+        $response->assertSee('Perkiraan Remisi');
         $response->assertSee('Unduh File Offline');
     }
 

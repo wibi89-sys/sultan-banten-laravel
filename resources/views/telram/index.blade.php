@@ -300,7 +300,7 @@
                             <span class="badge bg-warning text-dark fw-bold px-2 py-0.5" style="font-size: 10.5px;">SDP DITJENPAS</span>
                         </div>
                         <small class="text-white-50 d-block mt-0.5" style="font-size: 11.5px;">
-                            Perhitungan Ekspirasi, Proyeksi Remisi (Keppres 174/1999) &amp; Waktu Pengusulan PB/CB (UU 22/2022)
+                            Perhitungan Ekspirasi, Perkiraan Remisi (Keppres 174/1999) &amp; Waktu Pengusulan PB/CB (UU 22/2022)
                         </small>
                     </div>
                 </div>
@@ -332,7 +332,7 @@
                         <label class="stepper-label mb-1.5 d-block">PILIH MODE PERHITUNGAN:</label>
                         <div class="mode-switch-grid">
                             <button type="button" id="btnModeRemisi" onclick="setMode('simulasi_remisi')" class="btn-mode-tab active">
-                                <i class="fas fa-medal me-1 text-warning"></i> Proyeksi Remisi
+                                <i class="fas fa-medal me-1 text-warning"></i> Perkiraan Remisi
                             </button>
                             <button type="button" id="btnModeMaju" onclick="setMode('maju')" class="btn-mode-tab">
                                 <i class="fas fa-arrow-right me-1 text-primary"></i> Cari Ekspirasi
@@ -523,7 +523,7 @@
 
                     <!-- Tombol Utama Hitung -->
                     <button type="button" id="btnHitungUtama" onclick="hitungSesuaiMode()" class="btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm" style="border-radius: 10px; font-size: 14px; letter-spacing: 0.3px;">
-                        <i class="fas fa-medal me-1.5"></i> HITUNG PROYEKSI REMISI &amp; INTEGRASI
+                        <i class="fas fa-medal me-1.5"></i> HITUNG PERKIRAAN REMISI &amp; INTEGRASI
                     </button>
                 </div>
             </div>
@@ -537,9 +537,9 @@
                     <div class="mb-3" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(245, 158, 11, 0.1); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; color: #f59e0b;">
                         <i class="fas fa-medal" id="placeholderIcon"></i>
                     </div>
-                    <h5 class="fw-bold telram-text-title mb-2" id="placeholderTitle">Hasil Proyeksi Remisi &amp; Integrasi</h5>
+                    <h5 class="fw-bold telram-text-title mb-2" id="placeholderTitle">Perkiraan Perhitungan</h5>
                     <p class="text-muted mb-4 mx-auto" id="placeholderDesc" style="max-width: 440px; font-size: 13px; line-height: 1.5;">
-                        Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.
+                        Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PERKIRAAN REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.
                     </p>
                     <div class="d-inline-flex gap-2">
                         <button type="button" class="btn btn-outline-warning text-dark btn-sm px-3 rounded-pill fw-semibold" onclick="demoSampleData()">
@@ -709,13 +709,13 @@
                     </div>
                 </div>
 
-                <!-- 8. Section Rincian Proyeksi Remisi Berkala (Dual-View Mobile) -->
+                <!-- 8. Section Rincian Perkiraan Remisi Berkala (Dual-View Mobile) -->
                 <div id="sectionTableLedger" class="card border-0 shadow-sm telram-card">
                     <div class="card-body p-3 p-md-4">
                         <div class="d-flex justify-content-between align-items-center mb-2.5 flex-wrap gap-2">
                             <div class="d-flex align-items-center gap-2">
                                 <h6 class="fw-bold mb-0 telram-text-title d-flex align-items-center gap-1.5" style="font-size: 13.5px;">
-                                    <i class="fas fa-list-ol text-warning"></i> Rincian Proyeksi Remisi Berkala
+                                    <i class="fas fa-list-ol text-warning"></i> Perkiraan Perolehan Remisi
                                 </h6>
                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="badgeLedgerBasis" style="font-size: 10.5px;">Standar 2/3 PB/CB</span>
                             </div>
@@ -878,10 +878,10 @@
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
             btnHitung.className = 'btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm';
-            btnHitung.innerHTML = '<i class="fas fa-medal me-2"></i> HITUNG PROYEKSI REMISI &amp; INTEGRASI';
+            btnHitung.innerHTML = '<i class="fas fa-medal me-2"></i> HITUNG PERKIRAAN REMISI &amp; INTEGRASI';
 
-            placeholderTitle.innerText = 'Hasil Proyeksi Remisi & Integrasi';
-            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
+            placeholderTitle.innerText = 'Perkiraan Perhitungan';
+            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PERKIRAAN REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
             placeholderIcon.className = 'fas fa-medal';
         } else if (mode === 'maju') {
             if (btnMaju) btnMaju.classList.add('active');
@@ -1203,7 +1203,7 @@
                 if (data.target_basis === '2_3') {
                     noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas &amp; UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB (<strong>${data.formatted.tgl_2_3_definitif}</strong>). Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP telah bebas menjalani pembinaan luar di Bapas.`;
                 } else {
-                    noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-warning"></i> <b>Basis Ekspirasi Penuh:</b> Proyeksi remisi dihitung secara berkala hingga bebas murni tanpa hak integrasi PB/CB.`;
+                    noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-warning"></i> <b>Basis Ekspirasi Penuh:</b> Perkiraan remisi dihitung secara berkala hingga bebas murni tanpa hak integrasi PB/CB.`;
                 }
             }
 
@@ -1213,7 +1213,7 @@
             document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
             document.getElementById('infoTotalHari').innerText = `${data.total_hari_vonis.toLocaleString('id-ID')} (${data.lama_pidana_teks})`;
 
-            showToast(`Proyeksi Remisi & Waktu Pengusulan ${data.jenis_program} Berhasil Dihitung!`, 'success');
+            showToast(`Perkiraan Remisi & Waktu Pengusulan ${data.jenis_program} Berhasil Dihitung!`, 'success');
         } else if (data.mode === 'sisa') {
             boxHeroPengusulan.classList.add('d-none');
             boxHasilSisa.classList.remove('d-none');
@@ -1392,10 +1392,10 @@
         });
     }
 
-    // Unduh Dokumen Resmi PDF Proyeksi Remisi & Telram
+    // Unduh Dokumen Resmi PDF Perkiraan Remisi & Telram
     function unduhPdfResmi() {
         if (!lastResult || lastResult.mode !== 'simulasi_remisi') {
-            showToast('Lakukan simulasi proyeksi remisi terlebih dahulu!', 'warning');
+            showToast('Lakukan simulasi perkiraan remisi terlebih dahulu!', 'warning');
             return;
         }
 
