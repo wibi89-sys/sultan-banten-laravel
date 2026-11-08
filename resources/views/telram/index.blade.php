@@ -414,6 +414,20 @@
                         </small>
                     </div>
 
+                    <!-- Input Opsi Standarisasi Perhitungan Remisi: 2/3 vs Ekspirasi -->
+                    <div id="sectionTargetBasis" class="mb-3">
+                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 13px;">
+                            Standar Batas Simulasi Remisi <span class="text-danger">*</span>
+                        </label>
+                        <select id="selTargetBasis" class="form-select fw-semibold" style="border-radius: 10px; font-size: 13.5px;" onchange="updateHelpTargetBasis()">
+                            <option value="2_3" selected>Standar 2/3 Masa Pidana (Untuk Usulan PB / CB)</option>
+                            <option value="ekspirasi">Sampai Bebas Murni / Ekspirasi Penuh (Tanpa Hak PB/CB)</option>
+                        </select>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;" id="helpTargetBasis">
+                            <i class="fas fa-balance-scale text-primary me-1"></i> <b>Standar 2/3 (SDP):</b> Remisi dihitung hanya selama WBP menjalani pidana di Lapas sampai 2/3 tercapai (bebas PB/CB). Tahun berikutnya tidak dihitung di Lapas.
+                        </small>
+                    </div>
+
                     <!-- Input Tambahan Khusus Simulasi Remisi: Remisi yang Sudah Pernah Diperoleh (Opsional) -->
                     <div id="sectionRemisiAwal" class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
@@ -630,11 +644,11 @@
 
                         <!-- Section Tabel Proyeksi Remisi Keppres 174/1999 (Hanya untuk Mode Remisi) -->
                         <div id="sectionTableLedger" class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                                 <h6 class="fw-bold mb-0 telram-text-title">
                                     <i class="fas fa-list-ol text-warning me-2"></i>Tabel Proyeksi Remisi per Tahun (Keppres No. 174/1999)
                                 </h6>
-                                <span class="badge bg-light text-muted border" style="font-size: 11px;">Simulasi Otomatis</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" id="badgeLedgerBasis" style="font-size: 11px;">Standar 2/3 PB/CB</span>
                             </div>
                             <div class="table-responsive border rounded-3" style="border-color: #e2e8f0;">
                                 <table class="table table-hover table-striped align-middle mb-0 table-ledger">
@@ -656,8 +670,8 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <small class="text-muted d-block mt-2" style="font-size: 11.5px;">
-                                <i class="fas fa-info-circle me-1"></i> Catatan: Perhitungan remisi di atas merupakan estimasi reguler sesuai Keppres No. 174/1999 dengan asumsi narapidana berkelakuan baik, aktif mengikuti pembinaan (SPPN), dan tidak melanggar tata tertib (*Register F*).
+                            <small class="text-muted d-block mt-2" id="noteLedger" style="font-size: 11.5px; line-height: 1.45;">
+                                <i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas & UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB. Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP menjalani pembinaan luar di Bapas.
                             </small>
                         </div>
                     </div>
@@ -722,6 +736,7 @@
         const sectionAgama = document.getElementById('sectionAgama');
         const sectionDasawarsa = document.getElementById('sectionDasawarsa');
         const sectionRemisiTambahan = document.getElementById('sectionRemisiTambahan');
+        const sectionTargetBasis = document.getElementById('sectionTargetBasis');
         const sectionRemisiAwal = document.getElementById('sectionRemisiAwal');
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
@@ -739,6 +754,7 @@
             sectionAgama.classList.remove('d-none');
             if (sectionDasawarsa) sectionDasawarsa.classList.remove('d-none');
             if (sectionRemisiTambahan) sectionRemisiTambahan.classList.remove('d-none');
+            if (sectionTargetBasis) sectionTargetBasis.classList.remove('d-none');
             sectionRemisiAwal.classList.remove('d-none');
             sectionInputEkspirasi.classList.add('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
@@ -756,6 +772,7 @@
             sectionAgama.classList.add('d-none');
             if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
             if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
+            if (sectionTargetBasis) sectionTargetBasis.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionInputEkspirasi.classList.add('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
@@ -773,6 +790,7 @@
             sectionAgama.classList.add('d-none');
             if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
             if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
+            if (sectionTargetBasis) sectionTargetBasis.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionInputEkspirasi.classList.remove('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
@@ -790,6 +808,7 @@
             sectionAgama.classList.add('d-none');
             if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
             if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
+            if (sectionTargetBasis) sectionTargetBasis.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionInputEkspirasi.classList.remove('d-none');
             labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
@@ -819,6 +838,18 @@
         document.getElementById('tglAwal').value = today;
     }
 
+    // Update Helper Teks Standarisasi Target Basis
+    function updateHelpTargetBasis() {
+        const sel = document.getElementById('selTargetBasis');
+        const help = document.getElementById('helpTargetBasis');
+        if (!sel || !help) return;
+        if (sel.value === '2_3') {
+            help.innerHTML = '<i class="fas fa-balance-scale text-primary me-1"></i> <b>Standar 2/3 (SDP):</b> Remisi dihitung hanya selama WBP menjalani pidana di Lapas sampai 2/3 tercapai (bebas PB/CB). Tahun berikutnya tidak dihitung di Lapas.';
+        } else {
+            help.innerHTML = '<i class="fas fa-door-open text-warning me-1"></i> <b>Ekspirasi Penuh:</b> Perhitungan remisi dilanjutkan hingga bebas murni 100% tanpa hak integrasi PB/CB.';
+        }
+    }
+
     // Reset Form
     function resetForm() {
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
@@ -830,6 +861,8 @@
         document.getElementById('selAgama').value = 'islam';
         if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
         if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
+        if (document.getElementById('selTargetBasis')) document.getElementById('selTargetBasis').value = '2_3';
+        updateHelpTargetBasis();
         document.getElementById('vRemisiAwal').value = '0';
         document.getElementById('tglEkspirasiInput').value = '';
 
@@ -856,6 +889,8 @@
             document.getElementById('selAgama').value = 'islam';
             if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
             if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
+            if (document.getElementById('selTargetBasis')) document.getElementById('selTargetBasis').value = '2_3';
+            updateHelpTargetBasis();
             document.getElementById('vRemisiAwal').value = '0';
         } else {
             const futureDate = new Date(now);
@@ -909,6 +944,7 @@
                 payload.no_register = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
                 payload.include_dasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? 1 : 0) : 1;
                 payload.kategori_tambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
+                payload.target_basis = document.getElementById('selTargetBasis') ? document.getElementById('selTargetBasis').value : '2_3';
             } else if (currentMode === 'maju') {
                 payload.tahun = parseInt(document.getElementById('vTahun').value) || 0;
                 payload.bulan = parseInt(document.getElementById('vBulan').value) || 0;
@@ -1023,6 +1059,24 @@
 
             // Render Ledger Tabel
             renderTableLedger(data.proyeksi_ledger);
+
+            // Update badge basis proyeksi dan note penjelasan
+            const badgeLedgerBasis = document.getElementById('badgeLedgerBasis');
+            if (badgeLedgerBasis) {
+                badgeLedgerBasis.innerText = data.target_basis_label || (data.target_basis === '2_3' ? 'Standar 2/3 PB/CB' : 'Ekspirasi Penuh');
+                badgeLedgerBasis.className = data.target_basis === '2_3'
+                    ? 'badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1'
+                    : 'badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1';
+            }
+
+            const noteLedger = document.getElementById('noteLedger');
+            if (noteLedger) {
+                if (data.target_basis === '2_3') {
+                    noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas & UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB (<strong>${data.formatted.tgl_2_3_definitif}</strong>). Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP telah bebas menjalani pembinaan luar di Bapas.`;
+                } else {
+                    noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-warning"></i> <b>Basis Ekspirasi Penuh:</b> Proyeksi remisi dihitung secara berkala hingga bebas murni tanpa hak integrasi PB/CB.`;
+                }
+            }
 
             // Info ringkasan
             document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
@@ -1162,6 +1216,7 @@
         const noRegister = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
         const includeDasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? '1' : '0') : '1';
         const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
+        const targetBasis = document.getElementById('selTargetBasis') ? document.getElementById('selTargetBasis').value : '2_3';
 
         const form = document.createElement('form');
         form.method = 'POST';
@@ -1179,7 +1234,8 @@
             nama_wbp: namaWbp,
             no_register: noRegister,
             include_dasawarsa: includeDasawarsa,
-            kategori_tambahan: kategoriTambahan
+            kategori_tambahan: kategoriTambahan,
+            target_basis: targetBasis
         };
 
         for (const [k, v] of Object.entries(fields)) {
@@ -1220,6 +1276,7 @@
 *Agama WBP:* ${d.agama}
 *Status Pembinaan:* ${d.kategori_tambahan_label || 'Standar (Reguler)'}
 *Remisi Dasawarsa:* ${d.include_dasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
+*Basis Simulasi:* ${d.target_basis_label || 'Standar 2/3 Masa Pidana (PB/CB)'}
 *Program Integrasi:* ${d.nama_program}
 ---------------------------------------
 *Tonggak Masa Pidana:*

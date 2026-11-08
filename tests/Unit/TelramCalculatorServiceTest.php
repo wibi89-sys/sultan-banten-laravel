@@ -414,4 +414,54 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertNotEmpty($pdfBinary);
         $this->assertStringStartsWith('%PDF-', $pdfBinary);
     }
+
+    public function test_simulasi_remisi_standar_2_3_berhenti_saat_2_3_dan_tidak_mencapai_2028(): void
+    {
+        // Narapidana vonis 3 tahun dari 2026-01-01
+        // Dengan standar 2/3, narapidana mencapai 2/3 pada Agustus 2027 (setelah RU 2027)
+        // Sehingga remisi tahun 2028 TIDAK boleh ada dalam ledger
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Joko Susanto',
+            'REG.001/2026',
+            true,
+            'none',
+            '2_3'
+        );
+
+        $this->assertEquals('2_3', $result['target_basis']);
+        $this->assertStringContainsString('2/3', $result['target_basis_label']);
+
+        $yearsInLedger = array_column($result['proyeksi_ledger'], 'tahun');
+        $this->assertContains(2026, $yearsInLedger, 'Event tahun 2026 harus ada.');
+        $this->assertContains(2027, $yearsInLedger, 'Event tahun 2027 harus ada.');
+        $this->assertNotContains(2028, $yearsInLedger, 'Standar 2/3 PB/CB: event tahun 2028 TIDAK boleh dihitung karena WBP sudah bebas bersyarat di luar Lapas.');
+    }
+
+    public function test_simulasi_remisi_basis_ekspirasi_berlanjut_sampai_2028(): void
+    {
+        // Pada basis ekspirasi penuh, perhitungan dilanjutkan sampai bebas murni (2028)
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Joko Susanto',
+            'REG.001/2026',
+            true,
+            'none',
+            'ekspirasi'
+        );
+
+        $this->assertEquals('ekspirasi', $result['target_basis']);
+        $yearsInLedger = array_column($result['proyeksi_ledger'], 'tahun');
+        $this->assertContains(2028, $yearsInLedger, 'Pada basis ekspirasi penuh, event 2028 harus ada.');
+    }
 }

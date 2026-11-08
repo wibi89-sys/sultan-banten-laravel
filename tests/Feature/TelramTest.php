@@ -160,6 +160,7 @@ class TelramTest extends TestCase
             'no_register' => 'BI.123/2024',
             'include_dasawarsa' => true,
             'kategori_tambahan' => 'pemuka',
+            'target_basis' => '2_3',
         ]);
 
         $response->assertStatus(200);
@@ -170,6 +171,7 @@ class TelramTest extends TestCase
                 'no_register' => 'BI.123/2024',
                 'include_dasawarsa' => true,
                 'kategori_tambahan' => 'pemuka',
+                'target_basis' => '2_3',
             ],
         ]);
     }
@@ -188,6 +190,7 @@ class TelramTest extends TestCase
             'no_register' => 'REG.001/2024',
             'include_dasawarsa' => '1',
             'kategori_tambahan' => 'pemuka',
+            'target_basis' => '2_3',
         ]);
 
         $response->assertStatus(200);

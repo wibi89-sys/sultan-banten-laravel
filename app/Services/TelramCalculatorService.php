@@ -242,7 +242,8 @@ class TelramCalculatorService
         string $namaWbp = '',
         string $noRegister = '',
         bool $includeDasawarsa = true,
-        string $kategoriTambahan = 'none'
+        string $kategoriTambahan = 'none',
+        string $targetBasis = '2_3'
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
 
@@ -252,6 +253,8 @@ class TelramCalculatorService
 
         $namaWbp = trim($namaWbp) ?: 'Narapidana';
         $noRegister = trim($noRegister) ?: '-';
+
+        $targetBasis = $targetBasis === 'ekspirasi' ? 'ekspirasi' : '2_3';
 
         $agama = strtolower(trim($agama));
         $validAgama = ['islam', 'kristen', 'katolik', 'hindu', 'buddha', 'khonghucu'];
@@ -331,18 +334,56 @@ class TelramCalculatorService
         });
 
         // 4. Simulasi Proyeksi Remisi Sesuai Keppres No. 174 Tahun 1999 & Keppres Dasawarsa
+        // Batas Minimal Berhak Integrasi UU No. 22 Tahun 2022
+        $tglMinIntegrasi = $tglAwal->copy()->addDays($minHariIntegrasi);
+
+        // Inisialisasi batas dinamis 2/3 definitif
+        $totalHariRemisi = $remisiAwalHari;
+        $currentHari23 = max($minHariIntegrasi, $hari23Murni - $totalHariRemisi);
+        $current23Date = $tglAwal->copy()->addDays($currentHari23);
+        $is23Fulfilled = false;
+        $tgl23Definitif = $current23Date->copy();
+
         $keRu = 0;
         $keRk = 0;
-        $totalHariRemisi = $remisiAwalHari;
         $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
         $ledger = [];
+
+        $update23Progress = function (Carbon $evDate) use ($targetBasis, $hari23Murni, &$totalHariRemisi, $minHariIntegrasi, $tglAwal, $tglMinIntegrasi, &$tgl23Definitif, &$current23Date, &$is23Fulfilled) {
+            if ($targetBasis === '2_3') {
+                $sisaHari23 = $hari23Murni - $totalHariRemisi;
+                if ($sisaHari23 <= $minHariIntegrasi) {
+                    $tgl23Definitif = $evDate->gte($tglMinIntegrasi) ? $evDate->copy() : $tglMinIntegrasi->copy();
+                    $current23Date = $tgl23Definitif->copy();
+                    $is23Fulfilled = true;
+                } else {
+                    $calc23 = $tglAwal->copy()->addDays($sisaHari23);
+                    if ($calc23->lte($evDate)) {
+                        $tgl23Definitif = $evDate->copy();
+                        $current23Date = $tgl23Definitif->copy();
+                        $is23Fulfilled = true;
+                    } else {
+                        $tgl23Definitif = $calc23->copy();
+                        $current23Date = $tgl23Definitif->copy();
+                    }
+                }
+            }
+        };
 
         foreach ($eligibleEvents as $item) {
             $evDate = $item['carbon'];
 
-            // Jika tanggal event sudah sama atau melewati proyeksi ekspirasi terkini, WBP sudah bebas
-            if ($evDate->gte($currentEkspirasi)) {
-                break;
+            if ($targetBasis === '2_3') {
+                // Standar 2/3 (PB/CB): Jika 2/3 sudah tercapai di event sebelumnya atau tanggal event sudah melewati tanggal 2/3,
+                // maka WBP sudah bebas bersyarat di luar Lapas, sehingga remisi tahun-tahun berikutnya (misal 2028 dst) tidak dihitung di Lapas.
+                if ($is23Fulfilled || $evDate->gt($current23Date)) {
+                    break;
+                }
+            } else {
+                // Jika tanggal event sudah sama atau melewati proyeksi ekspirasi terkini, WBP sudah bebas murni
+                if ($evDate->gte($currentEkspirasi)) {
+                    break;
+                }
             }
 
             $hariDijalani = (int) $tglAwal->diffInDays($evDate);
@@ -450,6 +491,7 @@ class TelramCalculatorService
 
             $totalHariRemisi += $potonganHari;
             $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+            $update23Progress($evDate);
 
             $ledger[] = [
                 'nama_event' => $item['nama_event'],
@@ -496,6 +538,7 @@ class TelramCalculatorService
 
                     $totalHariRemisi += $potonganTambahan;
                     $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+                    $update23Progress($evDate);
 
                     $ledger[] = [
                         'nama_event' => $namaEventTambahan,
@@ -531,6 +574,7 @@ class TelramCalculatorService
                 if ($potonganDasawarsa > 0) {
                     $totalHariRemisi += $potonganDasawarsa;
                     $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+                    $update23Progress($evDate);
 
                     $ledger[] = [
                         'nama_event' => "Remisi Dasawarsa HUT ke-{$hutKe} RI ({$item['tahun']})",
@@ -555,9 +599,10 @@ class TelramCalculatorService
         }
 
         // 5. Perhitungan Tanggal 2/3 dan Pengusulan Integrasi Sesuai Rumus Baku SDP Ditjenpas
-        // Rumus SDP: 2/3 Murni dikurangi Full Akumulasi Remisi
-        $hari23Definitif = max($minHariIntegrasi, $hari23Murni - $totalHariRemisi);
-        $tgl23Definitif = $tglAwal->copy()->addDays($hari23Definitif);
+        if ($targetBasis !== '2_3') {
+            $hari23Definitif = max($minHariIntegrasi, $hari23Murni - $totalHariRemisi);
+            $tgl23Definitif = $tglAwal->copy()->addDays($hari23Definitif);
+        }
 
         // Tanggal 1/2 Asimilasi Definitif (1/2 Murni dikurangi Full Remisi, min 180 hari)
         $hari12Definitif = max(180, $hari12Murni - $totalHariRemisi);
@@ -619,6 +664,8 @@ class TelramCalculatorService
 
         return [
             'mode' => 'simulasi_remisi',
+            'target_basis' => $targetBasis,
+            'target_basis_label' => $targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana (Usulan PB/CB)' : 'Sampai Ekspirasi Bebas Murni',
             'nama_wbp' => $namaWbp,
             'no_register' => $noRegister,
             'tgl_awal' => $tglAwal->toDateString(),
@@ -980,6 +1027,7 @@ class TelramCalculatorService
         $namaProgram = htmlspecialchars($data['nama_program'] ?? 'Pembebasan Bersyarat (PB)');
         $labelTambahan = htmlspecialchars($data['label_kategori_tambahan'] ?? 'Reguler');
         $dasawarsaStatus = ! empty($data['include_dasawarsa']) ? 'Disertakan (1/12 vonis, maks 3 bln)' : 'Tidak Dihitung';
+        $targetBasisLabel = htmlspecialchars($data['target_basis_label'] ?? 'Standar 2/3 Masa Pidana (Usulan PB/CB)');
 
         $tglUsul = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
         $tgl23Def = htmlspecialchars($data['formatted']['tgl_2_3_definitif'] ?? '-');
@@ -1090,6 +1138,11 @@ ROW;
         <td>:</td>
         <td>{$dasawarsaStatus}</td>
     </tr>
+    <tr>
+        <td><b>Basis Simulasi</b></td>
+        <td>:</td>
+        <td colspan="4"><b>{$targetBasisLabel}</b></td>
+    </tr>
 </table>
 
 <!-- HIGHLIGHT ALERT: WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN) -->
@@ -1146,7 +1199,7 @@ ROW;
     <tr>
         <td width="55%" valign="top">
             <i>Dicetak melalui SULTAN BANTEN pada {$waktuCetak} oleh {$userCetak}.</i><br>
-            <span style="font-size: 7.2pt; color: #555;">Catatan: Lembar ini adalah estimasi reguler yuridis. Realisasi SK Remisi tetap bergantung pada penilaian SPPN dan perilaku WBP.</span>
+            <span style="font-size: 7.2pt; color: #555;">Catatan: Berdasarkan standar 2/3 (PB/CB), remisi dihitung selama narapidana menjalani masa pidana di Lapas hingga 2/3 Definitif tercapai. Setelah bebas bersyarat, WBP menjalani pembinaan luar di Bapas. Realisasi SK Remisi tetap bergantung pada penilaian SPPN dan perilaku WBP.</span>
         </td>
         <td width="45%" align="center" valign="top">
             Serang, {$tglAwal}<br>
