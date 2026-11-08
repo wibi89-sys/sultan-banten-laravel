@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\TelramCalculatorService;
+use Carbon\Carbon;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -205,5 +206,86 @@ class TelramCalculatorServiceTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->service->hitungSisaPidana('2026-10-20', '2026-10-16');
+    }
+
+    public function test_simulasi_remisi_dan_integrasi_vonis_3_tahun_pb(): void
+    {
+        // Narapidana ditahan 1 Januari 2024, Vonis 3 Tahun (36 Bulan), Agama Islam
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam'
+        );
+
+        $this->assertEquals('PB', $result['jenis_program']);
+        $this->assertEquals('Pembebasan Bersyarat (PB)', $result['nama_program']);
+        $this->assertEquals('2027-01-01', $result['milestones']['ekspirasi_murni']);
+
+        // 2/3 murni dari 360 * 3 = 1080 hari -> 720 hari (24 bulan)
+        $this->assertEquals(1080, $result['total_hari_vonis']);
+        $this->assertEquals('2025-12-21', $result['milestones']['tgl_2_3_murni']);
+
+        // Verifikasi ledger ada dan memiliki proyeksi remisi
+        $this->assertNotEmpty($result['proyeksi_ledger']);
+
+        // Event pertama: Idul Fitri 10 April 2024 (kurang dari 6 bulan dari 1 Jan 2024 -> ~100 hari)
+        $firstEvent = $result['proyeksi_ledger'][0];
+        $this->assertEquals('RK', $firstEvent['jenis']);
+        $this->assertFalse($firstEvent['eligible']);
+        $this->assertEquals(0, $firstEvent['besaran_hari']);
+
+        // Event kedua: RU 17 Agustus 2024 (telah menjalani > 6 bulan -> 229 hari)
+        $secondEvent = $result['proyeksi_ledger'][1];
+        $this->assertEquals('RU', $secondEvent['jenis']);
+        $this->assertTrue($secondEvent['eligible']);
+        $this->assertEquals(30, $secondEvent['besaran_hari']); // 1 Bulan (karena < 12 bulan)
+
+        // Verifikasi rumus SDP: 2/3 definitif = 2/3 murni dikurangi akumulasi remisi
+        $totalRemisi = $result['total_proyeksi_remisi_hari'];
+        $this->assertGreaterThan(0, $totalRemisi);
+
+        // Ekspirasi definitif = Ekspirasi murni minus total remisi
+        $tglEkspirasiMurni = Carbon::parse($result['milestones']['ekspirasi_murni']);
+        $expectedEkspirasiDefinitif = $tglEkspirasiMurni->copy()->subDays($totalRemisi)->toDateString();
+        $this->assertEquals($expectedEkspirasiDefinitif, $result['milestones']['ekspirasi_definitif']);
+
+        // Tanggal mulai pengusulan PB = 60 hari sebelum 2/3 definitif
+        $tgl23Definitif = Carbon::parse($result['milestones']['tgl_2_3_definitif']);
+        $expectedPengusulan = $tgl23Definitif->copy()->subDays(60)->toDateString();
+        $this->assertEquals($expectedPengusulan, $result['milestones']['tgl_mulai_pengusulan']);
+    }
+
+    public function test_simulasi_remisi_dan_integrasi_vonis_pendek_cb(): void
+    {
+        // Narapidana ditahan 1 Januari 2026, Vonis 1 Tahun 2 Bulan (14 Bulan -> <= 18 Bulan = Cuti Bersyarat)
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-01-01',
+            1,
+            2,
+            0,
+            'kristen'
+        );
+
+        $this->assertEquals('CB', $result['jenis_program']);
+        $this->assertEquals('Cuti Bersyarat (CB)', $result['nama_program']);
+        $this->assertStringContainsString('Cuti Bersyarat', $result['keterangan_program']);
+    }
+
+    public function test_simulasi_remisi_dengan_remisi_awal(): void
+    {
+        // Narapidana pindahan yang sudah memiliki SK remisi 60 hari
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2025-01-01',
+            2,
+            0,
+            0,
+            'islam',
+            60
+        );
+
+        $this->assertEquals(60, $result['remisi_awal_hari']);
+        $this->assertGreaterThanOrEqual(60, $result['total_proyeksi_remisi_hari']);
     }
 }

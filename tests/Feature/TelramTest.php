@@ -45,8 +45,9 @@ class TelramTest extends TestCase
 
         $response = $this->actingAs($user)->get('/telram');
         $response->assertStatus(200);
-        $response->assertSee('Kalkulator Perkiraan Ekspirasi');
-        $response->assertSee('HITUNG EKSPIRASI');
+        $response->assertSee('Kalkulator Telram');
+        $response->assertSee('Proyeksi Remisi');
+        $response->assertSee('Unduh File Offline');
     }
 
     public function test_calculate_mode_maju_returns_valid_json(): void
@@ -93,6 +94,53 @@ class TelramTest extends TestCase
                 'bulan' => 0,
                 'hari' => 0,
                 'lama_pidana_teks' => '1 Tahun',
+            ],
+        ]);
+    }
+
+    public function test_calculate_mode_simulasi_remisi_returns_valid_json(): void
+    {
+        $user = $this->getTestUser();
+
+        $response = $this->actingAs($user)->postJson('/telram/calculate', [
+            'mode' => 'simulasi_remisi',
+            'tgl_awal' => '2025-01-01',
+            'tahun' => 2,
+            'bulan' => 6,
+            'hari' => 0,
+            'agama' => 'islam',
+            'remisi_awal_hari' => 15,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'data' => [
+                'mode' => 'simulasi_remisi',
+                'jenis_program' => 'PB',
+                'agama' => 'Islam',
+                'remisi_awal_hari' => 15,
+            ],
+        ]);
+        $response->assertJsonStructure([
+            'success',
+            'data' => [
+                'milestones' => [
+                    'ekspirasi_murni',
+                    'tgl_1_3_murni',
+                    'tgl_1_2_murni',
+                    'tgl_2_3_murni',
+                    'tgl_1_2_definitif',
+                    'tgl_2_3_definitif',
+                    'tgl_mulai_pengusulan',
+                    'ekspirasi_definitif',
+                ],
+                'status_pengusulan' => [
+                    'kode',
+                    'label',
+                    'pesan',
+                ],
+                'proyeksi_ledger',
             ],
         ]);
     }
