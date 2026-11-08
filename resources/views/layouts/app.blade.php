@@ -515,7 +515,7 @@
             <div class="collapse {{ request()->routeIs('telram.*') || request()->routeIs('pembersih-pdf.*') ? 'show' : '' }}" id="menuUtilitas">
                 <div class="sidebar-submenu">
                     <a href="{{ route('telram.index') }}" class="{{ request()->routeIs('telram.*') ? 'active' : '' }}">
-                        <i class="fas fa-calculator"></i><span>Kalkulator Telram</span>
+                        <i class="fas fa-calculator text-warning"></i><span>Kalkulator Telram &amp; Integrasi</span>
                     </a>
                     <a href="{{ route('pembersih-pdf.index') }}" class="{{ request()->routeIs('pembersih-pdf.*') ? 'active' : '' }}">
                         <i class="fas fa-broom text-primary"></i><span>Pembersih PDF</span>

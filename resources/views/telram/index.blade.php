@@ -36,55 +36,62 @@
         color: #94a3b8 !important;
     }
 
-    /* Mode Switcher Tabs */
-    .mode-switch-container {
-        background: #e2e8f0;
-        padding: 4px;
-        border-radius: 10px;
-        display: flex;
-        gap: 4px;
-        flex-wrap: wrap;
-        transition: background-color 0.2s ease;
+    /* Mode Switcher Grid: 4-col Desktop, 2x2 Grid Mobile (No awkward wrapping) */
+    .mode-switch-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
     }
-    [data-theme="dark"] .mode-switch-container {
+    @media (min-width: 992px) {
+        .mode-switch-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    [data-theme="dark"] .mode-switch-grid {
         background: #0f172a !important;
-        border: 1px solid #334155;
+        border-color: #334155 !important;
     }
 
     .btn-mode-tab {
         background: transparent;
         color: #64748b;
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 700;
         border: none;
         border-radius: 8px;
-        padding: 8px 12px;
-        flex: 1 1 auto;
-        min-width: 120px;
+        padding: 9px 8px;
+        text-align: center;
         transition: all 0.2s ease;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        line-height: 1.25;
     }
     .btn-mode-tab:hover {
         color: var(--text-primary, #1f2937);
+        background: rgba(255, 255, 255, 0.5);
     }
     [data-theme="dark"] .btn-mode-tab {
         color: #94a3b8;
     }
     [data-theme="dark"] .btn-mode-tab:hover {
         color: #f8fafc;
+        background: rgba(30, 41, 59, 0.6);
     }
     .btn-mode-tab.active {
         background: #ffffff;
         color: #0f172a;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     }
     [data-theme="dark"] .btn-mode-tab.active {
         background: #1e293b;
         color: #f8fafc;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
     }
 
     /* Form Controls & Inputs */
@@ -100,10 +107,10 @@
 
     /* Stepper Box (Tahun, Bulan, Hari) */
     .stepper-box {
-        background: rgba(241, 245, 249, 0.6);
-        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
         border-radius: 10px;
-        padding: 8px;
+        padding: 8px 6px;
         text-align: center;
         transition: all 0.2s ease;
     }
@@ -113,6 +120,7 @@
     }
     .stepper-box input {
         color: var(--text-primary, #1f2937) !important;
+        font-size: 18px;
     }
     [data-theme="dark"] .stepper-box input {
         color: #f8fafc !important;
@@ -175,8 +183,9 @@
 
     .fraction-date-val {
         color: var(--text-primary, #1f2937);
-        font-size: 17px;
+        font-size: clamp(15px, 3vw, 17px);
         letter-spacing: -0.3px;
+        word-break: break-word;
     }
     [data-theme="dark"] .fraction-date-val {
         color: #f8fafc !important;
@@ -204,11 +213,12 @@
     .hero-usulan-pb {
         background: linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%);
         color: #ffffff;
-        border-radius: 12px;
+        border-radius: 14px;
         border: 1px solid rgba(251, 191, 36, 0.3);
+        overflow: hidden;
     }
 
-    /* Table Ledger */
+    /* Table Ledger & Cards */
     .table-ledger {
         font-size: 12.5px;
     }
@@ -221,6 +231,23 @@
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
         border-color: #334155 !important;
+    }
+
+    /* Mobile Timeline Cards */
+    .timeline-remisi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 14px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .timeline-remisi-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    [data-theme="dark"] .timeline-remisi-card {
+        background: #1e293b;
+        border-color: #334155;
+        color: #f1f5f9;
     }
 
     [data-theme="dark"] #sectionIdentitasWbp {
@@ -238,7 +265,7 @@
             background: white !important;
             color: black !important;
         }
-        .header-card, .btn, .mode-switch-container, #sectionInputVonis, #sectionInputEkspirasi, #sectionAgama, #sectionRemisiAwal, #btnHitungUtama, #placeholderSection {
+        .header-card, .btn, .mode-switch-grid, #colFormInput, #placeholderSection, #cardQuickActionsToolbar, #viewModeLedgerGroup, .d-print-none {
             display: none !important;
         }
         #hasilSection {
@@ -248,236 +275,254 @@
             border: none !important;
             box-shadow: none !important;
         }
+        #colHasilKanan {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid px-3 px-lg-4 py-3">
+<div class="container-fluid px-2 px-md-3 px-lg-4 py-2 py-md-3">
     <!-- Header Card -->
-    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 14px;">
-        <div class="card-body p-3 px-4">
+    <div class="card border-0 shadow-sm mb-3 mb-md-4 header-card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 14px;">
+        <div class="card-body p-3 px-md-4">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div style="width: 46px; height: 46px; border-radius: 11px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.2);">
+                <div class="d-flex align-items-center gap-2.5 gap-md-3">
+                    <div style="width: 44px; height: 44px; border-radius: 11px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 19px; border: 1px solid rgba(255,255,255,0.2);">
                         <i class="fas fa-calculator text-warning"></i>
                     </div>
                     <div>
-                        <h4 class="fw-bold mb-0 text-white">Kalkulator Telram & Integrasi</h4>
-                        <small class="text-white-50" style="font-size: 12px;">
-                            Perhitungan Ekspirasi, Proyeksi Remisi (Keppres 174/1999) & Waktu Pengusulan PB/CB (UU 22/2022)
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <h4 class="fw-bold mb-0 text-white" style="font-size: clamp(16px, 3.5vw, 20px);">Kalkulator Telram &amp; Integrasi</h4>
+                            <span class="badge bg-warning text-dark fw-bold px-2 py-0.5" style="font-size: 10.5px;">SDP DITJENPAS</span>
+                        </div>
+                        <small class="text-white-50 d-block mt-0.5" style="font-size: 11.5px;">
+                            Perhitungan Ekspirasi, Proyeksi Remisi (Keppres 174/1999) &amp; Waktu Pengusulan PB/CB (UU 22/2022)
                         </small>
                     </div>
                 </div>
-                <div>
-                    <a href="{{ asset('telram-offline.html') }}" download="kalkulator-ekspirasi-offline.html" class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-sm" style="font-size: 12.5px;">
-                        <i class="fas fa-download me-1.5 text-warning"></i> Unduh File Offline (.html)
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ asset('telram-offline.html') }}" download="kalkulator-ekspirasi-offline.html" class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-sm" style="font-size: 12px;">
+                        <i class="fas fa-download me-1 text-warning"></i> Unduh File Offline (.html)
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Area: 2 Columns on Desktop -->
-    <div class="row g-4">
-        <!-- Left Column: Input Form -->
-        <div class="col-lg-5 col-xl-5">
-            <div class="card border-0 shadow-sm telram-card">
-                <div class="card-header bg-transparent border-bottom p-3 px-4 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0 telram-text-title">
-                        <i class="fas fa-edit text-primary me-2"></i>Parameter Perhitungan
+    <!-- Main Content Area: 2 Columns on Desktop, Single Column Responsive on Mobile -->
+    <div class="row g-3 g-md-4">
+        <!-- Left Column: Input Form (Sticky on Desktop) -->
+        <div class="col-lg-5 col-xl-5" id="colFormInput">
+            <div class="card border-0 shadow-sm telram-card sticky-lg-top" style="top: 1rem; z-index: 5;">
+                <div class="card-header bg-transparent border-bottom p-3 px-md-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 telram-text-title d-flex align-items-center gap-2">
+                        <i class="fas fa-edit text-primary"></i> Parameter Perhitungan
                     </h6>
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1" onclick="resetForm()" style="font-size: 11.5px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1" onclick="resetForm()" style="font-size: 11px;">
                         <i class="fas fa-undo me-1"></i> Reset
                     </button>
                 </div>
-                <div class="card-body p-4">
-                    <!-- Mode Selector Tab -->
-                    <div class="mode-switch-container mb-4">
-                        <button type="button" id="btnModeRemisi" onclick="setMode('simulasi_remisi')" class="btn-mode-tab active">
-                            <i class="fas fa-medal me-1 text-warning"></i> Proyeksi Remisi & PB
-                        </button>
-                        <button type="button" id="btnModeMaju" onclick="setMode('maju')" class="btn-mode-tab">
-                            <i class="fas fa-arrow-right me-1 text-primary"></i> Cari Ekspirasi
-                        </button>
-                        <button type="button" id="btnModeMundur" onclick="setMode('mundur')" class="btn-mode-tab">
-                            <i class="fas fa-history me-1 text-secondary"></i> Cari Lama Pidana
-                        </button>
-                        <button type="button" id="btnModeSisa" onclick="setMode('sisa')" class="btn-mode-tab">
-                            <i class="fas fa-hourglass-half me-1 text-info"></i> Hitung Sisa Pidana
-                        </button>
-                    </div>
-
-                    <!-- Input Identitas WBP (Khusus Simulasi Remisi & Cetak PDF) -->
-                    <div id="sectionIdentitasWbp" class="mb-3 p-3 rounded-3" style="background: rgba(241, 245, 249, 0.6); border: 1px solid #e2e8f0;">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 13px;">
-                                <i class="fas fa-id-card text-primary me-1"></i> Identitas Narapidana / WBP
-                            </label>
-                            <span class="badge bg-light text-secondary border" style="font-size: 10.5px;">Cetak Berkas PDF</span>
-                        </div>
-                        <div class="row g-2">
-                            <div class="col-sm-7">
-                                <label class="stepper-label mb-1">NAMA WBP / NARAPIDANA</label>
-                                <input type="text" id="txtNamaWbp" class="form-control form-control-sm fw-semibold" placeholder="Nama WBP (Contoh: Budi Santoso)" style="border-radius: 8px; font-size: 13px;">
-                            </div>
-                            <div class="col-sm-5">
-                                <label class="stepper-label mb-1">NO. REGISTER</label>
-                                <input type="text" id="txtNoRegister" class="form-control form-control-sm fw-semibold" placeholder="Contoh: BI.01/2024" style="border-radius: 8px; font-size: 13px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tanggal Mulai Penahanan / Per Tanggal -->
+                <div class="card-body p-3 p-md-4">
+                    <!-- Mode Selector Tab: 4-col on Desktop, 2x2 on Mobile -->
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 13px;">
-                                Tgl. Mulai Penahanan <span class="text-danger">*</span>
-                            </label>
-                            <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="setTglAwalHariIni()" style="font-size: 11.5px;">
-                                <i class="fas fa-calendar-day me-1"></i> Hari Ini
+                        <label class="stepper-label mb-1.5 d-block">PILIH MODE PERHITUNGAN:</label>
+                        <div class="mode-switch-grid">
+                            <button type="button" id="btnModeRemisi" onclick="setMode('simulasi_remisi')" class="btn-mode-tab active">
+                                <i class="fas fa-medal me-1 text-warning"></i> Proyeksi Remisi
+                            </button>
+                            <button type="button" id="btnModeMaju" onclick="setMode('maju')" class="btn-mode-tab">
+                                <i class="fas fa-arrow-right me-1 text-primary"></i> Cari Ekspirasi
+                            </button>
+                            <button type="button" id="btnModeMundur" onclick="setMode('mundur')" class="btn-mode-tab">
+                                <i class="fas fa-history me-1 text-secondary"></i> Lama Pidana
+                            </button>
+                            <button type="button" id="btnModeSisa" onclick="setMode('sisa')" class="btn-mode-tab">
+                                <i class="fas fa-hourglass-half me-1 text-info"></i> Sisa Pidana
                             </button>
                         </div>
-                        <input type="date" id="tglAwal" class="form-control form-control-lg fw-semibold" style="border-radius: 10px; font-size: 14.5px;">
                     </div>
 
-                    <!-- Input Lama Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
-                    <div id="sectionInputVonis" class="mb-3">
-                        <label class="form-label telram-text-title fw-bold mb-2" style="font-size: 13px;">
-                            Lama Pidana / Vonis Hukuman <span class="text-danger">*</span>
-                        </label>
-                        <div class="row g-2">
-                            <div class="col-4">
-                                <div class="stepper-box">
-                                    <label class="d-block stepper-label mb-1">TAHUN</label>
-                                    <input type="number" id="vTahun" min="0" value="0" class="form-control form-control-lg text-center fw-bold border-0 bg-transparent" style="font-size: 20px;">
-                                </div>
+                    <!-- GRUP 1: Identitas WBP & Parameter Vonis -->
+                    <div class="p-3 rounded-3 mb-3 border bg-light-subtle" id="groupIdentitasVonis" style="border-color: #cbd5e1;">
+                        <!-- Input Identitas WBP (Khusus Simulasi Remisi & Cetak PDF) -->
+                        <div id="sectionIdentitasWbp" class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                <label class="stepper-label mb-0 text-primary">
+                                    <i class="fas fa-id-card me-1"></i> IDENTITAS WBP (UNTUK DOKUMEN PDF)
+                                </label>
+                                <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
                             </div>
-                            <div class="col-4">
-                                <div class="stepper-box">
-                                    <label class="d-block stepper-label mb-1">BULAN</label>
-                                    <input type="number" id="vBulan" min="0" value="0" class="form-control form-control-lg text-center fw-bold border-0 bg-transparent" style="font-size: 20px;">
+                            <div class="row g-2">
+                                <div class="col-7">
+                                    <input type="text" id="txtNamaWbp" class="form-control form-control-sm fw-semibold" placeholder="Nama WBP (Contoh: Budi)" style="border-radius: 8px; font-size: 12.5px;">
                                 </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="stepper-box">
-                                    <label class="d-block stepper-label mb-1">HARI</label>
-                                    <input type="number" id="vHari" min="0" value="0" class="form-control form-control-lg text-center fw-bold border-0 bg-transparent" style="font-size: 20px;">
+                                <div class="col-5">
+                                    <input type="text" id="txtNoRegister" class="form-control form-control-sm fw-semibold" placeholder="No. Reg (BI.01/24)" style="border-radius: 8px; font-size: 12.5px;">
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tanggal Mulai Penahanan / Per Tanggal -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 12.5px;">
+                                    Tgl. Mulai Penahanan <span class="text-danger">*</span>
+                                </label>
+                                <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="setTglAwalHariIni()" style="font-size: 11px;">
+                                    <i class="fas fa-calendar-day me-1"></i> Hari Ini
+                                </button>
+                            </div>
+                            <input type="date" id="tglAwal" class="form-control fw-semibold" style="border-radius: 9px; font-size: 14px;">
+                        </div>
+
+                        <!-- Input Lama Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
+                        <div id="sectionInputVonis">
+                            <label class="form-label telram-text-title fw-bold mb-1.5" style="font-size: 12.5px;">
+                                Lama Pidana / Vonis Pokok <span class="text-danger">*</span>
+                            </label>
+                            <div class="row g-1.5 g-sm-2">
+                                <div class="col-4">
+                                    <div class="stepper-box">
+                                        <label class="d-block stepper-label mb-0.5">TAHUN</label>
+                                        <input type="number" id="vTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 18px;">
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stepper-box">
+                                        <label class="d-block stepper-label mb-0.5">BULAN</label>
+                                        <input type="number" id="vBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 18px;">
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stepper-box">
+                                        <label class="d-block stepper-label mb-0.5">HARI</label>
+                                        <input type="number" id="vHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 18px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Mode Mundur & Sisa: Tanggal Ekspirasi Input -->
+                        <div id="sectionInputEkspirasi" class="d-none">
+                            <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 12.5px;">
+                                Tgl. Ekspirasi (Bebas Murni) <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" id="tglEkspirasiInput" class="form-control fw-semibold" style="border-radius: 9px; font-size: 14px;">
+                            <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                                <i class="fas fa-info-circle me-1"></i> Masukkan tanggal ekspirasi bebas murni vonis.
+                            </small>
+                        </div>
                     </div>
 
-                    <!-- Input Tambahan Khusus Simulasi Remisi: Agama WBP -->
-                    <div id="sectionAgama" class="mb-3">
-                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 13px;">
-                            Agama WBP (Untuk Remisi Khusus Hari Raya) <span class="text-danger">*</span>
-                        </label>
-                        <select id="selAgama" class="form-select fw-semibold" style="border-radius: 10px; font-size: 13.5px;">
-                            <option value="islam" selected>Islam (Hari Raya Idul Fitri)</option>
-                            <option value="kristen">Kristen Protestan (Hari Raya Natal - 25 Des)</option>
-                            <option value="katolik">Katolik (Hari Raya Natal - 25 Des)</option>
-                            <option value="hindu">Hindu (Hari Raya Nyepi)</option>
-                            <option value="buddha">Buddha (Hari Raya Waisak)</option>
-                            <option value="khonghucu">Khonghucu (Tahun Baru Imlek)</option>
-                        </select>
-                        <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
-                            <i class="fas fa-info-circle me-1"></i> Remisi Khusus (RK) diberikan pada Hari Raya Keagamaan masing-masing WBP.
-                        </small>
+                    <!-- GRUP 2: Parameter Remisi Keagamaan (Khusus Mode Simulasi Remisi) -->
+                    <div id="groupRemisiKeagamaan" class="mb-3">
+                        <!-- Input Agama WBP -->
+                        <div id="sectionAgama" class="mb-3">
+                            <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 12.5px;">
+                                Agama WBP (Remisi Khusus Hari Raya) <span class="text-danger">*</span>
+                            </label>
+                            <select id="selAgama" class="form-select fw-semibold" style="border-radius: 9px; font-size: 13px;">
+                                <option value="islam" selected>Islam (Hari Raya Idul Fitri)</option>
+                                <option value="kristen">Kristen Protestan (Hari Raya Natal - 25 Des)</option>
+                                <option value="katolik">Katolik (Hari Raya Natal - 25 Des)</option>
+                                <option value="hindu">Hindu (Hari Raya Nyepi)</option>
+                                <option value="buddha">Buddha (Hari Raya Waisak)</option>
+                                <option value="khonghucu">Khonghucu (Tahun Baru Imlek)</option>
+                            </select>
+                        </div>
+
+                        <!-- Input Remisi Sebelumnya (Opsional) -->
+                        <div id="sectionRemisiAwal" class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12.5px;">
+                                    Remisi SK Terdahulu (Jika Ada)
+                                </label>
+                                <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="vRemisiAwal" min="0" value="0" class="form-control fw-semibold" placeholder="0" style="border-radius: 8px 0 0 8px; font-size: 13px;">
+                                <span class="input-group-text fw-bold text-muted" style="border-radius: 0 8px 8px 0; font-size: 12px;">HARI</span>
+                            </div>
+                            <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;">
+                                Isi jika narapidana mutasi/lanjutan yang telah memiliki perolehan remisi sebelumnya.
+                            </small>
+                        </div>
                     </div>
 
-                    <!-- Input Opsi Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
-                    <div id="sectionDasawarsa" class="mb-3 p-2.5 rounded-3 border" style="background: rgba(254, 243, 199, 0.3); border-color: #fde68a !important;">
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="chkDasawarsa" checked style="cursor: pointer;">
-                            <label class="form-check-label fw-bold telram-text-title" for="chkDasawarsa" style="font-size: 12.5px; cursor: pointer;">
-                                Sertakan Remisi Dasawarsa (Tiap 10 Th Kemerdekaan RI)
+                    <!-- GRUP 3: Opsi Lanjutan SDP Ditjenpas (Collapsible / Terbuka Rapi) -->
+                    <div id="groupOpsiSdplanjutan" class="mb-3 p-3 rounded-3 border bg-light-subtle" style="border-color: #cbd5e1;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="stepper-label mb-0 text-primary">
+                                <i class="fas fa-balance-scale me-1"></i> STANDAR &amp; OPSI KHUSUS REMISI
                             </label>
                         </div>
-                        <small class="text-muted d-block mt-1 ps-4" style="font-size: 11px;">
-                            Diberikan setiap 10 tahun (1955 s.d. 2015, 2025, 2035) sebesar 1/12 vonis pokok (maks 3 bulan).
-                        </small>
-                    </div>
 
-                    <!-- Input Opsi Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
-                    <div id="sectionRemisiTambahan" class="mb-3">
-                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 13px;">
-                            Status Pembinaan / Remisi Tambahan (Pasal 4)
-                        </label>
-                        <select id="selRemisiTambahan" class="form-select fw-semibold" style="border-radius: 10px; font-size: 13.5px;">
-                            <option value="none" selected>Standar / Reguler (Tanpa Remisi Tambahan)</option>
-                            <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU yang didapat)</option>
-                            <option value="jasa_negara">Berjasa Bagi Negara / Donor Darah (+1/2 dari RU yang didapat)</option>
-                        </select>
-                        <small class="text-muted d-block mt-1" style="font-size: 11px;">
-                            <i class="fas fa-medal text-warning me-1"></i> Keppres No. 174/1999 Ps. 4: Narapidana yang menjadi pemuka pembinaan atau berjasa pada kemanusiaan mendapat remisi tambahan proporsional RU.
-                        </small>
-                    </div>
-
-                    <!-- Input Opsi Standarisasi Perhitungan Remisi: 2/3 vs Ekspirasi -->
-                    <div id="sectionTargetBasis" class="mb-3">
-                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 13px;">
-                            Standar Batas Simulasi Remisi <span class="text-danger">*</span>
-                        </label>
-                        <select id="selTargetBasis" class="form-select fw-semibold" style="border-radius: 10px; font-size: 13.5px;" onchange="updateHelpTargetBasis()">
-                            <option value="2_3" selected>Standar 2/3 Masa Pidana (Untuk Usulan PB / CB)</option>
-                            <option value="ekspirasi">Sampai Bebas Murni / Ekspirasi Penuh (Tanpa Hak PB/CB)</option>
-                        </select>
-                        <small class="text-muted d-block mt-1" style="font-size: 11px;" id="helpTargetBasis">
-                            <i class="fas fa-balance-scale text-primary me-1"></i> <b>Standar 2/3 (SDP):</b> Remisi dihitung hanya selama WBP menjalani pidana di Lapas sampai 2/3 tercapai (bebas PB/CB). Tahun berikutnya tidak dihitung di Lapas.
-                        </small>
-                    </div>
-
-                    <!-- Input Tambahan Khusus Simulasi Remisi: Remisi yang Sudah Pernah Diperoleh (Opsional) -->
-                    <div id="sectionRemisiAwal" class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 13px;">
-                                Remisi Sebelumnya yang Telah Diperoleh
+                        <!-- Standar Batas Simulasi: 2/3 vs Ekspirasi -->
+                        <div id="sectionTargetBasis" class="mb-2.5">
+                            <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
+                                Standar Batas Simulasi:
                             </label>
-                            <span class="badge bg-light text-secondary border" style="font-size: 10.5px;">Opsional</span>
+                            <select id="selTargetBasis" class="form-select form-select-sm fw-semibold" style="border-radius: 8px; font-size: 12.5px;" onchange="updateHelpTargetBasis()">
+                                <option value="2_3" selected>Standar 2/3 Masa Pidana (Untuk Usulan PB/CB)</option>
+                                <option value="ekspirasi">Sampai Bebas Murni (Tanpa Hak PB/CB)</option>
+                            </select>
+                            <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;" id="helpTargetBasis">
+                                <i class="fas fa-info-circle text-primary me-0.5"></i> Standar 2/3: Remisi dihitung hingga 2/3 Definitif tercapai saat bebas bersyarat.
+                            </small>
                         </div>
-                        <div class="input-group">
-                            <input type="number" id="vRemisiAwal" min="0" value="0" class="form-control fw-semibold" placeholder="0" style="border-radius: 10px 0 0 10px; font-size: 14px;">
-                            <span class="input-group-text fw-bold text-muted" style="border-radius: 0 10px 10px 0; font-size: 12.5px;">HARI</span>
+
+                        <!-- Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
+                        <div id="sectionDasawarsa" class="mb-2.5 p-2 rounded-2 border" style="background: rgba(254, 243, 199, 0.4); border-color: #fde68a !important;">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="chkDasawarsa" checked style="cursor: pointer;">
+                                <label class="form-check-label fw-bold telram-text-title" for="chkDasawarsa" style="font-size: 11.5px; cursor: pointer;">
+                                    Sertakan Remisi Dasawarsa (Tiap 10 Th RI)
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-0.5 ps-4" style="font-size: 10px;">
+                                Diberikan tiap 10 tahun (2025, 2035) sebesar 1/12 vonis pokok (maks 3 bln).
+                            </small>
                         </div>
-                        <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
-                            Isi jika narapidana pindahan/lanjutan yang sudah mengantongi SK Remisi sebelumnya.
-                        </small>
+
+                        <!-- Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
+                        <div id="sectionRemisiTambahan">
+                            <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
+                                Remisi Tambahan (Pasal 4 Keppres 174/1999):
+                            </label>
+                            <select id="selRemisiTambahan" class="form-select form-select-sm fw-semibold" style="border-radius: 8px; font-size: 12.5px;">
+                                <option value="none" selected>Standar / Reguler (Tanpa Tambahan)</option>
+                                <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU)</option>
+                                <option value="jasa_negara">Berjasa Bagi Negara / Donor (+1/2 dari RU)</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Input Mode Mundur & Sisa: Tanggal Ekspirasi Input -->
-                    <div id="sectionInputEkspirasi" class="mb-4 d-none">
-                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 13px;">
-                            Tgl. Ekspirasi (Bebas Murni) <span class="text-danger">*</span>
-                        </label>
-                        <input type="date" id="tglEkspirasiInput" class="form-control form-control-lg fw-semibold" style="border-radius: 10px; font-size: 14.5px;">
-                        <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
-                            <i class="fas fa-info-circle me-1"></i> Masukkan Tanggal ekspirasi (Bebas Murni)
-                        </small>
-                    </div>
-
-                    <!-- Tombol Hitung -->
-                    <button type="button" id="btnHitungUtama" onclick="hitungSesuaiMode()" class="btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm" style="border-radius: 10px; font-size: 14.5px; letter-spacing: 0.5px;">
-                        <i class="fas fa-medal me-2"></i> HITUNG PROYEKSI REMISI & INTEGRASI
+                    <!-- Tombol Utama Hitung -->
+                    <button type="button" id="btnHitungUtama" onclick="hitungSesuaiMode()" class="btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm" style="border-radius: 10px; font-size: 14px; letter-spacing: 0.3px;">
+                        <i class="fas fa-medal me-1.5"></i> HITUNG PROYEKSI REMISI &amp; INTEGRASI
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Right Column: Results & Actions -->
-        <div class="col-lg-7 col-xl-7">
+        <div class="col-lg-7 col-xl-7" id="colHasilKanan">
             <!-- Empty Placeholder (When No Calculation Yet) -->
-            <div id="placeholderSection" class="card border-0 shadow-sm text-center p-5 placeholder-card">
-                <div class="py-4">
-                    <div class="mb-3" style="width: 70px; height: 70px; border-radius: 50%; background: rgba(245, 158, 11, 0.1); display: inline-flex; align-items: center; justify-content: center; font-size: 30px; color: #f59e0b;">
+            <div id="placeholderSection" class="card border-0 shadow-sm text-center p-4 p-md-5 placeholder-card">
+                <div class="py-3 py-md-4">
+                    <div class="mb-3" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(245, 158, 11, 0.1); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; color: #f59e0b;">
                         <i class="fas fa-medal" id="placeholderIcon"></i>
                     </div>
-                    <h5 class="fw-bold telram-text-title mb-2" id="placeholderTitle">Hasil Proyeksi Remisi & Integrasi</h5>
-                    <p class="text-muted mb-4 mx-auto" id="placeholderDesc" style="max-width: 440px; font-size: 13.5px;">
-                        Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI & INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.
+                    <h5 class="fw-bold telram-text-title mb-2" id="placeholderTitle">Hasil Proyeksi Remisi &amp; Integrasi</h5>
+                    <p class="text-muted mb-4 mx-auto" id="placeholderDesc" style="max-width: 440px; font-size: 13px; line-height: 1.5;">
+                        Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.
                     </p>
                     <div class="d-inline-flex gap-2">
-                        <button type="button" class="btn btn-outline-warning text-dark btn-sm px-3 rounded-pill" onclick="demoSampleData()">
+                        <button type="button" class="btn btn-outline-warning text-dark btn-sm px-3 rounded-pill fw-semibold" onclick="demoSampleData()">
                             <i class="fas fa-magic me-1"></i> Coba Data Contoh
                         </button>
                     </div>
@@ -486,183 +531,206 @@
 
             <!-- Results Section (Initially Hidden) -->
             <div id="hasilSection" class="d-none">
-                <div class="card border-0 shadow-sm mb-4 telram-card">
-                    <div class="card-header bg-transparent border-bottom p-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge" id="badgeProgramStatus" style="font-size: 12px; padding: 6px 12px;">PB</span>
-                            <h6 class="fw-bold mb-0 telram-text-title" id="hasilHeaderTitle">
-                                Hasil Proyeksi Remisi & Integrasi
-                            </h6>
-                        </div>
-                        <div class="d-flex gap-1.5" id="btnGroupAksiHasil">
-                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1" onclick="unduhPdfResmi()" title="Unduh Lembar Resmi PDF" style="font-size: 11.5px;">
-                                <i class="fas fa-file-pdf me-1"></i> Unduh PDF
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1" onclick="cetakLembarPerhitungan()" title="Cetak Lembar Perhitungan" style="font-size: 11.5px;">
-                                <i class="fas fa-print me-1"></i> Cetak
-                            </button>
-                            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-2.5 py-1" onclick="salinRingkasanTeks()" title="Salin Ringkasan untuk WhatsApp" style="font-size: 11.5px;">
-                                <i class="fas fa-copy me-1"></i> Salin Ringkasan
-                            </button>
+                <!-- 1. Quick Action Toolbar Card (Atas Hasil) -->
+                <div class="card border-0 shadow-sm mb-3 telram-card" id="cardQuickActionsToolbar">
+                    <div class="card-body p-2 px-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge" id="badgeProgramStatus" style="font-size: 11.5px; padding: 5px 10px;">PB</span>
+                                <span class="fw-bold telram-text-title" id="hasilHeaderTitle" style="font-size: 13.5px;">
+                                    Hasil Proyeksi Remisi &amp; Integrasi
+                                </span>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap gap-1.5" id="btnGroupAksiHasil">
+                                <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 py-1.5 shadow-sm fw-semibold" onclick="unduhPdfResmi()" title="Unduh Lembar Resmi PDF" style="font-size: 11.5px;">
+                                    <i class="fas fa-file-pdf me-1"></i> Unduh PDF
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1.5 fw-semibold" onclick="cetakLembarPerhitungan()" title="Cetak Lembar Perhitungan" style="font-size: 11.5px;">
+                                    <i class="fas fa-print me-1"></i> Cetak
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm rounded-pill px-3 py-1.5 shadow-sm fw-semibold" onclick="salinRingkasanTeks()" title="Salin Ringkasan untuk WhatsApp" style="font-size: 11.5px;">
+                                    <i class="fab fa-whatsapp me-1"></i> Salin WA
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body p-4">
-                        <!-- Mode Remisi: Hero Alert Pengusulan PB / CB (H-2 Bulan) -->
-                        <div id="boxHeroPengusulan" class="card border-0 shadow-sm mb-4 hero-usulan-pb">
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                                    <span class="badge bg-white text-dark fw-bold px-2.5 py-1" style="font-size: 11.5px; letter-spacing: 0.5px;">
-                                        <i class="fas fa-bullhorn text-warning me-1"></i> WAKTU MULAI PENGUSULAN INTEGRASI KE SISTEM (H-2 BULAN SEBELUM 2/3)
-                                    </span>
-                                    <span class="badge" id="badgeStatusPengusulan" style="font-size: 11.5px; padding: 5px 10px;">
-                                        -
-                                    </span>
-                                </div>
-                                <div class="row align-items-center mt-2">
-                                    <div class="col-md-7">
-                                        <div class="text-white-50" style="font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px;">Mulai Pengusulan Berkas / Litmas Bapas:</div>
-                                        <h2 class="fw-black mb-1 text-white" id="resTglMulaiPengusulan" style="font-weight: 800; font-size: 24px;">-</h2>
-                                        <p class="mb-0 text-white" id="pesanPengusulan" style="font-size: 12.5px; opacity: 0.95;">
-                                            -
-                                        </p>
-                                    </div>
-                                    <div class="col-md-5 text-md-end mt-3 mt-md-0">
-                                        <div class="p-2.5 rounded-3" style="background: rgba(0,0,0,0.2); display: inline-block; text-align: left; min-width: 200px;">
-                                            <div class="text-white-50" style="font-size: 11px;">JATUH TEMPO 2/3 DEFINITIF:</div>
-                                            <strong class="text-white d-block" id="resTgl23Highlight" style="font-size: 15px;">-</strong>
-                                            <div class="text-white-50 mt-1" style="font-size: 11px;">METODE: 2/3 MINUS FULL REMISI</div>
-                                        </div>
-                                    </div>
+                </div>
+
+                <!-- 2. Hero Alert Pengusulan PB / CB (H-2 Bulan Sebelum 2/3) -->
+                <div id="boxHeroPengusulan" class="card border-0 shadow-sm mb-3 hero-usulan-pb">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <span class="badge bg-white text-dark fw-bold px-2.5 py-1" style="font-size: 11px; letter-spacing: 0.3px;">
+                                <i class="fas fa-bullhorn text-warning me-1"></i> WAKTU MULAI PENGUSULAN INTEGRASI KE SISTEM (H-2 BULAN SEBELUM 2/3)
+                            </span>
+                            <span class="badge" id="badgeStatusPengusulan" style="font-size: 11px; padding: 4px 8px;">
+                                -
+                            </span>
+                        </div>
+                        <div class="row align-items-center g-3 mt-1">
+                            <div class="col-md-7">
+                                <div class="text-white-50" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Mulai Pengusulan Berkas / Litmas Bapas:</div>
+                                <h2 class="fw-black mb-1 text-white" id="resTglMulaiPengusulan" style="font-weight: 800; font-size: clamp(18px, 4.5vw, 24px); word-break: break-word;">-</h2>
+                                <p class="mb-0 text-white" id="pesanPengusulan" style="font-size: 12px; opacity: 0.95; line-height: 1.4;">
+                                    -
+                                </p>
+                            </div>
+                            <div class="col-md-5 text-md-end">
+                                <div class="p-2.5 rounded-3 w-100" style="background: rgba(0,0,0,0.22); text-align: left;">
+                                    <div class="text-white-50" style="font-size: 10.5px; text-transform: uppercase;">Jatuh Tempo 2/3 Definitif:</div>
+                                    <strong class="text-white d-block" id="resTgl23Highlight" style="font-size: 14.5px;">-</strong>
+                                    <div class="text-white-50 mt-0.5" style="font-size: 10px;">Metode: 2/3 Murni - Full Remisi</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Mode Sisa Result Card (Dominant Highlight) -->
-                        <div id="boxHasilSisa" class="card border-0 shadow-sm mb-4 d-none" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-radius: 12px; position: relative; overflow: hidden;">
-                            <div class="card-body p-4 position-relative" style="z-index: 2;">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="badge bg-white text-success px-2.5 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
-                                            <i class="fas fa-hourglass-half me-1"></i> SISA MASA PIDANA
-                                        </span>
-                                        <h2 class="fw-black mb-0 text-white" id="resSisaPidana" style="font-weight: 800; font-size: 26px;">-</h2>
-                                    </div>
-                                    <div class="d-none d-sm-block text-white" style="font-size: 48px; opacity: 0.25;">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                </div>
+                <!-- 3. Mode Sisa Result Card (Dominant Highlight) -->
+                <div id="boxHasilSisa" class="card border-0 shadow-sm mb-3 d-none" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-radius: 14px; position: relative; overflow: hidden;">
+                    <div class="card-body p-4 position-relative" style="z-index: 2;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-white text-success px-2.5 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
+                                    <i class="fas fa-hourglass-half me-1"></i> SISA MASA PIDANA
+                                </span>
+                                <h2 class="fw-black mb-0 text-white" id="resSisaPidana" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px);">-</h2>
+                            </div>
+                            <div class="d-none d-sm-block text-white" style="font-size: 44px; opacity: 0.25;">
+                                <i class="fas fa-clock"></i>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Mode Mundur Result Box: Lama Pidana -->
-                        <div id="boxHasilPidana" class="card border-0 shadow-sm mb-3 d-none" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: white; border-radius: 12px;">
-                            <div class="card-body p-3 px-4 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="text-uppercase fw-bold text-white-50" style="font-size: 11px; letter-spacing: 1px;">
-                                        Total Lama Pidana (Vonis Murni)
-                                    </span>
-                                    <h3 class="fw-bold mb-0 text-white mt-1" id="resLamaPidana">-</h3>
+                <!-- 4. Mode Mundur Result Box: Lama Pidana -->
+                <div id="boxHasilPidana" class="card border-0 shadow-sm mb-3 d-none" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: white; border-radius: 14px;">
+                    <div class="card-body p-3 px-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-uppercase fw-bold text-white-50" style="font-size: 11px; letter-spacing: 1px;">
+                                Total Lama Pidana (Vonis Murni)
+                            </span>
+                            <h3 class="fw-bold mb-0 text-white mt-1" id="resLamaPidana" style="font-size: clamp(18px, 4vw, 24px);">-</h3>
+                        </div>
+                        <div style="font-size: 30px; opacity: 0.3;">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Ekspirasi Bebas Card (Dominant Highlight) -->
+                <div id="cardEkspirasi" class="card border-0 shadow-sm mb-3" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; border-radius: 14px; position: relative; overflow: hidden;">
+                    <div class="card-body p-3 p-md-4 position-relative" style="z-index: 2;">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                            <div>
+                                <span class="badge bg-white text-danger px-2.5 py-1 mb-1.5 fw-bold" id="badgeEkspirasiTitle" style="font-size: 11px; letter-spacing: 0.3px;">
+                                    <i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS DEFINITIF
+                                </span>
+                                <h2 class="fw-black mb-0 text-white" id="resEkspirasi" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px); word-break: break-word;">-</h2>
+                                <div id="subEkspirasiMurni" class="mt-1 text-white-50" style="font-size: 12px;">
+                                    Ekspirasi Murni: <span class="text-white fw-bold" id="resEkspirasiMurniText">-</span>
                                 </div>
-                                <div style="font-size: 32px; opacity: 0.3;">
-                                    <i class="fas fa-hourglass-half"></i>
-                                </div>
+                            </div>
+                            <div class="text-start text-sm-end" id="boxTotalRemisiBadge">
+                                <div class="text-white-50" style="font-size: 10.5px; text-transform: uppercase;">Total Proyeksi Remisi:</div>
+                                <div class="fw-bold text-warning mt-0.5" id="resTotalRemisiText" style="font-size: clamp(17px, 3.8vw, 22px);">0 Hari</div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Ekspirasi Card (Dominant Highlight) -->
-                        <div id="cardEkspirasi" class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; border-radius: 12px; position: relative; overflow: hidden;">
-                            <div class="card-body p-4 position-relative" style="z-index: 2;">
-                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                    <div>
-                                        <span class="badge bg-white text-danger px-2.5 py-1 mb-2 fw-bold" id="badgeEkspirasiTitle" style="font-size: 11px; letter-spacing: 0.5px;">
-                                            <i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS DEFINITIF
-                                        </span>
-                                        <h2 class="fw-black mb-0 text-white" id="resEkspirasi" style="font-weight: 800; font-size: 26px;">-</h2>
-                                        <div id="subEkspirasiMurni" class="mt-1 text-white-50" style="font-size: 12.5px;">
-                                            Ekspirasi Murni: <span class="text-white fw-bold" id="resEkspirasiMurniText">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-end" id="boxTotalRemisiBadge">
-                                        <div class="text-white-50" style="font-size: 11px; text-transform: uppercase;">Total Proyeksi Remisi:</div>
-                                        <div class="fw-bold fs-4 text-warning" id="resTotalRemisiText">0 Hari</div>
-                                    </div>
-                                </div>
+                <!-- 6. 3 Cards Grid (1/3, 1/2 Asimilasi, 2/3 PB/CB) -->
+                <div id="rowFractionCards" class="row row-cols-1 row-cols-sm-3 g-2 g-md-3 mb-3">
+                    <div class="col">
+                        <div class="card h-100 border-0 shadow-sm p-3 text-start fraction-card-blue">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-primary px-2 py-0.5 text-white fw-bold" style="font-size: 10.5px; border-radius: 6px;">
+                                    1/3 Masa Pidana
+                                </span>
+                                <i class="fas fa-book-reader text-primary opacity-75 fs-6"></i>
                             </div>
+                            <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res13">-</h4>
+                            <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;">Syarat dasar pembinaan</small>
                         </div>
-
-                        <!-- 3 Cards Grid (1/3, 1/2 Asimilasi, 2/3 PB/CB) -->
-                        <div id="rowFractionCards" class="row g-3">
-                            <div class="col-md-4">
-                                <div class="card h-100 border-0 shadow-sm p-3 p-xl-3 text-start fraction-card-blue">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="badge bg-primary px-2.5 py-1 text-white fw-bold" style="font-size: 11px; border-radius: 6px;">
-                                            1/3 Masa Pidana
-                                        </span>
-                                        <i class="fas fa-book-reader text-primary opacity-75 fs-5"></i>
-                                    </div>
-                                    <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res13">-</h4>
-                                    <small class="text-muted d-block mt-1" style="font-size: 11px;">Syarat dasar pembinaan</small>
-                                </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 border-0 shadow-sm p-3 text-start fraction-card-amber">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-warning px-2 py-0.5 text-dark fw-bold" style="font-size: 10.5px; border-radius: 6px;">
+                                    1/2 Asimilasi
+                                </span>
+                                <i class="fas fa-hands-helping text-warning opacity-75 fs-6"></i>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card h-100 border-0 shadow-sm p-3 p-xl-3 text-start fraction-card-amber">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="badge bg-warning px-2.5 py-1 text-dark fw-bold" style="font-size: 11px; border-radius: 6px;">
-                                            1/2 Asimilasi
-                                        </span>
-                                        <i class="fas fa-hands-helping text-warning opacity-75 fs-5"></i>
-                                    </div>
-                                    <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res12">-</h4>
-                                    <small class="text-muted d-block mt-1" id="subInfo12" style="font-size: 11px;">Mulai berhak Asimilasi Lapas</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card h-100 border-0 shadow-sm p-3 p-xl-3 text-start fraction-card-emerald">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="badge bg-success px-2.5 py-1 text-white fw-bold" id="badgeLabel23" style="font-size: 11px; border-radius: 6px;">
-                                            2/3 PB
-                                        </span>
-                                        <i class="fas fa-user-check text-success opacity-75 fs-5"></i>
-                                    </div>
-                                    <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res23">-</h4>
-                                    <small class="text-muted d-block mt-1" id="subInfo23" style="font-size: 11px;">Syarat substantif waktu PB/CB</small>
-                                </div>
-                            </div>
+                            <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res12">-</h4>
+                            <small class="text-muted d-block mt-0.5" id="subInfo12" style="font-size: 10.5px;">Mulai berhak Asimilasi Lapas</small>
                         </div>
-
-                        <!-- Info Ringkasan Ekstra -->
-                        <div class="mt-4 p-3 summary-info-box">
-                            <div class="row g-2 text-muted">
-                                <div class="col-sm-6">
-                                    <i class="fas fa-calendar-alt text-primary me-1"></i> <span id="labelInfoTglAwal">Tgl. Ditahan:</span> <strong class="telram-text-title" id="infoTglAwal">-</strong>
-                                </div>
-                                <div class="col-sm-6">
-                                    <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Total Hari Vonis:</span> <strong class="telram-text-title" id="infoTotalHari">-</strong> hari
-                                </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 border-0 shadow-sm p-3 text-start fraction-card-emerald">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-success px-2 py-0.5 text-white fw-bold" id="badgeLabel23" style="font-size: 10.5px; border-radius: 6px;">
+                                    2/3 PB
+                                </span>
+                                <i class="fas fa-user-check text-success opacity-75 fs-6"></i>
                             </div>
+                            <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res23">-</h4>
+                            <small class="text-muted d-block mt-0.5" id="subInfo23" style="font-size: 10.5px;">Syarat substantif waktu PB/CB</small>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Section Tabel Proyeksi Remisi Keppres 174/1999 (Hanya untuk Mode Remisi) -->
-                        <div id="sectionTableLedger" class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                                <h6 class="fw-bold mb-0 telram-text-title">
-                                    <i class="fas fa-list-ol text-warning me-2"></i>Tabel Proyeksi Remisi per Tahun (Keppres No. 174/1999)
+                <!-- 7. Info Ringkasan Ekstra -->
+                <div class="p-2.5 px-3 summary-info-box mb-3">
+                    <div class="row g-2 text-muted" style="font-size: 12px;">
+                        <div class="col-sm-6">
+                            <i class="fas fa-calendar-alt text-primary me-1"></i> <span id="labelInfoTglAwal">Tgl. Ditahan:</span> <strong class="telram-text-title" id="infoTglAwal">-</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Total Hari Vonis:</span> <strong class="telram-text-title" id="infoTotalHari">-</strong> hari
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. Section Rincian Proyeksi Remisi Berkala (Dual-View Mobile) -->
+                <div id="sectionTableLedger" class="card border-0 shadow-sm telram-card">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2.5 flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="fw-bold mb-0 telram-text-title d-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                                    <i class="fas fa-list-ol text-warning"></i> Rincian Proyeksi Remisi Berkala
                                 </h6>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" id="badgeLedgerBasis" style="font-size: 11px;">Standar 2/3 PB/CB</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="badgeLedgerBasis" style="font-size: 10.5px;">Standar 2/3 PB/CB</span>
                             </div>
-                            <div class="table-responsive border rounded-3" style="border-color: #e2e8f0;">
-                                <table class="table table-hover table-striped align-middle mb-0 table-ledger">
+
+                            <!-- Dual-View Switcher (Tabel vs Kartu Mobile) -->
+                            <div class="btn-group btn-group-sm rounded-pill p-0.5 border" role="group" id="viewModeLedgerGroup">
+                                <button type="button" class="btn btn-sm btn-primary active rounded-pill px-2.5 py-1" id="btnViewTable" onclick="setLedgerView('table')" title="Tampilan Tabel SDP Lengkap" style="font-size: 11px;">
+                                    <i class="fas fa-table me-1"></i> Tabel SDP
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1" id="btnViewCards" onclick="setLedgerView('cards')" title="Tampilan Kartu Kronologis (Nyaman di Ponsel)" style="font-size: 11px;">
+                                    <i class="fas fa-id-badge me-1"></i> Kartu Mobile
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- OPSI TAMPILAN 1: Tabel SDP Lengkap (Responsive dengan min-width agar tidak gepeng) -->
+                        <div id="ledgerTableView">
+                            <div class="d-block d-md-none text-muted mb-1" style="font-size: 11px;">
+                                <i class="fas fa-arrows-left-right text-primary me-1"></i> Geser tabel ke samping untuk melihat kolom lengkap
+                            </div>
+                            <div class="table-responsive border rounded-3" style="border-color: #cbd5e1;">
+                                <table class="table table-hover table-striped align-middle mb-0 table-ledger" style="min-width: 860px;">
                                     <thead class="table-light">
-                                        <tr>
+                                        <tr style="font-size: 11.5px;">
                                             <th style="width: 40px;" class="text-center">#</th>
-                                            <th>Nama Event Remisi</th>
-                                            <th>Tanggal Event</th>
-                                            <th>Masa Dijalani</th>
-                                            <th>Status</th>
-                                            <th>Besaran Remisi</th>
-                                            <th>Akumulasi</th>
-                                            <th>Perkiraan Bebas Baru</th>
-                                            <th>Keterangan &amp; Landasan Alasan</th>
+                                            <th style="min-width: 170px;">Nama Event &amp; Tahapan</th>
+                                            <th style="min-width: 105px; white-space: nowrap;">Tanggal Event</th>
+                                            <th style="min-width: 100px; white-space: nowrap;">Masa Dijalani</th>
+                                            <th style="min-width: 95px; white-space: nowrap;">Status</th>
+                                            <th style="min-width: 95px; white-space: nowrap;">Besaran</th>
+                                            <th style="min-width: 85px; white-space: nowrap;">Akumulasi</th>
+                                            <th style="min-width: 110px; white-space: nowrap;">Ekspirasi Baru</th>
+                                            <th style="min-width: 200px;">Keterangan &amp; Landasan Alasan</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbodyProyeksiRemisi">
@@ -670,10 +738,18 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <small class="text-muted d-block mt-2" id="noteLedger" style="font-size: 11.5px; line-height: 1.45;">
-                                <i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas & UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB. Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP menjalani pembinaan luar di Bapas.
-                            </small>
                         </div>
+
+                        <!-- OPSI TAMPILAN 2: Kartu Kronologis Mobile (Anti Horizontal Scroll) -->
+                        <div id="ledgerCardsView" class="d-none">
+                            <div id="cardsProyeksiRemisi" class="d-flex flex-column gap-2.5">
+                                <!-- Rendered dynamically as timeline cards -->
+                            </div>
+                        </div>
+
+                        <small class="text-muted d-block mt-2.5" id="noteLedger" style="font-size: 11px; line-height: 1.45;">
+                            <i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas &amp; UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB. Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP menjalani pembinaan luar di Bapas.
+                        </small>
                     </div>
                 </div>
             </div>
@@ -694,9 +770,10 @@
 <script>
     // State Aplikasi
     let currentMode = 'simulasi_remisi';
+    let currentLedgerView = 'table';
     let lastResult = null;
 
-    // Toast Alert Function
+    // Toast Notification System
     function showToast(message, type = 'success') {
         const toastEl = document.getElementById('telramToast');
         const toastContent = document.getElementById('telramToastContent');
@@ -724,6 +801,35 @@
         }, 3200);
     }
 
+    // Toggle Tampilan Tabel vs Kartu Mobile
+    function setLedgerView(viewType) {
+        currentLedgerView = viewType;
+        const btnTable = document.getElementById('btnViewTable');
+        const btnCards = document.getElementById('btnViewCards');
+        const tableView = document.getElementById('ledgerTableView');
+        const cardsView = document.getElementById('ledgerCardsView');
+
+        if (viewType === 'cards') {
+            if (btnCards) {
+                btnCards.className = 'btn btn-sm btn-primary active rounded-pill px-2.5 py-1';
+            }
+            if (btnTable) {
+                btnTable.className = 'btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1';
+            }
+            if (tableView) tableView.classList.add('d-none');
+            if (cardsView) cardsView.classList.remove('d-none');
+        } else {
+            if (btnTable) {
+                btnTable.className = 'btn btn-sm btn-primary active rounded-pill px-2.5 py-1';
+            }
+            if (btnCards) {
+                btnCards.className = 'btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1';
+            }
+            if (tableView) tableView.classList.remove('d-none');
+            if (cardsView) cardsView.classList.add('d-none');
+        }
+    }
+
     // Switcher Mode: Simulasi Remisi vs Maju vs Mundur vs Sisa
     function setMode(mode) {
         currentMode = mode;
@@ -733,11 +839,8 @@
         const btnSisa = document.getElementById('btnModeSisa');
         const sectionIdentitasWbp = document.getElementById('sectionIdentitasWbp');
         const sectionInputVonis = document.getElementById('sectionInputVonis');
-        const sectionAgama = document.getElementById('sectionAgama');
-        const sectionDasawarsa = document.getElementById('sectionDasawarsa');
-        const sectionRemisiTambahan = document.getElementById('sectionRemisiTambahan');
-        const sectionTargetBasis = document.getElementById('sectionTargetBasis');
-        const sectionRemisiAwal = document.getElementById('sectionRemisiAwal');
+        const groupRemisiKeagamaan = document.getElementById('groupRemisiKeagamaan');
+        const groupOpsiSdplanjutan = document.getElementById('groupOpsiSdplanjutan');
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
         const labelTglAwal = document.getElementById('labelTglAwal');
@@ -750,34 +853,28 @@
         if (mode === 'simulasi_remisi') {
             if (btnRemisi) btnRemisi.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.remove('d-none');
-            sectionInputVonis.classList.remove('d-none');
-            sectionAgama.classList.remove('d-none');
-            if (sectionDasawarsa) sectionDasawarsa.classList.remove('d-none');
-            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.remove('d-none');
-            if (sectionTargetBasis) sectionTargetBasis.classList.remove('d-none');
-            sectionRemisiAwal.classList.remove('d-none');
-            sectionInputEkspirasi.classList.add('d-none');
-            labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
+            if (sectionInputVonis) sectionInputVonis.classList.remove('d-none');
+            if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.remove('d-none');
+            if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.remove('d-none');
+            if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm';
-            btnHitung.innerHTML = '<i class="fas fa-medal me-2"></i> HITUNG PROYEKSI REMISI & INTEGRASI';
+            btnHitung.className = 'btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm';
+            btnHitung.innerHTML = '<i class="fas fa-medal me-2"></i> HITUNG PROYEKSI REMISI &amp; INTEGRASI';
 
             placeholderTitle.innerText = 'Hasil Proyeksi Remisi & Integrasi';
-            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI & INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
+            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
             placeholderIcon.className = 'fas fa-medal';
         } else if (mode === 'maju') {
             if (btnMaju) btnMaju.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
-            sectionInputVonis.classList.remove('d-none');
-            sectionAgama.classList.add('d-none');
-            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
-            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
-            if (sectionTargetBasis) sectionTargetBasis.classList.add('d-none');
-            sectionRemisiAwal.classList.add('d-none');
-            sectionInputEkspirasi.classList.add('d-none');
-            labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
+            if (sectionInputVonis) sectionInputVonis.classList.remove('d-none');
+            if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
+            if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
+            if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm';
+            btnHitung.className = 'btn btn-primary w-100 py-2.5 py-md-3 fw-bold shadow-sm';
             btnHitung.innerHTML = '<i class="fas fa-calculator me-2"></i> HITUNG EKSPIRASI';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
@@ -786,16 +883,13 @@
         } else if (mode === 'mundur') {
             if (btnMundur) btnMundur.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
-            sectionInputVonis.classList.add('d-none');
-            sectionAgama.classList.add('d-none');
-            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
-            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
-            if (sectionTargetBasis) sectionTargetBasis.classList.add('d-none');
-            sectionRemisiAwal.classList.add('d-none');
-            sectionInputEkspirasi.classList.remove('d-none');
-            labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
+            if (sectionInputVonis) sectionInputVonis.classList.add('d-none');
+            if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
+            if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
+            if (sectionInputEkspirasi) sectionInputEkspirasi.classList.remove('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-secondary w-100 py-3 fw-bold shadow-sm';
+            btnHitung.className = 'btn btn-secondary w-100 py-2.5 py-md-3 fw-bold shadow-sm';
             btnHitung.innerHTML = '<i class="fas fa-history me-2"></i> HITUNG LAMA PIDANA';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
@@ -804,16 +898,13 @@
         } else if (mode === 'sisa') {
             if (btnSisa) btnSisa.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
-            sectionInputVonis.classList.add('d-none');
-            sectionAgama.classList.add('d-none');
-            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
-            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
-            if (sectionTargetBasis) sectionTargetBasis.classList.add('d-none');
-            sectionRemisiAwal.classList.add('d-none');
-            sectionInputEkspirasi.classList.remove('d-none');
-            labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
+            if (sectionInputVonis) sectionInputVonis.classList.add('d-none');
+            if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
+            if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
+            if (sectionInputEkspirasi) sectionInputEkspirasi.classList.remove('d-none');
+            if (labelTglAwal) labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-info text-white w-100 py-3 fw-bold shadow-sm';
+            btnHitung.className = 'btn btn-info text-white w-100 py-2.5 py-md-3 fw-bold shadow-sm';
             btnHitung.innerHTML = '<i class="fas fa-hourglass-half me-2"></i> HITUNG SISA PIDANA';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Sisa Pidana';
@@ -844,9 +935,9 @@
         const help = document.getElementById('helpTargetBasis');
         if (!sel || !help) return;
         if (sel.value === '2_3') {
-            help.innerHTML = '<i class="fas fa-balance-scale text-primary me-1"></i> <b>Standar 2/3 (SDP):</b> Remisi dihitung hanya selama WBP menjalani pidana di Lapas sampai 2/3 tercapai (bebas PB/CB). Tahun berikutnya tidak dihitung di Lapas.';
+            help.innerHTML = '<i class="fas fa-info-circle text-primary me-0.5"></i> <b>Standar 2/3 (SDP):</b> Remisi dihitung hanya selama WBP menjalani pidana di Lapas sampai 2/3 tercapai (bebas PB/CB).';
         } else {
-            help.innerHTML = '<i class="fas fa-door-open text-warning me-1"></i> <b>Ekspirasi Penuh:</b> Perhitungan remisi dilanjutkan hingga bebas murni 100% tanpa hak integrasi PB/CB.';
+            help.innerHTML = '<i class="fas fa-door-open text-warning me-0.5"></i> <b>Ekspirasi Penuh:</b> Perhitungan remisi dilanjutkan hingga bebas murni tanpa hak integrasi PB/CB.';
         }
     }
 
@@ -876,8 +967,6 @@
     function demoSampleData() {
         const now = new Date();
         const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
         document.getElementById('tglAwal').value = `${yyyy}-01-01`;
 
         if (currentMode === 'simulasi_remisi' || currentMode === 'maju') {
@@ -1057,7 +1146,7 @@
             document.getElementById('res23').innerText = data.formatted.tgl_2_3_definitif;
             document.getElementById('subInfo23').innerText = `Jatuh Tempo (Murni: ${data.formatted.tgl_2_3_murni})`;
 
-            // Render Ledger Tabel
+            // Render Ledger Tabel & Cards
             renderTableLedger(data.proyeksi_ledger);
 
             // Update badge basis proyeksi dan note penjelasan
@@ -1065,14 +1154,14 @@
             if (badgeLedgerBasis) {
                 badgeLedgerBasis.innerText = data.target_basis_label || (data.target_basis === '2_3' ? 'Standar 2/3 PB/CB' : 'Ekspirasi Penuh');
                 badgeLedgerBasis.className = data.target_basis === '2_3'
-                    ? 'badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1'
-                    : 'badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1';
+                    ? 'badge bg-primary-subtle text-primary border border-primary-subtle'
+                    : 'badge bg-warning-subtle text-warning border border-warning-subtle';
             }
 
             const noteLedger = document.getElementById('noteLedger');
             if (noteLedger) {
                 if (data.target_basis === '2_3') {
-                    noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas & UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB (<strong>${data.formatted.tgl_2_3_definitif}</strong>). Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP telah bebas menjalani pembinaan luar di Bapas.`;
+                    noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas &amp; UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB (<strong>${data.formatted.tgl_2_3_definitif}</strong>). Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP telah bebas menjalani pembinaan luar di Bapas.`;
                 } else {
                     noteLedger.innerHTML = `<i class="fas fa-info-circle me-1 text-warning"></i> <b>Basis Ekspirasi Penuh:</b> Proyeksi remisi dihitung secara berkala hingga bebas murni tanpa hak integrasi PB/CB.`;
                 }
@@ -1164,38 +1253,102 @@
 
         document.getElementById('placeholderSection').classList.add('d-none');
         document.getElementById('hasilSection').classList.remove('d-none');
+
+        // Mobile UX: Auto smooth scroll ke hasil kalkulasi agar user langsung melihat angka
+        if (window.innerWidth < 992) {
+            setTimeout(() => {
+                const el = document.getElementById('hasilSection');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
     }
 
-    // Render Tabel Proyeksi Remisi
+    // Render Tabel Proyeksi Remisi (Tabel SDP & Mobile Timeline Cards)
     function renderTableLedger(ledger) {
         const tbody = document.getElementById('tbodyProyeksiRemisi');
+        const cardsContainer = document.getElementById('cardsProyeksiRemisi');
         tbody.innerHTML = '';
+        cardsContainer.innerHTML = '';
 
         if (!ledger || ledger.length === 0) {
             tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3 text-muted">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</td></tr>';
+            cardsContainer.innerHTML = '<div class="text-center py-3 text-muted border rounded-3 p-3">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</div>';
             return;
         }
 
         ledger.forEach((row, index) => {
-            const tr = document.createElement('tr');
+            // 1. Status Badge
             const statusBadge = row.eligible
-                ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fas fa-check-circle me-1"></i>${row.tahap || 'Memenuhi Syarat'}</span>`
-                : `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i class="fas fa-clock me-1"></i>Belum 6 Bln</span>`;
+                ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5" style="white-space: nowrap;"><i class="fas fa-check-circle me-1"></i>${row.tahap || 'Memenuhi Syarat'}</span>`
+                : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-0.5" style="white-space: nowrap;"><i class="fas fa-clock me-1"></i>Belum 6 Bln</span>`;
+
+            // Badge Tahap Warna
+            let badgeBg = '';
+            if (!row.eligible) {
+                badgeBg = 'background-color: #fff1f2;';
+            } else if (row.jenis === 'RD') {
+                badgeBg = 'background-color: #fffbeb;';
+            } else if (row.jenis === 'RT') {
+                badgeBg = 'background-color: #f0fdf4;';
+            }
+
+            // A. Row Tabel SDP Lengkap
+            const tr = document.createElement('tr');
+            if (badgeBg) tr.setAttribute('style', badgeBg);
 
             tr.innerHTML = `
                 <td class="text-center fw-bold text-muted">${index + 1}</td>
                 <td>
-                    <strong>${row.nama_event}</strong>
+                    <strong class="text-dark">${row.nama_event}</strong>
+                    ${row.tahap && row.tahap !== '-' ? `<br><small class="text-primary fw-semibold" style="font-size: 11px;">[Tahap: ${row.tahap}]</small>` : ''}
                 </td>
-                <td>${row.tanggal_indo}</td>
-                <td><small class="text-muted">${row.hari_dijalani} hari (${row.masa_dijalani_teks})</small></td>
-                <td>${statusBadge}</td>
-                <td class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-muted'}">${row.besaran_teks}</td>
-                <td class="fw-bold text-success">${row.total_akumulasi_hari} Hari</td>
-                <td class="fw-semibold text-danger">${row.perkiraan_ekspirasi_baru_indo}</td>
+                <td style="white-space: nowrap;">${row.tanggal_indo}</td>
+                <td style="white-space: nowrap;"><small class="text-muted fw-semibold">${row.hari_dijalani} hr<br><span style="font-size: 10.5px;">(${row.masa_dijalani_teks})</span></small></td>
+                <td style="white-space: nowrap;">${statusBadge}</td>
+                <td style="white-space: nowrap;" class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}">${row.besaran_teks}</td>
+                <td style="white-space: nowrap;" class="fw-bold text-success">${row.total_akumulasi_hari} Hari</td>
+                <td style="white-space: nowrap;" class="fw-bold text-danger">${row.perkiraan_ekspirasi_baru_indo}</td>
                 <td style="max-width: 280px;"><small class="text-secondary" style="font-size: 11px; line-height: 1.35; display: block;">${row.keterangan_alasan || '-'}</small></td>
             `;
             tbody.appendChild(tr);
+
+            // B. Kartu Kronologis Mobile
+            const card = document.createElement('div');
+            card.className = 'timeline-remisi-card';
+            if (badgeBg) card.setAttribute('style', badgeBg);
+
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary text-white rounded-circle" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px;">${index + 1}</span>
+                        <div>
+                            <strong class="text-dark" style="font-size: 13px;">${row.nama_event}</strong>
+                            ${row.tahap && row.tahap !== '-' ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1.5" style="font-size: 10px;">${row.tahap}</span>` : ''}
+                        </div>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <div class="row g-2 mb-2 pt-1 border-top" style="border-color: rgba(0,0,0,0.06) !important;">
+                    <div class="col-6">
+                        <small class="text-muted d-block" style="font-size: 10px; text-transform: uppercase;">TANGGAL EVENT</small>
+                        <span class="fw-bold text-dark" style="font-size: 12.5px;">${row.tanggal_indo}</span>
+                        <small class="text-muted d-block" style="font-size: 10.5px;">Dijalani: ${row.hari_dijalani} hr (${row.masa_dijalani_teks})</small>
+                    </div>
+                    <div class="col-6 text-end">
+                        <small class="text-muted d-block" style="font-size: 10px; text-transform: uppercase;">BESARAN REMISI</small>
+                        <span class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}" style="font-size: 13.5px;">${row.besaran_teks}</span>
+                        <small class="text-success fw-bold d-block" style="font-size: 10.5px;">Akumulasi: ${row.total_akumulasi_hari} Hari</small>
+                    </div>
+                </div>
+                <div class="p-2 rounded-2 border d-flex justify-content-between align-items-center mb-1.5" style="background: rgba(254, 242, 242, 0.6); border-color: #fecaca !important;">
+                    <small class="text-danger fw-bold" style="font-size: 10.5px; text-transform: uppercase;">EKSPIRASI SETELAH REMISI:</small>
+                    <span class="fw-bold text-danger" style="font-size: 13px;">${row.perkiraan_ekspirasi_baru_indo}</span>
+                </div>
+                <small class="text-muted d-block" style="font-size: 10.5px; line-height: 1.35;">
+                    <i class="fas fa-balance-scale text-secondary me-1"></i> ${row.keterangan_alasan || '-'}
+                </small>
+            `;
+            cardsContainer.appendChild(card);
         });
     }
 
@@ -1300,9 +1453,16 @@ _Catatan: Penghitungan ini merupakan simulasi reguler berdasarkan UU No. 22/2022
         });
     }
 
-    // Inisialisasi saat load
+    // Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
         setMode('simulasi_remisi');
+
+        // Deteksi layar ponsel: Jika mobile (< 768px), otomatis pilih Kartu Mobile
+        if (window.innerWidth < 768) {
+            setLedgerView('cards');
+        } else {
+            setLedgerView('table');
+        }
     });
 </script>
 @endsection

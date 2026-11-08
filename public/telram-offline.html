@@ -171,14 +171,23 @@
             padding: 20px;
         }
 
-        /* Mode Selector Tabs */
+        /* Sticky on Desktop */
+        @media (min-width: 992px) {
+            .sticky-lg {
+                position: sticky;
+                top: 20px;
+                align-self: start;
+            }
+        }
+
+        /* Mode Selector Tabs (Segmented Grid) */
         .mode-container {
             background: #e2e8f0;
             padding: 4px;
             border-radius: var(--radius-md);
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 4px;
-            flex-wrap: wrap;
             margin-bottom: 20px;
         }
 
@@ -188,9 +197,7 @@
         }
 
         .btn-tab {
-            flex: 1 1 auto;
-            min-width: 90px;
-            padding: 8px 10px;
+            padding: 9px 6px;
             font-size: 12px;
             font-weight: 700;
             border: none;
@@ -202,7 +209,21 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
+            text-align: center;
             transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .mode-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            .btn-tab {
+                padding: 10px 8px;
+                font-size: 11.5px;
+                white-space: normal;
+            }
         }
 
         .btn-tab:hover {
@@ -404,29 +425,37 @@
         .hero-usulan-box {
             background: linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%);
             border-radius: var(--radius-md);
-            padding: 20px;
+            padding: 18px 20px;
             color: #ffffff;
             margin-bottom: 20px;
             border: 1px solid rgba(251, 191, 36, 0.3);
+            box-shadow: 0 4px 14px rgba(180, 83, 9, 0.2);
         }
 
         .badge-pill-alert {
             display: inline-block;
             background: #ffffff;
             color: #78350f;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .hero-title-val {
+            font-size: clamp(18px, 4.5vw, 24px);
+            font-weight: 800;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         /* Results Section */
         .result-ekspirasi-card {
             background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
             border-radius: var(--radius-md);
-            padding: 20px;
+            padding: 18px 20px;
             color: #ffffff;
             margin-bottom: 20px;
             display: flex;
@@ -438,10 +467,12 @@
         }
 
         .ekspirasi-date-val {
-            font-size: 24px;
+            font-size: clamp(18px, 4.5vw, 24px);
             font-weight: 800;
             margin-top: 4px;
             color: #ffffff;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .badge-pill-light {
@@ -453,6 +484,25 @@
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 0.5px;
+        }
+
+        /* Box Mode Sisa & Mode Mundur */
+        .box-hasil-sisa {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #ffffff;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+        }
+
+        .box-hasil-pidana {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            color: #ffffff;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
         }
 
         /* 3 Fraction Cards Grid */
@@ -516,16 +566,60 @@
             margin-top: 4px;
         }
 
-        /* Table Ledger */
+        /* Dual-View Toggle & Table Ledger */
+        .view-toggle-wrap {
+            display: inline-flex;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .btn-view-toggle {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-view-toggle.active {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .scroll-hint-mobile {
+            display: none;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .scroll-hint-mobile {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+        }
+
         .table-wrap {
             overflow-x: auto;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             margin-top: 10px;
+            -webkit-overflow-scrolling: touch;
         }
 
         table.ledger-table {
             width: 100%;
+            min-width: 860px;
             border-collapse: collapse;
             font-size: 12px;
             text-align: left;
@@ -537,6 +631,7 @@
             border-bottom: 1px solid var(--border-color);
             color: var(--text-secondary);
             font-weight: 700;
+            white-space: nowrap;
         }
 
         [data-theme="dark"] table.ledger-table th {
@@ -551,6 +646,30 @@
 
         table.ledger-table tr:last-child td {
             border-bottom: none;
+        }
+
+        .cell-nowrap {
+            white-space: nowrap;
+        }
+
+        /* Timeline Cards Mobile View */
+        .timeline-remisi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .timeline-remisi-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        [data-theme="dark"] .timeline-remisi-card {
+            background: #1e293b;
+            border-color: #334155;
         }
 
         /* Summary Info Box */
@@ -590,11 +709,32 @@
         .d-none { display: none !important; }
 
         @media print {
-            .header-card, .btn-reset, .mode-container, .theme-toggle-btn, .btn-primary, .placeholder-box, .btn-print, .btn-copy {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+            }
+            .header-card, .btn-reset, .mode-container, .theme-toggle-btn, .btn-primary, .placeholder-box, .btn-print, .btn-copy, .view-toggle-wrap, .scroll-hint-mobile, #sectionInputCard {
                 display: none !important;
             }
             .layout-grid {
-                grid-template-columns: 1fr !important;
+                display: block !important;
+            }
+            #hasilSection {
+                display: block !important;
+            }
+            #viewTableContainer {
+                display: block !important;
+            }
+            #viewCardsContainer {
+                display: none !important;
+            }
+            table.ledger-table {
+                min-width: 100% !important;
+                font-size: 10px !important;
+            }
+            table.ledger-table th, table.ledger-table td {
+                padding: 4px 6px !important;
             }
         }
     </style>
@@ -636,8 +776,8 @@
 
     <!-- Main Layout -->
     <div class="layout-grid">
-        <!-- Left: Input Form -->
-        <section class="app-card">
+        <!-- Left: Input Form (Sticky on Desktop) -->
+        <section class="app-card sticky-lg" id="sectionInputCard">
             <div class="card-header">
                 <div class="card-header-title">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -821,21 +961,52 @@
                             <span class="fraction-badge badge-emerald" id="badgeProgramStatus">PB</span>
                             <span id="hasilHeaderTitle">Hasil Proyeksi Remisi & Integrasi</span>
                         </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn-reset btn-print" onclick="window.print()">Cetak</button>
-                            <button type="button" class="btn-reset btn-copy" onclick="salinRingkasanTeks()">Salin Ringkasan</button>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="btn-reset btn-print" onclick="window.print()" title="Cetak Berkas">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                    <rect width="12" height="8" x="6" y="14"></rect>
+                                </svg>
+                                Cetak
+                            </button>
+                            <button type="button" class="btn-reset btn-copy" onclick="salinRingkasanTeks()" title="Salin Ringkasan WhatsApp">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+                                </svg>
+                                Salin WA
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
                         <!-- Hero Alert Pengusulan PB/CB (H-2 Bulan Sebelum 2/3) -->
                         <div id="boxHeroPengusulan" class="hero-usulan-box">
-                            <span class="badge-pill-alert">WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN SEBELUM 2/3)</span>
-                            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.8; margin-top: 6px;">Mulai Pengusulan Berkas / Litmas Bapas:</div>
-                            <div style="font-size: 22px; font-weight: 800; margin-top: 2px;" id="resTglMulaiPengusulan">-</div>
-                            <div style="font-size: 12px; margin-top: 6px; opacity: 0.95;" id="pesanPengusulan">-</div>
-                            <div style="margin-top: 10px; padding: 8px 12px; background: rgba(0,0,0,0.25); border-radius: 6px; font-size: 12px;">
-                                Jatuh Tempo 2/3 Definitif: <strong id="resTgl23Highlight">-</strong> (Rumus SDP: 2/3 Murni minus Full Remisi)
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                                <span class="badge-pill-alert">WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN SEBELUM 2/3)</span>
+                                <span id="badgeStatusPengusulan" style="background: rgba(255,255,255,0.22); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700;">-</span>
                             </div>
+                            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.8; margin-top: 6px;">Mulai Pengusulan Berkas / Litmas Bapas:</div>
+                            <div class="hero-title-val" id="resTglMulaiPengusulan">-</div>
+                            <div style="font-size: 12px; margin-top: 6px; opacity: 0.95; line-height: 1.4;" id="pesanPengusulan">-</div>
+                            <div style="margin-top: 12px; padding: 10px 14px; background: rgba(0,0,0,0.25); border-radius: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                <div>Jatuh Tempo 2/3 Definitif: <strong id="resTgl23Highlight" style="font-size: 14.5px;">-</strong></div>
+                                <div style="font-size: 11px; opacity: 0.8;">Metode: 2/3 Murni - Full Remisi</div>
+                            </div>
+                        </div>
+
+                        <!-- Mode Sisa Result Box -->
+                        <div id="boxHasilSisa" class="box-hasil-sisa d-none">
+                            <span style="display: inline-block; background: #ffffff; color: #047857; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">SISA MASA PIDANA</span>
+                            <div style="font-size: clamp(20px, 4.5vw, 26px); font-weight: 800;" id="resSisaPidana">-</div>
+                            <small style="opacity: 0.85; display: block; margin-top: 6px; font-size: 12px;">Sisa hukuman yang belum dijalani hingga bebas murni.</small>
+                        </div>
+
+                        <!-- Mode Mundur Result Box: Lama Pidana -->
+                        <div id="boxHasilPidana" class="box-hasil-pidana d-none">
+                            <span style="display: inline-block; background: #ffffff; color: #3730a3; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">TOTAL LAMA PIDANA (VONIS MURNI)</span>
+                            <div style="font-size: clamp(20px, 4.5vw, 26px); font-weight: 800;" id="resLamaPidana">-</div>
+                            <small style="opacity: 0.85; display: block; margin-top: 6px; font-size: 12px;">Dihitung dari selisih tanggal penahanan ke tanggal ekspirasi.</small>
                         </div>
 
                         <!-- Ekspirasi Bebas Card -->
@@ -878,15 +1049,32 @@
                             <div><span id="labelInfoTotalHari">Total Hari Vonis:</span> <strong id="infoTotalHari" style="color: var(--text-primary);">-</strong> hari</div>
                         </div>
 
-                        <!-- Section Tabel Proyeksi Remisi Keppres 174/1999 -->
+                        <!-- Section Tabel Proyeksi Remisi Keppres 174/1999 (Dual-View) -->
                         <div id="sectionTableLedger" style="margin-top: 24px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);">
-                                    Tabel Proyeksi Remisi per Tahun (Keppres No. 174/1999)
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);">
+                                        Tabel Proyeksi Remisi per Tahun (Keppres No. 174/1999)
+                                    </div>
+                                    <span id="badgeLedgerBasis" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 700;">Standar 2/3 PB/CB</span>
                                 </div>
-                                <span id="badgeLedgerBasis" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 700;">Standar 2/3 PB/CB</span>
+                                <div class="view-toggle-wrap">
+                                    <button type="button" id="btnViewTable" class="btn-view-toggle active" onclick="setLedgerView('table')">Tabel SDP</button>
+                                    <button type="button" id="btnViewCards" class="btn-view-toggle" onclick="setLedgerView('cards')">Kartu Mobile</button>
+                                </div>
                             </div>
-                            <div class="table-wrap">
+
+                            <!-- Hint Scroll Mobile -->
+                            <div class="scroll-hint-mobile">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14"></path>
+                                    <path d="m12 5 7 7-7 7"></path>
+                                </svg>
+                                Geser ke kanan untuk melihat sisa kolom tabel
+                            </div>
+
+                            <!-- Table View Container -->
+                            <div id="viewTableContainer" class="table-wrap">
                                 <table class="ledger-table">
                                     <thead>
                                         <tr>
@@ -906,6 +1094,14 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- Mobile Timeline Cards View Container -->
+                            <div id="viewCardsContainer" class="d-none" style="margin-top: 10px;">
+                                <div id="cardsProyeksiRemisi">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+
                             <small id="noteLedger" style="color: var(--text-muted); font-size: 11.5px; display: block; margin-top: 8px; line-height: 1.45;">
                                 <b>Standar 2/3 (SDP Ditjenpas & UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB. Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP menjalani pembinaan luar di Bapas.
                             </small>
@@ -928,6 +1124,29 @@
     // State App
     let currentMode = 'simulasi_remisi';
     let lastResult = null;
+    let currentLedgerView = (window.innerWidth < 768) ? 'cards' : 'table';
+
+    function setLedgerView(view) {
+        currentLedgerView = view;
+        const btnViewTable = document.getElementById('btnViewTable');
+        const btnViewCards = document.getElementById('btnViewCards');
+        const viewTableContainer = document.getElementById('viewTableContainer');
+        const viewCardsContainer = document.getElementById('viewCardsContainer');
+
+        if (!btnViewTable || !btnViewCards) return;
+
+        if (view === 'cards') {
+            btnViewCards.classList.add('active');
+            btnViewTable.classList.remove('active');
+            if (viewTableContainer) viewTableContainer.classList.add('d-none');
+            if (viewCardsContainer) viewCardsContainer.classList.remove('d-none');
+        } else {
+            btnViewTable.classList.add('active');
+            btnViewCards.classList.remove('active');
+            if (viewTableContainer) viewTableContainer.classList.remove('d-none');
+            if (viewCardsContainer) viewCardsContainer.classList.add('d-none');
+        }
+    }
 
     // Theme Management (Light / Dark)
     function initTheme() {
@@ -1534,6 +1753,13 @@
         };
 
         // Render UI
+        document.getElementById('boxHeroPengusulan').classList.remove('d-none');
+        document.getElementById('boxHasilSisa').classList.add('d-none');
+        document.getElementById('boxHasilPidana').classList.add('d-none');
+        document.getElementById('cardEkspirasi').classList.remove('d-none');
+        document.getElementById('rowFractionCards').classList.remove('d-none');
+        document.getElementById('sectionTableLedger').classList.remove('d-none');
+
         document.getElementById('badgeProgramStatus').innerText = jenisProgram;
         const wbpJudul = (namaWbp && namaWbp !== 'Narapidana') ? ` (${namaWbp})` : '';
         document.getElementById('hasilHeaderTitle').innerText = `Hasil Proyeksi Remisi & Hak ${namaProgram}${wbpJudul}`;
@@ -1541,8 +1767,26 @@
         document.getElementById('resTgl23Highlight').innerText = formatDateIndo(tgl23Definitif);
         document.getElementById('pesanPengusulan').innerText = statusPesan;
 
+        const badgePengusulan = document.getElementById('badgeStatusPengusulan');
+        if (badgePengusulan) {
+            if (now < tglMulaiPengusulan) {
+                badgePengusulan.innerText = 'Menunggu Jadwal';
+                badgePengusulan.style.background = 'rgba(255,255,255,0.2)';
+            } else if (now <= tgl23Definitif) {
+                badgePengusulan.innerText = 'Waktunya Pengusulan';
+                badgePengusulan.style.background = '#f59e0b';
+                badgePengusulan.style.color = '#000';
+            } else {
+                badgePengusulan.innerText = 'Lewat 2/3';
+                badgePengusulan.style.background = '#ef4444';
+            }
+        }
+
+        document.getElementById('badgeEkspirasiTitle').innerText = 'EKSPIRASI SETELAH REMISI';
         document.getElementById('resEkspirasi').innerText = formatDateIndo(tglEkspirasiDefinitif);
+        document.getElementById('subEkspirasiMurni').classList.remove('d-none');
         document.getElementById('resEkspirasiMurniText').innerText = formatDateIndo(tglEkspirasiMurni);
+        document.getElementById('boxTotalRemisiBadge').classList.remove('d-none');
         document.getElementById('resTotalRemisiText').innerText = `${totalHariRemisi} Hari (${formatHariTeks(totalHariRemisi)})`;
 
         document.getElementById('res13').innerText = formatDateIndo(tgl13Murni);
@@ -1553,8 +1797,10 @@
         document.getElementById('res23').innerText = formatDateIndo(tgl23Definitif);
         document.getElementById('subInfo23').innerText = `Jatuh Tempo (Murni: ${formatDateIndo(tgl23Murni)})`;
 
+        document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Mulai Ditahan:';
         document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
-        document.getElementById('infoTotalHari').innerText = totalHariVonis.toLocaleString('id-ID');
+        document.getElementById('labelInfoTotalHari').innerText = 'Total Hari Vonis:';
+        document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
 
         // Update badge basis proyeksi dan note
         const badgeLedgerBasis = document.getElementById('badgeLedgerBasis');
@@ -1570,27 +1816,75 @@
             }
         }
 
-        // Render Table
+        // Render A: Table SDP
         const tbody = document.getElementById('tbodyProyeksiRemisi');
+        const cardsContainer = document.getElementById('cardsProyeksiRemisi');
         tbody.innerHTML = '';
+        cardsContainer.innerHTML = '';
+
         ledger.forEach((r, idx) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${idx + 1}</strong></td>
+                <td class="cell-nowrap"><strong>${idx + 1}</strong></td>
                 <td><strong>${r.nama_event}</strong></td>
-                <td>${r.tanggal_indo}</td>
-                <td>${r.hari_dijalani} hari</td>
-                <td>${r.eligible ? '<span style="color:#10b981;font-weight:700;">Memenuhi</span>' : '<span style="color:#94a3b8;">Belum 6 Bln</span>'}</td>
-                <td><strong>${r.besaran_teks}</strong></td>
-                <td style="color:#10b981;font-weight:700;">${r.akumulasi} Hari</td>
-                <td style="color:#ef4444;font-weight:700;">${r.bebas_baru}</td>
+                <td class="cell-nowrap">${r.tanggal_indo}</td>
+                <td class="cell-nowrap">${r.hari_dijalani} hari<br><small style="color:var(--text-muted);font-size:10.5px;">(${r.masa_teks})</small></td>
+                <td class="cell-nowrap">${r.eligible ? '<span style="color:#10b981;font-weight:700;">Memenuhi</span>' : '<span style="color:#94a3b8;">Belum 6 Bln</span>'}</td>
+                <td class="cell-nowrap"><strong>${r.besaran_teks}</strong></td>
+                <td class="cell-nowrap" style="color:#10b981;font-weight:700;">${r.akumulasi} Hari</td>
+                <td class="cell-nowrap" style="color:#ef4444;font-weight:700;">${r.bebas_baru}</td>
                 <td style="max-width:280px;font-size:11px;color:var(--text-secondary);">${r.keterangan_alasan || '-'}</td>
             `;
             tbody.appendChild(tr);
+
+            // Render B: Mobile Timeline Card
+            const card = document.createElement('div');
+            card.className = 'timeline-remisi-card';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #64748b; color: #fff; font-size: 11px; font-weight: 700;">${idx + 1}</span>
+                        <strong style="font-size: 13px; color: var(--text-primary);">${r.nama_event}</strong>
+                    </div>
+                    <span style="font-size: 11px; font-weight: 700; color: ${r.eligible ? '#10b981' : '#94a3b8'};">${r.eligible ? 'Memenuhi Syarat' : 'Belum 6 Bln'}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-top: 6px; border-top: 1px solid var(--border-color); font-size: 12px;">
+                    <div>
+                        <small style="color: var(--text-muted); font-size: 10px; display: block; text-transform: uppercase;">TANGGAL EVENT</small>
+                        <strong>${r.tanggal_indo}</strong>
+                        <small style="display: block; color: var(--text-secondary); font-size: 10.5px;">Dijalani: ${r.hari_dijalani} hr (${r.masa_teks})</small>
+                    </div>
+                    <div style="text-align: right;">
+                        <small style="color: var(--text-muted); font-size: 10px; display: block; text-transform: uppercase;">BESARAN REMISI</small>
+                        <strong style="color: #2563eb; font-size: 13.5px;">${r.besaran_teks}</strong>
+                        <small style="display: block; color: #10b981; font-weight: 700; font-size: 10.5px;">Akumulasi: ${r.akumulasi} Hari</small>
+                    </div>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
+                    <small style="color: #dc2626; font-weight: 700; font-size: 10.5px;">EKSPIRASI SETELAH REMISI:</small>
+                    <strong style="color: #dc2626; font-size: 13px;">${r.bebas_baru}</strong>
+                </div>
+                <small style="color: var(--text-secondary); font-size: 11px; line-height: 1.35; display: block;">
+                    ${r.keterangan_alasan || '-'}
+                </small>
+            `;
+            cardsContainer.appendChild(card);
         });
+
+        // Set default view on mobile
+        setLedgerView(currentLedgerView);
 
         document.getElementById('placeholderSection').classList.add('d-none');
         document.getElementById('hasilSection').classList.remove('d-none');
+
+        // Auto smooth-scroll to results on mobile
+        if (window.innerWidth < 992) {
+            setTimeout(() => {
+                const el = document.getElementById('hasilSection');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
         showToast('Proyeksi Remisi & Integrasi Selesai!');
     }
 
@@ -1623,52 +1917,289 @@
         const hari12 = Math.floor(totalHariVonis / 2);
         const hari23 = Math.floor((totalHariVonis * 2) / 3);
 
+        lastResult = {
+            mode: 'maju',
+            tglAwal: tglAwal,
+            lamaPidanaTeks: `${vThn} Tahun ${vBln} Bulan ${vHri} Hari`,
+            totalHariVonis: totalHariVonis,
+            tglEkspirasi: tglEkspirasi,
+            tgl13: addDays(tglAwal, hari13),
+            tgl12: addDays(tglAwal, hari12),
+            tgl23: addDays(tglAwal, hari23)
+        };
+
+        document.getElementById('boxHeroPengusulan').classList.add('d-none');
+        document.getElementById('boxHasilSisa').classList.add('d-none');
+        document.getElementById('boxHasilPidana').classList.add('d-none');
+        document.getElementById('cardEkspirasi').classList.remove('d-none');
+        document.getElementById('rowFractionCards').classList.remove('d-none');
+        document.getElementById('sectionTableLedger').classList.add('d-none');
+
+        document.getElementById('badgeProgramStatus').innerText = 'EKSPIRASI';
+        document.getElementById('hasilHeaderTitle').innerText = 'Hasil Perhitungan Ekspirasi Bebas';
+
+        document.getElementById('badgeEkspirasiTitle').innerText = 'EKSPIRASI BEBAS MURNI';
         document.getElementById('resEkspirasi').innerText = formatDateIndo(tglEkspirasi);
+        document.getElementById('subEkspirasiMurni').classList.add('d-none');
+        document.getElementById('boxTotalRemisiBadge').classList.add('d-none');
+
         document.getElementById('res13').innerText = formatDateIndo(addDays(tglAwal, hari13));
         document.getElementById('res12').innerText = formatDateIndo(addDays(tglAwal, hari12));
+        document.getElementById('subInfo12').innerText = '1/2 Masa Pidana Murni';
+        document.getElementById('badgeLabel23').innerText = '2/3 Masa Pidana';
         document.getElementById('res23').innerText = formatDateIndo(addDays(tglAwal, hari23));
+        document.getElementById('subInfo23').innerText = '2/3 Masa Pidana Murni';
+
+        document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
         document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
-        document.getElementById('infoTotalHari').innerText = totalHariVonis.toLocaleString('id-ID');
+        document.getElementById('labelInfoTotalHari').innerText = 'Total Hari Vonis:';
+        document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
 
         document.getElementById('placeholderSection').classList.add('d-none');
         document.getElementById('hasilSection').classList.remove('d-none');
+
+        if (window.innerWidth < 992) {
+            setTimeout(() => {
+                const el = document.getElementById('hasilSection');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
         showToast('Kalkulasi Ekspirasi Selesai!');
     }
 
-    // Salin Teks
+    // Mode Mundur: Cari Durasi Vonis dari Tgl Ditahan s/d Ekspirasi
+    function hitungTelramMundur() {
+        const inputTgl = document.getElementById('tglAwal').value;
+        const inputEkspirasi = document.getElementById('tglEkspirasiInput').value;
+
+        if (!inputTgl) {
+            showToast('Harap tentukan Tanggal Mulai Penahanan!', 'error');
+            return;
+        }
+        if (!inputEkspirasi) {
+            showToast('Harap tentukan Tanggal Ekspirasi!', 'error');
+            return;
+        }
+
+        const [y1, m1, d1] = inputTgl.split('-').map(Number);
+        const [y2, m2, d2] = inputEkspirasi.split('-').map(Number);
+        const tglAwal = new Date(y1, m1 - 1, d1);
+        const tglEkspirasi = new Date(y2, m2 - 1, d2);
+
+        if (tglEkspirasi <= tglAwal) {
+            showToast('Tanggal Ekspirasi harus lebih besar dari Tanggal Ditahan!', 'error');
+            return;
+        }
+
+        // Hitung selisih kalender
+        let years = tglEkspirasi.getFullYear() - tglAwal.getFullYear();
+        let months = tglEkspirasi.getMonth() - tglAwal.getMonth();
+        let days = tglEkspirasi.getDate() - tglAwal.getDate();
+
+        if (days < 0) {
+            months -= 1;
+            const prevMonthLastDay = new Date(tglEkspirasi.getFullYear(), tglEkspirasi.getMonth(), 0).getDate();
+            days += prevMonthLastDay;
+        }
+        if (months < 0) {
+            years -= 1;
+            months += 12;
+        }
+
+        const diffMs = tglEkspirasi.getTime() - tglAwal.getTime();
+        const totalHariVonis = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const lamaPidanaTeks = `${years} Tahun, ${months} Bulan, ${days} Hari`;
+
+        const hari13 = Math.floor(totalHariVonis / 3);
+        const hari12 = Math.floor(totalHariVonis / 2);
+        const hari23 = Math.floor((totalHariVonis * 2) / 3);
+
+        lastResult = {
+            mode: 'mundur',
+            tglAwal: tglAwal,
+            tglEkspirasi: tglEkspirasi,
+            lamaPidanaTeks: lamaPidanaTeks,
+            totalHariVonis: totalHariVonis,
+            tgl13: addDays(tglAwal, hari13),
+            tgl12: addDays(tglAwal, hari12),
+            tgl23: addDays(tglAwal, hari23)
+        };
+
+        document.getElementById('boxHeroPengusulan').classList.add('d-none');
+        document.getElementById('boxHasilSisa').classList.add('d-none');
+        document.getElementById('boxHasilPidana').classList.remove('d-none');
+        document.getElementById('cardEkspirasi').classList.remove('d-none');
+        document.getElementById('rowFractionCards').classList.remove('d-none');
+        document.getElementById('sectionTableLedger').classList.add('d-none');
+
+        document.getElementById('badgeProgramStatus').innerText = 'LAMA PIDANA';
+        document.getElementById('hasilHeaderTitle').innerText = 'Hasil Perhitungan Lama Pidana';
+        document.getElementById('resLamaPidana').innerText = `${lamaPidanaTeks} (${totalHariVonis.toLocaleString('id-ID')} Hari)`;
+
+        document.getElementById('badgeEkspirasiTitle').innerText = 'EKSPIRASI BEBAS MURNI';
+        document.getElementById('resEkspirasi').innerText = formatDateIndo(tglEkspirasi);
+        document.getElementById('subEkspirasiMurni').classList.add('d-none');
+        document.getElementById('boxTotalRemisiBadge').classList.add('d-none');
+
+        document.getElementById('res13').innerText = formatDateIndo(addDays(tglAwal, hari13));
+        document.getElementById('res12').innerText = formatDateIndo(addDays(tglAwal, hari12));
+        document.getElementById('subInfo12').innerText = '1/2 Masa Pidana Murni';
+        document.getElementById('badgeLabel23').innerText = '2/3 Masa Pidana';
+        document.getElementById('res23').innerText = formatDateIndo(addDays(tglAwal, hari23));
+        document.getElementById('subInfo23').innerText = '2/3 Masa Pidana Murni';
+
+        document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
+        document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
+        document.getElementById('labelInfoTotalHari').innerText = 'Total Hari Vonis:';
+        document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${lamaPidanaTeks})`;
+
+        document.getElementById('placeholderSection').classList.add('d-none');
+        document.getElementById('hasilSection').classList.remove('d-none');
+
+        if (window.innerWidth < 992) {
+            setTimeout(() => {
+                const el = document.getElementById('hasilSection');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        showToast('Lama Pidana Berhasil Dihitung!');
+    }
+
+    // Mode Sisa: Hitung Sisa Pidana dari Per Tanggal s/d Ekspirasi
+    function hitungTelramSisa() {
+        const inputTgl = document.getElementById('tglAwal').value;
+        const inputEkspirasi = document.getElementById('tglEkspirasiInput').value;
+
+        if (!inputTgl) {
+            showToast('Harap tentukan Per Tanggal Perhitungan!', 'error');
+            return;
+        }
+        if (!inputEkspirasi) {
+            showToast('Harap tentukan Tanggal Ekspirasi!', 'error');
+            return;
+        }
+
+        const [y1, m1, d1] = inputTgl.split('-').map(Number);
+        const [y2, m2, d2] = inputEkspirasi.split('-').map(Number);
+        const tglPerhitungan = new Date(y1, m1 - 1, d1);
+        const tglEkspirasi = new Date(y2, m2 - 1, d2);
+
+        if (tglEkspirasi <= tglPerhitungan) {
+            showToast('Tanggal Ekspirasi harus lebih besar dari Per Tanggal Perhitungan!', 'error');
+            return;
+        }
+
+        let years = tglEkspirasi.getFullYear() - tglPerhitungan.getFullYear();
+        let months = tglEkspirasi.getMonth() - tglPerhitungan.getMonth();
+        let days = tglEkspirasi.getDate() - tglPerhitungan.getDate();
+
+        if (days < 0) {
+            months -= 1;
+            const prevMonthLastDay = new Date(tglEkspirasi.getFullYear(), tglEkspirasi.getMonth(), 0).getDate();
+            days += prevMonthLastDay;
+        }
+        if (months < 0) {
+            years -= 1;
+            months += 12;
+        }
+
+        const diffMs = tglEkspirasi.getTime() - tglPerhitungan.getTime();
+        const totalHariSisa = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const sisaPidanaTeks = `${years} Tahun, ${months} Bulan, ${days} Hari`;
+
+        lastResult = {
+            mode: 'sisa',
+            tglPerhitungan: tglPerhitungan,
+            tglEkspirasi: tglEkspirasi,
+            sisaPidanaTeks: sisaPidanaTeks,
+            totalHariSisa: totalHariSisa
+        };
+
+        document.getElementById('boxHeroPengusulan').classList.add('d-none');
+        document.getElementById('boxHasilSisa').classList.remove('d-none');
+        document.getElementById('boxHasilPidana').classList.add('d-none');
+        document.getElementById('cardEkspirasi').classList.add('d-none');
+        document.getElementById('rowFractionCards').classList.add('d-none');
+        document.getElementById('sectionTableLedger').classList.add('d-none');
+
+        document.getElementById('badgeProgramStatus').innerText = 'SISA PIDANA';
+        document.getElementById('hasilHeaderTitle').innerText = 'Hasil Perhitungan Sisa Pidana';
+        document.getElementById('resSisaPidana').innerText = `${sisaPidanaTeks} (${totalHariSisa.toLocaleString('id-ID')} Hari)`;
+
+        document.getElementById('labelInfoTglAwal').innerText = 'Per Tanggal:';
+        document.getElementById('infoTglAwal').innerText = formatDateIndo(tglPerhitungan);
+        document.getElementById('labelInfoTotalHari').innerText = 'Total Sisa Hari:';
+        document.getElementById('infoTotalHari').innerText = totalHariSisa.toLocaleString('id-ID');
+
+        document.getElementById('placeholderSection').classList.add('d-none');
+        document.getElementById('hasilSection').classList.remove('d-none');
+
+        if (window.innerWidth < 992) {
+            setTimeout(() => {
+                const el = document.getElementById('hasilSection');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        showToast('Sisa Pidana Berhasil Dihitung!');
+    }
+
+    // Salin Ringkasan Teks WhatsApp
     function salinRingkasanTeks() {
         if (!lastResult) return;
         const d = lastResult;
-        let text = `*LEMBAR TELRAM & PROYEKSI REMISI (OFFLINE)*
----------------------------------------`;
+        let text = `*LEMBAR TELRAM & PROYEKSI REMISI (OFFLINE)*\n---------------------------------------`;
+
         if (d.mode === 'simulasi_remisi') {
-            text += `
-*Nama WBP:* ${d.namaWbp || 'Narapidana'}
-*No. Register:* ${d.noRegister || '-'}
-*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}
-*Lama Vonis:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)
-*Status Pembinaan:* ${d.kategoriTambahan === 'pemuka' ? 'Pemuka Lapas (+1/3 RU)' : (d.kategoriTambahan === 'jasa_negara' ? 'Jasa Negara (+1/2 RU)' : 'Standar (Reguler)')}
-*Remisi Dasawarsa:* ${d.includeDasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
-*Basis Simulasi:* ${d.targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana (PB/CB)' : 'Sampai Ekspirasi Bebas Murni'}
-*Program:* ${d.namaProgram}
----------------------------------------
-• *1/3 Masa Pidana:* ${formatDateIndo(d.tgl13Murni)}
-• *1/2 Asimilasi:* ${formatDateIndo(d.tgl12Definitif)} (Murni: ${formatDateIndo(d.tgl12Murni)})
-• *2/3 ${d.jenisProgram}:* ${formatDateIndo(d.tgl23Definitif)} (Murni: ${formatDateIndo(d.tgl23Murni)})
-• *Ekspirasi Definitif:* ${formatDateIndo(d.tglEkspirasiDefinitif)} (Murni: ${formatDateIndo(d.tglEkspirasiMurni)})
-• *Total Proyeksi Remisi:* ${d.totalHariRemisi} Hari
----------------------------------------
-⚠️ *WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN):*
-*Tanggal:* ${formatDateIndo(d.tglMulaiPengusulan)}
-*Catatan:* ${d.statusPesan}`;
+            text += `\n*Nama WBP:* ${d.namaWbp || 'Narapidana'}` +
+                    `\n*No. Register:* ${d.noRegister || '-'}` +
+                    `\n*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}` +
+                    `\n*Lama Vonis:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
+                    `\n*Status Pembinaan:* ${d.kategoriTambahan === 'pemuka' ? 'Pemuka Lapas (+1/3 RU)' : (d.kategoriTambahan === 'jasa_negara' ? 'Jasa Negara (+1/2 RU)' : 'Standar (Reguler)')}` +
+                    `\n*Remisi Dasawarsa:* ${d.includeDasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}` +
+                    `\n*Basis Simulasi:* ${d.targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana (PB/CB)' : 'Sampai Ekspirasi Bebas Murni'}` +
+                    `\n*Program:* ${d.namaProgram}` +
+                    `\n---------------------------------------` +
+                    `\n• *1/3 Masa Pidana:* ${formatDateIndo(d.tgl13Murni)}` +
+                    `\n• *1/2 Asimilasi:* ${formatDateIndo(d.tgl12Definitif)} (Murni: ${formatDateIndo(d.tgl12Murni)})` +
+                    `\n• *2/3 ${d.jenisProgram}:* ${formatDateIndo(d.tgl23Definitif)} (Murni: ${formatDateIndo(d.tgl23Murni)})` +
+                    `\n• *Ekspirasi Definitif:* ${formatDateIndo(d.tglEkspirasiDefinitif)} (Murni: ${formatDateIndo(d.tglEkspirasiMurni)})` +
+                    `\n• *Total Proyeksi Remisi:* ${d.totalHariRemisi} Hari` +
+                    `\n---------------------------------------` +
+                    `\n⚠️ *WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN):*` +
+                    `\n*Tanggal:* ${formatDateIndo(d.tglMulaiPengusulan)}` +
+                    `\n*Catatan:* ${d.statusPesan}`;
+        } else if (d.mode === 'sisa') {
+            text += `\n*Per Tanggal Perhitungan:* ${formatDateIndo(d.tglPerhitungan)}` +
+                    `\n*Tgl. Ekspirasi Bebas:* ${formatDateIndo(d.tglEkspirasi)}` +
+                    `\n---------------------------------------` +
+                    `\n⏱️ *SISA MASA PIDANA:* ${d.sisaPidanaTeks} (${d.totalHariSisa.toLocaleString('id-ID')} Hari)`;
+        } else if (d.mode === 'mundur') {
+            text += `\n*Tgl. Mulai Ditahan:* ${formatDateIndo(d.tglAwal)}` +
+                    `\n*Tgl. Ekspirasi Bebas:* ${formatDateIndo(d.tglEkspirasi)}` +
+                    `\n---------------------------------------` +
+                    `\n⚖️ *LAMA VONIS POKOK:* ${d.lamaPidanaTeks} (${d.totalHariVonis.toLocaleString('id-ID')} Hari)` +
+                    `\n• *1/3 Pidana:* ${formatDateIndo(d.tgl13)}` +
+                    `\n• *1/2 Pidana:* ${formatDateIndo(d.tgl12)}` +
+                    `\n• *2/3 Pidana:* ${formatDateIndo(d.tgl23)}`;
         } else {
-            text += `
-*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}
-*Lama Vonis:* ${d.lamaPidanaTeks}
-*Ekspirasi:* ${formatDateIndo(d.tglEkspirasi || d.tglEkspirasiDefinitif)}`;
+            text += `\n*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}` +
+                    `\n*Lama Vonis:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
+                    `\n---------------------------------------` +
+                    `\n• *1/3 Pidana:* ${formatDateIndo(d.tgl13)}` +
+                    `\n• *1/2 Pidana:* ${formatDateIndo(d.tgl12)}` +
+                    `\n• *2/3 Pidana:* ${formatDateIndo(d.tgl23)}` +
+                    `\n• *Ekspirasi Bebas Murni:* ${formatDateIndo(d.tglEkspirasi)}`;
         }
 
         navigator.clipboard.writeText(text).then(() => {
+            showToast('Ringkasan berhasil disalin!');
+        }).catch(() => {
+            showToast('Gagal menyalin ringkasan otomatis', 'error');
+        });
+    }
             showToast('Ringkasan berhasil disalin!');
         });
     }
