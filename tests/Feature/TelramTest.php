@@ -158,6 +158,7 @@ class TelramTest extends TestCase
             'agama' => 'islam',
             'nama_wbp' => 'Budi Santoso',
             'no_register' => 'BI.123/2024',
+            'perkara_pasal' => 'Pasal 363 KUHP',
             'include_dasawarsa' => true,
             'kategori_tambahan' => 'pemuka',
             'tahun_mulai_tambahan' => 2,
@@ -170,6 +171,7 @@ class TelramTest extends TestCase
             'data' => [
                 'nama_wbp' => 'Budi Santoso',
                 'no_register' => 'BI.123/2024',
+                'perkara_pasal' => 'Pasal 363 KUHP',
                 'include_dasawarsa' => true,
                 'kategori_tambahan' => 'pemuka',
                 'tahun_mulai_tambahan' => 2,
@@ -190,6 +192,7 @@ class TelramTest extends TestCase
             'agama' => 'islam',
             'nama_wbp' => 'Narapidana Uji',
             'no_register' => 'REG.001/2024',
+            'perkara_pasal' => 'Pasal 363 KUHP',
             'include_dasawarsa' => '1',
             'kategori_tambahan' => 'pemuka',
             'tahun_mulai_tambahan' => '2',

@@ -244,7 +244,8 @@ class TelramCalculatorService
         bool $includeDasawarsa = true,
         string $kategoriTambahan = 'none',
         string $targetBasis = '2_3',
-        int $tahunMulaiTambahan = 1
+        int $tahunMulaiTambahan = 1,
+        string $perkaraPasal = ''
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
 
@@ -254,6 +255,7 @@ class TelramCalculatorService
 
         $namaWbp = trim($namaWbp) ?: 'Narapidana';
         $noRegister = trim($noRegister) ?: '-';
+        $perkaraPasal = trim($perkaraPasal) ?: '-';
 
         $targetBasis = $targetBasis === 'ekspirasi' ? 'ekspirasi' : '2_3';
         $tahunMulaiTambahan = max(1, $tahunMulaiTambahan);
@@ -674,6 +676,7 @@ class TelramCalculatorService
             'target_basis_label' => $targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana (Usulan PB/CB)' : 'Sampai Ekspirasi Bebas Murni',
             'nama_wbp' => $namaWbp,
             'no_register' => $noRegister,
+            'perkara_pasal' => $perkaraPasal,
             'tgl_awal' => $tglAwal->toDateString(),
             'lama_pidana_teks' => implode(', ', $formatVonis) ?: '0 Hari',
             'tahun' => $tahun,
@@ -988,14 +991,14 @@ class TelramCalculatorService
                 $this->SetY(-15);
                 $this->SetFont('helvetica', 'I', 7.5);
                 $this->SetTextColor(120, 120, 120);
-                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Lembar Estimasi Telram & Remisi Sultan Banten', 0, 0, 'R');
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Lembar Perkiraan Perhitungan Sultan Banten', 0, 0, 'R');
             }
         };
 
         $pdf->SetCreator('Sultan Banten');
         $pdf->SetAuthor(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
         $cleanName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['nama_wbp'] ?? 'Narapidana');
-        $pdf->SetTitle("Estimasi_Telram_Remisi_{$cleanName}");
+        $pdf->SetTitle("Lembar_Perkiraan_Perhitungan_{$cleanName}");
         $pdf->SetMargins(10, 8, 10);
         $pdf->SetAutoPageBreak(true, 14);
         $pdf->AddPage();
@@ -1027,6 +1030,7 @@ class TelramCalculatorService
 
         $namaWbp = htmlspecialchars($data['nama_wbp'] ?? 'Narapidana');
         $noRegister = htmlspecialchars($data['no_register'] ?? '-');
+        $perkaraPasal = htmlspecialchars($data['perkara_pasal'] ?? '-');
         $agama = htmlspecialchars($data['agama'] ?? '-');
         $tglAwal = htmlspecialchars($data['formatted']['tgl_awal'] ?? '-');
         $lamaVonis = htmlspecialchars($data['lama_pidana_teks'] ?? '-');
@@ -1144,7 +1148,7 @@ ROW;
 </table>
 <hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
 
-<h1 style="color: #0f172a; margin-bottom: 1px;">LEMBAR ESTIMASI TELRAM &amp; PERKIRAAN PERHITUNGAN</h1>
+<h1 style="color: #0f172a; margin-bottom: 1px;">LEMBAR PERKIRAAN PERHITUNGAN</h1>
 <div align="center" style="font-size: 7.3pt; color: #475569; margin-bottom: 7px;">
     <i>Simulasi Reguler Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 &amp; Standar Operasional SDP Ditjenpas</i>
 </div>
@@ -1169,28 +1173,16 @@ ROW;
         <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$lamaVonis} ({$totalHariVonis} hr)</td>
     </tr>
     <tr>
-        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Agama / RK</td>
-        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$agama}</td>
-        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Ekspirasi Murni Awal</td>
-        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #b91c1c; padding: 3px 6px;">: {$tglEkspirasiMurni}</td>
-    </tr>
-    <tr>
-        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Program Integrasi</td>
-        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #047857; padding: 3px 6px;">: {$namaProgram}</td>
-        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Remisi Dasawarsa</td>
-        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; color: #0f172a; padding: 3px 6px;">: {$dasawarsaStatus}</td>
-    </tr>
-    <tr>
-        <td width="20%" style="color: #475569; padding: 3px 6px;">Status Pembinaan</td>
-        <td width="30%" style="color: #0f172a; padding: 3px 6px;">: {$labelTambahan}</td>
-        <td width="22%" style="color: #475569; padding: 3px 6px;">Standar Simulasi</td>
-        <td width="28%" style="font-weight: bold; color: #1e40af; padding: 3px 6px;">: {$targetBasisLabel}</td>
+        <td width="20%" style="color: #475569; padding: 3px 6px;">Pidana / Pasal</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$perkaraPasal}</td>
+        <td width="22%" style="color: #475569; padding: 3px 6px;">Ekspirasi Murni Awal</td>
+        <td width="28%" style="font-weight: bold; color: #b91c1c; padding: 3px 6px;">: {$tglEkspirasiMurni}</td>
     </tr>
 </table>
 
-<!-- II. MATRIKS TONGGAK MASA PIDANA & ESTIMASI INTEGRASI -->
+<!-- II. PERHITUNGAN PERKIRAAN INTEGRASI -->
 <div style="font-weight: bold; font-size: 8pt; color: #0f172a; margin-bottom: 3px;">
-    II. MATRIKS TONGGAK MASA PIDANA &amp; SYARAT INTEGRASI
+    II. PERHITUNGAN PERKIRAAN INTEGRASI
 </div>
 <table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #94a3b8; border-collapse: collapse; margin-bottom: 8px;">
     <thead>
@@ -1246,21 +1238,10 @@ ROW;
     </tr>
 </table>
 
-<!-- III. TABEL RINCIAN PROYEKSI PEROLEHAN REMISI PER EVENT KRONOLOGIS -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 3px;">
-    <tr>
-        <td width="65%" valign="bottom">
-            <span style="font-weight: bold; font-size: 8pt; color: #0f172a;">
-                III. TABEL RINCIAN PROYEKSI PEROLEHAN REMISI PER TAHUN (SDP DITJENPAS)
-            </span>
-        </td>
-        <td width="35%" align="right" valign="bottom">
-            <span style="font-size: 7pt; color: #475569;">
-                Standar: <b>{$targetBasisLabel}</b>
-            </span>
-        </td>
-    </tr>
-</table>
+<!-- III. PERKIRAAN PEROLEHAN REMISI -->
+<div style="font-weight: bold; font-size: 8pt; color: #0f172a; margin-bottom: 3px;">
+    III. PERKIRAAN PEROLEHAN REMISI
+</div>
 <table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
     <thead>
         <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.3pt;">

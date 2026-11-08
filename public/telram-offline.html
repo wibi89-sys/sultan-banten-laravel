@@ -815,7 +815,7 @@
                     <label class="form-label" style="display:block; margin-bottom: 8px;">
                         Identitas Narapidana / WBP (Untuk Cetak Berkas)
                     </label>
-                    <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 8px; margin-bottom: 8px;">
                         <div>
                             <span class="stepper-label" style="text-align: left;">NAMA WBP</span>
                             <input type="text" id="txtNamaWbp" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Nama WBP (Contoh: Budi Santoso)">
@@ -824,6 +824,10 @@
                             <span class="stepper-label" style="text-align: left;">NO. REGISTER</span>
                             <input type="text" id="txtNoRegister" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Contoh: BI.01/2024">
                         </div>
+                    </div>
+                    <div>
+                        <span class="stepper-label" style="text-align: left;">PIDANA / PASAL</span>
+                        <input type="text" id="txtPerkaraPasal" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Contoh: 363 KUHP">
                     </div>
                 </div>
 
@@ -1325,6 +1329,7 @@
     function resetForm() {
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
         if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
+        if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = '';
         document.getElementById('tglAwal').value = '';
         document.getElementById('vTahun').value = '0';
         document.getElementById('vBulan').value = '0';
@@ -1350,6 +1355,7 @@
         const yyyy = now.getFullYear();
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = 'Budi Santoso bin Ahmad';
         if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = 'BI.042/2024';
+        if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = 'Pasal 363 KUHP';
         document.getElementById('tglAwal').value = `${yyyy}-01-01`;
         document.getElementById('vTahun').value = '3';
         document.getElementById('vBulan').value = '0';
@@ -1463,6 +1469,7 @@
         const remisiAwal = parseInt(document.getElementById('vRemisiAwal').value) || 0;
         const namaWbp = (document.getElementById('txtNamaWbp') && document.getElementById('txtNamaWbp').value.trim()) || 'Narapidana';
         const noRegister = (document.getElementById('txtNoRegister') && document.getElementById('txtNoRegister').value.trim()) || '-';
+        const perkaraPasal = (document.getElementById('txtPerkaraPasal') && document.getElementById('txtPerkaraPasal').value.trim()) || '-';
         const includeDasawarsa = document.getElementById('chkDasawarsa') ? document.getElementById('chkDasawarsa').checked : true;
         const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
         const tahunMulaiTambahan = document.getElementById('selTahunMulaiTambahan') ? (parseInt(document.getElementById('selTahunMulaiTambahan').value) || 1) : 1;
@@ -1768,6 +1775,7 @@
             mode: 'simulasi_remisi',
             namaWbp: namaWbp,
             noRegister: noRegister,
+            perkaraPasal: perkaraPasal,
             tglAwal: tglAwal,
             lamaPidanaTeks: `${vThn} Tahun ${vBln} Bulan ${vHri} Hari`,
             totalHariVonis: totalHariVonis,
@@ -2188,11 +2196,12 @@
     function salinRingkasanTeks() {
         if (!lastResult) return;
         const d = lastResult;
-        let text = `*LEMBAR ESTIMASI TELRAM & PERKIRAAN PERHITUNGAN*\n---------------------------------------`;
+        let text = `*LEMBAR PERKIRAAN PERHITUNGAN*\n---------------------------------------`;
 
         if (d.mode === 'simulasi_remisi') {
             text += `\n*Nama WBP:* ${d.namaWbp || 'Narapidana'}` +
                     `\n*No. Register:* ${d.noRegister || '-'}` +
+                    `\n*Pidana / Pasal:* ${d.perkaraPasal || '-'}` +
                     `\n*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}` +
                     `\n*Pidana Pokok:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
                     `\n*Status Pembinaan:* ${d.kategoriTambahan === 'pemuka' ? 'Pemuka Lapas (+1/3 RU)' : (d.kategoriTambahan === 'jasa_negara' ? 'Jasa Negara (+1/2 RU)' : 'Standar (Reguler)')}` +

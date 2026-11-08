@@ -356,13 +356,16 @@
                                 </label>
                                 <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
                             </div>
-                            <div class="row g-2">
+                            <div class="row g-2 mb-2">
                                 <div class="col-7">
                                     <input type="text" id="txtNamaWbp" class="form-control form-control-sm fw-semibold" placeholder="Nama WBP (Contoh: Budi)" style="border-radius: 8px; font-size: 12.5px;">
                                 </div>
                                 <div class="col-5">
                                     <input type="text" id="txtNoRegister" class="form-control form-control-sm fw-semibold" placeholder="No. Reg (BI.01/24)" style="border-radius: 8px; font-size: 12.5px;">
                                 </div>
+                            </div>
+                            <div>
+                                <input type="text" id="txtPerkaraPasal" class="form-control form-control-sm fw-semibold" placeholder="Pidana / Pasal (Contoh: 363 KUHP)" style="border-radius: 8px; font-size: 12.5px;">
                             </div>
                         </div>
 
@@ -972,6 +975,7 @@
     function resetForm() {
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
         if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
+        if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = '';
         document.getElementById('tglAwal').value = '';
         document.getElementById('vTahun').value = '0';
         document.getElementById('vBulan').value = '0';
@@ -1001,6 +1005,7 @@
         if (currentMode === 'simulasi_remisi' || currentMode === 'maju') {
             if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = 'Budi Santoso bin Ahmad';
             if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = 'BI.042/2024';
+            if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = 'Pasal 363 KUHP';
             document.getElementById('vTahun').value = '3';
             document.getElementById('vBulan').value = '0';
             document.getElementById('vHari').value = '0';
@@ -1062,6 +1067,7 @@
                 payload.remisi_awal_hari = remisiAwal;
                 payload.nama_wbp = document.getElementById('txtNamaWbp') ? document.getElementById('txtNamaWbp').value : '';
                 payload.no_register = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
+                payload.perkara_pasal = document.getElementById('txtPerkaraPasal') ? document.getElementById('txtPerkaraPasal').value : '';
                 payload.include_dasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? 1 : 0) : 1;
                 payload.kategori_tambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
                 payload.tahun_mulai_tambahan = document.getElementById('selTahunMulaiTambahan') ? (parseInt(document.getElementById('selTahunMulaiTambahan').value) || 1) : 1;
@@ -1401,6 +1407,7 @@
         const remisiAwal = parseInt(document.getElementById('vRemisiAwal').value) || 0;
         const namaWbp = document.getElementById('txtNamaWbp') ? document.getElementById('txtNamaWbp').value : '';
         const noRegister = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
+        const perkaraPasal = document.getElementById('txtPerkaraPasal') ? document.getElementById('txtPerkaraPasal').value : '';
         const includeDasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? '1' : '0') : '1';
         const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
         const tahunMulaiTambahan = document.getElementById('selTahunMulaiTambahan') ? document.getElementById('selTahunMulaiTambahan').value : '1';
@@ -1421,6 +1428,7 @@
             remisi_awal_hari: remisiAwal,
             nama_wbp: namaWbp,
             no_register: noRegister,
+            perkara_pasal: perkaraPasal,
             include_dasawarsa: includeDasawarsa,
             kategori_tambahan: kategoriTambahan,
             tahun_mulai_tambahan: tahunMulaiTambahan,
@@ -1455,11 +1463,12 @@
         }
 
         const d = lastResult;
-        const text = `*LEMBAR ESTIMASI TELRAM & PERKIRAAN PERHITUNGAN*
+        const text = `*LEMBAR PERKIRAAN PERHITUNGAN*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
 *Nama WBP:* ${d.nama_wbp || 'Narapidana'}
 *No. Register:* ${d.no_register || '-'}
+*Pidana / Pasal:* ${d.perkara_pasal || '-'}
 *Tanggal Ditahan:* ${d.formatted.tgl_awal}
 *Pidana Pokok:* ${d.lama_pidana_teks} (${d.total_hari_vonis} hari)
 *Agama WBP:* ${d.agama}

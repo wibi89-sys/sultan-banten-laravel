@@ -446,8 +446,13 @@ class TelramCalculatorServiceTest extends TestCase
             'Testing WBP PDF',
             'BI.999/2024',
             true,
-            'pemuka'
+            'pemuka',
+            '2_3',
+            1,
+            'Pasal 363 KUHP'
         );
+
+        $this->assertEquals('Pasal 363 KUHP', $result['perkara_pasal']);
 
         $pdfBinary = $this->service->generatePdfReport($result);
 

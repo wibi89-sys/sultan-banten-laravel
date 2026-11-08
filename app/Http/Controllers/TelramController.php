@@ -45,6 +45,7 @@ class TelramController extends Controller
                     'remisi_awal_hari' => 'nullable|integer|min:0',
                     'nama_wbp' => 'nullable|string|max:150',
                     'no_register' => 'nullable|string|max:100',
+                    'perkara_pasal' => 'nullable|string|max:150',
                     'include_dasawarsa' => 'nullable|boolean',
                     'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara',
                     'tahun_mulai_tambahan' => 'nullable|integer|min:1|max:50',
@@ -64,6 +65,7 @@ class TelramController extends Controller
 
                 $namaWbp = trim((string) ($validated['nama_wbp'] ?? '')) ?: 'Narapidana';
                 $noRegister = trim((string) ($validated['no_register'] ?? '')) ?: '-';
+                $perkaraPasal = trim((string) ($validated['perkara_pasal'] ?? '')) ?: '-';
                 $includeDasawarsa = filter_var($validated['include_dasawarsa'] ?? true, FILTER_VALIDATE_BOOLEAN);
                 $kategoriTambahan = $validated['kategori_tambahan'] ?? 'none';
                 $tahunMulaiTambahan = (int) ($validated['tahun_mulai_tambahan'] ?? 1);
@@ -81,7 +83,8 @@ class TelramController extends Controller
                     $includeDasawarsa,
                     $kategoriTambahan,
                     $targetBasis,
-                    $tahunMulaiTambahan
+                    $tahunMulaiTambahan,
+                    $perkaraPasal
                 );
             } elseif ($mode === 'mundur') {
                 $validated = $request->validate([
@@ -156,6 +159,7 @@ class TelramController extends Controller
             'remisi_awal_hari' => 'nullable|integer|min:0',
             'nama_wbp' => 'nullable|string|max:150',
             'no_register' => 'nullable|string|max:100',
+            'perkara_pasal' => 'nullable|string|max:150',
             'include_dasawarsa' => 'nullable|boolean',
             'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara',
             'tahun_mulai_tambahan' => 'nullable|integer|min:1|max:50',
@@ -172,6 +176,7 @@ class TelramController extends Controller
 
         $namaWbp = trim((string) ($validated['nama_wbp'] ?? '')) ?: 'Narapidana';
         $noRegister = trim((string) ($validated['no_register'] ?? '')) ?: '-';
+        $perkaraPasal = trim((string) ($validated['perkara_pasal'] ?? '')) ?: '-';
         $includeDasawarsa = filter_var($validated['include_dasawarsa'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $kategoriTambahan = $validated['kategori_tambahan'] ?? 'none';
         $tahunMulaiTambahan = (int) ($validated['tahun_mulai_tambahan'] ?? 1);
@@ -189,11 +194,12 @@ class TelramController extends Controller
             $includeDasawarsa,
             $kategoriTambahan,
             $targetBasis,
-            $tahunMulaiTambahan
+            $tahunMulaiTambahan,
+            $perkaraPasal
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);
-        $filename = 'Telram_Proyeksi_'.preg_replace('/[^A-Za-z0-9_-]/', '_', $namaWbp).'_'.date('Ymd_His').'.pdf';
+        $filename = 'Perkiraan_Perhitungan_'.preg_replace('/[^A-Za-z0-9_-]/', '_', $namaWbp).'_'.date('Ymd_His').'.pdf';
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
