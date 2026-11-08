@@ -1244,14 +1244,14 @@ ROW;
 <table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
     <thead>
         <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.8pt;">
-            <th width="4%" style="border: 0.5px solid #475569; padding: 6px 2px;">No</th>
-            <th width="23%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Jenis Remisi/Tahun</th>
-            <th width="12%" style="border: 0.5px solid #475569; padding: 6px 2px;">Tgl. Pelaksanaan</th>
-            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Lama Menjalani Pidana</th>
-            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Besaran Remisi(Bl, Hr)</th>
-            <th width="10%" style="border: 0.5px solid #475569; padding: 6px 2px;">Besaran Remisi (Hr)</th>
-            <th width="13%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi setelah Remisi</th>
-            <th width="16%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Keterangan</th>
+            <th width="4%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 2px; text-align: center;">No</th>
+            <th width="23%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: center;">Jenis Remisi/Tahun</th>
+            <th width="12%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 2px; text-align: center;">Tgl. Pelaksanaan</th>
+            <th width="11%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 2px; text-align: center;">Lama Menjalani Pidana</th>
+            <th width="11%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 2px; text-align: center;">Besaran Remisi(Bl, Hr)</th>
+            <th width="10%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 2px; text-align: center;">Besaran Remisi (Hr)</th>
+            <th width="13%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 2px; text-align: center;">Ekspirasi setelah Remisi</th>
+            <th width="16%" align="center" valign="middle" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: center;">Keterangan</th>
         </tr>
     </thead>
     <tbody>

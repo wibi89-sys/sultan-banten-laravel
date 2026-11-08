@@ -740,15 +740,15 @@
                                 <table class="table table-hover table-striped align-middle mb-0 table-ledger" style="min-width: 860px;">
                                     <thead class="table-light">
                                         <tr style="font-size: 11.5px;">
-                                            <th style="width: 40px;" class="text-center">No</th>
-                                            <th style="min-width: 170px;">Jenis Remisi/Tahun</th>
-                                            <th style="min-width: 105px; white-space: nowrap;">Tgl. Pelaksanaan</th>
-                                            <th style="min-width: 100px; white-space: nowrap;">Lama Menjalani Pidana</th>
-                                            <th style="min-width: 95px; white-space: nowrap;">Status</th>
-                                            <th style="min-width: 105px; white-space: nowrap;">Besaran Remisi (Bl, Hr)</th>
-                                            <th style="min-width: 105px; white-space: nowrap;">Besaran Remisi (Hr)</th>
-                                            <th style="min-width: 110px; white-space: nowrap;">Ekspirasi setelah Remisi</th>
-                                            <th style="min-width: 200px;">Keterangan</th>
+                                            <th style="width: 40px;" class="text-center align-middle">No</th>
+                                            <th style="min-width: 170px;" class="text-center align-middle">Jenis Remisi/Tahun</th>
+                                            <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Tgl. Pelaksanaan</th>
+                                            <th style="min-width: 100px; white-space: nowrap;" class="text-center align-middle">Lama Menjalani Pidana</th>
+                                            <th style="min-width: 95px; white-space: nowrap;" class="text-center align-middle">Status</th>
+                                            <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Bl, Hr)</th>
+                                            <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Hr)</th>
+                                            <th style="min-width: 110px; white-space: nowrap;" class="text-center align-middle">Ekspirasi setelah Remisi</th>
+                                            <th style="min-width: 200px;" class="text-center align-middle">Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbodyProyeksiRemisi">
