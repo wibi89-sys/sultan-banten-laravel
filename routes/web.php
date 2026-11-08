@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
     // Kalkulator Telram PAS (Terbuka untuk semua user)
     Route::get('/telram', [TelramController::class, 'index'])->name('telram.index');
     Route::post('/telram/calculate', [TelramController::class, 'calculate'])->name('telram.calculate');
+    Route::post('/telram/export-pdf', [TelramController::class, 'exportPdf'])->name('telram.export-pdf');
 
     // Kroscek Data
     Route::get('/kroscek', [KroscekController::class, 'index'])->name('kroscek.index');

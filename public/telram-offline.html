@@ -670,6 +670,23 @@
                     </button>
                 </div>
 
+                <!-- Input Identitas WBP (Khusus Simulasi Remisi & Cetak) -->
+                <div id="sectionIdentitasWbp" class="form-group" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+                    <label class="form-label" style="display:block; margin-bottom: 8px;">
+                        Identitas Narapidana / WBP (Untuk Cetak Berkas)
+                    </label>
+                    <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 8px;">
+                        <div>
+                            <span class="stepper-label" style="text-align: left;">NAMA WBP</span>
+                            <input type="text" id="txtNamaWbp" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Nama WBP (Contoh: Budi Santoso)">
+                        </div>
+                        <div>
+                            <span class="stepper-label" style="text-align: left;">NO. REGISTER</span>
+                            <input type="text" id="txtNoRegister" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Contoh: BI.01/2024">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tgl Mulai Penahanan -->
                 <div class="form-group">
                     <div class="form-label-row">
@@ -716,6 +733,27 @@
                         <option value="hindu">Hindu (Hari Raya Nyepi)</option>
                         <option value="buddha">Buddha (Hari Raya Waisak)</option>
                         <option value="khonghucu">Khonghucu (Tahun Baru Imlek)</option>
+                    </select>
+                </div>
+
+                <!-- Opsi Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
+                <div id="sectionDasawarsa" class="form-group" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-md); padding: 10px 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--text-primary);">
+                        <input type="checkbox" id="chkDasawarsa" checked style="width: 16px; height: 16px; cursor: pointer;">
+                        Sertakan Remisi Dasawarsa (Tiap 10 Th Kemerdekaan RI)
+                    </label>
+                    <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px; padding-left: 24px;">
+                        Diberikan setiap 10 tahun (1955 s.d. 2015, 2025, 2035) sebesar 1/12 vonis pokok (maks 3 bulan).
+                    </small>
+                </div>
+
+                <!-- Opsi Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
+                <div id="sectionRemisiTambahan" class="form-group">
+                    <label class="form-label" style="display:block; margin-bottom: 6px;">Status Pembinaan / Remisi Tambahan (Pasal 4)</label>
+                    <select id="selRemisiTambahan" class="form-select">
+                        <option value="none" selected>Standar / Reguler (Tanpa Remisi Tambahan)</option>
+                        <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU yang didapat)</option>
+                        <option value="jasa_negara">Berjasa Bagi Negara / Donor Darah (+1/2 dari RU yang didapat)</option>
                     </select>
                 </div>
 
@@ -845,6 +883,7 @@
                                             <th>Besaran</th>
                                             <th>Akumulasi</th>
                                             <th>Bebas Baru</th>
+                                            <th>Keterangan &amp; Landasan Alasan</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbodyProyeksiRemisi">
@@ -930,8 +969,11 @@
         const btnMaju = document.getElementById('btnModeMaju');
         const btnMundur = document.getElementById('btnModeMundur');
         const btnSisa = document.getElementById('btnModeSisa');
+        const sectionIdentitasWbp = document.getElementById('sectionIdentitasWbp');
         const sectionVonis = document.getElementById('sectionInputVonis');
         const sectionAgama = document.getElementById('sectionAgama');
+        const sectionDasawarsa = document.getElementById('sectionDasawarsa');
+        const sectionRemisiTambahan = document.getElementById('sectionRemisiTambahan');
         const sectionRemisiAwal = document.getElementById('sectionRemisiAwal');
         const sectionEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
@@ -941,32 +983,44 @@
 
         if (mode === 'simulasi_remisi') {
             if (btnRemisi) btnRemisi.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.remove('d-none');
             sectionVonis.classList.remove('d-none');
             sectionAgama.classList.remove('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.remove('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.remove('d-none');
             sectionRemisiAwal.classList.remove('d-none');
             sectionEkspirasi.classList.add('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG PROYEKSI REMISI & INTEGRASI';
         } else if (mode === 'maju') {
             if (btnMaju) btnMaju.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             sectionVonis.classList.remove('d-none');
             sectionAgama.classList.add('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionEkspirasi.classList.add('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG EKSPIRASI';
         } else if (mode === 'mundur') {
             if (btnMundur) btnMundur.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             sectionVonis.classList.add('d-none');
             sectionAgama.classList.add('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionEkspirasi.classList.remove('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG LAMA PIDANA';
         } else if (mode === 'sisa') {
             if (btnSisa) btnSisa.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             sectionVonis.classList.add('d-none');
             sectionAgama.classList.add('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionEkspirasi.classList.remove('d-none');
             labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span style="color: #ef4444;">*</span>';
@@ -985,11 +1039,15 @@
     }
 
     function resetForm() {
+        if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
+        if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
         document.getElementById('tglAwal').value = '';
         document.getElementById('vTahun').value = '0';
         document.getElementById('vBulan').value = '0';
         document.getElementById('vHari').value = '0';
         document.getElementById('selAgama').value = 'islam';
+        if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
+        if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
         document.getElementById('vRemisiAwal').value = '0';
         document.getElementById('tglEkspirasiInput').value = '';
 
@@ -1002,11 +1060,15 @@
     function demoSampleData() {
         const now = new Date();
         const yyyy = now.getFullYear();
+        if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = 'Budi Santoso bin Ahmad';
+        if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = 'BI.042/2024';
         document.getElementById('tglAwal').value = `${yyyy}-01-01`;
         document.getElementById('vTahun').value = '3';
         document.getElementById('vBulan').value = '0';
         document.getElementById('vHari').value = '0';
         document.getElementById('selAgama').value = 'islam';
+        if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
+        if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
         document.getElementById('vRemisiAwal').value = '0';
         hitungSesuaiMode();
     }
@@ -1107,6 +1169,10 @@
         const vHri = parseInt(document.getElementById('vHari').value) || 0;
         const agama = document.getElementById('selAgama').value;
         const remisiAwal = parseInt(document.getElementById('vRemisiAwal').value) || 0;
+        const namaWbp = (document.getElementById('txtNamaWbp') && document.getElementById('txtNamaWbp').value.trim()) || 'Narapidana';
+        const noRegister = (document.getElementById('txtNoRegister') && document.getElementById('txtNoRegister').value.trim()) || '-';
+        const includeDasawarsa = document.getElementById('chkDasawarsa') ? document.getElementById('chkDasawarsa').checked : true;
+        const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
 
         if (!inputTgl) {
             showToast('Harap tentukan Tanggal Mulai Penahanan!', 'error');
@@ -1189,35 +1255,78 @@
                     eligible: false,
                     besaran_teks: '0 Hari',
                     akumulasi: totalHariRemisi,
-                    bebas_baru: formatDateIndo(currentEkspirasi)
+                    bebas_baru: formatDateIndo(currentEkspirasi),
+                    keterangan_alasan: 'Belum memenuhi syarat minimal menjalani 6 bulan pidana (Pasal 2 Keppres No. 174/1999).'
                 });
                 continue;
             }
 
             let pot = 0;
             let bTeks = '';
+            let keteranganAlasan = '';
+
             if (item.jenis === 'RU') {
                 keRu++;
                 if (keRu === 1) {
-                    pot = hariDijalani < 360 ? 30 : 60;
-                    bTeks = hariDijalani < 360 ? '1 Bulan' : '2 Bulan';
-                } else if (keRu === 2) { pot = 90; bTeks = '3 Bulan'; }
-                else if (keRu === 3) { pot = 120; bTeks = '4 Bulan'; }
-                else if (keRu === 4 || keRu === 5) { pot = 150; bTeks = '5 Bulan'; }
-                else { pot = 180; bTeks = '6 Bulan'; }
+                    if (hariDijalani < 360) {
+                        pot = 30;
+                        bTeks = '1 Bulan';
+                        keteranganAlasan = 'Tahun I Remisi Umum: Besaran 1 bulan karena telah menjalani masa pidana antara 6 s/d 12 bulan (kurang dari 1 tahun) pada tanggal 17 Agustus (Keppres 174/1999 Ps. 2).';
+                    } else {
+                        pot = 60;
+                        bTeks = '2 Bulan';
+                        keteranganAlasan = 'Tahun I Remisi Umum: Besaran 2 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
+                    }
+                } else if (keRu === 2) {
+                    pot = 90;
+                    bTeks = '3 Bulan';
+                    keteranganAlasan = 'Tahun II Remisi Umum: Besaran 3 bulan karena telah menjalani masa pidana pada tahun kedua.';
+                } else if (keRu === 3) {
+                    pot = 120;
+                    bTeks = '4 Bulan';
+                    keteranganAlasan = 'Tahun III Remisi Umum: Besaran 4 bulan karena telah menjalani masa pidana pada tahun ketiga.';
+                } else if (keRu === 4 || keRu === 5) {
+                    pot = 150;
+                    bTeks = '5 Bulan';
+                    keteranganAlasan = `Tahun ${keRu === 4 ? 'IV' : 'V'} Remisi Umum: Besaran 5 bulan karena telah menjalani masa pidana pada tahun keempat/kelima.`;
+                } else {
+                    pot = 180;
+                    bTeks = '6 Bulan';
+                    keteranganAlasan = `Tahun ke-${keRu} Remisi Umum: Besaran 6 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.`;
+                }
             } else {
                 keRk++;
                 if (keRk === 1) {
-                    pot = hariDijalani < 360 ? 15 : 30;
-                    bTeks = hariDijalani < 360 ? '15 Hari' : '1 Bulan';
-                } else if (keRk === 2 || keRk === 3) { pot = 30; bTeks = '1 Bulan'; }
-                else if (keRk === 4 || keRk === 5) { pot = 45; bTeks = '1 Bulan 15 Hari'; }
-                else { pot = 60; bTeks = '2 Bulan'; }
+                    if (hariDijalani < 360) {
+                        pot = 15;
+                        bTeks = '15 Hari';
+                        keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 15 hari karena telah menjalani masa pidana antara 6 s/d 12 bulan pada hari raya keagamaan.';
+                    } else {
+                        pot = 30;
+                        bTeks = '1 Bulan';
+                        keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 1 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
+                    }
+                } else if (keRk === 2 || keRk === 3) {
+                    pot = 30;
+                    bTeks = '1 Bulan';
+                    keteranganAlasan = `Tahun ${keRk === 2 ? 'II' : 'III'} Remisi Khusus: Besaran 1 bulan pada tahun kedua/ketiga.`;
+                } else if (keRk === 4 || keRk === 5) {
+                    pot = 45;
+                    bTeks = '1 Bulan 15 Hari';
+                    keteranganAlasan = `Tahun ${keRk === 4 ? 'IV' : 'V'} Remisi Khusus: Besaran 1 bulan 15 hari pada tahun keempat/kelima.`;
+                } else {
+                    pot = 60;
+                    bTeks = '2 Bulan';
+                    keteranganAlasan = `Tahun ke-${keRk} Remisi Khusus: Besaran 2 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.`;
+                }
             }
 
             const sisaMs = currentEkspirasi.getTime() - item.dateObj.getTime();
             const sisaHari = Math.round(sisaMs / (1000 * 60 * 60 * 24));
-            if (pot > sisaHari) pot = Math.max(0, sisaHari);
+            if (pot > sisaHari) {
+                pot = Math.max(0, sisaHari);
+                bTeks = `${pot} Hari (Sisa Pidana)`;
+            }
 
             totalHariRemisi += pot;
             currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
@@ -1230,8 +1339,74 @@
                 eligible: true,
                 besaran_teks: bTeks,
                 akumulasi: totalHariRemisi,
-                bebas_baru: formatDateIndo(currentEkspirasi)
+                bebas_baru: formatDateIndo(currentEkspirasi),
+                keterangan_alasan: keteranganAlasan
             });
+
+            // Remisi Tambahan (Pasal 4 Keppres 174/1999)
+            if (item.jenis === 'RU' && pot > 0 && kategoriTambahan !== 'none') {
+                let potTambahan = 0;
+                let namaTambahan = '';
+                let ketTambahan = '';
+
+                if (kategoriTambahan === 'pemuka') {
+                    potTambahan = Math.floor(pot / 3);
+                    namaTambahan = `Remisi Tambahan Pemuka (${item.dateObj.getFullYear()})`;
+                    ketTambahan = `Bonus 1/3 dari Remisi Umum (${bTeks}) bagi narapidana pemuka pembinaan di Lapas (Pasal 4 Keppres No. 174/1999).`;
+                } else if (kategoriTambahan === 'jasa_negara') {
+                    potTambahan = Math.floor(pot / 2);
+                    namaTambahan = `Remisi Tambahan Jasa Negara (${item.dateObj.getFullYear()})`;
+                    ketTambahan = `Bonus 1/2 dari Remisi Umum (${bTeks}) atas jasa bagi negara atau perbuatan kemanusiaan/donor darah (Pasal 4 Keppres No. 174/1999).`;
+                }
+
+                if (potTambahan > 0) {
+                    const sisaMsT = currentEkspirasi.getTime() - item.dateObj.getTime();
+                    const sisaHariT = Math.round(sisaMsT / (1000 * 60 * 60 * 24));
+                    if (potTambahan > sisaHariT) potTambahan = Math.max(0, sisaHariT);
+
+                    totalHariRemisi += potTambahan;
+                    currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
+
+                    ledger.push({
+                        nama_event: namaTambahan,
+                        tanggal_indo: formatDateIndo(item.dateObj),
+                        hari_dijalani: hariDijalani,
+                        masa_teks: formatHariTeks(hariDijalani),
+                        eligible: true,
+                        besaran_teks: formatHariTeks(potTambahan),
+                        akumulasi: totalHariRemisi,
+                        bebas_baru: formatDateIndo(currentEkspirasi),
+                        keterangan_alasan: ketTambahan
+                    });
+                }
+            }
+
+            // Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI)
+            const itemYr = item.dateObj.getFullYear();
+            if (item.jenis === 'RU' && includeDasawarsa && ((itemYr - 1945) % 10 === 0) && itemYr >= 1955) {
+                const hutKe = itemYr - 1945;
+                const potDasawarsaMaks = Math.min(90, Math.floor(totalHariVonis / 12));
+                const sisaMsD = currentEkspirasi.getTime() - item.dateObj.getTime();
+                const sisaHariD = Math.round(sisaMsD / (1000 * 60 * 60 * 24));
+                let potDasawarsa = Math.min(potDasawarsaMaks, Math.max(0, sisaHariD));
+
+                if (potDasawarsa > 0) {
+                    totalHariRemisi += potDasawarsa;
+                    currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
+
+                    ledger.push({
+                        nama_event: `Remisi Dasawarsa HUT ke-${hutKe} RI (${itemYr})`,
+                        tanggal_indo: formatDateIndo(item.dateObj),
+                        hari_dijalani: hariDijalani,
+                        masa_teks: formatHariTeks(hariDijalani),
+                        eligible: true,
+                        besaran_teks: formatHariTeks(potDasawarsa),
+                        akumulasi: totalHariRemisi,
+                        bebas_baru: formatDateIndo(currentEkspirasi),
+                        keterangan_alasan: `Pengurangan istimewa peringatan HUT ke-${hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (${formatHariTeks(potDasawarsaMaks)}), dibatasi maksimal 3 bulan / 90 hari.`
+                    });
+                }
+            }
         }
 
         // Definitif SDP: 2/3 Murni minus Full Remisi
@@ -1260,11 +1435,15 @@
 
         lastResult = {
             mode: 'simulasi_remisi',
+            namaWbp: namaWbp,
+            noRegister: noRegister,
             tglAwal: tglAwal,
             lamaPidanaTeks: `${vThn} Tahun ${vBln} Bulan ${vHri} Hari`,
             totalHariVonis: totalHariVonis,
             jenisProgram: jenisProgram,
             namaProgram: namaProgram,
+            includeDasawarsa: includeDasawarsa,
+            kategoriTambahan: kategoriTambahan,
             totalHariRemisi: totalHariRemisi,
             tglMulaiPengusulan: tglMulaiPengusulan,
             tgl23Definitif: tgl23Definitif,
@@ -1280,7 +1459,8 @@
 
         // Render UI
         document.getElementById('badgeProgramStatus').innerText = jenisProgram;
-        document.getElementById('hasilHeaderTitle').innerText = `Hasil Proyeksi Remisi & Hak ${namaProgram}`;
+        const wbpJudul = (namaWbp && namaWbp !== 'Narapidana') ? ` (${namaWbp})` : '';
+        document.getElementById('hasilHeaderTitle').innerText = `Hasil Proyeksi Remisi & Hak ${namaProgram}${wbpJudul}`;
         document.getElementById('resTglMulaiPengusulan').innerText = formatDateIndo(tglMulaiPengusulan);
         document.getElementById('resTgl23Highlight').innerText = formatDateIndo(tgl23Definitif);
         document.getElementById('pesanPengusulan').innerText = statusPesan;
@@ -1314,6 +1494,7 @@
                 <td><strong>${r.besaran_teks}</strong></td>
                 <td style="color:#10b981;font-weight:700;">${r.akumulasi} Hari</td>
                 <td style="color:#ef4444;font-weight:700;">${r.bebas_baru}</td>
+                <td style="max-width:280px;font-size:11px;color:var(--text-secondary);">${r.keterangan_alasan || '-'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1368,16 +1549,33 @@
     function salinRingkasanTeks() {
         if (!lastResult) return;
         const d = lastResult;
-        const text = `*LEMBAR TELRAM & INTEGRASI (OFFLINE)*
-Tgl Ditahan: ${formatDateIndo(d.tglAwal)}
-Vonis: ${d.lamaPidanaTeks}
-Program: ${d.namaProgram}
-1/3 Masa Pidana: ${formatDateIndo(d.tgl13Murni)}
-1/2 Asimilasi: ${formatDateIndo(d.tgl12Definitif)}
-2/3 Definitif: ${formatDateIndo(d.tgl23Definitif)}
-Mulai Pengusulan: ${formatDateIndo(d.tglMulaiPengusulan)}
-Ekspirasi Definitif: ${formatDateIndo(d.tglEkspirasiDefinitif)}
-Total Remisi: ${d.totalHariRemisi} Hari`;
+        let text = `*LEMBAR TELRAM & PROYEKSI REMISI (OFFLINE)*
+---------------------------------------`;
+        if (d.mode === 'simulasi_remisi') {
+            text += `
+*Nama WBP:* ${d.namaWbp || 'Narapidana'}
+*No. Register:* ${d.noRegister || '-'}
+*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}
+*Lama Vonis:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)
+*Status Pembinaan:* ${d.kategoriTambahan === 'pemuka' ? 'Pemuka Lapas (+1/3 RU)' : (d.kategoriTambahan === 'jasa_negara' ? 'Jasa Negara (+1/2 RU)' : 'Standar (Reguler)')}
+*Remisi Dasawarsa:* ${d.includeDasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
+*Program:* ${d.namaProgram}
+---------------------------------------
+• *1/3 Masa Pidana:* ${formatDateIndo(d.tgl13Murni)}
+• *1/2 Asimilasi:* ${formatDateIndo(d.tgl12Definitif)} (Murni: ${formatDateIndo(d.tgl12Murni)})
+• *2/3 ${d.jenisProgram}:* ${formatDateIndo(d.tgl23Definitif)} (Murni: ${formatDateIndo(d.tgl23Murni)})
+• *Ekspirasi Definitif:* ${formatDateIndo(d.tglEkspirasiDefinitif)} (Murni: ${formatDateIndo(d.tglEkspirasiMurni)})
+• *Total Proyeksi Remisi:* ${d.totalHariRemisi} Hari
+---------------------------------------
+⚠️ *WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN):*
+*Tanggal:* ${formatDateIndo(d.tglMulaiPengusulan)}
+*Catatan:* ${d.statusPesan}`;
+        } else {
+            text += `
+*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}
+*Lama Vonis:* ${d.lamaPidanaTeks}
+*Ekspirasi:* ${formatDateIndo(d.tglEkspirasi || d.tglEkspirasiDefinitif)}`;
+        }
 
         navigator.clipboard.writeText(text).then(() => {
             showToast('Ringkasan berhasil disalin!');

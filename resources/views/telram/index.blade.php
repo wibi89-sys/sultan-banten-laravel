@@ -223,6 +223,15 @@
         border-color: #334155 !important;
     }
 
+    [data-theme="dark"] #sectionIdentitasWbp {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] #sectionDasawarsa {
+        background: rgba(180, 83, 9, 0.15) !important;
+        border-color: rgba(245, 158, 11, 0.3) !important;
+    }
+
     /* Print Styles */
     @media print {
         body {
@@ -299,6 +308,26 @@
                         </button>
                     </div>
 
+                    <!-- Input Identitas WBP (Khusus Simulasi Remisi & Cetak PDF) -->
+                    <div id="sectionIdentitasWbp" class="mb-3 p-3 rounded-3" style="background: rgba(241, 245, 249, 0.6); border: 1px solid #e2e8f0;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 13px;">
+                                <i class="fas fa-id-card text-primary me-1"></i> Identitas Narapidana / WBP
+                            </label>
+                            <span class="badge bg-light text-secondary border" style="font-size: 10.5px;">Cetak Berkas PDF</span>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-sm-7">
+                                <label class="stepper-label mb-1">NAMA WBP / NARAPIDANA</label>
+                                <input type="text" id="txtNamaWbp" class="form-control form-control-sm fw-semibold" placeholder="Nama WBP (Contoh: Budi Santoso)" style="border-radius: 8px; font-size: 13px;">
+                            </div>
+                            <div class="col-sm-5">
+                                <label class="stepper-label mb-1">NO. REGISTER</label>
+                                <input type="text" id="txtNoRegister" class="form-control form-control-sm fw-semibold" placeholder="Contoh: BI.01/2024" style="border-radius: 8px; font-size: 13px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tanggal Mulai Penahanan / Per Tanggal -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
@@ -354,6 +383,34 @@
                         </select>
                         <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
                             <i class="fas fa-info-circle me-1"></i> Remisi Khusus (RK) diberikan pada Hari Raya Keagamaan masing-masing WBP.
+                        </small>
+                    </div>
+
+                    <!-- Input Opsi Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
+                    <div id="sectionDasawarsa" class="mb-3 p-2.5 rounded-3 border" style="background: rgba(254, 243, 199, 0.3); border-color: #fde68a !important;">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="chkDasawarsa" checked style="cursor: pointer;">
+                            <label class="form-check-label fw-bold telram-text-title" for="chkDasawarsa" style="font-size: 12.5px; cursor: pointer;">
+                                Sertakan Remisi Dasawarsa (Tiap 10 Th Kemerdekaan RI)
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1 ps-4" style="font-size: 11px;">
+                            Diberikan setiap 10 tahun (1955 s.d. 2015, 2025, 2035) sebesar 1/12 vonis pokok (maks 3 bulan).
+                        </small>
+                    </div>
+
+                    <!-- Input Opsi Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
+                    <div id="sectionRemisiTambahan" class="mb-3">
+                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 13px;">
+                            Status Pembinaan / Remisi Tambahan (Pasal 4)
+                        </label>
+                        <select id="selRemisiTambahan" class="form-select fw-semibold" style="border-radius: 10px; font-size: 13.5px;">
+                            <option value="none" selected>Standar / Reguler (Tanpa Remisi Tambahan)</option>
+                            <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU yang didapat)</option>
+                            <option value="jasa_negara">Berjasa Bagi Negara / Donor Darah (+1/2 dari RU yang didapat)</option>
+                        </select>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                            <i class="fas fa-medal text-warning me-1"></i> Keppres No. 174/1999 Ps. 4: Narapidana yang menjadi pemuka pembinaan atau berjasa pada kemanusiaan mendapat remisi tambahan proporsional RU.
                         </small>
                     </div>
 
@@ -424,6 +481,9 @@
                             </h6>
                         </div>
                         <div class="d-flex gap-1.5" id="btnGroupAksiHasil">
+                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1" onclick="unduhPdfResmi()" title="Unduh Lembar Resmi PDF" style="font-size: 11.5px;">
+                                <i class="fas fa-file-pdf me-1"></i> Unduh PDF
+                            </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1" onclick="cetakLembarPerhitungan()" title="Cetak Lembar Perhitungan" style="font-size: 11.5px;">
                                 <i class="fas fa-print me-1"></i> Cetak
                             </button>
@@ -588,6 +648,7 @@
                                             <th>Besaran Remisi</th>
                                             <th>Akumulasi</th>
                                             <th>Perkiraan Bebas Baru</th>
+                                            <th>Keterangan &amp; Landasan Alasan</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbodyProyeksiRemisi">
@@ -656,8 +717,11 @@
         const btnMaju = document.getElementById('btnModeMaju');
         const btnMundur = document.getElementById('btnModeMundur');
         const btnSisa = document.getElementById('btnModeSisa');
+        const sectionIdentitasWbp = document.getElementById('sectionIdentitasWbp');
         const sectionInputVonis = document.getElementById('sectionInputVonis');
         const sectionAgama = document.getElementById('sectionAgama');
+        const sectionDasawarsa = document.getElementById('sectionDasawarsa');
+        const sectionRemisiTambahan = document.getElementById('sectionRemisiTambahan');
         const sectionRemisiAwal = document.getElementById('sectionRemisiAwal');
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
@@ -670,8 +734,11 @@
 
         if (mode === 'simulasi_remisi') {
             if (btnRemisi) btnRemisi.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.remove('d-none');
             sectionInputVonis.classList.remove('d-none');
             sectionAgama.classList.remove('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.remove('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.remove('d-none');
             sectionRemisiAwal.classList.remove('d-none');
             sectionInputEkspirasi.classList.add('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
@@ -684,8 +751,11 @@
             placeholderIcon.className = 'fas fa-medal';
         } else if (mode === 'maju') {
             if (btnMaju) btnMaju.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             sectionInputVonis.classList.remove('d-none');
             sectionAgama.classList.add('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionInputEkspirasi.classList.add('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
@@ -698,8 +768,11 @@
             placeholderIcon.className = 'fas fa-calendar-alt';
         } else if (mode === 'mundur') {
             if (btnMundur) btnMundur.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             sectionInputVonis.classList.add('d-none');
             sectionAgama.classList.add('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionInputEkspirasi.classList.remove('d-none');
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
@@ -712,8 +785,11 @@
             placeholderIcon.className = 'fas fa-hourglass-half';
         } else if (mode === 'sisa') {
             if (btnSisa) btnSisa.classList.add('active');
+            if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             sectionInputVonis.classList.add('d-none');
             sectionAgama.classList.add('d-none');
+            if (sectionDasawarsa) sectionDasawarsa.classList.add('d-none');
+            if (sectionRemisiTambahan) sectionRemisiTambahan.classList.add('d-none');
             sectionRemisiAwal.classList.add('d-none');
             sectionInputEkspirasi.classList.remove('d-none');
             labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
@@ -745,11 +821,15 @@
 
     // Reset Form
     function resetForm() {
+        if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
+        if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
         document.getElementById('tglAwal').value = '';
         document.getElementById('vTahun').value = '0';
         document.getElementById('vBulan').value = '0';
         document.getElementById('vHari').value = '0';
         document.getElementById('selAgama').value = 'islam';
+        if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
+        if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
         document.getElementById('vRemisiAwal').value = '0';
         document.getElementById('tglEkspirasiInput').value = '';
 
@@ -768,10 +848,14 @@
         document.getElementById('tglAwal').value = `${yyyy}-01-01`;
 
         if (currentMode === 'simulasi_remisi' || currentMode === 'maju') {
+            if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = 'Budi Santoso bin Ahmad';
+            if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = 'BI.042/2024';
             document.getElementById('vTahun').value = '3';
             document.getElementById('vBulan').value = '0';
             document.getElementById('vHari').value = '0';
             document.getElementById('selAgama').value = 'islam';
+            if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
+            if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
             document.getElementById('vRemisiAwal').value = '0';
         } else {
             const futureDate = new Date(now);
@@ -821,6 +905,10 @@
                 payload.hari = vHri;
                 payload.agama = agama;
                 payload.remisi_awal_hari = remisiAwal;
+                payload.nama_wbp = document.getElementById('txtNamaWbp') ? document.getElementById('txtNamaWbp').value : '';
+                payload.no_register = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
+                payload.include_dasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? 1 : 0) : 1;
+                payload.kategori_tambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
             } else if (currentMode === 'maju') {
                 payload.tahun = parseInt(document.getElementById('vTahun').value) || 0;
                 payload.bulan = parseInt(document.getElementById('vBulan').value) || 0;
@@ -904,7 +992,8 @@
             // Badge Program
             badgeProgramStatus.innerText = data.jenis_program;
             badgeProgramStatus.className = data.jenis_program === 'CB' ? 'badge bg-info text-white' : 'badge bg-success text-white';
-            hasilHeaderTitle.innerText = `Hasil Proyeksi Remisi & Hak ${data.nama_program}`;
+            const wbpLabel = (data.nama_wbp && data.nama_wbp !== 'Narapidana') ? ` (${data.nama_wbp})` : '';
+            hasilHeaderTitle.innerText = `Hasil Proyeksi Remisi & Hak ${data.nama_program}${wbpLabel}`;
 
             // Hero Pengusulan
             document.getElementById('resTglMulaiPengusulan').innerText = data.formatted.tgl_mulai_pengusulan;
@@ -1029,7 +1118,7 @@
         tbody.innerHTML = '';
 
         if (!ledger || ledger.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3 text-muted">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</td></tr>';
             return;
         }
 
@@ -1050,9 +1139,62 @@
                 <td class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-muted'}">${row.besaran_teks}</td>
                 <td class="fw-bold text-success">${row.total_akumulasi_hari} Hari</td>
                 <td class="fw-semibold text-danger">${row.perkiraan_ekspirasi_baru_indo}</td>
+                <td style="max-width: 280px;"><small class="text-secondary" style="font-size: 11px; line-height: 1.35; display: block;">${row.keterangan_alasan || '-'}</small></td>
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    // Unduh Dokumen Resmi PDF Proyeksi Remisi & Telram
+    function unduhPdfResmi() {
+        if (!lastResult || lastResult.mode !== 'simulasi_remisi') {
+            showToast('Lakukan simulasi proyeksi remisi terlebih dahulu!', 'warning');
+            return;
+        }
+
+        const inputTgl = document.getElementById('tglAwal').value;
+        const vThn = parseInt(document.getElementById('vTahun').value) || 0;
+        const vBln = parseInt(document.getElementById('vBulan').value) || 0;
+        const vHri = parseInt(document.getElementById('vHari').value) || 0;
+        const agama = document.getElementById('selAgama').value;
+        const remisiAwal = parseInt(document.getElementById('vRemisiAwal').value) || 0;
+        const namaWbp = document.getElementById('txtNamaWbp') ? document.getElementById('txtNamaWbp').value : '';
+        const noRegister = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
+        const includeDasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? '1' : '0') : '1';
+        const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("telram.export-pdf") }}';
+        form.target = '_blank';
+
+        const fields = {
+            _token: '{{ csrf_token() }}',
+            tgl_awal: inputTgl,
+            tahun: vThn,
+            bulan: vBln,
+            hari: vHri,
+            agama: agama,
+            remisi_awal_hari: remisiAwal,
+            nama_wbp: namaWbp,
+            no_register: noRegister,
+            include_dasawarsa: includeDasawarsa,
+            kategori_tambahan: kategoriTambahan
+        };
+
+        for (const [k, v] of Object.entries(fields)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = k;
+            input.value = v;
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        showToast('Dokumen PDF resmi dibuka di tab baru!', 'success');
     }
 
     // Cetak Lembar Perhitungan Telram & Remisi
@@ -1071,9 +1213,13 @@
         const text = `*LEMBAR ESTIMASI TELRAM & REMISI PEMASYARAKATAN*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
+*Nama WBP:* ${d.nama_wbp || 'Narapidana'}
+*No. Register:* ${d.no_register || '-'}
 *Tanggal Ditahan:* ${d.formatted.tgl_awal}
 *Lama Vonis:* ${d.lama_pidana_teks} (${d.total_hari_vonis} hari)
 *Agama WBP:* ${d.agama}
+*Status Pembinaan:* ${d.kategori_tambahan_label || 'Standar (Reguler)'}
+*Remisi Dasawarsa:* ${d.include_dasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
 *Program Integrasi:* ${d.nama_program}
 ---------------------------------------
 *Tonggak Masa Pidana:*
@@ -1088,7 +1234,7 @@
 *Status:* ${d.status_pengusulan.label}
 *Catatan:* ${d.status_pengusulan.pesan}
 ---------------------------------------
-_Catatan: Penghitungan ini merupakan simulasi reguler berdasarkan UU No. 22/2022 dan Keppres No. 174/1999._`;
+_Catatan: Penghitungan ini merupakan simulasi reguler berdasarkan UU No. 22/2022, Keppres No. 174/1999 dan standar rumus SDP Ditjenpas._`;
 
         navigator.clipboard.writeText(text).then(() => {
             showToast('Ringkasan berhasil disalin ke clipboard!', 'success');

@@ -144,4 +144,69 @@ class TelramTest extends TestCase
             ],
         ]);
     }
+
+    public function test_calculate_mode_simulasi_remisi_with_wbp_identity_and_options(): void
+    {
+        $user = $this->getTestUser();
+
+        $response = $this->actingAs($user)->postJson('/telram/calculate', [
+            'mode' => 'simulasi_remisi',
+            'tgl_awal' => '2024-01-01',
+            'tahun' => 3,
+            'bulan' => 0,
+            'hari' => 0,
+            'agama' => 'islam',
+            'nama_wbp' => 'Budi Santoso',
+            'no_register' => 'BI.123/2024',
+            'include_dasawarsa' => true,
+            'kategori_tambahan' => 'pemuka',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'data' => [
+                'nama_wbp' => 'Budi Santoso',
+                'no_register' => 'BI.123/2024',
+                'include_dasawarsa' => true,
+                'kategori_tambahan' => 'pemuka',
+            ],
+        ]);
+    }
+
+    public function test_export_pdf_returns_valid_pdf_response(): void
+    {
+        $user = $this->getTestUser();
+
+        $response = $this->actingAs($user)->post('/telram/export-pdf', [
+            'tgl_awal' => '2024-01-01',
+            'tahun' => 3,
+            'bulan' => 0,
+            'hari' => 0,
+            'agama' => 'islam',
+            'nama_wbp' => 'Narapidana Uji',
+            'no_register' => 'REG.001/2024',
+            'include_dasawarsa' => '1',
+            'kategori_tambahan' => 'pemuka',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
+    public function test_export_pdf_fails_if_vonis_empty(): void
+    {
+        $user = $this->getTestUser();
+
+        $response = $this->actingAs($user)->post('/telram/export-pdf', [
+            'tgl_awal' => '2024-01-01',
+            'tahun' => 0,
+            'bulan' => 0,
+            'hari' => 0,
+            'agama' => 'islam',
+        ]);
+
+        $response->assertStatus(422);
+    }
 }

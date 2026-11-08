@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Instansi;
 use Carbon\Carbon;
 use InvalidArgumentException;
 
@@ -225,7 +226,8 @@ class TelramCalculatorService
 
     /**
      * Hitung Proyeksi Remisi dan Hak Integrasi (PB, CB, Asimilasi)
-     * Berdasarkan UU No. 22 Tahun 2022 & Keppres No. 174 Tahun 1999
+     * Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 (RU, RK, Remisi Tambahan),
+     * Keppres No. 120/1955 s.d. Keppres 120/2015 (Remisi Dasawarsa tiap 10 tahun RI),
      * Serta Metode Standar SDP Ditjenpas (2/3 Murni dikurangi Full Remisi).
      *
      * @return array<string, mixed>
@@ -236,7 +238,11 @@ class TelramCalculatorService
         int $bulan,
         int $hari,
         string $agama = 'islam',
-        int $remisiAwalHari = 0
+        int $remisiAwalHari = 0,
+        string $namaWbp = '',
+        string $noRegister = '',
+        bool $includeDasawarsa = true,
+        string $kategoriTambahan = 'none'
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
 
@@ -244,10 +250,18 @@ class TelramCalculatorService
             throw new InvalidArgumentException('Lama pidana vonis harus lebih dari 0.');
         }
 
+        $namaWbp = trim($namaWbp) ?: 'Narapidana';
+        $noRegister = trim($noRegister) ?: '-';
+
         $agama = strtolower(trim($agama));
         $validAgama = ['islam', 'kristen', 'katolik', 'hindu', 'buddha', 'khonghucu'];
         if (! in_array($agama, $validAgama, true)) {
             $agama = 'islam';
+        }
+
+        $validTambahan = ['none', 'pemuka', 'jasa_negara'];
+        if (! in_array($kategoriTambahan, $validTambahan, true)) {
+            $kategoriTambahan = 'none';
         }
 
         if ($remisiAwalHari < 0) {
@@ -316,7 +330,7 @@ class TelramCalculatorService
             return $a['carbon']->timestamp <=> $b['carbon']->timestamp;
         });
 
-        // 4. Simulasi Proyeksi Remisi Sesuai Keppres No. 174 Tahun 1999
+        // 4. Simulasi Proyeksi Remisi Sesuai Keppres No. 174 Tahun 1999 & Keppres Dasawarsa
         $keRu = 0;
         $keRk = 0;
         $totalHariRemisi = $remisiAwalHari;
@@ -344,13 +358,14 @@ class TelramCalculatorService
                     'hari_dijalani' => $hariDijalani,
                     'masa_dijalani_teks' => self::formatHariKeTeks($hariDijalani),
                     'eligible' => false,
-                    'keterangan_status' => 'Belum Memenuhi Syarat (Masa pidana < 6 bulan)',
+                    'keterangan_status' => 'Belum Memenuhi Syarat',
                     'tahap' => '-',
                     'besaran_hari' => 0,
                     'besaran_teks' => '0 Hari',
                     'total_akumulasi_hari' => $totalHariRemisi,
                     'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                     'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
+                    'keterangan_alasan' => "Masa pidana baru dijalani {$hariDijalani} hari (kurang dari 6 bulan) saat tanggal event, belum memenuhi syarat substantif masa minimal 6 bulan Keppres No. 174/1999.",
                 ];
 
                 continue;
@@ -360,6 +375,7 @@ class TelramCalculatorService
             $potonganHari = 0;
             $besaranTeks = '';
             $tahapTeks = '';
+            $keteranganAlasan = '';
 
             if ($item['jenis'] === 'RU') {
                 $keRu++;
@@ -369,22 +385,29 @@ class TelramCalculatorService
                     if ($hariDijalani < 360) {
                         $potonganHari = 30; // 1 Bulan (6 - 12 bulan)
                         $besaranTeks = '1 Bulan';
+                        $keteranganAlasan = 'Tahun I Remisi Umum: Besaran 1 bulan karena telah menjalani masa pidana antara 6 s/d 12 bulan (kurang dari 1 tahun) pada tanggal 17 Agustus.';
                     } else {
                         $potonganHari = 60; // 2 Bulan (>= 12 bulan)
                         $besaranTeks = '2 Bulan';
+                        $keteranganAlasan = 'Tahun I Remisi Umum: Besaran 2 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
                     }
                 } elseif ($keRu === 2) {
                     $potonganHari = 90; // 3 Bulan
                     $besaranTeks = '3 Bulan';
+                    $keteranganAlasan = 'Tahun II Remisi Umum: Besaran 3 bulan karena telah menjalani masa pidana pada tahun kedua.';
                 } elseif ($keRu === 3) {
                     $potonganHari = 120; // 4 Bulan
                     $besaranTeks = '4 Bulan';
+                    $keteranganAlasan = 'Tahun III Remisi Umum: Besaran 4 bulan karena telah menjalani masa pidana pada tahun ketiga.';
                 } elseif ($keRu === 4 || $keRu === 5) {
                     $potonganHari = 150; // 5 Bulan
                     $besaranTeks = '5 Bulan';
+                    $keRomawi = $keRu === 4 ? 'IV' : 'V';
+                    $keteranganAlasan = "Tahun {$keRomawi} Remisi Umum: Besaran 5 bulan karena telah menjalani masa pidana pada tahun keempat/kelima.";
                 } else {
                     $potonganHari = 180; // 6 Bulan (Tahun ke-6 dst)
                     $besaranTeks = '6 Bulan';
+                    $keteranganAlasan = "Tahun ke-{$keRu} Remisi Umum: Besaran 6 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.";
                 }
             } else {
                 // Remisi Khusus (RK)
@@ -395,19 +418,26 @@ class TelramCalculatorService
                     if ($hariDijalani < 360) {
                         $potonganHari = 15; // 15 Hari (6 - 12 bulan)
                         $besaranTeks = '15 Hari';
+                        $keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 15 hari karena telah menjalani masa pidana antara 6 s/d 12 bulan pada hari raya keagamaan.';
                     } else {
                         $potonganHari = 30; // 1 Bulan (>= 12 bulan)
                         $besaranTeks = '1 Bulan';
+                        $keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 1 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
                     }
                 } elseif ($keRk === 2 || $keRk === 3) {
                     $potonganHari = 30; // 1 Bulan
                     $besaranTeks = '1 Bulan';
+                    $keRomawi = $keRk === 2 ? 'II' : 'III';
+                    $keteranganAlasan = "Tahun {$keRomawi} Remisi Khusus: Besaran 1 bulan pada tahun kedua/ketiga.";
                 } elseif ($keRk === 4 || $keRk === 5) {
                     $potonganHari = 45; // 1 Bulan 15 Hari
                     $besaranTeks = '1 Bulan 15 Hari';
+                    $keRomawi = $keRk === 4 ? 'IV' : 'V';
+                    $keteranganAlasan = "Tahun {$keRomawi} Remisi Khusus: Besaran 1 bulan 15 hari pada tahun keempat/kelima.";
                 } else {
                     $potonganHari = 60; // 2 Bulan (Tahun ke-6 dst)
                     $besaranTeks = '2 Bulan';
+                    $keteranganAlasan = "Tahun ke-{$keRk} Remisi Khusus: Besaran 2 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.";
                 }
             }
 
@@ -437,7 +467,91 @@ class TelramCalculatorService
                 'total_akumulasi_hari' => $totalHariRemisi,
                 'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                 'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
+                'keterangan_alasan' => $keteranganAlasan,
             ];
+
+            // 4a. REMISI TAMBAHAN (Pasal 4 Keppres 174/1999) - Melekat pada Remisi Umum
+            if ($item['jenis'] === 'RU' && $potonganHari > 0 && $kategoriTambahan !== 'none') {
+                $potonganTambahan = 0;
+                $keteranganTambahan = '';
+                $namaEventTambahan = '';
+
+                if ($kategoriTambahan === 'pemuka') {
+                    // 1/3 dari Remisi Umum
+                    $potonganTambahan = (int) floor($potonganHari / 3);
+                    $namaEventTambahan = "Remisi Tambahan Pemuka ({$item['tahun']})";
+                    $keteranganTambahan = "Bonus 1/3 dari Remisi Umum ({$besaranTeks}) bagi narapidana pemuka pembinaan di Lapas (Pasal 4 Keppres No. 174/1999).";
+                } elseif ($kategoriTambahan === 'jasa_negara') {
+                    // 1/2 dari Remisi Umum
+                    $potonganTambahan = (int) floor($potonganHari / 2);
+                    $namaEventTambahan = "Remisi Tambahan Jasa Negara/Kemanusiaan ({$item['tahun']})";
+                    $keteranganTambahan = "Bonus 1/2 dari Remisi Umum ({$besaranTeks}) atas jasa bagi negara atau perbuatan kemanusiaan/donor darah (Pasal 4 Keppres No. 174/1999).";
+                }
+
+                if ($potonganTambahan > 0) {
+                    $sisaHariTambahan = (int) $evDate->diffInDays($currentEkspirasi);
+                    if ($potonganTambahan > $sisaHariTambahan) {
+                        $potonganTambahan = max(0, $sisaHariTambahan);
+                    }
+
+                    $totalHariRemisi += $potonganTambahan;
+                    $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+
+                    $ledger[] = [
+                        'nama_event' => $namaEventTambahan,
+                        'jenis' => 'RT',
+                        'tahun' => $item['tahun'],
+                        'tanggal' => $item['tanggal'],
+                        'tanggal_indo' => self::formatTanggalIndonesia($evDate),
+                        'hari_dijalani' => $hariDijalani,
+                        'masa_dijalani_teks' => self::formatHariKeTeks($hariDijalani),
+                        'eligible' => true,
+                        'keterangan_status' => 'Memenuhi Syarat (Tambahan)',
+                        'tahap' => 'Tambahan',
+                        'besaran_hari' => $potonganTambahan,
+                        'besaran_teks' => self::formatHariKeTeks($potonganTambahan),
+                        'total_akumulasi_hari' => $totalHariRemisi,
+                        'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
+                        'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
+                        'keterangan_alasan' => $keteranganTambahan,
+                    ];
+                }
+            }
+
+            // 4b. REMISI DASAWARSA (Keppres No. 120/1955 jo. Keppres No. 120/2015)
+            // Diberikan setiap kelipatan 10 tahun Kemerdekaan RI (17 Agustus: 2025, 2035, 2045)
+            if ($item['jenis'] === 'RU' && $includeDasawarsa && (($item['tahun'] - 1945) % 10 === 0)) {
+                $hutKe = $item['tahun'] - 1945;
+                // Rumus Keppres Dasawarsa: 1/12 vonis pokok, maksimal 3 bulan (90 hari)
+                $potonganDasawarsaMaks = min(90, (int) floor($totalHariVonis / 12));
+
+                $sisaHariDasawarsa = (int) $evDate->diffInDays($currentEkspirasi);
+                $potonganDasawarsa = min($potonganDasawarsaMaks, max(0, $sisaHariDasawarsa));
+
+                if ($potonganDasawarsa > 0) {
+                    $totalHariRemisi += $potonganDasawarsa;
+                    $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+
+                    $ledger[] = [
+                        'nama_event' => "Remisi Dasawarsa HUT ke-{$hutKe} RI ({$item['tahun']})",
+                        'jenis' => 'RD',
+                        'tahun' => $item['tahun'],
+                        'tanggal' => $item['tanggal'],
+                        'tanggal_indo' => self::formatTanggalIndonesia($evDate),
+                        'hari_dijalani' => $hariDijalani,
+                        'masa_dijalani_teks' => self::formatHariKeTeks($hariDijalani),
+                        'eligible' => true,
+                        'keterangan_status' => 'Memenuhi Syarat (Dasawarsa)',
+                        'tahap' => "Dasawarsa {$hutKe} Thn",
+                        'besaran_hari' => $potonganDasawarsa,
+                        'besaran_teks' => self::formatHariKeTeks($potonganDasawarsa),
+                        'total_akumulasi_hari' => $totalHariRemisi,
+                        'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
+                        'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
+                        'keterangan_alasan' => "Pengurangan istimewa peringatan HUT ke-{$hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (".self::formatHariKeTeks($potonganDasawarsaMaks).'), dibatasi maksimal 3 bulan / 90 hari.',
+                    ];
+                }
+            }
         }
 
         // 5. Perhitungan Tanggal 2/3 dan Pengusulan Integrasi Sesuai Rumus Baku SDP Ditjenpas
@@ -497,8 +611,16 @@ class TelramCalculatorService
             $formatVonis[] = "{$hari} Hari";
         }
 
+        $labelKategoriTambahan = match ($kategoriTambahan) {
+            'pemuka' => 'Pemuka Pembinaan Lapas (+1/3 RU)',
+            'jasa_negara' => 'Jasa Negara / Kemanusiaan (+1/2 RU)',
+            default => 'Reguler (Tanpa Remisi Tambahan)',
+        };
+
         return [
             'mode' => 'simulasi_remisi',
+            'nama_wbp' => $namaWbp,
+            'no_register' => $noRegister,
             'tgl_awal' => $tglAwal->toDateString(),
             'lama_pidana_teks' => implode(', ', $formatVonis) ?: '0 Hari',
             'tahun' => $tahun,
@@ -509,6 +631,9 @@ class TelramCalculatorService
             'jenis_program' => $jenisProgram,
             'nama_program' => $namaProgram,
             'keterangan_program' => $keteranganProgram,
+            'include_dasawarsa' => $includeDasawarsa,
+            'kategori_tambahan' => $kategoriTambahan,
+            'label_kategori_tambahan' => $labelKategoriTambahan,
             'remisi_awal_hari' => $remisiAwalHari,
             'total_proyeksi_remisi_hari' => $totalHariRemisi,
             'total_proyeksi_remisi_teks' => self::formatHariKeTeks($totalHariRemisi),
@@ -783,5 +908,254 @@ class TelramCalculatorService
         ];
 
         return $imlekTable[$year] ?? "{$year}-02-05";
+    }
+
+    /**
+     * Generate Dokumen PDF Resmi untuk Lembar Estimasi Telram & Remisi
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function generatePdfReport(array $data): string
+    {
+        $tcpdfPath = app_path('Libraries/tcpdf/tcpdf.php');
+        if (! file_exists($tcpdfPath)) {
+            $tcpdfPath = base_path('../tcpdf/tcpdf.php');
+        }
+        require_once $tcpdfPath;
+
+        $instansi = Instansi::getFirst();
+
+        $pdf = new class('P', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
+        {
+            public function Header() {}
+
+            public function Footer()
+            {
+                $this->SetY(-15);
+                $this->SetFont('helvetica', 'I', 7.5);
+                $this->SetTextColor(120, 120, 120);
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Lembar Estimasi Telram & Remisi Sultan Banten', 0, 0, 'R');
+            }
+        };
+
+        $pdf->SetCreator('Sultan Banten');
+        $pdf->SetAuthor(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
+        $cleanName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['nama_wbp'] ?? 'Narapidana');
+        $pdf->SetTitle("Estimasi_Telram_Remisi_{$cleanName}");
+        $pdf->SetMargins(14, 12, 14);
+        $pdf->SetAutoPageBreak(true, 18);
+        $pdf->AddPage();
+
+        $html = self::renderPdfTemplateHtml($data, $instansi);
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        return $pdf->Output('', 'S');
+    }
+
+    /**
+     * Render Template HTML untuk Dokumen PDF
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected static function renderPdfTemplateHtml(array $data, ?Instansi $instansi): string
+    {
+        $logoHtml = '';
+        $logoPath = null;
+        if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
+            $logoPath = public_path($instansi->logo_kop);
+        } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
+            $logoPath = public_path($instansi->logo);
+        }
+
+        if ($logoPath) {
+            $logoHtml = '<img src="'.$logoPath.'" width="65" height="65" />';
+        }
+
+        $namaWbp = htmlspecialchars($data['nama_wbp'] ?? 'Narapidana');
+        $noRegister = htmlspecialchars($data['no_register'] ?? '-');
+        $agama = htmlspecialchars($data['agama'] ?? '-');
+        $tglAwal = htmlspecialchars($data['formatted']['tgl_awal'] ?? '-');
+        $lamaVonis = htmlspecialchars($data['lama_pidana_teks'] ?? '-');
+        $totalHariVonis = number_format($data['total_hari_vonis'] ?? 0, 0, ',', '.');
+        $namaProgram = htmlspecialchars($data['nama_program'] ?? 'Pembebasan Bersyarat (PB)');
+        $labelTambahan = htmlspecialchars($data['label_kategori_tambahan'] ?? 'Reguler');
+        $dasawarsaStatus = ! empty($data['include_dasawarsa']) ? 'Disertakan (1/12 vonis, maks 3 bln)' : 'Tidak Dihitung';
+
+        $tglUsul = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
+        $tgl23Def = htmlspecialchars($data['formatted']['tgl_2_3_definitif'] ?? '-');
+        $tgl23Murni = htmlspecialchars($data['formatted']['tgl_2_3_murni'] ?? '-');
+        $tgl12Def = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
+        $tgl12Murni = htmlspecialchars($data['formatted']['tgl_1_2_murni'] ?? '-');
+        $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
+        $tglEkspirasiDef = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
+        $tglEkspirasiMurni = htmlspecialchars($data['formatted']['ekspirasi_murni'] ?? '-');
+        $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_hari'] ?? 0).' Hari ('.htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari').')';
+
+        $statusPesan = htmlspecialchars($data['status_pengusulan']['pesan'] ?? '-');
+
+        // Render Ledger Rows
+        $ledgerRowsHtml = '';
+        $ledger = (array) ($data['proyeksi_ledger'] ?? []);
+        if (empty($ledger)) {
+            $ledgerRowsHtml = '<tr><td colspan="6" align="center" style="color: #666; padding: 8px;">Tidak ada event remisi sebelum tanggal ekspirasi.</td></tr>';
+        } else {
+            foreach ($ledger as $idx => $r) {
+                $no = $idx + 1;
+                $evNama = htmlspecialchars($r['nama_event'] ?? '-');
+                $evTgl = htmlspecialchars($r['tanggal_indo'] ?? '-');
+                $evDijalani = htmlspecialchars($r['hari_dijalani'] ?? 0).' hr';
+                $evBesaran = htmlspecialchars($r['besaran_teks'] ?? '0 Hari');
+                $evAkumulasi = htmlspecialchars($r['total_akumulasi_hari'] ?? 0).' hr';
+                $evAlasan = htmlspecialchars($r['keterangan_alasan'] ?? ($r['keterangan_status'] ?? '-'));
+                $colorBesaran = ($r['besaran_hari'] ?? 0) > 0 ? '#1e40af' : '#6b7280';
+
+                $ledgerRowsHtml .= <<<ROW
+                <tr>
+                    <td align="center" style="font-weight: bold; border: 0.5px solid #ccc; padding: 4px;">{$no}</td>
+                    <td style="border: 0.5px solid #ccc; padding: 4px;"><b>{$evNama}</b></td>
+                    <td align="center" style="border: 0.5px solid #ccc; padding: 4px;">{$evTgl}</td>
+                    <td align="center" style="border: 0.5px solid #ccc; padding: 4px; font-weight: bold; color: {$colorBesaran};">{$evBesaran}</td>
+                    <td align="center" style="border: 0.5px solid #ccc; padding: 4px; font-weight: bold; color: #047857;">{$evAkumulasi}</td>
+                    <td style="border: 0.5px solid #ccc; padding: 4px; font-size: 7.5pt; color: #374151;">{$evAlasan}</td>
+                </tr>
+ROW;
+            }
+        }
+
+        $waktuCetak = self::formatTanggalIndonesia(Carbon::now()).' pukul '.date('H:i').' WIB';
+        $userCetak = htmlspecialchars(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
+
+        return <<<HTML
+<style>
+    body { font-family: helvetica, sans-serif; font-size: 8.5pt; color: #111; line-height: 1.35; }
+    h1 { font-size: 11pt; font-weight: bold; text-align: center; margin: 0; padding: 0; text-transform: uppercase; }
+    h2 { font-size: 9pt; font-weight: bold; margin: 0; padding: 0; }
+    .table-identitas td { padding: 2.5px 4px; font-size: 8.5pt; }
+    .table-ledger th { background-color: #f1f5f9; font-weight: bold; text-align: center; border: 0.5px solid #999; padding: 5px; font-size: 8pt; }
+</style>
+
+<!-- KOP SURAT RESMI KANWIL KEMENIMIPAS BANTEN -->
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td width="15%" align="center" valign="middle">
+            {$logoHtml}
+        </td>
+        <td width="85%" align="center" valign="middle">
+            <span style="font-size: 9.5pt;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
+            <span style="font-size: 9.5pt;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
+            <span style="font-size: 11.5pt; font-weight: bold;">KANTOR WILAYAH BANTEN</span><br>
+            <span style="font-size: 8pt; color: #333;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span><br>
+            <span style="font-size: 7.5pt; color: #555;"><i>Sistem Informasi Pelayanan Terpadu Pemasyarakatan (SULTAN BANTEN)</i></span>
+        </td>
+    </tr>
+</table>
+<hr style="height: 1.5px; border: none; background-color: #000; margin-top: 4px; margin-bottom: 8px;">
+
+<h1 style="color: #0f172a; margin-bottom: 2px;">LEMBAR ESTIMASI TELRAM & PROYEKSI REMISI</h1>
+<div align="center" style="font-size: 7.5pt; color: #4b5563; margin-bottom: 8px;">
+    <i>Simulasi Reguler Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 & Standar Rumus SDP Ditjenpas</i>
+</div>
+
+<!-- IDENTITAS WARGA BINAAN PEMASYARAKATAN -->
+<table width="100%" border="0" cellpadding="2" class="table-identitas" style="background-color: #f8fafc; border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
+    <tr>
+        <td width="22%"><b>Nama WBP / Narapidana</b></td>
+        <td width="2%">:</td>
+        <td width="36%"><b>{$namaWbp}</b></td>
+        <td width="18%"><b>Tanggal Mulai Ditahan</b></td>
+        <td width="2%">:</td>
+        <td width="20%">{$tglAwal}</td>
+    </tr>
+    <tr>
+        <td><b>Nomor Register</b></td>
+        <td>:</td>
+        <td>{$noRegister}</td>
+        <td><b>Lama Pidana (Vonis)</b></td>
+        <td>:</td>
+        <td><b>{$lamaVonis}</b> ({$totalHariVonis} hr)</td>
+    </tr>
+    <tr>
+        <td><b>Agama WBP</b></td>
+        <td>:</td>
+        <td>{$agama}</td>
+        <td><b>Program Integrasi</b></td>
+        <td>:</td>
+        <td><b>{$namaProgram}</b></td>
+    </tr>
+    <tr>
+        <td><b>Status Pembinaan</b></td>
+        <td>:</td>
+        <td>{$labelTambahan}</td>
+        <td><b>Remisi Dasawarsa</b></td>
+        <td>:</td>
+        <td>{$dasawarsaStatus}</td>
+    </tr>
+</table>
+
+<!-- HIGHLIGHT ALERT: WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN) -->
+<table width="100%" border="0" cellpadding="5" cellspacing="0" style="background-color: #fffbeb; border: 1px solid #f59e0b; margin-bottom: 8px;">
+    <tr>
+        <td style="color: #92400e; font-size: 8.5pt;">
+            <b>WAKTU MULAI PENGUSULAN INTEGRASI KE SISTEM (H-2 BULAN SEBELUM 2/3):</b><br>
+            <span style="font-size: 11pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
+            <span style="font-size: 8pt; color: #78350f;">{$statusPesan}</span><br>
+            <span style="font-size: 7.5pt; color: #92400e;"><i>*Petugas agar segera mengajukan permintaan Litmas ke Bapas dan menjadwalkan Sidang TPP UPT sebelum batas waktu tersebut.</i></span>
+        </td>
+    </tr>
+</table>
+
+<!-- TABEL MATRIKS TONGGAK MASA PIDANA -->
+<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
+    <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+        <th width="20%">1/3 Masa Pidana</th>
+        <th width="20%">1/2 Asimilasi</th>
+        <th width="20%">2/3 PB / CB</th>
+        <th width="20%">Ekspirasi Definitif</th>
+        <th width="20%">Total Proyeksi Remisi</th>
+    </tr>
+    <tr style="text-align: center; font-size: 8pt;">
+        <td><b>{$tgl13Murni}</b><br><span style="font-size: 6.8pt; color: #64748b;">(Syarat Pembinaan)</span></td>
+        <td><b>{$tgl12Def}</b><br><span style="font-size: 6.8pt; color: #64748b;">Murni: {$tgl12Murni}</span></td>
+        <td><b style="color: #047857;">{$tgl23Def}</b><br><span style="font-size: 6.8pt; color: #64748b;">Murni: {$tgl23Murni}</span></td>
+        <td><b style="color: #b91c1c;">{$tglEkspirasiDef}</b><br><span style="font-size: 6.8pt; color: #64748b;">Murni: {$tglEkspirasiMurni}</span></td>
+        <td><b style="color: #d97706;">{$totalRemisiTeks}</b></td>
+    </tr>
+</table>
+
+<!-- TABEL RINCIAN PROYEKSI REMISI PER TAHUN -->
+<div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 3px; color: #0f172a;">
+    TABEL RINCIAN PROYEKSI REMISI PER TAHUN (KEPPRES NO. 174/1999 &amp; DASAWARSA):
+</div>
+<table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #ccc; margin-bottom: 10px;">
+    <thead>
+        <tr>
+            <th width="5%">#</th>
+            <th width="28%">Nama Event Remisi</th>
+            <th width="14%">Tanggal</th>
+            <th width="12%">Besaran</th>
+            <th width="11%">Akumulasi</th>
+            <th width="30%">Keterangan &amp; Landasan Alasan</th>
+        </tr>
+    </thead>
+    <tbody>
+        {$ledgerRowsHtml}
+    </tbody>
+</table>
+
+<table width="100%" border="0" cellpadding="2" style="font-size: 8pt; margin-top: 6px;">
+    <tr>
+        <td width="55%" valign="top">
+            <i>Dicetak melalui SULTAN BANTEN pada {$waktuCetak} oleh {$userCetak}.</i><br>
+            <span style="font-size: 7.2pt; color: #555;">Catatan: Lembar ini adalah estimasi reguler yuridis. Realisasi SK Remisi tetap bergantung pada penilaian SPPN dan perilaku WBP.</span>
+        </td>
+        <td width="45%" align="center" valign="top">
+            Serang, {$tglAwal}<br>
+            <b>Petugas Registrasi / Pembinaan,</b><br><br><br><br>
+            <u><b>( ............................................................ )</b></u><br>
+            NIP.
+        </td>
+    </tr>
+</table>
+HTML;
     }
 }

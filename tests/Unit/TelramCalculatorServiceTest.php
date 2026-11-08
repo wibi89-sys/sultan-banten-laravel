@@ -288,4 +288,130 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals(60, $result['remisi_awal_hari']);
         $this->assertGreaterThanOrEqual(60, $result['total_proyeksi_remisi_hari']);
     }
+
+    public function test_simulasi_remisi_dengan_dasawarsa(): void
+    {
+        // Narapidana ditahan 1 Januari 2024, Vonis 3 Tahun (1080 hari)
+        // Tahun 2025 adalah HUT ke-80 RI ((2025 - 1945) % 10 === 0)
+        // Remisi Dasawarsa: 1/12 vonis pokok = 1080 / 12 = 90 hari (maks 90 hari)
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Ahmad Fauzi',
+            'BI.123/2024',
+            true, // include dasawarsa
+            'none'
+        );
+
+        $this->assertEquals('Ahmad Fauzi', $result['nama_wbp']);
+        $this->assertEquals('BI.123/2024', $result['no_register']);
+        $this->assertTrue($result['include_dasawarsa']);
+
+        // Cari event RD (Remisi Dasawarsa) di dalam ledger
+        $dasawarsaEvent = null;
+        foreach ($result['proyeksi_ledger'] as $ev) {
+            if ($ev['jenis'] === 'RD' && $ev['tahun'] === 2025) {
+                $dasawarsaEvent = $ev;
+                break;
+            }
+        }
+
+        $this->assertNotNull($dasawarsaEvent, 'Event Remisi Dasawarsa 2025 harus ditemukan di ledger.');
+        $this->assertEquals(90, $dasawarsaEvent['besaran_hari']);
+        $this->assertStringContainsString('HUT ke-80 RI', $dasawarsaEvent['nama_event']);
+        $this->assertStringContainsString('1/12 dari vonis pokok', $dasawarsaEvent['keterangan_alasan']);
+    }
+
+    public function test_simulasi_remisi_dengan_remisi_tambahan_pemuka(): void
+    {
+        // Vonis 3 tahun, kategori_tambahan = pemuka (+1/3 dari RU)
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Siti Aminah',
+            'BI.456/2024',
+            false,
+            'pemuka'
+        );
+
+        $this->assertEquals('pemuka', $result['kategori_tambahan']);
+
+        // Pada 17 Agustus 2024, RU ke-1 (<12 bln) = 30 hari (1 bulan)
+        // Pemuka mendapat 1/3 dari 30 hari = 10 hari
+        $tambahanEvent = null;
+        foreach ($result['proyeksi_ledger'] as $ev) {
+            if ($ev['jenis'] === 'RT' && $ev['tahun'] === 2024) {
+                $tambahanEvent = $ev;
+                break;
+            }
+        }
+
+        $this->assertNotNull($tambahanEvent, 'Event Remisi Tambahan Pemuka harus ditemukan.');
+        $this->assertEquals(10, $tambahanEvent['besaran_hari']);
+        $this->assertStringContainsString('Remisi Tambahan Pemuka', $tambahanEvent['nama_event']);
+        $this->assertStringContainsString('1/3 dari Remisi Umum', $tambahanEvent['keterangan_alasan']);
+    }
+
+    public function test_simulasi_remisi_dengan_remisi_tambahan_jasa_negara(): void
+    {
+        // Vonis 3 tahun, kategori_tambahan = jasa_negara (+1/2 dari RU)
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Bambang',
+            'BI.789/2024',
+            false,
+            'jasa_negara'
+        );
+
+        $this->assertEquals('jasa_negara', $result['kategori_tambahan']);
+
+        // Pada 17 Agustus 2024, RU ke-1 (<12 bln) = 30 hari (1 bulan)
+        // Jasa Negara mendapat 1/2 dari 30 hari = 15 hari
+        $tambahanEvent = null;
+        foreach ($result['proyeksi_ledger'] as $ev) {
+            if ($ev['jenis'] === 'RT' && $ev['tahun'] === 2024) {
+                $tambahanEvent = $ev;
+                break;
+            }
+        }
+
+        $this->assertNotNull($tambahanEvent, 'Event Remisi Tambahan Jasa Negara harus ditemukan.');
+        $this->assertEquals(15, $tambahanEvent['besaran_hari']);
+        $this->assertStringContainsString('Remisi Tambahan Jasa Negara', $tambahanEvent['nama_event']);
+        $this->assertStringContainsString('1/2 dari Remisi Umum', $tambahanEvent['keterangan_alasan']);
+    }
+
+    public function test_generate_pdf_report_returns_valid_pdf_binary(): void
+    {
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Testing WBP PDF',
+            'BI.999/2024',
+            true,
+            'pemuka'
+        );
+
+        $pdfBinary = $this->service->generatePdfReport($result);
+
+        $this->assertNotEmpty($pdfBinary);
+        $this->assertStringStartsWith('%PDF-', $pdfBinary);
+    }
 }
