@@ -14,7 +14,7 @@ return new class extends Migration
         if (! Schema::hasTable('wa_broadcasts')) {
             Schema::create('wa_broadcasts', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedInteger('pengumuman_id')->nullable();
+                $table->unsignedInteger('pengumuman_id')->nullable()->index();
                 $table->string('judul');
                 $table->string('kategori', 50)->default('Informasi');
                 $table->text('pesan');
@@ -26,12 +26,9 @@ return new class extends Migration
                 $table->integer('total_sent')->default(0);
                 $table->integer('total_failed')->default(0);
                 $table->string('status', 30)->default('completed');
-                $table->unsignedBigInteger('created_by')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable()->index();
                 $table->dateTime('sent_at')->nullable();
                 $table->timestamps();
-
-                $table->foreign('pengumuman_id')->references('id')->on('pengumuman')->nullOnDelete();
-                $table->foreign('created_by')->references('id')->on('users')->nullOnDelete();
             });
         }
 
@@ -39,7 +36,7 @@ return new class extends Migration
             Schema::create('wa_broadcast_logs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('broadcast_id')->constrained('wa_broadcasts')->cascadeOnDelete();
-                $table->unsignedBigInteger('user_id')->nullable();
+                $table->unsignedBigInteger('user_id')->nullable()->index();
                 $table->string('nama_penerima');
                 $table->string('no_wa', 30);
                 $table->string('role', 50)->nullable();
@@ -48,8 +45,6 @@ return new class extends Migration
                 $table->text('response_message')->nullable();
                 $table->dateTime('sent_at')->nullable();
                 $table->timestamps();
-
-                $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
             });
         }
     }

@@ -20,7 +20,7 @@ return new class extends Migration
                     $table->timestamp('locked_at')->nullable()->after('is_locked');
                 }
                 if (! Schema::hasColumn('tpp_naskah_kanwil', 'locked_by_id')) {
-                    $table->foreignId('locked_by_id')->nullable()->after('locked_at')->constrained('users')->nullOnDelete();
+                    $table->unsignedBigInteger('locked_by_id')->nullable()->index()->after('locked_at');
                 }
             });
         }
@@ -31,9 +31,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tpp_naskah_kanwil', function (Blueprint $table) {
-            $table->dropForeign(['locked_by_id']);
-            $table->dropColumn(['is_locked', 'locked_at', 'locked_by_id']);
-        });
+        if (Schema::hasTable('tpp_naskah_kanwil')) {
+            Schema::table('tpp_naskah_kanwil', function (Blueprint $table) {
+                $columns = ['is_locked', 'locked_at', 'locked_by_id'];
+                foreach ($columns as $column) {
+                    if (Schema::hasColumn('tpp_naskah_kanwil', $column)) {
+                        $table->dropColumn($column);
+                    }
+                }
+            });
+        }
     }
 };
