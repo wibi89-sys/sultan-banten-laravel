@@ -989,8 +989,8 @@ class TelramCalculatorService
         $pdf->SetAuthor(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
         $cleanName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['nama_wbp'] ?? 'Narapidana');
         $pdf->SetTitle("Estimasi_Telram_Remisi_{$cleanName}");
-        $pdf->SetMargins(14, 12, 14);
-        $pdf->SetAutoPageBreak(true, 18);
+        $pdf->SetMargins(10, 8, 10);
+        $pdf->SetAutoPageBreak(true, 14);
         $pdf->AddPage();
 
         $html = self::renderPdfTemplateHtml($data, $instansi);
@@ -1037,34 +1037,73 @@ class TelramCalculatorService
         $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
         $tglEkspirasiDef = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
         $tglEkspirasiMurni = htmlspecialchars($data['formatted']['ekspirasi_murni'] ?? '-');
-        $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_hari'] ?? 0).' Hari ('.htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari').')';
+        $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
+        $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari');
 
         $statusPesan = htmlspecialchars($data['status_pengusulan']['pesan'] ?? '-');
 
-        // Render Ledger Rows
+        // Render Ledger Rows (Tabel Rincian Proyeksi Remisi 8 Kolom)
         $ledgerRowsHtml = '';
         $ledger = (array) ($data['proyeksi_ledger'] ?? []);
         if (empty($ledger)) {
-            $ledgerRowsHtml = '<tr><td colspan="6" align="center" style="color: #666; padding: 8px;">Tidak ada event remisi sebelum tanggal ekspirasi.</td></tr>';
+            $ledgerRowsHtml = '<tr><td colspan="8" align="center" style="color: #64748b; padding: 12px; border: 0.5px solid #cbd5e1;">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</td></tr>';
         } else {
             foreach ($ledger as $idx => $r) {
                 $no = $idx + 1;
                 $evNama = htmlspecialchars($r['nama_event'] ?? '-');
                 $evTgl = htmlspecialchars($r['tanggal_indo'] ?? '-');
-                $evDijalani = htmlspecialchars($r['hari_dijalani'] ?? 0).' hr';
+                $evDijalani = htmlspecialchars($r['hari_dijalani'] ?? 0);
+                $evMasaTeks = htmlspecialchars($r['masa_dijalani_teks'] ?? '');
                 $evBesaran = htmlspecialchars($r['besaran_teks'] ?? '0 Hari');
                 $evAkumulasi = htmlspecialchars($r['total_akumulasi_hari'] ?? 0).' hr';
+                $evEkspirasiBaru = htmlspecialchars($r['perkiraan_ekspirasi_baru_indo'] ?? '-');
                 $evAlasan = htmlspecialchars($r['keterangan_alasan'] ?? ($r['keterangan_status'] ?? '-'));
-                $colorBesaran = ($r['besaran_hari'] ?? 0) > 0 ? '#1e40af' : '#6b7280';
+                $tahap = htmlspecialchars($r['tahap'] ?? '-');
+                $eligible = (bool) ($r['eligible'] ?? true);
+                $jenis = $r['jenis'] ?? '';
+
+                // Warna background baris & sorotan jenis remisi
+                $bgColor = ($idx % 2 === 0) ? '#ffffff' : '#f8fafc';
+                if (! $eligible) {
+                    $bgColor = '#fff1f2'; // Sorotan merah lembut untuk belum memenuhi syarat 6 bulan
+                } elseif ($jenis === 'RD') {
+                    $bgColor = '#fffbeb'; // Sorotan amber lembut untuk Remisi Dasawarsa
+                } elseif ($jenis === 'RT') {
+                    $bgColor = '#f0fdf4'; // Sorotan mint lembut untuk Remisi Tambahan
+                }
+
+                // Format besaran remisi
+                if ($eligible) {
+                    $besaranHtml = '<b style="color: #1e40af; font-size: 7.8pt;">'.$evBesaran.'</b>';
+                } else {
+                    $besaranHtml = '<span style="color: #e11d48; font-weight: bold; font-size: 7.5pt;">0 Hari</span><br><span style="color: #9f1239; font-size: 6.5pt;">(Belum 6 Bln)</span>';
+                }
+
+                // Format Subtitle Tahap Remisi
+                $tahapBadge = '';
+                if ($tahap && $tahap !== '-') {
+                    $badgeColor = match ($jenis) {
+                        'RD' => '#b45309',
+                        'RT' => '#047857',
+                        default => '#0284c7',
+                    };
+                    $tahapBadge = '<br><span style="font-size: 6.8pt; color: '.$badgeColor.'; font-weight: bold;">[Tahap: '.$tahap.']</span>';
+                }
 
                 $ledgerRowsHtml .= <<<ROW
-                <tr>
-                    <td align="center" style="font-weight: bold; border: 0.5px solid #ccc; padding: 4px;">{$no}</td>
-                    <td style="border: 0.5px solid #ccc; padding: 4px;"><b>{$evNama}</b></td>
-                    <td align="center" style="border: 0.5px solid #ccc; padding: 4px;">{$evTgl}</td>
-                    <td align="center" style="border: 0.5px solid #ccc; padding: 4px; font-weight: bold; color: {$colorBesaran};">{$evBesaran}</td>
-                    <td align="center" style="border: 0.5px solid #ccc; padding: 4px; font-weight: bold; color: #047857;">{$evAkumulasi}</td>
-                    <td style="border: 0.5px solid #ccc; padding: 4px; font-size: 7.5pt; color: #374151;">{$evAlasan}</td>
+                <tr bgcolor="{$bgColor}">
+                    <td align="center" style="font-weight: bold; border: 0.5px solid #cbd5e1; padding: 4px 2px; color: #475569; font-size: 7.5pt;">{$no}</td>
+                    <td style="border: 0.5px solid #cbd5e1; padding: 4px 5px; font-size: 7.5pt;">
+                        <b>{$evNama}</b>{$tahapBadge}
+                    </td>
+                    <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.2pt; color: #1e293b;">{$evTgl}</td>
+                    <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.2pt;">
+                        <b>{$evDijalani} hr</b><br><span style="font-size: 6.3pt; color: #64748b;">({$evMasaTeks})</span>
+                    </td>
+                    <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px;">{$besaranHtml}</td>
+                    <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-weight: bold; color: #047857; font-size: 7.5pt;">{$evAkumulasi}</td>
+                    <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-weight: bold; color: #b91c1c; font-size: 7.2pt;">{$evEkspirasiBaru}</td>
+                    <td style="border: 0.5px solid #cbd5e1; padding: 4px 5px; font-size: 6.8pt; color: #334155; line-height: 1.25;">{$evAlasan}</td>
                 </tr>
 ROW;
             }
@@ -1075,133 +1114,192 @@ ROW;
 
         return <<<HTML
 <style>
-    body { font-family: helvetica, sans-serif; font-size: 8.5pt; color: #111; line-height: 1.35; }
-    h1 { font-size: 11pt; font-weight: bold; text-align: center; margin: 0; padding: 0; text-transform: uppercase; }
-    h2 { font-size: 9pt; font-weight: bold; margin: 0; padding: 0; }
-    .table-identitas td { padding: 2.5px 4px; font-size: 8.5pt; }
-    .table-ledger th { background-color: #f1f5f9; font-weight: bold; text-align: center; border: 0.5px solid #999; padding: 5px; font-size: 8pt; }
+    body { font-family: helvetica, sans-serif; font-size: 8pt; color: #0f172a; line-height: 1.35; }
+    h1 { font-size: 11pt; font-weight: bold; text-align: center; margin: 0; padding: 0; text-transform: uppercase; letter-spacing: 0.3px; }
+    .table-identitas td { padding: 3px 5px; font-size: 8pt; }
+    .table-ledger th { background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: center; border: 0.5px solid #475569; padding: 5px 2px; font-size: 7.3pt; }
 </style>
 
 <!-- KOP SURAT RESMI KANWIL KEMENIMIPAS BANTEN -->
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
     <tr>
-        <td width="15%" align="center" valign="middle">
+        <td width="14%" align="center" valign="middle">
             {$logoHtml}
         </td>
-        <td width="85%" align="center" valign="middle">
-            <span style="font-size: 9.5pt;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
-            <span style="font-size: 9.5pt;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
-            <span style="font-size: 11.5pt; font-weight: bold;">KANTOR WILAYAH BANTEN</span><br>
-            <span style="font-size: 8pt; color: #333;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span><br>
-            <span style="font-size: 7.5pt; color: #555;"><i>Sistem Informasi Pelayanan Terpadu Pemasyarakatan (SULTAN BANTEN)</i></span>
+        <td width="86%" align="center" valign="middle">
+            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
+            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
+            <span style="font-size: 11pt; font-weight: bold; color: #0f172a;">KANTOR WILAYAH BANTEN</span><br>
+            <span style="font-size: 7.8pt; color: #334155;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span><br>
+            <span style="font-size: 7.2pt; color: #64748b;"><i>Sistem Informasi Pelayanan Terpadu Pemasyarakatan (SULTAN BANTEN)</i></span>
         </td>
     </tr>
 </table>
-<hr style="height: 1.5px; border: none; background-color: #000; margin-top: 4px; margin-bottom: 8px;">
+<hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
 
-<h1 style="color: #0f172a; margin-bottom: 2px;">LEMBAR ESTIMASI TELRAM & PROYEKSI REMISI</h1>
-<div align="center" style="font-size: 7.5pt; color: #4b5563; margin-bottom: 8px;">
-    <i>Simulasi Reguler Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 & Standar Rumus SDP Ditjenpas</i>
+<h1 style="color: #0f172a; margin-bottom: 1px;">LEMBAR ESTIMASI TELRAM &amp; PROYEKSI REMISI</h1>
+<div align="center" style="font-size: 7.3pt; color: #475569; margin-bottom: 7px;">
+    <i>Simulasi Reguler Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 &amp; Standar Operasional SDP Ditjenpas</i>
 </div>
 
-<!-- IDENTITAS WARGA BINAAN PEMASYARAKATAN -->
-<table width="100%" border="0" cellpadding="2" class="table-identitas" style="background-color: #f8fafc; border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
-    <tr>
-        <td width="22%"><b>Nama WBP / Narapidana</b></td>
-        <td width="2%">:</td>
-        <td width="36%"><b>{$namaWbp}</b></td>
-        <td width="18%"><b>Tanggal Mulai Ditahan</b></td>
-        <td width="2%">:</td>
-        <td width="20%">{$tglAwal}</td>
-    </tr>
-    <tr>
-        <td><b>Nomor Register</b></td>
-        <td>:</td>
-        <td>{$noRegister}</td>
-        <td><b>Lama Pidana (Vonis)</b></td>
-        <td>:</td>
-        <td><b>{$lamaVonis}</b> ({$totalHariVonis} hr)</td>
-    </tr>
-    <tr>
-        <td><b>Agama WBP</b></td>
-        <td>:</td>
-        <td>{$agama}</td>
-        <td><b>Program Integrasi</b></td>
-        <td>:</td>
-        <td><b>{$namaProgram}</b></td>
-    </tr>
-    <tr>
-        <td><b>Status Pembinaan</b></td>
-        <td>:</td>
-        <td>{$labelTambahan}</td>
-        <td><b>Remisi Dasawarsa</b></td>
-        <td>:</td>
-        <td>{$dasawarsaStatus}</td>
-    </tr>
-    <tr>
-        <td><b>Basis Simulasi</b></td>
-        <td>:</td>
-        <td colspan="4"><b>{$targetBasisLabel}</b></td>
-    </tr>
-</table>
-
-<!-- HIGHLIGHT ALERT: WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN) -->
-<table width="100%" border="0" cellpadding="5" cellspacing="0" style="background-color: #fffbeb; border: 1px solid #f59e0b; margin-bottom: 8px;">
-    <tr>
-        <td style="color: #92400e; font-size: 8.5pt;">
-            <b>WAKTU MULAI PENGUSULAN INTEGRASI KE SISTEM (H-2 BULAN SEBELUM 2/3):</b><br>
-            <span style="font-size: 11pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
-            <span style="font-size: 8pt; color: #78350f;">{$statusPesan}</span><br>
-            <span style="font-size: 7.5pt; color: #92400e;"><i>*Petugas agar segera mengajukan permintaan Litmas ke Bapas dan menjadwalkan Sidang TPP UPT sebelum batas waktu tersebut.</i></span>
+<!-- I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS -->
+<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; border-collapse: collapse; margin-bottom: 8px;">
+    <tr style="background-color: #f1f5f9;">
+        <td colspan="4" style="font-weight: bold; font-size: 8pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 4px 6px;">
+            I. IDENTITAS WARGA BINAAN PEMASYARAKATAN &amp; PARAMETER VONIS
         </td>
     </tr>
+    <tr>
+        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Nama WBP</td>
+        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$namaWbp}</td>
+        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Tgl. Mulai Ditahan</td>
+        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$tglAwal}</td>
+    </tr>
+    <tr>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Nomor Register</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$noRegister}</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Lama Vonis Pokok</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$lamaVonis} ({$totalHariVonis} hr)</td>
+    </tr>
+    <tr>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Agama / RK</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$agama}</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Ekspirasi Murni Awal</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #b91c1c; padding: 3px 6px;">: {$tglEkspirasiMurni}</td>
+    </tr>
+    <tr>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Program Integrasi</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #047857; padding: 3px 6px;">: {$namaProgram}</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Remisi Dasawarsa</td>
+        <td style="border-bottom: 0.5px solid #e2e8f0; color: #0f172a; padding: 3px 6px;">: {$dasawarsaStatus}</td>
+    </tr>
+    <tr>
+        <td style="color: #475569; padding: 3px 6px;">Status Pembinaan</td>
+        <td style="color: #0f172a; padding: 3px 6px;">: {$labelTambahan}</td>
+        <td style="color: #475569; padding: 3px 6px;">Standar Simulasi</td>
+        <td style="font-weight: bold; color: #1e40af; padding: 3px 6px;">: {$targetBasisLabel}</td>
+    </tr>
 </table>
 
-<!-- TABEL MATRIKS TONGGAK MASA PIDANA -->
-<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
-    <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
-        <th width="20%">1/3 Masa Pidana</th>
-        <th width="20%">1/2 Asimilasi</th>
-        <th width="20%">2/3 PB / CB</th>
-        <th width="20%">Ekspirasi Definitif</th>
-        <th width="20%">Total Proyeksi Remisi</th>
-    </tr>
-    <tr style="text-align: center; font-size: 8pt;">
-        <td><b>{$tgl13Murni}</b><br><span style="font-size: 6.8pt; color: #64748b;">(Syarat Pembinaan)</span></td>
-        <td><b>{$tgl12Def}</b><br><span style="font-size: 6.8pt; color: #64748b;">Murni: {$tgl12Murni}</span></td>
-        <td><b style="color: #047857;">{$tgl23Def}</b><br><span style="font-size: 6.8pt; color: #64748b;">Murni: {$tgl23Murni}</span></td>
-        <td><b style="color: #b91c1c;">{$tglEkspirasiDef}</b><br><span style="font-size: 6.8pt; color: #64748b;">Murni: {$tglEkspirasiMurni}</span></td>
-        <td><b style="color: #d97706;">{$totalRemisiTeks}</b></td>
-    </tr>
-</table>
-
-<!-- TABEL RINCIAN PROYEKSI REMISI PER TAHUN -->
-<div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 3px; color: #0f172a;">
-    TABEL RINCIAN PROYEKSI REMISI PER TAHUN (KEPPRES NO. 174/1999 &amp; DASAWARSA):
+<!-- II. MATRIKS TONGGAK MASA PIDANA & ESTIMASI INTEGRASI -->
+<div style="font-weight: bold; font-size: 8pt; color: #0f172a; margin-bottom: 3px;">
+    II. MATRIKS TONGGAK MASA PIDANA &amp; SYARAT INTEGRASI
 </div>
-<table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #ccc; margin-bottom: 10px;">
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #94a3b8; border-collapse: collapse; margin-bottom: 8px;">
     <thead>
-        <tr>
-            <th width="5%">#</th>
-            <th width="28%">Nama Event Remisi</th>
-            <th width="14%">Tanggal</th>
-            <th width="12%">Besaran</th>
-            <th width="11%">Akumulasi</th>
-            <th width="30%">Keterangan &amp; Landasan Alasan</th>
+        <tr style="background-color: #0f172a; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.3pt;">
+            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">1/3 Masa Pidana</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">1/2 Asimilasi</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">2/3 {$namaProgram}</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">Ekspirasi Definitif</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">Total Remisi Diperoleh</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="text-align: center; font-size: 8pt; background-color: #f8fafc;">
+            <td style="border: 0.5px solid #cbd5e1; padding: 5px 2px;">
+                <b style="color: #0284c7; font-size: 8.5pt;">{$tgl13Murni}</b><br>
+                <span style="font-size: 6.8pt; color: #64748b;">(Syarat Pembinaan)</span>
+            </td>
+            <td style="border: 0.5px solid #cbd5e1; padding: 5px 2px;">
+                <b style="color: #d97706; font-size: 8.5pt;">{$tgl12Def}</b><br>
+                <span style="font-size: 6.8pt; color: #64748b;">Murni: {$tgl12Murni}</span>
+            </td>
+            <td style="border: 0.5px solid #cbd5e1; padding: 5px 2px; background-color: #ecfdf5;">
+                <b style="color: #047857; font-size: 9pt;">{$tgl23Def}</b><br>
+                <span style="font-size: 6.8pt; color: #047857; font-weight: bold;">Murni: {$tgl23Murni}</span>
+            </td>
+            <td style="border: 0.5px solid #cbd5e1; padding: 5px 2px; background-color: #fef2f2;">
+                <b style="color: #b91c1c; font-size: 9pt;">{$tglEkspirasiDef}</b><br>
+                <span style="font-size: 6.8pt; color: #b91c1c;">Murni: {$tglEkspirasiMurni}</span>
+            </td>
+            <td style="border: 0.5px solid #cbd5e1; padding: 5px 2px; background-color: #fffbeb;">
+                <b style="color: #b45309; font-size: 9pt;">{$totalRemisiHari} Hari</b><br>
+                <span style="font-size: 6.8pt; color: #92400e;">({$totalRemisiTeks})</span>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- HIGHLIGHT ALERT: WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN SEBELUM 2/3) -->
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 8px;">
+    <tr>
+        <td width="73%" valign="middle" style="padding: 5px 8px;">
+            <span style="font-size: 7.5pt; font-weight: bold; color: #92400e; text-transform: uppercase;">
+                WAKTU MULAI PENGUSULAN INTEGRASI KE SISTEM (H-2 BULAN SEBELUM 2/3):
+            </span><br>
+            <span style="font-size: 10.5pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
+            <span style="font-size: 7.2pt; color: #78350f;">{$statusPesan}</span>
+        </td>
+        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 5px 6px;">
+            <span style="font-size: 7pt; color: #78350f; font-weight: bold;">JATUH TEMPO 2/3 DEFINITIF</span><br>
+            <span style="font-size: 10.5pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
+            <span style="font-size: 6.5pt; color: #555;">(2/3 Murni - Full Remisi)</span>
+        </td>
+    </tr>
+</table>
+
+<!-- III. TABEL RINCIAN PROYEKSI PEROLEHAN REMISI PER EVENT KRONOLOGIS -->
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 3px;">
+    <tr>
+        <td width="65%" valign="bottom">
+            <span style="font-weight: bold; font-size: 8pt; color: #0f172a;">
+                III. TABEL RINCIAN PROYEKSI PEROLEHAN REMISI PER TAHUN (SDP DITJENPAS)
+            </span>
+        </td>
+        <td width="35%" align="right" valign="bottom">
+            <span style="font-size: 7pt; color: #475569;">
+                Standar: <b>{$targetBasisLabel}</b>
+            </span>
+        </td>
+    </tr>
+</table>
+<table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
+    <thead>
+        <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.3pt;">
+            <th width="4%" style="border: 0.5px solid #475569; padding: 5px 2px;">#</th>
+            <th width="24%" style="border: 0.5px solid #475569; padding: 5px 4px; text-align: left;">Nama Event &amp; Tahapan</th>
+            <th width="12%" style="border: 0.5px solid #475569; padding: 5px 2px;">Tgl. Event</th>
+            <th width="11%" style="border: 0.5px solid #475569; padding: 5px 2px;">Masa Dijalani</th>
+            <th width="11%" style="border: 0.5px solid #475569; padding: 5px 2px;">Besaran Remisi</th>
+            <th width="10%" style="border: 0.5px solid #475569; padding: 5px 2px;">Akumulasi</th>
+            <th width="13%" style="border: 0.5px solid #475569; padding: 5px 2px;">Ekspirasi Baru</th>
+            <th width="15%" style="border: 0.5px solid #475569; padding: 5px 4px; text-align: left;">Keterangan &amp; Landasan</th>
         </tr>
     </thead>
     <tbody>
         {$ledgerRowsHtml}
     </tbody>
+    <tfoot>
+        <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #475569;">
+            <td colspan="4" align="right" style="border: 0.5px solid #cbd5e1; padding: 4px 6px; font-size: 7.5pt; color: #0f172a;">
+                TOTAL AKUMULASI REMISI YANG DIPEROLEH:
+            </td>
+            <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.8pt; color: #1e40af;">
+                <b>{$totalRemisiTeks}</b>
+            </td>
+            <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.8pt; color: #047857;">
+                <b>{$totalRemisiHari} hr</b>
+            </td>
+            <td align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px; font-size: 7.8pt; color: #b91c1c;">
+                <b>{$tglEkspirasiDef}</b>
+            </td>
+            <td style="border: 0.5px solid #cbd5e1; padding: 4px 5px; font-size: 6.8pt; color: #475569;">
+                <i>*Ekspirasi Akhir Definitif</i>
+            </td>
+        </tr>
+    </tfoot>
 </table>
 
-<table width="100%" border="0" cellpadding="2" style="font-size: 8pt; margin-top: 6px;">
+<table width="100%" border="0" cellpadding="2" style="font-size: 7.5pt; margin-top: 4px;">
     <tr>
-        <td width="55%" valign="top">
+        <td width="58%" valign="top">
             <i>Dicetak melalui SULTAN BANTEN pada {$waktuCetak} oleh {$userCetak}.</i><br>
-            <span style="font-size: 7.2pt; color: #555;">Catatan: Berdasarkan standar 2/3 (PB/CB), remisi dihitung selama narapidana menjalani masa pidana di Lapas hingga 2/3 Definitif tercapai. Setelah bebas bersyarat, WBP menjalani pembinaan luar di Bapas. Realisasi SK Remisi tetap bergantung pada penilaian SPPN dan perilaku WBP.</span>
+            <span style="font-size: 6.8pt; color: #555; line-height: 1.35;">
+                <b>Catatan Analisa:</b> Dokumen ini adalah lembar estimasi yuridis baku sesuai UU No. 22/2022 &amp; Keppres No. 174/1999 dengan standar {$targetBasisLabel}. Pengurangan remisi dihitung selama WBP menjalani pidana di Lapas hingga batas 2/3 Definitif terpenuhi. Realisasi penetapan SK Remisi tetap mengacu pada penilaian SPPN dan perilaku WBP.
+            </span>
         </td>
-        <td width="45%" align="center" valign="top">
+        <td width="42%" align="center" valign="top">
             Serang, {$tglAwal}<br>
             <b>Petugas Registrasi / Pembinaan,</b><br><br><br><br>
             <u><b>( ............................................................ )</b></u><br>
