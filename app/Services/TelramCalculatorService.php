@@ -1057,6 +1057,7 @@ class TelramCalculatorService
                 $evDijalani = htmlspecialchars($r['hari_dijalani'] ?? 0);
                 $evMasaTeks = htmlspecialchars($r['masa_dijalani_teks'] ?? '');
                 $evBesaran = htmlspecialchars($r['besaran_teks'] ?? '0 Hari');
+                $evBesaranHari = (int) ($r['besaran_hari'] ?? 0);
                 $evAkumulasi = htmlspecialchars($r['total_akumulasi_hari'] ?? 0).' hr';
                 $evEkspirasiBaru = htmlspecialchars($r['perkiraan_ekspirasi_baru_indo'] ?? '-');
                 $evAlasan = htmlspecialchars($r['keterangan_alasan'] ?? ($r['keterangan_status'] ?? '-'));
@@ -1103,7 +1104,9 @@ class TelramCalculatorService
                         <b>{$evDijalani} hr</b><br><span style="font-size: 6.8pt; color: #64748b;">({$evMasaTeks})</span>
                     </td>
                     <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px;">{$besaranHtml}</td>
-                    <td width="10%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #047857; font-size: 8.5pt;">{$evAkumulasi}</td>
+                    <td width="10%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #047857; font-size: 8.5pt;">
+                        {$evBesaranHari} hr<br><span style="font-size: 6.8pt; color: #64748b; font-weight: normal;">(Akum: {$evAkumulasi})</span>
+                    </td>
                     <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #b91c1c; font-size: 8.2pt;">{$evEkspirasiBaru}</td>
                     <td width="16%" style="border: 0.5px solid #cbd5e1; padding: 5px 5px; font-size: 7.2pt; color: #334155; line-height: 1.25;">{$evAlasan}</td>
                 </tr>
@@ -1240,15 +1243,15 @@ ROW;
 </table>
 <table width="100%" border="1" cellpadding="3" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 8px;">
     <thead>
-        <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 8pt;">
-            <th width="4%" style="border: 0.5px solid #475569; padding: 6px 2px;">#</th>
-            <th width="23%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Nama Event &amp; Tahapan</th>
-            <th width="12%" style="border: 0.5px solid #475569; padding: 6px 2px;">Tgl. Event</th>
-            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Masa Dijalani</th>
-            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Besaran Remisi</th>
-            <th width="10%" style="border: 0.5px solid #475569; padding: 6px 2px;">Akumulasi</th>
-            <th width="13%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi Baru</th>
-            <th width="16%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Keterangan &amp; Landasan</th>
+        <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.8pt;">
+            <th width="4%" style="border: 0.5px solid #475569; padding: 6px 2px;">No</th>
+            <th width="23%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Jenis Remisi/Tahun</th>
+            <th width="12%" style="border: 0.5px solid #475569; padding: 6px 2px;">Tgl. Pelaksanaan</th>
+            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Lama Menjalani Pidana</th>
+            <th width="11%" style="border: 0.5px solid #475569; padding: 6px 2px;">Besaran Remisi(Bl, Hr)</th>
+            <th width="10%" style="border: 0.5px solid #475569; padding: 6px 2px;">Besaran Remisi (Hr)</th>
+            <th width="13%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi setelah Remisi</th>
+            <th width="16%" style="border: 0.5px solid #475569; padding: 6px 4px; text-align: left;">Keterangan</th>
         </tr>
     </thead>
     <tbody>

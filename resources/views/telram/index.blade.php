@@ -740,15 +740,15 @@
                                 <table class="table table-hover table-striped align-middle mb-0 table-ledger" style="min-width: 860px;">
                                     <thead class="table-light">
                                         <tr style="font-size: 11.5px;">
-                                            <th style="width: 40px;" class="text-center">#</th>
-                                            <th style="min-width: 170px;">Nama Event &amp; Tahapan</th>
-                                            <th style="min-width: 105px; white-space: nowrap;">Tanggal Event</th>
-                                            <th style="min-width: 100px; white-space: nowrap;">Masa Dijalani</th>
+                                            <th style="width: 40px;" class="text-center">No</th>
+                                            <th style="min-width: 170px;">Jenis Remisi/Tahun</th>
+                                            <th style="min-width: 105px; white-space: nowrap;">Tgl. Pelaksanaan</th>
+                                            <th style="min-width: 100px; white-space: nowrap;">Lama Menjalani Pidana</th>
                                             <th style="min-width: 95px; white-space: nowrap;">Status</th>
-                                            <th style="min-width: 95px; white-space: nowrap;">Besaran</th>
-                                            <th style="min-width: 85px; white-space: nowrap;">Akumulasi</th>
-                                            <th style="min-width: 110px; white-space: nowrap;">Ekspirasi Baru</th>
-                                            <th style="min-width: 200px;">Keterangan &amp; Landasan Alasan</th>
+                                            <th style="min-width: 105px; white-space: nowrap;">Besaran Remisi (Bl, Hr)</th>
+                                            <th style="min-width: 105px; white-space: nowrap;">Besaran Remisi (Hr)</th>
+                                            <th style="min-width: 110px; white-space: nowrap;">Ekspirasi setelah Remisi</th>
+                                            <th style="min-width: 200px;">Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbodyProyeksiRemisi">
