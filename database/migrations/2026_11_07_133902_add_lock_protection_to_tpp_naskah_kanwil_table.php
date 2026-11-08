@@ -11,11 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tpp_naskah_kanwil', function (Blueprint $table) {
-            $table->boolean('is_locked')->default(false)->after('status');
-            $table->timestamp('locked_at')->nullable()->after('is_locked');
-            $table->foreignId('locked_by_id')->nullable()->after('locked_at')->constrained('users')->nullOnDelete();
-        });
+        if (Schema::hasTable('tpp_naskah_kanwil')) {
+            Schema::table('tpp_naskah_kanwil', function (Blueprint $table) {
+                if (! Schema::hasColumn('tpp_naskah_kanwil', 'is_locked')) {
+                    $table->boolean('is_locked')->default(false)->after('status');
+                }
+                if (! Schema::hasColumn('tpp_naskah_kanwil', 'locked_at')) {
+                    $table->timestamp('locked_at')->nullable()->after('is_locked');
+                }
+                if (! Schema::hasColumn('tpp_naskah_kanwil', 'locked_by_id')) {
+                    $table->foreignId('locked_by_id')->nullable()->after('locked_at')->constrained('users')->nullOnDelete();
+                }
+            });
+        }
     }
 
     /**
