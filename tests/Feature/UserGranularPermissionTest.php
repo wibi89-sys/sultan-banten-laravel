@@ -194,6 +194,7 @@ class UserGranularPermissionTest extends TestCase
             'upt_id' => $upt ? $upt->id : null,
             'akses_penghuni' => 'view',
             'akses_mutasi' => 'full',
+            'akses_utilitas' => 'view',
             'akses_upt' => 'none',
             'akses_overstaying' => 'view',
         ]);
@@ -205,6 +206,9 @@ class UserGranularPermissionTest extends TestCase
         $this->assertNotNull($createdUser);
         $this->assertEquals('view', $createdUser->akses_penghuni);
         $this->assertEquals('full', $createdUser->akses_mutasi);
+        $this->assertEquals('view', $createdUser->akses_utilitas);
+        $this->assertTrue($createdUser->canView('utilitas'));
+        $this->assertFalse($createdUser->canManage('utilitas'));
         $this->assertEquals('none', $createdUser->akses_upt);
         $this->assertEquals('view', $createdUser->akses_overstaying);
 
@@ -216,6 +220,7 @@ class UserGranularPermissionTest extends TestCase
             'upt_id' => $upt ? $upt->id : null,
             'akses_penghuni' => 'full',
             'akses_mutasi' => 'none',
+            'akses_utilitas' => 'none',
             'akses_upt' => 'view',
         ]);
 
@@ -225,6 +230,8 @@ class UserGranularPermissionTest extends TestCase
         $createdUser->refresh();
         $this->assertEquals('full', $createdUser->akses_penghuni);
         $this->assertEquals('none', $createdUser->akses_mutasi);
+        $this->assertEquals('none', $createdUser->akses_utilitas);
+        $this->assertFalse($createdUser->canView('utilitas'));
         $this->assertEquals('view', $createdUser->akses_upt);
     }
 
@@ -240,12 +247,16 @@ class UserGranularPermissionTest extends TestCase
         $createResponse->assertStatus(200);
         $createResponse->assertSee('Tambah Pengguna Baru');
         $createResponse->assertSee('Layanan &amp; Data Pemasyarakatan', false);
+        $createResponse->assertSee('Utilitas &amp; Alat Bantu', false);
+        $createResponse->assertSee('akses_utilitas', false);
 
         // Admin can access edit page
         $editResponse = $this->actingAs($admin)->get("/users/{$admin->id}/edit");
         $editResponse->assertStatus(200);
         $editResponse->assertSee('Edit Pengguna');
         $editResponse->assertSee($admin->username);
+        $editResponse->assertSee('Utilitas &amp; Alat Bantu', false);
+        $editResponse->assertSee('akses_utilitas', false);
 
         // View-only user on user module cannot access create page
         $upt = Upt::first();

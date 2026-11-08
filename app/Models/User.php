@@ -27,6 +27,7 @@ class User extends Authenticatable
         'akses_bebas_harian',
         'akses_sidang_tpp',
         'akses_mutasi',
+        'akses_utilitas',
         'akses_upt',
         'akses_user',
         'akses_instansi',

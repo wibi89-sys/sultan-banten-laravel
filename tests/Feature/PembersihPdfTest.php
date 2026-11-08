@@ -47,6 +47,20 @@ class PembersihPdfTest extends TestCase
         $response->assertSee('Srikandi', false);
     }
 
+    public function test_user_without_utilitas_permission_gets_forbidden_403_on_pembersih_pdf(): void
+    {
+        $restrictedUser = User::factory()->create([
+            'role' => 'operator',
+            'akses_utilitas' => 'none',
+        ]);
+
+        $response = $this->actingAs($restrictedUser)->get(route('pembersih-pdf.index'));
+        $response->assertStatus(403);
+
+        $cleanResponse = $this->actingAs($restrictedUser)->postJson(route('pembersih-pdf.clean'), []);
+        $cleanResponse->assertStatus(403);
+    }
+
     public function test_clean_fails_when_no_file_uploaded(): void
     {
         $response = $this->actingAs($this->user)->postJson(route('pembersih-pdf.clean'), []);

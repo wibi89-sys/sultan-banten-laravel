@@ -22,6 +22,7 @@ class UserController extends Controller
         'akses_bebas_harian',
         'akses_sidang_tpp',
         'akses_mutasi',
+        'akses_utilitas',
         'akses_upt',
         'akses_user',
         'akses_instansi',
@@ -335,6 +336,13 @@ class UserController extends Controller
                     'icon' => 'fas fa-history text-muted',
                 ],
             ],
+            'Utilitas & Alat Bantu' => [
+                'utilitas' => [
+                    'label' => 'Utilitas (Kalkulator Telram & Pembersih PDF)',
+                    'desc' => 'Akses kalkulator telram (perkiraan remisi & integrasi) dan sanitasi metadata dokumen PDF.',
+                    'icon' => 'fas fa-toolbox text-warning',
+                ],
+            ],
             'Master Data & Pengaturan Wilayah' => [
                 'upt' => [
                     'label' => 'Master Data Unit Pelaksana Teknis (UPT)',
@@ -343,7 +351,7 @@ class UserController extends Controller
                 ],
                 'user' => [
                     'label' => 'Manajemen User & Hak Akses',
-                    'desc' => 'Kelola akun pengguna, peran, hak akses granular 14 modul sistem.',
+                    'desc' => 'Kelola akun pengguna, peran, hak akses granular 15 modul sistem.',
                     'icon' => 'fas fa-user-shield text-dark',
                 ],
                 'instansi' => [

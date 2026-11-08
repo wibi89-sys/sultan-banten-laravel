@@ -26,6 +26,7 @@ class TelramTest extends TestCase
                 'password' => 'password123',
                 'nama_lengkap' => 'Tester Telram',
                 'role' => 'operator',
+                'akses_utilitas' => 'full',
             ]);
         }
 
@@ -48,6 +49,30 @@ class TelramTest extends TestCase
         $response->assertSee('Kalkulator Telram');
         $response->assertSee('Perkiraan Remisi');
         $response->assertSee('Unduh File Offline');
+    }
+
+    public function test_user_without_utilitas_permission_gets_forbidden_403(): void
+    {
+        $restrictedUser = User::create([
+            'username' => 'restricted_telram_'.uniqid(),
+            'password' => 'password123',
+            'nama_lengkap' => 'Restricted User',
+            'role' => 'operator',
+            'akses_utilitas' => 'none',
+        ]);
+
+        try {
+            $response = $this->actingAs($restrictedUser)->get('/telram');
+            $response->assertStatus(403);
+
+            $calcResponse = $this->actingAs($restrictedUser)->postJson('/telram/calculate', [
+                'mode' => 'maju',
+                'tgl_awal' => '2026-01-01',
+            ]);
+            $calcResponse->assertStatus(403);
+        } finally {
+            $restrictedUser->delete();
+        }
     }
 
     public function test_calculate_mode_maju_returns_valid_json(): void

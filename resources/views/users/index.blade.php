@@ -14,6 +14,7 @@
         'sidang_tpp' => ['label' => 'Sidang TPP', 'icon' => 'fas fa-gavel'],
         'mutasi' => ['label' => 'Mutasi Narapidana Antar-UPT', 'icon' => 'fas fa-exchange-alt'],
         'laporan' => ['label' => 'Cetak Laporan', 'icon' => 'fas fa-print'],
+        'utilitas' => ['label' => 'Utilitas & Telram', 'icon' => 'fas fa-toolbox'],
         'activity_log' => ['label' => 'Log Aktivitas Pengguna', 'icon' => 'fas fa-history'],
         'upt' => ['label' => 'Master Data UPT', 'icon' => 'fas fa-building'],
         'user' => ['label' => 'Manajemen User & Hak Akses', 'icon' => 'fas fa-user-shield'],

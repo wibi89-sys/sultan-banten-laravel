@@ -22,6 +22,10 @@ class TelramController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+        if (! $user || ! $user->hasAccess('utilitas')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.');
+        }
+
         $instansi = Instansi::getFirst();
 
         return view('telram.index', compact('user', 'instansi'));
@@ -32,6 +36,14 @@ class TelramController extends Controller
      */
     public function calculate(Request $request): JsonResponse
     {
+        $user = auth()->user();
+        if (! $user || ! $user->hasAccess('utilitas')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.',
+            ], 403);
+        }
+
         $mode = $request->input('mode', 'maju');
 
         try {
@@ -150,6 +162,11 @@ class TelramController extends Controller
      */
     public function exportPdf(Request $request): Response
     {
+        $user = auth()->user();
+        if (! $user || ! $user->hasAccess('utilitas')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.');
+        }
+
         $validated = $request->validate([
             'tgl_awal' => 'required|date',
             'tahun' => 'nullable|integer|min:0',

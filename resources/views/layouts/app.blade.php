@@ -507,6 +507,7 @@
             </div>
             @endif
 
+            @if($user->hasAccess('utilitas'))
             <div class="menu-parent {{ request()->routeIs('telram.*') || request()->routeIs('pembersih-pdf.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuUtilitas">
                 <i class="fas fa-toolbox"></i>
                 <span>Utilitas</span>
@@ -522,6 +523,7 @@
                     </a>
                 </div>
             </div>
+            @endif
 
             <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>

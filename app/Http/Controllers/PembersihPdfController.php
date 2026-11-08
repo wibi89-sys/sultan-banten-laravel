@@ -18,6 +18,10 @@ class PembersihPdfController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+        if (! $user || ! $user->hasAccess('utilitas')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.');
+        }
+
         $defaultAuthor = $user && $user->upt ? $user->upt->nama_upt : 'Kantor Wilayah Kemenimipas Banten';
         $defaultCreator = 'Aplikasi SULTAN Banten';
 
@@ -29,6 +33,14 @@ class PembersihPdfController extends Controller
      */
     public function clean(Request $request): JsonResponse
     {
+        $user = auth()->user();
+        if (! $user || ! $user->hasAccess('utilitas')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.',
+            ], 403);
+        }
+
         // 1. Validasi keberadaan dan status berkas
         $validationError = $this->validateUploadedPdf($request, 'file_pdf');
         if ($validationError !== null) {
@@ -104,6 +116,11 @@ class PembersihPdfController extends Controller
      */
     public function download(Request $request, string $token): BinaryFileResponse|JsonResponse
     {
+        $user = auth()->user();
+        if (! $user || ! $user->hasAccess('utilitas')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.');
+        }
+
         if (! preg_match('/^[a-f0-9]{32}$/', $token)) {
             abort(404, 'Token berkas tidak valid.');
         }
