@@ -890,11 +890,26 @@
                 <!-- Opsi Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
                 <div id="sectionRemisiTambahan" class="form-group">
                     <label class="form-label" style="display:block; margin-bottom: 6px;">Status Pembinaan / Remisi Tambahan (Pasal 4)</label>
-                    <select id="selRemisiTambahan" class="form-select">
+                    <select id="selRemisiTambahan" class="form-select" onchange="toggleTahunMulaiTambahan()">
                         <option value="none" selected>Standar / Reguler (Tanpa Remisi Tambahan)</option>
                         <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU yang didapat)</option>
                         <option value="jasa_negara">Berjasa Bagi Negara / Donor Darah (+1/2 dari RU yang didapat)</option>
                     </select>
+
+                    <!-- Input Mulai di Tahun ke Berapa -->
+                    <div id="wrapTahunMulaiTambahan" class="d-none" style="margin-top: 8px; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2);">
+                        <label class="form-label" style="display:block; margin-bottom: 4px; font-size: 11.5px; font-weight: 700;">Mulai Remisi Tambahan Sejak:</label>
+                        <select id="selTahunMulaiTambahan" class="form-select" style="font-size: 12px; padding: 6px 10px;">
+                            <option value="1">Tahun Ke-1 (Sejak RU Pertama)</option>
+                            <option value="2" selected>Tahun Ke-2 (Setelah 1/3 Pidana / Syarat Pemuka)</option>
+                            <option value="3">Tahun Ke-3</option>
+                            <option value="4">Tahun Ke-4</option>
+                            <option value="5">Tahun Ke-5</option>
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 10.5px; display: block; margin-top: 4px;">
+                            Remisi tambahan akan dihitung mulai tahun RU yang dipilih dan tahun-tahun berikutnya.
+                        </small>
+                    </div>
                 </div>
 
                 <!-- Opsi Standarisasi Perhitungan Remisi: 2/3 vs Ekspirasi -->
@@ -944,7 +959,7 @@
                         <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                     </svg>
                 </div>
-                <h2 class="placeholder-title" id="placeholderTitle">Hasil Proyeksi Remisi & Integrasi</h2>
+                <h2 class="placeholder-title" id="placeholderTitle">Perkiraan Perhitungan</h2>
                 <p class="placeholder-desc" id="placeholderDesc">
                     Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PROYEKSI REMISI & INTEGRASI"</strong>.
                 </p>
@@ -959,7 +974,7 @@
                     <div class="card-header">
                         <div class="card-header-title">
                             <span class="fraction-badge badge-emerald" id="badgeProgramStatus">PB</span>
-                            <span id="hasilHeaderTitle">Hasil Proyeksi Remisi & Integrasi</span>
+                            <span id="hasilHeaderTitle">Perkiraan Perhitungan</span>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                             <button type="button" class="btn-reset btn-print" onclick="window.print()" title="Cetak Berkas">
@@ -980,18 +995,23 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- Hero Alert Pengusulan PB/CB (H-2 Bulan Sebelum 2/3) -->
-                        <div id="boxHeroPengusulan" class="hero-usulan-box">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                                <span class="badge-pill-alert">WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN SEBELUM 2/3)</span>
-                                <span id="badgeStatusPengusulan" style="background: rgba(255,255,255,0.22); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700;">-</span>
-                            </div>
-                            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.8; margin-top: 6px;">Mulai Pengusulan Berkas / Litmas Bapas:</div>
-                            <div class="hero-title-val" id="resTglMulaiPengusulan">-</div>
-                            <div style="font-size: 12px; margin-top: 6px; opacity: 0.95; line-height: 1.4;" id="pesanPengusulan">-</div>
-                            <div style="margin-top: 12px; padding: 10px 14px; background: rgba(0,0,0,0.25); border-radius: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                                <div>Jatuh Tempo 2/3 Definitif: <strong id="resTgl23Highlight" style="font-size: 14.5px;">-</strong></div>
-                                <div style="font-size: 11px; opacity: 0.8;">Metode: 2/3 Murni - Full Remisi</div>
+                        <!-- Hero Card: Mulai Pengusulan di SDP & 2/3 Masa Pidana -->
+                        <div id="boxHeroPengusulan" class="hero-usulan-box" style="padding: 16px 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; align-items: stretch;">
+                                <div style="display: flex; flex-direction: column; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; margin-bottom: 4px;">
+                                            Mulai Pengusulan di SDP:
+                                        </div>
+                                        <div class="hero-title-val" id="resTglMulaiPengusulan" style="font-size: clamp(20px, 4.5vw, 26px); font-weight: 800;">-</div>
+                                    </div>
+                                    <div style="font-size: 12px; margin-top: 8px; opacity: 0.9; line-height: 1.45;" id="pesanPengusulan">-</div>
+                                </div>
+                                <div style="background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: center;">
+                                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85;">2/3 Masa Pidana:</div>
+                                    <strong id="resTgl23Highlight" style="display: block; font-size: clamp(16px, 3.5vw, 20px); font-weight: 800; margin: 4px 0;">-</strong>
+                                    <div style="font-size: 11px; opacity: 0.8;">Metode SDP: 2/3 Murni - Full Remisi</div>
+                                </div>
                             </div>
                         </div>
 
@@ -1019,7 +1039,7 @@
                                 </div>
                             </div>
                             <div id="boxTotalRemisiBadge" style="text-align: right;">
-                                <div style="font-size: 11px; opacity: 0.85;">TOTAL PROYEKSI REMISI:</div>
+                                <div style="font-size: 11px; opacity: 0.85;">TOTAL PERKIRAAN REMISI:</div>
                                 <div style="font-size: 20px; font-weight: 800; color: #fbbf24;" id="resTotalRemisiText">0 Hari</div>
                             </div>
                         </div>
@@ -1046,7 +1066,7 @@
                         <!-- Summary Details -->
                         <div class="summary-box">
                             <div><span id="labelInfoTglAwal">Tgl. Mulai Ditahan:</span> <strong id="infoTglAwal" style="color: var(--text-primary);">-</strong></div>
-                            <div><span id="labelInfoTotalHari">Total Hari Vonis:</span> <strong id="infoTotalHari" style="color: var(--text-primary);">-</strong> hari</div>
+                            <div><span id="labelInfoTotalHari">Pidana Pokok:</span> <strong id="infoTotalHari" style="color: var(--text-primary);">-</strong></div>
                         </div>
 
                         <!-- Section Tabel Proyeksi Remisi Keppres 174/1999 (Dual-View) -->
@@ -1291,6 +1311,17 @@
         }
     }
 
+    function toggleTahunMulaiTambahan() {
+        const sel = document.getElementById('selRemisiTambahan');
+        const wrap = document.getElementById('wrapTahunMulaiTambahan');
+        if (!sel || !wrap) return;
+        if (sel.value !== 'none') {
+            wrap.classList.remove('d-none');
+        } else {
+            wrap.classList.add('d-none');
+        }
+    }
+
     function resetForm() {
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
         if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
@@ -1301,6 +1332,8 @@
         document.getElementById('selAgama').value = 'islam';
         if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
         if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
+        if (document.getElementById('selTahunMulaiTambahan')) document.getElementById('selTahunMulaiTambahan').value = '2';
+        toggleTahunMulaiTambahan();
         if (document.getElementById('selTargetBasis')) document.getElementById('selTargetBasis').value = '2_3';
         updateHelpTargetBasis();
         document.getElementById('vRemisiAwal').value = '0';
@@ -1324,6 +1357,8 @@
         document.getElementById('selAgama').value = 'islam';
         if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
         if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
+        if (document.getElementById('selTahunMulaiTambahan')) document.getElementById('selTahunMulaiTambahan').value = '2';
+        toggleTahunMulaiTambahan();
         if (document.getElementById('selTargetBasis')) document.getElementById('selTargetBasis').value = '2_3';
         updateHelpTargetBasis();
         document.getElementById('vRemisiAwal').value = '0';
@@ -1430,6 +1465,7 @@
         const noRegister = (document.getElementById('txtNoRegister') && document.getElementById('txtNoRegister').value.trim()) || '-';
         const includeDasawarsa = document.getElementById('chkDasawarsa') ? document.getElementById('chkDasawarsa').checked : true;
         const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
+        const tahunMulaiTambahan = document.getElementById('selTahunMulaiTambahan') ? (parseInt(document.getElementById('selTahunMulaiTambahan').value) || 1) : 1;
 
         if (!inputTgl) {
             showToast('Harap tentukan Tanggal Mulai Penahanan!', 'error');
@@ -1635,7 +1671,7 @@
             });
 
             // Remisi Tambahan (Pasal 4 Keppres 174/1999)
-            if (item.jenis === 'RU' && pot > 0 && kategoriTambahan !== 'none') {
+            if (item.jenis === 'RU' && pot > 0 && kategoriTambahan !== 'none' && keRu >= tahunMulaiTambahan) {
                 let potTambahan = 0;
                 let namaTambahan = '';
                 let ketTambahan = '';
@@ -1720,10 +1756,10 @@
         let statusPesan = '';
         if (now < tglMulaiPengusulan) {
             const diffDays = Math.round((tglMulaiPengusulan.getTime() - now.getTime()) / (1000*60*60*24));
-            statusPesan = `Pengusulan berkas ke sistem & permintaan Litmas Bapas dapat dimulai pada ${formatDateIndo(tglMulaiPengusulan)} (tersisa ${diffDays} hari lagi).`;
+            statusPesan = `Pengusulan di SDP dapat dimulai pada ${formatDateIndo(tglMulaiPengusulan)} (tersisa ${diffDays} hari lagi).`;
         } else if (now <= tgl23Definitif) {
             const sisa23 = Math.round((tgl23Definitif.getTime() - now.getTime()) / (1000*60*60*24));
-            statusPesan = `Waktunya Pengusulan! Segera ajukan permintaan Litmas ke Bapas dan jadwalkan Sidang TPP UPT. Jatuh tempo 2/3 tercapai dalam ${sisa23} hari lagi (${formatDateIndo(tgl23Definitif)}).`;
+            statusPesan = `Waktunya Pengusulan! Pengusulan di SDP dapat diproses (H-2 bulan sebelum 2/3). Tanggal 2/3 masa pidana tercapai dalam ${sisa23} hari lagi (${formatDateIndo(tgl23Definitif)}).`;
         } else {
             statusPesan = `Masa pidana telah melewati tanggal 2/3 sejak ${formatDateIndo(tgl23Definitif)}. Pastikan SK ${namaProgram} telah terbit.`;
         }
@@ -1739,6 +1775,7 @@
             namaProgram: namaProgram,
             includeDasawarsa: includeDasawarsa,
             kategoriTambahan: kategoriTambahan,
+            tahunMulaiTambahan: tahunMulaiTambahan,
             totalHariRemisi: totalHariRemisi,
             tglMulaiPengusulan: tglMulaiPengusulan,
             tgl23Definitif: tgl23Definitif,
@@ -1762,7 +1799,7 @@
 
         document.getElementById('badgeProgramStatus').innerText = jenisProgram;
         const wbpJudul = (namaWbp && namaWbp !== 'Narapidana') ? ` (${namaWbp})` : '';
-        document.getElementById('hasilHeaderTitle').innerText = `Hasil Proyeksi Remisi & Hak ${namaProgram}${wbpJudul}`;
+        document.getElementById('hasilHeaderTitle').innerText = `Perkiraan Perhitungan${wbpJudul}`;
         document.getElementById('resTglMulaiPengusulan').innerText = formatDateIndo(tglMulaiPengusulan);
         document.getElementById('resTgl23Highlight').innerText = formatDateIndo(tgl23Definitif);
         document.getElementById('pesanPengusulan').innerText = statusPesan;
@@ -1795,11 +1832,12 @@
 
         document.getElementById('badgeLabel23').innerText = `2/3 ${jenisProgram}`;
         document.getElementById('res23').innerText = formatDateIndo(tgl23Definitif);
-        document.getElementById('subInfo23').innerText = `Jatuh Tempo (Murni: ${formatDateIndo(tgl23Murni)})`;
+        document.getElementById('subInfo23').innerText = `(Murni: ${formatDateIndo(tgl23Murni)})`;
 
         document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Mulai Ditahan:';
         document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
-        document.getElementById('labelInfoTotalHari').innerText = 'Total Hari Vonis:';
+        document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
+        document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
         document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
 
         // Update badge basis proyeksi dan note
@@ -1952,7 +1990,7 @@
 
         document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
         document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
-        document.getElementById('labelInfoTotalHari').innerText = 'Total Hari Vonis:';
+        document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
         document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
 
         document.getElementById('placeholderSection').classList.add('d-none');
@@ -2051,7 +2089,7 @@
 
         document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
         document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
-        document.getElementById('labelInfoTotalHari').innerText = 'Total Hari Vonis:';
+        document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
         document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${lamaPidanaTeks})`;
 
         document.getElementById('placeholderSection').classList.add('d-none');
@@ -2150,13 +2188,13 @@
     function salinRingkasanTeks() {
         if (!lastResult) return;
         const d = lastResult;
-        let text = `*LEMBAR TELRAM & PROYEKSI REMISI (OFFLINE)*\n---------------------------------------`;
+        let text = `*LEMBAR ESTIMASI TELRAM & PERKIRAAN PERHITUNGAN*\n---------------------------------------`;
 
         if (d.mode === 'simulasi_remisi') {
             text += `\n*Nama WBP:* ${d.namaWbp || 'Narapidana'}` +
                     `\n*No. Register:* ${d.noRegister || '-'}` +
                     `\n*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}` +
-                    `\n*Lama Vonis:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
+                    `\n*Pidana Pokok:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
                     `\n*Status Pembinaan:* ${d.kategoriTambahan === 'pemuka' ? 'Pemuka Lapas (+1/3 RU)' : (d.kategoriTambahan === 'jasa_negara' ? 'Jasa Negara (+1/2 RU)' : 'Standar (Reguler)')}` +
                     `\n*Remisi Dasawarsa:* ${d.includeDasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}` +
                     `\n*Basis Simulasi:* ${d.targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana (PB/CB)' : 'Sampai Ekspirasi Bebas Murni'}` +
@@ -2166,9 +2204,9 @@
                     `\n• *1/2 Asimilasi:* ${formatDateIndo(d.tgl12Definitif)} (Murni: ${formatDateIndo(d.tgl12Murni)})` +
                     `\n• *2/3 ${d.jenisProgram}:* ${formatDateIndo(d.tgl23Definitif)} (Murni: ${formatDateIndo(d.tgl23Murni)})` +
                     `\n• *Ekspirasi Definitif:* ${formatDateIndo(d.tglEkspirasiDefinitif)} (Murni: ${formatDateIndo(d.tglEkspirasiMurni)})` +
-                    `\n• *Total Proyeksi Remisi:* ${d.totalHariRemisi} Hari` +
+                    `\n• *Total Perkiraan Remisi:* ${d.totalHariRemisi} Hari` +
                     `\n---------------------------------------` +
-                    `\n⚠️ *WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN):*` +
+                    `\n⚠️ *MULAI PENGUSULAN DI SDP (H-2 BULAN):*` +
                     `\n*Tanggal:* ${formatDateIndo(d.tglMulaiPengusulan)}` +
                     `\n*Catatan:* ${d.statusPesan}`;
         } else if (d.mode === 'sisa') {
@@ -2180,13 +2218,13 @@
             text += `\n*Tgl. Mulai Ditahan:* ${formatDateIndo(d.tglAwal)}` +
                     `\n*Tgl. Ekspirasi Bebas:* ${formatDateIndo(d.tglEkspirasi)}` +
                     `\n---------------------------------------` +
-                    `\n⚖️ *LAMA VONIS POKOK:* ${d.lamaPidanaTeks} (${d.totalHariVonis.toLocaleString('id-ID')} Hari)` +
+                    `\n⚖️ *PIDANA POKOK:* ${d.lamaPidanaTeks} (${d.totalHariVonis.toLocaleString('id-ID')} Hari)` +
                     `\n• *1/3 Pidana:* ${formatDateIndo(d.tgl13)}` +
                     `\n• *1/2 Pidana:* ${formatDateIndo(d.tgl12)}` +
                     `\n• *2/3 Pidana:* ${formatDateIndo(d.tgl23)}`;
         } else {
             text += `\n*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}` +
-                    `\n*Lama Vonis:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
+                    `\n*Pidana Pokok:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
                     `\n---------------------------------------` +
                     `\n• *1/3 Pidana:* ${formatDateIndo(d.tgl13)}` +
                     `\n• *1/2 Pidana:* ${formatDateIndo(d.tgl12)}` +
@@ -2200,13 +2238,11 @@
             showToast('Gagal menyalin ringkasan otomatis', 'error');
         });
     }
-            showToast('Ringkasan berhasil disalin!');
-        });
-    }
 
     // Init on load
     initTheme();
     setMode('simulasi_remisi');
+    toggleTahunMulaiTambahan();
 </script>
 </body>
 </html>

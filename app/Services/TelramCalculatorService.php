@@ -243,7 +243,8 @@ class TelramCalculatorService
         string $noRegister = '',
         bool $includeDasawarsa = true,
         string $kategoriTambahan = 'none',
-        string $targetBasis = '2_3'
+        string $targetBasis = '2_3',
+        int $tahunMulaiTambahan = 1
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
 
@@ -255,6 +256,7 @@ class TelramCalculatorService
         $noRegister = trim($noRegister) ?: '-';
 
         $targetBasis = $targetBasis === 'ekspirasi' ? 'ekspirasi' : '2_3';
+        $tahunMulaiTambahan = max(1, $tahunMulaiTambahan);
 
         $agama = strtolower(trim($agama));
         $validAgama = ['islam', 'kristen', 'katolik', 'hindu', 'buddha', 'khonghucu'];
@@ -513,7 +515,7 @@ class TelramCalculatorService
             ];
 
             // 4a. REMISI TAMBAHAN (Pasal 4 Keppres 174/1999) - Melekat pada Remisi Umum
-            if ($item['jenis'] === 'RU' && $potonganHari > 0 && $kategoriTambahan !== 'none') {
+            if ($item['jenis'] === 'RU' && $potonganHari > 0 && $kategoriTambahan !== 'none' && $keRu >= $tahunMulaiTambahan) {
                 $potonganTambahan = 0;
                 $keteranganTambahan = '';
                 $namaEventTambahan = '';
@@ -623,16 +625,16 @@ class TelramCalculatorService
                 'label' => "Belum Waktunya ({$sisaHariMenujuUsul} hari lagi)",
                 'badge_class' => 'bg-secondary',
                 'sisa_hari' => $sisaHariMenujuUsul,
-                'pesan' => "Pengusulan berkas ke sistem & permintaan Litmas Bapas dapat dimulai pada {$this->formatTanggalIndonesia($tglMulaiPengusulan)} (tersisa {$sisaHariMenujuUsul} hari lagi).",
+                'pesan' => "Pengusulan di SDP dapat dimulai pada {$this->formatTanggalIndonesia($tglMulaiPengusulan)} (tersisa {$sisaHariMenujuUsul} hari lagi).",
             ];
         } elseif ($today->lte($tgl23Definitif)) {
-            $sisaHariJatuhTempo = (int) $today->diffInDays($tgl23Definitif);
+            $sisaHari23 = (int) $today->diffInDays($tgl23Definitif);
             $statusPengusulan = [
                 'kode' => 'waktunya_usul',
                 'label' => 'Waktunya Pengusulan!',
                 'badge_class' => 'bg-warning text-dark',
-                'sisa_hari' => $sisaHariJatuhTempo,
-                'pesan' => "Waktunya Pengusulan! Segera ajukan permintaan Litmas ke Bapas dan jadwalkan Sidang TPP UPT. Jatuh tempo 2/3 tercapai dalam {$sisaHariJatuhTempo} hari lagi ({$this->formatTanggalIndonesia($tgl23Definitif)}).",
+                'sisa_hari' => $sisaHari23,
+                'pesan' => "Waktunya Pengusulan! Pengusulan di SDP dapat diproses (H-2 bulan sebelum 2/3). Tanggal 2/3 masa pidana tercapai dalam {$sisaHari23} hari lagi ({$this->formatTanggalIndonesia($tgl23Definitif)}).",
             ];
         } else {
             $hariLewat = (int) $tgl23Definitif->diffInDays($today);
@@ -662,6 +664,10 @@ class TelramCalculatorService
             default => 'Reguler (Tanpa Remisi Tambahan)',
         };
 
+        if ($kategoriTambahan !== 'none' && $tahunMulaiTambahan > 1) {
+            $labelKategoriTambahan .= " (Mulai Tahun ke-{$tahunMulaiTambahan})";
+        }
+
         return [
             'mode' => 'simulasi_remisi',
             'target_basis' => $targetBasis,
@@ -680,6 +686,7 @@ class TelramCalculatorService
             'keterangan_program' => $keteranganProgram,
             'include_dasawarsa' => $includeDasawarsa,
             'kategori_tambahan' => $kategoriTambahan,
+            'tahun_mulai_tambahan' => $tahunMulaiTambahan,
             'label_kategori_tambahan' => $labelKategoriTambahan,
             'remisi_awal_hari' => $remisiAwalHari,
             'total_proyeksi_remisi_hari' => $totalHariRemisi,
@@ -1137,7 +1144,7 @@ ROW;
 </table>
 <hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
 
-<h1 style="color: #0f172a; margin-bottom: 1px;">LEMBAR ESTIMASI TELRAM &amp; PROYEKSI REMISI</h1>
+<h1 style="color: #0f172a; margin-bottom: 1px;">LEMBAR ESTIMASI TELRAM &amp; PERKIRAAN PERHITUNGAN</h1>
 <div align="center" style="font-size: 7.3pt; color: #475569; margin-bottom: 7px;">
     <i>Simulasi Reguler Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 &amp; Standar Operasional SDP Ditjenpas</i>
 </div>
@@ -1158,7 +1165,7 @@ ROW;
     <tr>
         <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Nomor Register</td>
         <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$noRegister}</td>
-        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Lama Vonis Pokok</td>
+        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 3px 6px;">Pidana Pokok</td>
         <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$lamaVonis} ({$totalHariVonis} hr)</td>
     </tr>
     <tr>
@@ -1192,7 +1199,7 @@ ROW;
             <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">1/2 Asimilasi</th>
             <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">2/3 {$namaProgram}</th>
             <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">Ekspirasi Definitif</th>
-            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">Total Remisi Diperoleh</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 4px;">Total Perkiraan Remisi</th>
         </tr>
     </thead>
     <tbody>
@@ -1221,18 +1228,18 @@ ROW;
     </tbody>
 </table>
 
-<!-- HIGHLIGHT ALERT: WAKTU MULAI PENGUSULAN KE SISTEM (H-2 BULAN SEBELUM 2/3) -->
+<!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3) -->
 <table width="100%" cellpadding="4" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 8px;">
     <tr>
         <td width="73%" valign="middle" style="padding: 5px 8px;">
             <span style="font-size: 7.5pt; font-weight: bold; color: #92400e; text-transform: uppercase;">
-                WAKTU MULAI PENGUSULAN INTEGRASI KE SISTEM (H-2 BULAN SEBELUM 2/3):
+                MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3):
             </span><br>
             <span style="font-size: 10.5pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
             <span style="font-size: 7.2pt; color: #78350f;">{$statusPesan}</span>
         </td>
         <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 5px 6px;">
-            <span style="font-size: 7pt; color: #78350f; font-weight: bold;">JATUH TEMPO 2/3 DEFINITIF</span><br>
+            <span style="font-size: 7pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br>
             <span style="font-size: 10.5pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
             <span style="font-size: 6.5pt; color: #555;">(2/3 Murni - Full Remisi)</span>
         </td>

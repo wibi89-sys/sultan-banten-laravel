@@ -394,6 +394,46 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('1/2 dari Remisi Umum', $tambahanEvent['keterangan_alasan']);
     }
 
+    public function test_simulasi_remisi_dengan_remisi_tambahan_mulai_tahun_kedua(): void
+    {
+        // Vonis 4 tahun, pemuka, mulai remisi tambahan sejak tahun ke-2 (tahunMulaiTambahan = 2)
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            4,
+            0,
+            0,
+            'islam',
+            0,
+            'Ahmad Santoso',
+            'BI.101/2024',
+            false,
+            'pemuka',
+            'ekspirasi',
+            2 // mulai tahun ke-2
+        );
+
+        $this->assertEquals(2, $result['tahun_mulai_tambahan']);
+
+        // RU ke-1 (2024): TIDAK boleh ada Remisi Tambahan
+        $rt2024 = null;
+        // RU ke-2 (2025): HARUS ada Remisi Tambahan
+        $rt2025 = null;
+
+        foreach ($result['proyeksi_ledger'] as $ev) {
+            if ($ev['jenis'] === 'RT') {
+                if ($ev['tahun'] === 2024) {
+                    $rt2024 = $ev;
+                } elseif ($ev['tahun'] === 2025) {
+                    $rt2025 = $ev;
+                }
+            }
+        }
+
+        $this->assertNull($rt2024, 'Remisi Tambahan pada tahun ke-1 tidak boleh diberikan bila mulai tahun ke-2.');
+        $this->assertNotNull($rt2025, 'Remisi Tambahan pada tahun ke-2 harus diberikan.');
+        $this->assertEquals(30, $rt2025['besaran_hari'], 'RU ke-2 adalah 90 hari, maka 1/3 dari 90 hari = 30 hari.');
+    }
+
     public function test_generate_pdf_report_returns_valid_pdf_binary(): void
     {
         $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
