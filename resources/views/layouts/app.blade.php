@@ -521,11 +521,6 @@
                     <a href="{{ route('pembersih-pdf.index') }}" class="{{ request()->routeIs('pembersih-pdf.*') ? 'active' : '' }}">
                         <i class="fas fa-broom text-primary"></i><span>Pembersih PDF</span>
                     </a>
-                    @if($user->isKanwil())
-                    <a href="{{ url('telaah-pc') }}" target="_blank" class="text-warning">
-                        <i class="fas fa-file-powerpoint text-warning"></i><span>Telaahan Khusus PB (Sidang)</span>
-                    </a>
-                    @endif
                 </div>
             </div>
             @endif
