@@ -280,35 +280,22 @@ class TelramCalculatorService
         if ($tahun > 0) {
             $tglEkspirasiMurni->addYearsNoOverflow($tahun);
         }
-        if ($bulan > 0) {
-            $tglEkspirasiMurni->addMonthsNoOverflow($bulan);
-        }
-        if ($hari > 0) {
-            $tglEkspirasiMurni->addDays($hari);
+        $sisaHariVonis = ($bulan * 30) + $hari;
+        if ($sisaHariVonis > 0) {
+            $tglEkspirasiMurni->addDays($sisaHariVonis);
         }
 
-        // Total hari baku untuk kalkulasi lama pidana
+        // Total hari baku: 1 Tahun = 360 hari (12 bln x 30 hari), 1 Bulan = 30 hari
         $totalHariVonis = ($tahun * 360) + ($bulan * 30) + $hari;
-        $totalBulan = ($tahun * 12) + $bulan;
 
-        // Tonggak Masa Pidana Murni Sesuai Standar Kalender Pemasyarakatan SDP Ditjenpas
-        // 1/3 Vonis Murni
-        $bln13 = (int) floor($totalBulan / 3);
-        $sisaBln13 = $totalBulan % 3;
-        $hr13Tambahan = (int) floor(($sisaBln13 * 30 + $hari) / 3);
-        $tgl13Murni = $tglAwal->copy()->addMonthsNoOverflow($bln13)->addDays($hr13Tambahan);
+        // Tonggak Masa Pidana Murni: Pidana pokok dikalikan 1/3, 1/2, 2/3
+        $hari13Murni = (int) floor($totalHariVonis / 3);
+        $hari12Murni = (int) floor($totalHariVonis / 2);
+        $hari23Murni = (int) floor(($totalHariVonis * 2) / 3);
 
-        // 1/2 Vonis Murni (Asimilasi)
-        $bln12 = (int) floor($totalBulan / 2);
-        $sisaBln12 = $totalBulan % 2;
-        $hr12Tambahan = (int) floor(($sisaBln12 * 30 + $hari) / 2);
-        $tgl12Murni = $tglAwal->copy()->addMonthsNoOverflow($bln12)->addDays($hr12Tambahan);
-
-        // 2/3 Vonis Murni (Syarat Waktu PB / CB)
-        $bln23 = (int) floor(($totalBulan * 2) / 3);
-        $sisaBln23 = ($totalBulan * 2) % 3;
-        $hr23Tambahan = (int) floor(($sisaBln23 * 30 + ($hari * 2)) / 3);
-        $tgl23Murni = $tglAwal->copy()->addMonthsNoOverflow($bln23)->addDays($hr23Tambahan);
+        $tgl13Murni = $tglAwal->copy()->addDays($hari13Murni);
+        $tgl12Murni = $tglAwal->copy()->addDays($hari12Murni);
+        $tgl23Murni = $tglAwal->copy()->addDays($hari23Murni);
 
         // 2. Tentukan Jenis Program Integrasi (PB vs CB)
         // Syarat CB: Pidana paling lama 1 tahun 6 bulan (18 bulan), minimal menjalani 2/3 (min 6 bulan = 180 hari)
@@ -370,37 +357,21 @@ class TelramCalculatorService
             $tgl23Murni,
             $tglMinIntegrasi,
             $tglMin12,
-            &$cumBulanRemisi,
-            &$cumHariRemisi
+            &$totalHariRemisi
         ) {
-            $totBln = $cumBulanRemisi + (int) floor($cumHariRemisi / 30);
-            $remDays = $cumHariRemisi % 30;
+            $curEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
 
-            $subRemisi = function (Carbon $base) use ($totBln, $remDays): Carbon {
-                $d = $base->copy();
-                if ($totBln > 0) {
-                    $d->subMonthsNoOverflow($totBln);
-                }
-                if ($remDays > 0) {
-                    $d->subDays($remDays);
-                }
-
-                return $d;
-            };
-
-            $curEkspirasi = $subRemisi($tglEkspirasiMurni);
-
-            $cur13 = $subRemisi($tgl13Murni);
+            $cur13 = $tgl13Murni->copy()->subDays($totalHariRemisi);
             if ($cur13->lt($tglAwal)) {
                 $cur13 = $tglAwal->copy();
             }
 
-            $cur12 = $subRemisi($tgl12Murni);
+            $cur12 = $tgl12Murni->copy()->subDays($totalHariRemisi);
             if ($cur12->lt($tglMin12)) {
                 $cur12 = $tglMin12->copy();
             }
 
-            $cur23 = $subRemisi($tgl23Murni);
+            $cur23 = $tgl23Murni->copy()->subDays($totalHariRemisi);
             if ($cur23->lt($tglMinIntegrasi)) {
                 $cur23 = $tglMinIntegrasi->copy();
             }

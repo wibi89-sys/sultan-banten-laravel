@@ -1513,26 +1513,15 @@
         if (vHri > 0) tglEkspirasiMurni.setDate(tglEkspirasiMurni.getDate() + vHri);
 
         const totalHariVonis = (vThn * 360) + (vBln * 30) + vHri;
-        const totalBulan = (vThn * 12) + vBln;
 
-        // Tonggak Murni Kalender SDP Ditjenpas
-        const bln13 = Math.floor(totalBulan / 3);
-        const sisaBln13 = totalBulan % 3;
-        const hr13Tambahan = Math.floor((sisaBln13 * 30 + vHri) / 3);
-        let tgl13Murni = addMonthsCalendar(tglAwal, bln13);
-        if (hr13Tambahan > 0) tgl13Murni = addDays(tgl13Murni, hr13Tambahan);
+        // Tonggak Masa Pidana Murni: Pidana pokok dikalikan 1/3, 1/2, 2/3
+        const hari13Murni = Math.floor(totalHariVonis / 3);
+        const hari12Murni = Math.floor(totalHariVonis / 2);
+        const hari23Murni = Math.floor((totalHariVonis * 2) / 3);
 
-        const bln12 = Math.floor(totalBulan / 2);
-        const sisaBln12 = totalBulan % 2;
-        const hr12Tambahan = Math.floor((sisaBln12 * 30 + vHri) / 2);
-        let tgl12Murni = addMonthsCalendar(tglAwal, bln12);
-        if (hr12Tambahan > 0) tgl12Murni = addDays(tgl12Murni, hr12Tambahan);
-
-        const bln23 = Math.floor((totalBulan * 2) / 3);
-        const sisaBln23 = (totalBulan * 2) % 3;
-        const hr23Tambahan = Math.floor((sisaBln23 * 30 + (vHri * 2)) / 3);
-        let tgl23Murni = addMonthsCalendar(tglAwal, bln23);
-        if (hr23Tambahan > 0) tgl23Murni = addDays(tgl23Murni, hr23Tambahan);
+        const tgl13Murni = addDays(tglAwal, hari13Murni);
+        const tgl12Murni = addDays(tglAwal, hari12Murni);
+        const tgl23Murni = addDays(tglAwal, hari23Murni);
 
         // PB vs CB
         const isCB = (totalBulan < 18) || (totalBulan === 18 && vHri === 0);
@@ -1575,26 +1564,16 @@
         let cumBulanRemisi = Math.floor(remisiAwal / 30);
         let cumHariRemisi = remisiAwal % 30;
 
-        const subMonthsDays = (baseDate, m, d) => {
-            let dt = new Date(baseDate);
-            if (m > 0) dt = addMonthsCalendar(dt, -m);
-            if (d > 0) dt = addDays(dt, -d);
-            return dt;
-        };
-
         const calcCurrentMilestones = () => {
-            const totBln = cumBulanRemisi + Math.floor(cumHariRemisi / 30);
-            const remDays = cumHariRemisi % 30;
+            const curEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
 
-            const curEkspirasi = subMonthsDays(tglEkspirasiMurni, totBln, remDays);
-
-            let cur13 = subMonthsDays(tgl13Murni, totBln, remDays);
+            let cur13 = addDays(tgl13Murni, -totalHariRemisi);
             if (cur13 < tglAwal) cur13 = new Date(tglAwal);
 
-            let cur12 = subMonthsDays(tgl12Murni, totBln, remDays);
+            let cur12 = addDays(tgl12Murni, -totalHariRemisi);
             if (cur12 < tglMin12) cur12 = new Date(tglMin12);
 
-            let cur23 = subMonthsDays(tgl23Murni, totBln, remDays);
+            let cur23 = addDays(tgl23Murni, -totalHariRemisi);
             if (cur23 < tglMinIntegrasi) cur23 = new Date(tglMinIntegrasi);
 
             return [curEkspirasi, cur13, cur12, cur23];
