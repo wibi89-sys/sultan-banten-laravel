@@ -21,29 +21,23 @@ class TelramCalculatorService
             throw new InvalidArgumentException('Lama pidana vonis harus lebih dari 0.');
         }
 
-        // Aturan Perhitungan Ekspirasi:
-        // 1. Dimulai dari tahun: jika ada tahun, tambah tahun di tanggal & bulan yang sama
+        // Aturan Perhitungan Ekspirasi & Tonggak Pidana:
+        // 1. Dimulai dari tahun: jika ada tahun, tambah tahun di tanggal & bulan yang sama (addYearsNoOverflow)
         // 2. Kemudian geser bulan dan hari: 1 bulan = 30 hari kalender aktual
-        $tglEkspirasi = $tglAwal->copy();
+        $tglEkspirasi = self::tambahDurasiVonis($tglAwal, $tahun, $bulan, $hari);
 
-        if ($tahun > 0) {
-            $tglEkspirasi->addYearsNoOverflow($tahun);
-        }
+        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        // Dihitung dari tanggal awal penahanan dengan kaidah hitung vonis yang sama
+        [$y13, $m13, $d13] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
+        [$y12, $m12, $d12] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
+        [$y23, $m23, $d23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
 
-        $sisaHari = ($bulan * 30) + $hari;
-        if ($sisaHari > 0) {
-            $tglEkspirasi->addDays($sisaHari);
-        }
+        $tgl13 = self::tambahDurasiVonis($tglAwal, $y13, $m13, $d13);
+        $tgl12 = self::tambahDurasiVonis($tglAwal, $y12, $m12, $d12);
+        $tgl23 = self::tambahDurasiVonis($tglAwal, $y23, $m23, $d23);
 
         // Total hari baku: 1 Tahun = 360 hari (12 bln x 30 hari), 1 Bulan = 30 hari
         $totalHariVonis = ($tahun * 360) + ($bulan * 30) + $hari;
-        $hari13 = (int) floor($totalHariVonis / 3);
-        $hari12 = (int) floor($totalHariVonis / 2);
-        $hari23 = (int) floor(($totalHariVonis * 2) / 3);
-
-        $tgl13 = $tglAwal->copy()->addDays($hari13);
-        $tgl12 = $tglAwal->copy()->addDays($hari12);
-        $tgl23 = $tglAwal->copy()->addDays($hari23);
 
         $formatVonis = [];
         if ($tahun > 0) {
@@ -104,14 +98,16 @@ class TelramCalculatorService
         $vBln = (int) floor($diffDays / 30);
         $vHri = (int) ($diffDays % 30);
 
-        $totalHariVonis = ($vThn * 360) + ($vBln * 30) + $vHri;
-        $hari13 = (int) floor($totalHariVonis / 3);
-        $hari12 = (int) floor($totalHariVonis / 2);
-        $hari23 = (int) floor(($totalHariVonis * 2) / 3);
+        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        [$y13, $m13, $d13] = self::hitungDurasiFraksi($vThn, $vBln, $vHri, 1, 3);
+        [$y12, $m12, $d12] = self::hitungDurasiFraksi($vThn, $vBln, $vHri, 1, 2);
+        [$y23, $m23, $d23] = self::hitungDurasiFraksi($vThn, $vBln, $vHri, 2, 3);
 
-        $tgl13 = $tglAwal->copy()->addDays($hari13);
-        $tgl12 = $tglAwal->copy()->addDays($hari12);
-        $tgl23 = $tglAwal->copy()->addDays($hari23);
+        $tgl13 = self::tambahDurasiVonis($tglAwal, $y13, $m13, $d13);
+        $tgl12 = self::tambahDurasiVonis($tglAwal, $y12, $m12, $d12);
+        $tgl23 = self::tambahDurasiVonis($tglAwal, $y23, $m23, $d23);
+
+        $totalHariVonis = ($vThn * 360) + ($vBln * 30) + $vHri;
 
         $formatVonis = [];
         if ($vThn > 0) {
@@ -276,26 +272,20 @@ class TelramCalculatorService
         }
 
         // 1. Ekspirasi Murni (Sebelum Remisi)
-        $tglEkspirasiMurni = $tglAwal->copy();
-        if ($tahun > 0) {
-            $tglEkspirasiMurni->addYearsNoOverflow($tahun);
-        }
-        $sisaHariVonis = ($bulan * 30) + $hari;
-        if ($sisaHariVonis > 0) {
-            $tglEkspirasiMurni->addDays($sisaHariVonis);
-        }
+        $tglEkspirasiMurni = self::tambahDurasiVonis($tglAwal, $tahun, $bulan, $hari);
+
+        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        // Dihitung dari tanggal awal penahanan dengan kaidah hitung vonis yang sama
+        [$y13Murni, $m13Murni, $d13Murni] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
+        [$y12Murni, $m12Murni, $d12Murni] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
+        [$y23Murni, $m23Murni, $d23Murni] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
+
+        $tgl13Murni = self::tambahDurasiVonis($tglAwal, $y13Murni, $m13Murni, $d13Murni);
+        $tgl12Murni = self::tambahDurasiVonis($tglAwal, $y12Murni, $m12Murni, $d12Murni);
+        $tgl23Murni = self::tambahDurasiVonis($tglAwal, $y23Murni, $m23Murni, $d23Murni);
 
         // Total hari baku: 1 Tahun = 360 hari (12 bln x 30 hari), 1 Bulan = 30 hari
         $totalHariVonis = ($tahun * 360) + ($bulan * 30) + $hari;
-
-        // Tonggak Masa Pidana Murni: Pidana pokok dikalikan 1/3, 1/2, 2/3
-        $hari13Murni = (int) floor($totalHariVonis / 3);
-        $hari12Murni = (int) floor($totalHariVonis / 2);
-        $hari23Murni = (int) floor(($totalHariVonis * 2) / 3);
-
-        $tgl13Murni = $tglAwal->copy()->addDays($hari13Murni);
-        $tgl12Murni = $tglAwal->copy()->addDays($hari12Murni);
-        $tgl23Murni = $tglAwal->copy()->addDays($hari23Murni);
 
         // 2. Tentukan Jenis Program Integrasi (PB vs CB)
         // Syarat CB: Pidana paling lama 1 tahun 6 bulan (18 bulan), minimal menjalani 2/3 (min 6 bulan = 180 hari)
@@ -851,6 +841,54 @@ class TelramCalculatorService
         }
 
         return implode(', ', $parts) ?: '0 Hari';
+    }
+
+    /**
+     * Hitung durasi pecahan dari masa pidana vonis (1/3, 1/2, 2/3)
+     * dalam satuan proporsional baku Tahun, Bulan, Hari
+     *
+     * @return array{0: int, 1: int, 2: int} [tahun, bulan, hari]
+     */
+    public static function hitungDurasiFraksi(int $tahun, int $bulan, int $hari, int $num, int $den): array
+    {
+        $totalBulan = ($tahun * 12) + $bulan;
+        $fracBulan = ($totalBulan * $num) / $den;
+        $fracHari = ($hari * $num) / $den;
+
+        $wholeBulan = (int) floor($fracBulan);
+        $sisaBulanFrac = $fracBulan - $wholeBulan;
+        $sisaHari = (int) round(($sisaBulanFrac * 30) + $fracHari);
+
+        if ($sisaHari >= 30) {
+            $wholeBulan += (int) floor($sisaHari / 30);
+            $sisaHari = $sisaHari % 30;
+        }
+
+        $outTahun = (int) floor($wholeBulan / 12);
+        $outBulan = $wholeBulan % 12;
+        $outHari = $sisaHari;
+
+        return [$outTahun, $outBulan, $outHari];
+    }
+
+    /**
+     * Tambahkan durasi pidana vonis ke tanggal awal:
+     * - Tahun: dari tanggal ke tanggal yang sama di tahun berikutnya (addYearsNoOverflow)
+     * - Sisa bulan & hari: 1 bulan = 30 hari kalender aktual
+     */
+    public static function tambahDurasiVonis(Carbon $tglAwal, int $tahun, int $bulan, int $hari): Carbon
+    {
+        $tgl = $tglAwal->copy();
+        if ($tahun > 0) {
+            $tgl->addYearsNoOverflow($tahun);
+        }
+
+        $sisaHari = ($bulan * 30) + $hari;
+        if ($sisaHari > 0) {
+            $tgl->addDays($sisaHari);
+        }
+
+        return $tgl;
     }
 
     /**

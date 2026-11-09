@@ -1445,6 +1445,35 @@
         return parts.join(', ') || '0 Hari';
     }
 
+    function hitungDurasiFraksi(tahun, bulan, hari, num, den) {
+        const totalBulan = (tahun * 12) + bulan;
+        const fracBulan = (totalBulan * num) / den;
+        const fracHari = (hari * num) / den;
+
+        let wholeBulan = Math.floor(fracBulan);
+        const sisaBulanFrac = fracBulan - wholeBulan;
+        let sisaHari = Math.round((sisaBulanFrac * 30) + fracHari);
+
+        if (sisaHari >= 30) {
+            wholeBulan += Math.floor(sisaHari / 30);
+            sisaHari = sisaHari % 30;
+        }
+
+        const outTahun = Math.floor(wholeBulan / 12);
+        const outBulan = wholeBulan % 12;
+        const outHari = sisaHari;
+
+        return [outTahun, outBulan, outHari];
+    }
+
+    function tambahDurasiVonis(tglAwal, tahun, bulan, hari) {
+        let d = new Date(tglAwal);
+        if (tahun > 0) d = addYearsCalendar(d, tahun);
+        const sisaHari = (bulan * 30) + hari;
+        if (sisaHari > 0) d = addDays(d, sisaHari);
+        return d;
+    }
+
     // Tabel Kalender Hari Raya
     const idulFitriTable = {
         2020: ['2020-05-24'], 2021: ['2021-05-13'], 2022: ['2022-05-02'],
@@ -1507,21 +1536,19 @@
         const tglAwal = new Date(y, m - 1, d);
 
         // Ekspirasi Murni
-        let tglEkspirasiMurni = new Date(tglAwal);
-        if (vThn > 0) tglEkspirasiMurni = addYearsCalendar(tglEkspirasiMurni, vThn);
-        if (vBln > 0) tglEkspirasiMurni = addMonthsCalendar(tglEkspirasiMurni, vBln);
-        if (vHri > 0) tglEkspirasiMurni.setDate(tglEkspirasiMurni.getDate() + vHri);
+        const tglEkspirasiMurni = tambahDurasiVonis(tglAwal, vThn, vBln, vHri);
+
+        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        // Dihitung dari tanggal awal penahanan dengan kaidah hitung vonis yang sama
+        const [y13Murni, m13Murni, d13Murni] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 3);
+        const [y12Murni, m12Murni, d12Murni] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 2);
+        const [y23Murni, m23Murni, d23Murni] = hitungDurasiFraksi(vThn, vBln, vHri, 2, 3);
+
+        const tgl13Murni = tambahDurasiVonis(tglAwal, y13Murni, m13Murni, d13Murni);
+        const tgl12Murni = tambahDurasiVonis(tglAwal, y12Murni, m12Murni, d12Murni);
+        const tgl23Murni = tambahDurasiVonis(tglAwal, y23Murni, m23Murni, d23Murni);
 
         const totalHariVonis = (vThn * 360) + (vBln * 30) + vHri;
-
-        // Tonggak Masa Pidana Murni: Pidana pokok dikalikan 1/3, 1/2, 2/3
-        const hari13Murni = Math.floor(totalHariVonis / 3);
-        const hari12Murni = Math.floor(totalHariVonis / 2);
-        const hari23Murni = Math.floor((totalHariVonis * 2) / 3);
-
-        const tgl13Murni = addDays(tglAwal, hari13Murni);
-        const tgl12Murni = addDays(tglAwal, hari12Murni);
-        const tgl23Murni = addDays(tglAwal, hari23Murni);
 
         // PB vs CB
         const isCB = (totalBulan < 18) || (totalBulan === 18 && vHri === 0);
@@ -2023,15 +2050,18 @@
         const [y, m, d] = inputTgl.split('-').map(Number);
         const tglAwal = new Date(y, m - 1, d);
 
-        let tglEkspirasi = new Date(tglAwal);
-        if (vThn > 0) tglEkspirasi = addYearsCalendar(tglEkspirasi, vThn);
-        const sisaHari = (vBln * 30) + vHri;
-        if (sisaHari > 0) tglEkspirasi.setDate(tglEkspirasi.getDate() + sisaHari);
+        const tglEkspirasi = tambahDurasiVonis(tglAwal, vThn, vBln, vHri);
+
+        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        const [y13, m13, d13] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 3);
+        const [y12, m12, d12] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 2);
+        const [y23, m23, d23] = hitungDurasiFraksi(vThn, vBln, vHri, 2, 3);
+
+        const tgl13 = tambahDurasiVonis(tglAwal, y13, m13, d13);
+        const tgl12 = tambahDurasiVonis(tglAwal, y12, m12, d12);
+        const tgl23 = tambahDurasiVonis(tglAwal, y23, m23, d23);
 
         const totalHariVonis = (vThn * 360) + (vBln * 30) + vHri;
-        const hari13 = Math.floor(totalHariVonis / 3);
-        const hari12 = Math.floor(totalHariVonis / 2);
-        const hari23 = Math.floor((totalHariVonis * 2) / 3);
 
         lastResult = {
             mode: 'maju',
@@ -2039,9 +2069,9 @@
             lamaPidanaTeks: `${vThn} Tahun ${vBln} Bulan ${vHri} Hari`,
             totalHariVonis: totalHariVonis,
             tglEkspirasi: tglEkspirasi,
-            tgl13: addDays(tglAwal, hari13),
-            tgl12: addDays(tglAwal, hari12),
-            tgl23: addDays(tglAwal, hari23)
+            tgl13: tgl13,
+            tgl12: tgl12,
+            tgl23: tgl23
         };
 
         document.getElementById('boxHeroPengusulan').classList.add('d-none');
@@ -2127,9 +2157,13 @@
         const totalHariVonis = Math.round(diffMs / (1000 * 60 * 60 * 24));
         const lamaPidanaTeks = `${years} Tahun, ${months} Bulan, ${days} Hari`;
 
-        const hari13 = Math.floor(totalHariVonis / 3);
-        const hari12 = Math.floor(totalHariVonis / 2);
-        const hari23 = Math.floor((totalHariVonis * 2) / 3);
+        const [y13, m13, d13] = hitungDurasiFraksi(years, months, days, 1, 3);
+        const [y12, m12, d12] = hitungDurasiFraksi(years, months, days, 1, 2);
+        const [y23, m23, d23] = hitungDurasiFraksi(years, months, days, 2, 3);
+
+        const tgl13 = tambahDurasiVonis(tglAwal, y13, m13, d13);
+        const tgl12 = tambahDurasiVonis(tglAwal, y12, m12, d12);
+        const tgl23 = tambahDurasiVonis(tglAwal, y23, m23, d23);
 
         lastResult = {
             mode: 'mundur',
@@ -2137,9 +2171,9 @@
             tglEkspirasi: tglEkspirasi,
             lamaPidanaTeks: lamaPidanaTeks,
             totalHariVonis: totalHariVonis,
-            tgl13: addDays(tglAwal, hari13),
-            tgl12: addDays(tglAwal, hari12),
-            tgl23: addDays(tglAwal, hari23)
+            tgl13: tgl13,
+            tgl12: tgl12,
+            tgl23: tgl23
         };
 
         document.getElementById('boxHeroPengusulan').classList.add('d-none');

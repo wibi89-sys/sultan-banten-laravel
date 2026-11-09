@@ -223,11 +223,11 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('Pembebasan Bersyarat (PB)', $result['nama_program']);
         $this->assertEquals('2027-01-01', $result['milestones']['ekspirasi_murni']);
 
-        // 2/3 murni dari 3 tahun (1080 hari baku): 720 hari dari 1 Jan 2024 = 21 Des 2025 (karena 2024 kabisat)
+        // Tonggak murni sesuai kaidah vonis: 1/3 = 1 thn (01/01/2025), 1/2 = 1 thn 6 bln (30/06/2025), 2/3 = 2 thn (01/01/2026)
         $this->assertEquals(1080, $result['total_hari_vonis']);
-        $this->assertEquals('2025-12-21', $result['milestones']['tgl_2_3_murni']);
-        $this->assertEquals('2024-12-26', $result['milestones']['tgl_1_3_murni']);
-        $this->assertEquals('2025-06-24', $result['milestones']['tgl_1_2_murni']);
+        $this->assertEquals('2026-01-01', $result['milestones']['tgl_2_3_murni']);
+        $this->assertEquals('2025-01-01', $result['milestones']['tgl_1_3_murni']);
+        $this->assertEquals('2025-06-30', $result['milestones']['tgl_1_2_murni']);
         $this->assertArrayHasKey('tgl_1_3_definitif', $result['milestones']);
 
         // Verifikasi ledger ada dan memiliki proyeksi remisi beserta tonggak baru (1/3, 1/2, 2/3)
@@ -548,16 +548,16 @@ class TelramCalculatorServiceTest extends TestCase
         }
 
         $this->assertNotNull($eventRt2026, 'Event RT Jasa Negara 2026 harus ada.');
-        $this->assertEquals('2023-12-24', $eventRt2026['tgl_1_3_baru'], '1/3 sebelum Natal 2026 (potongan 750 hari) harus 2023-12-24.');
-        $this->assertEquals('2025-08-15', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 (potongan 750 hari) harus 2025-08-15.');
-        $this->assertEquals('2027-04-07', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 (potongan 750 hari) harus 2027-04-07.');
+        $this->assertEquals('2024-01-09', $eventRt2026['tgl_1_3_baru'], '1/3 sebelum Natal 2026 (potongan 750 hari) harus 2024-01-09.');
+        $this->assertEquals('2025-09-10', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 (potongan 750 hari) harus 2025-09-10.');
+        $this->assertEquals('2027-05-09', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 (potongan 750 hari) harus 2027-05-09.');
         $this->assertEquals('2030-09-11', $eventRt2026['perkiraan_ekspirasi_baru'], 'Ekspirasi sebelum Natal 2026 harus 2030-09-11.');
         $this->assertEquals('26 Bulan, 15 Hari', $result['total_proyeksi_remisi_teks'], 'Total remisi harus dinyatakan dalam Bulan dan Hari (tanpa akumulasi tahun).');
 
         // Hasil definitif akhir setelah RK Natal 2026 (potongan 795 hari):
-        $this->assertEquals('2025-07-01', $result['milestones']['tgl_1_2_definitif'], '1/2 Definitif harus 01 Juli 2025.');
-        $this->assertEquals('2027-02-21', $result['milestones']['tgl_2_3_definitif'], '2/3 Definitif harus 21 Februari 2027.');
-        $this->assertEquals('2026-12-23', $result['milestones']['tgl_mulai_pengusulan'], 'Mulai usul SDP harus 23 Desember 2026.');
+        $this->assertEquals('2025-07-27', $result['milestones']['tgl_1_2_definitif'], '1/2 Definitif harus 27 Juli 2025.');
+        $this->assertEquals('2027-03-25', $result['milestones']['tgl_2_3_definitif'], '2/3 Definitif harus 25 Maret 2027.');
+        $this->assertEquals('2027-01-24', $result['milestones']['tgl_mulai_pengusulan'], 'Mulai usul SDP harus 24 Januari 2027.');
         $this->assertEquals('2030-07-28', $result['milestones']['ekspirasi_definitif'], 'Ekspirasi Akhir harus 28 Juli 2030.');
     }
 }
