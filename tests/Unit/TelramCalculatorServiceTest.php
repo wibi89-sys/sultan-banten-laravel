@@ -549,7 +549,9 @@ class TelramCalculatorServiceTest extends TestCase
 
         $this->assertNotNull($eventRt2026, 'Event RT Jasa Negara 2026 harus ada.');
         $this->assertEquals('2023-12-30', $eventRt2026['tgl_1_3_baru'], '1/3 sebelum Natal 2026 harus 30/12/2023.');
-        $this->assertEquals('2025-08-27', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 harus 27/08/2025.');
-        $this->assertEquals('2027-04-29', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 harus 29/04/2027.');
+        $this->assertEquals('2025-08-30', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 harus 30/08/2025.');
+        $this->assertEquals('2027-04-30', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 harus 30/04/2027.');
+        $this->assertEquals('2030-08-30', $eventRt2026['perkiraan_ekspirasi_baru'], 'Ekspirasi sebelum Natal 2026 harus 30/08/2030.');
+        $this->assertEquals('26 Bulan, 15 Hari', $result['total_proyeksi_remisi_teks'], 'Total remisi harus dinyatakan dalam Bulan dan Hari (tanpa akumulasi tahun).');
     }
 }

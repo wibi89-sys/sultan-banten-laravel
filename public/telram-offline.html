@@ -1435,6 +1435,16 @@
         return parts.join(', ') || '0 Hari';
     }
 
+    function formatRemisiBulanHari(totalHari) {
+        if (totalHari <= 0) return '0 Hari';
+        const bln = Math.floor(totalHari / 30);
+        const hri = totalHari % 30;
+        let parts = [];
+        if (bln > 0) parts.push(`${bln} Bulan`);
+        if (hri > 0) parts.push(`${hri} Hari`);
+        return parts.join(', ') || '0 Hari';
+    }
+
     // Tabel Kalender Hari Raya
     const idulFitriTable = {
         2020: ['2020-05-24'], 2021: ['2021-05-13'], 2022: ['2022-05-02'],
@@ -1517,18 +1527,12 @@
         const hr12Tambahan = Math.floor((sisaBln12 * 30 + vHri) / 2);
         let tgl12Murni = addMonthsCalendar(tglAwal, bln12);
         if (hr12Tambahan > 0) tgl12Murni = addDays(tgl12Murni, hr12Tambahan);
-        if (vThn >= 10 && vBln === 0 && vHri === 0 && tglAwal.getDate() === 30) {
-            tgl12Murni = addDays(tgl12Murni, -3);
-        }
 
         const bln23 = Math.floor((totalBulan * 2) / 3);
         const sisaBln23 = (totalBulan * 2) % 3;
         const hr23Tambahan = Math.floor((sisaBln23 * 30 + (vHri * 2)) / 3);
         let tgl23Murni = addMonthsCalendar(tglAwal, bln23);
         if (hr23Tambahan > 0) tgl23Murni = addDays(tgl23Murni, hr23Tambahan);
-        if (vThn >= 10 && vBln === 0 && vHri === 0 && tglAwal.getDate() === 30) {
-            tgl23Murni = addDays(tgl23Murni, -1);
-        }
 
         // PB vs CB
         const isCB = (totalBulan < 18) || (totalBulan === 18 && vHri === 0);
@@ -1571,9 +1575,8 @@
         let cumBulanRemisi = Math.floor(remisiAwal / 30);
         let cumHariRemisi = remisiAwal % 30;
 
-        const subYearsMonthsDays = (baseDate, y, m, d) => {
+        const subMonthsDays = (baseDate, m, d) => {
             let dt = new Date(baseDate);
-            if (y > 0) dt = addYearsCalendar(dt, -y);
             if (m > 0) dt = addMonthsCalendar(dt, -m);
             if (d > 0) dt = addDays(dt, -d);
             return dt;
@@ -1582,18 +1585,16 @@
         const calcCurrentMilestones = () => {
             const totBln = cumBulanRemisi + Math.floor(cumHariRemisi / 30);
             const remDays = cumHariRemisi % 30;
-            const remYears = Math.floor(totBln / 12);
-            const remMonths = totBln % 12;
 
-            const curEkspirasi = subYearsMonthsDays(tglEkspirasiMurni, remYears, remMonths, remDays);
+            const curEkspirasi = subMonthsDays(tglEkspirasiMurni, totBln, remDays);
 
-            let cur13 = subYearsMonthsDays(tgl13Murni, remYears, remMonths, remDays);
+            let cur13 = subMonthsDays(tgl13Murni, totBln, remDays);
             if (cur13 < tglAwal) cur13 = new Date(tglAwal);
 
-            let cur12 = subYearsMonthsDays(tgl12Murni, remYears, remMonths, remDays);
+            let cur12 = subMonthsDays(tgl12Murni, totBln, remDays);
             if (cur12 < tglMin12) cur12 = new Date(tglMin12);
 
-            let cur23 = subYearsMonthsDays(tgl23Murni, remYears, remMonths, remDays);
+            let cur23 = subMonthsDays(tgl23Murni, totBln, remDays);
             if (cur23 < tglMinIntegrasi) cur23 = new Date(tglMinIntegrasi);
 
             return [curEkspirasi, cur13, cur12, cur23];
@@ -1906,7 +1907,7 @@
         document.getElementById('subEkspirasiMurni').classList.remove('d-none');
         document.getElementById('resEkspirasiMurniText').innerText = formatDateIndo(tglEkspirasiMurni);
         document.getElementById('boxTotalRemisiBadge').classList.remove('d-none');
-        document.getElementById('resTotalRemisiText').innerText = `${totalHariRemisi} Hari (${formatHariTeks(totalHariRemisi)})`;
+        document.getElementById('resTotalRemisiText').innerText = `${totalHariRemisi} Hari (${formatRemisiBulanHari(totalHariRemisi)})`;
 
         document.getElementById('res13').innerText = formatDateIndo(tgl13Definitif);
         const subInfo13 = document.getElementById('subInfo13');

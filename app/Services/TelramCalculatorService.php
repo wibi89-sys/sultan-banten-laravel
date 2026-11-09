@@ -303,18 +303,12 @@ class TelramCalculatorService
         $sisaBln12 = $totalBulan % 2;
         $hr12Tambahan = (int) floor(($sisaBln12 * 30 + $hari) / 2);
         $tgl12Murni = $tglAwal->copy()->addMonthsNoOverflow($bln12)->addDays($hr12Tambahan);
-        if ($tahun >= 10 && $bulan === 0 && $hari === 0 && $tglAwal->day === 30) {
-            $tgl12Murni->subDays(3);
-        }
 
         // 2/3 Vonis Murni (Syarat Waktu PB / CB)
         $bln23 = (int) floor(($totalBulan * 2) / 3);
         $sisaBln23 = ($totalBulan * 2) % 3;
         $hr23Tambahan = (int) floor(($sisaBln23 * 30 + ($hari * 2)) / 3);
         $tgl23Murni = $tglAwal->copy()->addMonthsNoOverflow($bln23)->addDays($hr23Tambahan);
-        if ($tahun >= 10 && $bulan === 0 && $hari === 0 && $tglAwal->day === 30) {
-            $tgl23Murni->subDays(1);
-        }
 
         // 2. Tentukan Jenis Program Integrasi (PB vs CB)
         // Syarat CB: Pidana paling lama 1 tahun 6 bulan (18 bulan), minimal menjalani 2/3 (min 6 bulan = 180 hari)
@@ -381,16 +375,11 @@ class TelramCalculatorService
         ) {
             $totBln = $cumBulanRemisi + (int) floor($cumHariRemisi / 30);
             $remDays = $cumHariRemisi % 30;
-            $remYears = (int) floor($totBln / 12);
-            $remMonths = $totBln % 12;
 
-            $subRemisi = function (Carbon $base) use ($remYears, $remMonths, $remDays): Carbon {
+            $subRemisi = function (Carbon $base) use ($totBln, $remDays): Carbon {
                 $d = $base->copy();
-                if ($remYears > 0) {
-                    $d->subYearsNoOverflow($remYears);
-                }
-                if ($remMonths > 0) {
-                    $d->subMonthsNoOverflow($remMonths);
+                if ($totBln > 0) {
+                    $d->subMonthsNoOverflow($totBln);
                 }
                 if ($remDays > 0) {
                     $d->subDays($remDays);
@@ -813,7 +802,7 @@ class TelramCalculatorService
             'label_kategori_tambahan' => $labelKategoriTambahan,
             'remisi_awal_hari' => $remisiAwalHari,
             'total_proyeksi_remisi_hari' => $totalHariRemisi,
-            'total_proyeksi_remisi_teks' => self::formatHariKeTeks($totalHariRemisi),
+            'total_proyeksi_remisi_teks' => self::formatRemisiBulanHari($totalHariRemisi),
             'status_pengusulan' => $statusPengusulan,
             'milestones' => [
                 'ekspirasi_murni' => $tglEkspirasiMurni->toDateString(),
@@ -860,6 +849,29 @@ class TelramCalculatorService
         if ($thn > 0) {
             $parts[] = "{$thn} Tahun";
         }
+        if ($bln > 0) {
+            $parts[] = "{$bln} Bulan";
+        }
+        if ($hri > 0) {
+            $parts[] = "{$hri} Hari";
+        }
+
+        return implode(', ', $parts) ?: '0 Hari';
+    }
+
+    /**
+     * Konversi jumlah hari remisi ke format baku Pemasyarakatan (Bulan dan Hari, tanpa akumulasi tahun)
+     */
+    public static function formatRemisiBulanHari(int $totalHari): string
+    {
+        if ($totalHari <= 0) {
+            return '0 Hari';
+        }
+
+        $bln = (int) floor($totalHari / 30);
+        $hri = $totalHari % 30;
+
+        $parts = [];
         if ($bln > 0) {
             $parts[] = "{$bln} Bulan";
         }
