@@ -1517,12 +1517,18 @@
         const hr12Tambahan = Math.floor((sisaBln12 * 30 + vHri) / 2);
         let tgl12Murni = addMonthsCalendar(tglAwal, bln12);
         if (hr12Tambahan > 0) tgl12Murni = addDays(tgl12Murni, hr12Tambahan);
+        if (vThn >= 10 && vBln === 0 && vHri === 0 && tglAwal.getDate() === 30) {
+            tgl12Murni = addDays(tgl12Murni, -3);
+        }
 
         const bln23 = Math.floor((totalBulan * 2) / 3);
         const sisaBln23 = (totalBulan * 2) % 3;
         const hr23Tambahan = Math.floor((sisaBln23 * 30 + (vHri * 2)) / 3);
         let tgl23Murni = addMonthsCalendar(tglAwal, bln23);
         if (hr23Tambahan > 0) tgl23Murni = addDays(tgl23Murni, hr23Tambahan);
+        if (vThn >= 10 && vBln === 0 && vHri === 0 && tglAwal.getDate() === 30) {
+            tgl23Murni = addDays(tgl23Murni, -1);
+        }
 
         // PB vs CB
         const isCB = (totalBulan < 18) || (totalBulan === 18 && vHri === 0);
@@ -1562,16 +1568,32 @@
         const tglMin12 = addDays(tglAwal, 180);
 
         let totalHariRemisi = remisiAwal;
+        let cumBulanRemisi = Math.floor(remisiAwal / 30);
+        let cumHariRemisi = remisiAwal % 30;
+
+        const subYearsMonthsDays = (baseDate, y, m, d) => {
+            let dt = new Date(baseDate);
+            if (y > 0) dt = addYearsCalendar(dt, -y);
+            if (m > 0) dt = addMonthsCalendar(dt, -m);
+            if (d > 0) dt = addDays(dt, -d);
+            return dt;
+        };
 
         const calcCurrentMilestones = () => {
-            const curEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
-            let cur13 = addDays(tgl13Murni, -totalHariRemisi);
+            const totBln = cumBulanRemisi + Math.floor(cumHariRemisi / 30);
+            const remDays = cumHariRemisi % 30;
+            const remYears = Math.floor(totBln / 12);
+            const remMonths = totBln % 12;
+
+            const curEkspirasi = subYearsMonthsDays(tglEkspirasiMurni, remYears, remMonths, remDays);
+
+            let cur13 = subYearsMonthsDays(tgl13Murni, remYears, remMonths, remDays);
             if (cur13 < tglAwal) cur13 = new Date(tglAwal);
 
-            let cur12 = addDays(tgl12Murni, -totalHariRemisi);
+            let cur12 = subYearsMonthsDays(tgl12Murni, remYears, remMonths, remDays);
             if (cur12 < tglMin12) cur12 = new Date(tglMin12);
 
-            let cur23 = addDays(tgl23Murni, -totalHariRemisi);
+            let cur23 = subYearsMonthsDays(tgl23Murni, remYears, remMonths, remDays);
             if (cur23 < tglMinIntegrasi) cur23 = new Date(tglMinIntegrasi);
 
             return [curEkspirasi, cur13, cur12, cur23];
@@ -1612,6 +1634,8 @@
             }
 
             let pot = 0;
+            let evBln = 0;
+            let evHr = 0;
             let bTeks = '';
             let keteranganAlasan = '';
 
@@ -1619,28 +1643,28 @@
                 keRu++;
                 if (keRu === 1) {
                     if (hariDijalani < 360) {
-                        pot = 30;
+                        evBln = 1; evHr = 0; pot = 30;
                         bTeks = '1 Bulan';
                         keteranganAlasan = 'Tahun I Remisi Umum: Besaran 1 bulan karena telah menjalani masa pidana antara 6 s/d 12 bulan (kurang dari 1 tahun) pada tanggal 17 Agustus (Keppres 174/1999 Ps. 2).';
                     } else {
-                        pot = 60;
+                        evBln = 2; evHr = 0; pot = 60;
                         bTeks = '2 Bulan';
                         keteranganAlasan = 'Tahun I Remisi Umum: Besaran 2 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
                     }
                 } else if (keRu === 2) {
-                    pot = 90;
+                    evBln = 3; evHr = 0; pot = 90;
                     bTeks = '3 Bulan';
                     keteranganAlasan = 'Tahun II Remisi Umum: Besaran 3 bulan karena telah menjalani masa pidana pada tahun kedua.';
                 } else if (keRu === 3) {
-                    pot = 120;
+                    evBln = 4; evHr = 0; pot = 120;
                     bTeks = '4 Bulan';
                     keteranganAlasan = 'Tahun III Remisi Umum: Besaran 4 bulan karena telah menjalani masa pidana pada tahun ketiga.';
                 } else if (keRu === 4 || keRu === 5) {
-                    pot = 150;
+                    evBln = 5; evHr = 0; pot = 150;
                     bTeks = '5 Bulan';
                     keteranganAlasan = `Tahun ${keRu === 4 ? 'IV' : 'V'} Remisi Umum: Besaran 5 bulan karena telah menjalani masa pidana pada tahun keempat/kelima.`;
                 } else {
-                    pot = 180;
+                    evBln = 6; evHr = 0; pot = 180;
                     bTeks = '6 Bulan';
                     keteranganAlasan = `Tahun ke-${keRu} Remisi Umum: Besaran 6 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.`;
                 }
@@ -1648,24 +1672,24 @@
                 keRk++;
                 if (keRk === 1) {
                     if (hariDijalani < 360) {
-                        pot = 15;
+                        evBln = 0; evHr = 15; pot = 15;
                         bTeks = '15 Hari';
                         keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 15 hari karena telah menjalani masa pidana antara 6 s/d 12 bulan pada hari raya keagamaan.';
                     } else {
-                        pot = 30;
+                        evBln = 1; evHr = 0; pot = 30;
                         bTeks = '1 Bulan';
                         keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 1 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
                     }
                 } else if (keRk === 2 || keRk === 3) {
-                    pot = 30;
+                    evBln = 1; evHr = 0; pot = 30;
                     bTeks = '1 Bulan';
                     keteranganAlasan = `Tahun ${keRk === 2 ? 'II' : 'III'} Remisi Khusus: Besaran 1 bulan pada tahun kedua/ketiga.`;
                 } else if (keRk === 4 || keRk === 5) {
-                    pot = 45;
+                    evBln = 1; evHr = 15; pot = 45;
                     bTeks = '1 Bulan 15 Hari';
                     keteranganAlasan = `Tahun ${keRk === 4 ? 'IV' : 'V'} Remisi Khusus: Besaran 1 bulan 15 hari pada tahun keempat/kelima.`;
                 } else {
-                    pot = 60;
+                    evBln = 2; evHr = 0; pot = 60;
                     bTeks = '2 Bulan';
                     keteranganAlasan = `Tahun ke-${keRk} Remisi Khusus: Besaran 2 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.`;
                 }
@@ -1675,9 +1699,17 @@
             const sisaHari = Math.round(sisaMs / (1000 * 60 * 60 * 24));
             if (pot > sisaHari) {
                 pot = Math.max(0, sisaHari);
+                evBln = Math.floor(pot / 30);
+                evHr = pot % 30;
                 bTeks = `${pot} Hari (Sisa Pidana)`;
             }
 
+            cumBulanRemisi += evBln;
+            cumHariRemisi += evHr;
+            if (cumHariRemisi >= 30) {
+                cumBulanRemisi += Math.floor(cumHariRemisi / 30);
+                cumHariRemisi = cumHariRemisi % 30;
+            }
             totalHariRemisi += pot;
             [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 
@@ -1699,15 +1731,21 @@
             // Remisi Tambahan (Pasal 4 Keppres 174/1999)
             if (item.jenis === 'RU' && pot > 0 && kategoriTambahan !== 'none' && keRu >= tahunMulaiTambahan) {
                 let potTambahan = 0;
+                let rtBln = 0;
+                let rtHr = 0;
                 let namaTambahan = '';
                 let ketTambahan = '';
 
                 if (kategoriTambahan === 'pemuka') {
-                    potTambahan = Math.floor(pot / 3);
+                    rtBln = Math.floor(evBln / 3);
+                    rtHr = Math.floor(((evBln % 3) * 30) / 3);
+                    potTambahan = (rtBln * 30) + rtHr;
                     namaTambahan = `Remisi Tambahan Pemuka (${item.dateObj.getFullYear()})`;
                     ketTambahan = `Bonus 1/3 dari Remisi Umum (${bTeks}) bagi narapidana pemuka pembinaan di Lapas (Pasal 4 Keppres No. 174/1999).`;
                 } else if (kategoriTambahan === 'jasa_negara') {
-                    potTambahan = Math.floor(pot / 2);
+                    rtBln = Math.floor(evBln / 2);
+                    rtHr = (evBln % 2 === 1) ? 15 : 0;
+                    potTambahan = (rtBln * 30) + rtHr;
                     namaTambahan = `Remisi Tambahan Jasa Negara (${item.dateObj.getFullYear()})`;
                     ketTambahan = `Bonus 1/2 dari Remisi Umum (${bTeks}) atas jasa bagi negara atau perbuatan kemanusiaan/donor darah (Pasal 4 Keppres No. 174/1999).`;
                 }
@@ -1715,8 +1753,18 @@
                 if (potTambahan > 0) {
                     const sisaMsT = currentEkspirasi.getTime() - item.dateObj.getTime();
                     const sisaHariT = Math.round(sisaMsT / (1000 * 60 * 60 * 24));
-                    if (potTambahan > sisaHariT) potTambahan = Math.max(0, sisaHariT);
+                    if (potTambahan > sisaHariT) {
+                        potTambahan = Math.max(0, sisaHariT);
+                        rtBln = Math.floor(potTambahan / 30);
+                        rtHr = potTambahan % 30;
+                    }
 
+                    cumBulanRemisi += rtBln;
+                    cumHariRemisi += rtHr;
+                    if (cumHariRemisi >= 30) {
+                        cumBulanRemisi += Math.floor(cumHariRemisi / 30);
+                        cumHariRemisi = cumHariRemisi % 30;
+                    }
                     totalHariRemisi += potTambahan;
                     [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 
@@ -1747,6 +1795,14 @@
                 let potDasawarsa = Math.min(potDasawarsaMaks, Math.max(0, sisaHariD));
 
                 if (potDasawarsa > 0) {
+                    const rdBln = Math.floor(potDasawarsa / 30);
+                    const rdHr = potDasawarsa % 30;
+                    cumBulanRemisi += rdBln;
+                    cumHariRemisi += rdHr;
+                    if (cumHariRemisi >= 30) {
+                        cumBulanRemisi += Math.floor(cumHariRemisi / 30);
+                        cumHariRemisi = cumHariRemisi % 30;
+                    }
                     totalHariRemisi += potDasawarsa;
                     [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 

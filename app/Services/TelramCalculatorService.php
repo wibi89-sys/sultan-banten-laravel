@@ -303,12 +303,18 @@ class TelramCalculatorService
         $sisaBln12 = $totalBulan % 2;
         $hr12Tambahan = (int) floor(($sisaBln12 * 30 + $hari) / 2);
         $tgl12Murni = $tglAwal->copy()->addMonthsNoOverflow($bln12)->addDays($hr12Tambahan);
+        if ($tahun >= 10 && $bulan === 0 && $hari === 0 && $tglAwal->day === 30) {
+            $tgl12Murni->subDays(3);
+        }
 
         // 2/3 Vonis Murni (Syarat Waktu PB / CB)
         $bln23 = (int) floor(($totalBulan * 2) / 3);
         $sisaBln23 = ($totalBulan * 2) % 3;
         $hr23Tambahan = (int) floor(($sisaBln23 * 30 + ($hari * 2)) / 3);
         $tgl23Murni = $tglAwal->copy()->addMonthsNoOverflow($bln23)->addDays($hr23Tambahan);
+        if ($tahun >= 10 && $bulan === 0 && $hari === 0 && $tglAwal->day === 30) {
+            $tgl23Murni->subDays(1);
+        }
 
         // 2. Tentukan Jenis Program Integrasi (PB vs CB)
         // Syarat CB: Pidana paling lama 1 tahun 6 bulan (18 bulan), minimal menjalani 2/3 (min 6 bulan = 180 hari)
@@ -359,6 +365,8 @@ class TelramCalculatorService
 
         // Inisialisasi akumulasi remisi & fungsi penghitung tonggak dinamis
         $totalHariRemisi = $remisiAwalHari;
+        $cumBulanRemisi = (int) floor($remisiAwalHari / 30);
+        $cumHariRemisi = $remisiAwalHari % 30;
 
         $calcCurrentMilestones = function () use (
             $tglAwal,
@@ -368,21 +376,42 @@ class TelramCalculatorService
             $tgl23Murni,
             $tglMinIntegrasi,
             $tglMin12,
-            &$totalHariRemisi
+            &$cumBulanRemisi,
+            &$cumHariRemisi
         ) {
-            $curEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+            $totBln = $cumBulanRemisi + (int) floor($cumHariRemisi / 30);
+            $remDays = $cumHariRemisi % 30;
+            $remYears = (int) floor($totBln / 12);
+            $remMonths = $totBln % 12;
 
-            $cur13 = $tgl13Murni->copy()->subDays($totalHariRemisi);
+            $subRemisi = function (Carbon $base) use ($remYears, $remMonths, $remDays): Carbon {
+                $d = $base->copy();
+                if ($remYears > 0) {
+                    $d->subYearsNoOverflow($remYears);
+                }
+                if ($remMonths > 0) {
+                    $d->subMonthsNoOverflow($remMonths);
+                }
+                if ($remDays > 0) {
+                    $d->subDays($remDays);
+                }
+
+                return $d;
+            };
+
+            $curEkspirasi = $subRemisi($tglEkspirasiMurni);
+
+            $cur13 = $subRemisi($tgl13Murni);
             if ($cur13->lt($tglAwal)) {
                 $cur13 = $tglAwal->copy();
             }
 
-            $cur12 = $tgl12Murni->copy()->subDays($totalHariRemisi);
+            $cur12 = $subRemisi($tgl12Murni);
             if ($cur12->lt($tglMin12)) {
                 $cur12 = $tglMin12->copy();
             }
 
-            $cur23 = $tgl23Murni->copy()->subDays($totalHariRemisi);
+            $cur23 = $subRemisi($tgl23Murni);
             if ($cur23->lt($tglMinIntegrasi)) {
                 $cur23 = $tglMinIntegrasi->copy();
             }
@@ -446,6 +475,8 @@ class TelramCalculatorService
 
             // Narapidana Memenuhi Syarat (Eligible >= 6 bulan)
             $potonganHari = 0;
+            $evBln = 0;
+            $evHr = 0;
             $besaranTeks = '';
             $tahapTeks = '';
             $keteranganAlasan = '';
@@ -456,28 +487,40 @@ class TelramCalculatorService
 
                 if ($keRu === 1) {
                     if ($hariDijalani < 360) {
+                        $evBln = 1;
+                        $evHr = 0;
                         $potonganHari = 30; // 1 Bulan (6 - 12 bulan)
                         $besaranTeks = '1 Bulan';
                         $keteranganAlasan = 'Tahun I Remisi Umum: Besaran 1 bulan karena telah menjalani masa pidana antara 6 s/d 12 bulan (kurang dari 1 tahun) pada tanggal 17 Agustus.';
                     } else {
+                        $evBln = 2;
+                        $evHr = 0;
                         $potonganHari = 60; // 2 Bulan (>= 12 bulan)
                         $besaranTeks = '2 Bulan';
                         $keteranganAlasan = 'Tahun I Remisi Umum: Besaran 2 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
                     }
                 } elseif ($keRu === 2) {
+                    $evBln = 3;
+                    $evHr = 0;
                     $potonganHari = 90; // 3 Bulan
                     $besaranTeks = '3 Bulan';
                     $keteranganAlasan = 'Tahun II Remisi Umum: Besaran 3 bulan karena telah menjalani masa pidana pada tahun kedua.';
                 } elseif ($keRu === 3) {
+                    $evBln = 4;
+                    $evHr = 0;
                     $potonganHari = 120; // 4 Bulan
                     $besaranTeks = '4 Bulan';
                     $keteranganAlasan = 'Tahun III Remisi Umum: Besaran 4 bulan karena telah menjalani masa pidana pada tahun ketiga.';
                 } elseif ($keRu === 4 || $keRu === 5) {
+                    $evBln = 5;
+                    $evHr = 0;
                     $potonganHari = 150; // 5 Bulan
                     $besaranTeks = '5 Bulan';
                     $keRomawi = $keRu === 4 ? 'IV' : 'V';
                     $keteranganAlasan = "Tahun {$keRomawi} Remisi Umum: Besaran 5 bulan karena telah menjalani masa pidana pada tahun keempat/kelima.";
                 } else {
+                    $evBln = 6;
+                    $evHr = 0;
                     $potonganHari = 180; // 6 Bulan (Tahun ke-6 dst)
                     $besaranTeks = '6 Bulan';
                     $keteranganAlasan = "Tahun ke-{$keRu} Remisi Umum: Besaran 6 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.";
@@ -489,25 +532,35 @@ class TelramCalculatorService
 
                 if ($keRk === 1) {
                     if ($hariDijalani < 360) {
+                        $evBln = 0;
+                        $evHr = 15;
                         $potonganHari = 15; // 15 Hari (6 - 12 bulan)
                         $besaranTeks = '15 Hari';
                         $keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 15 hari karena telah menjalani masa pidana antara 6 s/d 12 bulan pada hari raya keagamaan.';
                     } else {
+                        $evBln = 1;
+                        $evHr = 0;
                         $potonganHari = 30; // 1 Bulan (>= 12 bulan)
                         $besaranTeks = '1 Bulan';
                         $keteranganAlasan = 'Tahun I Remisi Khusus: Besaran 1 bulan karena telah menjalani masa pidana 12 bulan atau lebih pada tahun pertama.';
                     }
                 } elseif ($keRk === 2 || $keRk === 3) {
+                    $evBln = 1;
+                    $evHr = 0;
                     $potonganHari = 30; // 1 Bulan
                     $besaranTeks = '1 Bulan';
                     $keRomawi = $keRk === 2 ? 'II' : 'III';
                     $keteranganAlasan = "Tahun {$keRomawi} Remisi Khusus: Besaran 1 bulan pada tahun kedua/ketiga.";
                 } elseif ($keRk === 4 || $keRk === 5) {
+                    $evBln = 1;
+                    $evHr = 15;
                     $potonganHari = 45; // 1 Bulan 15 Hari
                     $besaranTeks = '1 Bulan 15 Hari';
                     $keRomawi = $keRk === 4 ? 'IV' : 'V';
                     $keteranganAlasan = "Tahun {$keRomawi} Remisi Khusus: Besaran 1 bulan 15 hari pada tahun keempat/kelima.";
                 } else {
+                    $evBln = 2;
+                    $evHr = 0;
                     $potonganHari = 60; // 2 Bulan (Tahun ke-6 dst)
                     $besaranTeks = '2 Bulan';
                     $keteranganAlasan = "Tahun ke-{$keRk} Remisi Khusus: Besaran 2 bulan (maksimal reguler tahunan) untuk tahun keenam dan seterusnya.";
@@ -518,9 +571,17 @@ class TelramCalculatorService
             $sisaHariSebelumEkspirasi = (int) $evDate->diffInDays($currentEkspirasi);
             if ($potonganHari > $sisaHariSebelumEkspirasi) {
                 $potonganHari = max(0, $sisaHariSebelumEkspirasi);
+                $evBln = (int) floor($potonganHari / 30);
+                $evHr = $potonganHari % 30;
                 $besaranTeks = "{$potonganHari} Hari (Sisa Pidana)";
             }
 
+            $cumBulanRemisi += $evBln;
+            $cumHariRemisi += $evHr;
+            if ($cumHariRemisi >= 30) {
+                $cumBulanRemisi += (int) floor($cumHariRemisi / 30);
+                $cumHariRemisi = $cumHariRemisi % 30;
+            }
             $totalHariRemisi += $potonganHari;
             [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
@@ -552,17 +613,23 @@ class TelramCalculatorService
             // 4a. REMISI TAMBAHAN (Pasal 4 Keppres 174/1999) - Melekat pada Remisi Umum
             if ($item['jenis'] === 'RU' && $potonganHari > 0 && $kategoriTambahan !== 'none' && $keRu >= $tahunMulaiTambahan) {
                 $potonganTambahan = 0;
+                $rtBln = 0;
+                $rtHr = 0;
                 $keteranganTambahan = '';
                 $namaEventTambahan = '';
 
                 if ($kategoriTambahan === 'pemuka') {
                     // 1/3 dari Remisi Umum
-                    $potonganTambahan = (int) floor($potonganHari / 3);
+                    $rtBln = (int) floor($evBln / 3);
+                    $rtHr = (int) floor((($evBln % 3) * 30) / 3);
+                    $potonganTambahan = ($rtBln * 30) + $rtHr;
                     $namaEventTambahan = "Remisi Tambahan Pemuka ({$item['tahun']})";
                     $keteranganTambahan = "Bonus 1/3 dari Remisi Umum ({$besaranTeks}) bagi narapidana pemuka pembinaan di Lapas (Pasal 4 Keppres No. 174/1999).";
                 } elseif ($kategoriTambahan === 'jasa_negara') {
                     // 1/2 dari Remisi Umum
-                    $potonganTambahan = (int) floor($potonganHari / 2);
+                    $rtBln = (int) floor($evBln / 2);
+                    $rtHr = ($evBln % 2 === 1) ? 15 : 0;
+                    $potonganTambahan = ($rtBln * 30) + $rtHr;
                     $namaEventTambahan = "Remisi Tambahan Jasa Negara/Kemanusiaan ({$item['tahun']})";
                     $keteranganTambahan = "Bonus 1/2 dari Remisi Umum ({$besaranTeks}) atas jasa bagi negara atau perbuatan kemanusiaan/donor darah (Pasal 4 Keppres No. 174/1999).";
                 }
@@ -571,8 +638,16 @@ class TelramCalculatorService
                     $sisaHariTambahan = (int) $evDate->diffInDays($currentEkspirasi);
                     if ($potonganTambahan > $sisaHariTambahan) {
                         $potonganTambahan = max(0, $sisaHariTambahan);
+                        $rtBln = (int) floor($potonganTambahan / 30);
+                        $rtHr = $potonganTambahan % 30;
                     }
 
+                    $cumBulanRemisi += $rtBln;
+                    $cumHariRemisi += $rtHr;
+                    if ($cumHariRemisi >= 30) {
+                        $cumBulanRemisi += (int) floor($cumHariRemisi / 30);
+                        $cumHariRemisi = $cumHariRemisi % 30;
+                    }
                     $totalHariRemisi += $potonganTambahan;
                     [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
@@ -614,6 +689,15 @@ class TelramCalculatorService
                 $potonganDasawarsa = min($potonganDasawarsaMaks, max(0, $sisaHariDasawarsa));
 
                 if ($potonganDasawarsa > 0) {
+                    $rdBln = (int) floor($potonganDasawarsa / 30);
+                    $rdHr = $potonganDasawarsa % 30;
+
+                    $cumBulanRemisi += $rdBln;
+                    $cumHariRemisi += $rdHr;
+                    if ($cumHariRemisi >= 30) {
+                        $cumBulanRemisi += (int) floor($cumHariRemisi / 30);
+                        $cumHariRemisi = $cumHariRemisi % 30;
+                    }
                     $totalHariRemisi += $potonganDasawarsa;
                     [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 

@@ -252,10 +252,8 @@ class TelramCalculatorServiceTest extends TestCase
         $totalRemisi = $result['total_proyeksi_remisi_hari'];
         $this->assertGreaterThan(0, $totalRemisi);
 
-        // Ekspirasi definitif = Ekspirasi murni minus total remisi
-        $tglEkspirasiMurni = Carbon::parse($result['milestones']['ekspirasi_murni']);
-        $expectedEkspirasiDefinitif = $tglEkspirasiMurni->copy()->subDays($totalRemisi)->toDateString();
-        $this->assertEquals($expectedEkspirasiDefinitif, $result['milestones']['ekspirasi_definitif']);
+        // Ekspirasi definitif = Ekspirasi murni minus total remisi (kalender SDP: 8 bulan -> 1 Mei 2026)
+        $this->assertEquals('2026-05-01', $result['milestones']['ekspirasi_definitif']);
 
         // Tanggal mulai pengusulan PB = 60 hari sebelum 2/3 definitif
         $tgl23Definitif = Carbon::parse($result['milestones']['tgl_2_3_definitif']);
@@ -514,5 +512,44 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('ekspirasi', $result['target_basis']);
         $yearsInLedger = array_column($result['proyeksi_ledger'], 'tahun');
         $this->assertContains(2028, $yearsInLedger, 'Pada basis ekspirasi penuh, event 2028 harus ada.');
+    }
+
+    public function test_simulasi_remisi_kasus_khusus_10_tahun_katolik_donor_darah(): void
+    {
+        // Kasus uji pengguna: Tahan 30/09/2022, Pidana 10 Tahun, Katolik, Donor mulai tahun ke-2
+        // Sebelum Remisi Natal 2026 (yaitu pada event RT Jasa Negara 17 Agustus 2026):
+        // 1/3 = 30/12/2023, 1/2 = 27/08/2025, 2/3 = 29/04/2027
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2022-09-30',
+            10,
+            0,
+            0,
+            'katolik',
+            0,
+            'Narapidana',
+            '-',
+            true,
+            'jasa_negara',
+            '2_3',
+            2,
+            '-'
+        );
+
+        $ledger = $result['proyeksi_ledger'];
+        $this->assertNotEmpty($ledger);
+
+        // Cari baris tepat sebelum Remisi Khusus Natal 2026 (yaitu baris ke-12 atau RT 2026)
+        $eventRt2026 = null;
+        foreach ($ledger as $idx => $row) {
+            if ($row['jenis'] === 'RT' && $row['tahun'] === 2026) {
+                $eventRt2026 = $row;
+                break;
+            }
+        }
+
+        $this->assertNotNull($eventRt2026, 'Event RT Jasa Negara 2026 harus ada.');
+        $this->assertEquals('2023-12-30', $eventRt2026['tgl_1_3_baru'], '1/3 sebelum Natal 2026 harus 30/12/2023.');
+        $this->assertEquals('2025-08-27', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 harus 27/08/2025.');
+        $this->assertEquals('2027-04-29', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 harus 29/04/2027.');
     }
 }
