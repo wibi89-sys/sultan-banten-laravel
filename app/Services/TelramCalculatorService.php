@@ -280,20 +280,35 @@ class TelramCalculatorService
         if ($tahun > 0) {
             $tglEkspirasiMurni->addYearsNoOverflow($tahun);
         }
-        $sisaHariVonis = ($bulan * 30) + $hari;
-        if ($sisaHariVonis > 0) {
-            $tglEkspirasiMurni->addDays($sisaHariVonis);
+        if ($bulan > 0) {
+            $tglEkspirasiMurni->addMonthsNoOverflow($bulan);
+        }
+        if ($hari > 0) {
+            $tglEkspirasiMurni->addDays($hari);
         }
 
-        // Total hari baku: 1 Tahun = 360 hari, 1 Bulan = 30 hari
+        // Total hari baku untuk kalkulasi lama pidana
         $totalHariVonis = ($tahun * 360) + ($bulan * 30) + $hari;
-        $hari13Murni = (int) floor($totalHariVonis / 3);
-        $hari12Murni = (int) floor($totalHariVonis / 2);
-        $hari23Murni = (int) floor(($totalHariVonis * 2) / 3);
+        $totalBulan = ($tahun * 12) + $bulan;
 
-        $tgl13Murni = $tglAwal->copy()->addDays($hari13Murni);
-        $tgl12Murni = $tglAwal->copy()->addDays($hari12Murni);
-        $tgl23Murni = $tglAwal->copy()->addDays($hari23Murni);
+        // Tonggak Masa Pidana Murni Sesuai Standar Kalender Pemasyarakatan SDP Ditjenpas
+        // 1/3 Vonis Murni
+        $bln13 = (int) floor($totalBulan / 3);
+        $sisaBln13 = $totalBulan % 3;
+        $hr13Tambahan = (int) floor(($sisaBln13 * 30 + $hari) / 3);
+        $tgl13Murni = $tglAwal->copy()->addMonthsNoOverflow($bln13)->addDays($hr13Tambahan);
+
+        // 1/2 Vonis Murni (Asimilasi)
+        $bln12 = (int) floor($totalBulan / 2);
+        $sisaBln12 = $totalBulan % 2;
+        $hr12Tambahan = (int) floor(($sisaBln12 * 30 + $hari) / 2);
+        $tgl12Murni = $tglAwal->copy()->addMonthsNoOverflow($bln12)->addDays($hr12Tambahan);
+
+        // 2/3 Vonis Murni (Syarat Waktu PB / CB)
+        $bln23 = (int) floor(($totalBulan * 2) / 3);
+        $sisaBln23 = ($totalBulan * 2) % 3;
+        $hr23Tambahan = (int) floor(($sisaBln23 * 30 + ($hari * 2)) / 3);
+        $tgl23Murni = $tglAwal->copy()->addMonthsNoOverflow($bln23)->addDays($hr23Tambahan);
 
         // 2. Tentukan Jenis Program Integrasi (PB vs CB)
         // Syarat CB: Pidana paling lama 1 tahun 6 bulan (18 bulan), minimal menjalani 2/3 (min 6 bulan = 180 hari)
@@ -340,47 +355,54 @@ class TelramCalculatorService
         // 4. Simulasi Proyeksi Remisi Sesuai Keppres No. 174 Tahun 1999 & Keppres Dasawarsa
         // Batas Minimal Berhak Integrasi UU No. 22 Tahun 2022
         $tglMinIntegrasi = $tglAwal->copy()->addDays($minHariIntegrasi);
+        $tglMin12 = $tglAwal->copy()->addDays(180);
 
-        // Inisialisasi batas dinamis 2/3 definitif
+        // Inisialisasi akumulasi remisi & fungsi penghitung tonggak dinamis
         $totalHariRemisi = $remisiAwalHari;
-        $currentHari23 = max($minHariIntegrasi, $hari23Murni - $totalHariRemisi);
-        $current23Date = $tglAwal->copy()->addDays($currentHari23);
-        $is23Fulfilled = false;
-        $tgl23Definitif = $current23Date->copy();
+
+        $calcCurrentMilestones = function () use (
+            $tglAwal,
+            $tglEkspirasiMurni,
+            $tgl13Murni,
+            $tgl12Murni,
+            $tgl23Murni,
+            $tglMinIntegrasi,
+            $tglMin12,
+            &$totalHariRemisi
+        ) {
+            $curEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+
+            $cur13 = $tgl13Murni->copy()->subDays($totalHariRemisi);
+            if ($cur13->lt($tglAwal)) {
+                $cur13 = $tglAwal->copy();
+            }
+
+            $cur12 = $tgl12Murni->copy()->subDays($totalHariRemisi);
+            if ($cur12->lt($tglMin12)) {
+                $cur12 = $tglMin12->copy();
+            }
+
+            $cur23 = $tgl23Murni->copy()->subDays($totalHariRemisi);
+            if ($cur23->lt($tglMinIntegrasi)) {
+                $cur23 = $tglMinIntegrasi->copy();
+            }
+
+            return [$curEkspirasi, $cur13, $cur12, $cur23];
+        };
+
+        [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
         $keRu = 0;
         $keRk = 0;
-        $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
         $ledger = [];
-
-        $update23Progress = function (Carbon $evDate) use ($targetBasis, $hari23Murni, &$totalHariRemisi, $minHariIntegrasi, $tglAwal, $tglMinIntegrasi, &$tgl23Definitif, &$current23Date, &$is23Fulfilled) {
-            if ($targetBasis === '2_3') {
-                $sisaHari23 = $hari23Murni - $totalHariRemisi;
-                if ($sisaHari23 <= $minHariIntegrasi) {
-                    $tgl23Definitif = $evDate->gte($tglMinIntegrasi) ? $evDate->copy() : $tglMinIntegrasi->copy();
-                    $current23Date = $tgl23Definitif->copy();
-                    $is23Fulfilled = true;
-                } else {
-                    $calc23 = $tglAwal->copy()->addDays($sisaHari23);
-                    if ($calc23->lte($evDate)) {
-                        $tgl23Definitif = $evDate->copy();
-                        $current23Date = $tgl23Definitif->copy();
-                        $is23Fulfilled = true;
-                    } else {
-                        $tgl23Definitif = $calc23->copy();
-                        $current23Date = $tgl23Definitif->copy();
-                    }
-                }
-            }
-        };
 
         foreach ($eligibleEvents as $item) {
             $evDate = $item['carbon'];
 
             if ($targetBasis === '2_3') {
-                // Standar 2/3 (PB/CB): Jika 2/3 sudah tercapai di event sebelumnya atau tanggal event sudah melewati tanggal 2/3,
-                // maka WBP sudah bebas bersyarat di luar Lapas, sehingga remisi tahun-tahun berikutnya (misal 2028 dst) tidak dihitung di Lapas.
-                if ($is23Fulfilled || $evDate->gt($current23Date)) {
+                // Standar 2/3 (PB/CB): Jika tanggal event sudah melewati tanggal 2/3 definitif terkini,
+                // maka WBP sudah bebas bersyarat di luar Lapas, sehingga remisi tahun-tahun berikutnya tidak dihitung di Lapas.
+                if ($evDate->gt($current23Date)) {
                     break;
                 }
             } else {
@@ -408,6 +430,12 @@ class TelramCalculatorService
                     'besaran_hari' => 0,
                     'besaran_teks' => '0 Hari',
                     'total_akumulasi_hari' => $totalHariRemisi,
+                    'tgl_1_3_baru' => $current13Date->toDateString(),
+                    'tgl_1_3_baru_indo' => self::formatTanggalIndonesia($current13Date),
+                    'tgl_1_2_baru' => $current12Date->toDateString(),
+                    'tgl_1_2_baru_indo' => self::formatTanggalIndonesia($current12Date),
+                    'tgl_2_3_baru' => $current23Date->toDateString(),
+                    'tgl_2_3_baru_indo' => self::formatTanggalIndonesia($current23Date),
                     'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                     'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
                     'keterangan_alasan' => "Masa pidana baru dijalani {$hariDijalani} hari (kurang dari 6 bulan) saat tanggal event, belum memenuhi syarat substantif masa minimal 6 bulan Keppres No. 174/1999.",
@@ -494,8 +522,7 @@ class TelramCalculatorService
             }
 
             $totalHariRemisi += $potonganHari;
-            $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
-            $update23Progress($evDate);
+            [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
             $ledger[] = [
                 'nama_event' => $item['nama_event'],
@@ -511,6 +538,12 @@ class TelramCalculatorService
                 'besaran_hari' => $potonganHari,
                 'besaran_teks' => $besaranTeks,
                 'total_akumulasi_hari' => $totalHariRemisi,
+                'tgl_1_3_baru' => $current13Date->toDateString(),
+                'tgl_1_3_baru_indo' => self::formatTanggalIndonesia($current13Date),
+                'tgl_1_2_baru' => $current12Date->toDateString(),
+                'tgl_1_2_baru_indo' => self::formatTanggalIndonesia($current12Date),
+                'tgl_2_3_baru' => $current23Date->toDateString(),
+                'tgl_2_3_baru_indo' => self::formatTanggalIndonesia($current23Date),
                 'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                 'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
                 'keterangan_alasan' => $keteranganAlasan,
@@ -541,8 +574,7 @@ class TelramCalculatorService
                     }
 
                     $totalHariRemisi += $potonganTambahan;
-                    $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
-                    $update23Progress($evDate);
+                    [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
                     $ledger[] = [
                         'nama_event' => $namaEventTambahan,
@@ -558,6 +590,12 @@ class TelramCalculatorService
                         'besaran_hari' => $potonganTambahan,
                         'besaran_teks' => self::formatHariKeTeks($potonganTambahan),
                         'total_akumulasi_hari' => $totalHariRemisi,
+                        'tgl_1_3_baru' => $current13Date->toDateString(),
+                        'tgl_1_3_baru_indo' => self::formatTanggalIndonesia($current13Date),
+                        'tgl_1_2_baru' => $current12Date->toDateString(),
+                        'tgl_1_2_baru_indo' => self::formatTanggalIndonesia($current12Date),
+                        'tgl_2_3_baru' => $current23Date->toDateString(),
+                        'tgl_2_3_baru_indo' => self::formatTanggalIndonesia($current23Date),
                         'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                         'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
                         'keterangan_alasan' => $keteranganTambahan,
@@ -577,8 +615,7 @@ class TelramCalculatorService
 
                 if ($potonganDasawarsa > 0) {
                     $totalHariRemisi += $potonganDasawarsa;
-                    $currentEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
-                    $update23Progress($evDate);
+                    [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
                     $ledger[] = [
                         'nama_event' => "Remisi Dasawarsa HUT ke-{$hutKe} RI ({$item['tahun']})",
@@ -594,6 +631,12 @@ class TelramCalculatorService
                         'besaran_hari' => $potonganDasawarsa,
                         'besaran_teks' => self::formatHariKeTeks($potonganDasawarsa),
                         'total_akumulasi_hari' => $totalHariRemisi,
+                        'tgl_1_3_baru' => $current13Date->toDateString(),
+                        'tgl_1_3_baru_indo' => self::formatTanggalIndonesia($current13Date),
+                        'tgl_1_2_baru' => $current12Date->toDateString(),
+                        'tgl_1_2_baru_indo' => self::formatTanggalIndonesia($current12Date),
+                        'tgl_2_3_baru' => $current23Date->toDateString(),
+                        'tgl_2_3_baru_indo' => self::formatTanggalIndonesia($current23Date),
                         'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                         'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
                         'keterangan_alasan' => "Pengurangan istimewa peringatan HUT ke-{$hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (".self::formatHariKeTeks($potonganDasawarsaMaks).'), dibatasi maksimal 3 bulan / 90 hari.',
@@ -602,18 +645,11 @@ class TelramCalculatorService
             }
         }
 
-        // 5. Perhitungan Tanggal 2/3 dan Pengusulan Integrasi Sesuai Rumus Baku SDP Ditjenpas
-        if ($targetBasis !== '2_3') {
-            $hari23Definitif = max($minHariIntegrasi, $hari23Murni - $totalHariRemisi);
-            $tgl23Definitif = $tglAwal->copy()->addDays($hari23Definitif);
-        }
-
-        // Tanggal 1/2 Asimilasi Definitif (1/2 Murni dikurangi Full Remisi, min 180 hari)
-        $hari12Definitif = max(180, $hari12Murni - $totalHariRemisi);
-        $tgl12Definitif = $tglAwal->copy()->addDays($hari12Definitif);
-
-        // Ekspirasi Definitif Setelah Remisi
-        $tglEkspirasiDefinitif = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
+        // 5. Penetapan Tonggak Definitif Akhir Hasil Simulasi
+        $tgl13Definitif = $current13Date->copy();
+        $tgl12Definitif = $current12Date->copy();
+        $tgl23Definitif = $current23Date->copy();
+        $tglEkspirasiDefinitif = $currentEkspirasi->copy();
 
         // 6. Tanggal Mulai Pengusulan PB/CB (H-2 Bulan / 60 Hari sebelum 2/3 tercapai)
         $tglMulaiPengusulan = $tgl23Definitif->copy()->subDays(60);
@@ -700,6 +736,7 @@ class TelramCalculatorService
                 'tgl_1_3_murni' => $tgl13Murni->toDateString(),
                 'tgl_1_2_murni' => $tgl12Murni->toDateString(),
                 'tgl_2_3_murni' => $tgl23Murni->toDateString(),
+                'tgl_1_3_definitif' => $tgl13Definitif->toDateString(),
                 'tgl_1_2_definitif' => $tgl12Definitif->toDateString(),
                 'tgl_2_3_definitif' => $tgl23Definitif->toDateString(),
                 'tgl_mulai_pengusulan' => $tglMulaiPengusulan->toDateString(),
@@ -711,6 +748,7 @@ class TelramCalculatorService
                 'tgl_1_3_murni' => self::formatTanggalIndonesia($tgl13Murni),
                 'tgl_1_2_murni' => self::formatTanggalIndonesia($tgl12Murni),
                 'tgl_2_3_murni' => self::formatTanggalIndonesia($tgl23Murni),
+                'tgl_1_3_definitif' => self::formatTanggalIndonesia($tgl13Definitif),
                 'tgl_1_2_definitif' => self::formatTanggalIndonesia($tgl12Definitif),
                 'tgl_2_3_definitif' => self::formatTanggalIndonesia($tgl23Definitif),
                 'tgl_mulai_pengusulan' => self::formatTanggalIndonesia($tglMulaiPengusulan),
@@ -980,7 +1018,12 @@ class TelramCalculatorService
         }
         require_once $tcpdfPath;
 
-        $instansi = Instansi::getFirst();
+        $instansi = null;
+        try {
+            $instansi = Instansi::getFirst();
+        } catch (\Throwable) {
+            $instansi = null;
+        }
 
         $pdf = new class('P', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
         {
@@ -1037,7 +1080,7 @@ class TelramCalculatorService
         $tglUsul = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
         $tgl23Def = htmlspecialchars($data['formatted']['tgl_2_3_definitif'] ?? '-');
         $tgl12Def = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
-        $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
+        $tgl13Def = htmlspecialchars($data['formatted']['tgl_1_3_definitif'] ?? ($data['formatted']['tgl_1_3_murni'] ?? '-'));
         $tglEkspirasiDef = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
         $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
         $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari');
@@ -1060,6 +1103,9 @@ class TelramCalculatorService
                 $evBesaranHari = (int) ($r['besaran_hari'] ?? 0);
                 $evAkumulasi = htmlspecialchars($r['total_akumulasi_hari'] ?? 0).' hr';
                 $evEkspirasiBaru = htmlspecialchars($r['perkiraan_ekspirasi_baru_indo'] ?? '-');
+                $ev13Baru = htmlspecialchars($r['tgl_1_3_baru_indo'] ?? '-');
+                $ev12Baru = htmlspecialchars($r['tgl_1_2_baru_indo'] ?? '-');
+                $ev23Baru = htmlspecialchars($r['tgl_2_3_baru_indo'] ?? '-');
                 $evAlasan = htmlspecialchars($r['keterangan_alasan'] ?? ($r['keterangan_status'] ?? '-'));
                 $tahap = htmlspecialchars($r['tahap'] ?? '-');
                 $eligible = (bool) ($r['eligible'] ?? true);
@@ -1096,19 +1142,25 @@ class TelramCalculatorService
                 $ledgerRowsHtml .= <<<ROW
                 <tr bgcolor="{$bgColor}">
                     <td width="4%" align="center" style="font-weight: bold; border: 0.5px solid #cbd5e1; padding: 5px 2px; color: #475569; font-size: 8pt;">{$no}</td>
-                    <td width="21%" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 8pt;">
+                    <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 8pt;">
                         <b>{$evNama}</b>{$tahapBadge}
                     </td>
-                    <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8pt; color: #1e293b;">{$evTgl}</td>
-                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8pt;">
+                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8pt; color: #1e293b;">{$evTgl}</td>
+                    <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8pt;">
                         <b>{$evDijalani} hr</b><br><span style="font-size: 6.8pt; color: #64748b;">({$evMasaTeks})</span>
                     </td>
-                    <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px;">{$besaranHtml}</td>
-                    <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #047857; font-size: 8.5pt;">
+                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px;">{$besaranHtml}</td>
+                    <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #047857; font-size: 8.5pt;">
                         {$evBesaranHari} hr<br><span style="font-size: 6.8pt; color: #64748b; font-weight: normal;">(Akum: {$evAkumulasi})</span>
                     </td>
-                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-weight: bold; color: #b91c1c; font-size: 8.2pt;">{$evEkspirasiBaru}</td>
-                    <td width="13%" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 7pt; color: #334155; line-height: 1.25;">{$evAlasan}</td>
+                    <td width="16%" align="center" style="border: 0.5px solid #cbd5e1; padding: 4px 2px;">
+                        <b style="color: #b91c1c; font-size: 7.8pt;">{$evEkspirasiBaru}</b>
+                        <div style="font-size: 6.2pt; color: #475569; line-height: 1.25; margin-top: 2px;">
+                            1/3: {$ev13Baru} &bull; 1/2: {$ev12Baru}<br>
+                            <span style="color: #047857; font-weight: bold;">2/3: {$ev23Baru}</span>
+                        </div>
+                    </td>
+                    <td width="15%" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 7pt; color: #334155; line-height: 1.25;">{$evAlasan}</td>
                 </tr>
 ROW;
             }
@@ -1192,7 +1244,7 @@ ROW;
     <tbody>
         <tr style="text-align: center; font-size: 9.5pt; background-color: #f8fafc;">
             <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px;">
-                <b style="color: #0284c7; font-size: 9.5pt;">{$tgl13Murni}</b>
+                <b style="color: #0284c7; font-size: 9.5pt;">{$tgl13Def}</b>
             </td>
             <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 7px 2px;">
                 <b style="color: #d97706; font-size: 9.5pt;">{$tgl12Def}</b>
@@ -1245,13 +1297,13 @@ ROW;
     <thead>
         <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.3pt;">
             <th width="4%" align="center"><span style="font-size: 3.5pt;">&nbsp;<br></span>No</th>
-            <th width="21%" align="center">Jenis Remisi /<br>Tahun</th>
-            <th width="12%" align="center">Tgl.<br>Pelaksanaan</th>
-            <th width="13%" align="center">Lama Menjalani<br>Pidana</th>
-            <th width="12%" align="center">Besaran Remisi<br>(Bl, Hr)</th>
-            <th width="12%" align="center">Besaran Remisi<br>(Hr)</th>
-            <th width="13%" align="center">Ekspirasi<br>setelah Remisi</th>
-            <th width="13%" align="center"><span style="font-size: 3.5pt;">&nbsp;<br></span>Keterangan</th>
+            <th width="20%" align="center">Jenis Remisi /<br>Tahun</th>
+            <th width="11%" align="center">Tgl.<br>Pelaksanaan</th>
+            <th width="12%" align="center">Lama Menjalani<br>Pidana</th>
+            <th width="11%" align="center">Besaran Remisi<br>(Bl, Hr)</th>
+            <th width="11%" align="center">Besaran Remisi<br>(Hr)</th>
+            <th width="16%" align="center">Ekspirasi &amp; Tonggak<br>setelah Remisi</th>
+            <th width="15%" align="center"><span style="font-size: 3.5pt;">&nbsp;<br></span>Keterangan</th>
         </tr>
     </thead>
     <tbody>
@@ -1259,24 +1311,24 @@ ROW;
     </tbody>
     <tfoot>
         <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #475569;">
-            <td colspan="4" width="50%" align="right" style="border: 0.5px solid #cbd5e1; padding: 5px 6px; font-size: 8pt; color: #0f172a;">
+            <td colspan="4" width="47%" align="right" style="border: 0.5px solid #cbd5e1; padding: 5px 6px; font-size: 8pt; color: #0f172a;">
                 TOTAL AKUMULASI REMISI YANG DIPEROLEH:
             </td>
-            <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #1e40af;">
+            <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #1e40af;">
                 <b>{$totalRemisiTeks}</b>
             </td>
-            <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #047857;">
+            <td width="11%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 2px; font-size: 8.5pt; color: #047857;">
                 <b>{$totalRemisiHari} hr</b>
             </td>
-            <td colspan="2" width="26%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 7.5pt; color: #64748b;">
+            <td colspan="2" width="31%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 7.5pt; color: #64748b;">
                 <i>(Total Pengurangan Pidana)</i>
             </td>
         </tr>
         <tr style="background-color: #fef2f2; font-weight: bold;">
-            <td colspan="6" width="74%" align="right" style="border: 0.5px solid #cbd5e1; padding: 5px 6px; font-size: 8pt; color: #991b1b;">
+            <td colspan="6" width="69%" align="right" style="border: 0.5px solid #cbd5e1; padding: 5px 6px; font-size: 8pt; color: #991b1b;">
                 TANGGAL EKSPIRASI AKHIR (SETELAH REMISI):
             </td>
-            <td colspan="2" width="26%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 9pt; color: #b91c1c;">
+            <td colspan="2" width="31%" align="center" style="border: 0.5px solid #cbd5e1; padding: 5px 4px; font-size: 9pt; color: #b91c1c;">
                 <b>{$tglEkspirasiDef}</b>
             </td>
         </tr>

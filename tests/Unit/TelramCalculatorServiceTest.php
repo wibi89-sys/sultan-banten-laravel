@@ -223,12 +223,18 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('Pembebasan Bersyarat (PB)', $result['nama_program']);
         $this->assertEquals('2027-01-01', $result['milestones']['ekspirasi_murni']);
 
-        // 2/3 murni dari 360 * 3 = 1080 hari -> 720 hari (24 bulan)
+        // 2/3 murni dari 3 tahun (36 bulan) = 24 bulan (2 tahun persis kalender)
         $this->assertEquals(1080, $result['total_hari_vonis']);
-        $this->assertEquals('2025-12-21', $result['milestones']['tgl_2_3_murni']);
+        $this->assertEquals('2026-01-01', $result['milestones']['tgl_2_3_murni']);
+        $this->assertEquals('2025-01-01', $result['milestones']['tgl_1_3_murni']);
+        $this->assertEquals('2025-07-01', $result['milestones']['tgl_1_2_murni']);
+        $this->assertArrayHasKey('tgl_1_3_definitif', $result['milestones']);
 
-        // Verifikasi ledger ada dan memiliki proyeksi remisi
+        // Verifikasi ledger ada dan memiliki proyeksi remisi beserta tonggak baru (1/3, 1/2, 2/3)
         $this->assertNotEmpty($result['proyeksi_ledger']);
+        $this->assertArrayHasKey('tgl_1_3_baru', $result['proyeksi_ledger'][0]);
+        $this->assertArrayHasKey('tgl_1_2_baru', $result['proyeksi_ledger'][0]);
+        $this->assertArrayHasKey('tgl_2_3_baru', $result['proyeksi_ledger'][0]);
 
         // Event pertama: Idul Fitri 10 April 2024 (kurang dari 6 bulan dari 1 Jan 2024 -> ~100 hari)
         $firstEvent = $result['proyeksi_ledger'][0];

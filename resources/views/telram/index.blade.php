@@ -668,7 +668,7 @@
                                 <i class="fas fa-book-reader text-primary opacity-75 fs-6"></i>
                             </div>
                             <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res13">-</h4>
-                            <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;">Syarat dasar pembinaan</small>
+                            <small class="text-muted d-block mt-0.5" id="subInfo13" style="font-size: 10.5px;">Syarat dasar pembinaan</small>
                         </div>
                     </div>
                     <div class="col">
@@ -747,7 +747,7 @@
                                             <th style="min-width: 95px; white-space: nowrap;" class="text-center align-middle">Status</th>
                                             <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Bl, Hr)</th>
                                             <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Hr)</th>
-                                            <th style="min-width: 110px; white-space: nowrap;" class="text-center align-middle">Ekspirasi setelah Remisi</th>
+                                            <th style="min-width: 140px; white-space: nowrap;" class="text-center align-middle">Ekspirasi &amp; Tonggak<br>setelah Remisi</th>
                                             <th style="min-width: 200px;" class="text-center align-middle">Keterangan</th>
                                         </tr>
                                     </thead>
@@ -1178,7 +1178,10 @@
             document.getElementById('resTotalRemisiText').innerText = `${data.total_proyeksi_remisi_hari} Hari (${data.total_proyeksi_remisi_teks})`;
 
             // 3 Fraction Cards
-            document.getElementById('res13').innerText = data.formatted.tgl_1_3_murni;
+            document.getElementById('res13').innerText = data.formatted.tgl_1_3_definitif || data.formatted.tgl_1_3_murni;
+            const subInfo13 = document.getElementById('subInfo13');
+            if (subInfo13) subInfo13.innerText = `1/3 Definitif (Murni: ${data.formatted.tgl_1_3_murni})`;
+
             document.getElementById('res12').innerText = data.formatted.tgl_1_2_definitif;
             document.getElementById('subInfo12').innerText = `Asimilasi (Murni: ${data.formatted.tgl_1_2_murni})`;
 
@@ -1347,7 +1350,14 @@
                 <td style="white-space: nowrap;">${statusBadge}</td>
                 <td style="white-space: nowrap;" class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}">${row.besaran_teks}</td>
                 <td style="white-space: nowrap;" class="fw-bold text-success">${row.total_akumulasi_hari} Hari</td>
-                <td style="white-space: nowrap;" class="fw-bold text-danger">${row.perkiraan_ekspirasi_baru_indo}</td>
+                <td style="white-space: nowrap;">
+                    <span class="fw-bold text-danger">${row.perkiraan_ekspirasi_baru_indo}</span>
+                    <div class="small text-muted mt-1" style="font-size: 10.5px; line-height: 1.25;">
+                        <span>1/3: <b>${row.tgl_1_3_baru_indo || '-'}</b></span> &bull; 
+                        <span>1/2: <b>${row.tgl_1_2_baru_indo || '-'}</b></span><br>
+                        <span class="text-success fw-bold">2/3: ${row.tgl_2_3_baru_indo || '-'}</span>
+                    </div>
+                </td>
                 <td style="max-width: 280px;"><small class="text-secondary" style="font-size: 11px; line-height: 1.35; display: block;">${row.keterangan_alasan || '-'}</small></td>
             `;
             tbody.appendChild(tr);
@@ -1380,9 +1390,16 @@
                         <small class="text-success fw-bold d-block" style="font-size: 10.5px;">Akumulasi: ${row.total_akumulasi_hari} Hari</small>
                     </div>
                 </div>
-                <div class="p-2 rounded-2 border d-flex justify-content-between align-items-center mb-1.5" style="background: rgba(254, 242, 242, 0.6); border-color: #fecaca !important;">
-                    <small class="text-danger fw-bold" style="font-size: 10.5px; text-transform: uppercase;">EKSPIRASI SETELAH REMISI:</small>
-                    <span class="fw-bold text-danger" style="font-size: 13px;">${row.perkiraan_ekspirasi_baru_indo}</span>
+                <div class="p-2 rounded-2 border mb-1.5" style="background: rgba(254, 242, 242, 0.6); border-color: #fecaca !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-danger fw-bold" style="font-size: 10.5px; text-transform: uppercase;">EKSPIRASI SETELAH REMISI:</small>
+                        <span class="fw-bold text-danger" style="font-size: 13px;">${row.perkiraan_ekspirasi_baru_indo}</span>
+                    </div>
+                    <div class="mt-1 pt-1 border-top d-flex justify-content-between text-muted" style="font-size: 10.5px; border-color: rgba(239, 68, 68, 0.2) !important;">
+                        <span>1/3: <b>${row.tgl_1_3_baru_indo || '-'}</b></span>
+                        <span>1/2: <b>${row.tgl_1_2_baru_indo || '-'}</b></span>
+                        <span class="text-success fw-bold">2/3: ${row.tgl_2_3_baru_indo || '-'}</span>
+                    </div>
                 </div>
                 <small class="text-muted d-block" style="font-size: 10.5px; line-height: 1.35;">
                     <i class="fas fa-balance-scale text-secondary me-1"></i> ${row.keterangan_alasan || '-'}

@@ -155,6 +155,7 @@ class TelramTest extends TestCase
                     'tgl_1_3_murni',
                     'tgl_1_2_murni',
                     'tgl_2_3_murni',
+                    'tgl_1_3_definitif',
                     'tgl_1_2_definitif',
                     'tgl_2_3_definitif',
                     'tgl_mulai_pengusulan',

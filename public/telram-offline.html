@@ -1401,6 +1401,16 @@
         return d;
     }
 
+    function addMonthsCalendar(baseDate, months) {
+        const d = new Date(baseDate);
+        const originalDay = d.getDate();
+        d.setMonth(d.getMonth() + months);
+        if (d.getDate() !== originalDay) {
+            d.setDate(0);
+        }
+        return d;
+    }
+
     function formatDateIndo(d) {
         const bln = [
             'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -1489,20 +1499,32 @@
         // Ekspirasi Murni
         let tglEkspirasiMurni = new Date(tglAwal);
         if (vThn > 0) tglEkspirasiMurni = addYearsCalendar(tglEkspirasiMurni, vThn);
-        const sisaHariVonis = (vBln * 30) + vHri;
-        if (sisaHariVonis > 0) tglEkspirasiMurni.setDate(tglEkspirasiMurni.getDate() + sisaHariVonis);
+        if (vBln > 0) tglEkspirasiMurni = addMonthsCalendar(tglEkspirasiMurni, vBln);
+        if (vHri > 0) tglEkspirasiMurni.setDate(tglEkspirasiMurni.getDate() + vHri);
 
         const totalHariVonis = (vThn * 360) + (vBln * 30) + vHri;
-        const hari13Murni = Math.floor(totalHariVonis / 3);
-        const hari12Murni = Math.floor(totalHariVonis / 2);
-        const hari23Murni = Math.floor((totalHariVonis * 2) / 3);
+        const totalBulan = (vThn * 12) + vBln;
 
-        const tgl13Murni = addDays(tglAwal, hari13Murni);
-        const tgl12Murni = addDays(tglAwal, hari12Murni);
-        const tgl23Murni = addDays(tglAwal, hari23Murni);
+        // Tonggak Murni Kalender SDP Ditjenpas
+        const bln13 = Math.floor(totalBulan / 3);
+        const sisaBln13 = totalBulan % 3;
+        const hr13Tambahan = Math.floor((sisaBln13 * 30 + vHri) / 3);
+        let tgl13Murni = addMonthsCalendar(tglAwal, bln13);
+        if (hr13Tambahan > 0) tgl13Murni = addDays(tgl13Murni, hr13Tambahan);
+
+        const bln12 = Math.floor(totalBulan / 2);
+        const sisaBln12 = totalBulan % 2;
+        const hr12Tambahan = Math.floor((sisaBln12 * 30 + vHri) / 2);
+        let tgl12Murni = addMonthsCalendar(tglAwal, bln12);
+        if (hr12Tambahan > 0) tgl12Murni = addDays(tgl12Murni, hr12Tambahan);
+
+        const bln23 = Math.floor((totalBulan * 2) / 3);
+        const sisaBln23 = (totalBulan * 2) % 3;
+        const hr23Tambahan = Math.floor((sisaBln23 * 30 + (vHri * 2)) / 3);
+        let tgl23Murni = addMonthsCalendar(tglAwal, bln23);
+        if (hr23Tambahan > 0) tgl23Murni = addDays(tgl23Murni, hr23Tambahan);
 
         // PB vs CB
-        const totalBulan = (vThn * 12) + vBln;
         const isCB = (totalBulan < 18) || (totalBulan === 18 && vHri === 0);
         const jenisProgram = isCB ? 'CB' : 'PB';
         const namaProgram = isCB ? 'Cuti Bersyarat (CB)' : 'Pembebasan Bersyarat (PB)';
@@ -1537,41 +1559,33 @@
         const targetBasis = document.getElementById('selTargetBasis') ? document.getElementById('selTargetBasis').value : '2_3';
 
         const tglMinIntegrasi = addDays(tglAwal, minHariIntegrasi);
-        let currentHari23 = Math.max(minHariIntegrasi, hari23Murni - remisiAwal);
-        let current23Date = addDays(tglAwal, currentHari23);
-        let is23Fulfilled = false;
-        let tgl23Definitif = new Date(current23Date);
+        const tglMin12 = addDays(tglAwal, 180);
 
-        const update23Progress = (evDate) => {
-            if (targetBasis === '2_3') {
-                const sisaHari23 = hari23Murni - totalHariRemisi;
-                if (sisaHari23 <= minHariIntegrasi) {
-                    tgl23Definitif = evDate >= tglMinIntegrasi ? new Date(evDate) : new Date(tglMinIntegrasi);
-                    current23Date = new Date(tgl23Definitif);
-                    is23Fulfilled = true;
-                } else {
-                    const calc23 = addDays(tglAwal, sisaHari23);
-                    if (calc23 <= evDate) {
-                        tgl23Definitif = new Date(evDate);
-                        current23Date = new Date(tgl23Definitif);
-                        is23Fulfilled = true;
-                    } else {
-                        tgl23Definitif = new Date(calc23);
-                        current23Date = new Date(tgl23Definitif);
-                    }
-                }
-            }
+        let totalHariRemisi = remisiAwal;
+
+        const calcCurrentMilestones = () => {
+            const curEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
+            let cur13 = addDays(tgl13Murni, -totalHariRemisi);
+            if (cur13 < tglAwal) cur13 = new Date(tglAwal);
+
+            let cur12 = addDays(tgl12Murni, -totalHariRemisi);
+            if (cur12 < tglMin12) cur12 = new Date(tglMin12);
+
+            let cur23 = addDays(tgl23Murni, -totalHariRemisi);
+            if (cur23 < tglMinIntegrasi) cur23 = new Date(tglMinIntegrasi);
+
+            return [curEkspirasi, cur13, cur12, cur23];
         };
+
+        let [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 
         let keRu = 0;
         let keRk = 0;
-        let totalHariRemisi = remisiAwal;
-        let currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
         let ledger = [];
 
         for (let item of events) {
             if (targetBasis === '2_3') {
-                if (is23Fulfilled || item.dateObj > current23Date) break;
+                if (item.dateObj > current23Date) break;
             } else {
                 if (item.dateObj >= currentEkspirasi) break;
             }
@@ -1588,6 +1602,9 @@
                     eligible: false,
                     besaran_teks: '0 Hari',
                     akumulasi: totalHariRemisi,
+                    tgl13_baru: formatDateIndo(current13Date),
+                    tgl12_baru: formatDateIndo(current12Date),
+                    tgl23_baru: formatDateIndo(current23Date),
                     bebas_baru: formatDateIndo(currentEkspirasi),
                     keterangan_alasan: 'Belum memenuhi syarat minimal menjalani 6 bulan pidana (Pasal 2 Keppres No. 174/1999).'
                 });
@@ -1662,8 +1679,7 @@
             }
 
             totalHariRemisi += pot;
-            currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
-            update23Progress(item.dateObj);
+            [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 
             ledger.push({
                 nama_event: item.nama_event,
@@ -1673,6 +1689,9 @@
                 eligible: true,
                 besaran_teks: bTeks,
                 akumulasi: totalHariRemisi,
+                tgl13_baru: formatDateIndo(current13Date),
+                tgl12_baru: formatDateIndo(current12Date),
+                tgl23_baru: formatDateIndo(current23Date),
                 bebas_baru: formatDateIndo(currentEkspirasi),
                 keterangan_alasan: keteranganAlasan
             });
@@ -1699,8 +1718,7 @@
                     if (potTambahan > sisaHariT) potTambahan = Math.max(0, sisaHariT);
 
                     totalHariRemisi += potTambahan;
-                    currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
-                    update23Progress(item.dateObj);
+                    [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 
                     ledger.push({
                         nama_event: namaTambahan,
@@ -1710,6 +1728,9 @@
                         eligible: true,
                         besaran_teks: formatHariTeks(potTambahan),
                         akumulasi: totalHariRemisi,
+                        tgl13_baru: formatDateIndo(current13Date),
+                        tgl12_baru: formatDateIndo(current12Date),
+                        tgl23_baru: formatDateIndo(current23Date),
                         bebas_baru: formatDateIndo(currentEkspirasi),
                         keterangan_alasan: ketTambahan
                     });
@@ -1727,8 +1748,7 @@
 
                 if (potDasawarsa > 0) {
                     totalHariRemisi += potDasawarsa;
-                    currentEkspirasi = addDays(tglEkspirasiMurni, -totalHariRemisi);
-                    update23Progress(item.dateObj);
+                    [currentEkspirasi, current13Date, current12Date, current23Date] = calcCurrentMilestones();
 
                     ledger.push({
                         nama_event: `Remisi Dasawarsa HUT ke-${hutKe} RI (${itemYr})`,
@@ -1738,6 +1758,9 @@
                         eligible: true,
                         besaran_teks: formatHariTeks(potDasawarsa),
                         akumulasi: totalHariRemisi,
+                        tgl13_baru: formatDateIndo(current13Date),
+                        tgl12_baru: formatDateIndo(current12Date),
+                        tgl23_baru: formatDateIndo(current23Date),
                         bebas_baru: formatDateIndo(currentEkspirasi),
                         keterangan_alasan: `Pengurangan istimewa peringatan HUT ke-${hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (${formatHariTeks(potDasawarsaMaks)}), dibatasi maksimal 3 bulan / 90 hari.`
                     });
@@ -1746,15 +1769,10 @@
         }
 
         // Definitif SDP: 2/3 Murni minus Full Remisi
-        if (targetBasis !== '2_3') {
-            const hari23Definitif = Math.max(minHariIntegrasi, hari23Murni - totalHariRemisi);
-            tgl23Definitif = addDays(tglAwal, hari23Definitif);
-        }
-
-        const hari12Definitif = Math.max(180, hari12Murni - totalHariRemisi);
-        const tgl12Definitif = addDays(tglAwal, hari12Definitif);
-
-        const tglEkspirasiDefinitif = addDays(tglEkspirasiMurni, -totalHariRemisi);
+        const tgl13Definitif = current13Date;
+        const tgl12Definitif = current12Date;
+        const tgl23Definitif = current23Date;
+        const tglEkspirasiDefinitif = currentEkspirasi;
         const tglMulaiPengusulan = addDays(tgl23Definitif, -60);
 
         // Status countdown
@@ -1834,7 +1852,10 @@
         document.getElementById('boxTotalRemisiBadge').classList.remove('d-none');
         document.getElementById('resTotalRemisiText').innerText = `${totalHariRemisi} Hari (${formatHariTeks(totalHariRemisi)})`;
 
-        document.getElementById('res13').innerText = formatDateIndo(tgl13Murni);
+        document.getElementById('res13').innerText = formatDateIndo(tgl13Definitif);
+        const subInfo13 = document.getElementById('subInfo13');
+        if (subInfo13) subInfo13.innerText = `1/3 Definitif (Murni: ${formatDateIndo(tgl13Murni)})`;
+
         document.getElementById('res12').innerText = formatDateIndo(tgl12Definitif);
         document.getElementById('subInfo12').innerText = `Asimilasi (Murni: ${formatDateIndo(tgl12Murni)})`;
 
@@ -1845,7 +1866,6 @@
         document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Mulai Ditahan:';
         document.getElementById('infoTglAwal').innerText = formatDateIndo(tglAwal);
         document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
-        document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
         document.getElementById('infoTotalHari').innerText = `${totalHariVonis.toLocaleString('id-ID')} (${vThn} Thn, ${vBln} Bln, ${vHri} Hri)`;
 
         // Update badge basis proyeksi dan note
@@ -1878,7 +1898,14 @@
                 <td class="cell-nowrap">${r.eligible ? '<span style="color:#10b981;font-weight:700;">Memenuhi</span>' : '<span style="color:#94a3b8;">Belum 6 Bln</span>'}</td>
                 <td class="cell-nowrap"><strong>${r.besaran_teks}</strong></td>
                 <td class="cell-nowrap" style="color:#10b981;font-weight:700;">${r.akumulasi} Hari</td>
-                <td class="cell-nowrap" style="color:#ef4444;font-weight:700;">${r.bebas_baru}</td>
+                <td class="cell-nowrap">
+                    <strong style="color:#ef4444;">${r.bebas_baru}</strong>
+                    <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;line-height:1.25;">
+                        <span>1/3: <b>${r.tgl13_baru}</b></span> &bull; 
+                        <span>1/2: <b>${r.tgl12_baru}</b></span><br>
+                        <span style="color:#10b981;font-weight:700;">2/3: ${r.tgl23_baru}</span>
+                    </div>
+                </td>
                 <td style="max-width:280px;font-size:11px;color:var(--text-secondary);">${r.keterangan_alasan || '-'}</td>
             `;
             tbody.appendChild(tr);
@@ -1906,9 +1933,16 @@
                         <small style="display: block; color: #10b981; font-weight: 700; font-size: 10.5px;">Akumulasi: ${r.akumulasi} Hari</small>
                     </div>
                 </div>
-                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
-                    <small style="color: #dc2626; font-weight: 700; font-size: 10.5px;">EKSPIRASI SETELAH REMISI:</small>
-                    <strong style="color: #dc2626; font-size: 13px;">${r.bebas_baru}</strong>
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <small style="color: #dc2626; font-weight: 700; font-size: 10.5px; text-transform: uppercase;">EKSPIRASI SETELAH REMISI:</small>
+                        <strong style="color: #dc2626; font-size: 13px;">${r.bebas_baru}</strong>
+                    </div>
+                    <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(239, 68, 68, 0.2); display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+                        <span>1/3: <b>${r.tgl13_baru}</b></span>
+                        <span>1/2: <b>${r.tgl12_baru}</b></span>
+                        <span style="color:#10b981;font-weight:700;">2/3: ${r.tgl23_baru}</span>
+                    </div>
                 </div>
                 <small style="color: var(--text-secondary); font-size: 11px; line-height: 1.35; display: block;">
                     ${r.keterangan_alasan || '-'}
