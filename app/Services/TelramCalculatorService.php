@@ -1386,7 +1386,7 @@ ROW;
             <th width="12%" align="center">Lama Menjalani<br>Pidana</th>
             <th width="11%" align="center">Besaran Remisi<br>(Bl, Hr)</th>
             <th width="11%" align="center">Besaran Remisi<br>(Hr)</th>
-            <th width="16%" align="center">Ekspirasi &amp; Tonggak<br>setelah Remisi</th>
+            <th width="16%" align="center">Ekspirasi setelah<br>Remisi</th>
             <th width="15%" align="center"><span style="font-size: 3.5pt;">&nbsp;<br></span>Keterangan</th>
         </tr>
     </thead>

@@ -747,7 +747,7 @@
                                             <th style="min-width: 95px; white-space: nowrap;" class="text-center align-middle">Status</th>
                                             <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Bl, Hr)</th>
                                             <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Hr)</th>
-                                            <th style="min-width: 140px; white-space: nowrap;" class="text-center align-middle">Ekspirasi &amp; Tonggak<br>setelah Remisi</th>
+                                            <th style="min-width: 140px; white-space: nowrap;" class="text-center align-middle">Ekspirasi setelah Remisi</th>
                                             <th style="min-width: 200px;" class="text-center align-middle">Keterangan</th>
                                         </tr>
                                     </thead>
