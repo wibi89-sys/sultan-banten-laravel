@@ -1166,6 +1166,7 @@ class TelramCalculatorService
         $tgl12Def = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
         $tgl13Def = htmlspecialchars($data['formatted']['tgl_1_3_definitif'] ?? ($data['formatted']['tgl_1_3_murni'] ?? '-'));
         $tglEkspirasiDef = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
+        $tglEkspirasiMurni = htmlspecialchars($data['formatted']['ekspirasi_murni'] ?? '-');
         $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
         $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari');
 
@@ -1300,8 +1301,8 @@ ROW;
     <tr>
         <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana / Pasal</td>
         <td width="30%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$perkaraPasal}</td>
-        <td width="22%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi</td>
-        <td width="28%" style="font-weight: bold; color: #b91c1c; padding: 4px 8px; font-size: 10pt;">: {$tglEkspirasiDef}</td>
+        <td width="22%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi (Murni)</td>
+        <td width="28%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglEkspirasiMurni}</td>
     </tr>
 </table>
 
@@ -1321,7 +1322,7 @@ ROW;
             <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">1/3</th>
             <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">1/2</th>
             <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">2/3</th>
-            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi</th>
+            <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">Ekspirasi Akhir</th>
             <th width="20%" style="border: 0.5px solid #475569; padding: 6px 2px;">Jumlah Remisi</th>
         </tr>
     </thead>
