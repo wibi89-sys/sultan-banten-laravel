@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AiSettingController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BebasHarianController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FluktuasiController;
@@ -226,6 +227,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/pengaturan-ai/pegawai', [AiSettingController::class, 'pegawaiStore'])->name('ai-setting.pegawai.store');
     Route::put('/pengaturan-ai/pegawai/{id}', [AiSettingController::class, 'pegawaiUpdate'])->name('ai-setting.pegawai.update');
     Route::delete('/pengaturan-ai/pegawai/{id}', [AiSettingController::class, 'pegawaiDestroy'])->name('ai-setting.pegawai.destroy');
+
+    // Backup & Ekspor Database (Khusus Administrator)
+    Route::prefix('backup')->name('backup.')->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('index');
+        Route::get('/download', [BackupController::class, 'download'])->name('download');
+        Route::post('/generate', [BackupController::class, 'generate'])->name('generate');
+        Route::get('/file/{filename}', [BackupController::class, 'downloadFile'])->name('download-file');
+        Route::delete('/file/{filename}', [BackupController::class, 'destroyFile'])->name('destroy-file');
+    });
 
     // ==========================================
     // Modul Otomatisasi WhatsApp Baru (Terstruktur)

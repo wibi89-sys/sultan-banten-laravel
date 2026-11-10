@@ -525,12 +525,12 @@
             </div>
             @endif
 
-            <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
+            <div class="menu-parent {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') || request()->routeIs('backup.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuMaster">
                 <i class="fas fa-database"></i>
                 <span>Master Data</span>
                 <i class="fas fa-chevron-down arrow"></i>
             </div>
-            <div class="collapse {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') ? 'show' : '' }}" id="menuMaster">
+            <div class="collapse {{ request()->routeIs('upt.*') || request()->routeIs('users.*') || request()->routeIs('instansi.*') || request()->routeIs('pengumuman.*') || request()->routeIs('activity-log.*') || request()->routeIs('ai-setting.*') || request()->routeIs('backup.*') ? 'show' : '' }}" id="menuMaster">
                 <div class="sidebar-submenu">
                     @if($user->hasAccess('upt'))
                     <a href="{{ route('upt.index') }}" class="{{ request()->routeIs('upt.*') ? 'active' : '' }}"><i class="fas fa-building"></i><span>Data UPT</span></a>
@@ -549,6 +549,9 @@
                     @endif
                     @if($user->hasAccess('activity_log'))
                     <a href="{{ route('activity-log.index') }}" class="{{ request()->routeIs('activity-log.*') ? 'active' : '' }}"><i class="fas fa-history"></i><span>Activity Log</span></a>
+                    @endif
+                    @if($user->isAdmin())
+                    <a href="{{ route('backup.index') }}" class="{{ request()->routeIs('backup.*') ? 'active' : '' }}"><i class="fas fa-database text-warning"></i><span>Backup Database</span></a>
                     @endif
                 </div>
             </div>
