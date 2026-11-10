@@ -454,30 +454,32 @@
                         </div>
 
                         <!-- Tanggal Mulai Ditahan & Tanggal Putusan Pengadilan -->
-                        <div class="row g-2 mb-2.5">
-                            <div class="col-12 col-sm-6" id="colTglAwal">
-                                <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 24px;">
-                                    <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 12px;">
-                                        Tgl. Mulai Ditahan <span class="text-danger">*</span>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6" id="colTglAwal">
+                                <div class="d-flex justify-content-between align-items-center mb-1" style="height: 22px;">
+                                    <label class="form-label telram-text-title fw-bold mb-0 text-truncate" id="labelTglAwal" style="font-size: 11.5px;" title="Tanggal Mulai Ditahan">
+                                        <i class="fas fa-calendar-alt me-1 text-primary"></i> <span id="txtLabelTglAwal">Tgl. Ditahan</span> <span class="text-danger">*</span>
                                     </label>
-                                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" onclick="setTglAwalHariIni()" style="font-size: 10.5px; font-weight: 600; line-height: 1.2;">
-                                        <i class="fas fa-calendar-day me-0.5"></i> Hari Ini
+                                    <button type="button" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none fw-semibold px-1.5 py-0.5" onclick="setTglAwalHariIni()" style="font-size: 10px; line-height: 1.3; cursor: pointer;" title="Klik untuk mengisi tanggal hari ini">
+                                        Hari Ini
                                     </button>
                                 </div>
-                                <input type="date" id="tglAwal" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;">
+                                <input type="date" id="tglAwal" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
                             </div>
-                            <div class="col-12 col-sm-6" id="wrapTglPutusan">
-                                <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 24px;">
-                                    <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 12px;">
+                            <div class="col-6" id="wrapTglPutusan">
+                                <div class="d-flex justify-content-between align-items-center mb-1" style="height: 22px;">
+                                    <label class="form-label telram-text-title fw-bold mb-0 text-truncate text-primary" style="font-size: 11.5px;" title="Tanggal Putusan Pengadilan">
                                         <i class="fas fa-gavel me-1"></i> Tgl. Putusan
                                     </label>
-                                    <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional</span>
+                                    <span class="badge bg-light text-secondary border fw-normal px-1.5 py-0.5" style="font-size: 10px; line-height: 1.3;">
+                                        Opsional
+                                    </span>
                                 </div>
-                                <input type="date" id="tglPutusan" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;" title="Tanggal putusan pengadilan / vonis berkekuatan hukum tetap">
+                                <input type="date" id="tglPutusan" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" title="Tanggal putusan pengadilan / vonis berkekuatan hukum tetap">
                             </div>
-                            <div class="col-12 mt-1" id="helpTglPutusanWrap">
-                                <small class="text-muted d-block" style="font-size: 10.5px;">
-                                    <i class="fas fa-info-circle text-primary me-1"></i> Tgl. Putusan untuk hitung potongan tahanan (potah) &amp; remisi susulan.
+                            <div class="col-12" id="helpTglPutusanWrap">
+                                <small class="text-muted d-block mt-0.5" style="font-size: 10.5px; line-height: 1.35;">
+                                    <i class="fas fa-info-circle text-primary me-1"></i> Tgl. Putusan digunakan untuk menghitung potongan masa tahanan (Potah).
                                 </small>
                             </div>
                         </div>
@@ -1141,10 +1143,16 @@
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.remove('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.remove('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
-            if (wrapTglPutusan) wrapTglPutusan.classList.remove('d-none');
+            if (wrapTglPutusan) {
+                wrapTglPutusan.className = 'col-6';
+                wrapTglPutusan.classList.remove('d-none');
+            }
             if (helpTglPutusanWrap) helpTglPutusanWrap.classList.remove('d-none');
-            if (colTglAwal) colTglAwal.className = 'col-12 col-sm-6';
-            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Ditahan <span class="text-danger">*</span>';
+            if (colTglAwal) colTglAwal.className = 'col-6';
+            const txtLabelTglAwal = document.getElementById('txtLabelTglAwal');
+            if (txtLabelTglAwal) {
+                txtLabelTglAwal.innerText = 'Tgl. Ditahan';
+            }
 
             btnHitung.className = 'btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
             btnHitung.innerHTML = '<i class="fas fa-calculator fs-5"></i> <span>HITUNG PERKIRAAN REMISI &amp; INTEGRASI</span>';
@@ -1163,7 +1171,10 @@
             if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
             if (helpTglPutusanWrap) helpTglPutusanWrap.classList.add('d-none');
             if (colTglAwal) colTglAwal.className = 'col-12';
-            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
+            const txtLabelTglAwal = document.getElementById('txtLabelTglAwal');
+            if (txtLabelTglAwal) {
+                txtLabelTglAwal.innerText = 'Tgl. Mulai Penahanan';
+            }
 
             btnHitung.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
             btnHitung.innerHTML = '<i class="fas fa-calculator fs-5"></i> <span>HITUNG EKSPIRASI</span>';
@@ -1182,7 +1193,10 @@
             if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
             if (helpTglPutusanWrap) helpTglPutusanWrap.classList.add('d-none');
             if (colTglAwal) colTglAwal.className = 'col-12';
-            if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
+            const txtLabelTglAwal = document.getElementById('txtLabelTglAwal');
+            if (txtLabelTglAwal) {
+                txtLabelTglAwal.innerText = 'Tgl. Mulai Penahanan';
+            }
 
             btnHitung.className = 'btn btn-secondary w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
             btnHitung.innerHTML = '<i class="fas fa-history fs-5"></i> <span>HITUNG LAMA PIDANA</span>';
@@ -1201,7 +1215,10 @@
             if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
             if (helpTglPutusanWrap) helpTglPutusanWrap.classList.add('d-none');
             if (colTglAwal) colTglAwal.className = 'col-12';
-            if (labelTglAwal) labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
+            const txtLabelTglAwal = document.getElementById('txtLabelTglAwal');
+            if (txtLabelTglAwal) {
+                txtLabelTglAwal.innerText = 'Per Tanggal (Perhitungan)';
+            }
 
             btnHitung.className = 'btn btn-info text-white w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
             btnHitung.innerHTML = '<i class="fas fa-hourglass-half fs-5"></i> <span>HITUNG SISA PIDANA</span>';
