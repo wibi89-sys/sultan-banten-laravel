@@ -986,8 +986,6 @@ class TelramCalculatorService
         $teks .= "   • Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):\n";
         $teks .= "     {$tgl23Definitif} - 60 Hari = {$tglUsul}\n";
         $teks .= "========================================================\n";
-        $teks .= "Catatan: Perhitungan ini bersifat objektif dan fleksibel tanpa mengikat\n";
-        $teks .= "pada program integrasi tertentu.\n";
 
         return $teks;
     }
@@ -1036,13 +1034,13 @@ class TelramCalculatorService
         $durasi12Teks = htmlspecialchars(self::formatDurasiTeks($y12, $m12, $d12));
         $durasi23Teks = htmlspecialchars(self::formatDurasiTeks($y23, $m23, $d23));
 
-        $html = '<div class="hitungan-manual-container d-flex flex-column gap-3">';
+        $html = '<div class="hitungan-manual-container d-flex flex-column gap-3.5">';
 
         // Identitas Singkat
         $html .= <<<CARD
         <div class="card border-0 shadow-sm" style="background-color: #f8fafc; border-radius: 10px;">
-            <div class="card-body p-3">
-                <div class="row g-2" style="font-size: 12.5px;">
+            <div class="card-body p-3.5">
+                <div class="row g-2.5" style="font-size: 13px;">
                     <div class="col-sm-6"><b>Nama WBP:</b> {$namaWbp}</div>
                     <div class="col-sm-6"><b>No. Register:</b> {$noRegister}</div>
                     <div class="col-sm-6"><b>Perkara / Pasal:</b> {$perkaraPasal}</div>
@@ -1058,15 +1056,15 @@ CARD;
         if (! empty($data['tgl_putusan'])) {
             $html .= <<<CARD
             <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
-                <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
-                    <strong class="text-success" style="font-size: 13px;"><i class="fas fa-gavel me-1.5"></i> A. POTONGAN TAHANAN (POTAH)</strong>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">KUHAP Ps. 22(4)</span>
+                <div class="card-header bg-white py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between">
+                    <strong class="text-success" style="font-size: 14px;"><i class="fas fa-gavel me-1.5"></i> A. POTONGAN TAHANAN (POTAH)</strong>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10.5px;">KUHAP Ps. 22(4)</span>
                 </div>
-                <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
-                    <div class="p-2 rounded bg-light border font-monospace" style="font-size: 12px;">
+                <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
+                    <div class="p-3 rounded bg-light border font-monospace" style="font-size: 13px;">
                         • <b>Rumus:</b> Tgl. Putusan - Tgl. Mulai Ditahan<br>
                         • <b>Periode:</b> {$tglAwal} s.d. {$tglPutusan}<br>
-                        • <b>Hasil:</b> <b class="text-success">{$masaTahananTeks}</b>
+                        • <b>Hasil:</b> <b class="text-success" style="font-size: 14px;">{$masaTahananTeks}</b>
                     </div>
                 </div>
             </div>
@@ -1076,16 +1074,16 @@ CARD;
         // Bagian B: Ekspirasi Bebas Murni
         $html .= <<<CARD
         <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
-            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
-                <strong class="text-primary" style="font-size: 13px;"><i class="fas fa-door-open me-1.5"></i> B. EKSPIRASI BEBAS MURNI</strong>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10px;">Vonis Pokok</span>
+            <div class="card-header bg-white py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between">
+                <strong class="text-primary" style="font-size: 14px;"><i class="fas fa-door-open me-1.5"></i> B. EKSPIRASI BEBAS MURNI</strong>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10.5px;">Vonis Pokok</span>
             </div>
-            <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
-                <div class="p-2 rounded bg-light border font-monospace" style="font-size: 12px;">
+            <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
+                <div class="p-3 rounded bg-light border font-monospace" style="font-size: 13px;">
                     • <b>Kaidah:</b> Tahun = tanggal ke tanggal berikutnya | Bulan = 30 hari/bulan<br>
                     • <b>Rumus:</b> Tgl. Mulai Ditahan + Lama Pidana Pokok<br>
                     • <b>Hitung:</b> {$tglAwal} + {$lamaVonis}<br>
-                    • <b>Hasil:</b> <b class="text-danger" style="font-size: 13.5px;">{$ekspirasiMurni}</b>
+                    • <b>Hasil:</b> <b class="text-danger" style="font-size: 14.5px;">{$ekspirasiMurni}</b>
                 </div>
             </div>
         </div>
@@ -1094,23 +1092,23 @@ CARD;
         // Bagian C: Pentahapan Masa Pidana (Setelah Dipotong Remisi)
         $html .= <<<CARD
         <div class="card border" style="border-radius: 10px; border-color: #cbd5e1;">
-            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
-                <strong class="text-primary" style="font-size: 13px;"><i class="fas fa-layer-group me-1.5"></i> C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)</strong>
-                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 11px;">Remisi saat 2/3: {$totalRemisiTeks} ({$totalRemisiHari} Hr)</span>
+            <div class="card-header bg-white py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between">
+                <strong class="text-primary" style="font-size: 14px;"><i class="fas fa-layer-group me-1.5"></i> C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)</strong>
+                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 11.5px;">Remisi saat 2/3: {$totalRemisiTeks} ({$totalRemisiHari} Hr)</span>
             </div>
-            <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.6;">
-                <div class="mb-2 text-muted" style="font-size: 11.5px;">
+            <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
+                <div class="mb-2 text-muted" style="font-size: 12px;">
                     Dihitung dari tanggal murni dikurangkan total remisi yang diperoleh selama menjalani pidana di Lapas s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):
                 </div>
-                <div class="p-2.5 rounded bg-light border font-monospace mb-2" style="font-size: 12px; line-height: 1.8;">
+                <div class="p-3 rounded bg-light border font-monospace mb-2.5" style="font-size: 13px; line-height: 1.9;">
                     • <b>1/3 Masa Pidana</b> : {$tgl13Murni} - {$totalRemisiHari} Hari = <b class="text-primary">{$tgl13Definitif}</b><br>
                     • <b>1/2 Asimilasi</b>   : {$tgl12Murni} - {$totalRemisiHari} Hari = <b class="text-warning">{$tgl12Definitif}</b><br>
-                    • <b>2/3 Masa Pidana</b> : {$tgl23Murni} - {$totalRemisiHari} Hari = <b class="text-success">{$tgl23Definitif}</b><br>
-                    • <b>Ekspirasi Akhir</b> : {$ekspirasiMurni} - {$totalRemisiHari} Hari = <b class="text-danger">{$ekspirasiDefinitif}</b>
+                    • <b>2/3 Masa Pidana</b> : {$tgl23Murni} - {$totalRemisiHari} Hari = <b class="text-success" style="font-size: 14px;">{$tgl23Definitif}</b><br>
+                    • <b>Ekspirasi Akhir</b> : {$ekspirasiMurni} - {$totalRemisiHari} Hari = <b class="text-danger" style="font-size: 14px;">{$ekspirasiDefinitif}</b>
                 </div>
-                <div class="p-2 rounded border bg-warning-subtle text-warning-emphasis" style="font-size: 11.5px;">
+                <div class="p-2.5 rounded border bg-warning-subtle text-warning-emphasis" style="font-size: 12px;">
                     <i class="fas fa-calendar-check me-1"></i> <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b><br>
-                    {$tgl23Definitif} - 60 Hari = <b style="font-size: 12.5px;">{$tglUsul}</b>
+                    {$tgl23Definitif} - 60 Hari = <b style="font-size: 13.5px;">{$tglUsul}</b>
                 </div>
             </div>
         </div>
@@ -1524,20 +1522,21 @@ CARD;
         if (! empty($data['tgl_putusan'])) {
             $potahPdfHtml = <<<POTAH
 <!-- A. POTONGAN TAHANAN (POTAH) -->
-<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 6px;">
+<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 14px;">
     <tr style="background-color: #f0fdf4;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #166534;">
+        <td style="font-weight: bold; font-size: 10pt; color: #166534; padding: 7px 10px;">
             A. POTONGAN TAHANAN (POTAH)
         </td>
     </tr>
     <tr>
-        <td style="font-size: 7.8pt; line-height: 1.4; padding: 5px 6px;">
+        <td style="font-size: 9.5pt; line-height: 1.6; padding: 8px 12px;">
             &bull; <b>Rumus:</b> Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)<br>
-            &bull; <b>Periode:</b> {$tglAwal} s.d. {$tglPutusan}<br>
-            &bull; <b>Hasil Potongan Tahanan (Potah):</b> <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
+            &bull; <b>Periode Penahanan:</b> {$tglAwal} s.d. {$tglPutusan}<br>
+            &bull; <b>Hasil Potongan Tahanan (Potah):</b> <b style="color: #166534; font-size: 10.5pt;">{$masaTahananTeks}</b>
         </td>
     </tr>
 </table>
+<br>
 POTAH;
         }
 
@@ -1821,91 +1820,63 @@ ROW;
 <br>
 
 <!-- IDENTITAS SINGKAT LAMPIRAN -->
-<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 7.8pt; margin-bottom: 6px;">
+<table width="100%" cellpadding="5" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 9pt; margin-bottom: 14px;">
     <tr>
-        <td width="16%" style="color: #475569;">Nama WBP</td>
-        <td width="34%" style="font-weight: bold; color: #0f172a;">: {$namaWbp}</td>
-        <td width="20%" style="color: #475569;">Tgl. Mulai Ditahan</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$tglAwal}</td>
+        <td width="18%" style="color: #475569; padding: 5px 8px;">Nama WBP</td>
+        <td width="32%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$namaWbp}</td>
+        <td width="22%" style="color: #475569; padding: 5px 8px;">Tgl. Mulai Ditahan</td>
+        <td width="28%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$tglAwal}</td>
     </tr>
     <tr>
-        <td width="16%" style="color: #475569;">Nomor Register</td>
-        <td width="34%" style="font-weight: bold; color: #0f172a;">: {$noRegister}</td>
-        <td width="20%" style="color: #475569;">Tgl. Putusan</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$tglPutusan}</td>
+        <td width="18%" style="color: #475569; padding: 5px 8px;">Nomor Register</td>
+        <td width="32%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$noRegister}</td>
+        <td width="22%" style="color: #475569; padding: 5px 8px;">Tgl. Putusan</td>
+        <td width="28%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$tglPutusan}</td>
     </tr>
     <tr>
-        <td width="16%" style="color: #475569;">Perkara / Pasal</td>
-        <td width="34%" style="font-weight: bold; color: #0f172a;">: {$perkaraPasal}</td>
-        <td width="20%" style="color: #475569;">Pidana Pokok</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$lamaVonis}</td>
+        <td width="18%" style="color: #475569; padding: 5px 8px;">Perkara / Pasal</td>
+        <td width="32%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$perkaraPasal}</td>
+        <td width="22%" style="color: #475569; padding: 5px 8px;">Pidana Pokok</td>
+        <td width="28%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$lamaVonis}</td>
     </tr>
 </table>
+<br>
 
 {$potahPdfHtml}
 
 <!-- B. EKSPIRASI BEBAS MURNI -->
-<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 6px;">
+<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 14px;">
     <tr style="background-color: #f1f5f9;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #1e40af;">
+        <td style="font-weight: bold; font-size: 10pt; color: #1e40af; padding: 7px 10px;">
             B. EKSPIRASI BEBAS MURNI
         </td>
     </tr>
     <tr>
-        <td style="font-size: 7.8pt; line-height: 1.4; padding: 5px 6px;">
+        <td style="font-size: 9.5pt; line-height: 1.6; padding: 8px 12px;">
             &bull; <b>Rumus:</b> Tgl. Mulai Ditahan ({$tglAwal}) + Lama Pidana Pokok ({$lamaVonis})<br>
             &bull; <b>Kaidah:</b> Tahun (dari tanggal ke tanggal sama di tahun berikutnya), Bulan (1 Bulan = 30 Hari).<br>
-            &bull; <b>Tanggal Ekspirasi Bebas Murni:</b> <b style="color: #b91c1c; font-size: 8.8pt;">{$tglEkspirasiMurni}</b>
+            &bull; <b>Tanggal Ekspirasi Bebas Murni:</b> <b style="color: #b91c1c; font-size: 11pt;">{$tglEkspirasiMurni}</b>
         </td>
     </tr>
 </table>
+<br>
 
 <!-- C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI) -->
-<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 6px;">
+<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 14px;">
     <tr style="background-color: #fef2f2;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #991b1b;">
+        <td style="font-weight: bold; font-size: 10pt; color: #991b1b; padding: 7px 10px;">
             C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)
         </td>
     </tr>
     <tr>
-        <td style="font-size: 7.8pt; line-height: 1.45; padding: 5px 6px;">
-            Dihitung dari tanggal murni dikurangkan total remisi yang diperoleh s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):<br>
-            &bull; <b>Remisi Diperoleh saat 2/3:</b> <b style="color: #047857; font-size: 8.2pt;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b><br>
-            &bull; <b>1/3 Masa Pidana:</b> {$tgl13Murni} - {$totalRemisiHari} Hari = <b>{$tgl13Def}</b><br>
-            &bull; <b>1/2 Asimilasi:</b> {$tgl12Murni} - {$totalRemisiHari} Hari = <b>{$tgl12Def}</b><br>
-            &bull; <b>2/3 Masa Pidana:</b> {$tgl23Murni} - {$totalRemisiHari} Hari = <b style="color: #047857; font-size: 8.5pt;">{$tgl23Def}</b><br>
-            &bull; <b>Ekspirasi Akhir:</b> {$tglEkspirasiMurni} - {$totalRemisiHari} Hari = <b style="color: #b91c1c; font-size: 8.5pt;">{$tglEkspirasiDef}</b><br>
-            &bull; <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b> {$tgl23Def} - 60 Hari = <b style="color: #b45309; font-size: 8.5pt;">{$tglUsul}</b>
-        </td>
-    </tr>
-</table>
-
-<!-- CATATAN FLEKSIBILITAS -->
-<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #e2e8f0; background-color: #f8fafc; margin-bottom: 6px;">
-    <tr>
-        <td style="font-size: 6.8pt; color: #475569; line-height: 1.25;">
-            <b>Catatan / Disclaimer:</b> Rincian perhitungan matematis di atas bersifat objektif dan fleksibel tanpa mengikat pada satu program integrasi tertentu, sehingga dapat dijadikan acuan kerja universal dalam sidang TPP, pertimbangan pembinaan, usulan integrasi (PB/CB/CMB/Asimilasi), maupun kelengkapan berkas registrasi narapidana.
-        </td>
-    </tr>
-</table>
-
-<!-- KOTAK TANDA TANGAN VERIFIKASI -->
-<br>
-<table width="100%" border="0" cellpadding="2" cellspacing="0" style="font-size: 7.8pt;">
-    <tr>
-        <td width="50%" align="center">
-            Mengetahui,<br>
-            <b>Kasubsi Registrasi &amp; Bimkemas</b>
-            <br><br><br><br>
-            ( ............................................................ )<br>
-            <span style="font-size: 6.8pt; color: #64748b;">NIP. ....................................................</span>
-        </td>
-        <td width="50%" align="center">
-            Serang, {$tglCetakIndo}<br>
-            <b>Petugas Verifikator / Registrasi</b>
-            <br><br><br><br>
-            <b>( {$petugasNama} )</b><br>
-            <span style="font-size: 6.8pt; color: #64748b;">NIP. ....................................................</span>
+        <td style="font-size: 9.5pt; line-height: 1.7; padding: 10px 12px;">
+            <span style="color: #475569;">Dihitung dari tanggal murni dikurangkan perolehan remisi s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):</span><br>
+            &bull; <b>Remisi Diperoleh saat 2/3:</b> <b style="color: #047857; font-size: 10.5pt;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b><br>
+            &bull; <b>1/3 Masa Pidana:</b> {$tgl13Murni} - {$totalRemisiHari} Hari = <b style="color: #0f172a; font-size: 10pt;">{$tgl13Def}</b><br>
+            &bull; <b>1/2 Asimilasi:</b> {$tgl12Murni} - {$totalRemisiHari} Hari = <b style="color: #0f172a; font-size: 10pt;">{$tgl12Def}</b><br>
+            &bull; <b>2/3 Masa Pidana:</b> {$tgl23Murni} - {$totalRemisiHari} Hari = <b style="color: #047857; font-size: 11pt;">{$tgl23Def}</b><br>
+            &bull; <b>Ekspirasi Akhir:</b> {$tglEkspirasiMurni} - {$totalRemisiHari} Hari = <b style="color: #b91c1c; font-size: 11pt;">{$tglEkspirasiDef}</b><br>
+            &bull; <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b> {$tgl23Def} - 60 Hari = <b style="color: #b45309; font-size: 11pt;">{$tglUsul}</b>
         </td>
     </tr>
 </table>

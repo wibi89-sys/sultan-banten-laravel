@@ -660,9 +660,6 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)', $teks);
         $this->assertStringNotContainsString('tonggak', strtolower($teks));
 
-        // Verifikasi fleksibilitas (tidak memuat teks kaku program integrasi tertentu)
-        $this->assertStringContainsString('Perhitungan ini bersifat objektif dan fleksibel', $teks);
-
         // Verifikasi format visual html
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $html);
         $this->assertStringContainsString('B. EKSPIRASI BEBAS MURNI', $html);

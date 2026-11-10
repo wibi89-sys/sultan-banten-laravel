@@ -2656,57 +2656,57 @@
 
         // A. Potongan Tahanan (Potah) - jika ada tglPutusan
         if (d.tglPutusan) {
-            html += `<div class="step-card">
-            <div class="step-card-header" style="color: #047857;">
+            html += `<div class="step-card" style="margin-bottom: 14px;">
+            <div class="step-card-header" style="color: #047857; font-size: 14px; padding: 10px 14px;">
                 <span><i class="fas fa-gavel"></i> A. POTONGAN TAHANAN (POTAH)</span>
-                <span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">KUHAP Ps. 22(4)</span>
+                <span style="font-size: 10.5px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">KUHAP Ps. 22(4)</span>
             </div>
-            <div class="step-card-body" style="font-size: 12px; line-height: 1.6;">
+            <div class="step-card-body" style="font-size: 13.5px; line-height: 1.6; padding: 12px 14px;">
                 <div><b>Rumus:</b> Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)</div>
-                <div class="step-code-box" style="margin-top: 6px;">
-                    Periode: ${tglAwalFmt} s.d. ${tglPutusanFmt}<br>
-                    Hasil Potongan Tahanan (Potah) = <b style="color: #047857;">${d.masaTahananTeks}</b> (${masaTahananHari} Hari)
+                <div class="step-code-box" style="margin-top: 8px; font-size: 13px;">
+                    Periode Penahanan: ${tglAwalFmt} s.d. ${tglPutusanFmt}<br>
+                    Hasil Potongan Tahanan (Potah) = <b style="color: #047857; font-size: 14px;">${d.masaTahananTeks}</b>
                 </div>
             </div>
         </div>`;
         }
 
         // B. Ekspirasi Bebas Murni
-        html += `<div class="step-card">
-            <div class="step-card-header" style="color: var(--primary);">
+        html += `<div class="step-card" style="margin-bottom: 14px;">
+            <div class="step-card-header" style="color: var(--primary); font-size: 14px; padding: 10px 14px;">
                 <span><i class="fas fa-layer-group"></i> B. EKSPIRASI BEBAS MURNI</span>
-                <span style="font-size: 10px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Vonis Pokok</span>
+                <span style="font-size: 10.5px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Vonis Pokok</span>
             </div>
-            <div class="step-card-body" style="font-size: 12px; line-height: 1.6;">
+            <div class="step-card-body" style="font-size: 13.5px; line-height: 1.6; padding: 12px 14px;">
                 <div><b>Rumus:</b> Tgl. Mulai Ditahan (${tglAwalFmt}) + Lama Pidana Pokok (${d.lamaPidanaTeks})</div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin: 4px 0;">
+                <div style="font-size: 12px; color: var(--text-secondary); margin: 6px 0;">
                     Kaidah: Tahun (tanggal ke tanggal di tahun berikutnya), Bulan (1 Bulan = 30 Hari).
                 </div>
-                <div class="step-code-box" style="margin-top: 6px;">
-                    Tanggal Ekspirasi Bebas Murni = <b style="color: var(--danger); font-size: 13px;">${ekspirasiMurniFmt}</b>
+                <div class="step-code-box" style="margin-top: 8px; font-size: 13px;">
+                    Tanggal Ekspirasi Bebas Murni = <b style="color: var(--danger); font-size: 14.5px;">${ekspirasiMurniFmt}</b>
                 </div>
             </div>
         </div>`;
 
         // C. Pentahapan Masa Pidana (Setelah Dipotong Remisi)
-        html += `<div class="step-card">
-            <div class="step-card-header" style="color: #b91c1c;">
+        html += `<div class="step-card" style="margin-bottom: 14px;">
+            <div class="step-card-header" style="color: #b91c1c; font-size: 14px; padding: 10px 14px;">
                 <span><i class="fas fa-flag-checkered"></i> C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)</span>
-                <span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">Remisi saat 2/3: ${totalRemisiTeks} (${totalRemisiHari} Hr)</span>
+                <span style="font-size: 11.5px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">Remisi saat 2/3: ${totalRemisiTeks} (${totalRemisiHari} Hr)</span>
             </div>
-            <div class="step-card-body" style="font-size: 12px; line-height: 1.6;">
-                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
-                    Dihitung dari tanggal murni dikurangkan total remisi yang diperoleh s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):
+            <div class="step-card-body" style="font-size: 13.5px; line-height: 1.6; padding: 12px 14px;">
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+                    Dihitung dari tanggal murni dikurangkan perolehan remisi s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):
                 </div>
-                <div class="step-code-box" style="line-height: 1.8;">
+                <div class="step-code-box" style="line-height: 1.9; font-size: 13px;">
                     • <b>1/3 Masa Pidana</b> : ${tgl13MurniFmt} - ${totalRemisiHari} Hari = <b style="color: var(--primary);">${tgl13DefFmt}</b><br>
                     • <b>1/2 Asimilasi</b>   : ${tgl12MurniFmt} - ${totalRemisiHari} Hari = <b style="color: #d97706;">${tgl12DefFmt}</b><br>
-                    • <b>2/3 Masa Pidana</b> : ${tgl23MurniFmt} - ${totalRemisiHari} Hari = <b style="color: #047857;">${tgl23DefFmt}</b><br>
-                    • <b>Ekspirasi Akhir</b> : ${ekspirasiMurniFmt} - ${totalRemisiHari} Hari = <b style="color: var(--danger);">${ekspirasiDefFmt}</b>
+                    • <b>2/3 Masa Pidana</b> : ${tgl23MurniFmt} - ${totalRemisiHari} Hari = <b style="color: #047857; font-size: 14px;">${tgl23DefFmt}</b><br>
+                    • <b>Ekspirasi Akhir</b> : ${ekspirasiMurniFmt} - ${totalRemisiHari} Hari = <b style="color: var(--danger); font-size: 14px;">${ekspirasiDefFmt}</b>
                 </div>
-                <div style="margin-top: 8px; padding: 8px 10px; background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.3); border-radius: 6px; font-size: 11.5px; color: #b45309;">
+                <div style="margin-top: 10px; padding: 10px 12px; background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.3); border-radius: 6px; font-size: 12.5px; color: #b45309;">
                     <i class="fas fa-calendar-check me-1"></i> <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b><br>
-                    ${tgl23DefFmt} - 60 Hari = <b style="font-size: 12.5px;">${tglUsulFmt}</b>
+                    ${tgl23DefFmt} - 60 Hari = <b style="font-size: 13.5px;">${tglUsulFmt}</b>
                 </div>
             </div>
         </div>`;
@@ -2733,7 +2733,7 @@ II. RINCIAN PERHITUNGAN
             plainText += `A. POTONGAN TAHANAN (POTAH)
    • Rumus  : Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)
    • Periode: ${tglAwalFmt} s.d. ${tglPutusanFmt}
-   • Hasil  : ${d.masaTahananTeks} (${masaTahananHari} Hari)
+   • Hasil  : ${d.masaTahananTeks}
 
 `;
         }
@@ -2751,13 +2751,7 @@ C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)
    • Ekspirasi Akhir           : ${ekspirasiMurniFmt} - ${totalRemisiHari} Hari = ${ekspirasiDefFmt}
    • Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):
      ${tgl23DefFmt} - 60 Hari = ${tglUsulFmt}
-
-========================================================
-Catatan / Disclaimer:
-Rincian perhitungan matematis di atas bersifat objektif dan fleksibel tanpa mengikat
-pada satu program integrasi tertentu, sehingga dapat dijadikan acuan kerja universal
-dalam sidang TPP, pertimbangan pembinaan, usulan integrasi (PB/CB/CMB/Asimilasi),
-maupun kelengkapan berkas registrasi narapidana.`;
+========================================================`;
 
         offlineHitunganManualTeks = plainText;
         document.getElementById('offlineContainerVisual').innerHTML = html;
@@ -2824,7 +2818,7 @@ maupun kelengkapan berkas registrasi narapidana.`;
         <div class="offline-modal-body">
             <div style="display: flex; gap: 8px; margin-bottom: 14px;">
                 <button type="button" id="tabBtnVisual" class="btn-tab active" onclick="switchTabHitunganManual('visual')" style="flex: 1; padding: 7px;">
-                    Tampilan Visual (Langkah 1 s.d. 5)
+                    Tampilan Visual (Bagian A, B, C)
                 </button>
                 <button type="button" id="tabBtnTeks" class="btn-tab" onclick="switchTabHitunganManual('teks')" style="flex: 1; padding: 7px;">
                     Format Salin Teks / Berkas
