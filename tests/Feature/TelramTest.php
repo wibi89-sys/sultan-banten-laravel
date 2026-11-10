@@ -244,4 +244,78 @@ class TelramTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_calculate_mode_simulasi_remisi_dengan_denda_dan_subsider_bb_dan_sb(): void
+    {
+        $user = $this->getTestUser();
+
+        // Kasus BB (Belum Bayar)
+        $responseBb = $this->actingAs($user)->postJson('/telram/calculate', [
+            'mode' => 'simulasi_remisi',
+            'tgl_awal' => '2024-01-01',
+            'tahun' => 3,
+            'bulan' => 0,
+            'hari' => 0,
+            'sub_bulan' => 3,
+            'denda_nominal' => '1000000000',
+            'subsider_status' => 'bb',
+            'agama' => 'islam',
+            'nama_wbp' => 'Denda BB Tester',
+        ]);
+
+        $responseBb->assertStatus(200);
+        $responseBb->assertJson([
+            'success' => true,
+            'data' => [
+                'has_subsider' => true,
+                'subsider_status' => 'bb',
+                'denda_nominal' => 1000000000,
+                'kode_program' => 'PB',
+                'judul_program' => 'PERHITUNGAN PEMBEBASAN BERSYARAT (PB)',
+            ],
+        ]);
+
+        // Kasus CB (< 1 tahun 6 bulan)
+        $responseCb = $this->actingAs($user)->postJson('/telram/calculate', [
+            'mode' => 'simulasi_remisi',
+            'tgl_awal' => '2024-01-01',
+            'tahun' => 1,
+            'bulan' => 0,
+            'hari' => 0,
+            'agama' => 'islam',
+            'nama_wbp' => 'CB Tester',
+        ]);
+
+        $responseCb->assertStatus(200);
+        $responseCb->assertJson([
+            'success' => true,
+            'data' => [
+                'kode_program' => 'CB',
+                'judul_program' => 'PERHITUNGAN CUTI BERSYARAT (CB)',
+            ],
+        ]);
+    }
+
+    public function test_export_pdf_dengan_denda_dan_subsider(): void
+    {
+        $user = $this->getTestUser();
+
+        $response = $this->actingAs($user)->post('/telram/export-pdf', [
+            'tgl_awal' => '2024-01-01',
+            'tahun' => 1,
+            'bulan' => 0,
+            'hari' => 0,
+            'sub_bulan' => 2,
+            'denda_nominal' => '500000000',
+            'subsider_status' => 'bb',
+            'agama' => 'islam',
+            'nama_wbp' => 'Narapidana CB Subsider',
+            'no_register' => 'REG.999/2024',
+            'perkara_pasal' => 'Pasal 378 KUHP',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
 }

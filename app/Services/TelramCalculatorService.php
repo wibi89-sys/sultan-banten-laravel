@@ -247,6 +247,26 @@ class TelramCalculatorService
     }
 
     /**
+     * Format tanggal numerik baku untuk rumus matematika (dd/mm/yyyy)
+     */
+    public static function formatTanggalNumeric(mixed $date): string
+    {
+        if (empty($date)) {
+            return '-';
+        }
+
+        if ($date instanceof Carbon) {
+            return $date->format('d/m/Y');
+        }
+
+        try {
+            return Carbon::parse($date)->format('d/m/Y');
+        } catch (\Throwable) {
+            return (string) $date;
+        }
+    }
+
+    /**
      * Hitung Proyeksi Remisi dan Hak Integrasi (PB, CB, Asimilasi)
      * Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 (RU, RK, Remisi Tambahan),
      * Keppres No. 120/1955 s.d. Keppres 120/2015 (Remisi Dasawarsa tiap 10 tahun RI),
@@ -271,7 +291,9 @@ class TelramCalculatorService
         ?string $tglPutusanStr = null,
         int $subTahun = 0,
         int $subBulan = 0,
-        int $subHari = 0
+        int $subHari = 0,
+        float|int|string $dendaNominal = 0,
+        string $subsiderStatus = 'bb'
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
 
@@ -819,25 +841,56 @@ class TelramCalculatorService
             }
         }
 
+        $dendaClean = (float) preg_replace('/[^0-9]/', '', (string) $dendaNominal);
+        $subsiderStatus = strtolower(trim($subsiderStatus)) === 'sb' ? 'sb' : 'bb';
         $subTahun = max(0, $subTahun);
         $subBulan = max(0, $subBulan);
         $subHari = max(0, $subHari);
         $hasSubsider = ($subTahun > 0 || $subBulan > 0 || $subHari > 0);
+        $hasDenda = ($dendaClean > 0);
         $subsiderTeks = self::formatDurasiTeks($subTahun, $subBulan, $subHari);
         $totalHariSubsider = ($subTahun * 360) + ($subBulan * 30) + $subHari;
 
-        $tglEkspirasiSubsiderMurni = $hasSubsider
+        $dendaNominalFormatted = $hasDenda ? 'Rp '.number_format($dendaClean, 0, ',', '.').',-' : '-';
+        $statusLabel = $subsiderStatus === 'sb' ? 'Sudah Bayar / SB' : 'Belum Bayar / BB';
+
+        if ($hasDenda && $hasSubsider) {
+            $subsiderIdentitasTeks = "{$dendaNominalFormatted} Subsidair {$subsiderTeks} Kurungan ({$statusLabel})";
+        } elseif ($hasDenda) {
+            $subsiderIdentitasTeks = "{$dendaNominalFormatted} ({$statusLabel})";
+        } elseif ($hasSubsider) {
+            $subsiderIdentitasTeks = "{$subsiderTeks} Kurungan ({$statusLabel})";
+        } else {
+            $subsiderIdentitasTeks = '-';
+        }
+
+        $isSubsiderAktifBb = $hasSubsider && ($subsiderStatus === 'bb');
+
+        $tglEkspirasiSubsiderSebelumRemisi = $isSubsiderAktifBb
             ? self::tambahDurasiVonis($tglEkspirasiMurni, $subTahun, $subBulan, $subHari)
             : null;
 
-        $tglEkspirasiSubsiderDefinitif = $hasSubsider
+        $tglEkspirasiSubsiderDefinitif = $isSubsiderAktifBb
             ? self::tambahDurasiVonis($tglEkspirasiDefinitif, $subTahun, $subBulan, $subHari)
             : null;
+
+        $tgl23SubsiderDefinitif = $isSubsiderAktifBb
+            ? self::tambahDurasiVonis($tgl23Definitif, $subTahun, $subBulan, $subHari)
+            : null;
+
+        $tglEkspirasiAwal = $tglPutusan
+            ? self::tambahDurasiVonis($tglPutusan, $tahun, $bulan, $hari)
+            : $tglEkspirasiMurni;
+
+        $totalBulanVonis = ($tahun * 12) + $bulan;
+        $isCb = ($totalBulanVonis < 18) || ($totalBulanVonis === 18 && $hari === 0);
+        $judulProgram = $isCb ? 'PERHITUNGAN CUTI BERSYARAT (CB)' : 'PERHITUNGAN PEMBEBASAN BERSYARAT (PB)';
+        $kodeProgram = $isCb ? 'CB' : 'PB';
 
         $result = [
             'mode' => 'simulasi_remisi',
             'target_basis' => $targetBasis,
-            'target_basis_label' => $targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana' : 'Sampai Ekspirasi Bebas Murni',
+            'target_basis_label' => $targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana' : 'Sampai Ekspirasi Sebelum Remisi',
             'nama_wbp' => $namaWbp,
             'no_register' => $noRegister,
             'perkara_pasal' => $perkaraPasal,
@@ -853,6 +906,13 @@ class TelramCalculatorService
             'hari' => $hari,
             'total_hari_vonis' => $totalHariVonis,
             'has_subsider' => $hasSubsider,
+            'has_denda' => $hasDenda,
+            'denda_nominal' => $dendaClean,
+            'denda_nominal_formatted' => $dendaNominalFormatted,
+            'subsider_status' => $subsiderStatus,
+            'subsider_identitas_teks' => $subsiderIdentitasTeks,
+            'judul_program' => $judulProgram,
+            'kode_program' => $kodeProgram,
             'sub_tahun' => $subTahun,
             'sub_bulan' => $subBulan,
             'sub_hari' => $subHari,
@@ -871,17 +931,23 @@ class TelramCalculatorService
             'total_proyeksi_remisi_teks' => self::formatRemisiBulanHari($totalHariRemisi),
             'status_pengusulan' => $statusPengusulan,
             'milestones' => [
-                'ekspirasi_murni' => $tglEkspirasiMurni->toDateString(),
+                'ekspirasi_sebelum_remisi' => $tglEkspirasiMurni->toDateString(),
+                'ekspirasi_murni' => $tglEkspirasiMurni->toDateString(), // alias
                 'tgl_putusan' => $tglPutusan ? $tglPutusan->toDateString() : null,
-                'tgl_1_3_murni' => $tgl13Murni->toDateString(),
-                'tgl_1_2_murni' => $tgl12Murni->toDateString(),
-                'tgl_2_3_murni' => $tgl23Murni->toDateString(),
+                'tgl_1_3_sebelum_remisi' => $tgl13Murni->toDateString(),
+                'tgl_1_3_murni' => $tgl13Murni->toDateString(), // alias
+                'tgl_1_2_sebelum_remisi' => $tgl12Murni->toDateString(),
+                'tgl_1_2_murni' => $tgl12Murni->toDateString(), // alias
+                'tgl_2_3_sebelum_remisi' => $tgl23Murni->toDateString(),
+                'tgl_2_3_murni' => $tgl23Murni->toDateString(), // alias
                 'tgl_1_3_definitif' => $tgl13Definitif->toDateString(),
                 'tgl_1_2_definitif' => $tgl12Definitif->toDateString(),
                 'tgl_2_3_definitif' => $tgl23Definitif->toDateString(),
+                'tgl_2_3_subsider_definitif' => $tgl23SubsiderDefinitif?->toDateString(),
                 'tgl_mulai_pengusulan' => $tglMulaiPengusulan->toDateString(),
                 'ekspirasi_definitif' => $tglEkspirasiDefinitif->toDateString(),
-                'ekspirasi_subsider_murni' => $tglEkspirasiSubsiderMurni?->toDateString(),
+                'ekspirasi_subsider_sebelum_remisi' => $tglEkspirasiSubsiderSebelumRemisi?->toDateString(),
+                'ekspirasi_subsider_murni' => $tglEkspirasiSubsiderSebelumRemisi?->toDateString(), // alias
                 'ekspirasi_subsider_definitif' => $tglEkspirasiSubsiderDefinitif?->toDateString(),
             ],
             'formatted' => [
@@ -889,18 +955,39 @@ class TelramCalculatorService
                 'tgl_putusan' => $tglPutusan ? self::formatTanggalIndonesia($tglPutusan) : '-',
                 'masa_tahanan' => $masaTahananTeks,
                 'sisa_pidana_pasca_putusan' => $sisaPidanaPascaPutusanTeks,
-                'ekspirasi_murni' => self::formatTanggalIndonesia($tglEkspirasiMurni),
-                'tgl_1_3_murni' => self::formatTanggalIndonesia($tgl13Murni),
-                'tgl_1_2_murni' => self::formatTanggalIndonesia($tgl12Murni),
-                'tgl_2_3_murni' => self::formatTanggalIndonesia($tgl23Murni),
+                'ekspirasi_sebelum_remisi' => self::formatTanggalIndonesia($tglEkspirasiMurni),
+                'ekspirasi_murni' => self::formatTanggalIndonesia($tglEkspirasiMurni), // alias
+                'tgl_1_3_sebelum_remisi' => self::formatTanggalIndonesia($tgl13Murni),
+                'tgl_1_3_murni' => self::formatTanggalIndonesia($tgl13Murni), // alias
+                'tgl_1_2_sebelum_remisi' => self::formatTanggalIndonesia($tgl12Murni),
+                'tgl_1_2_murni' => self::formatTanggalIndonesia($tgl12Murni), // alias
+                'tgl_2_3_sebelum_remisi' => self::formatTanggalIndonesia($tgl23Murni),
+                'tgl_2_3_murni' => self::formatTanggalIndonesia($tgl23Murni), // alias
                 'tgl_1_3_definitif' => self::formatTanggalIndonesia($tgl13Definitif),
                 'tgl_1_2_definitif' => self::formatTanggalIndonesia($tgl12Definitif),
                 'tgl_2_3_definitif' => self::formatTanggalIndonesia($tgl23Definitif),
+                'tgl_2_3_subsider_definitif' => $tgl23SubsiderDefinitif ? self::formatTanggalIndonesia($tgl23SubsiderDefinitif) : '-',
                 'tgl_mulai_pengusulan' => self::formatTanggalIndonesia($tglMulaiPengusulan),
                 'ekspirasi_definitif' => self::formatTanggalIndonesia($tglEkspirasiDefinitif),
-                'ekspirasi_subsider_murni' => $tglEkspirasiSubsiderMurni ? self::formatTanggalIndonesia($tglEkspirasiSubsiderMurni) : '-',
+                'ekspirasi_subsider_sebelum_remisi' => $tglEkspirasiSubsiderSebelumRemisi ? self::formatTanggalIndonesia($tglEkspirasiSubsiderSebelumRemisi) : '-',
+                'ekspirasi_subsider_murni' => $tglEkspirasiSubsiderSebelumRemisi ? self::formatTanggalIndonesia($tglEkspirasiSubsiderSebelumRemisi) : '-', // alias
                 'ekspirasi_subsider_definitif' => $tglEkspirasiSubsiderDefinitif ? self::formatTanggalIndonesia($tglEkspirasiSubsiderDefinitif) : '-',
                 'subsider_teks' => $subsiderTeks,
+                'subsider_identitas_teks' => $subsiderIdentitasTeks,
+            ],
+            'numeric' => [
+                'tgl_awal' => self::formatTanggalNumeric($tglAwal),
+                'tgl_putusan' => $tglPutusan ? self::formatTanggalNumeric($tglPutusan) : '-',
+                'ekspirasi_awal' => self::formatTanggalNumeric($tglEkspirasiAwal),
+                'ekspirasi_sebelum_remisi' => self::formatTanggalNumeric($tglEkspirasiMurni),
+                'ekspirasi_subsider_sebelum_remisi' => $tglEkspirasiSubsiderSebelumRemisi ? self::formatTanggalNumeric($tglEkspirasiSubsiderSebelumRemisi) : '-',
+                'tgl_1_3_definitif' => self::formatTanggalNumeric($tgl13Definitif),
+                'tgl_1_2_definitif' => self::formatTanggalNumeric($tgl12Definitif),
+                'tgl_2_3_definitif' => self::formatTanggalNumeric($tgl23Definitif),
+                'tgl_2_3_subsider_definitif' => $tgl23SubsiderDefinitif ? self::formatTanggalNumeric($tgl23SubsiderDefinitif) : '-',
+                'ekspirasi_definitif' => self::formatTanggalNumeric($tglEkspirasiDefinitif),
+                'ekspirasi_subsider_definitif' => $tglEkspirasiSubsiderDefinitif ? self::formatTanggalNumeric($tglEkspirasiSubsiderDefinitif) : '-',
+                'tgl_mulai_pengusulan' => self::formatTanggalNumeric($tglMulaiPengusulan),
             ],
             'proyeksi_ledger' => $ledger,
         ];
@@ -960,103 +1047,149 @@ class TelramCalculatorService
 
     /**
      * Hasilkan rincian teks hitungan manual lengkap beserta rumus dan substitusi angka.
-     * Tidak menyebutkan program integrasi secara kaku agar fleksibel untuk semua keperluan.
+     * Mengikuti kaidah penulisan matematika dengan tanda sama dengan (=) yang lurus dan rapi.
      */
     public static function generateHitunganManualTeks(array $data): string
     {
+        $judulProgram = $data['judul_program'] ?? 'PERHITUNGAN PEMBEBASAN BERSYARAT (PB)';
         $namaWbp = $data['nama_wbp'] ?? 'Narapidana';
         $noRegister = $data['no_register'] ?? '-';
         $perkaraPasal = $data['perkara_pasal'] ?? '-';
-        $tglAwal = $data['formatted']['tgl_awal'] ?? '-';
-        $tglPutusan = $data['formatted']['tgl_putusan'] ?? '-';
         $lamaVonis = $data['lama_pidana_teks'] ?? '-';
-        $totalHariVonis = (int) ($data['total_hari_vonis'] ?? 0);
-        $totalHariVonisFmt = number_format($totalHariVonis, 0, ',', '.');
-        $tahun = (int) ($data['tahun'] ?? 0);
-        $bulan = (int) ($data['bulan'] ?? 0);
-        $hari = (int) ($data['hari'] ?? 0);
+        $subsiderIdentitas = $data['formatted']['subsider_identitas_teks'] ?? ($data['subsider_identitas_teks'] ?? '-');
+        $subsiderTeks = $data['formatted']['subsider_teks'] ?? ($data['subsider_teks'] ?? '0 Hari');
+        $hasSubsiderBb = ! empty($data['has_subsider']) && (($data['subsider_status'] ?? 'bb') === 'bb');
 
-        $ekspirasiMurni = $data['formatted']['ekspirasi_murni'] ?? '-';
-        $tgl13Murni = $data['formatted']['tgl_1_3_murni'] ?? '-';
-        $tgl12Murni = $data['formatted']['tgl_1_2_murni'] ?? '-';
-        $tgl23Murni = $data['formatted']['tgl_2_3_murni'] ?? '-';
+        $num = $data['numeric'] ?? [];
+        $fmt = $data['formatted'] ?? [];
+
+        $tglAwalNum = $num['tgl_awal'] ?? '-';
+        $tglAwalIndo = $fmt['tgl_awal'] ?? '-';
+
+        $tglPutusanNum = $num['tgl_putusan'] ?? '-';
+        $tglPutusanIndo = $fmt['tgl_putusan'] ?? '-';
+
+        $masaTahananTeks = $fmt['masa_tahanan'] ?? '-';
+
+        $ekspirasiAwalNum = $num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiAwalIndo = $fmt['ekspirasi_sebelum_remisi'] ?? '-';
+
+        $ekspirasiSebelumRemisiNum = $num['ekspirasi_sebelum_remisi'] ?? '-';
+        $ekspirasiSebelumRemisiIndo = $fmt['ekspirasi_sebelum_remisi'] ?? '-';
+
+        $ekspirasiSubSebelumRemisiNum = $num['ekspirasi_subsider_sebelum_remisi'] ?? '-';
+        $ekspirasiSubSebelumRemisiIndo = $fmt['ekspirasi_subsider_sebelum_remisi'] ?? '-';
 
         $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
         $totalRemisiTeks = $data['total_proyeksi_remisi_teks'] ?? '0 Hari';
 
-        $ekspirasiDefinitif = $data['formatted']['ekspirasi_definitif'] ?? '-';
-        $tgl13Definitif = $data['formatted']['tgl_1_3_definitif'] ?? '-';
-        $tgl12Definitif = $data['formatted']['tgl_1_2_definitif'] ?? '-';
-        $tgl23Definitif = $data['formatted']['tgl_2_3_definitif'] ?? '-';
-        $tglUsul = $data['formatted']['tgl_mulai_pengusulan'] ?? '-';
+        $tgl12DefNum = $num['tgl_1_2_definitif'] ?? '-';
+        $tgl12DefIndo = $fmt['tgl_1_2_definitif'] ?? '-';
 
-        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
-        $masaTahananTeks = $data['masa_tahanan_teks'] ?? '-';
-        $sisaHariPascaPutusan = $data['sisa_hari_pasca_putusan'] ?? null;
-        $sisaPidanaPascaPutusanTeks = $data['sisa_pidana_pasca_putusan_teks'] ?? '-';
+        $tgl23DefNum = $num['tgl_2_3_definitif'] ?? '-';
+        $tgl23DefIndo = $fmt['tgl_2_3_definitif'] ?? '-';
 
-        [$y13, $m13, $d13] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
-        [$y12, $m12, $d12] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
-        [$y23, $m23, $d23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
+        $tgl23SubDefNum = $num['tgl_2_3_subsider_definitif'] ?? '-';
+        $tgl23SubDefIndo = $fmt['tgl_2_3_subsider_definitif'] ?? '-';
 
-        $durasi13Teks = self::formatDurasiTeks($y13, $m13, $d13);
-        $durasi12Teks = self::formatDurasiTeks($y12, $m12, $d12);
-        $durasi23Teks = self::formatDurasiTeks($y23, $m23, $d23);
+        $ekspirasiDefNum = $num['ekspirasi_definitif'] ?? '-';
+        $ekspirasiDefIndo = $fmt['ekspirasi_definitif'] ?? '-';
 
-        $teks = "PERHITUNGAN MANUAL\n";
+        $ekspirasiSubDefNum = $num['ekspirasi_subsider_definitif'] ?? '-';
+        $ekspirasiSubDefIndo = $fmt['ekspirasi_subsider_definitif'] ?? '-';
+
+        $tglUsulNum = $num['tgl_mulai_pengusulan'] ?? '-';
+        $tglUsulIndo = $fmt['tgl_mulai_pengusulan'] ?? '-';
+
+        $teks = "{$judulProgram}\n";
         $teks .= "Sultan Banten - Kantor Wilayah Kemenimipas Banten\n";
         $teks .= "========================================================\n\n";
 
-        $teks .= "I. IDENTITAS & PERKARA\n";
+        $teks .= "IDENTITAS WARGA BINAAN PEMASYARAKATAN\n";
         $teks .= "--------------------------------------------------------\n";
-        $teks .= "• Nama WBP            : {$namaWbp}\n";
-        $teks .= "• Nomor Register      : {$noRegister}\n";
-        $teks .= "• Perkara / Pasal     : {$perkaraPasal}\n";
-        $teks .= "• Tgl. Mulai Ditahan  : {$tglAwal}\n";
-        $teks .= "• Tgl. Putusan        : {$tglPutusan}\n";
-        $teks .= "• Pidana Pokok        : {$lamaVonis}\n";
-        if (! empty($data['has_subsider'])) {
-            $subTeks = $data['formatted']['subsider_teks'] ?? '-';
-            $teks .= "• Pidana Subsider     : {$subTeks} (Kurungan Pengganti Denda)\n";
-        }
-        $teks .= "\n";
+        $teks .= "Nama WBP            : {$namaWbp}\n";
+        $teks .= "Nomor Register      : {$noRegister}\n";
+        $teks .= "Perkara / Pasal     : {$perkaraPasal}\n";
+        $teks .= "Tgl. Mulai Ditahan  : {$tglAwalIndo}\n";
+        $teks .= "Tgl. Putusan        : {$tglPutusanIndo}\n";
+        $teks .= "Pidana Pokok        : {$lamaVonis}\n";
+        $teks .= "Pidana Subsider     : {$subsiderIdentitas}\n\n";
 
-        $teks .= "II. RINCIAN PERHITUNGAN\n";
-        $teks .= "--------------------------------------------------------\n";
         if (! empty($data['tgl_putusan'])) {
             $teks .= "A. POTONGAN TAHANAN (POTAH)\n";
-            $teks .= "   • Rumus  : Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)\n";
-            $teks .= "   • Periode: {$tglAwal} s.d. {$tglPutusan}\n";
-            $teks .= "   • Hasil  : {$masaTahananTeks}\n\n";
+            $teks .= "   Potah = Tgl. Mulai Ditahan - Tgl. Putusan\n";
+            $teks .= "         = {$tglAwalNum} - {$tglPutusanNum}\n";
+            $teks .= "         = {$masaTahananTeks}\n\n";
         }
 
-        $teks .= "B. EKSPIRASI BEBAS MURNI\n";
-        $teks .= "   • Kaidah : Tahun = tanggal ke tanggal berikutnya | Bulan = 30 hari/bulan\n";
-        $teks .= "   • Rumus  : Tgl. Mulai Ditahan + Lama Pidana Pokok\n";
-        $teks .= "   • Hitung : {$tglAwal} + {$lamaVonis}\n";
-        $teks .= "   • Hasil  : {$ekspirasiMurni}\n";
-        if (! empty($data['has_subsider'])) {
-            $subMurni = $data['formatted']['ekspirasi_subsider_murni'] ?? '-';
-            $subTeks = $data['formatted']['subsider_teks'] ?? '-';
-            $teks .= "   • Ekspirasi + Subsider (Murni): {$subMurni} (+ {$subTeks})\n";
+        $teks .= "B. EKSPIRASI SEBELUM REMISI\n";
+        if (! empty($data['tgl_putusan'])) {
+            $teks .= "   Ekspirasi Awal  = Tgl. Putusan + Lama Pidana Pokok\n";
+            $teks .= "                   = {$tglPutusanNum} + {$lamaVonis}\n";
+            $teks .= "                   = {$ekspirasiAwalNum}\n";
+            $teks .= "                   = {$ekspirasiAwalIndo}\n\n";
+
+            $teks .= "   Ekspirasi Akhir = Ekspirasi Awal - Potah\n";
+            $teks .= "                   = {$ekspirasiAwalNum} - {$masaTahananTeks}\n";
+            $teks .= "                   = {$ekspirasiSebelumRemisiNum}\n";
+            $teks .= "                   = {$ekspirasiSebelumRemisiIndo}\n";
+        } else {
+            $teks .= "   Ekspirasi Akhir = Tgl. Mulai Ditahan + Lama Pidana Pokok\n";
+            $teks .= "                   = {$tglAwalNum} + {$lamaVonis}\n";
+            $teks .= "                   = {$ekspirasiSebelumRemisiNum}\n";
+            $teks .= "                   = {$ekspirasiSebelumRemisiIndo}\n";
+        }
+
+        if ($hasSubsiderBb) {
+            $teks .= "\n";
+            $teks .= "   Ekspirasi (+Subsider BB) = Ekspirasi Akhir + Pidana Subsider\n";
+            $teks .= "                            = {$ekspirasiSebelumRemisiNum} + {$subsiderTeks}\n";
+            $teks .= "                            = {$ekspirasiSubSebelumRemisiNum}\n";
+            $teks .= "                            = {$ekspirasiSubSebelumRemisiIndo}\n";
         }
         $teks .= "\n";
 
-        $teks .= "C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)\n";
-        $teks .= "   • Remisi Diperoleh saat 2/3 : {$totalRemisiTeks} ({$totalRemisiHari} Hari)\n";
-        $teks .= "     (Kaidah Keppres No. 174/1999: 1 Bulan Remisi = 30 Hari, tanpa konversi ke tahun)\n\n";
-        $teks .= "   • 1/3 Masa Pidana : {$tgl13Murni} - {$totalRemisiHari} Hari = {$tgl13Definitif}\n";
-        $teks .= "   • 1/2 Asimilasi   : {$tgl12Murni} - {$totalRemisiHari} Hari = {$tgl12Definitif}\n";
-        $teks .= "   • 2/3 Masa Pidana : {$tgl23Murni} - {$totalRemisiHari} Hari = {$tgl23Definitif}\n";
-        $teks .= "   • Ekspirasi Pokok : {$ekspirasiMurni} - {$totalRemisiHari} Hari = {$ekspirasiDefinitif}\n";
-        if (! empty($data['has_subsider'])) {
-            $subDef = $data['formatted']['ekspirasi_subsider_definitif'] ?? '-';
-            $subTeks = $data['formatted']['subsider_teks'] ?? '-';
-            $teks .= "   • Ekspirasi Akhir (+Subsider) : {$ekspirasiDefinitif} + {$subTeks} = {$subDef} (Tanpa Remisi)\n";
+        $teks .= "C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)\n";
+        $teks .= "   • Jumlah Remisi yang diperoleh = {$totalRemisiTeks} ({$totalRemisiHari} Hari)\n\n";
+
+        $teks .= "   • 1/2 Masa Pidana = Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)\n";
+        $teks .= "                     = {$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tgl12DefNum}\n";
+        $teks .= "                     = {$tgl12DefIndo}\n\n";
+
+        $teks .= "   • 2/3 Masa Pidana = Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)\n";
+        $teks .= "                     = {$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tgl23DefNum}\n";
+        $teks .= "                     = {$tgl23DefIndo}\n";
+
+        if ($hasSubsiderBb) {
+            $teks .= "\n";
+            $teks .= "   • 2/3 Masa Pidana (+Subsider BB) = 2/3 Masa Pidana + Pidana Subsider\n";
+            $teks .= "                                    = {$tgl23DefNum} + {$subsiderTeks}\n";
+            $teks .= "                                    = {$tgl23SubDefNum}\n";
+            $teks .= "                                    = {$tgl23SubDefIndo}\n";
         }
         $teks .= "\n";
-        $teks .= "   • Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):\n";
-        $teks .= "     {$tgl23Definitif} - 60 Hari = {$tglUsul}\n";
+
+        $teks .= "   • Ekspirasi Akhir = Ekspirasi Sebelum Remisi - Remisi\n";
+        $teks .= "                     = {$ekspirasiSebelumRemisiNum} - {$totalRemisiTeks}\n";
+        $teks .= "                     = {$ekspirasiDefNum}\n";
+        $teks .= "                     = {$ekspirasiDefIndo}\n";
+
+        if ($hasSubsiderBb) {
+            $teks .= "\n";
+            $teks .= "   • Ekspirasi Akhir (+Subsider BB) = Ekspirasi Akhir + Pidana Subsider\n";
+            $teks .= "                                    = {$ekspirasiDefNum} + {$subsiderTeks}\n";
+            $teks .= "                                    = {$ekspirasiSubDefNum}\n";
+            $teks .= "                                    = {$ekspirasiSubDefIndo} (Tanpa Remisi)\n";
+        }
+        $teks .= "\n";
+
+        $teks .= "   • Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):\n";
+        $teks .= "     Tgl. Usul SDP = Tgl. 2/3 Masa Pidana - 60 Hari\n";
+        $teks .= "                   = {$tgl23DefNum} - 60 Hari\n";
+        $teks .= "                   = {$tglUsulNum}\n";
+        $teks .= "                   = {$tglUsulIndo}\n";
         $teks .= "========================================================\n";
 
         return $teks;
@@ -1067,146 +1200,379 @@ class TelramCalculatorService
      */
     public static function renderHitunganManualHtml(array $data): string
     {
+        $judulProgram = htmlspecialchars($data['judul_program'] ?? 'PERHITUNGAN PEMBEBASAN BERSYARAT (PB)');
         $namaWbp = htmlspecialchars($data['nama_wbp'] ?? 'Narapidana');
         $noRegister = htmlspecialchars($data['no_register'] ?? '-');
         $perkaraPasal = htmlspecialchars($data['perkara_pasal'] ?? '-');
-        $tglAwal = htmlspecialchars($data['formatted']['tgl_awal'] ?? '-');
-        $tglPutusan = htmlspecialchars($data['formatted']['tgl_putusan'] ?? '-');
         $lamaVonis = htmlspecialchars($data['lama_pidana_teks'] ?? '-');
-        $totalHariVonis = (int) ($data['total_hari_vonis'] ?? 0);
-        $totalHariVonisFmt = number_format($totalHariVonis, 0, ',', '.');
-        $tahun = (int) ($data['tahun'] ?? 0);
-        $bulan = (int) ($data['bulan'] ?? 0);
-        $hari = (int) ($data['hari'] ?? 0);
+        $subsiderIdentitas = htmlspecialchars($data['formatted']['subsider_identitas_teks'] ?? ($data['subsider_identitas_teks'] ?? '-'));
+        $subsiderTeks = htmlspecialchars($data['formatted']['subsider_teks'] ?? ($data['subsider_teks'] ?? '0 Hari'));
+        $hasSubsiderBb = ! empty($data['has_subsider']) && (($data['subsider_status'] ?? 'bb') === 'bb');
 
-        $ekspirasiMurni = htmlspecialchars($data['formatted']['ekspirasi_murni'] ?? '-');
-        $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
-        $tgl12Murni = htmlspecialchars($data['formatted']['tgl_1_2_murni'] ?? '-');
-        $tgl23Murni = htmlspecialchars($data['formatted']['tgl_2_3_murni'] ?? '-');
+        $num = $data['numeric'] ?? [];
+        $fmt = $data['formatted'] ?? [];
+
+        $tglAwalNum = htmlspecialchars($num['tgl_awal'] ?? '-');
+        $tglAwalIndo = htmlspecialchars($fmt['tgl_awal'] ?? '-');
+
+        $tglPutusanNum = htmlspecialchars($num['tgl_putusan'] ?? '-');
+        $tglPutusanIndo = htmlspecialchars($fmt['tgl_putusan'] ?? '-');
+
+        $masaTahananTeks = htmlspecialchars($fmt['masa_tahanan'] ?? '-');
+
+        $ekspirasiAwalNum = htmlspecialchars($num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-'));
+        $ekspirasiAwalIndo = htmlspecialchars($fmt['ekspirasi_sebelum_remisi'] ?? '-');
+
+        $ekspirasiSebelumRemisiNum = htmlspecialchars($num['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiSebelumRemisiIndo = htmlspecialchars($fmt['ekspirasi_sebelum_remisi'] ?? '-');
+
+        $ekspirasiSubSebelumRemisiNum = htmlspecialchars($num['ekspirasi_subsider_sebelum_remisi'] ?? '-');
+        $ekspirasiSubSebelumRemisiIndo = htmlspecialchars($fmt['ekspirasi_subsider_sebelum_remisi'] ?? '-');
 
         $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
         $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari');
 
-        $ekspirasiDefinitif = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
-        $tgl13Definitif = htmlspecialchars($data['formatted']['tgl_1_3_definitif'] ?? '-');
-        $tgl12Definitif = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
-        $tgl23Definitif = htmlspecialchars($data['formatted']['tgl_2_3_definitif'] ?? '-');
-        $tglUsul = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
+        $tgl12DefNum = htmlspecialchars($num['tgl_1_2_definitif'] ?? '-');
+        $tgl12DefIndo = htmlspecialchars($fmt['tgl_1_2_definitif'] ?? '-');
 
-        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
-        $masaTahananTeks = htmlspecialchars($data['masa_tahanan_teks'] ?? '-');
-        $sisaHariPascaPutusan = (int) ($data['sisa_hari_pasca_putusan'] ?? 0);
-        $sisaPidanaPascaPutusanTeks = htmlspecialchars($data['sisa_pidana_pasca_putusan_teks'] ?? '-');
+        $tgl23DefNum = htmlspecialchars($num['tgl_2_3_definitif'] ?? '-');
+        $tgl23DefIndo = htmlspecialchars($fmt['tgl_2_3_definitif'] ?? '-');
 
-        [$y13, $m13, $d13] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
-        [$y12, $m12, $d12] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
-        [$y23, $m23, $d23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
+        $tgl23SubDefNum = htmlspecialchars($num['tgl_2_3_subsider_definitif'] ?? '-');
+        $tgl23SubDefIndo = htmlspecialchars($fmt['tgl_2_3_subsider_definitif'] ?? '-');
 
-        $durasi13Teks = htmlspecialchars(self::formatDurasiTeks($y13, $m13, $d13));
-        $durasi12Teks = htmlspecialchars(self::formatDurasiTeks($y12, $m12, $d12));
-        $durasi23Teks = htmlspecialchars(self::formatDurasiTeks($y23, $m23, $d23));
+        $ekspirasiDefNum = htmlspecialchars($num['ekspirasi_definitif'] ?? '-');
+        $ekspirasiDefIndo = htmlspecialchars($fmt['ekspirasi_definitif'] ?? '-');
 
-        $subsiderHtml = '';
-        if (! empty($data['has_subsider'])) {
-            $subTeks = htmlspecialchars($data['formatted']['subsider_teks'] ?? '-');
-            $subsiderHtml = "<div class=\"col-sm-6\"><b>Pidana Subsider:</b> {$subTeks} <span class=\"text-muted\">(Pengganti Denda)</span></div>";
-        }
+        $ekspirasiSubDefNum = htmlspecialchars($num['ekspirasi_subsider_definitif'] ?? '-');
+        $ekspirasiSubDefIndo = htmlspecialchars($fmt['ekspirasi_subsider_definitif'] ?? '-');
+
+        $tglUsulNum = htmlspecialchars($num['tgl_mulai_pengusulan'] ?? '-');
+        $tglUsulIndo = htmlspecialchars($fmt['tgl_mulai_pengusulan'] ?? '-');
 
         $html = '<div class="hitungan-manual-container d-flex flex-column gap-3.5">';
 
-        // Identitas Singkat
-        $html .= <<<CARD
+        // Judul Utama Dinamis
+        $html .= <<<HEADER
+        <div class="text-center pb-2 border-bottom">
+            <h5 class="fw-bold text-dark mb-0 tracking-wide text-uppercase" style="letter-spacing: 0.5px;">
+                {$judulProgram}
+            </h5>
+            <small class="text-muted">Kaidah Perhitungan Matematis Sesuai Regulasi Pemasyarakatan</small>
+        </div>
+HEADER;
+
+        // Identitas WBP 2 Kolom
+        $html .= <<<IDENTITAS
         <div class="card border-0 shadow-sm" style="background-color: #f8fafc; border-radius: 10px;">
             <div class="card-body p-3.5">
                 <div class="row g-2.5" style="font-size: 13px;">
                     <div class="col-sm-6"><b>Nama WBP:</b> {$namaWbp}</div>
+                    <div class="col-sm-6"><b>Tgl. Mulai Ditahan:</b> {$tglAwalIndo}</div>
                     <div class="col-sm-6"><b>No. Register:</b> {$noRegister}</div>
+                    <div class="col-sm-6"><b>Tgl. Putusan:</b> {$tglPutusanIndo}</div>
                     <div class="col-sm-6"><b>Perkara / Pasal:</b> {$perkaraPasal}</div>
                     <div class="col-sm-6"><b>Pidana Pokok:</b> {$lamaVonis}</div>
-                    {$subsiderHtml}
-                    <div class="col-sm-6"><b>Tgl. Mulai Ditahan:</b> {$tglAwal}</div>
-                    <div class="col-sm-6"><b>Tgl. Putusan:</b> {$tglPutusan}</div>
-                </div>
-            </div>
-        </div>
-CARD;
-
-        // Bagian A (Jika Tgl Putusan diisi)
-        if (! empty($data['tgl_putusan'])) {
-            $html .= <<<CARD
-            <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
-                <div class="card-header bg-white py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between">
-                    <strong class="text-success" style="font-size: 14px;"><i class="fas fa-gavel me-1.5"></i> A. POTONGAN TAHANAN (POTAH)</strong>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10.5px;">KUHAP Ps. 22(4)</span>
-                </div>
-                <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
-                    <div class="p-3 rounded bg-light border font-monospace" style="font-size: 13px;">
-                        • <b>Rumus:</b> Tgl. Putusan - Tgl. Mulai Ditahan<br>
-                        • <b>Periode:</b> {$tglAwal} s.d. {$tglPutusan}<br>
-                        • <b>Hasil:</b> <b class="text-success" style="font-size: 14px;">{$masaTahananTeks}</b>
+                    <div class="col-12 border-top pt-2 mt-1">
+                        <b>Pidana Denda / Subsider:</b> <span class="fw-semibold text-primary">{$subsiderIdentitas}</span>
                     </div>
                 </div>
             </div>
-CARD;
+        </div>
+IDENTITAS;
+
+        // Bagian A (Jika Tgl Putusan diisi)
+        if (! empty($data['tgl_putusan'])) {
+            $html .= <<<CARD_A
+            <div class="card border" style="border-radius: 10px; border-color: #bbf7d0;">
+                <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #f0fdf4;">
+                    <strong style="color: #166534; font-size: 14px;"><i class="fas fa-gavel me-1.5"></i> A. POTONGAN TAHANAN (POTAH)</strong>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10.5px;">KUHAP Ps. 22(4)</span>
+                </div>
+                <div class="card-body p-3.5" style="font-size: 13.5px;">
+                    <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
+                        <tr>
+                            <td style="width: 175px; font-weight: 600; color: #0f172a;">Potah</td>
+                            <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                            <td>Tgl. Mulai Ditahan - Tgl. Putusan</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td style="text-align: center; font-weight: bold;">=</td>
+                            <td>{$tglAwalNum} - {$tglPutusanNum}</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td style="text-align: center; font-weight: bold;">=</td>
+                            <td><b class="text-success" style="font-size: 14.5px;">{$masaTahananTeks}</b></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+CARD_A;
         }
 
-        // Ekspirasi Subsider Murni teks
-        $ekspirasiSubMurniHtml = '';
-        if (! empty($data['has_subsider'])) {
-            $subMurni = htmlspecialchars($data['formatted']['ekspirasi_subsider_murni'] ?? '-');
-            $subTeks = htmlspecialchars($data['formatted']['subsider_teks'] ?? '-');
-            $ekspirasiSubMurniHtml = "<br>• <b>Ekspirasi + Subsider (Murni):</b> <b class=\"text-danger\" style=\"font-size: 14.5px;\">{$subMurni}</b> <span class=\"text-muted\">(+ {$subTeks})</span>";
+        // Bagian B: Ekspirasi Sebelum Remisi
+        $subsiderHtmlB = '';
+        if ($hasSubsiderBb) {
+            $subsiderHtmlB = <<<SUB_B
+            <tr style="height: 8px;"><td colspan="3"></td></tr>
+            <tr>
+                <td style="width: 175px; font-weight: bold; color: #991b1b;">Ekspirasi (+Subsider BB)</td>
+                <td style="width: 25px; text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td style="color: #991b1b;">Ekspirasi Akhir + Pidana Subsider</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td>{$ekspirasiSebelumRemisiNum} + {$subsiderTeks}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td>{$ekspirasiSubSebelumRemisiNum}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td><b style="color: #991b1b; font-size: 14.5px;">{$ekspirasiSubSebelumRemisiIndo}</b></td>
+            </tr>
+SUB_B;
         }
 
-        // Bagian B: Ekspirasi Bebas Murni
-        $html .= <<<CARD
-        <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
-            <div class="card-header bg-white py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between">
-                <strong class="text-primary" style="font-size: 14px;"><i class="fas fa-door-open me-1.5"></i> B. EKSPIRASI BEBAS MURNI</strong>
+        $barisEkspirasiAwal = '';
+        if (! empty($data['tgl_putusan'])) {
+            $barisEkspirasiAwal = <<<EKS_AWAL
+            <tr>
+                <td style="width: 175px; font-weight: 600; color: #0f172a;">Ekspirasi Awal</td>
+                <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                <td>Tgl. Putusan + Lama Pidana Pokok</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold;">=</td>
+                <td>{$tglPutusanNum} + {$lamaVonis}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold;">=</td>
+                <td>{$ekspirasiAwalNum}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold;">=</td>
+                <td><b class="text-primary" style="font-size: 14.5px;">{$ekspirasiAwalIndo}</b></td>
+            </tr>
+            <tr style="height: 8px;"><td colspan="3"></td></tr>
+            <tr>
+                <td style="width: 175px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
+                <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                <td>Ekspirasi Awal - Potah</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold;">=</td>
+                <td>{$ekspirasiAwalNum} - {$masaTahananTeks}</td>
+            </tr>
+EKS_AWAL;
+        } else {
+            $barisEkspirasiAwal = <<<EKS_AWAL
+            <tr>
+                <td style="width: 175px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
+                <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                <td>Tgl. Mulai Ditahan + Lama Pidana Pokok</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold;">=</td>
+                <td>{$tglAwalNum} + {$lamaVonis}</td>
+            </tr>
+EKS_AWAL;
+        }
+
+        $html .= <<<CARD_B
+        <div class="card border" style="border-radius: 10px; border-color: #bfdbfe;">
+            <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #eff6ff;">
+                <strong style="color: #1e40af; font-size: 14px;"><i class="fas fa-door-open me-1.5"></i> B. EKSPIRASI SEBELUM REMISI</strong>
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10.5px;">Vonis Pokok</span>
             </div>
-            <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
-                <div class="p-3 rounded bg-light border font-monospace" style="font-size: 13px;">
-                    • <b>Kaidah:</b> Tahun = tanggal ke tanggal berikutnya | Bulan = 30 hari/bulan<br>
-                    • <b>Rumus:</b> Tgl. Mulai Ditahan + Lama Pidana Pokok<br>
-                    • <b>Hitung:</b> {$tglAwal} + {$lamaVonis}<br>
-                    • <b>Hasil:</b> <b class="text-danger" style="font-size: 14.5px;">{$ekspirasiMurni}</b>
-                    {$ekspirasiSubMurniHtml}
-                </div>
+            <div class="card-body p-3.5" style="font-size: 13.5px;">
+                <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
+                    {$barisEkspirasiAwal}
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$ekspirasiSebelumRemisiNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td><b class="text-danger" style="font-size: 14.5px;">{$ekspirasiSebelumRemisiIndo}</b></td>
+                    </tr>
+                    {$subsiderHtmlB}
+                </table>
             </div>
         </div>
-CARD;
+CARD_B;
 
-        // Ekspirasi Subsider Definitif teks
-        $ekspirasiSubDefHtml = '';
-        if (! empty($data['has_subsider'])) {
-            $subDef = htmlspecialchars($data['formatted']['ekspirasi_subsider_definitif'] ?? '-');
-            $subTeks = htmlspecialchars($data['formatted']['subsider_teks'] ?? '-');
-            $ekspirasiSubDefHtml = "<br>• <b>Ekspirasi Akhir (+Subsider)</b> : {$ekspirasiDefinitif} + {$subTeks} = <b class=\"text-danger\" style=\"font-size: 14px;\">{$subDef}</b> <span class=\"text-muted\">(Kurungan Denda tanpa remisi)</span>";
+        // Bagian C: Pentahapan Masa Pidana (Setelah Remisi)
+        $subsider23HtmlC = '';
+        if ($hasSubsiderBb) {
+            $subsider23HtmlC = <<<SUB_23
+            <tr style="height: 8px;"><td colspan="3"></td></tr>
+            <tr>
+                <td style="width: 175px; font-weight: bold; color: #14532d;">• 2/3 (+Subsider BB)</td>
+                <td style="width: 25px; text-align: center; font-weight: bold; color: #14532d;">=</td>
+                <td style="color: #14532d;">2/3 Masa Pidana + Pidana Subsider</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #14532d;">=</td>
+                <td>{$tgl23DefNum} + {$subsiderTeks}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #14532d;">=</td>
+                <td>{$tgl23SubDefNum}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #14532d;">=</td>
+                <td><b style="color: #14532d; font-size: 14.5px;">{$tgl23SubDefIndo}</b></td>
+            </tr>
+SUB_23;
         }
 
-        // Bagian C: Pentahapan Masa Pidana (Setelah Dipotong Remisi)
-        $html .= <<<CARD
-        <div class="card border" style="border-radius: 10px; border-color: #cbd5e1;">
-            <div class="card-header bg-white py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between">
-                <strong class="text-primary" style="font-size: 14px;"><i class="fas fa-layer-group me-1.5"></i> C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)</strong>
-                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 11.5px;">Remisi saat 2/3: {$totalRemisiTeks} ({$totalRemisiHari} Hr)</span>
+        $subsiderEkspirasiHtmlC = '';
+        if ($hasSubsiderBb) {
+            $subsiderEkspirasiHtmlC = <<<SUB_EKS_C
+            <tr style="height: 8px;"><td colspan="3"></td></tr>
+            <tr>
+                <td style="width: 175px; font-weight: bold; color: #991b1b;">• Ekspirasi (+Subsider BB)</td>
+                <td style="width: 25px; text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td style="color: #991b1b;">Ekspirasi Akhir + Pidana Subsider (Tanpa Remisi)</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td>{$ekspirasiDefNum} + {$subsiderTeks}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td>{$ekspirasiSubDefNum}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: center; font-weight: bold; color: #991b1b;">=</td>
+                <td><b style="color: #991b1b; font-size: 14.5px;">{$ekspirasiSubDefIndo}</b> <span class="text-muted" style="font-size: 11px;">(Tanpa Remisi)</span></td>
+            </tr>
+SUB_EKS_C;
+        }
+
+        $html .= <<<CARD_C
+        <div class="card border" style="border-radius: 10px; border-color: #fecaca;">
+            <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #fef2f2;">
+                <strong style="color: #991b1b; font-size: 14px;"><i class="fas fa-layer-group me-1.5"></i> C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)</strong>
+                <span class="badge bg-success text-white" style="font-size: 11.5px;">Remisi: {$totalRemisiTeks} ({$totalRemisiHari} Hr)</span>
             </div>
-            <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
-                <div class="p-3 rounded bg-light border font-monospace mb-2.5" style="font-size: 13px; line-height: 1.9;">
-                    • <b>1/3 Masa Pidana</b> : {$tgl13Murni} - {$totalRemisiHari} Hari = <b class="text-primary">{$tgl13Definitif}</b><br>
-                    • <b>1/2 Asimilasi</b>   : {$tgl12Murni} - {$totalRemisiHari} Hari = <b class="text-warning">{$tgl12Definitif}</b><br>
-                    • <b>2/3 Masa Pidana</b> : {$tgl23Murni} - {$totalRemisiHari} Hari = <b class="text-success" style="font-size: 14px;">{$tgl23Definitif}</b><br>
-                    • <b>Ekspirasi Pokok</b> : {$ekspirasiMurni} - {$totalRemisiHari} Hari = <b class="text-danger" style="font-size: 14px;">{$ekspirasiDefinitif}</b>
-                    {$ekspirasiSubDefHtml}
-                </div>
-                <div class="p-2.5 rounded border bg-warning-subtle text-warning-emphasis" style="font-size: 12px;">
-                    <i class="fas fa-calendar-check me-1"></i> <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b><br>
-                    {$tgl23Definitif} - 60 Hari = <b style="font-size: 13.5px;">{$tglUsul}</b>
-                </div>
+            <div class="card-body p-3.5" style="font-size: 13.5px;">
+                <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
+                    <tr>
+                        <td colspan="3" class="pb-2">
+                            • <b>Jumlah Remisi yang diperoleh</b> = <b class="text-success" style="font-size: 14px;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b>
+                        </td>
+                    </tr>
+                    <tr style="height: 6px;"><td colspan="3"></td></tr>
+                    <tr>
+                        <td style="width: 175px; font-weight: 600; color: #0f172a;">• 1/2 Masa Pidana</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                        <td>Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tgl12DefNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td><b style="color: #0284c7; font-size: 14.5px;">{$tgl12DefIndo}</b></td>
+                    </tr>
+                    <tr style="height: 8px;"><td colspan="3"></td></tr>
+                    <tr>
+                        <td style="width: 175px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                        <td>Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tgl23DefNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td><b class="text-success" style="font-size: 15px;">{$tgl23DefIndo}</b></td>
+                    </tr>
+                    {$subsider23HtmlC}
+                    <tr style="height: 8px;"><td colspan="3"></td></tr>
+                    <tr>
+                        <td style="width: 175px; font-weight: 600; color: #0f172a;">• Ekspirasi Akhir</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                        <td>Ekspirasi Sebelum Remisi - Remisi</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$ekspirasiSebelumRemisiNum} - {$totalRemisiTeks}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$ekspirasiDefNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td><b class="text-danger" style="font-size: 15px;">{$ekspirasiDefIndo}</b></td>
+                    </tr>
+                    {$subsiderEkspirasiHtmlC}
+                    <tr style="height: 10px;"><td colspan="3"></td></tr>
+                    <tr>
+                        <td style="width: 175px; font-weight: bold; color: #b45309;">• Pengusulan di SDP</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold; color: #b45309;">=</td>
+                        <td style="color: #b45309;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold; color: #b45309;">=</td>
+                        <td>{$tgl23DefNum} - 60 Hari</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold; color: #b45309;">=</td>
+                        <td>{$tglUsulNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold; color: #b45309;">=</td>
+                        <td><b style="color: #b45309; font-size: 15px;">{$tglUsulIndo}</b></td>
+                    </tr>
+                </table>
             </div>
         </div>
-CARD;
+CARD_C;
 
         $html .= '</div>';
 
@@ -1589,14 +1955,13 @@ CARD;
 
         $rowSubsiderPdf = '';
         $borderBottomPotah = '';
-        if ($hasSubsider) {
+        if ($hasSubsider || ! empty($data['has_denda'])) {
             $borderBottomPotah = 'border-bottom: 0.5px solid #e2e8f0;';
+            $subsiderIdentitasTeks = htmlspecialchars($data['formatted']['subsider_identitas_teks'] ?? ($data['subsider_identitas_teks'] ?? '-'));
             $rowSubsiderPdf = <<<SUB
     <tr>
         <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana Subsider</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$subsiderTeks} (Pengganti Denda)</td>
-        <td width="22%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi + Subsider</td>
-        <td width="28%" style="font-weight: bold; color: #b91c1c; padding: 4px 8px; font-size: 9.5pt;">: {$tglEkspirasiSubDef}</td>
+        <td width="80%" colspan="3" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$subsiderIdentitasTeks}</td>
     </tr>
 SUB;
         }
@@ -1630,26 +1995,198 @@ SUB;
         $tglCetakIndo = Carbon::now()->locale('id')->isoFormat('D MMMM Y');
         $petugasNama = htmlspecialchars(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
 
+        $judulProgram = htmlspecialchars($data['judul_program'] ?? 'PERHITUNGAN PEMBEBASAN BERSYARAT (PB)');
+        $subsiderIdentitasTeks = htmlspecialchars($data['formatted']['subsider_identitas_teks'] ?? ($data['subsider_identitas_teks'] ?? '-'));
+        $hasSubsiderBb = ! empty($data['has_subsider']) && (($data['subsider_status'] ?? 'bb') === 'bb');
+
+        $num = $data['numeric'] ?? [];
+        $tglAwalNum = htmlspecialchars($num['tgl_awal'] ?? '-');
+        $tglPutusanNum = htmlspecialchars($num['tgl_putusan'] ?? '-');
+        $ekspirasiAwalNum = htmlspecialchars($num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-'));
+        $ekspirasiSebelumRemisiNum = htmlspecialchars($num['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiSubSebelumRemisiNum = htmlspecialchars($num['ekspirasi_subsider_sebelum_remisi'] ?? '-');
+        $tgl12DefNum = htmlspecialchars($num['tgl_1_2_definitif'] ?? '-');
+        $tgl23DefNum = htmlspecialchars($num['tgl_2_3_definitif'] ?? '-');
+        $tgl23SubDefNum = htmlspecialchars($num['tgl_2_3_subsider_definitif'] ?? '-');
+        $ekspirasiDefNum = htmlspecialchars($num['ekspirasi_definitif'] ?? '-');
+        $ekspirasiSubDefNum = htmlspecialchars($num['ekspirasi_subsider_definitif'] ?? '-');
+        $tglUsulNum = htmlspecialchars($num['tgl_mulai_pengusulan'] ?? '-');
+
+        $ekspirasiAwalIndo = htmlspecialchars($data['formatted']['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiSebelumRemisiIndo = htmlspecialchars($data['formatted']['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiSubSebelumRemisiIndo = htmlspecialchars($data['formatted']['ekspirasi_subsider_sebelum_remisi'] ?? '-');
+        $tgl12DefIndo = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
+        $tgl23DefIndo = htmlspecialchars($data['formatted']['tgl_2_3_definitif'] ?? '-');
+        $tgl23SubDefIndo = htmlspecialchars($data['formatted']['tgl_2_3_subsider_definitif'] ?? '-');
+        $ekspirasiDefIndo = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
+        $ekspirasiSubDefIndo = htmlspecialchars($data['formatted']['ekspirasi_subsider_definitif'] ?? '-');
+        $tglUsulIndo = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
+
         $potahPdfHtml = '';
         if (! empty($data['tgl_putusan'])) {
             $potahPdfHtml = <<<POTAH
 <!-- A. POTONGAN TAHANAN (POTAH) -->
-<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 14px;">
+<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #bbf7d0; margin-bottom: 14px;">
     <tr style="background-color: #f0fdf4;">
         <td style="font-weight: bold; font-size: 10pt; color: #166534; padding: 7px 10px;">
             A. POTONGAN TAHANAN (POTAH)
         </td>
     </tr>
     <tr>
-        <td style="font-size: 9.5pt; line-height: 1.6; padding: 8px 12px;">
-            &bull; <b>Rumus:</b> Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)<br>
-            &bull; <b>Periode Penahanan:</b> {$tglAwal} s.d. {$tglPutusan}<br>
-            &bull; <b>Hasil Potongan Tahanan (Potah):</b> <b style="color: #166534; font-size: 10.5pt;">{$masaTahananTeks}</b>
+        <td style="padding: 10px 12px;">
+            <table width="100%" cellpadding="2" cellspacing="0" border="0" style="font-size: 9.5pt; line-height: 1.5;">
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">Potah</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Tgl. Mulai Ditahan - Tgl. Putusan</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tglAwalNum} - {$tglPutusanNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #166534; font-size: 10.5pt;">{$masaTahananTeks}</b></td>
+                </tr>
+            </table>
         </td>
     </tr>
 </table>
 <br>
 POTAH;
+        }
+
+        $barisEkspirasiAwalPdf = '';
+        if (! empty($data['tgl_putusan'])) {
+            $barisEkspirasiAwalPdf = <<<EKS_AWAL_PDF
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">Ekspirasi Awal</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Tgl. Putusan + Lama Pidana Pokok</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tglPutusanNum} + {$lamaVonis}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiAwalNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #1e40af; font-size: 10.5pt;">{$ekspirasiAwalIndo}</b></td>
+                </tr>
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Ekspirasi Awal - Potah</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiAwalNum} - {$masaTahananTeks}</td>
+                </tr>
+EKS_AWAL_PDF;
+        } else {
+            $barisEkspirasiAwalPdf = <<<EKS_AWAL_PDF
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Tgl. Mulai Ditahan + Lama Pidana Pokok</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tglAwalNum} + {$lamaVonis}</td>
+                </tr>
+EKS_AWAL_PDF;
+        }
+
+        $subsiderPdfSectionB = '';
+        if ($hasSubsiderBb) {
+            $subsiderPdfSectionB = <<<SUB_B_PDF
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #991b1b; font-weight: bold;">Ekspirasi (+Subsider BB)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Ekspirasi Akhir + Pidana Subsider</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiSebelumRemisiNum} + {$subsiderTeks}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiSubSebelumRemisiNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #991b1b; font-size: 10.5pt;">{$ekspirasiSubSebelumRemisiIndo}</b></td>
+                </tr>
+SUB_B_PDF;
+        }
+
+        $subsiderPdf23 = '';
+        if ($hasSubsiderBb) {
+            $subsiderPdf23 = <<<SUB_23_PDF
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #14532d; font-weight: bold;">&bull; 2/3 (+Subsider BB)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">2/3 Masa Pidana + Pidana Subsider</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tgl23DefNum} + {$subsiderTeks}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tgl23SubDefNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #14532d; font-size: 10.5pt;">{$tgl23SubDefIndo}</b></td>
+                </tr>
+SUB_23_PDF;
+        }
+
+        $subsiderPdfEkspirasiC = '';
+        if ($hasSubsiderBb) {
+            $subsiderPdfEkspirasiC = <<<SUB_EKS_C_PDF
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #991b1b; font-weight: bold;">&bull; Ekspirasi (+Subsider BB)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Ekspirasi Akhir + Pidana Subsider (Tanpa Remisi)</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiDefNum} + {$subsiderTeks}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiSubDefNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #991b1b; font-size: 10.5pt;">{$ekspirasiSubDefIndo}</b> <span style="font-size: 8pt; color: #555;">(Tanpa Remisi)</span></td>
+                </tr>
+SUB_EKS_C_PDF;
         }
 
         // Render Ledger Rows (Tabel Rincian Proyeksi Remisi 8 Kolom)
@@ -1787,7 +2324,7 @@ ROW;
     <tr>
         <td width="20%" style="{$borderBottomPotah} color: #475569; padding: 4px 8px; font-size: 9pt;">Potongan Tahanan (Potah)</td>
         <td width="30%" style="{$borderBottomPotah} font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$masaTahananTeks}</td>
-        <td width="22%" style="{$borderBottomPotah} color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi Pokok (Murni)</td>
+        <td width="22%" style="{$borderBottomPotah} color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi Pokok</td>
         <td width="28%" style="{$borderBottomPotah} font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglEkspirasiMurni}</td>
     </tr>
     {$rowSubsiderPdf}
@@ -1850,7 +2387,7 @@ ROW;
         <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 6px 8px;">
             <span style="font-size: 8pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br>
             <span style="font-size: 12pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
-            <span style="font-size: 7.5pt; color: #555;">(2/3 Murni - Full Remisi)</span>
+            <span style="font-size: 7.5pt; color: #555;">(2/3 Pokok - Full Remisi)</span>
         </td>
     </tr>
 </table>
@@ -1929,7 +2466,7 @@ ROW;
 <hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
 <br>
 
-<h1 style="color: #0f172a;">PERHITUNGAN MANUAL</h1>
+<h1 style="color: #0f172a; font-size: 13pt; text-align: center; font-weight: bold; margin: 0; padding: 4px 0 10px 0; letter-spacing: 0.3px;">{$judulProgram}</h1>
 <br>
 
 <!-- IDENTITAS SINGKAT LAMPIRAN -->
@@ -1952,43 +2489,145 @@ ROW;
         <td width="22%" style="color: #475569; padding: 5px 8px;">Pidana Pokok</td>
         <td width="28%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$lamaVonis}</td>
     </tr>
+    <tr>
+        <td width="18%" style="color: #475569; padding: 5px 8px;">Pidana Subsider</td>
+        <td colspan="3" width="82%" style="font-weight: bold; color: #0f172a; padding: 5px 8px;">: {$subsiderIdentitasTeks}</td>
+    </tr>
 </table>
 <br>
 
 {$potahPdfHtml}
 
-<!-- B. EKSPIRASI BEBAS MURNI -->
-<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 14px;">
-    <tr style="background-color: #f1f5f9;">
+<!-- B. EKSPIRASI SEBELUM REMISI -->
+<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #bfdbfe; margin-bottom: 14px;">
+    <tr style="background-color: #eff6ff;">
         <td style="font-weight: bold; font-size: 10pt; color: #1e40af; padding: 7px 10px;">
-            B. EKSPIRASI BEBAS MURNI
+            B. EKSPIRASI SEBELUM REMISI
         </td>
     </tr>
     <tr>
-        <td style="font-size: 9.5pt; line-height: 1.6; padding: 8px 12px;">
-            &bull; <b>Rumus:</b> Tgl. Mulai Ditahan ({$tglAwal}) + Lama Pidana Pokok ({$lamaVonis})<br>
-            &bull; <b>Kaidah:</b> Tahun (dari tanggal ke tanggal sama di tahun berikutnya), Bulan (1 Bulan = 30 Hari).<br>
-            &bull; <b>Tanggal Ekspirasi Bebas Murni:</b> <b style="color: #b91c1c; font-size: 11pt;">{$tglEkspirasiMurni}</b>
+        <td style="padding: 10px 12px;">
+            <table width="100%" cellpadding="2" cellspacing="0" border="0" style="font-size: 9.5pt; line-height: 1.5;">
+                {$barisEkspirasiAwalPdf}
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiSebelumRemisiNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #b91c1c; font-size: 10.5pt;">{$ekspirasiSebelumRemisiIndo}</b></td>
+                </tr>
+                {$subsiderPdfSectionB}
+            </table>
         </td>
     </tr>
 </table>
 <br>
 
-<!-- C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI) -->
-<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 14px;">
+<!-- C. PENTAHAPAN MASA PIDANA (SETELAH REMISI) -->
+<table width="100%" cellpadding="6" cellspacing="0" style="border: 0.5px solid #fecaca; margin-bottom: 14px;">
     <tr style="background-color: #fef2f2;">
         <td style="font-weight: bold; font-size: 10pt; color: #991b1b; padding: 7px 10px;">
-            C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)
+            C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)
         </td>
     </tr>
     <tr>
-        <td style="font-size: 9.5pt; line-height: 1.7; padding: 10px 12px;">
-            &bull; <b>Remisi Diperoleh saat 2/3:</b> <b style="color: #047857; font-size: 10.5pt;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b><br>
-            &bull; <b>1/3 Masa Pidana:</b> {$tgl13Murni} - {$totalRemisiHari} Hari = <b style="color: #0f172a; font-size: 10pt;">{$tgl13Def}</b><br>
-            &bull; <b>1/2 Asimilasi:</b> {$tgl12Murni} - {$totalRemisiHari} Hari = <b style="color: #0f172a; font-size: 10pt;">{$tgl12Def}</b><br>
-            &bull; <b>2/3 Masa Pidana:</b> {$tgl23Murni} - {$totalRemisiHari} Hari = <b style="color: #047857; font-size: 11pt;">{$tgl23Def}</b><br>
-            &bull; <b>Ekspirasi Akhir:</b> {$tglEkspirasiMurni} - {$totalRemisiHari} Hari = <b style="color: #b91c1c; font-size: 11pt;">{$tglEkspirasiDef}</b><br>
-            &bull; <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b> {$tgl23Def} - 60 Hari = <b style="color: #b45309; font-size: 11pt;">{$tglUsul}</b>
+        <td style="padding: 10px 12px;">
+            <table width="100%" cellpadding="2" cellspacing="0" border="0" style="font-size: 9.5pt; line-height: 1.5;">
+                <tr>
+                    <td colspan="3" style="font-size: 9.5pt; color: #0f172a; padding-bottom: 4px;">
+                        &bull; <b>Jumlah Remisi yang diperoleh</b> = <b style="color: #15803d; font-size: 10pt;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b>
+                    </td>
+                </tr>
+                <tr><td colspan="3" style="height: 4px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">&bull; 1/2 Masa Pidana</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tgl12DefNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #0284c7; font-size: 10.5pt;">{$tgl12DefIndo}</b></td>
+                </tr>
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tgl23DefNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #15803d; font-size: 10.5pt;">{$tgl23DefIndo}</b></td>
+                </tr>
+                {$subsiderPdf23}
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #0f172a; font-weight: bold;">&bull; Ekspirasi Akhir</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">Ekspirasi Sebelum Remisi - Remisi</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiSebelumRemisiNum} - {$totalRemisiTeks}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$ekspirasiDefNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #b91c1c; font-size: 10.5pt;">{$ekspirasiDefIndo}</b></td>
+                </tr>
+                {$subsiderPdfEkspirasiC}
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
+                <tr>
+                    <td width="24%" style="color: #b45309; font-weight: bold;">&bull; Usul SDP (H-2 Bln)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">2/3 Masa Pidana - 60 Hari</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tgl23DefNum} - 60 Hari</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%">{$tglUsulNum}</td>
+                </tr>
+                <tr>
+                    <td width="24%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="72%"><b style="color: #b45309; font-size: 10.5pt;">{$tglUsulIndo}</b></td>
+                </tr>
+            </table>
         </td>
     </tr>
 </table>

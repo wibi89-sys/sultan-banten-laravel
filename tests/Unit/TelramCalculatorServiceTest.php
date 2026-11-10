@@ -656,14 +656,14 @@ class TelramCalculatorServiceTest extends TestCase
         // Verifikasi rincian perhitungan matematis terstruktur (A, B, C) pada format teks
         $this->assertStringContainsString('Tgl. Putusan', $teks);
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $teks);
-        $this->assertStringContainsString('B. EKSPIRASI BEBAS MURNI', $teks);
-        $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)', $teks);
+        $this->assertStringContainsString('B. EKSPIRASI SEBELUM REMISI', $teks);
+        $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)', $teks);
         $this->assertStringNotContainsString('tonggak', strtolower($teks));
 
         // Verifikasi format visual html
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $html);
-        $this->assertStringContainsString('B. EKSPIRASI BEBAS MURNI', $html);
-        $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)', $html);
+        $this->assertStringContainsString('B. EKSPIRASI SEBELUM REMISI', $html);
+        $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)', $html);
         $this->assertStringNotContainsString('tonggak', strtolower($html));
 
         // Verifikasi PDF Report
@@ -718,5 +718,163 @@ class TelramCalculatorServiceTest extends TestCase
         // Verifikasi PDF juga dapat digenerate dengan subsider
         $pdf = TelramCalculatorService::generatePdfReport($result);
         $this->assertNotEmpty($pdf);
+    }
+
+    public function test_judul_program_dinamis_pb_vs_cb(): void
+    {
+        // 1. Kasus CB: Vonis <= 1 tahun 6 bulan (1 tahun 0 bulan = 360 hari)
+        $resCb = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            1,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP CB'
+        );
+
+        $this->assertEquals('CB', $resCb['kode_program']);
+        $this->assertEquals('PERHITUNGAN CUTI BERSYARAT (CB)', $resCb['judul_program']);
+        $this->assertStringContainsString('PERHITUNGAN CUTI BERSYARAT (CB)', $resCb['hitungan_manual_teks']);
+        $this->assertStringContainsString('PERHITUNGAN CUTI BERSYARAT (CB)', $resCb['hitungan_manual_html']);
+
+        // 2. Kasus Batas Persis CB: 1 tahun 6 bulan (540 hari)
+        $resBatasCb = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            1,
+            6,
+            0,
+            'islam',
+            0,
+            'WBP Batas CB'
+        );
+
+        $this->assertEquals('CB', $resBatasCb['kode_program']);
+        $this->assertEquals('PERHITUNGAN CUTI BERSYARAT (CB)', $resBatasCb['judul_program']);
+
+        // 3. Kasus PB: Vonis > 1 tahun 6 bulan (e.g. 1 tahun 6 bulan 1 hari atau 2 tahun)
+        $resPb = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            2,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP PB'
+        );
+
+        $this->assertEquals('PB', $resPb['kode_program']);
+        $this->assertEquals('PERHITUNGAN PEMBEBASAN BERSYARAT (PB)', $resPb['judul_program']);
+        $this->assertStringContainsString('PERHITUNGAN PEMBEBASAN BERSYARAT (PB)', $resPb['hitungan_manual_teks']);
+        $this->assertStringContainsString('PERHITUNGAN PEMBEBASAN BERSYARAT (PB)', $resPb['hitungan_manual_html']);
+    }
+
+    public function test_subsider_bb_vs_sb_dan_nominal_denda(): void
+    {
+        // 1. Kasus BB (Belum Bayar): Denda Rp 1.000.000.000, Subsider 3 Bulan
+        $resBb = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP Denda BB',
+            'BI.01',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 114 UU Narkotika',
+            null,
+            0,
+            3,
+            0,
+            '1000000000',
+            'bb'
+        );
+
+        $this->assertTrue($resBb['has_subsider']);
+        $this->assertEquals('bb', $resBb['subsider_status']);
+        $this->assertEquals(1000000000.0, $resBb['denda_nominal']);
+        $this->assertEquals('Rp 1.000.000.000,-', $resBb['denda_nominal_formatted']);
+        $this->assertStringContainsString('Rp 1.000.000.000,-', $resBb['subsider_identitas_teks']);
+        $this->assertStringContainsString('(Belum Bayar / BB)', $resBb['subsider_identitas_teks']);
+
+        // Pada BB, kurungan 3 bulan (90 hari) harus menambah 2/3 dan ekspirasi
+        $tgl23Pokok = Carbon::parse($resBb['milestones']['tgl_2_3_definitif']);
+        $tgl23Sub = Carbon::parse($resBb['milestones']['tgl_2_3_subsider_definitif']);
+        $this->assertEquals(90, (int) $tgl23Pokok->diffInDays($tgl23Sub));
+
+        $tglEksPokok = Carbon::parse($resBb['milestones']['ekspirasi_definitif']);
+        $tglEksSub = Carbon::parse($resBb['milestones']['ekspirasi_subsider_definitif']);
+        $this->assertEquals(90, (int) $tglEksPokok->diffInDays($tglEksSub));
+
+        // Hitungan manual memuat rincian 2/3 (+Subsider BB)
+        $this->assertStringContainsString('2/3 Masa Pidana (+Subsider BB)', $resBb['hitungan_manual_teks']);
+        $this->assertStringContainsString('2/3 (+Subsider BB)', $resBb['hitungan_manual_html']);
+
+        // 2. Kasus SB (Sudah Bayar): Denda Rp 1.000.000.000, Subsider 3 Bulan (SB)
+        $resSb = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP Denda SB',
+            'BI.02',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 114 UU Narkotika',
+            null,
+            0,
+            3,
+            0,
+            '1000000000',
+            'sb'
+        );
+
+        $this->assertTrue($resSb['has_subsider']);
+        $this->assertEquals('sb', $resSb['subsider_status']);
+        $this->assertStringContainsString('Rp 1.000.000.000,-', $resSb['subsider_identitas_teks']);
+        $this->assertStringContainsString('(Sudah Bayar / SB)', $resSb['subsider_identitas_teks']);
+
+        // Pada SB, kurungan subsider TIDAK dijalani (null)
+        $this->assertNull($resSb['milestones']['ekspirasi_subsider_definitif']);
+        $this->assertNull($resSb['milestones']['tgl_2_3_subsider_definitif']);
+
+        // Hitungan manual tidak menambahkan baris 2/3 (+Subsider BB)
+        $this->assertStringNotContainsString('2/3 (+Subsider BB)', $resSb['hitungan_manual_teks']);
+
+        // 3. Kasus Tanpa Subsider dan Tanpa Denda
+        $resNol = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            2,
+            0,
+            0,
+            'islam'
+        );
+        $this->assertEquals('-', $resNol['subsider_identitas_teks']);
+        $this->assertStringContainsString('Pidana Subsider     : -', $resNol['hitungan_manual_teks']);
+    }
+
+    public function test_format_tanggal_numeric_dd_mm_yyyy(): void
+    {
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-05',
+            2,
+            0,
+            0,
+            'islam'
+        );
+
+        $this->assertArrayHasKey('numeric', $res);
+        $this->assertEquals('05/01/2024', $res['numeric']['tgl_awal']);
+        $this->assertEquals('05/01/2026', $res['numeric']['ekspirasi_sebelum_remisi']);
+        // Pastikan tanggal matematika di hitungan manual mencakup format dd/mm/yyyy
+        $this->assertStringContainsString('05/01/2024', $res['hitungan_manual_teks']);
     }
 }

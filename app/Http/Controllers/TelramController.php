@@ -66,6 +66,8 @@ class TelramController extends Controller
                     'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara',
                     'tahun_mulai_tambahan' => 'nullable|integer|min:1|max:50',
                     'target_basis' => 'nullable|string|in:2_3,ekspirasi',
+                    'denda_nominal' => 'nullable',
+                    'subsider_status' => 'nullable|string|in:bb,sb',
                 ]);
 
                 $tahun = (int) ($validated['tahun'] ?? 0);
@@ -89,6 +91,8 @@ class TelramController extends Controller
                 $kategoriTambahan = $validated['kategori_tambahan'] ?? 'none';
                 $tahunMulaiTambahan = (int) ($validated['tahun_mulai_tambahan'] ?? 1);
                 $targetBasis = $validated['target_basis'] ?? '2_3';
+                $dendaNominal = $validated['denda_nominal'] ?? 0;
+                $subsiderStatus = $validated['subsider_status'] ?? 'bb';
 
                 $result = $this->calculator->hitungProyeksiRemisiDanIntegrasi(
                     $validated['tgl_awal'],
@@ -107,7 +111,9 @@ class TelramController extends Controller
                     $validated['tgl_putusan'] ?? null,
                     $subTahun,
                     $subBulan,
-                    $subHari
+                    $subHari,
+                    $dendaNominal,
+                    $subsiderStatus
                 );
             } elseif ($mode === 'mundur') {
                 $validated = $request->validate([
@@ -205,6 +211,8 @@ class TelramController extends Controller
             'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara',
             'tahun_mulai_tambahan' => 'nullable|integer|min:1|max:50',
             'target_basis' => 'nullable|string|in:2_3,ekspirasi',
+            'denda_nominal' => 'nullable',
+            'subsider_status' => 'nullable|string|in:bb,sb',
         ]);
 
         $tahun = (int) ($validated['tahun'] ?? 0);
@@ -225,6 +233,8 @@ class TelramController extends Controller
         $kategoriTambahan = $validated['kategori_tambahan'] ?? 'none';
         $tahunMulaiTambahan = (int) ($validated['tahun_mulai_tambahan'] ?? 1);
         $targetBasis = $validated['target_basis'] ?? '2_3';
+        $dendaNominal = $validated['denda_nominal'] ?? 0;
+        $subsiderStatus = $validated['subsider_status'] ?? 'bb';
 
         $data = $this->calculator->hitungProyeksiRemisiDanIntegrasi(
             $validated['tgl_awal'],
@@ -243,7 +253,9 @@ class TelramController extends Controller
             $validated['tgl_putusan'] ?? null,
             $subTahun,
             $subBulan,
-            $subHari
+            $subHari,
+            $dendaNominal,
+            $subsiderStatus
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);
