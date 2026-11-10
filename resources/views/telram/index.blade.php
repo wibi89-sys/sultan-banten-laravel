@@ -90,23 +90,28 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
     }
 
-    /* Parameter Box Containers */
+    /* Parameter Box Containers - Clean Modern Card */
     .param-group-box {
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 14px;
+        padding: 15px 14px;
         margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         transition: all 0.2s ease;
     }
+    .param-group-box:hover {
+        border-color: #cbd5e1;
+    }
     [data-theme="dark"] .param-group-box {
-        background: rgba(15, 23, 42, 0.6) !important;
+        background: #1e293b !important;
         border-color: #334155 !important;
+        box-shadow: none;
     }
     .param-group-title {
-        font-size: 11px;
+        font-size: 11.5px;
         font-weight: 800;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
         text-transform: uppercase;
     }
     [data-theme="dark"] .param-group-title {
@@ -422,11 +427,11 @@
 
                     <!-- GRUP 1: Identitas Narapidana / WBP (Khusus Simulasi Remisi & Cetak PDF) -->
                     <div class="param-group-box mb-3" id="sectionIdentitasWbp">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom" style="border-color: rgba(0,0,0,0.05) !important;">
                             <span class="param-group-title text-primary">
                                 <i class="fas fa-id-card me-1.5"></i> Identitas WBP
                             </span>
-                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional / Berkas PDF</span>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 9.5px;">Opsional / Berkas PDF</span>
                         </div>
                         <div class="mb-2">
                             <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 11.5px;">Nama Lengkap WBP</label>
@@ -446,11 +451,11 @@
 
                     <!-- GRUP 2: Parameter Penahanan, Vonis Pokok & Agama -->
                     <div class="param-group-box mb-3" id="groupIdentitasVonis">
-                        <div class="d-flex justify-content-between align-items-center mb-2.5">
+                        <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom" style="border-color: rgba(0,0,0,0.05) !important;">
                             <span class="param-group-title text-primary">
                                 <i class="fas fa-balance-scale me-1.5"></i> Periode Penahanan &amp; Vonis
                             </span>
-                            <span class="badge bg-primary text-white fw-semibold" style="font-size: 10px;">Wajib</span>
+                            <span class="badge bg-primary text-white fw-semibold" style="font-size: 9.5px;">Wajib</span>
                         </div>
 
                         <!-- Tanggal Mulai Ditahan & Tanggal Putusan Pengadilan -->
@@ -512,12 +517,12 @@
                         </div>
 
                         <!-- Input Pidana Denda & Subsider Kurungan -->
-                        <div id="sectionInputSubsider" class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                        <div id="sectionInputSubsider" class="mb-3 pt-2.5 border-top" style="border-color: rgba(0,0,0,0.06) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
                                     <i class="fas fa-hand-holding-usd me-1 text-primary"></i> Denda &amp; Pidana Subsider
                                 </label>
-                                <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional</span>
+                                <span class="badge bg-light text-secondary border fw-normal" style="font-size: 9.5px;">Opsional</span>
                             </div>
 
                             <!-- Besaran Denda Nominal (Rupiah) & Status Bayar -->
@@ -567,19 +572,27 @@
                         </div>
 
                         <!-- Input Agama WBP (Khusus Simulasi Remisi) -->
-                        <div id="groupRemisiKeagamaan" class="mb-1">
+                        <div id="groupRemisiKeagamaan" class="mb-1 pt-2.5 border-top" style="border-color: rgba(0,0,0,0.06) !important;">
                             <div id="sectionAgama">
-                                <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 12px;">
-                                    Agama WBP (Remisi Khusus Hari Raya) <span class="text-danger">*</span>
-                                </label>
-                                <select id="selAgama" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;">
-                                    <option value="islam" selected>Islam (Hari Raya Idul Fitri)</option>
-                                    <option value="kristen">Kristen Protestan (Hari Raya Natal - 25 Des)</option>
-                                    <option value="katolik">Katolik (Hari Raya Natal - 25 Des)</option>
-                                    <option value="hindu">Hindu (Hari Raya Nyepi)</option>
-                                    <option value="buddha">Buddha (Hari Raya Waisak)</option>
-                                    <option value="khonghucu">Khonghucu (Tahun Baru Imlek)</option>
+                                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                    <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
+                                        <i class="fas fa-mosque me-1.5 text-primary"></i> Agama WBP <span class="text-danger">*</span>
+                                    </label>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 9.5px; font-weight: 600;">
+                                        <i class="fas fa-gift me-0.5"></i> Remisi Khusus (RK)
+                                    </span>
+                                </div>
+                                <select id="selAgama" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
+                                    <option value="islam" selected>Islam — Idul Fitri</option>
+                                    <option value="kristen">Kristen Protestan — Natal (25 Des)</option>
+                                    <option value="katolik">Katolik — Natal (25 Des)</option>
+                                    <option value="hindu">Hindu — Nyepi</option>
+                                    <option value="buddha">Buddha — Waisak</option>
+                                    <option value="khonghucu">Khonghucu — Tahun Baru Imlek</option>
                                 </select>
+                                <small class="text-muted d-block mt-1" style="font-size: 10px; line-height: 1.35;">
+                                    <i class="fas fa-info-circle me-0.5 text-primary"></i> Menentukan kalender penetapan Remisi Khusus Hari Raya Keagamaan tiap tahunnya.
+                                </small>
                             </div>
                         </div>
 
@@ -628,26 +641,29 @@
 
                                 <!-- Standar Batas Simulasi: 2/3 vs Ekspirasi -->
                                 <div id="sectionTargetBasis" class="mb-3">
-                                    <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
-                                        Standar Batas Simulasi:
-                                    </label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
+                                            Standar Batas Simulasi
+                                        </label>
+                                        <span class="badge bg-secondary-subtle text-secondary border" style="font-size: 9px;">Batas Hitung</span>
+                                    </div>
                                     <select id="selTargetBasis" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" onchange="updateHelpTargetBasis(); updateBadgeOpsiLanjutan();">
-                                        <option value="2_3" selected>Standar 2/3 Masa Pidana (Untuk Usulan PB/CB)</option>
+                                        <option value="2_3" selected>Standar 2/3 Pidana (Usulan PB/CB)</option>
                                         <option value="ekspirasi">Sampai Ekspirasi Akhir (Tanpa Hak PB/CB)</option>
                                     </select>
-                                    <small class="text-muted d-block mt-1" style="font-size: 10.5px;" id="helpTargetBasis">
+                                    <small class="text-muted d-block mt-1" style="font-size: 10px; line-height: 1.35;" id="helpTargetBasis">
                                         <i class="fas fa-info-circle text-primary me-0.5"></i> Standar 2/3: Remisi dihitung hingga 2/3 Definitif tercapai saat bebas bersyarat.
                                     </small>
                                 </div>
 
                                 <!-- Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
-                                <div id="sectionDasawarsa" class="mb-3 p-2.5 rounded-2 border" style="background: rgba(254, 243, 199, 0.35); border-color: #fde68a !important;">
+                                <div id="sectionDasawarsa" class="mb-3 p-2.5 rounded-3 border" style="background: rgba(254, 243, 199, 0.4); border-color: #fde68a !important;">
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div>
-                                            <label class="form-check-label fw-bold telram-text-title d-block mb-0" for="chkDasawarsa" style="font-size: 12px; cursor: pointer;">
-                                                Sertakan Remisi Dasawarsa (10 Th RI)
+                                            <label class="form-check-label fw-bold telram-text-title d-block mb-0" for="chkDasawarsa" style="font-size: 11.5px; cursor: pointer;">
+                                                <i class="fas fa-flag text-warning me-1"></i> Remisi Dasawarsa (HUT RI ke-10 Th)
                                             </label>
-                                            <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
+                                            <small class="text-muted d-block mt-0.5" style="font-size: 9.5px; line-height: 1.3;">
                                                 Diberikan tiap 10 tahun (2025, 2035) sebesar 1/12 vonis (maks 3 bln).
                                             </small>
                                         </div>
@@ -659,29 +675,35 @@
 
                                 <!-- Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
                                 <div id="sectionRemisiTambahan">
-                                    <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
-                                        Remisi Tambahan (Pasal 4 Keppres 174/1999):
-                                    </label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
+                                            <i class="fas fa-award text-warning me-1.5"></i> Kategori Remisi Tambahan
+                                        </label>
+                                        <span class="badge bg-light text-secondary border fw-normal" style="font-size: 9.5px;">Keppres 174/1999</span>
+                                    </div>
                                     <select id="selRemisiTambahan" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" onchange="toggleTahunMulaiTambahan(); updateBadgeOpsiLanjutan();">
-                                        <option value="none" selected>Standar / Reguler (Tanpa Tambahan)</option>
+                                        <option value="none" selected>Reguler (Tanpa Tambahan)</option>
                                         <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU)</option>
                                         <option value="jasa_negara">Berjasa Bagi Negara / Donor (+1/2 dari RU)</option>
                                     </select>
 
                                     <!-- Input Mulai di Tahun ke Berapa -->
-                                    <div id="wrapTahunMulaiTambahan" class="mt-2 p-2.5 rounded-2 border d-none" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.2) !important;">
-                                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 11px;">
-                                            <i class="fas fa-calendar-alt text-primary me-1"></i> Mulai Remisi Tambahan Sejak:
-                                        </label>
+                                    <div id="wrapTahunMulaiTambahan" class="mt-2 p-2.5 rounded-3 border d-none" style="background: rgba(37, 99, 235, 0.04); border-color: rgba(37, 99, 235, 0.18) !important;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 11px;">
+                                                <i class="fas fa-calendar-alt me-1"></i> Mulai Diberikan Sejak:
+                                            </label>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 9px;">Syarat 1/3 Pidana</span>
+                                        </div>
                                         <select id="selTahunMulaiTambahan" class="form-select fw-semibold" style="height: 34px; border-radius: 6px; font-size: 11.5px;">
                                             <option value="1">Tahun Ke-1 (Sejak RU Pertama)</option>
-                                            <option value="2" selected>Tahun Ke-2 (Setelah 1/3 Pidana / Syarat Pemuka)</option>
+                                            <option value="2" selected>Tahun Ke-2 (Syarat 1/3 Pidana / Pemuka)</option>
                                             <option value="3">Tahun Ke-3</option>
                                             <option value="4">Tahun Ke-4</option>
                                             <option value="5">Tahun Ke-5</option>
                                         </select>
-                                        <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
-                                            Remisi tambahan akan dihitung mulai tahun RU yang dipilih dan tahun-tahun berikutnya.
+                                        <small class="text-muted d-block mt-1" style="font-size: 10px; line-height: 1.35;">
+                                            Remisi tambahan dihitung mulai tahun penunjukan pemuka dan seterusnya.
                                         </small>
                                     </div>
                                 </div>

@@ -660,6 +660,32 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)', $teks);
         $this->assertStringNotContainsString('tonggak', strtolower($teks));
 
+        // Verifikasi baris perantara pecahan 1/2 dan 2/3 (3 thn 6 bln -> 1 thn 9 bln dan 2 thn 4 bln)
+        $this->assertStringContainsString('1 Tahun, 9 Bulan', $teks);
+        $this->assertStringContainsString('2 Tahun, 4 Bulan', $teks);
+        $this->assertStringContainsString('1 Tahun, 9 Bulan', $html);
+        $this->assertStringContainsString('2 Tahun, 4 Bulan', $html);
+
+        // Verifikasi penghapusan kurung hari redundan pada potah & remisi
+        $this->assertStringNotContainsString('(165 Hari)', $teks);
+        $this->assertStringNotContainsString('(165 Hari)', $html);
+
+        // Kasus Vonis 10 Tahun (Memverifikasi 1/2 = 5 Tahun dan 2/3 = 6 Tahun, 8 Bulan)
+        $res10 = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2020-01-01',
+            10,
+            0,
+            0,
+            'islam',
+            0,
+            'Ahmad 10 Thn',
+            'REG.10/2020'
+        );
+        $this->assertStringContainsString('5 Tahun', $res10['hitungan_manual_teks']);
+        $this->assertStringContainsString('6 Tahun, 8 Bulan', $res10['hitungan_manual_teks']);
+        $this->assertStringContainsString('5 Tahun', $res10['hitungan_manual_html']);
+        $this->assertStringContainsString('6 Tahun, 8 Bulan', $res10['hitungan_manual_html']);
+
         // Verifikasi format visual html
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $html);
         $this->assertStringContainsString('B. EKSPIRASI SEBELUM REMISI', $html);
