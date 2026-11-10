@@ -1435,14 +1435,14 @@ CARD;
                 $this->SetY(-15);
                 $this->SetFont('helvetica', 'I', 7.5);
                 $this->SetTextColor(120, 120, 120);
-                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Lembar Perkiraan Perhitungan Sultan Banten', 0, 0, 'R');
+                $this->Cell(0, 5, 'Halaman '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages().' | Perkiraan Perolehan Remisi Sultan Banten', 0, 0, 'R');
             }
         };
 
         $pdf->SetCreator('Sultan Banten');
         $pdf->SetAuthor(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
         $cleanName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['nama_wbp'] ?? 'Narapidana');
-        $pdf->SetTitle("Lembar_Perkiraan_Perhitungan_{$cleanName}");
+        $pdf->SetTitle("Perkiraan_Perolehan_Remisi_{$cleanName}");
         $pdf->SetMargins(10, 8, 10);
         $pdf->SetAutoPageBreak(true, 14);
         $pdf->AddPage();
@@ -1641,7 +1641,7 @@ ROW;
 <hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
 <br>
 
-<h1 style="color: #0f172a;">LEMBAR PERKIRAAN PERHITUNGAN</h1>
+<h1 style="color: #0f172a;">PERKIRAAN PEROLEHAN REMISI</h1>
 <br>
 
 <!-- I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS -->

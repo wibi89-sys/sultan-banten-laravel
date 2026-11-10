@@ -328,11 +328,6 @@
                         </small>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <a href="{{ asset('telram-offline.html') }}" download="kalkulator-ekspirasi-offline.html" class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-sm" style="font-size: 12px;">
-                        <i class="fas fa-download me-1 text-warning"></i> Unduh File Offline (.html)
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -1709,7 +1704,7 @@
 
         const d = lastResult;
         const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan:* ${d.formatted.tgl_putusan}\n*Potongan Tahanan (Potah):* ${d.masa_tahanan_teks}` : '';
-        const text = `*LEMBAR PERKIRAAN PERHITUNGAN*
+        const text = `*PERKIRAAN PEROLEHAN REMISI*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
 *Nama WBP:* ${d.nama_wbp || 'Narapidana'}

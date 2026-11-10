@@ -220,7 +220,7 @@ class TelramController extends Controller
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);
-        $filename = 'Perkiraan_Perhitungan_'.preg_replace('/[^A-Za-z0-9_-]/', '_', $namaWbp).'_'.date('Ymd_His').'.pdf';
+        $filename = 'Perkiraan_Perolehan_Remisi_'.preg_replace('/[^A-Za-z0-9_-]/', '_', $namaWbp).'_'.date('Ymd_His').'.pdf';
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
