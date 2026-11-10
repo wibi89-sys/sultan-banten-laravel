@@ -1912,23 +1912,29 @@ ROW;
 </table>
 
 <!-- ============================================================== -->
-<!-- HALAMAN 2: LAMPIRAN RINCIAN RUMUS & KALKULASI MANUAL LENGKAP -->
+<!-- HALAMAN 2: PERHITUNGAN MANUAL LENGKAP                        -->
 <!-- ============================================================== -->
 <div style="page-break-before: always;"></div>
 
+<!-- KOP SURAT RESMI KANWIL KEMENIMIPAS BANTEN (HALAMAN 2) -->
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
     <tr>
-        <td width="12%" align="center" valign="middle">
+        <td width="14%" align="center" valign="middle">
             {$logoHtml}
         </td>
-        <td width="88%" align="center" valign="middle">
-            <span style="font-size: 8pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
-            <span style="font-size: 8pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN - KANTOR WILAYAH BANTEN</span><br>
-            <span style="font-size: 10pt; font-weight: bold; color: #0f172a; text-transform: uppercase;">LAMPIRAN: RINCIAN RUMUS &amp; KALKULASI MANUAL</span>
+        <td width="86%" align="center" valign="middle">
+            <span style="font-size: 9.5pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
+            <span style="font-size: 9.5pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
+            <span style="font-size: 12pt; font-weight: bold; color: #0f172a;">KANTOR WILAYAH BANTEN</span><br>
+            <span style="font-size: 8.5pt; color: #334155;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span>
         </td>
     </tr>
 </table>
-<hr style="height: 1px; border: none; background-color: #0f172a; margin-top: 3px; margin-bottom: 6px;">
+<hr style="height: 1.5px; border: none; background-color: #0f172a; margin-top: 4px; margin-bottom: 6px;">
+<br>
+
+<h1 style="color: #0f172a;">PERHITUNGAN MANUAL</h1>
+<br>
 
 <!-- IDENTITAS SINGKAT LAMPIRAN -->
 <table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 7.8pt; margin-bottom: 6px;">
