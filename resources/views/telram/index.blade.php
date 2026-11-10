@@ -137,19 +137,44 @@
         transform: rotate(180deg);
     }
 
-    /* Form Controls & Inputs */
-    .form-select {
-        padding-left: 0.65rem;
-        padding-right: 1.75rem;
-        background-position: right 0.5rem center;
-        background-size: 14px 10px;
-        text-overflow: ellipsis;
+    /* Form Controls & Inputs - Reliable Cross-Browser Form Select */
+    .form-select,
+    select.form-select {
+        display: block;
+        width: 100%;
+        padding: 0.45rem 2.25rem 0.45rem 0.75rem !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        line-height: 1.5 !important;
+        color: #1e293b !important;
+        background-color: #ffffff !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.75rem center !important;
+        background-size: 14px 10px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        min-height: 40px !important;
+        height: auto !important;
+        box-sizing: border-box !important;
     }
-    [data-theme="dark"] .form-control,
-    [data-theme="dark"] .form-select {
+    .form-select:focus,
+    select.form-select:focus {
+        border-color: #3b82f6 !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+    [data-theme="dark"] .form-control {
         background-color: #1e293b !important;
         border-color: #334155 !important;
         color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] .form-select,
+    [data-theme="dark"] select.form-select {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
     }
     [data-theme="dark"] input[type="date"] {
         color-scheme: dark;
@@ -589,7 +614,7 @@
                                         <i class="fas fa-gift me-0.5"></i> Remisi Khusus (RK)
                                     </span>
                                 </div>
-                                <select id="selAgama" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
+                                <select id="selAgama" class="form-select fw-semibold">
                                     <option value="islam" selected>Islam — Idul Fitri</option>
                                     <option value="kristen">Kristen Protestan — Natal (25 Des)</option>
                                     <option value="katolik">Katolik — Natal (25 Des)</option>
@@ -651,7 +676,7 @@
                                     <label class="form-label telram-text-title fw-bold mb-1 d-block" style="font-size: 12px;">
                                         <i class="fas fa-bullseye text-primary me-1"></i> Standar Batas Simulasi:
                                     </label>
-                                    <select id="selTargetBasis" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12px;" onchange="updateHelpTargetBasis(); updateBadgeOpsiLanjutan();">
+                                    <select id="selTargetBasis" class="form-select fw-semibold" onchange="updateHelpTargetBasis(); updateBadgeOpsiLanjutan();">
                                         <option value="2_3" selected>2/3 Masa Pidana (PB / CB)</option>
                                         <option value="ekspirasi">Ekspirasi Akhir (Bebas Murni)</option>
                                     </select>
@@ -682,7 +707,7 @@
                                     <label class="form-label telram-text-title fw-bold mb-1 d-block" style="font-size: 12px;">
                                         <i class="fas fa-award text-warning me-1.5"></i> Remisi Tambahan (Keppres 174/99):
                                     </label>
-                                    <select id="selRemisiTambahan" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12px;" onchange="toggleTahunMulaiTambahan(); updateBadgeOpsiLanjutan();">
+                                    <select id="selRemisiTambahan" class="form-select fw-semibold" onchange="toggleTahunMulaiTambahan(); updateBadgeOpsiLanjutan();">
                                         <option value="none" selected>Reguler (Tanpa Tambahan)</option>
                                         <option value="pemuka">Pemuka Lapas (+1/3 RU)</option>
                                         <option value="jasa_negara">Jasa Negara / Donor (+1/2 RU)</option>
@@ -699,7 +724,7 @@
                                             </label>
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 9px;">Syarat 1/3 Pidana</span>
                                         </div>
-                                        <select id="selTahunMulaiTambahan" class="form-select fw-semibold" style="height: 34px; border-radius: 6px; font-size: 11.5px;">
+                                        <select id="selTahunMulaiTambahan" class="form-select fw-semibold">
                                             <option value="1">Tahun Ke-1 (Sejak RU Pertama)</option>
                                             <option value="2" selected>Tahun Ke-2 (Syarat Pemuka 1/3)</option>
                                             <option value="3">Tahun Ke-3</option>
