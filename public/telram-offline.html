@@ -1699,7 +1699,7 @@
         // Ekspirasi Murni
         const tglEkspirasiMurni = tambahDurasiVonis(tglAwal, vThn, vBln, vHri);
 
-        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        // Pentahapan Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
         // Dihitung dari tanggal awal penahanan dengan kaidah hitung vonis yang sama
         const [y13Murni, m13Murni, d13Murni] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 3);
         const [y12Murni, m12Murni, d12Murni] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 2);
@@ -2256,7 +2256,7 @@
 
         const tglEkspirasi = tambahDurasiVonis(tglAwal, vThn, vBln, vHri);
 
-        // Tonggak Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
+        // Pentahapan Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
         const [y13, m13, d13] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 3);
         const [y12, m12, d12] = hitungDurasiFraksi(vThn, vBln, vHri, 1, 2);
         const [y23, m23, d23] = hitungDurasiFraksi(vThn, vBln, vHri, 2, 3);
@@ -2527,6 +2527,7 @@
                     `\n*Remisi Dasawarsa:* ${d.includeDasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}` +
                     `\n*Basis Simulasi:* ${d.targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana' : 'Sampai Ekspirasi Bebas Murni'}` +
                     `\n---------------------------------------` +
+                    `\n*Pentahapan Masa Pidana:*` +
                     `\n• *1/3 Masa Pidana:* ${formatDateIndo(d.tgl13Murni)}` +
                     `\n• *1/2 Asimilasi:* ${formatDateIndo(d.tgl12Definitif)} (Murni: ${formatDateIndo(d.tgl12Murni)})` +
                     `\n• *2/3 Masa Pidana:* ${formatDateIndo(d.tgl23Definitif)} (Murni: ${formatDateIndo(d.tgl23Murni)})` +
@@ -2653,180 +2654,110 @@
             </div>
         </div>`;
 
-        // Langkah 1
-        html += `<div class="step-card">
-            <div class="step-card-header" style="color: var(--primary);">
-                <span><i class="fas fa-layer-group"></i> LANGKAH 1: Perhitungan Masa Pidana Pokok &amp; Ekspirasi Bebas Murni</span>
-                <span style="font-size: 10px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Vonis Pokok</span>
-            </div>
-            <div class="step-card-body">
-                <div><b>Kaidah Perhitungan Vonis &amp; Ekspirasi Murni:</b></div>
-                <ul style="margin: 6px 0 8px 18px; color: var(--text-secondary); font-size: 11.5px;">
-                    <li><b>Komponen Tahun:</b> Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).</li>
-                    <li><b>Komponen Bulan:</b> Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).</li>
-                </ul>
-                <div class="step-code-box">Tanggal Ekspirasi Murni = ${tglAwalFmt} + ${d.lamaPidanaTeks} = <b style="color: var(--danger);">${ekspirasiMurniFmt}</b></div>
-            </div>
-        </div>`;
-
-        // Langkah 2
+        // A. Potongan Tahanan (Potah) - jika ada tglPutusan
         if (d.tglPutusan) {
             html += `<div class="step-card">
-                <div class="step-card-header" style="color: #047857;">
-                    <span><i class="fas fa-gavel"></i> LANGKAH 2: Potongan Masa Penahanan (Pasca-Putusan)</span>
-                    <span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">KUHAP Ps. 22(4)</span>
+            <div class="step-card-header" style="color: #047857;">
+                <span><i class="fas fa-gavel"></i> A. POTONGAN TAHANAN (POTAH)</span>
+                <span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">KUHAP Ps. 22(4)</span>
+            </div>
+            <div class="step-card-body" style="font-size: 12px; line-height: 1.6;">
+                <div><b>Rumus:</b> Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)</div>
+                <div class="step-code-box" style="margin-top: 6px;">
+                    Periode: ${tglAwalFmt} s.d. ${tglPutusanFmt}<br>
+                    Hasil Potongan Tahanan (Potah) = <b style="color: #047857;">${d.masaTahananTeks}</b> (${masaTahananHari} Hari)
                 </div>
-                <div class="step-card-body">
-                    <div><b>Dasar Hukum:</b> Masa penahanan yang telah dijalani dikurangkan seluruhnya dari pidana yang dijatuhkan.</div>
-                    <div class="step-code-box">
-                        Periode Penahanan: ${tglAwalFmt} s.d. ${tglPutusanFmt}<br>
-                        Potongan Tahanan (Potah) = <b>${d.masaTahananTeks}</b> (${masaTahananHari} Hari)
-                    </div>
-                </div>
-            </div>`;
+            </div>
+        </div>`;
         }
 
-        // Langkah 3
+        // B. Ekspirasi Bebas Murni
         html += `<div class="step-card">
-            <div class="step-card-header" style="color: #0284c7;">
-                <span><i class="fas fa-chart-pie"></i> LANGKAH 3: Tonggak Murni Masa Pidana (Proporsional dari Vonis Pokok)</span>
-                <span style="font-size: 10px; background: rgba(2,132,199,0.1); color: #0284c7; padding: 2px 6px; border-radius: 4px;">Fleksibel</span>
+            <div class="step-card-header" style="color: var(--primary);">
+                <span><i class="fas fa-layer-group"></i> B. EKSPIRASI BEBAS MURNI</span>
+                <span style="font-size: 10px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Vonis Pokok</span>
             </div>
-            <div class="step-card-body">
-                <div style="margin-bottom: 8px;">Dihitung proporsional dari lama vonis pokok murni sejak tanggal mulai ditahan:</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
-                    <div style="padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.02);">
-                        <small style="font-size: 10px; color: var(--text-secondary); display: block;">1/3 MASA PIDANA</small>
-                        <span style="font-size: 11px;">1/3 &times; ${d.lamaPidanaTeks} = ${durasi13Teks}</span><br>
-                        <b style="color: var(--primary); font-size: 12.5px;">${tgl13MurniFmt}</b>
-                    </div>
-                    <div style="padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.02);">
-                        <small style="font-size: 10px; color: var(--text-secondary); display: block;">1/2 MASA PIDANA (ASIMILASI)</small>
-                        <span style="font-size: 11px;">1/2 &times; ${d.lamaPidanaTeks} = ${durasi12Teks}</span><br>
-                        <b style="color: #d97706; font-size: 12.5px;">${tgl12MurniFmt}</b>
-                    </div>
-                    <div style="padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.02);">
-                        <small style="font-size: 10px; color: var(--text-secondary); display: block;">2/3 MASA PIDANA</small>
-                        <span style="font-size: 11px;">2/3 &times; ${d.lamaPidanaTeks} = ${durasi23Teks}</span><br>
-                        <b style="color: #047857; font-size: 12.5px;">${tgl23MurniFmt}</b>
-                    </div>
+            <div class="step-card-body" style="font-size: 12px; line-height: 1.6;">
+                <div><b>Rumus:</b> Tgl. Mulai Ditahan (${tglAwalFmt}) + Lama Pidana Pokok (${d.lamaPidanaTeks})</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin: 4px 0;">
+                    Kaidah: Tahun (tanggal ke tanggal di tahun berikutnya), Bulan (1 Bulan = 30 Hari).
+                </div>
+                <div class="step-code-box" style="margin-top: 6px;">
+                    Tanggal Ekspirasi Bebas Murni = <b style="color: var(--danger); font-size: 13px;">${ekspirasiMurniFmt}</b>
                 </div>
             </div>
         </div>`;
 
-        // Langkah 4
-        html += `<div class="step-card">
-            <div class="step-card-header" style="color: #b45309;">
-                <span><i class="fas fa-medal"></i> LANGKAH 4: Rincian Kronologis Perolehan Remisi (Keppres No. 174/1999)</span>
-                <span style="font-size: 10px; background: rgba(180,83,9,0.1); color: #b45309; padding: 2px 6px; border-radius: 4px;">Bulan &amp; Hari</span>
-            </div>
-            <div class="step-card-body">
-                <div>Remisi dihitung dan diakumulasikan dalam satuan Bulan dan Hari (1 Bulan = 30 Hari, tanpa konversi akumulasi ke tahun).</div>
-                <div class="step-code-box" style="text-align: right; margin-top: 8px;">
-                    Total Akumulasi Remisi yang Diperoleh: <b style="color: #047857; font-size: 13px;">${totalRemisiHari} Hari (${totalRemisiTeks})</b>
-                </div>
-            </div>
-        </div>`;
-
-        // Langkah 5
+        // C. Pentahapan Masa Pidana (Setelah Dipotong Remisi)
         html += `<div class="step-card">
             <div class="step-card-header" style="color: #b91c1c;">
-                <span><i class="fas fa-flag-checkered"></i> LANGKAH 5: Penetapan Tonggak Definitif &amp; Waktu Pengusulan SDP</span>
-                <span style="font-size: 10px; background: rgba(185,28,28,0.1); color: #b91c1c; padding: 2px 6px; border-radius: 4px;">Definitif</span>
+                <span><i class="fas fa-flag-checkered"></i> C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)</span>
+                <span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">Remisi saat 2/3: ${totalRemisiTeks} (${totalRemisiHari} Hr)</span>
             </div>
-            <div class="step-card-body">
-                <div class="step-code-box">
-                    Ekspirasi Definitif = ${ekspirasiMurniFmt} - ${totalRemisiHari} Hari = <b style="color: #b91c1c;">${ekspirasiDefFmt}</b><br>
-                    1/3 Definitif = ${tgl13MurniFmt} - ${totalRemisiHari} Hari = <b>${tgl13DefFmt}</b><br>
-                    1/2 Definitif (Asimilasi) = ${tgl12MurniFmt} - ${totalRemisiHari} Hari = <b>${tgl12DefFmt}</b><br>
-                    2/3 Definitif = ${tgl23MurniFmt} - ${totalRemisiHari} Hari = <b style="color: #047857;">${tgl23DefFmt}</b><br>
-                    Mulai Pengusulan di SDP = ${tgl23DefFmt} - 60 Hari (H-2 Bulan) = <b style="color: #b45309;">${tglUsulFmt}</b>
+            <div class="step-card-body" style="font-size: 12px; line-height: 1.6;">
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
+                    Dihitung dari tanggal murni dikurangkan total remisi yang diperoleh s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):
                 </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">
-                    <i class="fas fa-info-circle me-1 text-primary"></i> <b>Keterangan:</b> Perhitungan ini dirancang fleksibel tanpa mengikat pada jenis program integrasi tertentu sehingga dapat digunakan untuk seluruh analisis pembinaan maupun administrasi narapidana.
+                <div class="step-code-box" style="line-height: 1.8;">
+                    • <b>1/3 Masa Pidana</b> : ${tgl13MurniFmt} - ${totalRemisiHari} Hari = <b style="color: var(--primary);">${tgl13DefFmt}</b><br>
+                    • <b>1/2 Asimilasi</b>   : ${tgl12MurniFmt} - ${totalRemisiHari} Hari = <b style="color: #d97706;">${tgl12DefFmt}</b><br>
+                    • <b>2/3 Masa Pidana</b> : ${tgl23MurniFmt} - ${totalRemisiHari} Hari = <b style="color: #047857;">${tgl23DefFmt}</b><br>
+                    • <b>Ekspirasi Akhir</b> : ${ekspirasiMurniFmt} - ${totalRemisiHari} Hari = <b style="color: var(--danger);">${ekspirasiDefFmt}</b>
+                </div>
+                <div style="margin-top: 8px; padding: 8px 10px; background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.3); border-radius: 6px; font-size: 11.5px; color: #b45309;">
+                    <i class="fas fa-calendar-check me-1"></i> <b>Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b><br>
+                    ${tgl23DefFmt} - 60 Hari = <b style="font-size: 12.5px;">${tglUsulFmt}</b>
                 </div>
             </div>
         </div>`;
 
         // Plain Text Format
-        let plainText = `================================================================================
-RINCIAN HITUNGAN MANUAL & FORMULA MATEMATIS PERHITUNGAN PIDANA
-Standar Pemasyarakatan & Keppres No. 174/1999 - Sultan Banten
-================================================================================
+        let plainText = `PERHITUNGAN MANUAL
+Sultan Banten - Kantor Wilayah Kemenimipas Banten
+========================================================
 
-I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS
---------------------------------------------------------------------------------
-Nama WBP                : ${d.namaWbp || 'Narapidana'}
-Nomor Register          : ${d.noRegister || '-'}
-Perkara / Pasal         : ${d.perkaraPasal || '-'}
-Pidana Pokok (Vonis)    : ${d.lamaPidanaTeks}
-Tanggal Mulai Ditahan   : ${tglAwalFmt}
-Tanggal Putusan         : ${tglPutusanFmt}
+I. IDENTITAS & PERKARA
+--------------------------------------------------------
+• Nama WBP            : ${d.namaWbp || 'Narapidana'}
+• Nomor Register      : ${d.noRegister || '-'}
+• Perkara / Pasal     : ${d.perkaraPasal || '-'}
+• Tgl. Ditahan        : ${tglAwalFmt}
+• Tgl. Putusan        : ${tglPutusanFmt}
+• Pidana Pokok        : ${d.lamaPidanaTeks}
 
-II. LANGKAH-LANGKAH PERHITUNGAN MANUAL (STEP-BY-STEP AUDIT TRAIL)
---------------------------------------------------------------------------------
-[LANGKAH 1] PERHITUNGAN MASA PIDANA POKOK & EKSPIRASI BEBAS MURNI
-- Kaidah Perhitungan Vonis & Ekspirasi:
-  * Komponen Tahun : Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).
-  * Komponen Bulan : Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).
-- Formula Ekspirasi Murni = ${tglAwalFmt} + ${d.lamaPidanaTeks}
-- Tanggal Ekspirasi Bebas Murni (Sebelum Remisi):
-  >>> ${ekspirasiMurniFmt} <<<
+II. RINCIAN PERHITUNGAN
+--------------------------------------------------------
 `;
 
         if (d.tglPutusan) {
-            plainText += `
-[LANGKAH 2] PERHITUNGAN POTONGAN TAHANAN (PASCA-PUTUSAN)
-- Dasar Hukum: KUHAP Pasal 22 Ayat (4)
-- Periode Penahanan     : ${tglAwalFmt} s.d. ${tglPutusanFmt}
-- Potongan Tahanan (Potah) : ${d.masaTahananTeks} (${masaTahananHari} Hari)
+            plainText += `A. POTONGAN TAHANAN (POTAH)
+   • Rumus  : Tgl. Putusan - Tgl. Mulai Ditahan (KUHAP Ps. 22 Ayat 4)
+   • Periode: ${tglAwalFmt} s.d. ${tglPutusanFmt}
+   • Hasil  : ${d.masaTahananTeks} (${masaTahananHari} Hari)
+
 `;
         }
 
-        plainText += `
-[LANGKAH 3] PERHITUNGAN TONGGAK MURNI MASA PIDANA (PROPORSIONAL VONIS)
-Dihitung secara proporsional dari lama vonis murni sejak tanggal mulai ditahan:
-- 1/3 Masa Pidana:
-  Formula : 1/3 x ${d.lamaPidanaTeks} = ${durasi13Teks}
-  Tanggal : >>> ${tgl13MurniFmt} <<<
-- 1/2 Masa Pidana (Asimilasi):
-  Formula : 1/2 x ${d.lamaPidanaTeks} = ${durasi12Teks}
-  Tanggal : >>> ${tgl12MurniFmt} <<<
-- 2/3 Masa Pidana:
-  Formula : 2/3 x ${d.lamaPidanaTeks} = ${durasi23Teks}
-  Tanggal : >>> ${tgl23MurniFmt} <<<
+        plainText += `B. EKSPIRASI BEBAS MURNI
+   • Rumus  : Tgl. Mulai Ditahan + Lama Pidana Pokok
+   • Kaidah : Tahun (dari tanggal ke tanggal sama di tahun berikutnya), Bulan (1 Bulan = 30 Hari)
+   • Hasil  : ${ekspirasiMurniFmt}
 
-[LANGKAH 4] PERHITUNGAN AKUMULASI PEROLEHAN REMISI (KEPPRES NO. 174/1999)
-- Kaidah Remisi:
-  Dihitung dan diakumulasikan dalam satuan Bulan dan Hari (1 Bulan = 30 Hari).
-  Tidak dikonversikan menjadi tahun agar perhitungan bulanan tidak bergeser.
-- Total Akumulasi Remisi yang Diperoleh:
-  >>> ${totalRemisiHari} Hari (${totalRemisiTeks}) <<<
+C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)
+   • Remisi Diperoleh saat 2/3 : ${totalRemisiTeks} (${totalRemisiHari} Hari)
+   • 1/3 Masa Pidana           : ${tgl13MurniFmt} - ${totalRemisiHari} Hari = ${tgl13DefFmt}
+   • 1/2 Asimilasi             : ${tgl12MurniFmt} - ${totalRemisiHari} Hari = ${tgl12DefFmt}
+   • 2/3 Masa Pidana           : ${tgl23MurniFmt} - ${totalRemisiHari} Hari = ${tgl23DefFmt}
+   • Ekspirasi Akhir           : ${ekspirasiMurniFmt} - ${totalRemisiHari} Hari = ${ekspirasiDefFmt}
+   • Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):
+     ${tgl23DefFmt} - 60 Hari = ${tglUsulFmt}
 
-[LANGKAH 5] PENETAPAN TONGGAK DEFINITIF & WAKTU PENGUSULAN DI SDP
-Dihitung dengan mengurangkan total perolehan remisi dari masing-masing tonggak murni:
-- Ekspirasi Definitif:
-  Ekspirasi Murni (${ekspirasiMurniFmt}) - ${totalRemisiHari} Hari Remisi
-  = >>> ${ekspirasiDefFmt} <<<
-- 1/3 Definitif:
-  ${tgl13MurniFmt} - ${totalRemisiHari} Hari Remisi
-  = >>> ${tgl13DefFmt} <<<
-- 1/2 Definitif (Asimilasi):
-  ${tgl12MurniFmt} - ${totalRemisiHari} Hari Remisi
-  = >>> ${tgl12DefFmt} <<<
-- 2/3 Definitif:
-  ${tgl23MurniFmt} - ${totalRemisiHari} Hari Remisi
-  = >>> ${tgl23DefFmt} <<<
-- Waktu Mulai Pengusulan di SDP (H-2 Bulan / 60 Hari sebelum 2/3 Definitif):
-  ${tgl23DefFmt} - 60 Hari
-  = >>> ${tglUsulFmt} <<<
-
---------------------------------------------------------------------------------
+========================================================
 Catatan / Disclaimer:
-Perhitungan ini bersifat fleksibel dan matematis murni tanpa mengikat pada jenis
-program integrasi tertentu, sehingga dapat dijadikan acuan kerja universal dalam
-sidang TPP, usulan PB/CB/CMB/Asimilasi, maupun kelengkapan berkas registrasi.
-================================================================================`;
+Rincian perhitungan matematis di atas bersifat objektif dan fleksibel tanpa mengikat
+pada satu program integrasi tertentu, sehingga dapat dijadikan acuan kerja universal
+dalam sidang TPP, pertimbangan pembinaan, usulan integrasi (PB/CB/CMB/Asimilasi),
+maupun kelengkapan berkas registrasi narapidana.`;
 
         offlineHitunganManualTeks = plainText;
         document.getElementById('offlineContainerVisual').innerHTML = html;

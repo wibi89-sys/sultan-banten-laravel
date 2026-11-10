@@ -1670,7 +1670,7 @@
 *Remisi Dasawarsa:* ${d.include_dasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
 *Basis Simulasi:* ${d.target_basis_label || 'Standar 2/3 Masa Pidana'}
 ---------------------------------------
-*Tonggak Masa Pidana:*
+*Pentahapan Masa Pidana:*
 • *1/3 Masa Pidana:* ${d.formatted.tgl_1_3_murni}
 • *1/2 Asimilasi:* ${d.formatted.tgl_1_2_definitif} (Murni: ${d.formatted.tgl_1_2_murni})
 • *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Murni: ${d.formatted.tgl_2_3_murni})

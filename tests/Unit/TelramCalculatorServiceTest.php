@@ -223,14 +223,14 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('Pembebasan Bersyarat (PB)', $result['nama_program']);
         $this->assertEquals('2027-01-01', $result['milestones']['ekspirasi_murni']);
 
-        // Tonggak murni sesuai kaidah vonis: 1/3 = 1 thn (01/01/2025), 1/2 = 1 thn 6 bln (30/06/2025), 2/3 = 2 thn (01/01/2026)
+        // Pentahapan murni sesuai kaidah vonis: 1/3 = 1 thn (01/01/2025), 1/2 = 1 thn 6 bln (30/06/2025), 2/3 = 2 thn (01/01/2026)
         $this->assertEquals(1080, $result['total_hari_vonis']);
         $this->assertEquals('2026-01-01', $result['milestones']['tgl_2_3_murni']);
         $this->assertEquals('2025-01-01', $result['milestones']['tgl_1_3_murni']);
         $this->assertEquals('2025-06-30', $result['milestones']['tgl_1_2_murni']);
         $this->assertArrayHasKey('tgl_1_3_definitif', $result['milestones']);
 
-        // Verifikasi ledger ada dan memiliki proyeksi remisi beserta tonggak baru (1/3, 1/2, 2/3)
+        // Verifikasi ledger ada dan memiliki proyeksi remisi beserta pentahapan baru (1/3, 1/2, 2/3)
         $this->assertNotEmpty($result['proyeksi_ledger']);
         $this->assertArrayHasKey('tgl_1_3_baru', $result['proyeksi_ledger'][0]);
         $this->assertArrayHasKey('tgl_1_2_baru', $result['proyeksi_ledger'][0]);
@@ -653,23 +653,21 @@ class TelramCalculatorServiceTest extends TestCase
         $teks = $result['hitungan_manual_teks'];
         $html = $result['hitungan_manual_html'];
 
-        // Verifikasi 5 langkah terstruktur pada format teks
+        // Verifikasi rincian perhitungan matematis terstruktur (A, B, C) pada format teks
         $this->assertStringContainsString('Tgl. Putusan', $teks);
-        $this->assertStringContainsString('LANGKAH 1: Perhitungan Masa Pidana Pokok & Ekspirasi Bebas Murni', $teks);
-        $this->assertStringContainsString('LANGKAH 2: Potongan Masa Penahanan', $teks);
-        $this->assertStringContainsString('LANGKAH 3: Tonggak Murni Masa Pidana', $teks);
-        $this->assertStringContainsString('LANGKAH 4: Rincian Kronologis Perolehan Remisi', $teks);
-        $this->assertStringContainsString('LANGKAH 5: Penetapan Tonggak Definitif & Waktu Pengusulan SDP', $teks);
+        $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $teks);
+        $this->assertStringContainsString('B. EKSPIRASI BEBAS MURNI', $teks);
+        $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)', $teks);
+        $this->assertStringNotContainsString('tonggak', strtolower($teks));
 
         // Verifikasi fleksibilitas (tidak memuat teks kaku program integrasi tertentu)
-        $this->assertStringContainsString('Perhitungan ini bersifat fleksibel', $teks);
+        $this->assertStringContainsString('Perhitungan ini bersifat objektif dan fleksibel', $teks);
 
         // Verifikasi format visual html
-        $this->assertStringContainsString('LANGKAH 1: Perhitungan Masa Pidana Pokok', $html);
-        $this->assertStringContainsString('LANGKAH 2: Potongan Masa Penahanan', $html);
-        $this->assertStringContainsString('LANGKAH 3: Tonggak Murni Masa Pidana', $html);
-        $this->assertStringContainsString('LANGKAH 4: Rincian Kronologis Perolehan Remisi', $html);
-        $this->assertStringContainsString('LANGKAH 5: Penetapan Tonggak Definitif', $html);
+        $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $html);
+        $this->assertStringContainsString('B. EKSPIRASI BEBAS MURNI', $html);
+        $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH DIPOTONG REMISI)', $html);
+        $this->assertStringNotContainsString('tonggak', strtolower($html));
 
         // Verifikasi PDF Report
         $pdfOutput = TelramCalculatorService::generatePdfReport($result);
