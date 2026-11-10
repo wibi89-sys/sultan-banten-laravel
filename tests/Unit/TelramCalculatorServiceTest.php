@@ -741,9 +741,11 @@ class TelramCalculatorServiceTest extends TestCase
         $tglSubDef = Carbon::parse($result['milestones']['ekspirasi_subsider_definitif']);
         $this->assertEquals(180, (int) $tglPokokDef->diffInDays($tglSubDef));
 
-        // Verifikasi PDF juga dapat digenerate dengan subsider
+        // Verifikasi PDF juga dapat digenerate dengan subsider dan tepat 2 halaman
         $pdf = TelramCalculatorService::generatePdfReport($result);
         $this->assertNotEmpty($pdf);
+        $pageCount = preg_match_all('/\/Type\s*\/Page\b/', $pdf);
+        $this->assertEquals(2, $pageCount, "PDF harus tepat 2 halaman, ditemukan: {$pageCount} halaman.");
     }
 
     public function test_judul_program_dinamis_pb_vs_cb(): void
@@ -902,5 +904,38 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('05/01/2026', $res['numeric']['ekspirasi_sebelum_remisi']);
         // Pastikan tanggal matematika di hitungan manual mencakup format dd/mm/yyyy
         $this->assertStringContainsString('05/01/2024', $res['hitungan_manual_teks']);
+    }
+
+    public function test_pdf_report_vonis_panjang_dengan_potah_dan_subsider_bb(): void
+    {
+        // Narapidana 10 tahun, ada potah (ditahan 2020-01-01, putusan 2020-06-01), subsider 3 bulan BB, denda 1 milyar
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2020-01-01',
+            10,
+            0,
+            0,
+            'islam',
+            0,
+            'Narapidana Kasus Berat',
+            'BI.888/2020',
+            true,
+            'pemuka',
+            '2_3',
+            1,
+            'Pasal 114 ayat (2) UU 35/2009',
+            '2020-06-01',
+            0,
+            3,
+            0,
+            '1000000000',
+            'bb'
+        );
+
+        $pdf = TelramCalculatorService::generatePdfReport($res);
+        $this->assertNotEmpty($pdf);
+        $pageCount = preg_match_all('/\/Type\s*\/Page\b/', $pdf);
+        // Pada vonis 10 tahun (15 baris event remisi), tabel ledger remisi terbagi rapi
+        // dan Lampiran Hitungan Manual berada di halaman lampiran tersendiri (3 halaman total)
+        $this->assertEquals(3, $pageCount, "PDF narapidana 10 tahun terbagi rapi 3 halaman, ditemukan: {$pageCount} halaman.");
     }
 }
