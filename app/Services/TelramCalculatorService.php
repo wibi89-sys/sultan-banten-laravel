@@ -1334,7 +1334,7 @@ IDENTITAS;
                 <div class="card-body p-3.5" style="font-size: 13.5px;">
                     <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
                         <tr>
-                            <td style="width: 175px; font-weight: 600; color: #0f172a;">Potah</td>
+                            <td style="width: 240px; font-weight: 600; color: #0f172a;">Potah</td>
                             <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                             <td>Tgl. Mulai Ditahan - Tgl. Putusan</td>
                         </tr>
@@ -1360,7 +1360,7 @@ CARD_A;
             $subsiderHtmlB = <<<SUB_B
             <tr style="height: 8px;"><td colspan="3"></td></tr>
             <tr>
-                <td style="width: 175px; font-weight: bold; color: #991b1b;">Ekspirasi (+Subsider BB)</td>
+                <td style="width: 240px; font-weight: bold; color: #991b1b;">Ekspirasi (+Subsider BB)</td>
                 <td style="width: 25px; text-align: center; font-weight: bold; color: #991b1b;">=</td>
                 <td style="color: #991b1b;">Ekspirasi Akhir + Pidana Subsider</td>
             </tr>
@@ -1386,7 +1386,7 @@ SUB_B;
         if (! empty($data['tgl_putusan'])) {
             $barisEkspirasiAwal = <<<EKS_AWAL
             <tr>
-                <td style="width: 175px; font-weight: 600; color: #0f172a;">Ekspirasi Awal</td>
+                <td style="width: 240px; font-weight: 600; color: #0f172a;">Ekspirasi Awal</td>
                 <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                 <td>Tgl. Putusan + Lama Pidana Pokok</td>
             </tr>
@@ -1407,7 +1407,7 @@ SUB_B;
             </tr>
             <tr style="height: 8px;"><td colspan="3"></td></tr>
             <tr>
-                <td style="width: 175px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
+                <td style="width: 240px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
                 <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                 <td>Ekspirasi Awal - Potah</td>
             </tr>
@@ -1420,7 +1420,7 @@ EKS_AWAL;
         } else {
             $barisEkspirasiAwal = <<<EKS_AWAL
             <tr>
-                <td style="width: 175px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
+                <td style="width: 240px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
                 <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                 <td>Tgl. Mulai Ditahan + Lama Pidana Pokok</td>
             </tr>
@@ -1463,7 +1463,7 @@ CARD_B;
             $subsider23HtmlC = <<<SUB_23
             <tr style="height: 8px;"><td colspan="3"></td></tr>
             <tr>
-                <td style="width: 175px; font-weight: bold; color: #14532d;">• 2/3 (+Subsider BB)</td>
+                <td style="width: 240px; font-weight: bold; color: #14532d;">• 2/3 (+Subsider BB)</td>
                 <td style="width: 25px; text-align: center; font-weight: bold; color: #14532d;">=</td>
                 <td style="color: #14532d;">2/3 Masa Pidana + Pidana Subsider</td>
             </tr>
@@ -1490,7 +1490,7 @@ SUB_23;
             $subsiderEkspirasiHtmlC = <<<SUB_EKS_C
             <tr style="height: 8px;"><td colspan="3"></td></tr>
             <tr>
-                <td style="width: 175px; font-weight: bold; color: #991b1b;">• Ekspirasi (+Subsider BB)</td>
+                <td style="width: 240px; font-weight: bold; color: #991b1b;">• Ekspirasi (+Subsider BB)</td>
                 <td style="width: 25px; text-align: center; font-weight: bold; color: #991b1b;">=</td>
                 <td style="color: #991b1b;">Ekspirasi Akhir + Pidana Subsider (Tanpa Remisi)</td>
             </tr>
@@ -1521,13 +1521,13 @@ SUB_EKS_C;
             <div class="card-body p-3.5" style="font-size: 13.5px;">
                 <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
                     <tr>
-                        <td colspan="3" class="pb-2">
-                            • <b>Jumlah Remisi yang diperoleh</b> = <b class="text-success" style="font-size: 14px;">{$totalRemisiTeks}</b>
-                        </td>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• Jumlah Remisi yang diperoleh</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                        <td><b class="text-success" style="font-size: 14px;">{$totalRemisiTeks}</b></td>
                     </tr>
                     <tr style="height: 6px;"><td colspan="3"></td></tr>
                     <tr>
-                        <td style="width: 175px; font-weight: 600; color: #0f172a;">• 1/2 Masa Pidana</td>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• 1/2 Masa Pidana</td>
                         <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                         <td>Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
                     </tr>
@@ -1553,7 +1553,7 @@ SUB_EKS_C;
                     </tr>
                     <tr style="height: 8px;"><td colspan="3"></td></tr>
                     <tr>
-                        <td style="width: 175px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
                         <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                         <td>Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
                     </tr>
@@ -1580,7 +1580,7 @@ SUB_EKS_C;
                     {$subsider23HtmlC}
                     <tr style="height: 8px;"><td colspan="3"></td></tr>
                     <tr>
-                        <td style="width: 175px; font-weight: 600; color: #0f172a;">• Ekspirasi Akhir</td>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• Ekspirasi Akhir</td>
                         <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
                         <td>Ekspirasi Sebelum Remisi - Remisi</td>
                     </tr>
@@ -1602,7 +1602,7 @@ SUB_EKS_C;
                     {$subsiderEkspirasiHtmlC}
                     <tr style="height: 10px;"><td colspan="3"></td></tr>
                     <tr>
-                        <td style="width: 175px; font-weight: bold; color: #b45309;">• Pengusulan di SDP</td>
+                        <td style="width: 240px; font-weight: bold; color: #b45309;">• Pengusulan di SDP</td>
                         <td style="width: 25px; text-align: center; font-weight: bold; color: #b45309;">=</td>
                         <td style="color: #b45309;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
                     </tr>
@@ -2078,29 +2078,29 @@ SUB;
         if (! empty($data['tgl_putusan'])) {
             $potahPdfHtml = <<<POTAH
 <!-- A. POTONGAN TAHANAN (POTAH) -->
-<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bbf7d0; margin-bottom: 6px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bbf7d0; margin-bottom: 9px;">
     <tr style="background-color: #f0fdf4;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 3px 6px;">
+        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 3.5px 7px;">
             A. POTONGAN TAHANAN (POTAH)
         </td>
     </tr>
     <tr>
-        <td style="padding: 4px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.15;">
+        <td style="padding: 4px 7px;">
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.2;">
                 <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">Potah</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">Potah</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Tgl. Mulai Ditahan - Tgl. Putusan</td>
+                    <td width="68%">Tgl. Mulai Ditahan - Tgl. Putusan</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglAwalNum} - {$tglPutusanNum}</td>
+                    <td width="68%">{$tglAwalNum} - {$tglPutusanNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #166534; font-size: 9pt;">{$masaTahananTeks}</b></td>
+                    <td width="68%"><b style="color: #166534; font-size: 9pt;">{$masaTahananTeks}</b></td>
                 </tr>
             </table>
         </td>
@@ -2113,48 +2113,48 @@ POTAH;
         if (! empty($data['tgl_putusan'])) {
             $barisEkspirasiAwalPdf = <<<EKS_AWAL_PDF
                 <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">Ekspirasi Awal</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">Ekspirasi Awal</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Tgl. Putusan + Lama Pidana Pokok</td>
+                    <td width="68%">Tgl. Putusan + Lama Pidana Pokok</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglPutusanNum} + {$lamaVonis}</td>
+                    <td width="68%">{$tglPutusanNum} + {$lamaVonis}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiAwalNum}</td>
+                    <td width="68%">{$ekspirasiAwalNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #1e40af; font-size: 9.5pt;">{$ekspirasiAwalIndo}</b></td>
+                    <td width="68%"><b style="color: #1e40af; font-size: 9.5pt;">{$ekspirasiAwalIndo}</b></td>
                 </tr>
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Ekspirasi Awal - Potah</td>
+                    <td width="68%">Ekspirasi Awal - Potah</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiAwalNum} - {$masaTahananTeks}</td>
+                    <td width="68%">{$ekspirasiAwalNum} - {$masaTahananTeks}</td>
                 </tr>
 EKS_AWAL_PDF;
         } else {
             $barisEkspirasiAwalPdf = <<<EKS_AWAL_PDF
                 <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Tgl. Mulai Ditahan + Lama Pidana Pokok</td>
+                    <td width="68%">Tgl. Mulai Ditahan + Lama Pidana Pokok</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglAwalNum} + {$lamaVonis}</td>
+                    <td width="68%">{$tglAwalNum} + {$lamaVonis}</td>
                 </tr>
 EKS_AWAL_PDF;
         }
@@ -2162,26 +2162,26 @@ EKS_AWAL_PDF;
         $subsiderPdfSectionB = '';
         if ($hasSubsiderBb) {
             $subsiderPdfSectionB = <<<SUB_B_PDF
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%" style="color: #991b1b; font-weight: bold;">Ekspirasi (+Subsider BB)</td>
+                    <td width="28%" style="color: #991b1b; font-weight: bold;">Ekspirasi (+Subsider BB)</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Ekspirasi Akhir + Pidana Subsider</td>
+                    <td width="68%">Ekspirasi Akhir + Pidana Subsider</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiSebelumRemisiNum} + {$subsiderTeks}</td>
+                    <td width="68%">{$ekspirasiSebelumRemisiNum} + {$subsiderTeks}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiSubSebelumRemisiNum}</td>
+                    <td width="68%">{$ekspirasiSubSebelumRemisiNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #991b1b; font-size: 9.5pt;">{$ekspirasiSubSebelumRemisiIndo}</b></td>
+                    <td width="68%"><b style="color: #991b1b; font-size: 9.5pt;">{$ekspirasiSubSebelumRemisiIndo}</b></td>
                 </tr>
 SUB_B_PDF;
         }
@@ -2189,26 +2189,26 @@ SUB_B_PDF;
         $subsiderPdf23 = '';
         if ($hasSubsiderBb) {
             $subsiderPdf23 = <<<SUB_23_PDF
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%" style="color: #14532d; font-weight: bold;">&bull; 2/3 (+Subsider BB)</td>
+                    <td width="28%" style="color: #14532d; font-weight: bold;">&bull; 2/3 (+Subsider BB)</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">2/3 Masa Pidana + Pidana Subsider</td>
+                    <td width="68%">2/3 Masa Pidana + Pidana Subsider</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tgl23DefNum} + {$subsiderTeks}</td>
+                    <td width="68%">{$tgl23DefNum} + {$subsiderTeks}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tgl23SubDefNum}</td>
+                    <td width="68%">{$tgl23SubDefNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #14532d; font-size: 9.5pt;">{$tgl23SubDefIndo}</b></td>
+                    <td width="68%"><b style="color: #14532d; font-size: 9.5pt;">{$tgl23SubDefIndo}</b></td>
                 </tr>
 SUB_23_PDF;
         }
@@ -2216,26 +2216,26 @@ SUB_23_PDF;
         $subsiderPdfEkspirasiC = '';
         if ($hasSubsiderBb) {
             $subsiderPdfEkspirasiC = <<<SUB_EKS_C_PDF
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%" style="color: #991b1b; font-weight: bold;">&bull; Ekspirasi (+Subsider BB)</td>
+                    <td width="28%" style="color: #991b1b; font-weight: bold;">&bull; Ekspirasi (+Subsider BB)</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Ekspirasi Akhir + Pidana Subsider (Tanpa Remisi)</td>
+                    <td width="68%">Ekspirasi Akhir + Pidana Subsider (Tanpa Remisi)</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiDefNum} + {$subsiderTeks}</td>
+                    <td width="68%">{$ekspirasiDefNum} + {$subsiderTeks}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiSubDefNum}</td>
+                    <td width="68%">{$ekspirasiSubDefNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #991b1b; font-size: 9.5pt;">{$ekspirasiSubDefIndo}</b> <span style="font-size: 7.5pt; color: #555;">(Tanpa Remisi)</span></td>
+                    <td width="68%"><b style="color: #991b1b; font-size: 9.5pt;">{$ekspirasiSubDefIndo}</b> <span style="font-size: 7.5pt; color: #555;">(Tanpa Remisi)</span></td>
                 </tr>
 SUB_EKS_C_PDF;
         }
@@ -2511,7 +2511,7 @@ ROW;
 <h1 style="color: #0f172a; font-size: 11.5pt; text-align: center; font-weight: bold; margin: 0; padding: 2px 0 4px 0; letter-spacing: 0.3px;">{$judulProgram}</h1>
 
 <!-- IDENTITAS SINGKAT LAMPIRAN -->
-<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 8pt; margin-bottom: 6px;">
+<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 8pt; margin-bottom: 9px;">
     <tr>
         <td width="18%" style="color: #475569; padding: 3px 6px;">Nama WBP</td>
         <td width="32%" style="font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$namaWbp}</td>
@@ -2539,25 +2539,25 @@ ROW;
 {$potahPdfHtml}
 
 <!-- B. EKSPIRASI SEBELUM REMISI -->
-<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bfdbfe; margin-bottom: 6px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bfdbfe; margin-bottom: 9px;">
     <tr style="background-color: #eff6ff;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #1e40af; padding: 3px 6px;">
+        <td style="font-weight: bold; font-size: 8.5pt; color: #1e40af; padding: 3.5px 7px;">
             B. EKSPIRASI SEBELUM REMISI
         </td>
     </tr>
     <tr>
-        <td style="padding: 4px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.15;">
+        <td style="padding: 4px 7px;">
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.2;">
                 {$barisEkspirasiAwalPdf}
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiSebelumRemisiNum}</td>
+                    <td width="68%">{$ekspirasiSebelumRemisiNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #b91c1c; font-size: 9.5pt;">{$ekspirasiSebelumRemisiIndo}</b></td>
+                    <td width="68%"><b style="color: #b91c1c; font-size: 9.5pt;">{$ekspirasiSebelumRemisiIndo}</b></td>
                 </tr>
                 {$subsiderPdfSectionB}
             </table>
@@ -2566,115 +2566,115 @@ ROW;
 </table>
 
 <!-- C. PENTAHAPAN MASA PIDANA (SETELAH REMISI) -->
-<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fecaca; margin-bottom: 6px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fecaca; margin-bottom: 9px;">
     <tr style="background-color: #fef2f2;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #991b1b; padding: 3px 6px;">
+        <td style="font-weight: bold; font-size: 8.5pt; color: #991b1b; padding: 3.5px 7px;">
             C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)
         </td>
     </tr>
     <tr>
-        <td style="padding: 4px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.15;">
+        <td style="padding: 4px 7px;">
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.2;">
                 <tr>
-                    <td colspan="3" style="font-size: 8.5pt; color: #0f172a; padding-bottom: 2px;">
-                        &bull; <b>Jumlah Remisi yang diperoleh</b> = <b style="color: #15803d; font-size: 9pt;">{$totalRemisiTeks}</b>
-                    </td>
-                </tr>
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
-                <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">&bull; 1/2 Masa Pidana</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Jumlah Remisi yang diperoleh</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
+                    <td width="68%"><b style="color: #15803d; font-size: 9.5pt;">{$totalRemisiTeks}</b></td>
                 </tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 1/2 Masa Pidana</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    <td width="68%">Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglAwalNum} + ({$durasi12Teks} - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tgl12DefNum}</td>
+                    <td width="68%">{$tglAwalNum} + ({$durasi12Teks} - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #0284c7; font-size: 9.5pt;">{$tgl12DefIndo}</b></td>
-                </tr>
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
-                <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
+                    <td width="68%">{$tgl12DefNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    <td width="68%"><b style="color: #0284c7; font-size: 9.5pt;">{$tgl12DefIndo}</b></td>
+                </tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
+                <tr>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglAwalNum} + ({$durasi23Teks} - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tgl23DefNum}</td>
+                    <td width="68%">{$tglAwalNum} + ({$durasi23Teks} - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #15803d; font-size: 9.5pt;">{$tgl23DefIndo}</b></td>
+                    <td width="68%">{$tgl23DefNum}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%"><b style="color: #15803d; font-size: 9.5pt;">{$tgl23DefIndo}</b></td>
                 </tr>
                 {$subsiderPdf23}
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%" style="color: #0f172a; font-weight: bold;">&bull; Ekspirasi Akhir</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Ekspirasi Akhir</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">Ekspirasi Sebelum Remisi - Remisi</td>
+                    <td width="68%">Ekspirasi Sebelum Remisi - Remisi</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiSebelumRemisiNum} - {$totalRemisiTeks}</td>
+                    <td width="68%">{$ekspirasiSebelumRemisiNum} - {$totalRemisiTeks}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$ekspirasiDefNum}</td>
+                    <td width="68%">{$ekspirasiDefNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #b91c1c; font-size: 9.5pt;">{$ekspirasiDefIndo}</b></td>
+                    <td width="68%"><b style="color: #b91c1c; font-size: 9.5pt;">{$ekspirasiDefIndo}</b></td>
                 </tr>
                 {$subsiderPdfEkspirasiC}
-                <tr style="font-size: 2pt; line-height: 0.4;"><td colspan="3">&nbsp;</td></tr>
+                <tr style="font-size: 3pt; line-height: 0.5;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
-                    <td width="24%" style="color: #b45309; font-weight: bold;">&bull; Usul SDP (H-2 Bln)</td>
+                    <td width="28%" style="color: #b45309; font-weight: bold;">&bull; Usul SDP (H-2 Bln)</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">2/3 Masa Pidana - 60 Hari</td>
+                    <td width="68%">2/3 Masa Pidana - 60 Hari</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tgl23DefNum} - 60 Hari</td>
+                    <td width="68%">{$tgl23DefNum} - 60 Hari</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%">{$tglUsulNum}</td>
+                    <td width="68%">{$tglUsulNum}</td>
                 </tr>
                 <tr>
-                    <td width="24%"></td>
+                    <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="72%"><b style="color: #b45309; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
+                    <td width="68%"><b style="color: #b45309; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
                 </tr>
             </table>
         </td>

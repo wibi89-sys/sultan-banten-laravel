@@ -157,6 +157,9 @@
         min-height: 40px !important;
         height: auto !important;
         box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
     }
     .form-select:focus,
     select.form-select:focus {
