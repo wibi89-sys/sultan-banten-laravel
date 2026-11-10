@@ -655,7 +655,7 @@ class TelramCalculatorServiceTest extends TestCase
 
         // Verifikasi 5 langkah terstruktur pada format teks
         $this->assertStringContainsString('Tgl. Putusan', $teks);
-        $this->assertStringContainsString('LANGKAH 1: Perhitungan Hari Pidana Pokok & Ekspirasi Murni', $teks);
+        $this->assertStringContainsString('LANGKAH 1: Perhitungan Masa Pidana Pokok & Ekspirasi Bebas Murni', $teks);
         $this->assertStringContainsString('LANGKAH 2: Potongan Masa Penahanan', $teks);
         $this->assertStringContainsString('LANGKAH 3: Tonggak Murni Masa Pidana', $teks);
         $this->assertStringContainsString('LANGKAH 4: Rincian Kronologis Perolehan Remisi', $teks);
@@ -665,7 +665,7 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('Perhitungan ini bersifat fleksibel', $teks);
 
         // Verifikasi format visual html
-        $this->assertStringContainsString('LANGKAH 1: Perhitungan Hari Pidana Pokok', $html);
+        $this->assertStringContainsString('LANGKAH 1: Perhitungan Masa Pidana Pokok', $html);
         $this->assertStringContainsString('LANGKAH 2: Potongan Masa Penahanan', $html);
         $this->assertStringContainsString('LANGKAH 3: Tonggak Murni Masa Pidana', $html);
         $this->assertStringContainsString('LANGKAH 4: Rincian Kronologis Perolehan Remisi', $html);

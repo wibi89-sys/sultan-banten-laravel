@@ -1664,7 +1664,7 @@
 *No. Register:* ${d.no_register || '-'}
 *Pidana / Pasal:* ${d.perkara_pasal || '-'}
 *Tanggal Ditahan:* ${d.formatted.tgl_awal}${putusanLine}
-*Pidana Pokok:* ${d.lama_pidana_teks} (${d.total_hari_vonis} hari)
+*Pidana Pokok:* ${d.lama_pidana_teks}
 *Agama WBP:* ${d.agama}
 *Status Pembinaan:* ${d.kategori_tambahan_label || 'Standar (Reguler)'}
 *Remisi Dasawarsa:* ${d.include_dasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}

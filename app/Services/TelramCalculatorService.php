@@ -959,22 +959,25 @@ class TelramCalculatorService
         $teks .= "• Perkara / Pasal     : {$perkaraPasal}\n";
         $teks .= "• Tgl. Mulai Ditahan  : {$tglAwal}\n";
         $teks .= "• Tgl. Putusan        : {$tglPutusan}\n";
-        $teks .= "• Pidana Pokok        : {$lamaVonis} ({$totalHariVonisFmt} Hari baku)\n\n";
+        $teks .= "• Pidana Pokok        : {$lamaVonis}\n\n";
 
         $teks .= "II. LANGKAH-LANGKAH PERHITUNGAN MANUAL\n";
         $teks .= "--------------------------------------------------------\n";
-        $teks .= "LANGKAH 1: Perhitungan Hari Pidana Pokok & Ekspirasi Murni\n";
-        $teks .= "• Kaidah Baku: 1 Tahun = 360 Hari (12 bln × 30 hr), 1 Bulan = 30 Hari\n";
-        $teks .= "• Total Hari Vonis = ({$tahun} × 360) + ({$bulan} × 30) + {$hari} = {$totalHariVonisFmt} Hari\n";
-        $teks .= "• Kaidah Ekspirasi: Ditambahkan tanggal ke tanggal pada tahun berikutnya + 30 hari kalender per bulan\n";
-        $teks .= "• Tanggal Ekspirasi Bebas Murni: {$ekspirasiMurni}\n\n";
+        $teks .= "LANGKAH 1: Perhitungan Masa Pidana Pokok & Ekspirasi Bebas Murni\n";
+        $teks .= "• Kaidah Perhitungan Vonis & Ekspirasi:\n";
+        $teks .= "  * Komponen Tahun : Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).\n";
+        $teks .= "  * Komponen Bulan : Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).\n";
+        if ($hari > 0) {
+            $teks .= "  * Komponen Hari  : Ditambahkan {$hari} hari kalender.\n";
+        }
+        $teks .= "• Formula Ekspirasi Murni = {$tglAwal} + {$lamaVonis}\n";
+        $teks .= "• Tanggal Ekspirasi Bebas Murni (Sebelum Remisi): {$ekspirasiMurni}\n\n";
 
         if (! empty($data['tgl_putusan'])) {
             $teks .= "LANGKAH 2: Potongan Masa Penahanan (Pasca-Putusan)\n";
             $teks .= "• Dasar Hukum: Pasal 22 ayat (4) KUHAP (Masa penahanan dikurangkan seluruhnya dari pidana)\n";
             $teks .= "• Periode Penahanan: {$tglAwal} s.d. {$tglPutusan}\n";
-            $teks .= "• Masa Tahanan (Potongan): {$masaTahananTeks}\n";
-            $teks .= "• Sisa Pidana Pokok Pasca-Putusan: {$totalHariVonisFmt} hr - {$masaTahananHari} hr = {$sisaHariPascaPutusan} Hari ({$sisaPidanaPascaPutusanTeks})\n\n";
+            $teks .= "• Masa Tahanan yang Dijalani (Potongan): {$masaTahananTeks} ({$masaTahananHari} Hari)\n\n";
         }
 
         $teks .= "LANGKAH 3: Tonggak Murni Masa Pidana (Proporsional dari Vonis Pokok)\n";
@@ -998,10 +1001,11 @@ class TelramCalculatorService
                 $no++;
             }
         }
-        $teks .= "• Total Akumulasi Remisi yang Diperoleh: {$totalRemisiHari} Hari ({$totalRemisiTeks})\n";
-        $teks .= "  (Catatan: Remisi dihitung dan dijumlahkan dalam satuan Bulan & Hari tanpa konversi tahun)\n\n";
+        $teks .= "• Total Akumulasi Remisi yang Diperoleh: {$totalRemisiTeks} ({$totalRemisiHari} Hari)\n";
+        $teks .= "  (Kaidah Remisi: 1 Bulan Remisi = 30 Hari. Berapapun jumlah remisi tidak dikonversi ke tahun, tetap dihitung dalam Bulan dan Hari)\n\n";
 
         $teks .= "LANGKAH 5: Penetapan Tonggak Definitif & Waktu Pengusulan SDP\n";
+        $teks .= "• Kaidah: Masing-masing tonggak murni dikurangi total hari perolehan remisi ({$totalRemisiHari} Hari):\n";
         $teks .= "• Ekspirasi Definitif : {$ekspirasiMurni} - {$totalRemisiHari} Hari = {$ekspirasiDefinitif}\n";
         $teks .= "• 1/3 Definitif       : {$tgl13Murni} - {$totalRemisiHari} Hari = {$tgl13Definitif}\n";
         $teks .= "• 1/2 Definitif       : {$tgl12Murni} - {$totalRemisiHari} Hari = {$tgl12Definitif}\n";
@@ -1067,7 +1071,7 @@ class TelramCalculatorService
                     <div class="col-sm-6"><b>Nama WBP:</b> {$namaWbp}</div>
                     <div class="col-sm-6"><b>No. Register:</b> {$noRegister}</div>
                     <div class="col-sm-6"><b>Perkara / Pasal:</b> {$perkaraPasal}</div>
-                    <div class="col-sm-6"><b>Pidana Pokok:</b> {$lamaVonis} ({$totalHariVonisFmt} Hari baku)</div>
+                    <div class="col-sm-6"><b>Pidana Pokok:</b> {$lamaVonis}</div>
                     <div class="col-sm-6"><b>Tgl. Mulai Ditahan:</b> {$tglAwal}</div>
                     <div class="col-sm-6"><b>Tgl. Putusan:</b> {$tglPutusan}</div>
                 </div>
@@ -1079,16 +1083,18 @@ CARD;
         $html .= <<<CARD
         <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
             <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
-                <strong class="text-primary" style="font-size: 13px;"><i class="fas fa-layer-group me-1.5"></i> LANGKAH 1: Perhitungan Hari Pidana Pokok &amp; Ekspirasi Murni</strong>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10px;">Vonis Baku</span>
+                <strong class="text-primary" style="font-size: 13px;"><i class="fas fa-layer-group me-1.5"></i> LANGKAH 1: Perhitungan Masa Pidana Pokok &amp; Ekspirasi Bebas Murni</strong>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10px;">Vonis Pokok</span>
             </div>
             <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
-                <div class="mb-1 text-secondary"><b>Kaidah Baku Pemasyarakatan:</b> 1 Tahun = 360 Hari (12 bln × 30 hr), 1 Bulan = 30 Hari.</div>
+                <div class="mb-1 text-secondary"><b>Kaidah Perhitungan Vonis &amp; Ekspirasi Murni:</b></div>
+                <ul class="mb-2 ps-3 text-secondary" style="font-size: 12px;">
+                    <li><b>Komponen Tahun:</b> Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).</li>
+                    <li><b>Komponen Bulan:</b> Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).</li>
+                </ul>
                 <div class="p-2 rounded bg-light border mb-2 font-monospace" style="font-size: 12px;">
-                    Total Hari Vonis = ({$tahun} × 360) + ({$bulan} × 30) + {$hari} = <b>{$totalHariVonisFmt} Hari</b>
+                    Tanggal Ekspirasi Murni = {$tglAwal} + {$lamaVonis} = <b class="text-danger" style="font-size: 13.5px;">{$ekspirasiMurni}</b>
                 </div>
-                <div class="text-secondary"><b>Kaidah Ekspirasi Bebas Murni:</b> Tanggal ke tanggal yang sama di tahun berikutnya + 30 hari kalender per bulan.</div>
-                <div class="mt-1">Tanggal Ekspirasi Murni (Sebelum Remisi): <b class="text-danger" style="font-size: 13.5px;">{$ekspirasiMurni}</b></div>
             </div>
         </div>
 CARD;
@@ -1098,15 +1104,14 @@ CARD;
             $html .= <<<CARD
             <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
                 <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
-                    <strong class="text-success" style="font-size: 13px;"><i class="fas fa-gavel me-1.5"></i> LANGKAH 2: Potongan Masa Penahanan &amp; Sisa Pidana Pokok</strong>
+                    <strong class="text-success" style="font-size: 13px;"><i class="fas fa-gavel me-1.5"></i> LANGKAH 2: Potongan Masa Penahanan (Pasca-Putusan)</strong>
                     <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">KUHAP Ps. 22(4)</span>
                 </div>
                 <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
                     <div class="mb-1 text-secondary"><b>Dasar Hukum:</b> Masa penahanan yang telah dijalani dikurangkan seluruhnya dari pidana yang dijatuhkan.</div>
                     <div class="p-2 rounded bg-light border mb-2 font-monospace" style="font-size: 12px;">
                         Periode Penahanan: {$tglAwal} s.d. {$tglPutusan}<br>
-                        Masa Tahanan (Potongan) = <b>{$masaTahananTeks}</b><br>
-                        Sisa Pidana Pasca-Putusan = {$totalHariVonisFmt} hr - {$masaTahananHari} hr = <b>{$sisaHariPascaPutusan} Hari</b> ({$sisaPidanaPascaPutusanTeks})
+                        Masa Tahanan yang Dijalani (Potongan) = <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
                     </div>
                 </div>
             </div>
@@ -1205,7 +1210,8 @@ TR;
                     </table>
                 </div>
                 <div class="p-2 rounded bg-light border text-end">
-                    Total Akumulasi Remisi yang Diperoleh: <b class="text-success" style="font-size: 13px;">{$totalRemisiHari} Hari ({$totalRemisiTeks})</b>
+                    Total Akumulasi Remisi yang Diperoleh: <b class="text-success" style="font-size: 13px;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b><br>
+                    <small class="text-muted" style="font-size: 11px;">(Kaidah Remisi: 1 Bulan Remisi = 30 Hari. Berapapun jumlah remisi tidak dikonversi ke tahun, tetap dihitung dalam Bulan dan Hari)</small>
                 </div>
             </div>
         </div>
@@ -1643,14 +1649,13 @@ CARD;
 <table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
     <tr style="background-color: #f0fdf4;">
         <td style="font-weight: bold; font-size: 8.2pt; color: #166534;">
-            LANGKAH 2: POTONGAN MASA PENAHANAN &amp; SISA PIDANA POKOK (KUHAP Ps. 22 Ayat 4)
+            LANGKAH 2: POTONGAN MASA PENAHANAN (KUHAP Ps. 22 Ayat 4)
         </td>
     </tr>
     <tr>
         <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
             &bull; <b>Periode Penahanan:</b> {$tglAwal} s.d. {$tglPutusan}<br>
-            &bull; <b>Masa Tahanan yang Dijalani:</b> <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)<br>
-            &bull; <b>Sisa Pidana Pasca-Putusan:</b> {$totalHariVonisFmt} hari - {$masaTahananHari} hari = <b>{$sisaHariPascaPutusan} Hari</b> ({$sisaPidanaPascaPutusanTeks})
+            &bull; <b>Masa Tahanan yang Dijalani (Potongan):</b> <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
         </td>
     </tr>
 </table>
@@ -1954,7 +1959,7 @@ ROW;
         <td width="16%" style="color: #475569;">Perkara / Pasal</td>
         <td width="34%" style="font-weight: bold; color: #0f172a;">: {$perkaraPasal}</td>
         <td width="20%" style="color: #475569;">Pidana Pokok</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$lamaVonis} ({$totalHariVonisFmt} Hari)</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$lamaVonis}</td>
     </tr>
 </table>
 
@@ -1962,14 +1967,15 @@ ROW;
 <table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
     <tr style="background-color: #f1f5f9;">
         <td style="font-weight: bold; font-size: 8.2pt; color: #1e40af;">
-            LANGKAH 1: PERHITUNGAN HARI PIDANA POKOK &amp; EKSPIRASI MURNI
+            LANGKAH 1: PERHITUNGAN MASA PIDANA POKOK &amp; EKSPIRASI BEBAS MURNI
         </td>
     </tr>
     <tr>
         <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
-            &bull; <b>Kaidah Baku Pemasyarakatan:</b> 1 Tahun = 360 Hari (12 bulan &times; 30 hari), 1 Bulan = 30 Hari.<br>
-            &bull; <b>Total Hari Pidana Pokok:</b> ({$tahun} &times; 360) + ({$bulan} &times; 30) + {$hari} = <b>{$totalHariVonisFmt} Hari</b><br>
-            &bull; <b>Kaidah Ekspirasi Bebas Murni:</b> Dihitung sejak tanggal mulai ditahan ({$tglAwal}) ditambah durasi pidana ({$lamaVonis}) mengacu pada kalender masehi riil (tahun ke tahun yang sama + 30 hari per bulan).<br>
+            &bull; <b>Kaidah Perhitungan Vonis &amp; Ekspirasi Murni:</b><br>
+            &nbsp;&nbsp;- <b>Tahun:</b> Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).<br>
+            &nbsp;&nbsp;- <b>Bulan:</b> Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).<br>
+            &bull; <b>Formula Ekspirasi Murni:</b> Tanggal Mulai Ditahan ({$tglAwal}) + {$lamaVonis}<br>
             &bull; <b>Tanggal Ekspirasi Murni (Sebelum Remisi): <span style="color: #b91c1c; font-size: 8.5pt;">{$tglEkspirasiMurni}</span></b>
         </td>
     </tr>

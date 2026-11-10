@@ -2522,7 +2522,7 @@
                     `\n*Pidana / Pasal:* ${d.perkaraPasal || '-'}` +
                     `\n*Tgl. Ditahan:* ${formatDateIndo(d.tglAwal)}` +
                     putusanLine +
-                    `\n*Pidana Pokok:* ${d.lamaPidanaTeks} (${d.totalHariVonis} hari)` +
+                    `\n*Pidana Pokok:* ${d.lamaPidanaTeks}` +
                     `\n*Status Pembinaan:* ${d.kategoriTambahan === 'pemuka' ? 'Pemuka Lapas (+1/3 RU)' : (d.kategoriTambahan === 'jasa_negara' ? 'Jasa Negara (+1/2 RU)' : 'Standar (Reguler)')}` +
                     `\n*Remisi Dasawarsa:* ${d.includeDasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}` +
                     `\n*Basis Simulasi:* ${d.targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana' : 'Sampai Ekspirasi Bebas Murni'}` +
@@ -2647,7 +2647,7 @@
                 <div><b>Nama WBP:</b> ${d.namaWbp || 'Narapidana'}</div>
                 <div><b>No. Register:</b> ${d.noRegister || '-'}</div>
                 <div><b>Perkara / Pasal:</b> ${d.perkaraPasal || '-'}</div>
-                <div><b>Pidana Pokok:</b> ${d.lamaPidanaTeks} (${totalHariVonisFmt} Hari baku)</div>
+                <div><b>Pidana Pokok:</b> ${d.lamaPidanaTeks}</div>
                 <div><b>Tgl. Mulai Ditahan:</b> ${tglAwalFmt}</div>
                 <div><b>Tgl. Putusan:</b> ${tglPutusanFmt}</div>
             </div>
@@ -2656,14 +2656,16 @@
         // Langkah 1
         html += `<div class="step-card">
             <div class="step-card-header" style="color: var(--primary);">
-                <span><i class="fas fa-layer-group"></i> LANGKAH 1: Perhitungan Hari Pidana Pokok &amp; Ekspirasi Murni</span>
-                <span style="font-size: 10px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Vonis Baku</span>
+                <span><i class="fas fa-layer-group"></i> LANGKAH 1: Perhitungan Masa Pidana Pokok &amp; Ekspirasi Bebas Murni</span>
+                <span style="font-size: 10px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Vonis Pokok</span>
             </div>
             <div class="step-card-body">
-                <div><b>Kaidah Baku Pemasyarakatan:</b> 1 Tahun = 360 Hari (12 bln &times; 30 hr), 1 Bulan = 30 Hari.</div>
-                <div class="step-code-box">Total Hari Vonis = (${thn} &times; 360) + (${bln} &times; 30) + ${hri} = <b>${totalHariVonisFmt} Hari</b></div>
-                <div><b>Kaidah Ekspirasi Bebas Murni:</b> Tanggal ke tanggal yang sama di tahun berikutnya + 30 hari kalender per bulan.</div>
-                <div style="margin-top: 4px;">Tanggal Ekspirasi Murni (Sebelum Remisi): <b style="color: var(--danger); font-size: 13px;">${ekspirasiMurniFmt}</b></div>
+                <div><b>Kaidah Perhitungan Vonis &amp; Ekspirasi Murni:</b></div>
+                <ul style="margin: 6px 0 8px 18px; color: var(--text-secondary); font-size: 11.5px;">
+                    <li><b>Komponen Tahun:</b> Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).</li>
+                    <li><b>Komponen Bulan:</b> Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).</li>
+                </ul>
+                <div class="step-code-box">Tanggal Ekspirasi Murni = ${tglAwalFmt} + ${d.lamaPidanaTeks} = <b style="color: var(--danger);">${ekspirasiMurniFmt}</b></div>
             </div>
         </div>`;
 
@@ -2671,15 +2673,14 @@
         if (d.tglPutusan) {
             html += `<div class="step-card">
                 <div class="step-card-header" style="color: #047857;">
-                    <span><i class="fas fa-gavel"></i> LANGKAH 2: Potongan Masa Penahanan &amp; Sisa Pidana Pokok</span>
+                    <span><i class="fas fa-gavel"></i> LANGKAH 2: Potongan Masa Penahanan (Pasca-Putusan)</span>
                     <span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #047857; padding: 2px 6px; border-radius: 4px;">KUHAP Ps. 22(4)</span>
                 </div>
                 <div class="step-card-body">
                     <div><b>Dasar Hukum:</b> Masa penahanan yang telah dijalani dikurangkan seluruhnya dari pidana yang dijatuhkan.</div>
                     <div class="step-code-box">
                         Periode Penahanan: ${tglAwalFmt} s.d. ${tglPutusanFmt}<br>
-                        Masa Tahanan (Potongan) = <b>${d.masaTahananTeks}</b> (${masaTahananHari} Hari)<br>
-                        Sisa Pidana Pasca-Putusan = ${totalHariVonisFmt} hr - ${masaTahananHari} hr = <b>${sisaHariPascaPutusan} Hari</b> (${sisaPidanaPascaPutusanTeks})
+                        Masa Tahanan yang Dijalani (Potongan) = <b>${d.masaTahananTeks}</b> (${masaTahananHari} Hari)
                     </div>
                 </div>
             </div>`;
@@ -2758,37 +2759,27 @@ I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS
 Nama WBP                : ${d.namaWbp || 'Narapidana'}
 Nomor Register          : ${d.noRegister || '-'}
 Perkara / Pasal         : ${d.perkaraPasal || '-'}
-Pidana Pokok (Vonis)    : ${d.lamaPidanaTeks} (${totalHariVonisFmt} Hari baku)
+Pidana Pokok (Vonis)    : ${d.lamaPidanaTeks}
 Tanggal Mulai Ditahan   : ${tglAwalFmt}
 Tanggal Putusan         : ${tglPutusanFmt}
 
 II. LANGKAH-LANGKAH PERHITUNGAN MANUAL (STEP-BY-STEP AUDIT TRAIL)
 --------------------------------------------------------------------------------
-[LANGKAH 1] PERHITUNGAN HARI PIDANA POKOK & EKSPIRASI BEBAS MURNI
-- Kaidah Baku Pemasyarakatan:
-  * 1 Tahun = 360 Hari (12 bulan x 30 hari)
-  * 1 Bulan = 30 Hari
-- Rumus Total Hari Pidana Pokok:
-  Total Hari = (Tahun x 360) + (Bulan x 30) + Hari
-             = (${thn} x 360) + (${bln} x 30) + ${hri}
-             = ${totalHariVonisFmt} Hari
-- Kaidah Ekspirasi Bebas Murni:
-  Dihitung dari Tanggal Ditahan (${tglAwalFmt}) ditambah lama pidana (${d.lamaPidanaTeks})
-  mengacu pada kalender masehi riil (tahun ke tahun yang sama + 30 hari kalender per bulan).
+[LANGKAH 1] PERHITUNGAN MASA PIDANA POKOK & EKSPIRASI BEBAS MURNI
+- Kaidah Perhitungan Vonis & Ekspirasi:
+  * Komponen Tahun : Dihitung dari tanggal ke tanggal yang sama di tahun berikutnya (tidak diubah menjadi hari).
+  * Komponen Bulan : Dihitung 30 hari kalender per bulan (1 Bulan = 30 Hari).
+- Formula Ekspirasi Murni = ${tglAwalFmt} + ${d.lamaPidanaTeks}
 - Tanggal Ekspirasi Bebas Murni (Sebelum Remisi):
   >>> ${ekspirasiMurniFmt} <<<
 `;
 
         if (d.tglPutusan) {
             plainText += `
-[LANGKAH 2] PERHITUNGAN POTONGAN TAHANAN & SISA PIDANA PASCA-PUTUSAN
+[LANGKAH 2] PERHITUNGAN POTONGAN TAHANAN (PASCA-PUTUSAN)
 - Dasar Hukum: KUHAP Pasal 22 Ayat (4)
 - Periode Penahanan     : ${tglAwalFmt} s.d. ${tglPutusanFmt}
 - Masa Tahanan Dijalani : ${d.masaTahananTeks} (${masaTahananHari} Hari)
-- Sisa Pidana Pasca-Putusan:
-  Sisa Hari = Total Hari Vonis - Masa Tahanan
-            = ${totalHariVonisFmt} Hari - ${masaTahananHari} Hari
-            = ${sisaHariPascaPutusan} Hari (${sisaPidanaPascaPutusanTeks})
 `;
         }
 
