@@ -995,8 +995,7 @@
                                             <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Tgl. Pelaksanaan</th>
                                             <th style="min-width: 100px; white-space: nowrap;" class="text-center align-middle">Lama Menjalani Pidana</th>
                                             <th style="min-width: 95px; white-space: nowrap;" class="text-center align-middle">Status</th>
-                                            <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Bl, Hr)</th>
-                                            <th style="min-width: 105px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi (Hr)</th>
+                                            <th style="min-width: 115px; white-space: nowrap;" class="text-center align-middle">Besaran Remisi</th>
                                             <th style="min-width: 140px; white-space: nowrap;" class="text-center align-middle">Ekspirasi setelah Remisi</th>
                                             <th style="min-width: 200px;" class="text-center align-middle">Keterangan</th>
                                         </tr>
@@ -1851,7 +1850,7 @@
         cardsContainer.innerHTML = '';
 
         if (!ledger || ledger.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3 text-muted">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</td></tr>';
             cardsContainer.innerHTML = '<div class="text-center py-3 text-muted border rounded-3 p-3">Tidak ada jadwal event remisi sebelum tanggal ekspirasi.</div>';
             return;
         }
@@ -1886,7 +1885,6 @@
                 <td style="white-space: nowrap;"><small class="text-muted fw-semibold">${row.hari_dijalani} hr<br><span style="font-size: 10.5px;">(${row.masa_dijalani_teks})</span></small></td>
                 <td style="white-space: nowrap;">${statusBadge}</td>
                 <td style="white-space: nowrap;" class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}">${row.besaran_teks}</td>
-                <td style="white-space: nowrap;" class="fw-bold text-success">${row.total_akumulasi_hari} Hari</td>
                 <td style="white-space: nowrap;">
                     <span class="fw-bold text-danger">${row.perkiraan_ekspirasi_baru_indo}</span>
                     <div class="small text-muted mt-1" style="font-size: 10.5px; line-height: 1.25;">
