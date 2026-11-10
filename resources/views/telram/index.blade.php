@@ -109,6 +109,57 @@
         letter-spacing: 0.5px;
         text-transform: uppercase;
     }
+    [data-theme="dark"] .param-group-title {
+        color: #60a5fa !important;
+    }
+
+    /* Collapsible Accordion Parameter Box */
+    .param-accordion-box {
+        background: #ffffff;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    [data-theme="dark"] .param-accordion-box {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: #334155 !important;
+    }
+    .transition-icon {
+        transition: transform 0.25s ease;
+    }
+    [aria-expanded="true"] .transition-icon {
+        transform: rotate(180deg);
+    }
+
+    /* Preset Buttons for Vonis */
+    .btn-preset-vonis {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 3px 9px;
+        transition: all 0.15s ease;
+        line-height: 1.25;
+        cursor: pointer;
+    }
+    .btn-preset-vonis:hover {
+        background: #3b82f6;
+        color: #ffffff;
+        border-color: #3b82f6;
+    }
+    [data-theme="dark"] .btn-preset-vonis {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .btn-preset-vonis:hover {
+        background: #3b82f6 !important;
+        color: #ffffff !important;
+        border-color: #3b82f6 !important;
+    }
 
     /* Form Controls & Inputs */
     [data-theme="dark"] .form-control,
@@ -119,6 +170,27 @@
     }
     [data-theme="dark"] input[type="date"] {
         color-scheme: dark;
+    }
+    [data-theme="dark"] .input-group-text {
+        background-color: #334155 !important;
+        border-color: #475569 !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .btn-outline-secondary {
+        color: #cbd5e1 !important;
+        border-color: #475569 !important;
+    }
+    [data-theme="dark"] .btn-outline-secondary:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+    }
+    [data-theme="dark"] .btn-outline-primary {
+        color: #93c5fd !important;
+        border-color: #3b82f6 !important;
+    }
+    [data-theme="dark"] .btn-outline-primary:hover {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
     }
 
     /* Stepper Box (Tahun, Bulan, Hari) */
@@ -369,9 +441,9 @@
                     <div class="param-group-box mb-3" id="sectionIdentitasWbp">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="param-group-title text-primary">
-                                <i class="fas fa-id-card me-1"></i> Identitas WBP (Cetak PDF)
+                                <i class="fas fa-id-card me-1.5"></i> Identitas WBP
                             </span>
-                            <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional / Berkas PDF</span>
                         </div>
                         <div class="mb-2">
                             <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 11.5px;">Nama Lengkap WBP</label>
@@ -389,34 +461,34 @@
                         </div>
                     </div>
 
-                    <!-- GRUP 2: Parameter Penahanan & Vonis Pokok -->
+                    <!-- GRUP 2: Parameter Penahanan, Vonis Pokok & Agama -->
                     <div class="param-group-box mb-3" id="groupIdentitasVonis">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2.5">
                             <span class="param-group-title text-primary">
-                                <i class="fas fa-gavel me-1"></i> Parameter Penahanan &amp; Vonis
+                                <i class="fas fa-balance-scale me-1.5"></i> Periode Penahanan &amp; Vonis
                             </span>
-                            <span class="badge bg-primary text-white" style="font-size: 10px;">Wajib</span>
+                            <span class="badge bg-primary text-white fw-semibold" style="font-size: 10px;">Wajib</span>
                         </div>
 
                         <!-- Tanggal Mulai Ditahan & Tanggal Putusan Pengadilan -->
-                        <div class="row g-2 mb-2">
+                        <div class="row g-2 mb-2.5">
                             <div class="col-12 col-sm-6" id="colTglAwal">
-                                <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 22px;">
+                                <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 24px;">
                                     <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 12px;">
                                         Tgl. Mulai Ditahan <span class="text-danger">*</span>
                                     </label>
-                                    <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="setTglAwalHariIni()" style="font-size: 11px;">
+                                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" onclick="setTglAwalHariIni()" style="font-size: 10.5px; font-weight: 600; line-height: 1.2;">
                                         <i class="fas fa-calendar-day me-0.5"></i> Hari Ini
                                     </button>
                                 </div>
                                 <input type="date" id="tglAwal" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;">
                             </div>
                             <div class="col-12 col-sm-6" id="wrapTglPutusan">
-                                <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 22px;">
+                                <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 24px;">
                                     <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 12px;">
                                         <i class="fas fa-gavel me-1"></i> Tgl. Putusan
                                     </label>
-                                    <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
+                                    <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional</span>
                                 </div>
                                 <input type="date" id="tglPutusan" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;" title="Tanggal putusan pengadilan / vonis berkekuatan hukum tetap">
                             </div>
@@ -428,7 +500,7 @@
                         </div>
 
                         <!-- Input Lama Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
-                        <div id="sectionInputVonis" class="mt-2.5">
+                        <div id="sectionInputVonis" class="mb-3">
                             <label class="form-label telram-text-title fw-bold mb-1.5 d-block" style="font-size: 12px;">
                                 Lama Pidana / Vonis Pokok <span class="text-danger">*</span>
                             </label>
@@ -436,21 +508,48 @@
                                 <div class="col-4">
                                     <div class="stepper-box">
                                         <label class="d-block stepper-label mb-0.5">TAHUN</label>
-                                        <input type="number" id="vTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 18px;">
+                                        <input type="number" id="vTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="stepper-box">
                                         <label class="d-block stepper-label mb-0.5">BULAN</label>
-                                        <input type="number" id="vBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 18px;">
+                                        <input type="number" id="vBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="stepper-box">
                                         <label class="d-block stepper-label mb-0.5">HARI</label>
-                                        <input type="number" id="vHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 18px;">
+                                        <input type="number" id="vHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
                                     </div>
                                 </div>
+                            </div>
+                            <!-- Preset Tombol Vonis Cepat -->
+                            <div class="d-flex align-items-center gap-1.5 flex-wrap mt-2" id="wrapPresetsVonis">
+                                <span class="text-muted fw-semibold me-1" style="font-size: 11px;">Pintas:</span>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetVonis(1, 0, 0)">1 Thn</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetVonis(2, 0, 0)">2 Thn</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetVonis(3, 0, 0)">3 Thn</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetVonis(5, 0, 0)">5 Thn</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="addPresetBulan(6)">+6 Bln</button>
+                                <button type="button" class="btn btn-preset-vonis text-danger" onclick="setPresetVonis(0, 0, 0)" title="Nol-kan Vonis"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Input Agama WBP (Khusus Simulasi Remisi) -->
+                        <div id="groupRemisiKeagamaan" class="mb-1">
+                            <div id="sectionAgama">
+                                <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 12px;">
+                                    Agama WBP (Remisi Khusus Hari Raya) <span class="text-danger">*</span>
+                                </label>
+                                <select id="selAgama" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;">
+                                    <option value="islam" selected>Islam (Hari Raya Idul Fitri)</option>
+                                    <option value="kristen">Kristen Protestan (Hari Raya Natal - 25 Des)</option>
+                                    <option value="katolik">Katolik (Hari Raya Natal - 25 Des)</option>
+                                    <option value="hindu">Hindu (Hari Raya Nyepi)</option>
+                                    <option value="buddha">Buddha (Hari Raya Waisak)</option>
+                                    <option value="khonghucu">Khonghucu (Tahun Baru Imlek)</option>
+                                </select>
                             </div>
                         </div>
 
@@ -466,120 +565,104 @@
                         </div>
                     </div>
 
-                    <!-- GRUP 3: Parameter Remisi Keagamaan (Khusus Mode Simulasi Remisi) -->
-                    <div class="param-group-box mb-3" id="groupRemisiKeagamaan">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="param-group-title text-primary">
-                                <i class="fas fa-medal me-1"></i> Parameter Remisi Keagamaan
-                            </span>
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 10px;">Keppres 174</span>
-                        </div>
-                        <!-- Input Agama WBP -->
-                        <div class="mb-2.5" id="sectionAgama">
-                            <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 12px;">
-                                Agama WBP (Remisi Khusus Hari Raya) <span class="text-danger">*</span>
-                            </label>
-                            <select id="selAgama" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 13px;">
-                                <option value="islam" selected>Islam (Hari Raya Idul Fitri)</option>
-                                <option value="kristen">Kristen Protestan (Hari Raya Natal - 25 Des)</option>
-                                <option value="katolik">Katolik (Hari Raya Natal - 25 Des)</option>
-                                <option value="hindu">Hindu (Hari Raya Nyepi)</option>
-                                <option value="buddha">Buddha (Hari Raya Waisak)</option>
-                                <option value="khonghucu">Khonghucu (Tahun Baru Imlek)</option>
-                            </select>
-                        </div>
-
-                        <!-- Input Remisi Sebelumnya (Opsional) -->
-                        <div id="sectionRemisiAwal">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
-                                    Remisi SK Terdahulu (Jika Ada)
-                                </label>
-                                <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
+                    <!-- GRUP 3: Opsi Lanjutan SDP Ditjenpas (Collapsible Accordion yang Elegan & Kompak) -->
+                    <div class="card param-accordion-box mb-3" id="groupOpsiSdplanjutan">
+                        <div class="card-header bg-transparent p-2.5 px-3 border-0 d-flex justify-content-between align-items-center" 
+                             role="button" data-bs-toggle="collapse" data-bs-target="#collapseOpsiLanjutan" 
+                             aria-expanded="false" aria-controls="collapseOpsiLanjutan" id="btnToggleOpsiLanjutan" style="cursor: pointer;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-sliders-h text-primary" style="font-size: 13px;"></i>
+                                <span class="fw-bold telram-text-title" style="font-size: 12px;">Pengaturan Lanjutan SDP &amp; Remisi</span>
+                                <span class="badge bg-secondary-subtle text-secondary border" id="badgeOpsiLanjutanSummary" style="font-size: 9.5px;">Standar</span>
                             </div>
-                            <div class="input-group">
-                                <input type="number" id="vRemisiAwal" min="0" value="0" class="form-control fw-semibold" placeholder="0" style="height: 38px; border-radius: 8px 0 0 8px; font-size: 13px;">
-                                <span class="input-group-text fw-bold text-muted" style="height: 38px; border-radius: 0 8px 8px 0; font-size: 12px; background: #e2e8f0;">HARI</span>
-                            </div>
-                            <small class="text-muted d-block mt-1" style="font-size: 10.5px;">
-                                Diisi jika narapidana mutasi/lanjutan yang telah memiliki perolehan remisi SK sebelumnya.
-                            </small>
+                            <i class="fas fa-chevron-down text-muted transition-icon" id="iconChevronOpsi"></i>
                         </div>
-                    </div>
-
-                    <!-- GRUP 4: Opsi Lanjutan SDP Ditjenpas -->
-                    <div class="param-group-box mb-3" id="groupOpsiSdplanjutan">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="param-group-title text-primary">
-                                <i class="fas fa-balance-scale me-1"></i> Standar &amp; Opsi Khusus Remisi
-                            </span>
-                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" style="font-size: 10px;">SDP Ditjenpas</span>
-                        </div>
-
-                        <!-- Standar Batas Simulasi: 2/3 vs Ekspirasi -->
-                        <div id="sectionTargetBasis" class="mb-2.5">
-                            <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
-                                Standar Batas Simulasi:
-                            </label>
-                            <select id="selTargetBasis" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" onchange="updateHelpTargetBasis()">
-                                <option value="2_3" selected>Standar 2/3 Masa Pidana (Untuk Usulan PB/CB)</option>
-                                <option value="ekspirasi">Sampai Bebas Murni (Tanpa Hak PB/CB)</option>
-                            </select>
-                            <small class="text-muted d-block mt-1" style="font-size: 10.5px;" id="helpTargetBasis">
-                                <i class="fas fa-info-circle text-primary me-0.5"></i> Standar 2/3: Remisi dihitung hingga 2/3 Definitif tercapai saat bebas bersyarat.
-                            </small>
-                        </div>
-
-                        <!-- Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
-                        <div id="sectionDasawarsa" class="mb-2.5 p-2.5 rounded-2 border" style="background: rgba(254, 243, 199, 0.35); border-color: #fde68a !important;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <label class="form-check-label fw-bold telram-text-title d-block mb-0" for="chkDasawarsa" style="font-size: 12px; cursor: pointer;">
-                                        Sertakan Remisi Dasawarsa (10 Th RI)
-                                    </label>
-                                    <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
-                                        Diberikan tiap 10 tahun (2025, 2035) sebesar 1/12 vonis (maks 3 bln).
+                        <div class="collapse" id="collapseOpsiLanjutan">
+                            <div class="card-body p-3 pt-2 border-top" style="border-color: rgba(0,0,0,0.06) !important;">
+                                <!-- Input Remisi Sebelumnya (Opsional) -->
+                                <div id="sectionRemisiAwal" class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
+                                            Remisi SK Terdahulu (Jika Ada)
+                                        </label>
+                                        <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional</span>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="number" id="vRemisiAwal" min="0" value="0" class="form-control fw-semibold" placeholder="0" style="height: 38px; border-radius: 8px 0 0 8px; font-size: 13px;" onchange="updateBadgeOpsiLanjutan()">
+                                        <span class="input-group-text fw-bold text-muted" style="height: 38px; border-radius: 0 8px 8px 0; font-size: 12px; background: #e2e8f0;">HARI</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-1" style="font-size: 10.5px;">
+                                        Diisi jika narapidana mutasi/lanjutan yang telah memiliki perolehan remisi SK sebelumnya.
                                     </small>
                                 </div>
-                                <div class="form-check form-switch ms-2 mb-0">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="chkDasawarsa" checked style="cursor: pointer; width: 2.2em; height: 1.2em;">
+
+                                <!-- Standar Batas Simulasi: 2/3 vs Ekspirasi -->
+                                <div id="sectionTargetBasis" class="mb-3">
+                                    <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
+                                        Standar Batas Simulasi:
+                                    </label>
+                                    <select id="selTargetBasis" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" onchange="updateHelpTargetBasis(); updateBadgeOpsiLanjutan();">
+                                        <option value="2_3" selected>Standar 2/3 Masa Pidana (Untuk Usulan PB/CB)</option>
+                                        <option value="ekspirasi">Sampai Bebas Murni (Tanpa Hak PB/CB)</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1" style="font-size: 10.5px;" id="helpTargetBasis">
+                                        <i class="fas fa-info-circle text-primary me-0.5"></i> Standar 2/3: Remisi dihitung hingga 2/3 Definitif tercapai saat bebas bersyarat.
+                                    </small>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
-                        <div id="sectionRemisiTambahan">
-                            <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
-                                Remisi Tambahan (Pasal 4 Keppres 174/1999):
-                            </label>
-                            <select id="selRemisiTambahan" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" onchange="toggleTahunMulaiTambahan()">
-                                <option value="none" selected>Standar / Reguler (Tanpa Tambahan)</option>
-                                <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU)</option>
-                                <option value="jasa_negara">Berjasa Bagi Negara / Donor (+1/2 dari RU)</option>
-                            </select>
+                                <!-- Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
+                                <div id="sectionDasawarsa" class="mb-3 p-2.5 rounded-2 border" style="background: rgba(254, 243, 199, 0.35); border-color: #fde68a !important;">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="form-check-label fw-bold telram-text-title d-block mb-0" for="chkDasawarsa" style="font-size: 12px; cursor: pointer;">
+                                                Sertakan Remisi Dasawarsa (10 Th RI)
+                                            </label>
+                                            <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
+                                                Diberikan tiap 10 tahun (2025, 2035) sebesar 1/12 vonis (maks 3 bln).
+                                            </small>
+                                        </div>
+                                        <div class="form-check form-switch ms-2 mb-0">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="chkDasawarsa" checked style="cursor: pointer; width: 2.2em; height: 1.2em;" onchange="updateBadgeOpsiLanjutan()">
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <!-- Input Mulai di Tahun ke Berapa -->
-                            <div id="wrapTahunMulaiTambahan" class="mt-2 p-2.5 rounded-2 border d-none" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.2) !important;">
-                                <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 11px;">
-                                    <i class="fas fa-calendar-alt text-primary me-1"></i> Mulai Remisi Tambahan Sejak:
-                                </label>
-                                <select id="selTahunMulaiTambahan" class="form-select fw-semibold" style="height: 34px; border-radius: 6px; font-size: 11.5px;">
-                                    <option value="1">Tahun Ke-1 (Sejak RU Pertama)</option>
-                                    <option value="2" selected>Tahun Ke-2 (Setelah 1/3 Pidana / Syarat Pemuka)</option>
-                                    <option value="3">Tahun Ke-3</option>
-                                    <option value="4">Tahun Ke-4</option>
-                                    <option value="5">Tahun Ke-5</option>
-                                </select>
-                                <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
-                                    Remisi tambahan akan dihitung mulai tahun RU yang dipilih dan tahun-tahun berikutnya.
-                                </small>
+                                <!-- Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
+                                <div id="sectionRemisiTambahan">
+                                    <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 12px;">
+                                        Remisi Tambahan (Pasal 4 Keppres 174/1999):
+                                    </label>
+                                    <select id="selRemisiTambahan" class="form-select fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" onchange="toggleTahunMulaiTambahan(); updateBadgeOpsiLanjutan();">
+                                        <option value="none" selected>Standar / Reguler (Tanpa Tambahan)</option>
+                                        <option value="pemuka">Pemuka Pembinaan Lapas (+1/3 dari RU)</option>
+                                        <option value="jasa_negara">Berjasa Bagi Negara / Donor (+1/2 dari RU)</option>
+                                    </select>
+
+                                    <!-- Input Mulai di Tahun ke Berapa -->
+                                    <div id="wrapTahunMulaiTambahan" class="mt-2 p-2.5 rounded-2 border d-none" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.2) !important;">
+                                        <label class="form-label telram-text-title fw-bold mb-1" style="font-size: 11px;">
+                                            <i class="fas fa-calendar-alt text-primary me-1"></i> Mulai Remisi Tambahan Sejak:
+                                        </label>
+                                        <select id="selTahunMulaiTambahan" class="form-select fw-semibold" style="height: 34px; border-radius: 6px; font-size: 11.5px;">
+                                            <option value="1">Tahun Ke-1 (Sejak RU Pertama)</option>
+                                            <option value="2" selected>Tahun Ke-2 (Setelah 1/3 Pidana / Syarat Pemuka)</option>
+                                            <option value="3">Tahun Ke-3</option>
+                                            <option value="4">Tahun Ke-4</option>
+                                            <option value="5">Tahun Ke-5</option>
+                                        </select>
+                                        <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
+                                            Remisi tambahan akan dihitung mulai tahun RU yang dipilih dan tahun-tahun berikutnya.
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Tombol Utama Hitung -->
-                    <button type="button" id="btnHitungUtama" onclick="hitungSesuaiMode()" class="btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm" style="border-radius: 10px; font-size: 14px; letter-spacing: 0.3px;">
-                        <i class="fas fa-medal me-1.5"></i> HITUNG PERKIRAAN REMISI &amp; INTEGRASI
+                    <button type="button" id="btnHitungUtama" onclick="hitungSesuaiMode()" class="btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="border-radius: 12px; font-size: 14px; letter-spacing: 0.3px;">
+                        <i class="fas fa-medal fs-5"></i>
+                        <span>HITUNG PERKIRAAN REMISI &amp; INTEGRASI</span>
                     </button>
                 </div>
             </div>
@@ -997,6 +1080,7 @@
         const colTglAwal = document.getElementById('colTglAwal');
         const wrapTglPutusan = document.getElementById('wrapTglPutusan');
         const helpTglPutusanWrap = document.getElementById('helpTglPutusanWrap');
+        const wrapPresetsVonis = document.getElementById('wrapPresetsVonis');
         const placeholderTitle = document.getElementById('placeholderTitle');
         const placeholderDesc = document.getElementById('placeholderDesc');
         const placeholderIcon = document.getElementById('placeholderIcon');
@@ -1007,6 +1091,7 @@
             if (btnRemisi) btnRemisi.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.remove('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.remove('d-none');
+            if (wrapPresetsVonis) wrapPresetsVonis.classList.remove('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.remove('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.remove('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
@@ -1015,8 +1100,8 @@
             if (colTglAwal) colTglAwal.className = 'col-12 col-sm-6';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Ditahan <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm';
-            btnHitung.innerHTML = '<i class="fas fa-medal me-2"></i> HITUNG PERKIRAAN REMISI &amp; INTEGRASI';
+            btnHitung.className = 'btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
+            btnHitung.innerHTML = '<i class="fas fa-medal fs-5"></i> <span>HITUNG PERKIRAAN REMISI &amp; INTEGRASI</span>';
 
             placeholderTitle.innerText = 'Perkiraan Perhitungan';
             placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PERKIRAAN REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
@@ -1025,6 +1110,7 @@
             if (btnMaju) btnMaju.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.remove('d-none');
+            if (wrapPresetsVonis) wrapPresetsVonis.classList.remove('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
@@ -1033,8 +1119,8 @@
             if (colTglAwal) colTglAwal.className = 'col-12';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-primary w-100 py-2.5 py-md-3 fw-bold shadow-sm';
-            btnHitung.innerHTML = '<i class="fas fa-calculator me-2"></i> HITUNG EKSPIRASI';
+            btnHitung.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
+            btnHitung.innerHTML = '<i class="fas fa-calculator fs-5"></i> <span>HITUNG EKSPIRASI</span>';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
             placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Lama Vonis Hukuman di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.';
@@ -1043,6 +1129,7 @@
             if (btnMundur) btnMundur.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.add('d-none');
+            if (wrapPresetsVonis) wrapPresetsVonis.classList.add('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.remove('d-none');
@@ -1051,8 +1138,8 @@
             if (colTglAwal) colTglAwal.className = 'col-12';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-secondary w-100 py-2.5 py-md-3 fw-bold shadow-sm';
-            btnHitung.innerHTML = '<i class="fas fa-history me-2"></i> HITUNG LAMA PIDANA';
+            btnHitung.className = 'btn btn-secondary w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
+            btnHitung.innerHTML = '<i class="fas fa-history fs-5"></i> <span>HITUNG LAMA PIDANA</span>';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Lama Pidana';
             placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Tanggal Ekspirasi (Bebas Murni) di sebelah kiri, kemudian klik tombol <strong>"HITUNG LAMA PIDANA"</strong> untuk mencari durasi lama vonis hukuman secara otomatis.';
@@ -1061,6 +1148,7 @@
             if (btnSisa) btnSisa.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.add('d-none');
+            if (wrapPresetsVonis) wrapPresetsVonis.classList.add('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.remove('d-none');
@@ -1069,8 +1157,8 @@
             if (colTglAwal) colTglAwal.className = 'col-12';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
 
-            btnHitung.className = 'btn btn-info text-white w-100 py-2.5 py-md-3 fw-bold shadow-sm';
-            btnHitung.innerHTML = '<i class="fas fa-hourglass-half me-2"></i> HITUNG SISA PIDANA';
+            btnHitung.className = 'btn btn-info text-white w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
+            btnHitung.innerHTML = '<i class="fas fa-hourglass-half fs-5"></i> <span>HITUNG SISA PIDANA</span>';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Sisa Pidana';
             placeholderDesc.innerHTML = 'Tentukan Per Tanggal Perhitungan dan Tanggal Ekspirasi (Bebas Murni) di sebelah kiri, kemudian klik tombol <strong>"HITUNG SISA PIDANA"</strong> untuk melihat sisa masa pidana yang belum dijalani.';
@@ -1118,6 +1206,57 @@
         }
     }
 
+    // Set Preset Nilai Vonis Cepat
+    function setPresetVonis(thn, bln, hri) {
+        const elThn = document.getElementById('vTahun');
+        const elBln = document.getElementById('vBulan');
+        const elHri = document.getElementById('vHari');
+        if (elThn) elThn.value = thn;
+        if (elBln) elBln.value = bln;
+        if (elHri) elHri.value = hri;
+    }
+
+    // Tambah Bulan ke Vonis Cepat
+    function addPresetBulan(bln) {
+        const elThn = document.getElementById('vTahun');
+        const elBln = document.getElementById('vBulan');
+        if (!elThn || !elBln) return;
+        const curThn = parseInt(elThn.value) || 0;
+        const curBln = parseInt(elBln.value) || 0;
+        const totalBln = curBln + bln;
+        elThn.value = curThn + Math.floor(totalBln / 12);
+        elBln.value = totalBln % 12;
+    }
+
+    // Update Badge Ringkasan Pengaturan Lanjutan SDP
+    function updateBadgeOpsiLanjutan() {
+        const badge = document.getElementById('badgeOpsiLanjutanSummary');
+        if (!badge) return;
+
+        const chkDasawarsa = document.getElementById('chkDasawarsa');
+        const selTambahan = document.getElementById('selRemisiTambahan');
+        const selBasis = document.getElementById('selTargetBasis');
+        const remisiAwal = parseInt(document.getElementById('vRemisiAwal') ? document.getElementById('vRemisiAwal').value : 0) || 0;
+
+        const dasawarsaOff = chkDasawarsa && !chkDasawarsa.checked;
+        const adaTambahan = selTambahan && selTambahan.value !== 'none';
+        const basisEkspirasi = selBasis && selBasis.value === 'ekspirasi';
+        const adaRemisiAwal = remisiAwal > 0;
+
+        if (dasawarsaOff || adaTambahan || basisEkspirasi || adaRemisiAwal) {
+            badge.className = 'badge bg-warning text-dark border border-warning';
+            let summary = [];
+            if (adaTambahan) summary.push('Tambahan');
+            if (basisEkspirasi) summary.push('Bebas Murni');
+            if (dasawarsaOff) summary.push('Tanpa Dasawarsa');
+            if (adaRemisiAwal) summary.push(remisiAwal + ' Hri');
+            badge.innerText = summary.join(' | ') || 'Kustom';
+        } else {
+            badge.className = 'badge bg-secondary-subtle text-secondary border';
+            badge.innerText = 'Standar';
+        }
+    }
+
     // Reset Form
     function resetForm() {
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
@@ -1137,6 +1276,16 @@
         updateHelpTargetBasis();
         document.getElementById('vRemisiAwal').value = '0';
         document.getElementById('tglEkspirasiInput').value = '';
+
+        updateBadgeOpsiLanjutan();
+
+        const collapseEl = document.getElementById('collapseOpsiLanjutan');
+        if (collapseEl && collapseEl.classList.contains('show') && typeof bootstrap !== 'undefined') {
+            const bsCollapse = bootstrap.Collapse.getInstance(collapseEl);
+            if (bsCollapse) {
+                bsCollapse.hide();
+            }
+        }
 
         document.getElementById('hasilSection').classList.add('d-none');
         document.getElementById('placeholderSection').classList.remove('d-none');
@@ -1182,6 +1331,7 @@
             document.getElementById('tglEkspirasiInput').value = `${fY}-${fM}-${fD}`;
         }
 
+        updateBadgeOpsiLanjutan();
         hitungSesuaiMode();
     }
 
