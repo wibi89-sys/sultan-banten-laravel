@@ -186,8 +186,8 @@
             padding: 4px;
             border-radius: var(--radius-md);
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
             margin-bottom: 20px;
         }
 
@@ -197,7 +197,7 @@
         }
 
         .btn-tab {
-            padding: 9px 6px;
+            padding: 10px 8px;
             font-size: 12px;
             font-weight: 700;
             border: none;
@@ -212,18 +212,6 @@
             text-align: center;
             transition: all 0.2s ease;
             white-space: nowrap;
-        }
-
-        @media (max-width: 640px) {
-            .mode-container {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 6px;
-            }
-            .btn-tab {
-                padding: 10px 8px;
-                font-size: 11.5px;
-                white-space: normal;
-            }
         }
 
         .btn-tab:hover {
@@ -324,6 +312,16 @@
             background: transparent;
             color: var(--text-primary);
             outline: none;
+        }
+
+        .stepper-input::-webkit-outer-spin-button,
+        .stepper-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .stepper-input[type=number] {
+            -moz-appearance: textfield;
         }
 
         /* Action Buttons */
@@ -901,32 +899,35 @@
 
                 <!-- Input Identitas WBP (Khusus Simulasi Remisi & Cetak) -->
                 <div id="sectionIdentitasWbp" class="form-group" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
-                    <label class="form-label" style="display:block; margin-bottom: 8px;">
-                        Identitas Narapidana / WBP (Untuk Cetak Berkas)
-                    </label>
-                    <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 8px; margin-bottom: 8px;">
-                        <div>
-                            <span class="stepper-label" style="text-align: left;">NAMA WBP</span>
-                            <input type="text" id="txtNamaWbp" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Nama WBP (Contoh: Budi Santoso)">
-                        </div>
-                        <div>
-                            <span class="stepper-label" style="text-align: left;">NO. REGISTER</span>
-                            <input type="text" id="txtNoRegister" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Contoh: BI.01/2024">
-                        </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 11px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; text-transform: uppercase;">
+                            Identitas WBP (Cetak Berkas)
+                        </span>
+                        <span style="font-size: 10px; color: var(--text-secondary); background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;">Opsional</span>
                     </div>
-                    <div>
-                        <span class="stepper-label" style="text-align: left;">PIDANA / PASAL</span>
-                        <input type="text" id="txtPerkaraPasal" class="form-control" style="font-size: 13px; padding: 8px 10px;" placeholder="Contoh: 363 KUHP">
+                    <div style="margin-bottom: 8px;">
+                        <span class="stepper-label" style="text-align: left; margin-bottom: 3px;">NAMA LENGKAP WBP</span>
+                        <input type="text" id="txtNamaWbp" class="form-control" style="font-size: 13px; padding: 8px 10px; height: 38px;" placeholder="Nama WBP (Contoh: Budi Santoso)">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <span class="stepper-label" style="text-align: left; margin-bottom: 3px;">NO. REGISTER</span>
+                            <input type="text" id="txtNoRegister" class="form-control" style="font-size: 13px; padding: 8px 10px; height: 38px;" placeholder="Contoh: BI.01/2024">
+                        </div>
+                        <div>
+                            <span class="stepper-label" style="text-align: left; margin-bottom: 3px;">PIDANA / PASAL</span>
+                            <input type="text" id="txtPerkaraPasal" class="form-control" style="font-size: 13px; padding: 8px 10px; height: 38px;" placeholder="Contoh: 363 KUHP">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Tgl Mulai Penahanan & Tgl Putusan Pengadilan -->
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px;" id="gridTglGroup">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;" id="gridTglGroup">
                     <div class="form-group" style="margin-bottom: 0;">
-                        <div class="form-label-row">
-                            <label class="form-label" id="labelTglAwal">Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span></label>
+                        <div class="form-label-row" style="min-height: 22px;">
+                            <label class="form-label" id="labelTglAwal" style="font-size: 12px; margin-bottom: 0;">Tgl. Mulai Ditahan <span style="color: #ef4444;">*</span></label>
                             <button type="button" class="form-link-btn" onclick="setTglAwalHariIni()">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
                                     <line x1="16" x2="16" y1="2" y2="6"></line>
                                     <line x1="8" x2="8" y1="2" y2="6"></line>
@@ -935,18 +936,20 @@
                                 Hari Ini
                             </button>
                         </div>
-                        <input type="date" id="tglAwal" class="form-control">
+                        <input type="date" id="tglAwal" class="form-control" style="height: 38px; font-size: 13px;">
                     </div>
                     <div class="form-group" id="wrapTglPutusan" style="margin-bottom: 0;">
-                        <div class="form-label-row">
-                            <label class="form-label" style="color: var(--primary);">Tgl. Putusan</label>
+                        <div class="form-label-row" style="min-height: 22px;">
+                            <label class="form-label" style="color: var(--primary); font-size: 12px; margin-bottom: 0;">Tgl. Putusan</label>
                             <span style="font-size: 10px; color: var(--text-secondary); background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;">Opsional</span>
                         </div>
-                        <input type="date" id="tglPutusan" class="form-control" title="Tanggal putusan pengadilan berkekuatan hukum tetap">
-                        <small style="font-size: 10.5px; color: var(--text-secondary); display: block; margin-top: 3px;">
-                            Untuk hitung potongan tahanan &amp; deteksi remisi susulan.
-                        </small>
+                        <input type="date" id="tglPutusan" class="form-control" style="height: 38px; font-size: 13px;" title="Tanggal putusan pengadilan berkekuatan hukum tetap">
                     </div>
+                </div>
+                <div id="helpTglPutusanWrap" style="margin-bottom: 14px;">
+                    <small style="font-size: 10.5px; color: var(--text-secondary); display: block;">
+                        Tgl. Putusan untuk hitung potongan tahanan (potah) &amp; remisi susulan.
+                    </small>
                 </div>
 
                 <!-- Mode Maju & Remisi Input: Lama Vonis -->
@@ -983,13 +986,15 @@
 
                 <!-- Opsi Remisi Dasawarsa (Tiap 10 Tahun Kemerdekaan RI) -->
                 <div id="sectionDasawarsa" class="form-group" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-md); padding: 10px 12px;">
-                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--text-primary);">
-                        <input type="checkbox" id="chkDasawarsa" checked style="width: 16px; height: 16px; cursor: pointer;">
-                        Sertakan Remisi Dasawarsa (Tiap 10 Th Kemerdekaan RI)
-                    </label>
-                    <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px; padding-left: 24px;">
-                        Diberikan setiap 10 tahun (1955 s.d. 2015, 2025, 2035) sebesar 1/12 vonis pokok (maks 3 bulan).
-                    </small>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <label for="chkDasawarsa" style="font-weight: 700; font-size: 12.5px; cursor: pointer; color: var(--text-primary); margin: 0;">
+                            Sertakan Remisi Dasawarsa (10 Th RI)
+                            <small style="color: var(--text-muted); font-size: 10.5px; font-weight: normal; display: block; margin-top: 3px;">
+                                Diberikan tiap 10 tahun (2025, 2035) sebesar 1/12 vonis (maks 3 bln).
+                            </small>
+                        </label>
+                        <input type="checkbox" id="chkDasawarsa" checked style="width: 18px; height: 18px; cursor: pointer; margin-left: 8px;">
+                    </div>
                 </div>
 
                 <!-- Opsi Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
@@ -1359,6 +1364,7 @@
         const btnHitung = document.getElementById('btnHitungUtama');
         const labelTglAwal = document.getElementById('labelTglAwal');
         const wrapTglPutusan = document.getElementById('wrapTglPutusan');
+        const helpTglPutusanWrap = document.getElementById('helpTglPutusanWrap');
         const gridTglGroup = document.getElementById('gridTglGroup');
 
         [btnRemisi, btnMaju, btnMundur, btnSisa].forEach(b => { if (b) b.classList.remove('active'); });
@@ -1374,8 +1380,9 @@
             sectionRemisiAwal.classList.remove('d-none');
             sectionEkspirasi.classList.add('d-none');
             if (wrapTglPutusan) wrapTglPutusan.classList.remove('d-none');
-            if (gridTglGroup) gridTglGroup.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-            labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span>';
+            if (helpTglPutusanWrap) helpTglPutusanWrap.classList.remove('d-none');
+            if (gridTglGroup) gridTglGroup.style.gridTemplateColumns = '1fr 1fr';
+            labelTglAwal.innerHTML = 'Tgl. Mulai Ditahan <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG PERKIRAAN REMISI & INTEGRASI';
         } else if (mode === 'maju') {
             if (btnMaju) btnMaju.classList.add('active');
@@ -1388,6 +1395,7 @@
             sectionRemisiAwal.classList.add('d-none');
             sectionEkspirasi.classList.add('d-none');
             if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
+            if (helpTglPutusanWrap) helpTglPutusanWrap.classList.add('d-none');
             if (gridTglGroup) gridTglGroup.style.gridTemplateColumns = '1fr';
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG EKSPIRASI';
@@ -1402,6 +1410,7 @@
             sectionRemisiAwal.classList.add('d-none');
             sectionEkspirasi.classList.remove('d-none');
             if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
+            if (helpTglPutusanWrap) helpTglPutusanWrap.classList.add('d-none');
             if (gridTglGroup) gridTglGroup.style.gridTemplateColumns = '1fr';
             labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG LAMA PIDANA';
@@ -1416,6 +1425,7 @@
             sectionRemisiAwal.classList.add('d-none');
             sectionEkspirasi.classList.remove('d-none');
             if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
+            if (helpTglPutusanWrap) helpTglPutusanWrap.classList.add('d-none');
             if (gridTglGroup) gridTglGroup.style.gridTemplateColumns = '1fr';
             labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span style="color: #ef4444;">*</span>';
             btnHitung.innerText = 'HITUNG SISA PIDANA';
