@@ -21,7 +21,7 @@ echo "⏰ Waktu    : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "--------------------------------------------------"
 
 PHP_BIN=""
-for candidate in "/usr/local/bin/php" "/usr/bin/php" "/opt/cpanel/ea-php83/root/usr/bin/php" "$(which php 2>/dev/null)"; do
+for candidate in "/opt/cpanel/ea-php83/root/usr/bin/php" "/opt/cpanel/ea-php82/root/usr/bin/php" "/usr/local/bin/ea-php83" "/usr/local/bin/php83" "/usr/bin/php83" "/usr/bin/php8.3" "$(which php8.3 2>/dev/null)" "$(which php 2>/dev/null)" "/usr/local/bin/php" "/usr/bin/php"; do
     if [ -x "$candidate" ]; then
         PHP_BIN="$candidate"
         break
@@ -33,6 +33,8 @@ if [ -z "$PHP_BIN" ]; then
     exit 1
 fi
 
+echo "🐘 PHP Executable : $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
+
 echo "1. Menarik commit terbaru dari GitHub (origin main)..."
 git pull origin main
 
@@ -43,7 +45,7 @@ if [ -n "$COMPOSER_BIN" ]; then
 fi
 
 echo "2. Memberikan izin eksekusi pada script shell..."
-chmod +x cron-wa.sh scripts/*.sh 2>/dev/null || true
+chmod +x update.sh cron-wa.sh scripts/*.sh 2>/dev/null || true
 
 echo "3. Menyiapkan direktori penyimpanan berkas..."
 mkdir -p public/uploads/sidang_tpp public/uploads/sidang_tpp_signed storage/app/public
