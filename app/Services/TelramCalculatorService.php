@@ -241,12 +241,30 @@ class TelramCalculatorService
         string $kategoriTambahan = 'none',
         string $targetBasis = '2_3',
         int $tahunMulaiTambahan = 1,
-        string $perkaraPasal = ''
+        string $perkaraPasal = '',
+        ?string $tglPutusanStr = null
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
 
         if ($tahun <= 0 && $bulan <= 0 && $hari <= 0) {
             throw new InvalidArgumentException('Lama pidana vonis harus lebih dari 0.');
+        }
+
+        $tglPutusan = null;
+        $masaTahananHari = 0;
+        $masaTahananTeks = '-';
+
+        if (! empty($tglPutusanStr)) {
+            $parsedPutusan = Carbon::parse($tglPutusanStr)->startOfDay();
+            if ($parsedPutusan->lt($tglAwal)) {
+                throw new InvalidArgumentException('Tanggal putusan pengadilan tidak boleh mendahului tanggal mulai ditahan.');
+            }
+            $tglPutusan = $parsedPutusan;
+            $masaTahananHari = (int) $tglAwal->diffInDays($tglPutusan);
+            $masaTahananTeks = self::formatHariKeTeks($masaTahananHari);
+            if ($masaTahananHari > 0) {
+                $masaTahananTeks .= " ({$masaTahananHari} Hari)";
+            }
         }
 
         $namaWbp = trim($namaWbp) ?: 'Narapidana';
@@ -392,9 +410,15 @@ class TelramCalculatorService
             }
 
             $hariDijalani = (int) $tglAwal->diffInDays($evDate);
+            $isSebelumPutusan = $tglPutusan && $evDate->lt($tglPutusan);
 
             // Syarat Minimal Keppres 174/1999: Minimal telah menjalani 6 bulan (180 hari)
             if ($hariDijalani < 180) {
+                $alasanBelum6Bln = "Masa pidana baru dijalani {$hariDijalani} hari (kurang dari 6 bulan) saat tanggal event, belum memenuhi syarat substantif masa minimal 6 bulan Keppres No. 174/1999.";
+                if ($isSebelumPutusan) {
+                    $alasanBelum6Bln .= ' (Pada tanggal event ini WBP juga masih berstatus Tahanan, Putusan: '.self::formatTanggalIndonesia($tglPutusan).').';
+                }
+
                 $ledger[] = [
                     'nama_event' => $item['nama_event'],
                     'jenis' => $item['jenis'],
@@ -417,7 +441,7 @@ class TelramCalculatorService
                     'tgl_2_3_baru_indo' => self::formatTanggalIndonesia($current23Date),
                     'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                     'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
-                    'keterangan_alasan' => "Masa pidana baru dijalani {$hariDijalani} hari (kurang dari 6 bulan) saat tanggal event, belum memenuhi syarat substantif masa minimal 6 bulan Keppres No. 174/1999.",
+                    'keterangan_alasan' => $alasanBelum6Bln,
                 ];
 
                 continue;
@@ -535,6 +559,11 @@ class TelramCalculatorService
             $totalHariRemisi += $potonganHari;
             [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
+            $statusEvent = $isSebelumPutusan ? 'Memenuhi Syarat (Remisi Susulan)' : 'Memenuhi Syarat';
+            if ($isSebelumPutusan) {
+                $keteranganAlasan .= ' (Catatan: Saat event ini WBP masih berstatus Tahanan karena putusan pengadilan dijatuhkan pada '.self::formatTanggalIndonesia($tglPutusan).'. Diproses melalui Remisi Susulan di SDP).';
+            }
+
             $ledger[] = [
                 'nama_event' => $item['nama_event'],
                 'jenis' => $item['jenis'],
@@ -544,7 +573,7 @@ class TelramCalculatorService
                 'hari_dijalani' => $hariDijalani,
                 'masa_dijalani_teks' => self::formatHariKeTeks($hariDijalani),
                 'eligible' => true,
-                'keterangan_status' => 'Memenuhi Syarat',
+                'keterangan_status' => $statusEvent,
                 'tahap' => $tahapTeks,
                 'besaran_hari' => $potonganHari,
                 'besaran_teks' => $besaranTeks,
@@ -601,6 +630,11 @@ class TelramCalculatorService
                     $totalHariRemisi += $potonganTambahan;
                     [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
+                    $statusTambahan = $isSebelumPutusan ? 'Memenuhi Syarat (Tambahan - Susulan)' : 'Memenuhi Syarat (Tambahan)';
+                    if ($isSebelumPutusan) {
+                        $keteranganTambahan .= ' (Remisi susulan pasca-inkrah '.self::formatTanggalIndonesia($tglPutusan).').';
+                    }
+
                     $ledger[] = [
                         'nama_event' => $namaEventTambahan,
                         'jenis' => 'RT',
@@ -610,7 +644,7 @@ class TelramCalculatorService
                         'hari_dijalani' => $hariDijalani,
                         'masa_dijalani_teks' => self::formatHariKeTeks($hariDijalani),
                         'eligible' => true,
-                        'keterangan_status' => 'Memenuhi Syarat (Tambahan)',
+                        'keterangan_status' => $statusTambahan,
                         'tahap' => 'Tambahan',
                         'besaran_hari' => $potonganTambahan,
                         'besaran_teks' => self::formatHariKeTeks($potonganTambahan),
@@ -651,6 +685,12 @@ class TelramCalculatorService
                     $totalHariRemisi += $potonganDasawarsa;
                     [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
+                    $statusDasawarsa = $isSebelumPutusan ? 'Memenuhi Syarat (Dasawarsa - Susulan)' : 'Memenuhi Syarat (Dasawarsa)';
+                    $keteranganAlasanDasawarsa = "Pengurangan istimewa peringatan HUT ke-{$hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (".self::formatHariKeTeks($potonganDasawarsaMaks).'), dibatasi maksimal 3 bulan / 90 hari.';
+                    if ($isSebelumPutusan) {
+                        $keteranganAlasanDasawarsa .= ' (Remisi susulan pasca-inkrah '.self::formatTanggalIndonesia($tglPutusan).').';
+                    }
+
                     $ledger[] = [
                         'nama_event' => "Remisi Dasawarsa HUT ke-{$hutKe} RI ({$item['tahun']})",
                         'jenis' => 'RD',
@@ -660,7 +700,7 @@ class TelramCalculatorService
                         'hari_dijalani' => $hariDijalani,
                         'masa_dijalani_teks' => self::formatHariKeTeks($hariDijalani),
                         'eligible' => true,
-                        'keterangan_status' => 'Memenuhi Syarat (Dasawarsa)',
+                        'keterangan_status' => $statusDasawarsa,
                         'tahap' => "Dasawarsa {$hutKe} Thn",
                         'besaran_hari' => $potonganDasawarsa,
                         'besaran_teks' => self::formatHariKeTeks($potonganDasawarsa),
@@ -673,7 +713,7 @@ class TelramCalculatorService
                         'tgl_2_3_baru_indo' => self::formatTanggalIndonesia($current23Date),
                         'perkiraan_ekspirasi_baru' => $currentEkspirasi->toDateString(),
                         'perkiraan_ekspirasi_baru_indo' => self::formatTanggalIndonesia($currentEkspirasi),
-                        'keterangan_alasan' => "Pengurangan istimewa peringatan HUT ke-{$hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (".self::formatHariKeTeks($potonganDasawarsaMaks).'), dibatasi maksimal 3 bulan / 90 hari.',
+                        'keterangan_alasan' => $keteranganAlasanDasawarsa,
                     ];
                 }
             }
@@ -740,6 +780,16 @@ class TelramCalculatorService
             $labelKategoriTambahan .= " (Mulai Tahun ke-{$tahunMulaiTambahan})";
         }
 
+        $sisaPidanaPascaPutusanTeks = '-';
+        $sisaHariPascaPutusan = null;
+        if ($tglPutusan) {
+            $sisaHariPascaPutusan = max(0, $totalHariVonis - $masaTahananHari);
+            $sisaPidanaPascaPutusanTeks = self::formatHariKeTeks($sisaHariPascaPutusan);
+            if ($sisaHariPascaPutusan > 0) {
+                $sisaPidanaPascaPutusanTeks .= " ({$sisaHariPascaPutusan} Hari)";
+            }
+        }
+
         return [
             'mode' => 'simulasi_remisi',
             'target_basis' => $targetBasis,
@@ -748,6 +798,11 @@ class TelramCalculatorService
             'no_register' => $noRegister,
             'perkara_pasal' => $perkaraPasal,
             'tgl_awal' => $tglAwal->toDateString(),
+            'tgl_putusan' => $tglPutusan ? $tglPutusan->toDateString() : null,
+            'masa_tahanan_hari' => $masaTahananHari,
+            'masa_tahanan_teks' => $masaTahananTeks,
+            'sisa_hari_pasca_putusan' => $sisaHariPascaPutusan,
+            'sisa_pidana_pasca_putusan_teks' => $sisaPidanaPascaPutusanTeks,
             'lama_pidana_teks' => implode(', ', $formatVonis) ?: '0 Hari',
             'tahun' => $tahun,
             'bulan' => $bulan,
@@ -767,6 +822,7 @@ class TelramCalculatorService
             'status_pengusulan' => $statusPengusulan,
             'milestones' => [
                 'ekspirasi_murni' => $tglEkspirasiMurni->toDateString(),
+                'tgl_putusan' => $tglPutusan ? $tglPutusan->toDateString() : null,
                 'tgl_1_3_murni' => $tgl13Murni->toDateString(),
                 'tgl_1_2_murni' => $tgl12Murni->toDateString(),
                 'tgl_2_3_murni' => $tgl23Murni->toDateString(),
@@ -778,6 +834,9 @@ class TelramCalculatorService
             ],
             'formatted' => [
                 'tgl_awal' => self::formatTanggalIndonesia($tglAwal),
+                'tgl_putusan' => $tglPutusan ? self::formatTanggalIndonesia($tglPutusan) : '-',
+                'masa_tahanan' => $masaTahananTeks,
+                'sisa_pidana_pasca_putusan' => $sisaPidanaPascaPutusanTeks,
                 'ekspirasi_murni' => self::formatTanggalIndonesia($tglEkspirasiMurni),
                 'tgl_1_3_murni' => self::formatTanggalIndonesia($tgl13Murni),
                 'tgl_1_2_murni' => self::formatTanggalIndonesia($tgl12Murni),
@@ -1180,6 +1239,8 @@ class TelramCalculatorService
         $noRegister = htmlspecialchars($data['no_register'] ?? '-');
         $perkaraPasal = htmlspecialchars($data['perkara_pasal'] ?? '-');
         $tglAwal = htmlspecialchars($data['formatted']['tgl_awal'] ?? '-');
+        $tglPutusan = htmlspecialchars($data['formatted']['tgl_putusan'] ?? '-');
+        $masaTahananTeks = htmlspecialchars($data['formatted']['masa_tahanan'] ?? '-');
         $lamaVonis = htmlspecialchars($data['lama_pidana_teks'] ?? '-');
 
         $tglUsul = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
@@ -1316,12 +1377,18 @@ ROW;
     <tr>
         <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Nomor Register</td>
         <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$noRegister}</td>
+        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Tgl. Putusan Pengadilan</td>
+        <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglPutusan}</td>
+    </tr>
+    <tr>
+        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana / Pasal</td>
+        <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$perkaraPasal}</td>
         <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana Pokok</td>
         <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$lamaVonis}</td>
     </tr>
     <tr>
-        <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Pidana / Pasal</td>
-        <td width="30%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$perkaraPasal}</td>
+        <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Masa Tahanan (Potongan)</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$masaTahananTeks}</td>
         <td width="22%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi (Murni)</td>
         <td width="28%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglEkspirasiMurni}</td>
     </tr>

@@ -50,6 +50,7 @@ class TelramController extends Controller
             if ($mode === 'simulasi_remisi') {
                 $validated = $request->validate([
                     'tgl_awal' => 'required|date',
+                    'tgl_putusan' => 'nullable|date|after_or_equal:tgl_awal',
                     'tahun' => 'nullable|integer|min:0',
                     'bulan' => 'nullable|integer|min:0',
                     'hari' => 'nullable|integer|min:0',
@@ -96,7 +97,8 @@ class TelramController extends Controller
                     $kategoriTambahan,
                     $targetBasis,
                     $tahunMulaiTambahan,
-                    $perkaraPasal
+                    $perkaraPasal,
+                    $validated['tgl_putusan'] ?? null
                 );
             } elseif ($mode === 'mundur') {
                 $validated = $request->validate([
@@ -169,6 +171,7 @@ class TelramController extends Controller
 
         $validated = $request->validate([
             'tgl_awal' => 'required|date',
+            'tgl_putusan' => 'nullable|date|after_or_equal:tgl_awal',
             'tahun' => 'nullable|integer|min:0',
             'bulan' => 'nullable|integer|min:0',
             'hari' => 'nullable|integer|min:0',
@@ -212,7 +215,8 @@ class TelramController extends Controller
             $kategoriTambahan,
             $targetBasis,
             $tahunMulaiTambahan,
-            $perkaraPasal
+            $perkaraPasal,
+            $validated['tgl_putusan'] ?? null
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);

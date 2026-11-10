@@ -560,4 +560,71 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('2027-01-24', $result['milestones']['tgl_mulai_pengusulan'], 'Mulai usul SDP harus 24 Januari 2027.');
         $this->assertEquals('2030-07-28', $result['milestones']['ekspirasi_definitif'], 'Ekspirasi Akhir harus 28 Juli 2030.');
     }
+
+    public function test_simulasi_remisi_dengan_tanggal_putusan_dan_remisi_susulan(): void
+    {
+        // Ditahan 01/01/2024, Vonis 3 Tahun, Putusan inkrah 01/09/2024 (8 bulan setelah ditahan)
+        // Pada event RU 17/08/2024: hari dijalani = 229 hari (memenuhi syarat > 180 hari / 6 bulan),
+        // tetapi karena event terjadi sebelum tgl putusan, remisi berstatus Remisi Susulan.
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Ahmad Fauzi',
+            'BI.012/2024',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 378 KUHP',
+            '2024-09-01'
+        );
+
+        $this->assertEquals('2024-09-01', $result['tgl_putusan']);
+        $this->assertEquals(244, $result['masa_tahanan_hari'], 'Masa tahanan 01/01/2024 s.d. 01/09/2024 adalah 244 hari.');
+        $this->assertNotEmpty($result['masa_tahanan_teks']);
+        $this->assertEquals(836, $result['sisa_hari_pasca_putusan'], 'Sisa pidana pasca-putusan (1080 - 244) = 836 hari.');
+        $this->assertNotEmpty($result['sisa_pidana_pasca_putusan_teks']);
+
+        // Periksa event RU 17/08/2024 di dalam ledger
+        $eventRu2024 = null;
+        foreach ($result['proyeksi_ledger'] as $row) {
+            if ($row['jenis'] === 'RU' && $row['tahun'] === 2024) {
+                $eventRu2024 = $row;
+                break;
+            }
+        }
+
+        $this->assertNotNull($eventRu2024, 'Event RU 17 Agustus 2024 harus tercatat.');
+        $this->assertTrue($eventRu2024['eligible']);
+        $this->assertEquals('Memenuhi Syarat (Remisi Susulan)', $eventRu2024['keterangan_status']);
+        $this->assertStringContainsString('Remisi Susulan', $eventRu2024['keterangan_alasan']);
+
+        // Pastikan tanggal putusan juga masuk ke array formatted
+        $this->assertNotNull($result['formatted']['tgl_putusan']);
+    }
+
+    public function test_simulasi_remisi_tanggal_putusan_lebih_awal_dari_tgl_awal_throws_exception(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'Ahmad Fauzi',
+            'BI.012/2024',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 378 KUHP',
+            '2023-12-01' // Lebih awal dari tgl_awal
+        );
+    }
 }

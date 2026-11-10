@@ -369,17 +369,31 @@
                             </div>
                         </div>
 
-                        <!-- Tanggal Mulai Penahanan / Per Tanggal -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 12.5px;">
-                                    Tgl. Mulai Penahanan <span class="text-danger">*</span>
-                                </label>
-                                <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="setTglAwalHariIni()" style="font-size: 11px;">
-                                    <i class="fas fa-calendar-day me-1"></i> Hari Ini
-                                </button>
+                        <!-- Tanggal Mulai Ditahan & Tanggal Putusan Pengadilan -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-12 col-md-6" id="colTglAwal">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label telram-text-title fw-bold mb-0" id="labelTglAwal" style="font-size: 12.5px;">
+                                        Tgl. Mulai Penahanan <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="setTglAwalHariIni()" style="font-size: 11px;">
+                                        <i class="fas fa-calendar-day me-1"></i> Hari Ini
+                                    </button>
+                                </div>
+                                <input type="date" id="tglAwal" class="form-control fw-semibold" style="border-radius: 9px; font-size: 14px;">
                             </div>
-                            <input type="date" id="tglAwal" class="form-control fw-semibold" style="border-radius: 9px; font-size: 14px;">
+                            <div class="col-12 col-md-6" id="wrapTglPutusan">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 12.5px;">
+                                        <i class="fas fa-gavel me-1"></i> Tgl. Putusan / Inkrah
+                                    </label>
+                                    <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
+                                </div>
+                                <input type="date" id="tglPutusan" class="form-control fw-semibold" style="border-radius: 9px; font-size: 14px;" title="Tanggal putusan pengadilan / vonis berkekuatan hukum tetap">
+                                <small class="text-muted d-block mt-0.5" style="font-size: 10px;">
+                                    Untuk hitung potongan tahanan &amp; deteksi remisi susulan.
+                                </small>
+                            </div>
                         </div>
 
                         <!-- Input Lama Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
@@ -706,6 +720,12 @@
                         <div class="col-sm-6">
                             <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Pidana Pokok:</span> <strong class="telram-text-title" id="infoTotalHari">-</strong>
                         </div>
+                        <div class="col-sm-6 d-none" id="wrapInfoPutusan">
+                            <i class="fas fa-gavel text-warning me-1"></i> Tgl. Putusan: <strong class="telram-text-title" id="infoTglPutusan">-</strong>
+                        </div>
+                        <div class="col-sm-6 d-none" id="wrapInfoMasaTahanan">
+                            <i class="fas fa-user-clock text-success me-1"></i> Potongan Tahanan: <strong class="telram-text-title" id="infoMasaTahanan">-</strong>
+                        </div>
                     </div>
                 </div>
 
@@ -862,6 +882,8 @@
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
         const btnHitung = document.getElementById('btnHitungUtama');
         const labelTglAwal = document.getElementById('labelTglAwal');
+        const colTglAwal = document.getElementById('colTglAwal');
+        const wrapTglPutusan = document.getElementById('wrapTglPutusan');
         const placeholderTitle = document.getElementById('placeholderTitle');
         const placeholderDesc = document.getElementById('placeholderDesc');
         const placeholderIcon = document.getElementById('placeholderIcon');
@@ -875,6 +897,8 @@
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.remove('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.remove('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
+            if (wrapTglPutusan) wrapTglPutusan.classList.remove('d-none');
+            if (colTglAwal) colTglAwal.className = 'col-12 col-md-6';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
             btnHitung.className = 'btn btn-warning text-dark w-100 py-2.5 py-md-3 fw-bold shadow-sm';
@@ -890,6 +914,8 @@
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.add('d-none');
+            if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
+            if (colTglAwal) colTglAwal.className = 'col-12';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
             btnHitung.className = 'btn btn-primary w-100 py-2.5 py-md-3 fw-bold shadow-sm';
@@ -905,6 +931,8 @@
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.remove('d-none');
+            if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
+            if (colTglAwal) colTglAwal.className = 'col-12';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Penahanan <span class="text-danger">*</span>';
 
             btnHitung.className = 'btn btn-secondary w-100 py-2.5 py-md-3 fw-bold shadow-sm';
@@ -920,6 +948,8 @@
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
             if (sectionInputEkspirasi) sectionInputEkspirasi.classList.remove('d-none');
+            if (wrapTglPutusan) wrapTglPutusan.classList.add('d-none');
+            if (colTglAwal) colTglAwal.className = 'col-12';
             if (labelTglAwal) labelTglAwal.innerHTML = 'Per Tanggal (Tgl. Perhitungan) <span class="text-danger">*</span>';
 
             btnHitung.className = 'btn btn-info text-white w-100 py-2.5 py-md-3 fw-bold shadow-sm';
@@ -977,6 +1007,7 @@
         if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
         if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = '';
         document.getElementById('tglAwal').value = '';
+        if (document.getElementById('tglPutusan')) document.getElementById('tglPutusan').value = '';
         document.getElementById('vTahun').value = '0';
         document.getElementById('vBulan').value = '0';
         document.getElementById('vHari').value = '0';
@@ -1006,6 +1037,13 @@
             if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = 'Budi Santoso bin Ahmad';
             if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = 'BI.042/2024';
             if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = 'Pasal 363 KUHP';
+            if (document.getElementById('tglPutusan')) {
+                const samplePutusan = new Date(yyyy, 2, 15);
+                const pY = samplePutusan.getFullYear();
+                const pM = String(samplePutusan.getMonth() + 1).padStart(2, '0');
+                const pD = String(samplePutusan.getDate()).padStart(2, '0');
+                document.getElementById('tglPutusan').value = `${pY}-${pM}-${pD}`;
+            }
             document.getElementById('vTahun').value = '3';
             document.getElementById('vBulan').value = '0';
             document.getElementById('vHari').value = '0';
@@ -1018,6 +1056,7 @@
             updateHelpTargetBasis();
             document.getElementById('vRemisiAwal').value = '0';
         } else {
+            if (document.getElementById('tglPutusan')) document.getElementById('tglPutusan').value = '';
             const futureDate = new Date(now);
             futureDate.setFullYear(futureDate.getFullYear() + 2);
             const fY = futureDate.getFullYear();
@@ -1065,6 +1104,7 @@
                 payload.hari = vHri;
                 payload.agama = agama;
                 payload.remisi_awal_hari = remisiAwal;
+                payload.tgl_putusan = document.getElementById('tglPutusan') ? document.getElementById('tglPutusan').value : '';
                 payload.nama_wbp = document.getElementById('txtNamaWbp') ? document.getElementById('txtNamaWbp').value : '';
                 payload.no_register = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
                 payload.perkara_pasal = document.getElementById('txtPerkaraPasal') ? document.getElementById('txtPerkaraPasal').value : '';
@@ -1216,6 +1256,22 @@
             document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
             document.getElementById('infoTotalHari').innerText = `${data.total_hari_vonis.toLocaleString('id-ID')} (${data.lama_pidana_teks})`;
 
+            const wrapInfoPutusan = document.getElementById('wrapInfoPutusan');
+            const wrapInfoMasaTahanan = document.getElementById('wrapInfoMasaTahanan');
+            if (data.formatted.tgl_putusan) {
+                if (wrapInfoPutusan) {
+                    wrapInfoPutusan.classList.remove('d-none');
+                    document.getElementById('infoTglPutusan').innerText = data.formatted.tgl_putusan;
+                }
+                if (wrapInfoMasaTahanan) {
+                    wrapInfoMasaTahanan.classList.remove('d-none');
+                    document.getElementById('infoMasaTahanan').innerText = data.masa_tahanan_teks;
+                }
+            } else {
+                if (wrapInfoPutusan) wrapInfoPutusan.classList.add('d-none');
+                if (wrapInfoMasaTahanan) wrapInfoMasaTahanan.classList.add('d-none');
+            }
+
             showToast(`Perkiraan Remisi & Waktu Pengusulan ${data.jenis_program} Berhasil Dihitung!`, 'success');
         } else if (data.mode === 'sisa') {
             boxHeroPengusulan.classList.add('d-none');
@@ -1225,6 +1281,9 @@
             rowFractionCards.classList.add('d-none');
             sectionTableLedger.classList.add('d-none');
             btnGroupAksiHasil.classList.add('d-none');
+
+            if (document.getElementById('wrapInfoPutusan')) document.getElementById('wrapInfoPutusan').classList.add('d-none');
+            if (document.getElementById('wrapInfoMasaTahanan')) document.getElementById('wrapInfoMasaTahanan').classList.add('d-none');
 
             document.getElementById('resSisaPidana').innerText = data.sisa_pidana_teks;
             document.getElementById('labelInfoTglAwal').innerText = 'Per Tanggal:';
@@ -1242,6 +1301,9 @@
             rowFractionCards.classList.remove('d-none');
             sectionTableLedger.classList.add('d-none');
             btnGroupAksiHasil.classList.add('d-none');
+
+            if (document.getElementById('wrapInfoPutusan')) document.getElementById('wrapInfoPutusan').classList.add('d-none');
+            if (document.getElementById('wrapInfoMasaTahanan')) document.getElementById('wrapInfoMasaTahanan').classList.add('d-none');
 
             document.getElementById('resLamaPidana').innerText = data.lama_pidana_teks;
             document.getElementById('badgeEkspirasiTitle').innerHTML = '<i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS MURNI';
@@ -1272,6 +1334,9 @@
             rowFractionCards.classList.remove('d-none');
             sectionTableLedger.classList.add('d-none');
             btnGroupAksiHasil.classList.add('d-none');
+
+            if (document.getElementById('wrapInfoPutusan')) document.getElementById('wrapInfoPutusan').classList.add('d-none');
+            if (document.getElementById('wrapInfoMasaTahanan')) document.getElementById('wrapInfoMasaTahanan').classList.add('d-none');
 
             document.getElementById('badgeEkspirasiTitle').innerHTML = '<i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS MURNI';
             document.getElementById('resEkspirasi').innerText = data.formatted.tgl_ekspirasi;
@@ -1417,6 +1482,7 @@
         }
 
         const inputTgl = document.getElementById('tglAwal').value;
+        const tglPutusan = document.getElementById('tglPutusan') ? document.getElementById('tglPutusan').value : '';
         const vThn = parseInt(document.getElementById('vTahun').value) || 0;
         const vBln = parseInt(document.getElementById('vBulan').value) || 0;
         const vHri = parseInt(document.getElementById('vHari').value) || 0;
@@ -1438,6 +1504,7 @@
         const fields = {
             _token: '{{ csrf_token() }}',
             tgl_awal: inputTgl,
+            tgl_putusan: tglPutusan,
             tahun: vThn,
             bulan: vBln,
             hari: vHri,
@@ -1480,13 +1547,14 @@
         }
 
         const d = lastResult;
+        const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan / Inkrah:* ${d.formatted.tgl_putusan}\n*Masa Tahanan (Potongan):* ${d.masa_tahanan_teks}` : '';
         const text = `*LEMBAR PERKIRAAN PERHITUNGAN*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
 *Nama WBP:* ${d.nama_wbp || 'Narapidana'}
 *No. Register:* ${d.no_register || '-'}
 *Pidana / Pasal:* ${d.perkara_pasal || '-'}
-*Tanggal Ditahan:* ${d.formatted.tgl_awal}
+*Tanggal Ditahan:* ${d.formatted.tgl_awal}${putusanLine}
 *Pidana Pokok:* ${d.lama_pidana_teks} (${d.total_hari_vonis} hari)
 *Agama WBP:* ${d.agama}
 *Status Pembinaan:* ${d.kategori_tambahan_label || 'Standar (Reguler)'}
