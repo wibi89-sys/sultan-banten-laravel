@@ -48,7 +48,7 @@ class TelramTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Kalkulator Telram');
         $response->assertSee('Perkiraan Remisi');
-        $response->assertSee('Unduh File Offline');
+        $response->assertSee('Pidana Pokok');
     }
 
     public function test_user_without_utilitas_permission_gets_forbidden_403(): void

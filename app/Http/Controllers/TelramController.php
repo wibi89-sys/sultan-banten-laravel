@@ -54,6 +54,9 @@ class TelramController extends Controller
                     'tahun' => 'nullable|integer|min:0',
                     'bulan' => 'nullable|integer|min:0',
                     'hari' => 'nullable|integer|min:0',
+                    'sub_tahun' => 'nullable|integer|min:0',
+                    'sub_bulan' => 'nullable|integer|min:0',
+                    'sub_hari' => 'nullable|integer|min:0',
                     'agama' => 'nullable|string|in:islam,kristen,katolik,hindu,buddha,khonghucu',
                     'remisi_awal_hari' => 'nullable|integer|min:0',
                     'nama_wbp' => 'nullable|string|max:150',
@@ -68,6 +71,9 @@ class TelramController extends Controller
                 $tahun = (int) ($validated['tahun'] ?? 0);
                 $bulan = (int) ($validated['bulan'] ?? 0);
                 $hari = (int) ($validated['hari'] ?? 0);
+                $subTahun = (int) ($validated['sub_tahun'] ?? 0);
+                $subBulan = (int) ($validated['sub_bulan'] ?? 0);
+                $subHari = (int) ($validated['sub_hari'] ?? 0);
 
                 if ($tahun <= 0 && $bulan <= 0 && $hari <= 0) {
                     return response()->json([
@@ -98,7 +104,10 @@ class TelramController extends Controller
                     $targetBasis,
                     $tahunMulaiTambahan,
                     $perkaraPasal,
-                    $validated['tgl_putusan'] ?? null
+                    $validated['tgl_putusan'] ?? null,
+                    $subTahun,
+                    $subBulan,
+                    $subHari
                 );
             } elseif ($mode === 'mundur') {
                 $validated = $request->validate([
@@ -126,11 +135,17 @@ class TelramController extends Controller
                     'tahun' => 'nullable|integer|min:0',
                     'bulan' => 'nullable|integer|min:0',
                     'hari' => 'nullable|integer|min:0',
+                    'sub_tahun' => 'nullable|integer|min:0',
+                    'sub_bulan' => 'nullable|integer|min:0',
+                    'sub_hari' => 'nullable|integer|min:0',
                 ]);
 
                 $tahun = (int) ($validated['tahun'] ?? 0);
                 $bulan = (int) ($validated['bulan'] ?? 0);
                 $hari = (int) ($validated['hari'] ?? 0);
+                $subTahun = (int) ($validated['sub_tahun'] ?? 0);
+                $subBulan = (int) ($validated['sub_bulan'] ?? 0);
+                $subHari = (int) ($validated['sub_hari'] ?? 0);
 
                 if ($tahun <= 0 && $bulan <= 0 && $hari <= 0) {
                     return response()->json([
@@ -143,7 +158,10 @@ class TelramController extends Controller
                     $validated['tgl_awal'],
                     $tahun,
                     $bulan,
-                    $hari
+                    $hari,
+                    $subTahun,
+                    $subBulan,
+                    $subHari
                 );
             }
 
@@ -175,6 +193,9 @@ class TelramController extends Controller
             'tahun' => 'nullable|integer|min:0',
             'bulan' => 'nullable|integer|min:0',
             'hari' => 'nullable|integer|min:0',
+            'sub_tahun' => 'nullable|integer|min:0',
+            'sub_bulan' => 'nullable|integer|min:0',
+            'sub_hari' => 'nullable|integer|min:0',
             'agama' => 'nullable|string|in:islam,kristen,katolik,hindu,buddha,khonghucu',
             'remisi_awal_hari' => 'nullable|integer|min:0',
             'nama_wbp' => 'nullable|string|max:150',
@@ -189,6 +210,9 @@ class TelramController extends Controller
         $tahun = (int) ($validated['tahun'] ?? 0);
         $bulan = (int) ($validated['bulan'] ?? 0);
         $hari = (int) ($validated['hari'] ?? 0);
+        $subTahun = (int) ($validated['sub_tahun'] ?? 0);
+        $subBulan = (int) ($validated['sub_bulan'] ?? 0);
+        $subHari = (int) ($validated['sub_hari'] ?? 0);
 
         if ($tahun <= 0 && $bulan <= 0 && $hari <= 0) {
             abort(422, 'Harap masukkan lama vonis hukuman (Tahun, Bulan, atau Hari)!');
@@ -216,7 +240,10 @@ class TelramController extends Controller
             $targetBasis,
             $tahunMulaiTambahan,
             $perkaraPasal,
-            $validated['tgl_putusan'] ?? null
+            $validated['tgl_putusan'] ?? null,
+            $subTahun,
+            $subBulan,
+            $subHari
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);

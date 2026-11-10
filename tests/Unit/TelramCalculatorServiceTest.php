@@ -671,4 +671,52 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertNotEmpty($pdfOutput);
         $this->assertStringStartsWith('%PDF-', $pdfOutput);
     }
+
+    public function test_kalkulasi_dengan_pidana_subsider(): void
+    {
+        // Uji coba hitung maju dengan vonis pokok 2 tahun + subsider 3 bulan
+        $maju = $this->service->hitungMaju('2024-01-01', 2, 0, 0, 0, 3, 0);
+        $this->assertTrue($maju['has_subsider']);
+        $this->assertEquals('2026-01-01', $maju['tgl_ekspirasi']);
+        // 2026-01-01 + 3 bulan (90 hari) = 2026-04-01
+        $this->assertEquals('2026-04-01', $maju['tgl_ekspirasi_subsider']);
+        $this->assertEquals('3 Bulan', $maju['subsider_teks']);
+
+        // Uji coba simulasi remisi dengan subsider 6 bulan
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP Uji Subsider',
+            'BI.777/2024',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 114 UU Narkotika',
+            '2024-06-01',
+            0,
+            6,
+            0 // Subsider 6 bulan
+        );
+
+        $this->assertTrue($result['has_subsider']);
+        $this->assertEquals('6 Bulan', $result['subsider_teks']);
+        $this->assertNotNull($result['milestones']['ekspirasi_subsider_murni']);
+        $this->assertNotNull($result['milestones']['ekspirasi_subsider_definitif']);
+        $this->assertStringContainsString('Pidana Subsider', $result['hitungan_manual_teks']);
+        $this->assertStringContainsString('Pidana Subsider', $result['hitungan_manual_html']);
+
+        // Pastikan ekspirasi subsider definitif lebih lama 180 hari (6 bulan) dari ekspirasi pokok definitif
+        $tglPokokDef = Carbon::parse($result['milestones']['ekspirasi_definitif']);
+        $tglSubDef = Carbon::parse($result['milestones']['ekspirasi_subsider_definitif']);
+        $this->assertEquals(180, (int) $tglPokokDef->diffInDays($tglSubDef));
+
+        // Verifikasi PDF juga dapat digenerate dengan subsider
+        $pdf = TelramCalculatorService::generatePdfReport($result);
+        $this->assertNotEmpty($pdf);
+    }
 }

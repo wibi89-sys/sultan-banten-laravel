@@ -202,13 +202,25 @@
         text-align: center;
         transition: all 0.2s ease;
     }
+    .stepper-box:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
     [data-theme="dark"] .stepper-box {
         background: rgba(15, 23, 42, 0.7) !important;
         border-color: #334155 !important;
     }
+    [data-theme="dark"] .stepper-box:focus-within {
+        border-color: #60a5fa !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    }
     .stepper-box input {
         color: var(--text-primary, #1f2937) !important;
         font-size: 18px;
+    }
+    .stepper-box input:focus {
+        outline: none;
+        box-shadow: none;
     }
     .stepper-box input::-webkit-outer-spin-button,
     .stepper-box input::-webkit-inner-spin-button {
@@ -423,7 +435,7 @@
                         <label class="stepper-label mb-1.5 d-block">PILIH MODE PERHITUNGAN:</label>
                         <div class="mode-switch-grid">
                             <button type="button" id="btnModeRemisi" onclick="setMode('simulasi_remisi')" class="btn-mode-tab active">
-                                <i class="fas fa-medal me-1.5 text-warning"></i> Perkiraan Remisi
+                                <i class="fas fa-calendar-check me-1.5 text-primary"></i> Perkiraan Remisi
                             </button>
                             <button type="button" id="btnModeMaju" onclick="setMode('maju')" class="btn-mode-tab">
                                 <i class="fas fa-arrow-right me-1.5 text-primary"></i> Cari Ekspirasi
@@ -499,10 +511,10 @@
                             </div>
                         </div>
 
-                        <!-- Input Lama Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
+                        <!-- Input Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
                         <div id="sectionInputVonis" class="mb-3">
                             <label class="form-label telram-text-title fw-bold mb-1.5 d-block" style="font-size: 12px;">
-                                Lama Pidana / Vonis Pokok <span class="text-danger">*</span>
+                                Pidana Pokok <span class="text-danger">*</span>
                             </label>
                             <div class="row g-2">
                                 <div class="col-4">
@@ -532,7 +544,47 @@
                                 <button type="button" class="btn btn-preset-vonis" onclick="setPresetVonis(3, 0, 0)">3 Thn</button>
                                 <button type="button" class="btn btn-preset-vonis" onclick="setPresetVonis(5, 0, 0)">5 Thn</button>
                                 <button type="button" class="btn btn-preset-vonis" onclick="addPresetBulan(6)">+6 Bln</button>
-                                <button type="button" class="btn btn-preset-vonis text-danger" onclick="setPresetVonis(0, 0, 0)" title="Nol-kan Vonis"><i class="fas fa-times"></i></button>
+                                <button type="button" class="btn btn-preset-vonis text-danger" onclick="setPresetVonis(0, 0, 0)" title="Nol-kan Pidana Pokok"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Input Pidana Subsider (Kurungan Pengganti Denda) -->
+                        <div id="sectionInputSubsider" class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                <label class="form-label telram-text-title fw-bold mb-0" style="font-size: 12px;">
+                                    <i class="fas fa-hand-holding-usd me-1 text-primary"></i> Pidana Subsider (Pengganti Denda)
+                                </label>
+                                <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">Opsional</span>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <div class="stepper-box">
+                                        <label class="d-block stepper-label mb-0.5">TAHUN</label>
+                                        <input type="number" id="vSubTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stepper-box">
+                                        <label class="d-block stepper-label mb-0.5">BULAN</label>
+                                        <input type="number" id="vSubBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stepper-box">
+                                        <label class="d-block stepper-label mb-0.5">HARI</label>
+                                        <input type="number" id="vSubHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Preset Tombol Subsider Cepat -->
+                            <div class="d-flex align-items-center gap-1.5 flex-wrap mt-2" id="wrapPresetsSubsider">
+                                <span class="text-muted fw-semibold me-1" style="font-size: 11px;">Pintas:</span>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetSubsider(0, 1, 0)">1 Bln</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetSubsider(0, 2, 0)">2 Bln</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetSubsider(0, 3, 0)">3 Bln</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetSubsider(0, 6, 0)">6 Bln</button>
+                                <button type="button" class="btn btn-preset-vonis" onclick="setPresetSubsider(1, 0, 0)">1 Thn</button>
+                                <button type="button" class="btn btn-preset-vonis text-danger" onclick="setPresetSubsider(0, 0, 0)" title="Nol-kan Subsider"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
 
@@ -661,7 +713,7 @@
 
                     <!-- Tombol Utama Hitung -->
                     <button type="button" id="btnHitungUtama" onclick="hitungSesuaiMode()" class="btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="border-radius: 12px; font-size: 14px; letter-spacing: 0.3px;">
-                        <i class="fas fa-medal fs-5"></i>
+                        <i class="fas fa-calculator fs-5"></i>
                         <span>HITUNG PERKIRAAN REMISI &amp; INTEGRASI</span>
                     </button>
                 </div>
@@ -674,7 +726,7 @@
             <div id="placeholderSection" class="card border-0 shadow-sm text-center p-4 p-md-5 placeholder-card">
                 <div class="py-3 py-md-4">
                     <div class="mb-3" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(245, 158, 11, 0.1); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; color: #f59e0b;">
-                        <i class="fas fa-medal" id="placeholderIcon"></i>
+                        <i class="fas fa-calculator" id="placeholderIcon"></i>
                     </div>
                     <h5 class="fw-bold telram-text-title mb-2" id="placeholderTitle">Perkiraan Perhitungan</h5>
                     <p class="text-muted mb-4 mx-auto" id="placeholderDesc" style="max-width: 440px; font-size: 13px; line-height: 1.5;">
@@ -788,12 +840,27 @@
                                 </span>
                                 <h2 class="fw-black mb-0 text-white" id="resEkspirasi" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px); word-break: break-word;">-</h2>
                                 <div id="subEkspirasiMurni" class="mt-1 text-white-50" style="font-size: 12px;">
-                                    Ekspirasi Murni: <span class="text-white fw-bold" id="resEkspirasiMurniText">-</span>
+                                    Ekspirasi Pokok (Murni): <span class="text-white fw-bold" id="resEkspirasiMurniText">-</span>
                                 </div>
                             </div>
                             <div class="text-start text-sm-end" id="boxTotalRemisiBadge">
                                 <div class="text-white-50" style="font-size: 10.5px; text-transform: uppercase;">Total Perkiraan Remisi:</div>
                                 <div class="fw-bold text-warning mt-0.5" id="resTotalRemisiText" style="font-size: clamp(17px, 3.8vw, 22px);">0 Hari</div>
+                            </div>
+                        </div>
+                        <!-- Highlight Ekspirasi Subsider Jika Ada -->
+                        <div id="boxEkspirasiSubsider" class="mt-2.5 pt-2.5 border-top d-none" style="border-color: rgba(255,255,255,0.2) !important;">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <span class="badge bg-warning text-dark fw-bold px-2 py-0.5" style="font-size: 10.5px;">
+                                        <i class="fas fa-hand-holding-usd me-1"></i> + PIDANA SUBSIDER (<span id="resSubsiderLabel">3 Bulan</span>)
+                                    </span>
+                                    <div class="text-white-50 mt-1" style="font-size: 11.5px;">Ekspirasi Akhir (+ Kurungan Pengganti Denda):</div>
+                                </div>
+                                <div class="text-start text-sm-end">
+                                    <strong class="text-white d-block" id="resEkspirasiSubsiderVal" style="font-size: 18px; font-weight: 800;">-</strong>
+                                    <small class="text-white-50" style="font-size: 11px;">Murni: <span id="resEkspirasiSubsiderMurniVal" class="text-white fw-semibold">-</span></small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -847,6 +914,9 @@
                         </div>
                         <div class="col-sm-6">
                             <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Pidana Pokok:</span> <strong class="telram-text-title" id="infoTotalHari">-</strong>
+                        </div>
+                        <div class="col-sm-6 d-none" id="wrapInfoSubsider">
+                            <i class="fas fa-hand-holding-usd text-warning me-1"></i> Pidana Subsider: <strong class="telram-text-title" id="infoSubsider">-</strong>
                         </div>
                         <div class="col-sm-6 d-none" id="wrapInfoPutusan">
                             <i class="fas fa-gavel text-warning me-1"></i> Tgl. Putusan: <strong class="telram-text-title" id="infoTglPutusan">-</strong>
@@ -1072,6 +1142,7 @@
         const btnSisa = document.getElementById('btnModeSisa');
         const sectionIdentitasWbp = document.getElementById('sectionIdentitasWbp');
         const sectionInputVonis = document.getElementById('sectionInputVonis');
+        const sectionInputSubsider = document.getElementById('sectionInputSubsider');
         const groupRemisiKeagamaan = document.getElementById('groupRemisiKeagamaan');
         const groupOpsiSdplanjutan = document.getElementById('groupOpsiSdplanjutan');
         const sectionInputEkspirasi = document.getElementById('sectionInputEkspirasi');
@@ -1091,6 +1162,7 @@
             if (btnRemisi) btnRemisi.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.remove('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.remove('d-none');
+            if (sectionInputSubsider) sectionInputSubsider.classList.remove('d-none');
             if (wrapPresetsVonis) wrapPresetsVonis.classList.remove('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.remove('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.remove('d-none');
@@ -1101,15 +1173,16 @@
             if (labelTglAwal) labelTglAwal.innerHTML = 'Tgl. Mulai Ditahan <span class="text-danger">*</span>';
 
             btnHitung.className = 'btn btn-warning text-dark w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
-            btnHitung.innerHTML = '<i class="fas fa-medal fs-5"></i> <span>HITUNG PERKIRAAN REMISI &amp; INTEGRASI</span>';
+            btnHitung.innerHTML = '<i class="fas fa-calculator fs-5"></i> <span>HITUNG PERKIRAAN REMISI &amp; INTEGRASI</span>';
 
             placeholderTitle.innerText = 'Perkiraan Perhitungan';
-            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Vonis, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PERKIRAAN REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
-            placeholderIcon.className = 'fas fa-medal';
+            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan, Lama Pidana Pokok, Subsider, dan Agama WBP di sebelah kiri, kemudian klik tombol <strong>"HITUNG PERKIRAAN REMISI &amp; INTEGRASI"</strong> untuk melihat perkiraan tanggal ekspirasi baru, waktu pengusulan PB/CB (H-2 bulan), serta tabel rincian remisi berkala.';
+            placeholderIcon.className = 'fas fa-calculator';
         } else if (mode === 'maju') {
             if (btnMaju) btnMaju.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.remove('d-none');
+            if (sectionInputSubsider) sectionInputSubsider.classList.remove('d-none');
             if (wrapPresetsVonis) wrapPresetsVonis.classList.remove('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
@@ -1123,12 +1196,13 @@
             btnHitung.innerHTML = '<i class="fas fa-calculator fs-5"></i> <span>HITUNG EKSPIRASI</span>';
 
             placeholderTitle.innerText = 'Hasil Perhitungan Ekspirasi';
-            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Lama Vonis Hukuman di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.';
+            placeholderDesc.innerHTML = 'Tentukan Tanggal Mulai Penahanan dan Lama Pidana Pokok &amp; Subsider di sebelah kiri, kemudian klik tombol <strong>"HITUNG EKSPIRASI"</strong> untuk melihat perkiraan tanggal ekspirasi dan tahapan masa pidana secara rinci.';
             placeholderIcon.className = 'fas fa-calendar-alt';
         } else if (mode === 'mundur') {
             if (btnMundur) btnMundur.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.add('d-none');
+            if (sectionInputSubsider) sectionInputSubsider.classList.add('d-none');
             if (wrapPresetsVonis) wrapPresetsVonis.classList.add('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
@@ -1148,6 +1222,7 @@
             if (btnSisa) btnSisa.classList.add('active');
             if (sectionIdentitasWbp) sectionIdentitasWbp.classList.add('d-none');
             if (sectionInputVonis) sectionInputVonis.classList.add('d-none');
+            if (sectionInputSubsider) sectionInputSubsider.classList.add('d-none');
             if (wrapPresetsVonis) wrapPresetsVonis.classList.add('d-none');
             if (groupRemisiKeagamaan) groupRemisiKeagamaan.classList.add('d-none');
             if (groupOpsiSdplanjutan) groupOpsiSdplanjutan.classList.add('d-none');
@@ -1216,6 +1291,16 @@
         if (elHri) elHri.value = hri;
     }
 
+    // Set Preset Nilai Subsider Cepat
+    function setPresetSubsider(thn, bln, hri) {
+        const elThn = document.getElementById('vSubTahun');
+        const elBln = document.getElementById('vSubBulan');
+        const elHri = document.getElementById('vSubHari');
+        if (elThn) elThn.value = thn;
+        if (elBln) elBln.value = bln;
+        if (elHri) elHri.value = hri;
+    }
+
     // Tambah Bulan ke Vonis Cepat
     function addPresetBulan(bln) {
         const elThn = document.getElementById('vTahun');
@@ -1267,6 +1352,9 @@
         document.getElementById('vTahun').value = '0';
         document.getElementById('vBulan').value = '0';
         document.getElementById('vHari').value = '0';
+        if (document.getElementById('vSubTahun')) document.getElementById('vSubTahun').value = '0';
+        if (document.getElementById('vSubBulan')) document.getElementById('vSubBulan').value = '0';
+        if (document.getElementById('vSubHari')) document.getElementById('vSubHari').value = '0';
         document.getElementById('selAgama').value = 'islam';
         if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
         if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
@@ -1276,6 +1364,9 @@
         updateHelpTargetBasis();
         document.getElementById('vRemisiAwal').value = '0';
         document.getElementById('tglEkspirasiInput').value = '';
+
+        if (document.getElementById('boxEkspirasiSubsider')) document.getElementById('boxEkspirasiSubsider').classList.add('d-none');
+        if (document.getElementById('wrapInfoSubsider')) document.getElementById('wrapInfoSubsider').classList.add('d-none');
 
         updateBadgeOpsiLanjutan();
 
@@ -1313,6 +1404,9 @@
             document.getElementById('vTahun').value = '3';
             document.getElementById('vBulan').value = '0';
             document.getElementById('vHari').value = '0';
+            if (document.getElementById('vSubTahun')) document.getElementById('vSubTahun').value = '0';
+            if (document.getElementById('vSubBulan')) document.getElementById('vSubBulan').value = '3';
+            if (document.getElementById('vSubHari')) document.getElementById('vSubHari').value = '0';
             document.getElementById('selAgama').value = 'islam';
             if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
             if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
@@ -1323,6 +1417,9 @@
             document.getElementById('vRemisiAwal').value = '0';
         } else {
             if (document.getElementById('tglPutusan')) document.getElementById('tglPutusan').value = '';
+            if (document.getElementById('vSubTahun')) document.getElementById('vSubTahun').value = '0';
+            if (document.getElementById('vSubBulan')) document.getElementById('vSubBulan').value = '0';
+            if (document.getElementById('vSubHari')) document.getElementById('vSubHari').value = '0';
             const futureDate = new Date(now);
             futureDate.setFullYear(futureDate.getFullYear() + 2);
             const fY = futureDate.getFullYear();
@@ -1356,11 +1453,14 @@
                 const vThn = parseInt(document.getElementById('vTahun').value) || 0;
                 const vBln = parseInt(document.getElementById('vBulan').value) || 0;
                 const vHri = parseInt(document.getElementById('vHari').value) || 0;
+                const vSubThn = parseInt(document.getElementById('vSubTahun') ? document.getElementById('vSubTahun').value : 0) || 0;
+                const vSubBln = parseInt(document.getElementById('vSubBulan') ? document.getElementById('vSubBulan').value : 0) || 0;
+                const vSubHri = parseInt(document.getElementById('vSubHari') ? document.getElementById('vSubHari').value : 0) || 0;
                 const agama = document.getElementById('selAgama').value;
                 const remisiAwal = parseInt(document.getElementById('vRemisiAwal').value) || 0;
 
                 if (vThn === 0 && vBln === 0 && vHri === 0) {
-                    showToast('Harap tentukan Lama Pidana Vonis!', 'error');
+                    showToast('Harap tentukan Lama Pidana Pokok!', 'error');
                     btnHitung.disabled = false;
                     btnHitung.innerHTML = originalBtnHtml;
                     return;
@@ -1369,6 +1469,9 @@
                 payload.tahun = vThn;
                 payload.bulan = vBln;
                 payload.hari = vHri;
+                payload.sub_tahun = vSubThn;
+                payload.sub_bulan = vSubBln;
+                payload.sub_hari = vSubHri;
                 payload.agama = agama;
                 payload.remisi_awal_hari = remisiAwal;
                 payload.tgl_putusan = document.getElementById('tglPutusan') ? document.getElementById('tglPutusan').value : '';
@@ -1383,9 +1486,12 @@
                 payload.tahun = parseInt(document.getElementById('vTahun').value) || 0;
                 payload.bulan = parseInt(document.getElementById('vBulan').value) || 0;
                 payload.hari = parseInt(document.getElementById('vHari').value) || 0;
+                payload.sub_tahun = parseInt(document.getElementById('vSubTahun') ? document.getElementById('vSubTahun').value : 0) || 0;
+                payload.sub_bulan = parseInt(document.getElementById('vSubBulan') ? document.getElementById('vSubBulan').value : 0) || 0;
+                payload.sub_hari = parseInt(document.getElementById('vSubHari') ? document.getElementById('vSubHari').value : 0) || 0;
 
                 if (payload.tahun === 0 && payload.bulan === 0 && payload.hari === 0) {
-                    showToast('Harap tentukan Lama Pidana Vonis!', 'error');
+                    showToast('Harap tentukan Lama Pidana Pokok!', 'error');
                     btnHitung.disabled = false;
                     btnHitung.innerHTML = originalBtnHtml;
                     return;
@@ -1403,6 +1509,38 @@
                 payload.tgl_ekspirasi = document.getElementById('tglEkspirasiInput').value;
                 if (!payload.tgl_ekspirasi) {
                     showToast('Harap tentukan Tanggal Ekspirasi!', 'error');
+                    btnHitung.disabled = false;
+                    btnHitung.innerHTML = originalBtnHtml;
+                    return;
+                }
+            }
+
+            const response = await fetch('{{ route("telram.calculate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const resJson = await response.json();
+
+            if (!resJson.success) {
+                showToast(resJson.message || 'Gagal menghitung kalkulasi Telram', 'error');
+                return;
+            }
+
+            renderHasilApi(resJson.data);
+        } catch (err) {
+            console.error('Error saat kalkulasi:', err);
+            showToast('Terjadi kesalahan koneksi saat menghitung data', 'error');
+        } finally {
+            btnHitung.disabled = false;
+            btnHitung.innerHTML = originalBtnHtml;
+        }
+    }
                     btnHitung.disabled = false;
                     btnHitung.innerHTML = originalBtnHtml;
                     return;
@@ -1539,6 +1677,25 @@
                 if (wrapInfoMasaTahanan) wrapInfoMasaTahanan.classList.add('d-none');
             }
 
+            // Subsider Check
+            const boxEkspirasiSubsider = document.getElementById('boxEkspirasiSubsider');
+            const wrapInfoSubsider = document.getElementById('wrapInfoSubsider');
+            if (data.has_subsider) {
+                if (boxEkspirasiSubsider) {
+                    boxEkspirasiSubsider.classList.remove('d-none');
+                    document.getElementById('resSubsiderLabel').innerText = data.subsider_teks;
+                    document.getElementById('resEkspirasiSubsiderVal').innerText = data.formatted.ekspirasi_subsider_definitif;
+                    document.getElementById('resEkspirasiSubsiderMurniVal').innerText = data.formatted.ekspirasi_subsider_murni;
+                }
+                if (wrapInfoSubsider) {
+                    wrapInfoSubsider.classList.remove('d-none');
+                    document.getElementById('infoSubsider').innerText = `${data.subsider_teks} (Pengganti Denda)`;
+                }
+            } else {
+                if (boxEkspirasiSubsider) boxEkspirasiSubsider.classList.add('d-none');
+                if (wrapInfoSubsider) wrapInfoSubsider.classList.add('d-none');
+            }
+
             showToast(`Perkiraan Remisi & Waktu Pengusulan ${data.jenis_program} Berhasil Dihitung!`, 'success');
         } else if (data.mode === 'sisa') {
             boxHeroPengusulan.classList.add('d-none');
@@ -1551,6 +1708,8 @@
 
             if (document.getElementById('wrapInfoPutusan')) document.getElementById('wrapInfoPutusan').classList.add('d-none');
             if (document.getElementById('wrapInfoMasaTahanan')) document.getElementById('wrapInfoMasaTahanan').classList.add('d-none');
+            if (document.getElementById('boxEkspirasiSubsider')) document.getElementById('boxEkspirasiSubsider').classList.add('d-none');
+            if (document.getElementById('wrapInfoSubsider')) document.getElementById('wrapInfoSubsider').classList.add('d-none');
 
             document.getElementById('resSisaPidana').innerText = data.sisa_pidana_teks;
             document.getElementById('labelInfoTglAwal').innerText = 'Per Tanggal:';
@@ -1571,6 +1730,8 @@
 
             if (document.getElementById('wrapInfoPutusan')) document.getElementById('wrapInfoPutusan').classList.add('d-none');
             if (document.getElementById('wrapInfoMasaTahanan')) document.getElementById('wrapInfoMasaTahanan').classList.add('d-none');
+            if (document.getElementById('boxEkspirasiSubsider')) document.getElementById('boxEkspirasiSubsider').classList.add('d-none');
+            if (document.getElementById('wrapInfoSubsider')) document.getElementById('wrapInfoSubsider').classList.add('d-none');
 
             document.getElementById('resLamaPidana').innerText = data.lama_pidana_teks;
             document.getElementById('badgeEkspirasiTitle').innerHTML = '<i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS MURNI';
@@ -1616,6 +1777,25 @@
             document.getElementById('badgeLabel23').innerText = '2/3 Masa Pidana';
             document.getElementById('res23').innerText = data.formatted.tgl_2_3;
             document.getElementById('subInfo23').innerText = '2/3 Masa Pidana Murni';
+
+            // Subsider Check
+            const boxEkspirasiSubsider = document.getElementById('boxEkspirasiSubsider');
+            const wrapInfoSubsider = document.getElementById('wrapInfoSubsider');
+            if (data.has_subsider) {
+                if (boxEkspirasiSubsider) {
+                    boxEkspirasiSubsider.classList.remove('d-none');
+                    document.getElementById('resSubsiderLabel').innerText = data.subsider_teks;
+                    document.getElementById('resEkspirasiSubsiderVal').innerText = data.formatted.tgl_ekspirasi_subsider;
+                    document.getElementById('resEkspirasiSubsiderMurniVal').innerText = data.formatted.tgl_ekspirasi_subsider;
+                }
+                if (wrapInfoSubsider) {
+                    wrapInfoSubsider.classList.remove('d-none');
+                    document.getElementById('infoSubsider').innerText = `${data.subsider_teks} (Pengganti Denda)`;
+                }
+            } else {
+                if (boxEkspirasiSubsider) boxEkspirasiSubsider.classList.add('d-none');
+                if (wrapInfoSubsider) wrapInfoSubsider.classList.add('d-none');
+            }
 
             document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
             document.getElementById('infoTglAwal').innerText = data.formatted.tgl_awal;
@@ -1753,6 +1933,9 @@
         const vThn = parseInt(document.getElementById('vTahun').value) || 0;
         const vBln = parseInt(document.getElementById('vBulan').value) || 0;
         const vHri = parseInt(document.getElementById('vHari').value) || 0;
+        const vSubThn = parseInt(document.getElementById('vSubTahun') ? document.getElementById('vSubTahun').value : 0) || 0;
+        const vSubBln = parseInt(document.getElementById('vSubBulan') ? document.getElementById('vSubBulan').value : 0) || 0;
+        const vSubHri = parseInt(document.getElementById('vSubHari') ? document.getElementById('vSubHari').value : 0) || 0;
         const agama = document.getElementById('selAgama').value;
         const remisiAwal = parseInt(document.getElementById('vRemisiAwal').value) || 0;
         const namaWbp = document.getElementById('txtNamaWbp') ? document.getElementById('txtNamaWbp').value : '';
@@ -1775,6 +1958,9 @@
             tahun: vThn,
             bulan: vBln,
             hari: vHri,
+            sub_tahun: vSubThn,
+            sub_bulan: vSubBln,
+            sub_hari: vSubHri,
             agama: agama,
             remisi_awal_hari: remisiAwal,
             nama_wbp: namaWbp,
