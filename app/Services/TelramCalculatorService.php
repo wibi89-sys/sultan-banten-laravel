@@ -1097,9 +1097,6 @@ CARD;
                 <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 11.5px;">Remisi saat 2/3: {$totalRemisiTeks} ({$totalRemisiHari} Hr)</span>
             </div>
             <div class="card-body p-3.5" style="font-size: 13.5px; line-height: 1.6;">
-                <div class="mb-2 text-muted" style="font-size: 12px;">
-                    Dihitung dari tanggal murni dikurangkan total remisi yang diperoleh selama menjalani pidana di Lapas s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):
-                </div>
                 <div class="p-3 rounded bg-light border font-monospace mb-2.5" style="font-size: 13px; line-height: 1.9;">
                     • <b>1/3 Masa Pidana</b> : {$tgl13Murni} - {$totalRemisiHari} Hari = <b class="text-primary">{$tgl13Definitif}</b><br>
                     • <b>1/2 Asimilasi</b>   : {$tgl12Murni} - {$totalRemisiHari} Hari = <b class="text-warning">{$tgl12Definitif}</b><br>
@@ -1870,7 +1867,6 @@ ROW;
     </tr>
     <tr>
         <td style="font-size: 9.5pt; line-height: 1.7; padding: 10px 12px;">
-            <span style="color: #475569;">Dihitung dari tanggal murni dikurangkan perolehan remisi s.d. 2/3 masa pidana (1 Bulan Remisi = 30 Hari):</span><br>
             &bull; <b>Remisi Diperoleh saat 2/3:</b> <b style="color: #047857; font-size: 10.5pt;">{$totalRemisiTeks} ({$totalRemisiHari} Hari)</b><br>
             &bull; <b>1/3 Masa Pidana:</b> {$tgl13Murni} - {$totalRemisiHari} Hari = <b style="color: #0f172a; font-size: 10pt;">{$tgl13Def}</b><br>
             &bull; <b>1/2 Asimilasi:</b> {$tgl12Murni} - {$totalRemisiHari} Hari = <b style="color: #0f172a; font-size: 10pt;">{$tgl12Def}</b><br>
