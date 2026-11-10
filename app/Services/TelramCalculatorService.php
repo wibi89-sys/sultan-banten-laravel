@@ -977,7 +977,7 @@ class TelramCalculatorService
             $teks .= "LANGKAH 2: Potongan Masa Penahanan (Pasca-Putusan)\n";
             $teks .= "• Dasar Hukum: Pasal 22 ayat (4) KUHAP (Masa penahanan dikurangkan seluruhnya dari pidana)\n";
             $teks .= "• Periode Penahanan: {$tglAwal} s.d. {$tglPutusan}\n";
-            $teks .= "• Masa Tahanan yang Dijalani (Potongan): {$masaTahananTeks} ({$masaTahananHari} Hari)\n\n";
+            $teks .= "• Potongan Tahanan (Potah): {$masaTahananTeks} ({$masaTahananHari} Hari)\n\n";
         }
 
         $teks .= "LANGKAH 3: Tonggak Murni Masa Pidana (Proporsional dari Vonis Pokok)\n";
@@ -1111,7 +1111,7 @@ CARD;
                     <div class="mb-1 text-secondary"><b>Dasar Hukum:</b> Masa penahanan yang telah dijalani dikurangkan seluruhnya dari pidana yang dijatuhkan.</div>
                     <div class="p-2 rounded bg-light border mb-2 font-monospace" style="font-size: 12px;">
                         Periode Penahanan: {$tglAwal} s.d. {$tglPutusan}<br>
-                        Masa Tahanan yang Dijalani (Potongan) = <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
+                        Potongan Tahanan (Potah) = <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
                     </div>
                 </div>
             </div>
@@ -1655,7 +1655,7 @@ CARD;
     <tr>
         <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
             &bull; <b>Periode Penahanan:</b> {$tglAwal} s.d. {$tglPutusan}<br>
-            &bull; <b>Masa Tahanan yang Dijalani (Potongan):</b> <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
+            &bull; <b>Potongan Tahanan (Potah):</b> <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)
         </td>
     </tr>
 </table>
@@ -1795,7 +1795,7 @@ ROW;
         <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$lamaVonis}</td>
     </tr>
     <tr>
-        <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Masa Tahanan (Potongan)</td>
+        <td width="20%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Potongan Tahanan (Potah)</td>
         <td width="30%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$masaTahananTeks}</td>
         <td width="22%" style="color: #475569; padding: 4px 8px; font-size: 9pt;">Ekspirasi (Murni)</td>
         <td width="28%" style="font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglEkspirasiMurni}</td>

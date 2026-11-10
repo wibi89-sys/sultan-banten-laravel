@@ -727,7 +727,7 @@
                             <i class="fas fa-gavel text-warning me-1"></i> Tgl. Putusan: <strong class="telram-text-title" id="infoTglPutusan">-</strong>
                         </div>
                         <div class="col-sm-6 d-none" id="wrapInfoMasaTahanan">
-                            <i class="fas fa-user-clock text-success me-1"></i> Potongan Tahanan: <strong class="telram-text-title" id="infoMasaTahanan">-</strong>
+                            <i class="fas fa-user-clock text-success me-1"></i> Potongan Tahanan (Potah): <strong class="telram-text-title" id="infoMasaTahanan">-</strong>
                         </div>
                     </div>
                 </div>
@@ -1656,7 +1656,7 @@
         }
 
         const d = lastResult;
-        const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan:* ${d.formatted.tgl_putusan}\n*Masa Tahanan (Potongan):* ${d.masa_tahanan_teks}` : '';
+        const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan:* ${d.formatted.tgl_putusan}\n*Potongan Tahanan (Potah):* ${d.masa_tahanan_teks}` : '';
         const text = `*LEMBAR PERKIRAAN PERHITUNGAN*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------

@@ -1188,7 +1188,7 @@
                             <div><span id="labelInfoTglAwal">Tgl. Mulai Ditahan:</span> <strong id="infoTglAwal" style="color: var(--text-primary);">-</strong></div>
                             <div><span id="labelInfoTotalHari">Pidana Pokok:</span> <strong id="infoTotalHari" style="color: var(--text-primary);">-</strong></div>
                             <div id="wrapInfoPutusan" class="d-none"><span>Tgl. Putusan:</span> <strong id="infoTglPutusan" style="color: var(--text-primary);">-</strong></div>
-                            <div id="wrapInfoMasaTahanan" class="d-none"><span>Potongan Tahanan:</span> <strong id="infoMasaTahanan" style="color: var(--text-primary);">-</strong></div>
+                            <div id="wrapInfoMasaTahanan" class="d-none"><span>Potongan Tahanan (Potah):</span> <strong id="infoMasaTahanan" style="color: var(--text-primary);">-</strong></div>
                         </div>
 
                         <!-- Section Tabel Proyeksi Remisi Keppres 174/1999 (Dual-View) -->
@@ -2516,7 +2516,7 @@
         let text = `*LEMBAR PERKIRAAN PERHITUNGAN*\n---------------------------------------`;
 
         if (d.mode === 'simulasi_remisi') {
-            const putusanLine = d.tglPutusan ? `\n*Tgl. Putusan:* ${formatDateIndo(d.tglPutusan)}\n*Masa Tahanan (Potongan):* ${d.masaTahananTeks}` : '';
+            const putusanLine = d.tglPutusan ? `\n*Tgl. Putusan:* ${formatDateIndo(d.tglPutusan)}\n*Potongan Tahanan (Potah):* ${d.masaTahananTeks}` : '';
             text += `\n*Nama WBP:* ${d.namaWbp || 'Narapidana'}` +
                     `\n*No. Register:* ${d.noRegister || '-'}` +
                     `\n*Pidana / Pasal:* ${d.perkaraPasal || '-'}` +
@@ -2680,7 +2680,7 @@
                     <div><b>Dasar Hukum:</b> Masa penahanan yang telah dijalani dikurangkan seluruhnya dari pidana yang dijatuhkan.</div>
                     <div class="step-code-box">
                         Periode Penahanan: ${tglAwalFmt} s.d. ${tglPutusanFmt}<br>
-                        Masa Tahanan yang Dijalani (Potongan) = <b>${d.masaTahananTeks}</b> (${masaTahananHari} Hari)
+                        Potongan Tahanan (Potah) = <b>${d.masaTahananTeks}</b> (${masaTahananHari} Hari)
                     </div>
                 </div>
             </div>`;
@@ -2779,7 +2779,7 @@ II. LANGKAH-LANGKAH PERHITUNGAN MANUAL (STEP-BY-STEP AUDIT TRAIL)
 [LANGKAH 2] PERHITUNGAN POTONGAN TAHANAN (PASCA-PUTUSAN)
 - Dasar Hukum: KUHAP Pasal 22 Ayat (4)
 - Periode Penahanan     : ${tglAwalFmt} s.d. ${tglPutusanFmt}
-- Masa Tahanan Dijalani : ${d.masaTahananTeks} (${masaTahananHari} Hari)
+- Potongan Tahanan (Potah) : ${d.masaTahananTeks} (${masaTahananHari} Hari)
 `;
         }
 
