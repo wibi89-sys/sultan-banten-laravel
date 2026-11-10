@@ -385,7 +385,7 @@
                             <div class="col-12 col-md-6" id="wrapTglPutusan">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 12.5px;">
-                                        <i class="fas fa-gavel me-1"></i> Tgl. Putusan / Inkrah
+                                        <i class="fas fa-gavel me-1"></i> Tgl. Putusan
                                     </label>
                                     <span class="badge bg-light text-secondary border" style="font-size: 10px;">Opsional</span>
                                 </div>
@@ -576,6 +576,9 @@
                                 </span>
                             </div>
                             <div class="d-flex align-items-center flex-wrap gap-1.5" id="btnGroupAksiHasil">
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 shadow-sm fw-semibold" onclick="tampilkanModalHitunganManual()" title="Lihat Rumus &amp; Hitungan Manual Lengkap" style="font-size: 11.5px;">
+                                    <i class="fas fa-calculator me-1"></i> Hitungan Manual &amp; Rumus
+                                </button>
                                 <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 py-1.5 shadow-sm fw-semibold" onclick="unduhPdfResmi()" title="Unduh Lembar Resmi PDF" style="font-size: 11.5px;">
                                     <i class="fas fa-file-pdf me-1"></i> Unduh PDF
                                 </button>
@@ -789,6 +792,73 @@
                             <i class="fas fa-info-circle me-1 text-primary"></i> <b>Standar 2/3 (SDP Ditjenpas &amp; UU No. 22/2022):</b> Remisi dihitung selama narapidana menjalani pidana di Lapas s.d. 2/3 Definitif tercapai saat bebas bersyarat PB/CB. Remisi tahun-tahun setelahnya tidak dihitung di Lapas karena WBP menjalani pembinaan luar di Bapas.
                         </small>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Hitungan Manual Lengkap & Rumus -->
+<div class="modal fade" id="modalHitunganManual" tabindex="-1" aria-labelledby="modalHitunganManualLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+            <div class="modal-header bg-light py-2.5 px-3 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary p-2 rounded-circle">
+                        <i class="fas fa-calculator text-white" style="font-size: 13px;"></i>
+                    </span>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0 text-dark" id="modalHitunganManualLabel" style="font-size: 14.5px;">
+                            Hitungan Manual Lengkap &amp; Rumus
+                        </h6>
+                        <small class="text-muted" style="font-size: 11px;">
+                            Audit Trail Matematis Sesuai Kaidah Baku Pemasyarakatan &amp; Keppres No. 174/1999
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-3">
+                <!-- Nav Tabs: Kartu Visual vs Format Teks -->
+                <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-pill border" id="pillsHitunganManual" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill py-1.5 fw-semibold" id="tabVisualManual" data-bs-toggle="pill" data-bs-target="#contentVisualManual" type="button" role="tab" style="font-size: 12px;">
+                            <i class="fas fa-layer-group me-1.5"></i> Tampilan Visual (Langkah 1 s.d. 5)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill py-1.5 fw-semibold" id="tabTeksManual" data-bs-toggle="pill" data-bs-target="#contentTeksManual" type="button" role="tab" style="font-size: 12px;">
+                            <i class="fas fa-file-lines me-1.5"></i> Format Salin Teks / Berkas
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="pillsHitunganManualContent">
+                    <!-- Tab Visual Cards -->
+                    <div class="tab-pane fade show active" id="contentVisualManual" role="tabpanel">
+                        <div id="containerHitunganManualHtml">
+                            <!-- Injected from data.hitungan_manual_html -->
+                        </div>
+                    </div>
+
+                    <!-- Tab Preformatted Plain Text -->
+                    <div class="tab-pane fade" id="contentTeksManual" role="tabpanel">
+                        <div class="position-relative">
+                            <pre id="preHitunganManualTeks" class="p-3 rounded-3 bg-dark text-light border font-monospace mb-0" style="font-size: 11.5px; max-height: 480px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; line-height: 1.55;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light py-2 px-3 border-top d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">
+                    Tutup
+                </button>
+                <div class="d-flex gap-1.5">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm fw-semibold" onclick="salinHitunganManualTeks()">
+                        <i class="fas fa-copy me-1"></i> Salin Rincian Hitungan
+                    </button>
                 </div>
             </div>
         </div>
@@ -1539,6 +1609,45 @@
         window.print();
     }
 
+    // Buka Modal Hitungan Manual & Rumus
+    function tampilkanModalHitunganManual() {
+        if (!lastResult || lastResult.mode !== 'simulasi_remisi') {
+            showToast('Lakukan simulasi remisi terlebih dahulu!', 'warning');
+            return;
+        }
+
+        const containerHtml = document.getElementById('containerHitunganManualHtml');
+        const preTeks = document.getElementById('preHitunganManualTeks');
+
+        if (containerHtml && lastResult.hitungan_manual_html) {
+            containerHtml.innerHTML = lastResult.hitungan_manual_html;
+        }
+
+        if (preTeks && lastResult.hitungan_manual_teks) {
+            preTeks.textContent = lastResult.hitungan_manual_teks;
+        }
+
+        const modalEl = document.getElementById('modalHitunganManual');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    }
+
+    // Salin Teks Hitungan Manual ke Clipboard
+    function salinHitunganManualTeks() {
+        if (!lastResult || !lastResult.hitungan_manual_teks) {
+            showToast('Rincian hitungan manual belum tersedia.', 'warning');
+            return;
+        }
+
+        navigator.clipboard.writeText(lastResult.hitungan_manual_teks).then(() => {
+            showToast('Rincian hitungan manual berhasil disalin!', 'success');
+        }).catch(() => {
+            showToast('Gagal menyalin teks ke clipboard.', 'error');
+        });
+    }
+
     // Salin Ringkasan Teks untuk WhatsApp
     function salinRingkasanTeks() {
         if (!lastResult || lastResult.mode !== 'simulasi_remisi') {
@@ -1547,7 +1656,7 @@
         }
 
         const d = lastResult;
-        const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan / Inkrah:* ${d.formatted.tgl_putusan}\n*Masa Tahanan (Potongan):* ${d.masa_tahanan_teks}` : '';
+        const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan:* ${d.formatted.tgl_putusan}\n*Masa Tahanan (Potongan):* ${d.masa_tahanan_teks}` : '';
         const text = `*LEMBAR PERKIRAAN PERHITUNGAN*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
@@ -1559,13 +1668,12 @@
 *Agama WBP:* ${d.agama}
 *Status Pembinaan:* ${d.kategori_tambahan_label || 'Standar (Reguler)'}
 *Remisi Dasawarsa:* ${d.include_dasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
-*Basis Simulasi:* ${d.target_basis_label || 'Standar 2/3 Masa Pidana (PB/CB)'}
-*Program Integrasi:* ${d.nama_program}
+*Basis Simulasi:* ${d.target_basis_label || 'Standar 2/3 Masa Pidana'}
 ---------------------------------------
 *Tonggak Masa Pidana:*
 • *1/3 Masa Pidana:* ${d.formatted.tgl_1_3_murni}
 • *1/2 Asimilasi:* ${d.formatted.tgl_1_2_definitif} (Murni: ${d.formatted.tgl_1_2_murni})
-• *2/3 ${d.jenis_program}:* ${d.formatted.tgl_2_3_definitif} (Murni: ${d.formatted.tgl_2_3_murni})
+• *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Murni: ${d.formatted.tgl_2_3_murni})
 • *Ekspirasi Definitif:* ${d.formatted.ekspirasi_definitif} (Murni: ${d.formatted.ekspirasi_murni})
 • *Total Perkiraan Remisi:* ${d.total_proyeksi_remisi_hari} Hari (${d.total_proyeksi_remisi_teks})
 ---------------------------------------

@@ -632,7 +632,7 @@ class TelramCalculatorService
 
                     $statusTambahan = $isSebelumPutusan ? 'Memenuhi Syarat (Tambahan - Susulan)' : 'Memenuhi Syarat (Tambahan)';
                     if ($isSebelumPutusan) {
-                        $keteranganTambahan .= ' (Remisi susulan pasca-inkrah '.self::formatTanggalIndonesia($tglPutusan).').';
+                        $keteranganTambahan .= ' (Remisi susulan pasca-putusan '.self::formatTanggalIndonesia($tglPutusan).').';
                     }
 
                     $ledger[] = [
@@ -688,7 +688,7 @@ class TelramCalculatorService
                     $statusDasawarsa = $isSebelumPutusan ? 'Memenuhi Syarat (Dasawarsa - Susulan)' : 'Memenuhi Syarat (Dasawarsa)';
                     $keteranganAlasanDasawarsa = "Pengurangan istimewa peringatan HUT ke-{$hutKe} Kemerdekaan RI: 1/12 dari vonis pokok (".self::formatHariKeTeks($potonganDasawarsaMaks).'), dibatasi maksimal 3 bulan / 90 hari.';
                     if ($isSebelumPutusan) {
-                        $keteranganAlasanDasawarsa .= ' (Remisi susulan pasca-inkrah '.self::formatTanggalIndonesia($tglPutusan).').';
+                        $keteranganAlasanDasawarsa .= ' (Remisi susulan pasca-putusan '.self::formatTanggalIndonesia($tglPutusan).').';
                     }
 
                     $ledger[] = [
@@ -790,10 +790,10 @@ class TelramCalculatorService
             }
         }
 
-        return [
+        $result = [
             'mode' => 'simulasi_remisi',
             'target_basis' => $targetBasis,
-            'target_basis_label' => $targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana (Usulan PB/CB)' : 'Sampai Ekspirasi Bebas Murni',
+            'target_basis_label' => $targetBasis === '2_3' ? 'Standar 2/3 Masa Pidana' : 'Sampai Ekspirasi Bebas Murni',
             'nama_wbp' => $namaWbp,
             'no_register' => $noRegister,
             'perkara_pasal' => $perkaraPasal,
@@ -849,6 +849,11 @@ class TelramCalculatorService
             ],
             'proyeksi_ledger' => $ledger,
         ];
+
+        $result['hitungan_manual_teks'] = self::generateHitunganManualTeks($result);
+        $result['hitungan_manual_html'] = self::renderHitunganManualHtml($result);
+
+        return $result;
     }
 
     /**
@@ -877,6 +882,360 @@ class TelramCalculatorService
         }
 
         return implode(', ', $parts) ?: '0 Hari';
+    }
+
+    /**
+     * Konversi durasi tahun, bulan, hari ke format teks deskriptif
+     */
+    public static function formatDurasiTeks(int $tahun, int $bulan, int $hari): string
+    {
+        $parts = [];
+        if ($tahun > 0) {
+            $parts[] = "{$tahun} Tahun";
+        }
+        if ($bulan > 0) {
+            $parts[] = "{$bulan} Bulan";
+        }
+        if ($hari > 0) {
+            $parts[] = "{$hari} Hari";
+        }
+
+        return implode(', ', $parts) ?: '0 Hari';
+    }
+
+    /**
+     * Hasilkan rincian teks hitungan manual lengkap beserta rumus dan substitusi angka.
+     * Tidak menyebutkan program integrasi secara kaku agar fleksibel untuk semua keperluan.
+     */
+    public static function generateHitunganManualTeks(array $data): string
+    {
+        $namaWbp = $data['nama_wbp'] ?? 'Narapidana';
+        $noRegister = $data['no_register'] ?? '-';
+        $perkaraPasal = $data['perkara_pasal'] ?? '-';
+        $tglAwal = $data['formatted']['tgl_awal'] ?? '-';
+        $tglPutusan = $data['formatted']['tgl_putusan'] ?? '-';
+        $lamaVonis = $data['lama_pidana_teks'] ?? '-';
+        $totalHariVonis = (int) ($data['total_hari_vonis'] ?? 0);
+        $totalHariVonisFmt = number_format($totalHariVonis, 0, ',', '.');
+        $tahun = (int) ($data['tahun'] ?? 0);
+        $bulan = (int) ($data['bulan'] ?? 0);
+        $hari = (int) ($data['hari'] ?? 0);
+
+        $ekspirasiMurni = $data['formatted']['ekspirasi_murni'] ?? '-';
+        $tgl13Murni = $data['formatted']['tgl_1_3_murni'] ?? '-';
+        $tgl12Murni = $data['formatted']['tgl_1_2_murni'] ?? '-';
+        $tgl23Murni = $data['formatted']['tgl_2_3_murni'] ?? '-';
+
+        $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
+        $totalRemisiTeks = $data['total_proyeksi_remisi_teks'] ?? '0 Hari';
+
+        $ekspirasiDefinitif = $data['formatted']['ekspirasi_definitif'] ?? '-';
+        $tgl13Definitif = $data['formatted']['tgl_1_3_definitif'] ?? '-';
+        $tgl12Definitif = $data['formatted']['tgl_1_2_definitif'] ?? '-';
+        $tgl23Definitif = $data['formatted']['tgl_2_3_definitif'] ?? '-';
+        $tglUsul = $data['formatted']['tgl_mulai_pengusulan'] ?? '-';
+
+        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
+        $masaTahananTeks = $data['masa_tahanan_teks'] ?? '-';
+        $sisaHariPascaPutusan = $data['sisa_hari_pasca_putusan'] ?? null;
+        $sisaPidanaPascaPutusanTeks = $data['sisa_pidana_pasca_putusan_teks'] ?? '-';
+
+        [$y13, $m13, $d13] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
+        [$y12, $m12, $d12] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
+        [$y23, $m23, $d23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
+
+        $durasi13Teks = self::formatDurasiTeks($y13, $m13, $d13);
+        $durasi12Teks = self::formatDurasiTeks($y12, $m12, $d12);
+        $durasi23Teks = self::formatDurasiTeks($y23, $m23, $d23);
+
+        $teks = "RINCIAN HITUNGAN MANUAL & RUMUS LENGKAP\n";
+        $teks .= "Sultan Banten - Kantor Wilayah Kemenimipas Banten\n";
+        $teks .= "========================================================\n\n";
+
+        $teks .= "I. DATA IDENTITAS & PERKARA\n";
+        $teks .= "--------------------------------------------------------\n";
+        $teks .= "• Nama WBP            : {$namaWbp}\n";
+        $teks .= "• Nomor Register      : {$noRegister}\n";
+        $teks .= "• Perkara / Pasal     : {$perkaraPasal}\n";
+        $teks .= "• Tgl. Mulai Ditahan  : {$tglAwal}\n";
+        $teks .= "• Tgl. Putusan        : {$tglPutusan}\n";
+        $teks .= "• Pidana Pokok        : {$lamaVonis} ({$totalHariVonisFmt} Hari baku)\n\n";
+
+        $teks .= "II. LANGKAH-LANGKAH PERHITUNGAN MANUAL\n";
+        $teks .= "--------------------------------------------------------\n";
+        $teks .= "LANGKAH 1: Perhitungan Hari Pidana Pokok & Ekspirasi Murni\n";
+        $teks .= "• Kaidah Baku: 1 Tahun = 360 Hari (12 bln × 30 hr), 1 Bulan = 30 Hari\n";
+        $teks .= "• Total Hari Vonis = ({$tahun} × 360) + ({$bulan} × 30) + {$hari} = {$totalHariVonisFmt} Hari\n";
+        $teks .= "• Kaidah Ekspirasi: Ditambahkan tanggal ke tanggal pada tahun berikutnya + 30 hari kalender per bulan\n";
+        $teks .= "• Tanggal Ekspirasi Bebas Murni: {$ekspirasiMurni}\n\n";
+
+        if (! empty($data['tgl_putusan'])) {
+            $teks .= "LANGKAH 2: Potongan Masa Penahanan (Pasca-Putusan)\n";
+            $teks .= "• Dasar Hukum: Pasal 22 ayat (4) KUHAP (Masa penahanan dikurangkan seluruhnya dari pidana)\n";
+            $teks .= "• Periode Penahanan: {$tglAwal} s.d. {$tglPutusan}\n";
+            $teks .= "• Masa Tahanan (Potongan): {$masaTahananTeks}\n";
+            $teks .= "• Sisa Pidana Pokok Pasca-Putusan: {$totalHariVonisFmt} hr - {$masaTahananHari} hr = {$sisaHariPascaPutusan} Hari ({$sisaPidanaPascaPutusanTeks})\n\n";
+        }
+
+        $teks .= "LANGKAH 3: Tonggak Murni Masa Pidana (Proporsional dari Vonis Pokok)\n";
+        $teks .= "• 1/3 Masa Pidana : 1/3 × {$lamaVonis} = {$durasi13Teks} -> {$tgl13Murni}\n";
+        $teks .= "• 1/2 Masa Pidana : 1/2 × {$lamaVonis} = {$durasi12Teks} (Asimilasi) -> {$tgl12Murni}\n";
+        $teks .= "• 2/3 Masa Pidana : 2/3 × {$lamaVonis} = {$durasi23Teks} -> {$tgl23Murni}\n";
+        $teks .= "  (Catatan: Dihitung proporsional dari masa pidana pokok dari tanggal mulai ditahan)\n\n";
+
+        $teks .= "LANGKAH 4: Rincian Kronologis Perolehan Remisi (Keppres No. 174/1999)\n";
+        $ledger = $data['proyeksi_ledger'] ?? [];
+        if (! empty($ledger)) {
+            $no = 1;
+            foreach ($ledger as $r) {
+                $status = $r['eligible'] ? $r['keterangan_status'] : 'Belum 6 Bulan';
+                $teks .= " {$no}. [{$r['tanggal_indo']}] {$r['nama_event']}\n";
+                $teks .= "    - Dijalani: {$r['hari_dijalani']} hr ({$r['masa_dijalani_teks']}) | Status: {$status}\n";
+                $teks .= "    - Besaran: {$r['besaran_teks']} | Akumulasi: {$r['total_akumulasi_hari']} Hari\n";
+                if (! empty($r['keterangan_alasan'])) {
+                    $teks .= "    - Keterangan: {$r['keterangan_alasan']}\n";
+                }
+                $no++;
+            }
+        }
+        $teks .= "• Total Akumulasi Remisi yang Diperoleh: {$totalRemisiHari} Hari ({$totalRemisiTeks})\n";
+        $teks .= "  (Catatan: Remisi dihitung dan dijumlahkan dalam satuan Bulan & Hari tanpa konversi tahun)\n\n";
+
+        $teks .= "LANGKAH 5: Penetapan Tonggak Definitif & Waktu Pengusulan SDP\n";
+        $teks .= "• Ekspirasi Definitif : {$ekspirasiMurni} - {$totalRemisiHari} Hari = {$ekspirasiDefinitif}\n";
+        $teks .= "• 1/3 Definitif       : {$tgl13Murni} - {$totalRemisiHari} Hari = {$tgl13Definitif}\n";
+        $teks .= "• 1/2 Definitif       : {$tgl12Murni} - {$totalRemisiHari} Hari = {$tgl12Definitif}\n";
+        $teks .= "• 2/3 Definitif       : {$tgl23Murni} - {$totalRemisiHari} Hari = {$tgl23Definitif}\n";
+        $teks .= "• Mulai Pengusulan SDP: {$tgl23Definitif} - 60 Hari (H-2 Bulan) = {$tglUsul}\n\n";
+        $teks .= "========================================================\n";
+        $teks .= 'Keterangan: Perhitungan ini bersifat fleksibel sebagai bahan telaah pembinaan, usulan integrasi, maupun administrasi registrasi narapidana di UPT Pemasyarakatan.';
+
+        return $teks;
+    }
+
+    /**
+     * Render komponen visual HTML hitungan manual langkah demi langkah untuk web modal
+     */
+    public static function renderHitunganManualHtml(array $data): string
+    {
+        $namaWbp = htmlspecialchars($data['nama_wbp'] ?? 'Narapidana');
+        $noRegister = htmlspecialchars($data['no_register'] ?? '-');
+        $perkaraPasal = htmlspecialchars($data['perkara_pasal'] ?? '-');
+        $tglAwal = htmlspecialchars($data['formatted']['tgl_awal'] ?? '-');
+        $tglPutusan = htmlspecialchars($data['formatted']['tgl_putusan'] ?? '-');
+        $lamaVonis = htmlspecialchars($data['lama_pidana_teks'] ?? '-');
+        $totalHariVonis = (int) ($data['total_hari_vonis'] ?? 0);
+        $totalHariVonisFmt = number_format($totalHariVonis, 0, ',', '.');
+        $tahun = (int) ($data['tahun'] ?? 0);
+        $bulan = (int) ($data['bulan'] ?? 0);
+        $hari = (int) ($data['hari'] ?? 0);
+
+        $ekspirasiMurni = htmlspecialchars($data['formatted']['ekspirasi_murni'] ?? '-');
+        $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
+        $tgl12Murni = htmlspecialchars($data['formatted']['tgl_1_2_murni'] ?? '-');
+        $tgl23Murni = htmlspecialchars($data['formatted']['tgl_2_3_murni'] ?? '-');
+
+        $totalRemisiHari = (int) ($data['total_proyeksi_remisi_hari'] ?? 0);
+        $totalRemisiTeks = htmlspecialchars($data['total_proyeksi_remisi_teks'] ?? '0 Hari');
+
+        $ekspirasiDefinitif = htmlspecialchars($data['formatted']['ekspirasi_definitif'] ?? '-');
+        $tgl13Definitif = htmlspecialchars($data['formatted']['tgl_1_3_definitif'] ?? '-');
+        $tgl12Definitif = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
+        $tgl23Definitif = htmlspecialchars($data['formatted']['tgl_2_3_definitif'] ?? '-');
+        $tglUsul = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
+
+        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
+        $masaTahananTeks = htmlspecialchars($data['masa_tahanan_teks'] ?? '-');
+        $sisaHariPascaPutusan = (int) ($data['sisa_hari_pasca_putusan'] ?? 0);
+        $sisaPidanaPascaPutusanTeks = htmlspecialchars($data['sisa_pidana_pasca_putusan_teks'] ?? '-');
+
+        [$y13, $m13, $d13] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
+        [$y12, $m12, $d12] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
+        [$y23, $m23, $d23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
+
+        $durasi13Teks = htmlspecialchars(self::formatDurasiTeks($y13, $m13, $d13));
+        $durasi12Teks = htmlspecialchars(self::formatDurasiTeks($y12, $m12, $d12));
+        $durasi23Teks = htmlspecialchars(self::formatDurasiTeks($y23, $m23, $d23));
+
+        $html = '<div class="hitungan-manual-container d-flex flex-column gap-3">';
+
+        // Identitas Singkat
+        $html .= <<<CARD
+        <div class="card border-0 shadow-sm" style="background-color: #f8fafc; border-radius: 10px;">
+            <div class="card-body p-3">
+                <div class="row g-2" style="font-size: 12.5px;">
+                    <div class="col-sm-6"><b>Nama WBP:</b> {$namaWbp}</div>
+                    <div class="col-sm-6"><b>No. Register:</b> {$noRegister}</div>
+                    <div class="col-sm-6"><b>Perkara / Pasal:</b> {$perkaraPasal}</div>
+                    <div class="col-sm-6"><b>Pidana Pokok:</b> {$lamaVonis} ({$totalHariVonisFmt} Hari baku)</div>
+                    <div class="col-sm-6"><b>Tgl. Mulai Ditahan:</b> {$tglAwal}</div>
+                    <div class="col-sm-6"><b>Tgl. Putusan:</b> {$tglPutusan}</div>
+                </div>
+            </div>
+        </div>
+CARD;
+
+        // Langkah 1
+        $html .= <<<CARD
+        <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
+            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                <strong class="text-primary" style="font-size: 13px;"><i class="fas fa-layer-group me-1.5"></i> LANGKAH 1: Perhitungan Hari Pidana Pokok &amp; Ekspirasi Murni</strong>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10px;">Vonis Baku</span>
+            </div>
+            <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
+                <div class="mb-1 text-secondary"><b>Kaidah Baku Pemasyarakatan:</b> 1 Tahun = 360 Hari (12 bln × 30 hr), 1 Bulan = 30 Hari.</div>
+                <div class="p-2 rounded bg-light border mb-2 font-monospace" style="font-size: 12px;">
+                    Total Hari Vonis = ({$tahun} × 360) + ({$bulan} × 30) + {$hari} = <b>{$totalHariVonisFmt} Hari</b>
+                </div>
+                <div class="text-secondary"><b>Kaidah Ekspirasi Bebas Murni:</b> Tanggal ke tanggal yang sama di tahun berikutnya + 30 hari kalender per bulan.</div>
+                <div class="mt-1">Tanggal Ekspirasi Murni (Sebelum Remisi): <b class="text-danger" style="font-size: 13.5px;">{$ekspirasiMurni}</b></div>
+            </div>
+        </div>
+CARD;
+
+        // Langkah 2 (Jika Tgl Putusan diisi)
+        if (! empty($data['tgl_putusan'])) {
+            $html .= <<<CARD
+            <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
+                <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                    <strong class="text-success" style="font-size: 13px;"><i class="fas fa-gavel me-1.5"></i> LANGKAH 2: Potongan Masa Penahanan &amp; Sisa Pidana Pokok</strong>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">KUHAP Ps. 22(4)</span>
+                </div>
+                <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
+                    <div class="mb-1 text-secondary"><b>Dasar Hukum:</b> Masa penahanan yang telah dijalani dikurangkan seluruhnya dari pidana yang dijatuhkan.</div>
+                    <div class="p-2 rounded bg-light border mb-2 font-monospace" style="font-size: 12px;">
+                        Periode Penahanan: {$tglAwal} s.d. {$tglPutusan}<br>
+                        Masa Tahanan (Potongan) = <b>{$masaTahananTeks}</b><br>
+                        Sisa Pidana Pasca-Putusan = {$totalHariVonisFmt} hr - {$masaTahananHari} hr = <b>{$sisaHariPascaPutusan} Hari</b> ({$sisaPidanaPascaPutusanTeks})
+                    </div>
+                </div>
+            </div>
+CARD;
+        }
+
+        // Langkah 3
+        $html .= <<<CARD
+        <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
+            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                <strong class="text-info" style="font-size: 13px;"><i class="fas fa-chart-pie me-1.5"></i> LANGKAH 3: Tonggak Murni Masa Pidana (Proporsional dari Vonis Pokok)</strong>
+                <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 10px;">Fleksibel</span>
+            </div>
+            <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
+                <div class="mb-2 text-secondary">Dihitung proporsional dari lama vonis pokok murni sejak tanggal mulai ditahan:</div>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <div class="p-2 rounded border bg-light">
+                            <small class="text-muted d-block" style="font-size: 10.5px;">1/3 MASA PIDANA</small>
+                            <span class="text-secondary" style="font-size: 11px;">1/3 × {$lamaVonis} = {$durasi13Teks}</span><br>
+                            <b class="text-primary" style="font-size: 13px;">{$tgl13Murni}</b>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 rounded border bg-light">
+                            <small class="text-muted d-block" style="font-size: 10.5px;">1/2 MASA PIDANA (ASIMILASI)</small>
+                            <span class="text-secondary" style="font-size: 11px;">1/2 × {$lamaVonis} = {$durasi12Teks}</span><br>
+                            <b class="text-warning" style="font-size: 13px;">{$tgl12Murni}</b>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 rounded border bg-light">
+                            <small class="text-muted d-block" style="font-size: 10.5px;">2/3 MASA PIDANA</small>
+                            <span class="text-secondary" style="font-size: 11px;">2/3 × {$lamaVonis} = {$durasi23Teks}</span><br>
+                            <b class="text-success" style="font-size: 13px;">{$tgl23Murni}</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+CARD;
+
+        // Langkah 4
+        $ledger = $data['proyeksi_ledger'] ?? [];
+        $rowsHtml = '';
+        if (empty($ledger)) {
+            $rowsHtml = '<tr><td colspan="7" class="text-center py-2 text-muted">Tidak ada event remisi sebelum ekspirasi.</td></tr>';
+        } else {
+            foreach ($ledger as $i => $row) {
+                $no = $i + 1;
+                $evTgl = htmlspecialchars($row['tanggal_indo'] ?? '-');
+                $evNama = htmlspecialchars($row['nama_event'] ?? '-');
+                $evDijalani = htmlspecialchars($row['hari_dijalani'] ?? 0);
+                $evBesaran = htmlspecialchars($row['besaran_teks'] ?? '0 Hari');
+                $evAkum = htmlspecialchars($row['total_akumulasi_hari'] ?? 0);
+                $evStatus = htmlspecialchars($row['keterangan_status'] ?? '-');
+                $badgeStatus = $row['eligible']
+                    ? '<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">'.$evStatus.'</span>'
+                    : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10px;">Belum 6 Bln</span>';
+
+                $rowsHtml .= <<<TR
+                <tr style="font-size: 11px;">
+                    <td class="text-center fw-bold text-muted">{$no}</td>
+                    <td>{$evTgl}</td>
+                    <td><b>{$evNama}</b></td>
+                    <td class="text-center">{$evDijalani} hr</td>
+                    <td class="text-center">{$badgeStatus}</td>
+                    <td class="text-center fw-bold text-primary">{$evBesaran}</td>
+                    <td class="text-center fw-bold text-success">{$evAkum} hr</td>
+                </tr>
+TR;
+            }
+        }
+
+        $html .= <<<CARD
+        <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
+            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                <strong class="text-warning text-dark" style="font-size: 13px;"><i class="fas fa-medal me-1.5"></i> LANGKAH 4: Rincian Kronologis Perolehan Remisi (Keppres No. 174/1999)</strong>
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 10px;">Bulan &amp; Hari</span>
+            </div>
+            <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
+                <div class="table-responsive border rounded mb-2">
+                    <table class="table table-sm table-striped align-middle mb-0">
+                        <thead class="table-light" style="font-size: 11px;">
+                            <tr>
+                                <th style="width: 30px;" class="text-center">No</th>
+                                <th>Tgl. Event</th>
+                                <th>Nama Remisi</th>
+                                <th class="text-center">Dijalani</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Besaran</th>
+                                <th class="text-center">Akumulasi</th>
+                            </tr>
+                        </thead>
+                        <tbody>{$rowsHtml}</tbody>
+                    </table>
+                </div>
+                <div class="p-2 rounded bg-light border text-end">
+                    Total Akumulasi Remisi yang Diperoleh: <b class="text-success" style="font-size: 13px;">{$totalRemisiHari} Hari ({$totalRemisiTeks})</b>
+                </div>
+            </div>
+        </div>
+CARD;
+
+        // Langkah 5
+        $html .= <<<CARD
+        <div class="card border" style="border-radius: 10px; border-color: #e2e8f0;">
+            <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
+                <strong class="text-danger" style="font-size: 13px;"><i class="fas fa-flag-checkered me-1.5"></i> LANGKAH 5: Penetapan Tonggak Definitif &amp; Waktu Pengusulan SDP</strong>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10px;">Definitif</span>
+            </div>
+            <div class="card-body p-3" style="font-size: 12.5px; line-height: 1.5;">
+                <div class="p-2 rounded bg-light border mb-2 font-monospace" style="font-size: 12px;">
+                    Ekspirasi Definitif = {$ekspirasiMurni} - {$totalRemisiHari} Hari = <b class="text-danger">{$ekspirasiDefinitif}</b><br>
+                    1/3 Definitif = {$tgl13Murni} - {$totalRemisiHari} Hari = <b>{$tgl13Definitif}</b><br>
+                    1/2 Definitif (Asimilasi) = {$tgl12Murni} - {$totalRemisiHari} Hari = <b>{$tgl12Definitif}</b><br>
+                    2/3 Definitif = {$tgl23Murni} - {$totalRemisiHari} Hari = <b class="text-success">{$tgl23Definitif}</b><br>
+                    Mulai Pengusulan di SDP = {$tgl23Definitif} - 60 Hari (H-2 Bulan) = <b class="text-warning">{$tglUsul}</b>
+                </div>
+                <div class="text-muted" style="font-size: 11px;">
+                    <i class="fas fa-info-circle me-1 text-primary"></i> <b>Keterangan:</b> Perhitungan ini dirancang fleksibel tanpa mengikat pada jenis program integrasi tertentu sehingga dapat digunakan untuk seluruh analisis pembinaan maupun administrasi narapidana.
+                </div>
+            </div>
+        </div>
+CARD;
+
+        $html .= '</div>';
+
+        return $html;
     }
 
     /**
@@ -1254,6 +1613,50 @@ class TelramCalculatorService
 
         $statusPesan = htmlspecialchars($data['status_pengusulan']['pesan'] ?? '-');
 
+        $tahun = (int) ($data['tahun'] ?? 0);
+        $bulan = (int) ($data['bulan'] ?? 0);
+        $hari = (int) ($data['hari'] ?? 0);
+        $totalHariVonis = (int) ($data['total_hari_vonis'] ?? (($tahun * 360) + ($bulan * 30) + $hari));
+        $totalHariVonisFmt = number_format($totalHariVonis, 0, ',', '.');
+        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
+        $sisaHariPascaPutusan = (int) ($data['sisa_hari_pasca_putusan'] ?? 0);
+        $sisaPidanaPascaPutusanTeks = htmlspecialchars($data['sisa_pidana_pasca_putusan_teks'] ?? '-');
+
+        [$y13, $m13, $d13] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
+        [$y12, $m12, $d12] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
+        [$y23, $m23, $d23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
+
+        $durasi13Teks = htmlspecialchars(self::formatDurasiTeks($y13, $m13, $d13));
+        $durasi12Teks = htmlspecialchars(self::formatDurasiTeks($y12, $m12, $d12));
+        $durasi23Teks = htmlspecialchars(self::formatDurasiTeks($y23, $m23, $d23));
+
+        $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
+        $tgl12Murni = htmlspecialchars($data['formatted']['tgl_1_2_murni'] ?? '-');
+        $tgl23Murni = htmlspecialchars($data['formatted']['tgl_2_3_murni'] ?? '-');
+
+        $tglCetakIndo = Carbon::now()->locale('id')->isoFormat('D MMMM Y');
+        $petugasNama = htmlspecialchars(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
+
+        $langkah2PdfHtml = '';
+        if (! empty($data['tgl_putusan'])) {
+            $langkah2PdfHtml = <<<L2
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
+    <tr style="background-color: #f0fdf4;">
+        <td style="font-weight: bold; font-size: 8.2pt; color: #166534;">
+            LANGKAH 2: POTONGAN MASA PENAHANAN &amp; SISA PIDANA POKOK (KUHAP Ps. 22 Ayat 4)
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
+            &bull; <b>Periode Penahanan:</b> {$tglAwal} s.d. {$tglPutusan}<br>
+            &bull; <b>Masa Tahanan yang Dijalani:</b> <b>{$masaTahananTeks}</b> ({$masaTahananHari} Hari)<br>
+            &bull; <b>Sisa Pidana Pasca-Putusan:</b> {$totalHariVonisFmt} hari - {$masaTahananHari} hari = <b>{$sisaHariPascaPutusan} Hari</b> ({$sisaPidanaPascaPutusanTeks})
+        </td>
+    </tr>
+</table>
+L2;
+        }
+
         // Render Ledger Rows (Tabel Rincian Proyeksi Remisi 8 Kolom)
         $ledgerRowsHtml = '';
         $ledger = (array) ($data['proyeksi_ledger'] ?? []);
@@ -1377,7 +1780,7 @@ ROW;
     <tr>
         <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Nomor Register</td>
         <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$noRegister}</td>
-        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Tgl. Putusan Pengadilan</td>
+        <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 4px 8px; font-size: 9pt;">Tgl. Putusan</td>
         <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 4px 8px; font-size: 9.5pt;">: {$tglPutusan}</td>
     </tr>
     <tr>
@@ -1506,6 +1909,147 @@ ROW;
             </td>
         </tr>
     </tfoot>
+</table>
+
+<!-- ============================================================== -->
+<!-- HALAMAN 2: LAMPIRAN RINCIAN RUMUS & KALKULASI MANUAL LENGKAP -->
+<!-- ============================================================== -->
+<div style="page-break-before: always;"></div>
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td width="12%" align="center" valign="middle">
+            {$logoHtml}
+        </td>
+        <td width="88%" align="center" valign="middle">
+            <span style="font-size: 8pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
+            <span style="font-size: 8pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN - KANTOR WILAYAH BANTEN</span><br>
+            <span style="font-size: 10pt; font-weight: bold; color: #0f172a; text-transform: uppercase;">LAMPIRAN: RINCIAN RUMUS &amp; KALKULASI MANUAL</span>
+        </td>
+    </tr>
+</table>
+<hr style="height: 1px; border: none; background-color: #0f172a; margin-top: 3px; margin-bottom: 6px;">
+
+<!-- IDENTITAS SINGKAT LAMPIRAN -->
+<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 7.8pt; margin-bottom: 6px;">
+    <tr>
+        <td width="16%" style="color: #475569;">Nama WBP</td>
+        <td width="34%" style="font-weight: bold; color: #0f172a;">: {$namaWbp}</td>
+        <td width="20%" style="color: #475569;">Tgl. Mulai Ditahan</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$tglAwal}</td>
+    </tr>
+    <tr>
+        <td width="16%" style="color: #475569;">Nomor Register</td>
+        <td width="34%" style="font-weight: bold; color: #0f172a;">: {$noRegister}</td>
+        <td width="20%" style="color: #475569;">Tgl. Putusan</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$tglPutusan}</td>
+    </tr>
+    <tr>
+        <td width="16%" style="color: #475569;">Perkara / Pasal</td>
+        <td width="34%" style="font-weight: bold; color: #0f172a;">: {$perkaraPasal}</td>
+        <td width="20%" style="color: #475569;">Pidana Pokok</td>
+        <td width="30%" style="font-weight: bold; color: #0f172a;">: {$lamaVonis} ({$totalHariVonisFmt} Hari)</td>
+    </tr>
+</table>
+
+<!-- LANGKAH 1 -->
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
+    <tr style="background-color: #f1f5f9;">
+        <td style="font-weight: bold; font-size: 8.2pt; color: #1e40af;">
+            LANGKAH 1: PERHITUNGAN HARI PIDANA POKOK &amp; EKSPIRASI MURNI
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
+            &bull; <b>Kaidah Baku Pemasyarakatan:</b> 1 Tahun = 360 Hari (12 bulan &times; 30 hari), 1 Bulan = 30 Hari.<br>
+            &bull; <b>Total Hari Pidana Pokok:</b> ({$tahun} &times; 360) + ({$bulan} &times; 30) + {$hari} = <b>{$totalHariVonisFmt} Hari</b><br>
+            &bull; <b>Kaidah Ekspirasi Bebas Murni:</b> Dihitung sejak tanggal mulai ditahan ({$tglAwal}) ditambah durasi pidana ({$lamaVonis}) mengacu pada kalender masehi riil (tahun ke tahun yang sama + 30 hari per bulan).<br>
+            &bull; <b>Tanggal Ekspirasi Murni (Sebelum Remisi): <span style="color: #b91c1c; font-size: 8.5pt;">{$tglEkspirasiMurni}</span></b>
+        </td>
+    </tr>
+</table>
+
+<!-- LANGKAH 2 -->
+{$langkah2PdfHtml}
+
+<!-- LANGKAH 3 -->
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
+    <tr style="background-color: #f0fdfa;">
+        <td style="font-weight: bold; font-size: 8.2pt; color: #0f766e;">
+            LANGKAH 3: TONGGAK MURNI MASA PIDANA (PROPORSIONAL DARI VONIS POKOK)
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
+            Dihitung secara proporsional dari lama vonis pokok murni sejak tanggal mulai ditahan:<br>
+            &bull; <b>1/3 Masa Pidana:</b> 1/3 &times; {$lamaVonis} = {$durasi13Teks} &rarr; <b>{$tgl13Murni}</b><br>
+            &bull; <b>1/2 Masa Pidana (Asimilasi):</b> 1/2 &times; {$lamaVonis} = {$durasi12Teks} &rarr; <b>{$tgl12Murni}</b><br>
+            &bull; <b>2/3 Masa Pidana:</b> 2/3 &times; {$lamaVonis} = {$durasi23Teks} &rarr; <b style="color: #047857;">{$tgl23Murni}</b>
+        </td>
+    </tr>
+</table>
+
+<!-- LANGKAH 4 -->
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
+    <tr style="background-color: #fffbeb;">
+        <td style="font-weight: bold; font-size: 8.2pt; color: #b45309;">
+            LANGKAH 4: AKUMULASI PEROLEHAN REMISI (KEPPRES NO. 174/1999)
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
+            &bull; Remisi dihitung dan diakumulasikan dalam satuan Bulan dan Hari (1 Bulan = 30 Hari, tanpa konversi akumulasi ke tahun).<br>
+            &bull; <b>Total Akumulasi Remisi yang Diperoleh:</b> <b style="color: #047857; font-size: 8.5pt;">{$totalRemisiHari} Hari ({$totalRemisiTeks})</b>
+        </td>
+    </tr>
+</table>
+
+<!-- LANGKAH 5 -->
+<table width="100%" cellpadding="4" cellspacing="0" style="border: 0.5px solid #cbd5e1; margin-bottom: 5px;">
+    <tr style="background-color: #fef2f2;">
+        <td style="font-weight: bold; font-size: 8.2pt; color: #b91c1c;">
+            LANGKAH 5: PENETAPAN TONGGAK DEFINITIF &amp; WAKTU PENGUSULAN SDP
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 7.5pt; line-height: 1.35; padding: 4px 6px;">
+            &bull; <b>Ekspirasi Definitif:</b> Ekspirasi Murni ({$tglEkspirasiMurni}) - Total Remisi ({$totalRemisiHari} Hari) = <b style="color: #b91c1c; font-size: 8.5pt;">{$tglEkspirasiDef}</b><br>
+            &bull; <b>1/3 Definitif:</b> {$tgl13Murni} - {$totalRemisiHari} Hari = <b>{$tgl13Def}</b><br>
+            &bull; <b>1/2 Definitif (Asimilasi):</b> {$tgl12Murni} - {$totalRemisiHari} Hari = <b>{$tgl12Def}</b><br>
+            &bull; <b>2/3 Definitif:</b> {$tgl23Murni} - {$totalRemisiHari} Hari = <b style="color: #047857; font-size: 8.5pt;">{$tgl23Def}</b><br>
+            &bull; <b>Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):</b> {$tgl23Def} - 60 Hari = <b style="color: #b45309; font-size: 8.5pt;">{$tglUsul}</b>
+        </td>
+    </tr>
+</table>
+
+<!-- CATATAN FLEKSIBILITAS -->
+<table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #e2e8f0; background-color: #f8fafc; margin-bottom: 6px;">
+    <tr>
+        <td style="font-size: 6.8pt; color: #475569; line-height: 1.25;">
+            <b>Catatan / Disclaimer:</b> Rincian perhitungan matematis di atas bersifat objektif dan fleksibel tanpa mengikat pada satu program integrasi tertentu, sehingga dapat dijadikan acuan kerja universal dalam sidang TPP, pertimbangan pembinaan, usulan integrasi (PB/CB/CMB/Asimilasi), maupun kelengkapan berkas registrasi narapidana.
+        </td>
+    </tr>
+</table>
+
+<!-- KOTAK TANDA TANGAN VERIFIKASI -->
+<br>
+<table width="100%" border="0" cellpadding="2" cellspacing="0" style="font-size: 7.8pt;">
+    <tr>
+        <td width="50%" align="center">
+            Mengetahui,<br>
+            <b>Kasubsi Registrasi &amp; Bimkemas</b>
+            <br><br><br><br>
+            ( ............................................................ )<br>
+            <span style="font-size: 6.8pt; color: #64748b;">NIP. ....................................................</span>
+        </td>
+        <td width="50%" align="center">
+            Serang, {$tglCetakIndo}<br>
+            <b>Petugas Verifikator / Registrasi</b>
+            <br><br><br><br>
+            <b>( {$petugasNama} )</b><br>
+            <span style="font-size: 6.8pt; color: #64748b;">NIP. ....................................................</span>
+        </td>
+    </tr>
 </table>
 HTML;
     }
