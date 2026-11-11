@@ -695,7 +695,8 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('80 Bulan', $res10['hitungan_manual_html']);
 
         // Verifikasi format visual html
-        $this->assertStringContainsString('<b>Nama:</b> Budi Santoso', $html);
+        $this->assertStringContainsString('Nama', $html);
+        $this->assertStringContainsString('Budi Santoso', $html);
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $html);
         $this->assertStringContainsString('B. EKSPIRASI SEBELUM REMISI', $html);
         $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)', $html);
