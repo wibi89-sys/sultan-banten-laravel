@@ -1902,11 +1902,11 @@
                 <td style="white-space: nowrap;">${statusBadge}</td>
                 <td style="white-space: nowrap;" class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}">${row.besaran_teks}</td>
                 <td style="white-space: nowrap;">
-                    <span class="fw-bold text-danger">${row.perkiraan_ekspirasi_baru_indo}</span>
-                    <div class="small text-muted mt-1" style="font-size: 10.5px; line-height: 1.25;">
-                        <span>1/3: <b>${row.tgl_1_3_baru_indo || '-'}</b></span> &bull; 
-                        <span>1/2: <b>${row.tgl_1_2_baru_indo || '-'}</b></span><br>
-                        <span class="text-success fw-bold">2/3: ${row.tgl_2_3_baru_indo || '-'}</span>
+                    <div style="font-size: 12px; line-height: 1.45; font-weight: 700;">
+                        <div class="text-danger">Eks: ${row.perkiraan_ekspirasi_baru_indo}</div>
+                        <div class="text-primary">1/3: ${row.tgl_1_3_baru_indo || '-'}</div>
+                        <div style="color: #b45309;">1/2: ${row.tgl_1_2_baru_indo || '-'}</div>
+                        <div class="text-success">2/3: ${row.tgl_2_3_baru_indo || '-'}</div>
                     </div>
                 </td>
                 <td style="max-width: 280px;"><small class="text-secondary" style="font-size: 11px; line-height: 1.35; display: block;">${row.keterangan_alasan || '-'}</small></td>
@@ -1942,14 +1942,11 @@
                     </div>
                 </div>
                 <div class="p-2 rounded-2 border mb-1.5" style="background: rgba(254, 242, 242, 0.6); border-color: #fecaca !important;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-danger fw-bold" style="font-size: 10.5px; text-transform: uppercase;">EKSPIRASI SETELAH REMISI:</small>
-                        <span class="fw-bold text-danger" style="font-size: 13px;">${row.perkiraan_ekspirasi_baru_indo}</span>
-                    </div>
-                    <div class="mt-1 pt-1 border-top d-flex justify-content-between text-muted" style="font-size: 10.5px; border-color: rgba(239, 68, 68, 0.2) !important;">
-                        <span>1/3: <b>${row.tgl_1_3_baru_indo || '-'}</b></span>
-                        <span>1/2: <b>${row.tgl_1_2_baru_indo || '-'}</b></span>
-                        <span class="text-success fw-bold">2/3: ${row.tgl_2_3_baru_indo || '-'}</span>
+                    <div class="row g-1" style="font-size: 12px; font-weight: 700; line-height: 1.4;">
+                        <div class="col-6 text-danger">Eks: ${row.perkiraan_ekspirasi_baru_indo}</div>
+                        <div class="col-6 text-primary">1/3: ${row.tgl_1_3_baru_indo || '-'}</div>
+                        <div class="col-6" style="color: #b45309;">1/2: ${row.tgl_1_2_baru_indo || '-'}</div>
+                        <div class="col-6 text-success">2/3: ${row.tgl_2_3_baru_indo || '-'}</div>
                     </div>
                 </div>
                 <small class="text-muted d-block" style="font-size: 10.5px; line-height: 1.35;">

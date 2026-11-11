@@ -2411,22 +2411,21 @@ SUB_EKS_C_PDF;
                 $ledgerRowsHtml .= <<<ROW
                 <tr bgcolor="{$bgColor}">
                     <td width="4%" align="center" style="font-weight: bold; border: 0.5px solid #cbd5e1; padding: 3px 2px; color: #475569; font-size: 7.5pt;">{$no}</td>
-                    <td width="22%" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 7.5pt; line-height: 1.15;">
+                    <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 7.5pt; line-height: 1.15;">
                         <b>{$evNama}</b>{$tahapBadge}
                     </td>
                     <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px; font-size: 7.5pt; color: #1e293b;">{$evTgl}</td>
-                    <td width="14%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px; font-size: 7.5pt; line-height: 1.15;">
-                        <b>{$evDijalani} hr</b><br><span style="font-size: 6.5pt; color: #64748b;">({$evMasaTeks})</span>
+                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px; font-size: 7.5pt; line-height: 1.15;">
+                        <b>{$evDijalani} hr</b><br><span style="font-size: 6.8pt; color: #64748b;">({$evMasaTeks})</span>
                     </td>
-                    <td width="14%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px;">{$besaranHtml}</td>
-                    <td width="17%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px;">
-                        <b style="color: #b91c1c; font-size: 7.5pt;">{$evEkspirasiBaru}</b>
-                        <div style="font-size: 6pt; color: #475569; line-height: 1.15; margin-top: 1px;">
-                            1/3: {$ev13Baru} &bull; 1/2: {$ev12Baru}<br>
-                            <span style="color: #047857; font-weight: bold;">2/3: {$ev23Baru}</span>
-                        </div>
+                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px;">{$besaranHtml}</td>
+                    <td width="20%" align="left" style="border: 0.5px solid #cbd5e1; padding: 3px 5px; font-size: 7.5pt; line-height: 1.25;">
+                        <span style="color: #b91c1c; font-weight: bold;">Eks: {$evEkspirasiBaru}</span><br>
+                        <span style="color: #0369a1; font-weight: bold;">1/3: {$ev13Baru}</span><br>
+                        <span style="color: #b45309; font-weight: bold;">1/2: {$ev12Baru}</span><br>
+                        <span style="color: #047857; font-weight: bold;">2/3: {$ev23Baru}</span>
                     </td>
-                    <td width="17%" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 6.8pt; color: #334155; line-height: 1.15;">{$evAlasan}</td>
+                    <td width="18%" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 7pt; color: #334155; line-height: 1.15;">{$evAlasan}</td>
                 </tr>
 ROW;
             }
@@ -2547,12 +2546,12 @@ ROW;
     <thead>
         <tr style="background-color: #1e293b; color: #ffffff; text-align: center; font-weight: bold; font-size: 7.2pt;">
             <th width="4%" align="center"><span style="font-size: 2pt;">&nbsp;<br></span>No</th>
-            <th width="22%" align="center">Jenis Remisi /<br>Tahun</th>
+            <th width="20%" align="center">Jenis Remisi /<br>Tahun</th>
             <th width="12%" align="center">Tgl.<br>Pelaksanaan</th>
-            <th width="14%" align="center">Lama Menjalani<br>Pidana</th>
-            <th width="14%" align="center"><span style="font-size: 2pt;">&nbsp;<br></span>Besaran Remisi</th>
-            <th width="17%" align="center">Ekspirasi setelah<br>Remisi</th>
-            <th width="17%" align="center"><span style="font-size: 2pt;">&nbsp;<br></span>Keterangan</th>
+            <th width="13%" align="center">Lama Menjalani<br>Pidana</th>
+            <th width="13%" align="center"><span style="font-size: 2pt;">&nbsp;<br></span>Besaran Remisi</th>
+            <th width="20%" align="center">Ekspirasi &amp; Tahapan<br>Setelah Remisi</th>
+            <th width="18%" align="center"><span style="font-size: 2pt;">&nbsp;<br></span>Keterangan</th>
         </tr>
     </thead>
     <tbody>
@@ -2560,21 +2559,21 @@ ROW;
     </tbody>
     <tfoot>
         <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #475569;">
-            <td colspan="4" width="52%" align="right" style="border: 0.5px solid #cbd5e1; padding: 3px 6px; font-size: 7.5pt; color: #0f172a;">
+            <td colspan="4" width="49%" align="right" style="border: 0.5px solid #cbd5e1; padding: 3px 6px; font-size: 7.5pt; color: #0f172a;">
                 TOTAL AKUMULASI REMISI YANG DIPEROLEH:
             </td>
-            <td width="14%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px; font-size: 7.8pt; color: #1e40af;">
+            <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 2px; font-size: 7.8pt; color: #1e40af;">
                 <b>{$totalRemisiTeks}</b>
             </td>
-            <td colspan="2" width="34%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 7pt; color: #64748b;">
+            <td colspan="2" width="38%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 7pt; color: #64748b;">
                 <i>(Total Pengurangan Pidana)</i>
             </td>
         </tr>
         <tr style="background-color: #fef2f2; font-weight: bold;">
-            <td colspan="5" width="66%" align="right" style="border: 0.5px solid #cbd5e1; padding: 3px 6px; font-size: 7.5pt; color: #991b1b;">
+            <td colspan="5" width="62%" align="right" style="border: 0.5px solid #cbd5e1; padding: 3px 6px; font-size: 7.5pt; color: #991b1b;">
                 TANGGAL EKSPIRASI AKHIR (SETELAH REMISI):
             </td>
-            <td colspan="2" width="34%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 8.5pt; color: #b91c1c;">
+            <td colspan="2" width="38%" align="center" style="border: 0.5px solid #cbd5e1; padding: 3px 4px; font-size: 8.5pt; color: #b91c1c;">
                 <b>{$tglEkspirasiDef}</b>
             </td>
         </tr>
