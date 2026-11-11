@@ -209,6 +209,44 @@
         </div>
     </div>
 
+    {{-- Kartu Import / Pulihkan Database (.sql / .sql.gz) --}}
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-circle bg-primary-subtle text-primary">
+                        <i class="fas fa-cloud-upload-alt fa-lg"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Import &amp; Pulihkan Database (Tanpa phpMyAdmin)</h5>
+                        <p class="text-muted small mb-0">Unggah file cadangan <code>.sql.gz</code> atau <code>.sql</code> dari server utama untuk langsung dipulihkan secara otomatis dan bebas bentrok Foreign Key.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form action="{{ route('backup.import') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('PERHATIAN: Memulihkan database akan menimpa tabel dan data saat ini pada database {{ $stats['database_name'] }} dengan isi file cadangan yang diunggah. Lanjutkan pemulihan?');">
+                @csrf
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-8">
+                        <input type="file" name="backup_file" class="form-control @error('backup_file') is-invalid @enderror" accept=".sql,.gz" required>
+                        @error('backup_file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text small text-muted mt-1">
+                            <i class="fas fa-check-circle text-success me-1"></i> Mendukung file <strong>.sql.gz</strong> (terkompresi) maupun <strong>.sql</strong>. Sistem otomatis mengatur <code>FOREIGN_KEY_CHECKS=0</code>, merapikan urutan tabel induk (<code>upt</code>, <code>users</code>, dll.), dan menjalankan sinkronisasi migrasi.
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <button type="submit" class="btn btn-primary btn-download-hero w-100">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Import &amp; Pulihkan Sekarang</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Tabel Riwayat File Cadangan di Server --}}
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
         <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -273,6 +311,14 @@
                                         <i class="fas fa-download me-1"></i> Unduh
                                     </a>
 
+                                    {{-- Tombol Pulihkan (Restore) --}}
+                                    <form action="{{ route('backup.restore-file', $file['filename']) }}" method="POST" class="d-inline" onsubmit="return confirm('Pulihkan database dari arsip {{ $file['filename'] }}? Data saat ini akan digantikan oleh isi cadangan tersebut.');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Pulihkan database dari file cadangan ini">
+                                            <i class="fas fa-undo-alt me-1"></i> Pulihkan
+                                        </button>
+                                    </form>
+
                                     {{-- Tombol Hapus --}}
                                     <form action="{{ route('backup.destroy-file', $file['filename']) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus file cadangan {{ $file['filename'] }} dari server? Tindakan ini tidak dapat dibatalkan.');">
                                         @csrf
@@ -322,14 +368,13 @@
                 <div class="col-md-6">
                     <div class="p-3 rounded-3 border bg-light h-100">
                         <h6 class="fw-bold text-primary mb-2">
-                            <i class="fas fa-window-maximize me-1"></i> Cara 1: Melalui phpMyAdmin (cPanel)
+                            <i class="fas fa-window-maximize me-1"></i> Cara 1: Melalui phpMyAdmin (Lokal / cPanel)
                         </h6>
                         <ol class="small text-muted ps-3 mb-0">
-                            <li>Buka <strong>phpMyAdmin</strong> pada cPanel hosting Anda.</li>
-                            <li>Pilih database <code>{{ $stats['database_name'] }}</code> pada bilah sisi kiri.</li>
-                            <li>Klik menu tab <strong>Import</strong> di bagian atas.</li>
-                            <li>Pilih file cadangan hasil unduhan (file <code>.sql</code> maupun <code>.sql.gz</code> didukung langsung).</li>
-                            <li>Klik tombol <strong>Kirim / Go</strong> di bagian bawah. Selesai!</li>
+                            <li>Buka <strong>phpMyAdmin</strong> dan pilih database <code>{{ $stats['database_name'] }}</code>.</li>
+                            <li>Jika mengimpor file backup versi lama ke database yang sudah berisi tabel, centang <strong>Check all</strong> lalu pilih <strong>Drop</strong> (kosongkan tabel lama terlebih dahulu agar tidak bentrok tipe <em>Foreign Key</em>), atau gunakan fitur <strong>Import &amp; Pulihkan Database</strong> di atas.</li>
+                            <li>Klik menu tab <strong>Import</strong> di bagian atas, lalu pilih file <code>.sql</code> atau <code>.sql.gz</code>.</li>
+                            <li>Hilangkan centang <em>Enable foreign key checks</em> (opsional), lalu klik <strong>Kirim / Go</strong>.</li>
                         </ol>
                     </div>
                 </div>

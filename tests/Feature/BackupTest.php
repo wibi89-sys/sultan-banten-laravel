@@ -76,6 +76,9 @@ class BackupTest extends TestCase
 
         $responseGenerate = $this->actingAs($operator)->post(route('backup.generate'));
         $responseGenerate->assertForbidden();
+
+        $responseImport = $this->actingAs($operator)->post(route('backup.import'));
+        $responseImport->assertForbidden();
     }
 
     public function test_admin_can_access_backup_page(): void
@@ -102,6 +105,19 @@ class BackupTest extends TestCase
         // Pastikan muncul di view
         $response = $this->actingAs($admin)->get(route('backup.index'));
         $response->assertSee('feature_test_backup.sql.gz');
+
+        // Pastikan struktur SQL memiliki pembersihan awal seluruh tabel & tabel induk `upt` di atas `data_integrasi`
+        $gzPath = $service->getBackupDirectory().DIRECTORY_SEPARATOR.'feature_test_backup.sql.gz';
+        $sqlContent = (string) gzdecode((string) file_get_contents($gzPath));
+        $firstDropPos = strpos($sqlContent, 'DROP TABLE IF EXISTS `data_integrasi`;');
+        $firstCreatePos = strpos($sqlContent, 'CREATE TABLE');
+        $createUptPos = strpos($sqlContent, 'CREATE TABLE `upt`');
+        $createIntegrasiPos = strpos($sqlContent, 'CREATE TABLE `data_integrasi`');
+
+        $this->assertNotFalse($firstDropPos);
+        $this->assertNotFalse($firstCreatePos);
+        $this->assertLessThan($firstCreatePos, $firstDropPos);
+        $this->assertLessThan($createIntegrasiPos, $createUptPos);
 
         // Unduh file yang tersimpan
         $responseDownload = $this->actingAs($admin)->get(route('backup.download-file', 'feature_test_backup.sql.gz'));

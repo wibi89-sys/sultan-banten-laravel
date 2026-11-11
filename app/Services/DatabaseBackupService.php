@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -217,6 +218,249 @@ class DatabaseBackupService
     }
 
     /**
+     * Urutan tabel induk (parent tables) yang harus dibuat lebih dulu
+     * sebelum tabel anak (child tables) yang memiliki Foreign Key.
+     *
+     * @var array<int, string>
+     */
+    protected array $parentTablePriority = [
+        'migrations',
+        'upt',
+        'users',
+        'instansi',
+        'pengumuman',
+        'sidang_tpp',
+        'mutasi_narapidana',
+        'wa_settings',
+        'wa_groups',
+        'wa_pimpinan',
+        'wa_broadcasts',
+        'wa_scheduled_reports',
+        'ai_settings',
+        'master_pegawai_kanwil',
+    ];
+
+    /**
+     * Pulihkan (Import / Restore) database dari file .sql atau .sql.gz.
+     * Otomatis menghapus tabel lama terlebih dahulu di bawah FOREIGN_KEY_CHECKS=0
+     * agar tidak terjadi konflik tipe kolom Foreign Key (MySQL Error 3780)
+     * antara server produksi dan server lokal.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws Exception
+     */
+    public function restoreFromFile(string $filePath): array
+    {
+        @set_time_limit(600);
+        @ini_set('memory_limit', '512M');
+
+        if (! File::exists($filePath) || ! is_readable($filePath)) {
+            throw new Exception('File cadangan tidak ditemukan atau tidak dapat dibaca.');
+        }
+
+        $startTime = microtime(true);
+
+        // Deteksi apakah file terkompresi GZIP berdasarkan magic bytes (\x1f\x8b) atau ekstensi .gz
+        $magic = '';
+        $probe = @fopen($filePath, 'rb');
+        if ($probe) {
+            $magic = (string) fread($probe, 2);
+            fclose($probe);
+        }
+        $isGzip = ($magic === "\x1f\x8b") || str_ends_with(strtolower($filePath), '.gz');
+
+        // Pra-pindai file untuk memvalidasi isi SQL dan mendata tabel yang akan dibuat ulang
+        $scanInfo = $this->scanSqlDumpFile($filePath, $isGzip);
+        if (! $scanInfo['is_valid']) {
+            throw new Exception('File cadangan tidak berisi perintah SQL (CREATE TABLE / INSERT INTO) yang valid.');
+        }
+
+        $handle = $isGzip ? @gzopen($filePath, 'rb') : @fopen($filePath, 'rb');
+        if (! $handle) {
+            throw new Exception('Gagal membuka aliran file cadangan untuk pemulihan.');
+        }
+
+        $pdo = DB::connection()->getPdo();
+        $executedStatements = 0;
+        $tablesCreated = 0;
+
+        try {
+            $pdo->exec('SET FOREIGN_KEY_CHECKS = 0;');
+            $pdo->exec("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';");
+
+            // Hapus terlebih dahulu seluruh tabel yang akan dibuat ulang oleh file dump ini
+            // di bagian paling awal (sebelum CREATE TABLE pertama dieksekusi).
+            // Ini mencegah MySQL 8.0/8.4 Error 3780 (inkompatibilitas signed vs unsigned Foreign Key)
+            // ketika tabel anak (misal `data_integrasi`) dieksekusi lebih dulu daripada tabel induk (`upt`).
+            foreach ($scanInfo['tables_to_create'] as $tableName) {
+                $safeTable = str_replace('`', '``', $tableName);
+                $pdo->exec("DROP TABLE IF EXISTS `{$safeTable}`;");
+            }
+
+            $statement = '';
+            $inString = false;
+
+            while (! ($isGzip ? gzeof($handle) : feof($handle))) {
+                $line = $isGzip ? gzgets($handle, 65536) : fgets($handle, 65536);
+                if ($line === false) {
+                    break;
+                }
+
+                // Hapus UTF-8 BOM pada baris pertama jika ada
+                if ($executedStatements === 0 && $statement === '') {
+                    $line = preg_replace('/^\xEF\xBB\xBF/', '', $line) ?? $line;
+                }
+
+                if (! $inString) {
+                    $trimmed = ltrim($line);
+                    if ($trimmed === '' || str_starts_with($trimmed, '--') || str_starts_with($trimmed, '#')) {
+                        continue;
+                    }
+                }
+
+                $statement .= $line;
+                $this->updateSqlStringState($line, $inString);
+
+                if (! $inString && str_ends_with(rtrim($line), ';')) {
+                    $sqlToRun = trim($statement);
+                    $statement = '';
+
+                    if ($sqlToRun !== '' && $sqlToRun !== ';') {
+                        // Normalisasi collation MySQL 8.0+ / MariaDB 11+ agar kompatibel lintas versi
+                        if (stripos($sqlToRun, 'CREATE TABLE') === 0) {
+                            $sqlToRun = str_ireplace(
+                                ['utf8mb4_0900_ai_ci', 'utf8mb4_uca1400_ai_ci'],
+                                'utf8mb4_general_ci',
+                                $sqlToRun
+                            );
+                            $tablesCreated++;
+                        }
+
+                        $pdo->exec($sqlToRun);
+                        $executedStatements++;
+                    }
+                }
+            }
+        } finally {
+            if ($isGzip) {
+                @gzclose($handle);
+            } else {
+                @fclose($handle);
+            }
+
+            try {
+                $pdo->exec('SET FOREIGN_KEY_CHECKS = 1;');
+            } catch (Exception) {
+                // Abaikan jika koneksi terputus
+            }
+        }
+
+        // Jalankan migrasi secara aman apabila di kode lokal terdapat tabel/kolom baru
+        // yang belum ada di file backup server lama
+        try {
+            Artisan::call('migrate', ['--force' => true]);
+        } catch (Exception) {
+            // Abaikan jika migrasi sudah sinkron
+        }
+
+        $timeTaken = round(microtime(true) - $startTime, 2);
+
+        return [
+            'tables_restored' => $tablesCreated,
+            'statements_executed' => $executedStatements,
+            'time_taken_seconds' => $timeTaken,
+        ];
+    }
+
+    /**
+     * Pindai cepat file SQL (.sql / .sql.gz) untuk memastikan file valid dan
+     * mengumpulkan daftar nama tabel yang memiliki perintah CREATE TABLE.
+     *
+     * @return array{is_valid: bool, tables_to_create: array<int, string>}
+     */
+    protected function scanSqlDumpFile(string $filePath, bool $isGzip): array
+    {
+        $handle = $isGzip ? @gzopen($filePath, 'rb') : @fopen($filePath, 'rb');
+        if (! $handle) {
+            return ['is_valid' => false, 'tables_to_create' => []];
+        }
+
+        $hasValidSql = false;
+        $tables = [];
+
+        try {
+            while (! ($isGzip ? gzeof($handle) : feof($handle))) {
+                $line = $isGzip ? gzgets($handle, 65536) : fgets($handle, 65536);
+                if ($line === false) {
+                    break;
+                }
+
+                if (preg_match('/^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i', $line, $matches)) {
+                    $hasValidSql = true;
+                    $tables[] = $matches[1];
+                } elseif (! $hasValidSql && preg_match('/^\s*INSERT\s+INTO\s+`?([a-zA-Z0-9_]+)`?/i', $line)) {
+                    $hasValidSql = true;
+                }
+            }
+        } finally {
+            if ($isGzip) {
+                @gzclose($handle);
+            } else {
+                @fclose($handle);
+            }
+        }
+
+        return [
+            'is_valid' => $hasValidSql,
+            'tables_to_create' => array_values(array_unique($tables)),
+        ];
+    }
+
+    /**
+     * Lacak apakah posisi parser saat ini masih berada di dalam literal string SQL ('...').
+     */
+    protected function updateSqlStringState(string $line, bool &$inString): void
+    {
+        $len = strlen($line);
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $line[$i];
+            if ($inString && $ch === '\\') {
+                $i++; // Lewati karakter yang di-escape dengan backslash
+
+                continue;
+            }
+            if ($ch === "'") {
+                $inString = ! $inString;
+            }
+        }
+    }
+
+    /**
+     * Urutkan daftar tabel agar tabel induk (parent tables) selalu dibuat lebih dulu.
+     *
+     * @param  array<int, string>  $tables
+     * @return array<int, string>
+     */
+    protected function sortTablesByDependency(array $tables): array
+    {
+        $priorityMap = array_flip($this->parentTablePriority);
+
+        usort($tables, function (string $a, string $b) use ($priorityMap): int {
+            $rankA = $priorityMap[$a] ?? 999;
+            $rankB = $priorityMap[$b] ?? 999;
+
+            if ($rankA !== $rankB) {
+                return $rankA <=> $rankB;
+            }
+
+            return strcmp($a, $b);
+        });
+
+        return $tables;
+    }
+
+    /**
      * Eksekusi penulisan struktur dan data seluruh tabel database.
      *
      * @param  callable(string): void  $write
@@ -253,6 +497,21 @@ class DatabaseBackupService
             if (! empty($vals[0])) {
                 $tables[] = $vals[0];
             }
+        }
+
+        // Urutkan agar tabel induk (upt, users, dll.) berada di urutan paling atas
+        $tables = $this->sortTablesByDependency($tables);
+
+        // Hapus seluruh tabel di bagian paling awal (urutan terbalik: child -> parent)
+        // untuk mencegah MySQL 8.0/8.4 Error 3780 saat diimpor ke database yang sudah berisi tabel
+        if (! empty($tables)) {
+            $write("-- --------------------------------------------------------\n");
+            $write("-- Pembersihan Awal Seluruh Tabel (Mencegah Konflik Foreign Key)\n");
+            $write("-- --------------------------------------------------------\n");
+            foreach (array_reverse($tables) as $table) {
+                $write("DROP TABLE IF EXISTS `{$table}`;\n");
+            }
+            $write("\n");
         }
 
         foreach ($tables as $table) {
