@@ -2235,13 +2235,10 @@ SUB;
 <!-- A. POTONGAN TAHANAN (POTAH) -->
 <table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bbf7d0;">
     <tr style="background-color: #f0fdf4;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 2.5px 6px;">
-            A. POTONGAN TAHANAN (POTAH)
-        </td>
+        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 2.5px 6px;">A. POTONGAN TAHANAN (POTAH)</td>
     </tr>
     <tr>
-        <td style="padding: 2.5px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+        <td style="padding: 2.5px 6px;"><table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">Potah</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
@@ -2450,21 +2447,12 @@ SUB_EKS_C_PDF;
                 $ledgerRowsHtml .= <<<ROW
                 <tr nobr="true" bgcolor="{$bgColor}">
                     <td width="4%" align="center" style="font-weight: bold; border: 0.5px solid #cbd5e1; padding: 1.5px; color: #475569; font-size: 7.5pt;">{$no}</td>
-                    <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 1.5px 4px; font-size: 7.5pt; line-height: 1.1;">
-                        <b>{$evNama}</b>{$tahapBadge}
-                    </td>
+                    <td width="20%" align="left" style="border: 0.5px solid #cbd5e1; padding: 1.5px 4px; font-size: 7.5pt; line-height: 1.1;"><b>{$evNama}</b>{$tahapBadge}</td>
                     <td width="12%" align="center" style="border: 0.5px solid #cbd5e1; padding: 1.5px; font-size: 7.5pt; color: #1e293b;">{$evTgl}</td>
-                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 1.5px; font-size: 7.5pt; line-height: 1.1;">
-                        <b>{$evDijalani} hr</b><br><span style="font-size: 6.8pt; color: #64748b;">({$evMasaTeks})</span>
-                    </td>
+                    <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 1.5px; font-size: 7.5pt; line-height: 1.1;"><b>{$evDijalani} hr</b><br><span style="font-size: 6.8pt; color: #64748b;">({$evMasaTeks})</span></td>
                     <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 1.5px;">{$besaranHtml}</td>
-                    <td width="20%" align="left" style="border: 0.5px solid #cbd5e1; padding: 1.5px 5px; font-size: 7.5pt; line-height: 1.1;">
-                        <span style="color: #b91c1c; font-weight: bold;">Eks: {$evEkspirasiBaru}</span><br>
-                        <span style="color: #0369a1; font-weight: bold;">1/3: {$ev13Baru}</span><br>
-                        <span style="color: #b45309; font-weight: bold;">1/2: {$ev12Baru}</span><br>
-                        <span style="color: #047857; font-weight: bold;">2/3: {$ev23Baru}</span>
-                    </td>
-                    <td width="18%" style="border: 0.5px solid #cbd5e1; padding: 1.5px 4px; font-size: 7pt; color: #334155; line-height: 1.08;">{$evAlasan}</td>
+                    <td width="20%" align="left" style="border: 0.5px solid #cbd5e1; padding: 1.5px 5px; font-size: 7.5pt; line-height: 1.1;"><span style="color: #b91c1c; font-weight: bold;">Eks: {$evEkspirasiBaru}</span><br><span style="color: #0369a1; font-weight: bold;">1/3: {$ev13Baru}</span><br><span style="color: #b45309; font-weight: bold;">1/2: {$ev12Baru}</span><br><span style="color: #047857; font-weight: bold;">2/3: {$ev23Baru}</span></td>
+                    <td width="18%" align="left" style="border: 0.5px solid #cbd5e1; padding: 1.5px 4px; font-size: 7pt; color: #334155; line-height: 1.08;">{$evAlasan}</td>
                 </tr>
 ROW;
             }
@@ -2484,9 +2472,7 @@ ROW;
 <!-- I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS -->
 <table width="100%" cellpadding="2" cellspacing="0" class="table-identitas" style="border: 0.5px solid #cbd5e1; border-collapse: collapse; margin-bottom: 4px;">
     <tr style="background-color: #f1f5f9;">
-        <td colspan="6" style="font-weight: bold; font-size: 8.8pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 2.5px 6px;">
-            I. IDENTITAS WARGA BINAAN PEMASYARAKATAN &amp; PARAMETER VONIS
-        </td>
+        <td colspan="6" style="font-weight: bold; font-size: 8.8pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 2.5px 6px;">I. IDENTITAS WARGA BINAAN PEMASYARAKATAN &amp; PARAMETER VONIS</td>
     </tr>
     <tr>
         <td width="19%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 2px 6px; font-size: 8.5pt;">Nama</td>
@@ -2526,9 +2512,7 @@ ROW;
 <!-- II. PERHITUNGAN PERKIRAAN INTEGRASI -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td style="font-weight: bold; font-size: 8.8pt; color: #0f172a; padding-bottom: 2px;">
-            II. PERHITUNGAN PERKIRAAN INTEGRASI
-        </td>
+        <td style="font-weight: bold; font-size: 8.8pt; color: #0f172a; padding-bottom: 2px;">II. PERHITUNGAN PERKIRAAN INTEGRASI</td>
     </tr>
 </table>
 <table width="100%" cellpadding="2" cellspacing="0" style="border: 0.5px solid #94a3b8; border-collapse: collapse; margin-bottom: 4px;">
@@ -2543,22 +2527,11 @@ ROW;
     </thead>
     <tbody>
         <tr style="text-align: center; font-size: 8.8pt; background-color: #f8fafc;">
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px;">
-                <b style="color: #0284c7; font-size: 8.8pt;">{$tgl13Def}</b>
-            </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px;">
-                <b style="color: #d97706; font-size: 8.8pt;">{$tgl12Def}</b>
-            </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #ecfdf5;">
-                <b style="color: #047857; font-size: 9pt;">{$tgl23Def}</b>
-            </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #fef2f2;">
-                <b style="color: #b91c1c; font-size: 9pt;">{$tglEkspirasiDef}</b>
-            </td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #fffbeb;">
-                <b style="color: #b45309; font-size: 9pt;">{$totalRemisiHari} Hari</b><br>
-                <span style="font-size: 7.2pt; color: #92400e;">({$totalRemisiTeks})</span>
-            </td>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px;"><b style="color: #0284c7; font-size: 8.8pt;">{$tgl13Def}</b></td>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px;"><b style="color: #d97706; font-size: 8.8pt;">{$tgl12Def}</b></td>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #ecfdf5;"><b style="color: #047857; font-size: 9pt;">{$tgl23Def}</b></td>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #fef2f2;"><b style="color: #b91c1c; font-size: 9pt;">{$tglEkspirasiDef}</b></td>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #fffbeb;"><b style="color: #b45309; font-size: 9pt;">{$totalRemisiHari} Hari</b><br><span style="font-size: 7.2pt; color: #92400e;">({$totalRemisiTeks})</span></td>
         </tr>
     </tbody>
 </table>
@@ -2566,27 +2539,15 @@ ROW;
 <!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3) -->
 <table width="100%" cellpadding="2.5" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 4px;">
     <tr>
-        <td width="73%" valign="middle" style="padding: 2.5px 8px;">
-            <span style="font-size: 8pt; font-weight: bold; color: #92400e; text-transform: uppercase;">
-                MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3):
-            </span><br>
-            <span style="font-size: 10pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br>
-            <span style="font-size: 7.5pt; color: #78350f;">{$statusPesan}</span>
-        </td>
-        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 2.5px 6px;">
-            <span style="font-size: 7.5pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br>
-            <span style="font-size: 10pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
-            <span style="font-size: 7pt; color: #555;">(2/3 Pokok - Full Remisi)</span>
-        </td>
+        <td width="73%" valign="middle" style="padding: 2.5px 8px;"><span style="font-size: 8pt; font-weight: bold; color: #92400e; text-transform: uppercase;">MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3):</span><br><span style="font-size: 10pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br><span style="font-size: 7.5pt; color: #78350f;">{$statusPesan}</span></td>
+        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 2.5px 6px;"><span style="font-size: 7.5pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br><span style="font-size: 10pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br><span style="font-size: 7pt; color: #555;">(2/3 Pokok - Full Remisi)</span></td>
     </tr>
 </table>
 
 <!-- III. PERKIRAAN PEROLEHAN REMISI -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td style="font-weight: bold; font-size: 8.8pt; color: #0f172a; padding-bottom: 2px;">
-            III. PERKIRAAN PEROLEHAN REMISI
-        </td>
+        <td style="font-weight: bold; font-size: 8.8pt; color: #0f172a; padding-bottom: 2px;">III. PERKIRAAN PEROLEHAN REMISI</td>
     </tr>
 </table>
 <table width="100%" border="1" cellpadding="1.2" cellspacing="0" class="table-ledger" style="border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 4px;">
@@ -2606,23 +2567,13 @@ ROW;
     </tbody>
     <tfoot>
         <tr nobr="true" style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #475569;">
-            <td colspan="4" width="49%" align="right" style="border: 0.5px solid #cbd5e1; padding: 2.5px 6px; font-size: 7.5pt; color: #0f172a;">
-                TOTAL AKUMULASI REMISI YANG DIPEROLEH:
-            </td>
-            <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; font-size: 7.8pt; color: #1e40af;">
-                <b>{$totalRemisiTeks}</b>
-            </td>
-            <td colspan="2" width="38%" align="center" style="border: 0.5px solid #cbd5e1; padding: 2.5px 4px; font-size: 7pt; color: #64748b;">
-                <i>(Total Pengurangan Pidana)</i>
-            </td>
+            <td colspan="4" width="49%" align="right" style="border: 0.5px solid #cbd5e1; padding: 2.5px 6px; font-size: 7.5pt; color: #0f172a;">TOTAL AKUMULASI REMISI YANG DIPEROLEH:</td>
+            <td width="13%" align="center" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; font-size: 7.8pt; color: #1e40af;"><b>{$totalRemisiTeks}</b></td>
+            <td colspan="2" width="38%" align="center" style="border: 0.5px solid #cbd5e1; padding: 2.5px 4px; font-size: 7pt; color: #64748b;"><i>(Total Pengurangan Pidana)</i></td>
         </tr>
         <tr nobr="true" style="background-color: #fef2f2; font-weight: bold;">
-            <td colspan="5" width="62%" align="right" style="border: 0.5px solid #cbd5e1; padding: 2.5px 6px; font-size: 7.5pt; color: #991b1b;">
-                TANGGAL EKSPIRASI AKHIR (SETELAH REMISI):
-            </td>
-            <td colspan="2" width="38%" align="center" style="border: 0.5px solid #cbd5e1; padding: 2.5px 4px; font-size: 8.5pt; color: #b91c1c;">
-                <b>{$tglEkspirasiDef}</b>
-            </td>
+            <td colspan="5" width="62%" align="right" style="border: 0.5px solid #cbd5e1; padding: 2.5px 6px; font-size: 7.5pt; color: #991b1b;">TANGGAL EKSPIRASI AKHIR (SETELAH REMISI):</td>
+            <td colspan="2" width="38%" align="center" style="border: 0.5px solid #cbd5e1; padding: 2.5px 4px; font-size: 8.5pt; color: #b91c1c;"><b>{$tglEkspirasiDef}</b></td>
         </tr>
     </tfoot>
 </table>
@@ -2674,13 +2625,10 @@ ROW;
 <!-- B. EKSPIRASI SEBELUM REMISI -->
 <table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bfdbfe;">
     <tr style="background-color: #eff6ff;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #1e40af; padding: 2.5px 6px;">
-            B. EKSPIRASI SEBELUM REMISI
-        </td>
+        <td style="font-weight: bold; font-size: 8.5pt; color: #1e40af; padding: 2.5px 6px;">B. EKSPIRASI SEBELUM REMISI</td>
     </tr>
     <tr>
-        <td style="padding: 2.5px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+        <td style="padding: 2.5px 6px;"><table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
                 {$barisEkspirasiAwalPdf}
                 <tr>
                     <td width="28%"></td>
@@ -2693,8 +2641,7 @@ ROW;
                     <td width="68%"><b style="color: #b91c1c; font-size: 9.5pt;">{$ekspirasiSebelumRemisiIndo}</b></td>
                 </tr>
                 {$subsiderPdfSectionB}
-            </table>
-        </td>
+            </table></td>
     </tr>
 </table>
 
@@ -2702,13 +2649,10 @@ ROW;
 <!-- C. PENTAHAPAN MASA PIDANA (SETELAH REMISI) -->
 <table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fecaca;">
     <tr style="background-color: #fef2f2;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #991b1b; padding: 2.5px 6px;">
-            C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)
-        </td>
+        <td style="font-weight: bold; font-size: 8.5pt; color: #991b1b; padding: 2.5px 6px;">C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)</td>
     </tr>
     <tr>
-        <td style="padding: 2.5px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+        <td style="padding: 2.5px 6px;"><table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Jumlah Remisi yang diperoleh</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
@@ -2827,13 +2771,10 @@ ROW;
 <!-- D. USUL SDP (H-2 BULAN) -->
 <table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fed7aa;">
     <tr style="background-color: #fff7ed;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #c2410c; padding: 2.5px 6px;">
-            D. USUL SDP (H-2 BULAN)
-        </td>
+        <td style="font-weight: bold; font-size: 8.5pt; color: #c2410c; padding: 2.5px 6px;">D. USUL SDP (H-2 BULAN)</td>
     </tr>
     <tr>
-        <td style="padding: 2.5px 6px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+        <td style="padding: 2.5px 6px;"><table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Pengusulan di SDP</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
