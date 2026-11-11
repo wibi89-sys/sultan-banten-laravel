@@ -653,11 +653,13 @@ class TelramCalculatorServiceTest extends TestCase
         $teks = $result['hitungan_manual_teks'];
         $html = $result['hitungan_manual_html'];
 
-        // Verifikasi rincian perhitungan matematis terstruktur (A, B, C) pada format teks
+        // Verifikasi rincian perhitungan matematis terstruktur (A, B, C, D) pada format teks
         $this->assertStringContainsString('Tgl. Putusan', $teks);
+        $this->assertStringContainsString('Nama                : Budi Santoso', $teks);
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $teks);
         $this->assertStringContainsString('B. EKSPIRASI SEBELUM REMISI', $teks);
         $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)', $teks);
+        $this->assertStringContainsString('D. USUL SDP (H-2 BULAN)', $teks);
         $this->assertStringNotContainsString('tonggak', strtolower($teks));
 
         // Verifikasi baris perantara pecahan 1/2 dan 2/3 (3 thn 6 bln -> 1 thn 9 bln dan 2 thn 4 bln)
@@ -687,9 +689,11 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('6 Tahun, 8 Bulan', $res10['hitungan_manual_html']);
 
         // Verifikasi format visual html
+        $this->assertStringContainsString('<b>Nama:</b> Budi Santoso', $html);
         $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH)', $html);
         $this->assertStringContainsString('B. EKSPIRASI SEBELUM REMISI', $html);
         $this->assertStringContainsString('C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)', $html);
+        $this->assertStringContainsString('D. USUL SDP (H-2 BULAN)', $html);
         $this->assertStringNotContainsString('tonggak', strtolower($html));
 
         // Verifikasi PDF Report

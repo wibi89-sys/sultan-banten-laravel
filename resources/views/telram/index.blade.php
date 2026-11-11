@@ -142,10 +142,10 @@
     select.form-select {
         display: block;
         width: 100%;
-        padding: 0.45rem 2.25rem 0.45rem 0.75rem !important;
+        padding: 0.5rem 2.25rem 0.5rem 0.75rem !important;
         font-size: 12.5px !important;
         font-weight: 600 !important;
-        line-height: 1.5 !important;
+        line-height: normal !important;
         color: #1e293b !important;
         background-color: #ffffff !important;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
@@ -155,11 +155,22 @@
         border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
         min-height: 40px !important;
-        height: auto !important;
+        height: 40px !important;
         box-sizing: border-box !important;
         -webkit-appearance: none !important;
         -moz-appearance: none !important;
         appearance: none !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+    .form-select option,
+    select.form-select option {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: #1e293b !important;
+        background-color: #ffffff !important;
+        padding: 6px 10px !important;
     }
     .form-select:focus,
     select.form-select:focus {
@@ -178,6 +189,11 @@
         border-color: #334155 !important;
         color: #f1f5f9 !important;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    }
+    [data-theme="dark"] .form-select option,
+    [data-theme="dark"] select.form-select option {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
     }
     [data-theme="dark"] input[type="date"] {
         color-scheme: dark;
@@ -469,7 +485,7 @@
                             <span class="badge bg-light text-secondary border fw-normal" style="font-size: 9.5px;">Opsional / Berkas PDF</span>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 11.5px;">Nama Lengkap WBP</label>
+                            <label class="form-label telram-text-title fw-semibold mb-1" style="font-size: 11.5px;">Nama Lengkap</label>
                             <input type="text" id="txtNamaWbp" class="form-control fw-semibold" placeholder="Contoh: Budi Santoso bin Ahmad" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
                         </div>
                         <div class="row g-2">
@@ -2077,7 +2093,7 @@
         const text = `*${d.judul_program || 'PERKIRAAN PEROLEHAN REMISI'}*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
-*Nama WBP:* ${d.nama_wbp || 'Narapidana'}
+*Nama:* ${d.nama_wbp || 'Narapidana'}
 *No. Register:* ${d.no_register || '-'}
 *Pidana / Pasal:* ${d.perkara_pasal || '-'}
 *Tanggal Ditahan:* ${d.formatted.tgl_awal}${putusanLine}

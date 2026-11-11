@@ -1129,7 +1129,7 @@ class TelramCalculatorService
 
         $teks .= "IDENTITAS WARGA BINAAN PEMASYARAKATAN\n";
         $teks .= "--------------------------------------------------------\n";
-        $teks .= "Nama WBP            : {$namaWbp}\n";
+        $teks .= "Nama                : {$namaWbp}\n";
         $teks .= "Nomor Register      : {$noRegister}\n";
         $teks .= "Perkara / Pasal     : {$perkaraPasal}\n";
         $teks .= "Tgl. Mulai Ditahan  : {$tglAwalIndo}\n";
@@ -1209,11 +1209,11 @@ class TelramCalculatorService
         }
         $teks .= "\n";
 
-        $teks .= "   • Waktu Mulai Pengusulan di SDP (H-2 Bulan sebelum 2/3):\n";
-        $teks .= "     Tgl. Usul SDP = Tgl. 2/3 Masa Pidana - 60 Hari\n";
-        $teks .= "                   = {$tgl23DefNum} - 60 Hari\n";
-        $teks .= "                   = {$tglUsulNum}\n";
-        $teks .= "                   = {$tglUsulIndo}\n";
+        $teks .= "D. USUL SDP (H-2 BULAN)\n";
+        $teks .= "   • Pengusulan di SDP = Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)\n";
+        $teks .= "                       = {$tgl23DefNum} - 60 Hari\n";
+        $teks .= "                       = {$tglUsulNum}\n";
+        $teks .= "                       = {$tglUsulIndo}\n";
         $teks .= "========================================================\n";
 
         return $teks;
@@ -1309,7 +1309,7 @@ HEADER;
         <div class="card border-0 shadow-sm mb-3" style="background-color: #f8fafc; border-radius: 10px;">
             <div class="card-body p-3.5">
                 <div class="row g-2.5" style="font-size: 13px;">
-                    <div class="col-sm-6"><b>Nama WBP:</b> {$namaWbp}</div>
+                    <div class="col-sm-6"><b>Nama:</b> {$namaWbp}</div>
                     <div class="col-sm-6"><b>Tgl. Mulai Ditahan:</b> {$tglAwalIndo}</div>
                     <div class="col-sm-6"><b>No. Register:</b> {$noRegister}</div>
                     <div class="col-sm-6"><b>Tgl. Putusan:</b> {$tglPutusanIndo}</div>
@@ -1600,31 +1600,43 @@ SUB_EKS_C;
                         <td><b class="text-danger" style="font-size: 15px;">{$ekspirasiDefIndo}</b></td>
                     </tr>
                     {$subsiderEkspirasiHtmlC}
-                    <tr style="height: 10px;"><td colspan="3"></td></tr>
-                    <tr>
-                        <td style="width: 240px; font-weight: bold; color: #b45309;">• Pengusulan di SDP</td>
-                        <td style="width: 25px; text-align: center; font-weight: bold; color: #b45309;">=</td>
-                        <td style="color: #b45309;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold; color: #b45309;">=</td>
-                        <td>{$tgl23DefNum} - 60 Hari</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold; color: #b45309;">=</td>
-                        <td>{$tglUsulNum}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold; color: #b45309;">=</td>
-                        <td><b style="color: #b45309; font-size: 15px;">{$tglUsulIndo}</b></td>
-                    </tr>
                 </table>
             </div>
         </div>
 CARD_C;
+
+        $html .= <<<CARD_D
+        <div class="card border mb-3" style="border-radius: 10px; border-color: #fed7aa;">
+            <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #fff7ed;">
+                <strong style="color: #c2410c; font-size: 14px;"><i class="fas fa-calendar-check me-1.5"></i> D. USUL SDP (H-2 BULAN)</strong>
+                <span class="badge bg-warning text-dark" style="font-size: 11.5px;">Integrasi PB/CB</span>
+            </div>
+            <div class="card-body p-3.5" style="font-size: 13.5px;">
+                <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
+                    <tr>
+                        <td style="width: 240px; font-weight: bold; color: #c2410c;">• Pengusulan di SDP</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td style="color: #c2410c;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td>{$tgl23DefNum} - 60 Hari</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td>{$tglUsulNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td><b style="color: #c2410c; font-size: 15px;">{$tglUsulIndo}</b></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+CARD_D;
 
         $html .= '</div>';
 
@@ -2353,7 +2365,7 @@ ROW;
         </td>
     </tr>
     <tr>
-        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 2px 6px; font-size: 8.5pt;">Nama WBP</td>
+        <td width="20%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 2px 6px; font-size: 8.5pt;">Nama</td>
         <td width="30%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 2px 6px; font-size: 8.8pt;">: {$namaWbp}</td>
         <td width="22%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 2px 6px; font-size: 8.5pt;">Tgl. Mulai Ditahan</td>
         <td width="28%" style="border-bottom: 0.5px solid #e2e8f0; font-weight: bold; color: #0f172a; padding: 2px 6px; font-size: 8.8pt;">: {$tglAwal}</td>
@@ -2510,7 +2522,7 @@ ROW;
 <!-- IDENTITAS SINGKAT LAMPIRAN -->
 <table width="100%" cellpadding="3" cellspacing="0" style="border: 0.5px solid #cbd5e1; background-color: #f8fafc; font-size: 8pt;">
     <tr>
-        <td width="18%" style="color: #475569; padding: 3px 6px;">Nama WBP</td>
+        <td width="18%" style="color: #475569; padding: 3px 6px;">Nama</td>
         <td width="32%" style="font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$namaWbp}</td>
         <td width="22%" style="color: #475569; padding: 3px 6px;">Tgl. Mulai Ditahan</td>
         <td width="28%" style="font-weight: bold; color: #0f172a; padding: 3px 6px;">: {$tglAwal}</td>
@@ -2654,26 +2666,40 @@ ROW;
                     <td width="68%"><b style="color: #b91c1c; font-size: 9.5pt;">{$ekspirasiDefIndo}</b></td>
                 </tr>
                 {$subsiderPdfEkspirasiC}
-                <tr style="font-size: 2pt; line-height: 0.3;"><td colspan="3">&nbsp;</td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+{$cardSpacerPdf}
+<!-- D. USUL SDP (H-2 BULAN) -->
+<table cellpadding="0" cellspacing="0" style="width: 100%; border: 0.6px solid #fed7aa; background-color: #ffffff; font-family: courier, monospace;">
+    <tr>
+        <td style="background-color: #fff7ed; padding: 2px 6px; border-bottom: 0.5px solid #fed7aa; color: #c2410c; font-size: 8.5pt; font-weight: bold;">
+            D. USUL SDP (H-2 BULAN) &nbsp;&nbsp;<span style="color: #9a3412; font-size: 7.5pt; font-weight: normal;">(Integrasi PB/CB)</span>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 2.5px 6px; font-size: 8pt; line-height: 1.12; color: #1e293b;">
+            <table cellpadding="0" cellspacing="0" style="width: 100%; font-size: 8pt; line-height: 1.12;">
                 <tr>
-                    <td width="28%" style="color: #b45309; font-weight: bold;">&bull; Usul SDP (H-2 Bln)</td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">2/3 Masa Pidana - 60 Hari</td>
+                    <td width="28%" style="color: #c2410c; font-weight: bold;">&bull; Pengusulan di SDP</td>
+                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
+                    <td width="68%" style="color: #c2410c;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
                     <td width="68%">{$tgl23DefNum} - 60 Hari</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
                     <td width="68%">{$tglUsulNum}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%"><b style="color: #b45309; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
+                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
+                    <td width="68%"><b style="color: #c2410c; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
                 </tr>
             </table>
         </td>
