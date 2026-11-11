@@ -1457,7 +1457,7 @@
                     document.getElementById('tglAwal') ? document.getElementById('tglAwal').value : '',
                     document.getElementById('tglPutusan') ? document.getElementById('tglPutusan').value : '',
                     'rutan',
-                    'Penahanan Rutan'
+                    'Tahanan Lapas/Rutan'
                 );
             }
         } else {
@@ -1474,38 +1474,48 @@
         const rowId = `riwayat_row_${riwayatIndexCounter}`;
 
         const rowHtml = `
-        <div class="item-riwayat-row p-2 bg-white rounded-2 border position-relative" id="${rowId}" style="font-size: 11px;">
-            <div class="row g-1.5 align-items-center">
-                <div class="col-12 col-md-4">
-                    <label class="form-label mb-0.5 text-muted" style="font-size: 10px; font-weight: 600;">Jenis Status</label>
-                    <select class="form-select form-select-sm riwayat-jenis fw-semibold" onchange="hitungUlangRiwayat()" style="font-size: 11px; height: 32px; padding: 2px 24px 2px 8px !important; min-height: 32px !important;">
-                        <option value="rutan" ${jenis === 'rutan' ? 'selected' : ''}>Rutan (1:1 / 100%)</option>
+        <div class="item-riwayat-row p-2.5 bg-white rounded-3 border shadow-xs mb-2.5 position-relative" id="${rowId}" style="font-size: 11px;">
+            <!-- Baris 1: Header Segmen, Jenis Status & Tombol Hapus -->
+            <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                <div class="d-flex align-items-center gap-1.5 flex-grow-1">
+                    <span class="badge bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 10.5px; flex-shrink: 0;">${riwayatIndexCounter}</span>
+                    <select class="form-select form-select-sm riwayat-jenis fw-bold text-primary" onchange="hitungUlangRiwayat()" style="font-size: 12px; height: 36px; border-radius: 8px;">
+                        <option value="rutan" ${jenis === 'rutan' ? 'selected' : ''}>Tahanan Lapas/Rutan (1:1 / 100%)</option>
                         <option value="rumah" ${jenis === 'rumah' ? 'selected' : ''}>Tahanan Rumah (1/3)</option>
                         <option value="kota" ${jenis === 'kota' ? 'selected' : ''}>Tahanan Kota (1/5)</option>
                         <option value="tangguh" ${jenis === 'tangguh' ? 'selected' : ''}>Penangguhan (0% - Jeda)</option>
-                        <option value="bantar" ${jenis === 'bantar' ? 'selected' : ''}>Pembantaran RS (0% - Jeda)</option>
-                        <option value="masuk_kembali" ${jenis === 'masuk_kembali' ? 'selected' : ''}>Masuk Kembali Rutan (1:1)</option>
+                        <option value="bantar" ${jenis === 'bantar' ? 'selected' : ''}>Pembantaran (0% - Jeda)</option>
+                        <option value="masuk_kembali" ${jenis === 'masuk_kembali' ? 'selected' : ''}>Masuk Kembali (1:1 / 100%)</option>
                     </select>
                 </div>
-                <div class="col-6 col-md-3">
-                    <label class="form-label mb-0.5 text-muted" style="font-size: 10px; font-weight: 600;">Tgl. Mulai</label>
-                    <input type="date" class="form-control form-control-sm riwayat-tgl-mulai fw-semibold" value="${tglMulai}" onchange="onRiwayatDateChange()" style="font-size: 11px; height: 32px;">
+                <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1 d-inline-flex align-items-center justify-content-center" onclick="hapusBarisRiwayat('${rowId}')" title="Hapus segmen ini" style="height: 36px; width: 36px; border-radius: 8px; flex-shrink: 0;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+
+            <!-- Baris 2: Tanggal Mulai & Tanggal Selesai (50% - 50% Lebar Penuh, Sangat Jelas) -->
+            <div class="row g-2 mb-2">
+                <div class="col-6">
+                    <label class="form-label telram-text-title fw-bold mb-1 text-muted d-block" style="font-size: 11px;">
+                        <i class="fas fa-calendar-alt me-1 text-primary"></i> Tgl. Mulai <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control riwayat-tgl-mulai fw-semibold" value="${tglMulai}" onchange="onRiwayatDateChange()" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
                 </div>
-                <div class="col-6 col-md-3">
-                    <label class="form-label mb-0.5 text-muted" style="font-size: 10px; font-weight: 600;">Tgl. Selesai</label>
-                    <input type="date" class="form-control form-control-sm riwayat-tgl-selesai fw-semibold" value="${tglSelesai}" onchange="onRiwayatDateChange()" style="font-size: 11px; height: 32px;">
+                <div class="col-6">
+                    <label class="form-label telram-text-title fw-bold mb-1 text-muted d-block" style="font-size: 11px;">
+                        <i class="fas fa-calendar-check me-1 text-primary"></i> Tgl. Selesai <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control riwayat-tgl-selesai fw-semibold" value="${tglSelesai}" onchange="onRiwayatDateChange()" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
                 </div>
-                <div class="col-12 col-md-2 text-end">
-                    <label class="form-label mb-0.5 text-muted d-none d-md-block" style="font-size: 10px;">Aksi</label>
-                    <button type="button" class="btn btn-sm btn-outline-danger w-100 py-1" onclick="hapusBarisRiwayat('${rowId}')" style="font-size: 11px; height: 32px;" title="Hapus segmen ini">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+            </div>
+
+            <!-- Baris 3: Keterangan & Badge Hasil Perhitungan -->
+            <div class="row g-2 align-items-center">
+                <div class="col-7">
+                    <input type="text" class="form-control riwayat-keterangan" value="${ket}" placeholder="Keterangan / No. Penetapan (opsional)" style="height: 34px; border-radius: 6px; font-size: 11.5px;">
                 </div>
-                <div class="col-12 col-md-8 mt-1">
-                    <input type="text" class="form-control form-control-sm riwayat-keterangan" value="${ket}" placeholder="Keterangan / No. Surat Penetapan (opsional)" style="font-size: 10.5px; height: 28px;">
-                </div>
-                <div class="col-12 col-md-4 mt-1 text-md-end">
-                    <span class="badge bg-light text-dark border riwayat-badge-info py-1 px-2" style="font-size: 10px;">0 Hari</span>
+                <div class="col-5 text-end">
+                    <span class="badge bg-light text-dark border riwayat-badge-info py-1.5 px-2 w-100 text-truncate d-block" style="font-size: 10.5px;">0 Hari</span>
                 </div>
             </div>
         </div>`;

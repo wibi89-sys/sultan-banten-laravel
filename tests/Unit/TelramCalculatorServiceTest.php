@@ -1002,7 +1002,7 @@ class TelramCalculatorServiceTest extends TestCase
 
         // Verifikasi teks hitungan manual mencakup tabel riwayat dan tgl efektif
         $this->assertStringContainsString('Rincian Riwayat Penahanan', $res['hitungan_manual_teks']);
-        $this->assertStringContainsString('Pembantaran Penahanan (RS)', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('Pembantaran', $res['hitungan_manual_teks']);
         $this->assertStringContainsString('Tgl. Mulai Ditahan (Efektif)', $res['hitungan_manual_teks']);
         $this->assertStringContainsString('07/02/2024', $res['hitungan_manual_teks']);
 

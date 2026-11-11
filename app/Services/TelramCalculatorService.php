@@ -334,7 +334,7 @@ class TelramCalculatorService
 
             switch ($jenis) {
                 case 'rumah':
-                    $labelJenis = 'Penahanan Rumah';
+                    $labelJenis = 'Tahanan Rumah';
                     $rasio = '1/3';
                     $dasarHukum = 'Ps. 22 ayat (5) huruf a KUHAP';
                     // Asas favor reo: pembulatan ke atas (ceil)
@@ -343,7 +343,7 @@ class TelramCalculatorService
                     break;
 
                 case 'kota':
-                    $labelJenis = 'Penahanan Kota';
+                    $labelJenis = 'Tahanan Kota';
                     $rasio = '1/5';
                     $dasarHukum = 'Ps. 22 ayat (5) huruf b KUHAP';
                     // Asas favor reo: pembulatan ke atas (ceil)
@@ -352,7 +352,7 @@ class TelramCalculatorService
                     break;
 
                 case 'tangguh':
-                    $labelJenis = 'Penangguhan Penahanan';
+                    $labelJenis = 'Penangguhan';
                     $rasio = '0';
                     $dasarHukum = 'Ps. 31 KUHAP';
                     $hariPotah = 0;
@@ -360,7 +360,7 @@ class TelramCalculatorService
                     break;
 
                 case 'bantar':
-                    $labelJenis = 'Pembantaran Penahanan (RS)';
+                    $labelJenis = 'Pembantaran';
                     $rasio = '0';
                     $dasarHukum = 'SEMA No. 1/1989';
                     $hariPotah = 0;
@@ -368,7 +368,7 @@ class TelramCalculatorService
                     break;
 
                 case 'masuk_kembali':
-                    $labelJenis = 'Masuk Kembali ke Rutan';
+                    $labelJenis = 'Masuk Kembali';
                     $rasio = '1/1';
                     $dasarHukum = 'Ps. 22 ayat (4) KUHAP';
                     $hariPotah = $hariKalender;
@@ -378,7 +378,7 @@ class TelramCalculatorService
                 case 'rutan':
                 default:
                     $jenis = 'rutan';
-                    $labelJenis = 'Penahanan Rutan';
+                    $labelJenis = 'Tahanan Lapas/Rutan';
                     $rasio = '1/1';
                     $dasarHukum = 'Ps. 22 ayat (4) KUHAP';
                     $hariPotah = $hariKalender;
