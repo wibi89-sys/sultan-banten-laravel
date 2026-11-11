@@ -1614,23 +1614,23 @@ CARD_C;
             <div class="card-body p-3.5" style="font-size: 13.5px;">
                 <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
                     <tr>
-                        <td style="width: 240px; font-weight: bold; color: #c2410c;">• Pengusulan di SDP</td>
-                        <td style="width: 25px; text-align: center; font-weight: bold; color: #c2410c;">=</td>
-                        <td style="color: #c2410c;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• Pengusulan di SDP</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                        <td>Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td style="text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
                         <td>{$tgl23DefNum} - 60 Hari</td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td style="text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
                         <td>{$tglUsulNum}</td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td style="text-align: center; font-weight: bold; color: #c2410c;">=</td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
                         <td><b style="color: #c2410c; font-size: 15px;">{$tglUsulIndo}</b></td>
                     </tr>
                 </table>
@@ -1946,13 +1946,6 @@ CARD_D;
         }
         require_once $tcpdfPath;
 
-        $instansi = null;
-        try {
-            $instansi = Instansi::getFirst();
-        } catch (\Throwable) {
-            $instansi = null;
-        }
-
         $pdf = new class('P', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF
         {
             public function Header() {}
@@ -1970,11 +1963,11 @@ CARD_D;
         $pdf->SetAuthor(auth()->user()->nama_lengkap ?? 'Petugas Registrasi');
         $cleanName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $data['nama_wbp'] ?? 'Narapidana');
         $pdf->SetTitle("Perkiraan_Perolehan_Remisi_{$cleanName}");
-        $pdf->SetMargins(10, 8, 10);
+        $pdf->SetMargins(14, 14, 14);
         $pdf->SetAutoPageBreak(true, 14);
         $pdf->AddPage();
 
-        $html = self::renderPdfTemplateHtml($data, $instansi);
+        $html = self::renderPdfTemplateHtml($data);
         $pdf->writeHTML($html, true, false, true, false, '');
 
         return $pdf->Output('', 'S');
@@ -1985,20 +1978,8 @@ CARD_D;
      *
      * @param  array<string, mixed>  $data
      */
-    protected static function renderPdfTemplateHtml(array $data, ?Instansi $instansi): string
+    protected static function renderPdfTemplateHtml(array $data, ?Instansi $instansi = null): string
     {
-        $logoHtml = '';
-        $logoPath = null;
-        if (! empty($instansi?->logo_kop) && file_exists(public_path($instansi->logo_kop))) {
-            $logoPath = public_path($instansi->logo_kop);
-        } elseif (! empty($instansi?->logo) && file_exists(public_path($instansi->logo))) {
-            $logoPath = public_path($instansi->logo);
-        }
-
-        if ($logoPath) {
-            $logoHtml = '<img src="'.$logoPath.'" width="52" height="52" />';
-        }
-
         $namaWbp = htmlspecialchars($data['nama_wbp'] ?? 'Narapidana');
         $noRegister = htmlspecialchars($data['no_register'] ?? '-');
         $perkaraPasal = htmlspecialchars($data['perkara_pasal'] ?? '-');
@@ -2339,23 +2320,8 @@ ROW;
     .table-ledger th { background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: center; border: 0.5px solid #475569; padding: 4px 2px; font-size: 7.2pt; }
 </style>
 
-<!-- KOP SURAT RESMI KANWIL KEMENIMIPAS BANTEN -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-    <tr>
-        <td width="14%" align="center" valign="middle">
-            {$logoHtml}
-        </td>
-        <td width="86%" align="center" valign="middle">
-            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
-            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
-            <span style="font-size: 11.5pt; font-weight: bold; color: #0f172a;">KANTOR WILAYAH BANTEN</span><br>
-            <span style="font-size: 8pt; color: #334155;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span>
-        </td>
-    </tr>
-</table>
-<hr style="height: 1.2px; border: none; background-color: #0f172a; margin-top: 3px; margin-bottom: 4px;">
-
 <h1 style="color: #0f172a;">PERKIRAAN PEROLEHAN REMISI</h1>
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 3pt; line-height: 0.4;"><tr><td>&nbsp;</td></tr></table>
 
 <!-- I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS -->
 <table width="100%" cellpadding="3" cellspacing="0" class="table-identitas" style="border: 0.5px solid #cbd5e1; border-collapse: collapse; margin-bottom: 5px;">
@@ -2499,22 +2465,6 @@ ROW;
 <!-- HALAMAN 2: PERHITUNGAN MANUAL LENGKAP                        -->
 <!-- ============================================================== -->
 <div style="page-break-before: always;"></div>
-
-<!-- KOP SURAT RESMI KANWIL KEMENIMIPAS BANTEN (HALAMAN 2) -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-    <tr>
-        <td width="14%" align="center" valign="middle">
-            {$logoHtml}
-        </td>
-        <td width="86%" align="center" valign="middle">
-            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</span><br>
-            <span style="font-size: 9pt; font-weight: bold; color: #1e293b;">DIREKTORAT JENDERAL PEMASYARAKATAN</span><br>
-            <span style="font-size: 11.5pt; font-weight: bold; color: #0f172a;">KANTOR WILAYAH BANTEN</span><br>
-            <span style="font-size: 8pt; color: #334155;">Jl. KH. Sam'un No. 44, Serang, Banten | Pos-el: djpasbanten@gmail.com</span>
-        </td>
-    </tr>
-</table>
-<hr style="height: 1.2px; border: none; background-color: #0f172a; margin-top: 3px; margin-bottom: 4px;">
 
 <h1 style="color: #0f172a; font-size: 11.5pt; text-align: center; font-weight: bold; margin: 0; padding: 2px 0 3px 0; letter-spacing: 0.3px;">{$judulProgram}</h1>
 <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 3pt; line-height: 0.4;"><tr><td>&nbsp;</td></tr></table>
@@ -2672,33 +2622,33 @@ ROW;
 </table>
 {$cardSpacerPdf}
 <!-- D. USUL SDP (H-2 BULAN) -->
-<table cellpadding="0" cellspacing="0" style="width: 100%; border: 0.6px solid #fed7aa; background-color: #ffffff; font-family: courier, monospace;">
-    <tr>
-        <td style="background-color: #fff7ed; padding: 2px 6px; border-bottom: 0.5px solid #fed7aa; color: #c2410c; font-size: 8.5pt; font-weight: bold;">
-            D. USUL SDP (H-2 BULAN) &nbsp;&nbsp;<span style="color: #9a3412; font-size: 7.5pt; font-weight: normal;">(Integrasi PB/CB)</span>
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fed7aa;">
+    <tr style="background-color: #fff7ed;">
+        <td style="font-weight: bold; font-size: 8.5pt; color: #c2410c; padding: 2.5px 6px;">
+            D. USUL SDP (H-2 BULAN)
         </td>
     </tr>
     <tr>
-        <td style="padding: 2.5px 6px; font-size: 8pt; line-height: 1.12; color: #1e293b;">
-            <table cellpadding="0" cellspacing="0" style="width: 100%; font-size: 8pt; line-height: 1.12;">
+        <td style="padding: 2.5px 6px;">
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
                 <tr>
-                    <td width="28%" style="color: #c2410c; font-weight: bold;">&bull; Pengusulan di SDP</td>
-                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
-                    <td width="68%" style="color: #c2410c;">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Pengusulan di SDP</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
                     <td width="68%">{$tgl23DefNum} - 60 Hari</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
                     <td width="68%">{$tglUsulNum}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold; color: #c2410c;">=</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
                     <td width="68%"><b style="color: #c2410c; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
                 </tr>
             </table>
