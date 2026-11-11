@@ -407,32 +407,21 @@ class TelramCalculatorService
 
         $calcCurrentMilestones = function () use (
             $tglAwal,
+            $tahun,
+            $bulan,
+            $hari,
             $tglEkspirasiMurni,
-            $tgl13Murni,
-            $tgl12Murni,
-            $tgl23Murni,
             $tglMinIntegrasi,
             $tglMin12,
             &$totalHariRemisi
         ) {
             $curEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
 
-            $cur13 = $tgl13Murni->copy()->subDays($totalHariRemisi);
-            if ($cur13->lt($tglAwal)) {
-                $cur13 = $tglAwal->copy();
-            }
+            $res13 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 3, $totalHariRemisi, $tglAwal);
+            $res12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12);
+            $res23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasi);
 
-            $cur12 = $tgl12Murni->copy()->subDays($totalHariRemisi);
-            if ($cur12->lt($tglMin12)) {
-                $cur12 = $tglMin12->copy();
-            }
-
-            $cur23 = $tgl23Murni->copy()->subDays($totalHariRemisi);
-            if ($cur23->lt($tglMinIntegrasi)) {
-                $cur23 = $tglMinIntegrasi->copy();
-            }
-
-            return [$curEkspirasi, $cur13, $cur12, $cur23];
+            return [$curEkspirasi, $res13['tanggal'], $res12['tanggal'], $res23['tanggal']];
         };
 
         [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
@@ -887,6 +876,10 @@ class TelramCalculatorService
         [$thn23, $bln23, $hri23] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
         $durasi23Teks = self::formatDurasiTeks($thn23, $bln23, $hri23);
 
+        $detailTahap13 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 3, $totalHariRemisi, $tglAwal);
+        $detailTahap12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12);
+        $detailTahap23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasi);
+
         $result = [
             'mode' => 'simulasi_remisi',
             'target_basis' => $targetBasis,
@@ -901,8 +894,18 @@ class TelramCalculatorService
             'sisa_hari_pasca_putusan' => $sisaHariPascaPutusan,
             'sisa_pidana_pasca_putusan_teks' => $sisaPidanaPascaPutusanTeks,
             'lama_pidana_teks' => implode(', ', $formatVonis) ?: '0 Hari',
+            'pidana_bulan_teks' => $detailTahap12['pidana_bulan_teks'],
             'durasi_1_2_teks' => $durasi12Teks,
             'durasi_2_3_teks' => $durasi23Teks,
+            'fraksi_1_3_bulan_teks' => $detailTahap13['fraksi_bulan_teks'],
+            'selisih_1_3_bulan_teks' => $detailTahap13['selisih_bulan_teks'],
+            'selisih_1_3_tahun_teks' => $detailTahap13['selisih_tahun_teks'],
+            'fraksi_1_2_bulan_teks' => $detailTahap12['fraksi_bulan_teks'],
+            'selisih_1_2_bulan_teks' => $detailTahap12['selisih_bulan_teks'],
+            'selisih_1_2_tahun_teks' => $detailTahap12['selisih_tahun_teks'],
+            'fraksi_2_3_bulan_teks' => $detailTahap23['fraksi_bulan_teks'],
+            'selisih_2_3_bulan_teks' => $detailTahap23['selisih_bulan_teks'],
+            'selisih_2_3_tahun_teks' => $detailTahap23['selisih_tahun_teks'],
             'tahun' => $tahun,
             'bulan' => $bulan,
             'hari' => $hari,
@@ -1105,23 +1108,22 @@ class TelramCalculatorService
         $tglUsulNum = $num['tgl_mulai_pengusulan'] ?? '-';
         $tglUsulIndo = $fmt['tgl_mulai_pengusulan'] ?? '-';
 
-        $durasi12Teks = $fmt['durasi_1_2'] ?? ($data['durasi_1_2_teks'] ?? '');
-        if (empty($durasi12Teks)) {
-            $thn = (int) ($data['tahun'] ?? 0);
-            $bln = (int) ($data['bulan'] ?? 0);
-            $hri = (int) ($data['hari'] ?? 0);
-            [$th12, $bl12, $hr12] = self::hitungDurasiFraksi($thn, $bln, $hri, 1, 2);
-            $durasi12Teks = self::formatDurasiTeks($th12, $bl12, $hr12);
-        }
+        $thn = (int) ($data['tahun'] ?? 0);
+        $bln = (int) ($data['bulan'] ?? 0);
+        $hri = (int) ($data['hari'] ?? 0);
+        $tglAwalCarbon = ! empty($data['tgl_awal']) ? Carbon::parse($data['tgl_awal'])->startOfDay() : Carbon::today();
 
-        $durasi23Teks = $fmt['durasi_2_3'] ?? ($data['durasi_2_3_teks'] ?? '');
-        if (empty($durasi23Teks)) {
-            $thn = (int) ($data['tahun'] ?? 0);
-            $bln = (int) ($data['bulan'] ?? 0);
-            $hri = (int) ($data['hari'] ?? 0);
-            [$th23, $bl23, $hr23] = self::hitungDurasiFraksi($thn, $bln, $hri, 2, 3);
-            $durasi23Teks = self::formatDurasiTeks($th23, $bl23, $hr23);
-        }
+        $calc12 = self::hitungPentahapanSetelahRemisi($tglAwalCarbon, $thn, $bln, $hri, 1, 2, $totalRemisiHari);
+        $calc23 = self::hitungPentahapanSetelahRemisi($tglAwalCarbon, $thn, $bln, $hri, 2, 3, $totalRemisiHari);
+
+        $pidanaBulanTeks = $data['pidana_bulan_teks'] ?? $calc12['pidana_bulan_teks'];
+        $fraksi12BulanTeks = $data['fraksi_1_2_bulan_teks'] ?? $calc12['fraksi_bulan_teks'];
+        $selisih12BulanTeks = $data['selisih_1_2_bulan_teks'] ?? $calc12['selisih_bulan_teks'];
+        $selisih12TahunTeks = $data['selisih_1_2_tahun_teks'] ?? $calc12['selisih_tahun_teks'];
+
+        $fraksi23BulanTeks = $data['fraksi_2_3_bulan_teks'] ?? $calc23['fraksi_bulan_teks'];
+        $selisih23BulanTeks = $data['selisih_2_3_bulan_teks'] ?? $calc23['selisih_bulan_teks'];
+        $selisih23TahunTeks = $data['selisih_2_3_tahun_teks'] ?? $calc23['selisih_tahun_teks'];
 
         $teks = "{$judulProgram}\n";
         $teks .= "Sultan Banten - Kantor Wilayah Kemenimipas Banten\n";
@@ -1176,13 +1178,19 @@ class TelramCalculatorService
 
         $teks .= "   • 1/2 Masa Pidana = Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)\n";
         $teks .= "                     = {$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + ({$durasi12Teks} - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglAwalNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglAwalNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglAwalNum} + {$selisih12BulanTeks}\n";
+        $teks .= "                     = {$tglAwalNum} + {$selisih12TahunTeks}\n";
         $teks .= "                     = {$tgl12DefNum}\n";
         $teks .= "                     = {$tgl12DefIndo}\n\n";
 
         $teks .= "   • 2/3 Masa Pidana = Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)\n";
         $teks .= "                     = {$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + ({$durasi23Teks} - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglAwalNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglAwalNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglAwalNum} + {$selisih23BulanTeks}\n";
+        $teks .= "                     = {$tglAwalNum} + {$selisih23TahunTeks}\n";
         $teks .= "                     = {$tgl23DefNum}\n";
         $teks .= "                     = {$tgl23DefIndo}\n";
 
@@ -1274,23 +1282,22 @@ class TelramCalculatorService
         $tglUsulNum = htmlspecialchars($num['tgl_mulai_pengusulan'] ?? '-');
         $tglUsulIndo = htmlspecialchars($fmt['tgl_mulai_pengusulan'] ?? '-');
 
-        $durasi12Teks = htmlspecialchars($fmt['durasi_1_2'] ?? ($data['durasi_1_2_teks'] ?? ''));
-        if (empty($durasi12Teks)) {
-            $thn = (int) ($data['tahun'] ?? 0);
-            $bln = (int) ($data['bulan'] ?? 0);
-            $hri = (int) ($data['hari'] ?? 0);
-            [$th12, $bl12, $hr12] = self::hitungDurasiFraksi($thn, $bln, $hri, 1, 2);
-            $durasi12Teks = htmlspecialchars(self::formatDurasiTeks($th12, $bl12, $hr12));
-        }
+        $thn = (int) ($data['tahun'] ?? 0);
+        $bln = (int) ($data['bulan'] ?? 0);
+        $hri = (int) ($data['hari'] ?? 0);
+        $tglAwalCarbon = ! empty($data['tgl_awal']) ? Carbon::parse($data['tgl_awal'])->startOfDay() : Carbon::today();
 
-        $durasi23Teks = htmlspecialchars($fmt['durasi_2_3'] ?? ($data['durasi_2_3_teks'] ?? ''));
-        if (empty($durasi23Teks)) {
-            $thn = (int) ($data['tahun'] ?? 0);
-            $bln = (int) ($data['bulan'] ?? 0);
-            $hri = (int) ($data['hari'] ?? 0);
-            [$th23, $bl23, $hr23] = self::hitungDurasiFraksi($thn, $bln, $hri, 2, 3);
-            $durasi23Teks = htmlspecialchars(self::formatDurasiTeks($th23, $bl23, $hr23));
-        }
+        $calc12 = self::hitungPentahapanSetelahRemisi($tglAwalCarbon, $thn, $bln, $hri, 1, 2, $totalRemisiHari);
+        $calc23 = self::hitungPentahapanSetelahRemisi($tglAwalCarbon, $thn, $bln, $hri, 2, 3, $totalRemisiHari);
+
+        $pidanaBulanTeks = htmlspecialchars($data['pidana_bulan_teks'] ?? $calc12['pidana_bulan_teks']);
+        $fraksi12BulanTeks = htmlspecialchars($data['fraksi_1_2_bulan_teks'] ?? $calc12['fraksi_bulan_teks']);
+        $selisih12BulanTeks = htmlspecialchars($data['selisih_1_2_bulan_teks'] ?? $calc12['selisih_bulan_teks']);
+        $selisih12TahunTeks = htmlspecialchars($data['selisih_1_2_tahun_teks'] ?? $calc12['selisih_tahun_teks']);
+
+        $fraksi23BulanTeks = htmlspecialchars($data['fraksi_2_3_bulan_teks'] ?? $calc23['fraksi_bulan_teks']);
+        $selisih23BulanTeks = htmlspecialchars($data['selisih_2_3_bulan_teks'] ?? $calc23['selisih_bulan_teks']);
+        $selisih23TahunTeks = htmlspecialchars($data['selisih_2_3_tahun_teks'] ?? $calc23['selisih_tahun_teks']);
 
         $html = '<div class="hitungan-manual-container d-flex flex-column gap-3" style="gap: 16px !important;">';
 
@@ -1539,7 +1546,22 @@ SUB_EKS_C;
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ({$durasi12Teks} - {$totalRemisiTeks})</td>
+                        <td>{$tglAwalNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + {$selisih12BulanTeks}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + {$selisih12TahunTeks}</td>
                     </tr>
                     <tr>
                         <td></td>
@@ -1565,7 +1587,22 @@ SUB_EKS_C;
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ({$durasi23Teks} - {$totalRemisiTeks})</td>
+                        <td>{$tglAwalNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + {$selisih23BulanTeks}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglAwalNum} + {$selisih23TahunTeks}</td>
                     </tr>
                     <tr>
                         <td></td>
@@ -1692,6 +1729,76 @@ CARD_D;
         $outHari = $sisaHari;
 
         return [$outTahun, $outBulan, $outHari];
+    }
+
+    /**
+     * Hitung pentahapan masa pidana (1/3, 1/2, 2/3) setelah dikurangi Remisi
+     * sesuai kaidah perhitungan manual Pemasyarakatan:
+     * 1. Masa Pidana diubah ke satuan Bulan (& Hari) mengikuti satuan Remisi (1 Tahun = 12 Bulan)
+     * 2. Dikalikan pecahan (1/3, 1/2, 2/3) dalam satuan Bulan (& Hari)
+     * 3. Dikurangi total Remisi (Bulan & Hari)
+     * 4. Hasil pengurangan diubah kembali ke satuan Tahun, Bulan, Hari (12 Bulan = 1 Tahun)
+     * 5. Dijumlahkan ke Tanggal Mulai Ditahan dengan kaidah Telram (tambahDurasiVonis)
+     *
+     * @return array{
+     *     tanggal: Carbon,
+     *     pidana_bulan_teks: string,
+     *     fraksi_bulan_teks: string,
+     *     selisih_bulan_teks: string,
+     *     selisih_tahun_teks: string,
+     *     selisih_tahun: int,
+     *     selisih_bulan: int,
+     *     selisih_hari: int
+     * }
+     */
+    public static function hitungPentahapanSetelahRemisi(
+        Carbon $tglAwal,
+        int $tahun,
+        int $bulan,
+        int $hari,
+        int $num,
+        int $den,
+        int $totalHariRemisi,
+        ?Carbon $tglMinimal = null
+    ): array {
+        // 1. Masa pidana dalam satuan Bulan & Hari (mengikuti satuan Remisi)
+        $totalBulanPidana = ($tahun * 12) + $bulan;
+        $pidanaBulanTeks = self::formatRemisiBulanHari(($totalBulanPidana * 30) + $hari);
+
+        // 2. Hasil (Fraksi x Masa Pidana) dalam satuan Bulan & Hari
+        [$fThn, $fBln, $fHri] = self::hitungDurasiFraksi($tahun, $bulan, $hari, $num, $den);
+        $totalBulanFraksi = ($fThn * 12) + $fBln;
+        $totalHariFraksi = ($totalBulanFraksi * 30) + $fHri;
+        $fraksiBulanTeks = self::formatRemisiBulanHari($totalHariFraksi);
+
+        // 3. Pengurangan ((Fraksi x Masa Pidana) - Remisi) dalam satuan Bulan & Hari
+        $sisaHariTotal = max(0, $totalHariFraksi - max(0, $totalHariRemisi));
+        $selisihBulanTotal = (int) floor($sisaHariTotal / 30);
+        $selisihHari = $sisaHariTotal % 30;
+        $selisihBulanTeks = self::formatRemisiBulanHari($sisaHariTotal);
+
+        // 4. Konversi kembali hasil pengurangan ke satuan Tahun, Bulan, Hari (12 Bulan = 1 Tahun)
+        $selisihTahun = (int) floor($selisihBulanTotal / 12);
+        $selisihBulan = $selisihBulanTotal % 12;
+        $selisihTahunTeks = self::formatDurasiTeks($selisihTahun, $selisihBulan, $selisihHari);
+
+        // 5. Jumlahkan Tanggal Mulai Ditahan + hasil (Tahun, Bulan, Hari) dengan kaidah Telram
+        $tglHasil = self::tambahDurasiVonis($tglAwal, $selisihTahun, $selisihBulan, $selisihHari);
+
+        if ($tglMinimal && $tglHasil->lt($tglMinimal)) {
+            $tglHasil = $tglMinimal->copy();
+        }
+
+        return [
+            'tanggal' => $tglHasil,
+            'pidana_bulan_teks' => $pidanaBulanTeks,
+            'fraksi_bulan_teks' => $fraksiBulanTeks,
+            'selisih_bulan_teks' => $selisihBulanTeks,
+            'selisih_tahun_teks' => $selisihTahunTeks,
+            'selisih_tahun' => $selisihTahun,
+            'selisih_bulan' => $selisihBulan,
+            'selisih_hari' => $selisihHari,
+        ];
     }
 
     /**
@@ -2032,6 +2139,19 @@ SUB;
         $durasi13Teks = htmlspecialchars(self::formatDurasiTeks($y13, $m13, $d13));
         $durasi12Teks = htmlspecialchars(self::formatDurasiTeks($y12, $m12, $d12));
         $durasi23Teks = htmlspecialchars(self::formatDurasiTeks($y23, $m23, $d23));
+
+        $tglAwalCarbon = ! empty($data['tgl_awal']) ? Carbon::parse($data['tgl_awal'])->startOfDay() : Carbon::today();
+        $calcPdf12 = self::hitungPentahapanSetelahRemisi($tglAwalCarbon, $tahun, $bulan, $hari, 1, 2, $totalRemisiHari);
+        $calcPdf23 = self::hitungPentahapanSetelahRemisi($tglAwalCarbon, $tahun, $bulan, $hari, 2, 3, $totalRemisiHari);
+
+        $pidanaBulanTeks = htmlspecialchars($data['pidana_bulan_teks'] ?? $calcPdf12['pidana_bulan_teks']);
+        $fraksi12BulanTeks = htmlspecialchars($data['fraksi_1_2_bulan_teks'] ?? $calcPdf12['fraksi_bulan_teks']);
+        $selisih12BulanTeks = htmlspecialchars($data['selisih_1_2_bulan_teks'] ?? $calcPdf12['selisih_bulan_teks']);
+        $selisih12TahunTeks = htmlspecialchars($data['selisih_1_2_tahun_teks'] ?? $calcPdf12['selisih_tahun_teks']);
+
+        $fraksi23BulanTeks = htmlspecialchars($data['fraksi_2_3_bulan_teks'] ?? $calcPdf23['fraksi_bulan_teks']);
+        $selisih23BulanTeks = htmlspecialchars($data['selisih_2_3_bulan_teks'] ?? $calcPdf23['selisih_bulan_teks']);
+        $selisih23TahunTeks = htmlspecialchars($data['selisih_2_3_tahun_teks'] ?? $calcPdf23['selisih_tahun_teks']);
 
         $tgl13Murni = htmlspecialchars($data['formatted']['tgl_1_3_murni'] ?? '-');
         $tgl12Murni = htmlspecialchars($data['formatted']['tgl_1_2_murni'] ?? '-');
@@ -2555,7 +2675,22 @@ ROW;
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ({$durasi12Teks} - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglAwalNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglAwalNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglAwalNum} + {$selisih12BulanTeks}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglAwalNum} + {$selisih12TahunTeks}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
@@ -2581,7 +2716,22 @@ ROW;
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ({$durasi23Teks} - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglAwalNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglAwalNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglAwalNum} + {$selisih23BulanTeks}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglAwalNum} + {$selisih23TahunTeks}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>

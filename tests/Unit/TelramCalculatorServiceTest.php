@@ -548,16 +548,16 @@ class TelramCalculatorServiceTest extends TestCase
         }
 
         $this->assertNotNull($eventRt2026, 'Event RT Jasa Negara 2026 harus ada.');
-        $this->assertEquals('2024-01-09', $eventRt2026['tgl_1_3_baru'], '1/3 sebelum Natal 2026 (potongan 750 hari) harus 2024-01-09.');
-        $this->assertEquals('2025-09-10', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 (potongan 750 hari) harus 2025-09-10.');
-        $this->assertEquals('2027-05-09', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 (potongan 750 hari) harus 2027-05-09.');
+        $this->assertEquals('2023-12-29', $eventRt2026['tgl_1_3_baru'], '1/3 sebelum Natal 2026 (remisi 25 bulan -> 40-25 = 15 bln = 1 thn 3 bln) harus 2023-12-29.');
+        $this->assertEquals('2025-08-26', $eventRt2026['tgl_1_2_baru'], '1/2 sebelum Natal 2026 (remisi 25 bulan -> 60-25 = 35 bln = 2 thn 11 bln) harus 2025-08-26.');
+        $this->assertEquals('2027-04-28', $eventRt2026['tgl_2_3_baru'], '2/3 sebelum Natal 2026 (remisi 25 bulan -> 80-25 = 55 bln = 4 thn 7 bln) harus 2027-04-28.');
         $this->assertEquals('2030-09-11', $eventRt2026['perkiraan_ekspirasi_baru'], 'Ekspirasi sebelum Natal 2026 harus 2030-09-11.');
         $this->assertEquals('26 Bulan, 15 Hari', $result['total_proyeksi_remisi_teks'], 'Total remisi harus dinyatakan dalam Bulan dan Hari (tanpa akumulasi tahun).');
 
-        // Hasil definitif akhir setelah RK Natal 2026 (potongan 795 hari):
-        $this->assertEquals('2025-07-27', $result['milestones']['tgl_1_2_definitif'], '1/2 Definitif harus 27 Juli 2025.');
-        $this->assertEquals('2027-03-25', $result['milestones']['tgl_2_3_definitif'], '2/3 Definitif harus 25 Maret 2027.');
-        $this->assertEquals('2027-01-24', $result['milestones']['tgl_mulai_pengusulan'], 'Mulai usul SDP harus 24 Januari 2027.');
+        // Hasil definitif akhir setelah RK Natal 2026 (potongan 26 bulan 15 hari = 795 hari):
+        $this->assertEquals('2025-07-12', $result['milestones']['tgl_1_2_definitif'], '1/2 Definitif (60 bln - 26 bln 15 hr = 33 bln 15 hr = 2 thn 9 bln 15 hr) harus 12 Juli 2025.');
+        $this->assertEquals('2027-03-14', $result['milestones']['tgl_2_3_definitif'], '2/3 Definitif (80 bln - 26 bln 15 hr = 53 bln 15 hr = 4 thn 5 bln 15 hr) harus 14 Maret 2027.');
+        $this->assertEquals('2027-01-13', $result['milestones']['tgl_mulai_pengusulan'], 'Mulai usul SDP harus 13 Januari 2027 (H-60 hari dari 14 Maret 2027).');
         $this->assertEquals('2030-07-28', $result['milestones']['ekspirasi_definitif'], 'Ekspirasi Akhir harus 28 Juli 2030.');
     }
 
@@ -662,17 +662,21 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('D. USUL SDP (H-2 BULAN)', $teks);
         $this->assertStringNotContainsString('tonggak', strtolower($teks));
 
-        // Verifikasi baris perantara pecahan 1/2 dan 2/3 (3 thn 6 bln -> 1 thn 9 bln dan 2 thn 4 bln)
-        $this->assertStringContainsString('1 Tahun, 9 Bulan', $teks);
-        $this->assertStringContainsString('2 Tahun, 4 Bulan', $teks);
-        $this->assertStringContainsString('1 Tahun, 9 Bulan', $html);
-        $this->assertStringContainsString('2 Tahun, 4 Bulan', $html);
+        // Verifikasi baris perantara konversi bulan dan kembali ke tahun pada 1/2 dan 2/3 (3 thn 6 bln = 42 Bulan -> 21 Bulan & 28 Bulan)
+        $this->assertStringContainsString('42 Bulan', $teks);
+        $this->assertStringContainsString('21 Bulan', $teks);
+        $this->assertStringContainsString('28 Bulan', $teks);
+        $this->assertStringContainsString('1 Tahun, 4 Bulan', $teks);
+        $this->assertStringContainsString('1 Tahun, 11 Bulan', $teks);
+        $this->assertStringContainsString('42 Bulan', $html);
+        $this->assertStringContainsString('21 Bulan', $html);
+        $this->assertStringContainsString('28 Bulan', $html);
 
         // Verifikasi penghapusan kurung hari redundan pada potah & remisi
         $this->assertStringNotContainsString('(165 Hari)', $teks);
         $this->assertStringNotContainsString('(165 Hari)', $html);
 
-        // Kasus Vonis 10 Tahun (Memverifikasi 1/2 = 5 Tahun dan 2/3 = 6 Tahun, 8 Bulan)
+        // Kasus Vonis 10 Tahun (Memverifikasi konversi 120 Bulan -> 1/2 = 60 Bulan dan 2/3 = 80 Bulan)
         $res10 = $this->service->hitungProyeksiRemisiDanIntegrasi(
             '2020-01-01',
             10,
@@ -683,10 +687,12 @@ class TelramCalculatorServiceTest extends TestCase
             'Ahmad 10 Thn',
             'REG.10/2020'
         );
-        $this->assertStringContainsString('5 Tahun', $res10['hitungan_manual_teks']);
-        $this->assertStringContainsString('6 Tahun, 8 Bulan', $res10['hitungan_manual_teks']);
-        $this->assertStringContainsString('5 Tahun', $res10['hitungan_manual_html']);
-        $this->assertStringContainsString('6 Tahun, 8 Bulan', $res10['hitungan_manual_html']);
+        $this->assertStringContainsString('120 Bulan', $res10['hitungan_manual_teks']);
+        $this->assertStringContainsString('60 Bulan', $res10['hitungan_manual_teks']);
+        $this->assertStringContainsString('80 Bulan', $res10['hitungan_manual_teks']);
+        $this->assertStringContainsString('120 Bulan', $res10['hitungan_manual_html']);
+        $this->assertStringContainsString('60 Bulan', $res10['hitungan_manual_html']);
+        $this->assertStringContainsString('80 Bulan', $res10['hitungan_manual_html']);
 
         // Verifikasi format visual html
         $this->assertStringContainsString('<b>Nama:</b> Budi Santoso', $html);
