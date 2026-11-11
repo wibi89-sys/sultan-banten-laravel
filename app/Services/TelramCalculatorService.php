@@ -267,11 +267,176 @@ class TelramCalculatorService
     }
 
     /**
+     * Hitung riwayat penahanan multi-periode (Rutan, Rumah, Kota, Penangguhan, Pembantaran).
+     * Sesuai Pasal 22 & 31 KUHAP serta SEMA No. 1/1989.
+     * Menggunakan asas yang lebih menguntungkan tahanan (favor reo / pembulatan ke atas)
+     * dan perhitungan durasi kalender secara inklusif.
+     *
+     * @param  array<int, array<string, mixed>>  $riwayat
+     * @return array<string, mixed>
+     */
+    public function hitungRiwayatPenahanan(array $riwayat, ?Carbon $tglPutusan = null): array
+    {
+        $items = [];
+        $totalKalender = 0;
+        $totalPotah = 0;
+        $totalJeda = 0;
+
+        $cleanRiwayat = [];
+        foreach ($riwayat as $r) {
+            if (! is_array($r) || empty($r['tgl_mulai']) || empty($r['tgl_selesai'])) {
+                continue;
+            }
+            $cleanRiwayat[] = $r;
+        }
+
+        if (empty($cleanRiwayat)) {
+            return [
+                'items' => [],
+                'total_hari_kalender' => 0,
+                'total_hari_potah' => 0,
+                'total_hari_jeda' => 0,
+                'tgl_awal_fisik' => Carbon::today(),
+                'tgl_awal_efektif' => Carbon::today(),
+                'tgl_putusan' => $tglPutusan,
+            ];
+        }
+
+        usort($cleanRiwayat, static function ($a, $b) {
+            return strcmp((string) $a['tgl_mulai'], (string) $b['tgl_mulai']);
+        });
+
+        $earliestStart = null;
+        $latestEnd = null;
+
+        foreach ($cleanRiwayat as $idx => $row) {
+            $mulai = Carbon::parse($row['tgl_mulai'])->startOfDay();
+            $selesai = Carbon::parse($row['tgl_selesai'])->startOfDay();
+
+            if ($selesai->lt($mulai)) {
+                $temp = $mulai;
+                $mulai = $selesai;
+                $selesai = $temp;
+            }
+
+            if ($earliestStart === null || $mulai->lt($earliestStart)) {
+                $earliestStart = $mulai->copy();
+            }
+            if ($latestEnd === null || $selesai->gt($latestEnd)) {
+                $latestEnd = $selesai->copy();
+            }
+
+            // Durasi kalender inklusif: (T2 - T1) + 1 hari
+            $hariKalender = (int) $mulai->diffInDays($selesai) + 1;
+
+            $jenis = strtolower(trim((string) ($row['jenis'] ?? 'rutan')));
+            $keterangan = trim((string) ($row['keterangan'] ?? ''));
+
+            switch ($jenis) {
+                case 'rumah':
+                    $labelJenis = 'Penahanan Rumah';
+                    $rasio = '1/3';
+                    $dasarHukum = 'Ps. 22 ayat (5) huruf a KUHAP';
+                    // Asas favor reo: pembulatan ke atas (ceil)
+                    $hariPotah = (int) ceil($hariKalender / 3);
+                    $isJeda = false;
+                    break;
+
+                case 'kota':
+                    $labelJenis = 'Penahanan Kota';
+                    $rasio = '1/5';
+                    $dasarHukum = 'Ps. 22 ayat (5) huruf b KUHAP';
+                    // Asas favor reo: pembulatan ke atas (ceil)
+                    $hariPotah = (int) ceil($hariKalender / 5);
+                    $isJeda = false;
+                    break;
+
+                case 'tangguh':
+                    $labelJenis = 'Penangguhan Penahanan';
+                    $rasio = '0';
+                    $dasarHukum = 'Ps. 31 KUHAP';
+                    $hariPotah = 0;
+                    $isJeda = true;
+                    break;
+
+                case 'bantar':
+                    $labelJenis = 'Pembantaran Penahanan (RS)';
+                    $rasio = '0';
+                    $dasarHukum = 'SEMA No. 1/1989';
+                    $hariPotah = 0;
+                    $isJeda = true;
+                    break;
+
+                case 'masuk_kembali':
+                    $labelJenis = 'Masuk Kembali ke Rutan';
+                    $rasio = '1/1';
+                    $dasarHukum = 'Ps. 22 ayat (4) KUHAP';
+                    $hariPotah = $hariKalender;
+                    $isJeda = false;
+                    break;
+
+                case 'rutan':
+                default:
+                    $jenis = 'rutan';
+                    $labelJenis = 'Penahanan Rutan';
+                    $rasio = '1/1';
+                    $dasarHukum = 'Ps. 22 ayat (4) KUHAP';
+                    $hariPotah = $hariKalender;
+                    $isJeda = false;
+                    break;
+            }
+
+            $totalKalender += $hariKalender;
+            $totalPotah += $hariPotah;
+            if ($isJeda) {
+                $totalJeda += $hariKalender;
+            }
+
+            $items[] = [
+                'no' => $idx + 1,
+                'jenis' => $jenis,
+                'label_jenis' => $labelJenis,
+                'rasio' => $rasio,
+                'dasar_hukum' => $dasarHukum,
+                'tgl_mulai' => $mulai->toDateString(),
+                'tgl_selesai' => $selesai->toDateString(),
+                'tgl_mulai_indo' => self::formatTanggalIndonesia($mulai),
+                'tgl_selesai_indo' => self::formatTanggalIndonesia($selesai),
+                'tgl_mulai_num' => self::formatTanggalNumeric($mulai),
+                'tgl_selesai_num' => self::formatTanggalNumeric($selesai),
+                'periode_teks' => self::formatTanggalNumeric($mulai).' - '.self::formatTanggalNumeric($selesai),
+                'hari_kalender' => $hariKalender,
+                'hari_potah' => $hariPotah,
+                'is_jeda' => $isJeda,
+                'keterangan' => $keterangan ?: '-',
+            ];
+        }
+
+        if ($tglPutusan === null && $latestEnd !== null) {
+            $tglPutusan = $latestEnd->copy();
+        }
+
+        $refPutusan = $tglPutusan ?? ($latestEnd ?? Carbon::today());
+        $tglAwalEfektif = $refPutusan->copy()->subDays($totalPotah);
+
+        return [
+            'items' => $items,
+            'total_hari_kalender' => $totalKalender,
+            'total_hari_potah' => $totalPotah,
+            'total_hari_jeda' => $totalJeda,
+            'tgl_awal_fisik' => $earliestStart ?? Carbon::today(),
+            'tgl_awal_efektif' => $tglAwalEfektif,
+            'tgl_putusan' => $tglPutusan,
+        ];
+    }
+
+    /**
      * Hitung Proyeksi Remisi dan Hak Integrasi (PB, CB, Asimilasi)
      * Berdasarkan UU No. 22 Tahun 2022, Keppres No. 174 Tahun 1999 (RU, RK, Remisi Tambahan),
      * Keppres No. 120/1955 s.d. Keppres 120/2015 (Remisi Dasawarsa tiap 10 tahun RI),
      * Serta Metode Standar SDP Ditjenpas (2/3 Murni dikurangi Full Remisi).
      *
+     * @param  array<int, array<string, mixed>>  $riwayatPenahanan
      * @return array<string, mixed>
      */
     public function hitungProyeksiRemisiDanIntegrasi(
@@ -293,9 +458,11 @@ class TelramCalculatorService
         int $subBulan = 0,
         int $subHari = 0,
         float|int|string $dendaNominal = 0,
-        string $subsiderStatus = 'bb'
+        string $subsiderStatus = 'bb',
+        array $riwayatPenahanan = []
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
+        $tglAwalFisik = $tglAwal;
 
         if ($tahun <= 0 && $bulan <= 0 && $hari <= 0) {
             throw new InvalidArgumentException('Lama pidana vonis harus lebih dari 0.');
@@ -304,8 +471,23 @@ class TelramCalculatorService
         $tglPutusan = null;
         $masaTahananHari = 0;
         $masaTahananTeks = '-';
+        $riwayatData = null;
+        $hasRiwayatPenahanan = false;
 
-        if (! empty($tglPutusanStr)) {
+        if (! empty($riwayatPenahanan)) {
+            $parsedPutusanInitial = ! empty($tglPutusanStr) ? Carbon::parse($tglPutusanStr)->startOfDay() : null;
+            $riwayatData = $this->hitungRiwayatPenahanan($riwayatPenahanan, $parsedPutusanInitial);
+            if (! empty($riwayatData['items'])) {
+                $hasRiwayatPenahanan = true;
+                $tglPutusan = $riwayatData['tgl_putusan'];
+                $masaTahananHari = $riwayatData['total_hari_potah'];
+                $masaTahananTeks = self::formatHariKeTeks($masaTahananHari);
+                $tglAwalFisik = $riwayatData['tgl_awal_fisik'];
+                $tglAwal = $riwayatData['tgl_awal_efektif'];
+            }
+        }
+
+        if (! $hasRiwayatPenahanan && ! empty($tglPutusanStr)) {
             $parsedPutusan = Carbon::parse($tglPutusanStr)->startOfDay();
             if ($parsedPutusan->lt($tglAwal)) {
                 throw new InvalidArgumentException('Tanggal putusan pengadilan tidak boleh mendahului tanggal mulai ditahan.');
@@ -372,7 +554,7 @@ class TelramCalculatorService
         }
 
         // 3. Bangun Kalender Event Remisi Kronologis (RU 17 Agustus & RK Hari Raya Keagamaan)
-        $startYear = $tglAwal->year;
+        $startYear = min($tglAwalFisik->year, $tglAwal->year);
         $endYear = $tglEkspirasiMurni->year + 1;
         $rawEvents = $this->generateRemisiEvents($agama, $startYear, $endYear);
 
@@ -380,7 +562,7 @@ class TelramCalculatorService
         $eligibleEvents = [];
         foreach ($rawEvents as $ev) {
             $evDate = Carbon::parse($ev['tanggal'])->startOfDay();
-            if ($evDate->gte($tglAwal)) {
+            if ($evDate->gte($tglAwalFisik)) {
                 $eligibleEvents[] = [
                     'nama_event' => $ev['nama_event'],
                     'jenis' => $ev['jenis'], // 'RU' atau 'RK'
@@ -446,7 +628,7 @@ class TelramCalculatorService
                 }
             }
 
-            $hariDijalani = (int) $tglAwal->diffInDays($evDate);
+            $hariDijalani = $evDate->gte($tglAwal) ? (int) $tglAwal->diffInDays($evDate) : 0;
             $isSebelumPutusan = $tglPutusan && $evDate->lt($tglPutusan);
 
             // Syarat Minimal Keppres 174/1999: Minimal telah menjalani 6 bulan (180 hari)
@@ -887,7 +1069,15 @@ class TelramCalculatorService
             'nama_wbp' => $namaWbp,
             'no_register' => $noRegister,
             'perkara_pasal' => $perkaraPasal,
-            'tgl_awal' => $tglAwal->toDateString(),
+            'tgl_awal' => $tglAwalFisik->toDateString(),
+            'tgl_mulai_ditahan_fisik' => $tglAwalFisik->toDateString(),
+            'tgl_awal_fisik' => $tglAwalFisik->toDateString(),
+            'tgl_mulai_ditahan_efektif' => $tglAwal->toDateString(),
+            'tgl_awal_efektif' => $tglAwal->toDateString(),
+            'has_riwayat_penahanan' => $hasRiwayatPenahanan,
+            'riwayat_penahanan' => $riwayatData['items'] ?? [],
+            'total_hari_kalender_tahanan' => $riwayatData['total_hari_kalender'] ?? $masaTahananHari,
+            'total_hari_jeda_tahanan' => $riwayatData['total_hari_jeda'] ?? 0,
             'tgl_putusan' => $tglPutusan ? $tglPutusan->toDateString() : null,
             'masa_tahanan_hari' => $masaTahananHari,
             'masa_tahanan_teks' => $masaTahananTeks,
@@ -956,7 +1146,11 @@ class TelramCalculatorService
                 'ekspirasi_subsider_definitif' => $tglEkspirasiSubsiderDefinitif?->toDateString(),
             ],
             'formatted' => [
-                'tgl_awal' => self::formatTanggalIndonesia($tglAwal),
+                'tgl_awal' => self::formatTanggalIndonesia($tglAwalFisik),
+                'tgl_mulai_ditahan_fisik' => self::formatTanggalIndonesia($tglAwalFisik),
+                'tgl_mulai_ditahan_efektif' => self::formatTanggalIndonesia($tglAwal),
+                'total_hari_kalender_tahanan' => ($riwayatData['total_hari_kalender'] ?? $masaTahananHari).' Hari',
+                'total_hari_jeda_tahanan' => ($riwayatData['total_hari_jeda'] ?? 0).' Hari',
                 'tgl_putusan' => $tglPutusan ? self::formatTanggalIndonesia($tglPutusan) : '-',
                 'masa_tahanan' => $masaTahananTeks,
                 'sisa_pidana_pasca_putusan' => $sisaPidanaPascaPutusanTeks,
@@ -983,7 +1177,9 @@ class TelramCalculatorService
                 'subsider_identitas_teks' => $subsiderIdentitasTeks,
             ],
             'numeric' => [
-                'tgl_awal' => self::formatTanggalNumeric($tglAwal),
+                'tgl_awal' => self::formatTanggalNumeric($tglAwalFisik),
+                'tgl_mulai_ditahan_fisik' => self::formatTanggalNumeric($tglAwalFisik),
+                'tgl_mulai_ditahan_efektif' => self::formatTanggalNumeric($tglAwal),
                 'tgl_putusan' => $tglPutusan ? self::formatTanggalNumeric($tglPutusan) : '-',
                 'ekspirasi_awal' => self::formatTanggalNumeric($tglEkspirasiAwal),
                 'ekspirasi_sebelum_remisi' => self::formatTanggalNumeric($tglEkspirasiMurni),
@@ -1077,6 +1273,7 @@ class TelramCalculatorService
         $tglPutusanIndo = $fmt['tgl_putusan'] ?? '-';
 
         $masaTahananTeks = $fmt['masa_tahanan'] ?? '-';
+        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
 
         $ekspirasiAwalNum = $num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-');
         $ekspirasiAwalIndo = $fmt['ekspirasi_sebelum_remisi'] ?? '-';
@@ -1141,9 +1338,38 @@ class TelramCalculatorService
 
         if (! empty($data['tgl_putusan'])) {
             $teks .= "A. POTONGAN TAHANAN (POTAH)\n";
-            $teks .= "   Potah = Tgl. Mulai Ditahan - Tgl. Putusan\n";
-            $teks .= "         = {$tglAwalNum} - {$tglPutusanNum}\n";
-            $teks .= "         = {$masaTahananTeks}\n\n";
+            if (! empty($data['has_riwayat_penahanan']) && ! empty($data['riwayat_penahanan'])) {
+                $teks .= "   Rincian Riwayat Penahanan, Pembantaran & Perhitungan Potah (Ps. 22 & 31 KUHAP):\n";
+                $teks .= "   -----------------------------------------------------------------------------------------\n";
+                $teks .= "   No | Status Penahanan              | Periode                 | Hari | Rasio | Potah\n";
+                $teks .= "   -----------------------------------------------------------------------------------------\n";
+                foreach ($data['riwayat_penahanan'] as $r) {
+                    $noStr = str_pad((string) $r['no'], 2, ' ', STR_PAD_RIGHT);
+                    $jenisStr = str_pad(mb_substr($r['label_jenis'], 0, 28), 28, ' ', STR_PAD_RIGHT);
+                    $periodeStr = str_pad($r['periode_teks'], 23, ' ', STR_PAD_RIGHT);
+                    $hariStr = str_pad((string) $r['hari_kalender'], 4, ' ', STR_PAD_LEFT);
+                    $rasioStr = str_pad($r['rasio'], 5, ' ', STR_PAD_RIGHT);
+                    $potahStr = str_pad($r['hari_potah'].' hr', 6, ' ', STR_PAD_LEFT);
+                    $teks .= "   {$noStr} | {$jenisStr} | {$periodeStr} | {$hariStr} | {$rasioStr} | {$potahStr}\n";
+                }
+                $teks .= "   -----------------------------------------------------------------------------------------\n";
+                $totalKal = $data['total_hari_kalender_tahanan'] ?? 0;
+                $totalJeda = $data['total_hari_jeda_tahanan'] ?? 0;
+                $tglAwalEfektifNum = $num['tgl_mulai_ditahan_efektif'] ?? '-';
+                $tglAwalEfektifIndo = $fmt['tgl_mulai_ditahan_efektif'] ?? '-';
+                $teks .= "   Total Hari Kalender        = {$totalKal} Hari\n";
+                if ($totalJeda > 0) {
+                    $teks .= "   Total Jeda (Tangguh/RS)    = {$totalJeda} Hari (0 Hari Potah)\n";
+                }
+                $teks .= "   Total Potongan Tahanan     = {$masaTahananHari} Hari ({$masaTahananTeks})\n";
+                $teks .= "   Tgl. Mulai Ditahan Efektif = Tgl. Putusan - Total Potah\n";
+                $teks .= "                              = {$tglPutusanNum} - {$masaTahananHari} Hari\n";
+                $teks .= "                              = {$tglAwalEfektifNum} ({$tglAwalEfektifIndo})\n\n";
+            } else {
+                $teks .= "   Potah = Tgl. Mulai Ditahan - Tgl. Putusan\n";
+                $teks .= "         = {$tglAwalNum} - {$tglPutusanNum}\n";
+                $teks .= "         = {$masaTahananTeks}\n\n";
+            }
         }
 
         $teks .= "B. EKSPIRASI SEBELUM REMISI\n";
@@ -1173,24 +1399,27 @@ class TelramCalculatorService
         }
         $teks .= "\n";
 
+        $labelDitahan = ! empty($data['has_riwayat_penahanan']) ? 'Tgl. Mulai Ditahan (Efektif)' : 'Tgl. Mulai Ditahan';
+        $tglDitahanAcuanNum = ! empty($data['has_riwayat_penahanan']) ? ($num['tgl_mulai_ditahan_efektif'] ?? $tglAwalNum) : $tglAwalNum;
+
         $teks .= "C. PENTAHAPAN MASA PIDANA (SETELAH REMISI)\n";
         $teks .= "   • Jumlah Remisi yang diperoleh = {$totalRemisiTeks}\n\n";
 
-        $teks .= "   • 1/2 Masa Pidana = Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)\n";
-        $teks .= "                     = {$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + {$selisih12BulanTeks}\n";
-        $teks .= "                     = {$tglAwalNum} + {$selisih12TahunTeks}\n";
+        $teks .= "   • 1/2 Masa Pidana = {$labelDitahan} + ((1/2 x Masa Pidana) - Remisi)\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih12BulanTeks}\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih12TahunTeks}\n";
         $teks .= "                     = {$tgl12DefNum}\n";
         $teks .= "                     = {$tgl12DefIndo}\n\n";
 
-        $teks .= "   • 2/3 Masa Pidana = Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)\n";
-        $teks .= "                     = {$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglAwalNum} + {$selisih23BulanTeks}\n";
-        $teks .= "                     = {$tglAwalNum} + {$selisih23TahunTeks}\n";
+        $teks .= "   • 2/3 Masa Pidana = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi)\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih23BulanTeks}\n";
+        $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih23TahunTeks}\n";
         $teks .= "                     = {$tgl23DefNum}\n";
         $teks .= "                     = {$tgl23DefIndo}\n";
 
@@ -1251,6 +1480,7 @@ class TelramCalculatorService
         $tglPutusanIndo = htmlspecialchars($fmt['tgl_putusan'] ?? '-');
 
         $masaTahananTeks = htmlspecialchars($fmt['masa_tahanan'] ?? '-');
+        $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
 
         $ekspirasiAwalNum = htmlspecialchars($num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-'));
         $ekspirasiAwalIndo = htmlspecialchars($fmt['ekspirasi_sebelum_remisi'] ?? '-');
@@ -1370,7 +1600,90 @@ IDENTITAS;
 
         // Bagian A (Jika Tgl Putusan diisi)
         if (! empty($data['tgl_putusan'])) {
-            $html .= <<<CARD_A
+            if (! empty($data['has_riwayat_penahanan']) && ! empty($data['riwayat_penahanan'])) {
+                $rowsRiwayatHtml = '';
+                foreach ($data['riwayat_penahanan'] as $r) {
+                    $badgeJeda = $r['is_jeda']
+                        ? '<span class="badge bg-secondary-subtle text-secondary border">0 Hari (Jeda)</span>'
+                        : '<b class="text-success">'.$r['hari_potah'].' hr</b>';
+                    $rowsRiwayatHtml .= '<tr>'.
+                        '<td class="text-center font-monospace">'.$r['no'].'</td>'.
+                        '<td><b>'.htmlspecialchars($r['label_jenis']).'</b><br><small class="text-muted">'.htmlspecialchars($r['dasar_hukum']).'</small></td>'.
+                        '<td class="text-center font-monospace">'.htmlspecialchars($r['periode_teks']).'</td>'.
+                        '<td class="text-center font-monospace">'.$r['hari_kalender'].' hr</td>'.
+                        '<td class="text-center font-monospace">'.htmlspecialchars($r['rasio']).'</td>'.
+                        '<td class="text-center font-monospace">'.$badgeJeda.'</td>'.
+                        '<td style="font-size: 11.5px;">'.htmlspecialchars($r['keterangan']).'</td>'.
+                    '</tr>';
+                }
+
+                $totalKal = $data['total_hari_kalender_tahanan'] ?? 0;
+                $totalJeda = $data['total_hari_jeda_tahanan'] ?? 0;
+                $jedaNote = $totalJeda > 0 ? " <span class=\"text-danger\">(Masa Jeda: {$totalJeda} Hari)</span>" : '';
+                $tglAwalEfektifNum = htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? '-');
+                $tglAwalEfektifIndo = htmlspecialchars($fmt['tgl_mulai_ditahan_efektif'] ?? '-');
+
+                $html .= <<<CARD_A
+            <div class="card border mb-3" style="border-radius: 10px; border-color: #bbf7d0;">
+                <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #f0fdf4;">
+                    <strong style="color: #166534; font-size: 14px;"><i class="fas fa-layer-group me-1.5"></i> A. POTONGAN TAHANAN (POTAH) &amp; RIWAYAT PENAHANAN</strong>
+                    <span class="badge bg-success text-white" style="font-size: 10px;">Pasal 22 &amp; 31 KUHAP</span>
+                </div>
+                <div class="card-body p-3.5" style="font-size: 13.5px;">
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered table-hover mb-0 align-middle" style="font-size: 12px;">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th style="width: 4%;">No</th>
+                                    <th style="width: 24%;">Status Penahanan</th>
+                                    <th style="width: 22%;">Periode</th>
+                                    <th style="width: 10%;">Kalender</th>
+                                    <th style="width: 12%;">Rasio</th>
+                                    <th style="width: 12%;">Hari Potah</th>
+                                    <th style="width: 16%;">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {$rowsRiwayatHtml}
+                            </tbody>
+                            <tfoot class="table-light fw-bold" style="font-size: 12px;">
+                                <tr>
+                                    <td colspan="3" class="text-end">Total Hari Kalender:</td>
+                                    <td class="text-center font-monospace">{$totalKal} hr</td>
+                                    <td class="text-end">Total Potah:</td>
+                                    <td class="text-center font-monospace text-success" style="font-size: 13px;">{$masaTahananHari} hr</td>
+                                    <td>{$jedaNote}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
+                        <tr>
+                            <td style="width: 250px; font-weight: 600; color: #0f172a;">Total Potah Diperoleh</td>
+                            <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                            <td><b class="text-success" style="font-size: 14.5px;">{$masaTahananTeks} ({$masaTahananHari} Hari)</b></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; color: #0f172a;">Tgl. Mulai Ditahan (Efektif)</td>
+                            <td style="text-align: center; font-weight: bold;">=</td>
+                            <td>Tgl. Putusan - Total Potah</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td style="text-align: center; font-weight: bold;">=</td>
+                            <td>{$tglPutusanNum} - {$masaTahananHari} Hari</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td style="text-align: center; font-weight: bold;">=</td>
+                            <td><b class="text-primary" style="font-size: 14px;">{$tglAwalEfektifNum}</b> <span class="text-muted">({$tglAwalEfektifIndo})</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+CARD_A;
+            } else {
+                $html .= <<<CARD_A
             <div class="card border mb-3" style="border-radius: 10px; border-color: #bbf7d0;">
                 <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #f0fdf4;">
                     <strong style="color: #166534; font-size: 14px;"><i class="fas fa-gavel me-1.5"></i> A. POTONGAN TAHANAN (POTAH)</strong>
@@ -1397,6 +1710,7 @@ IDENTITAS;
                 </div>
             </div>
 CARD_A;
+            }
         }
 
         // Bagian B: Ekspirasi Sebelum Remisi
@@ -1557,6 +1871,9 @@ SUB_23;
 SUB_EKS_C;
         }
 
+        $labelDitahanHtml = ! empty($data['has_riwayat_penahanan']) ? 'Tgl. Mulai Ditahan (Efektif)' : 'Tgl. Mulai Ditahan';
+        $tglDitahanAcuanNum = ! empty($data['has_riwayat_penahanan']) ? htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? $tglAwalNum) : $tglAwalNum;
+
         $html .= <<<CARD_C
         <div class="card border mb-3" style="border-radius: 10px; border-color: #fecaca;">
             <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #fef2f2;">
@@ -1574,32 +1891,32 @@ SUB_EKS_C;
                     <tr>
                         <td style="width: 240px; font-weight: 600; color: #0f172a;">• 1/2 Masa Pidana</td>
                         <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
-                        <td>Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
+                        <td>{$labelDitahanHtml} + ((1/2 x Masa Pidana) - Remisi)</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                        <td>{$tglDitahanAcuanNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                        <td>{$tglDitahanAcuanNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})</td>
+                        <td>{$tglDitahanAcuanNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + {$selisih12BulanTeks}</td>
+                        <td>{$tglDitahanAcuanNum} + {$selisih12BulanTeks}</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + {$selisih12TahunTeks}</td>
+                        <td>{$tglDitahanAcuanNum} + {$selisih12TahunTeks}</td>
                     </tr>
                     <tr>
                         <td></td>
@@ -1615,32 +1932,32 @@ SUB_EKS_C;
                     <tr>
                         <td style="width: 240px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
                         <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
-                        <td>Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
+                        <td>{$labelDitahanHtml} + ((2/3 x Masa Pidana) - Remisi)</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                        <td>{$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + {$selisih23BulanTeks}</td>
+                        <td>{$tglDitahanAcuanNum} + {$selisih23BulanTeks}</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglAwalNum} + {$selisih23TahunTeks}</td>
+                        <td>{$tglDitahanAcuanNum} + {$selisih23TahunTeks}</td>
                     </tr>
                     <tr>
                         <td></td>
@@ -2226,11 +2543,96 @@ SUB;
         $ekspirasiSubDefIndo = htmlspecialchars($data['formatted']['ekspirasi_subsider_definitif'] ?? '-');
         $tglUsulIndo = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
 
+        $labelPentahapanPdf = ! empty($data['has_riwayat_penahanan']) ? 'Tgl. Mulai Ditahan (Efektif)' : 'Tgl. Mulai Ditahan';
+        $tglPentahapanPdfNum = ! empty($data['has_riwayat_penahanan']) ? htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? $tglAwalNum) : $tglAwalNum;
+
         $cardSpacerPdf = '<table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 6pt; line-height: 0.7;"><tr><td>&nbsp;</td></tr></table>';
 
         $potahPdfHtml = '';
         if (! empty($data['tgl_putusan'])) {
-            $potahPdfHtml = <<<POTAH
+            if (! empty($data['has_riwayat_penahanan']) && ! empty($data['riwayat_penahanan'])) {
+                $rowsRiwayatPdf = '';
+                foreach ($data['riwayat_penahanan'] as $r) {
+                    $potahBadgePdf = $r['is_jeda']
+                        ? '<span style="color: #64748b; font-weight: bold;">0 hr</span>'
+                        : '<b style="color: #166534;">'.$r['hari_potah'].' hr</b>';
+                    $rowsRiwayatPdf .= '<tr nobr="true">'.
+                        '<td width="5%" align="center">'.$r['no'].'</td>'.
+                        '<td width="26%" align="left"><b>'.htmlspecialchars($r['label_jenis']).'</b><br><span style="font-size: 6.2pt; color: #64748b;">'.htmlspecialchars($r['dasar_hukum']).'</span></td>'.
+                        '<td width="23%" align="center">'.htmlspecialchars($r['periode_teks']).'</td>'.
+                        '<td width="10%" align="center">'.$r['hari_kalender'].' hr</td>'.
+                        '<td width="14%" align="center">'.htmlspecialchars($r['rasio']).'</td>'.
+                        '<td width="12%" align="center">'.$potahBadgePdf.'</td>'.
+                        '<td width="10%" align="left" style="font-size: 6.5pt;">'.htmlspecialchars($r['keterangan']).'</td>'.
+                    '</tr>';
+                }
+
+                $totalKal = $data['total_hari_kalender_tahanan'] ?? 0;
+                $totalJeda = $data['total_hari_jeda_tahanan'] ?? 0;
+                $tglAwalEfektifNum = htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? '-');
+                $tglAwalEfektifIndo = htmlspecialchars($data['formatted']['tgl_mulai_ditahan_efektif'] ?? '-');
+                $jedaTeksPdf = $totalJeda > 0 ? " (Jeda: {$totalJeda} hr)" : '';
+
+                $potahPdfHtml = <<<POTAH
+{$cardSpacerPdf}
+<!-- A. POTONGAN TAHANAN (POTAH) & RIWAYAT PENAHANAN -->
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bbf7d0;">
+    <tr style="background-color: #f0fdf4;">
+        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 2.5px 6px;">A. POTONGAN TAHANAN (POTAH) &amp; RIWAYAT PENAHANAN (PS. 22 &amp; 31 KUHAP)</td>
+    </tr>
+    <tr>
+        <td style="padding: 2.5px 6px;"><table width="100%" border="1" cellpadding="1.5" cellspacing="0" style="font-size: 7pt; border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 3px;">
+                <thead>
+                    <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+                        <th width="5%">No</th>
+                        <th width="26%">Status Penahanan</th>
+                        <th width="23%">Periode</th>
+                        <th width="10%">Kalender</th>
+                        <th width="14%">Rasio KUHAP</th>
+                        <th width="12%">Hari Potah</th>
+                        <th width="10%">Ket.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {$rowsRiwayatPdf}
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f8fafc; font-weight: bold;">
+                        <td colspan="3" align="right" style="padding-right: 4px;">Total Kalender{$jedaTeksPdf}:</td>
+                        <td align="center">{$totalKal} hr</td>
+                        <td align="right" style="padding-right: 4px;">Total Potah:</td>
+                        <td align="center" style="color: #166534;"><b>{$masaTahananHari} hr</b></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+                <tr>
+                    <td width="30%" style="color: #0f172a; font-weight: bold;">Total Potah Diperoleh</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="66%"><b style="color: #166534; font-size: 9pt;">{$masaTahananTeks} ({$masaTahananHari} Hari)</b></td>
+                </tr>
+                <tr>
+                    <td width="30%" style="color: #0f172a; font-weight: bold;">Tgl. Mulai Ditahan (Efektif)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="66%">Tgl. Putusan - Total Potah</td>
+                </tr>
+                <tr>
+                    <td width="30%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="66%">{$tglPutusanNum} - {$masaTahananHari} Hari</td>
+                </tr>
+                <tr>
+                    <td width="30%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="66%"><b style="color: #0284c7; font-size: 9pt;">{$tglAwalEfektifNum}</b> ({$tglAwalEfektifIndo})</td>
+                </tr>
+            </table></td>
+    </tr>
+</table>
+POTAH;
+            } else {
+                $potahPdfHtml = <<<POTAH
 {$cardSpacerPdf}
 <!-- A. POTONGAN TAHANAN (POTAH) -->
 <table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bbf7d0;">
@@ -2259,6 +2661,7 @@ SUB;
     </tr>
 </table>
 POTAH;
+            }
         }
 
         $barisEkspirasiAwalPdf = '';
@@ -2662,32 +3065,32 @@ ROW;
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 1/2 Masa Pidana</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">Tgl. Mulai Ditahan + ((1/2 x Masa Pidana) - Remisi)</td>
+                    <td width="68%">{$labelPentahapanPdf} + ((1/2 x Masa Pidana) - Remisi)</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ((1/2 x {$lamaVonis}) - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ((1/2 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ({$fraksi12BulanTeks} - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + {$selisih12BulanTeks}</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih12BulanTeks}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + {$selisih12TahunTeks}</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih12TahunTeks}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
@@ -2703,32 +3106,32 @@ ROW;
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">Tgl. Mulai Ditahan + ((2/3 x Masa Pidana) - Remisi)</td>
+                    <td width="68%">{$labelPentahapanPdf} + ((2/3 x Masa Pidana) - Remisi)</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + {$selisih23BulanTeks}</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23BulanTeks}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglAwalNum} + {$selisih23TahunTeks}</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23TahunTeks}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>

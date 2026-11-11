@@ -68,6 +68,7 @@ class TelramController extends Controller
                     'target_basis' => 'nullable|string|in:2_3,ekspirasi',
                     'denda_nominal' => 'nullable',
                     'subsider_status' => 'nullable|string|in:bb,sb',
+                    'riwayat_penahanan' => 'nullable',
                 ]);
 
                 $tahun = (int) ($validated['tahun'] ?? 0);
@@ -94,6 +95,13 @@ class TelramController extends Controller
                 $dendaNominal = $validated['denda_nominal'] ?? 0;
                 $subsiderStatus = $validated['subsider_status'] ?? 'bb';
 
+                $rawRiwayat = $request->input('riwayat_penahanan');
+                if (is_string($rawRiwayat)) {
+                    $decoded = json_decode($rawRiwayat, true);
+                    $rawRiwayat = is_array($decoded) ? $decoded : [];
+                }
+                $riwayatPenahanan = is_array($rawRiwayat) ? $rawRiwayat : [];
+
                 $result = $this->calculator->hitungProyeksiRemisiDanIntegrasi(
                     $validated['tgl_awal'],
                     $tahun,
@@ -113,7 +121,8 @@ class TelramController extends Controller
                     $subBulan,
                     $subHari,
                     $dendaNominal,
-                    $subsiderStatus
+                    $subsiderStatus,
+                    $riwayatPenahanan
                 );
             } elseif ($mode === 'mundur') {
                 $validated = $request->validate([
@@ -213,6 +222,7 @@ class TelramController extends Controller
             'target_basis' => 'nullable|string|in:2_3,ekspirasi',
             'denda_nominal' => 'nullable',
             'subsider_status' => 'nullable|string|in:bb,sb',
+            'riwayat_penahanan' => 'nullable',
         ]);
 
         $tahun = (int) ($validated['tahun'] ?? 0);
@@ -236,6 +246,13 @@ class TelramController extends Controller
         $dendaNominal = $validated['denda_nominal'] ?? 0;
         $subsiderStatus = $validated['subsider_status'] ?? 'bb';
 
+        $rawRiwayat = $request->input('riwayat_penahanan');
+        if (is_string($rawRiwayat)) {
+            $decoded = json_decode($rawRiwayat, true);
+            $rawRiwayat = is_array($decoded) ? $decoded : [];
+        }
+        $riwayatPenahanan = is_array($rawRiwayat) ? $rawRiwayat : [];
+
         $data = $this->calculator->hitungProyeksiRemisiDanIntegrasi(
             $validated['tgl_awal'],
             $tahun,
@@ -255,7 +272,8 @@ class TelramController extends Controller
             $subBulan,
             $subHari,
             $dendaNominal,
-            $subsiderStatus
+            $subsiderStatus,
+            $riwayatPenahanan
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);

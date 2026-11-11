@@ -540,6 +540,58 @@
                             </div>
                         </div>
 
+                        <!-- RIWAYAT PENAHANAN & PEMBANTARAN (MULTI-PERIODE) -->
+                        <div class="mb-3 pt-2.5 border-top" id="wrapRiwayatPenahananToggle" style="border-color: rgba(0,0,0,0.06) !important;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 11.5px; cursor: pointer;" for="switchRiwayatPenahanan">
+                                    <i class="fas fa-layer-group me-1"></i> Riwayat Penahanan &amp; Pembantaran
+                                </label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="switchRiwayatPenahanan" role="switch" onchange="toggleRiwayatPenahanan()">
+                                    <label class="form-check-label text-muted fw-semibold" for="switchRiwayatPenahanan" style="font-size: 10.5px;">Aktifkan</label>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-0.5" style="font-size: 10.5px; line-height: 1.35;">
+                                Gunakan jika terdapat penangguhan, pembantaran sakit (RS), tahanan kota (1/5), atau tahanan rumah (1/3).
+                            </small>
+
+                            <!-- Container Repeater Riwayat Penahanan -->
+                            <div id="containerRiwayatPenahanan" class="mt-2.5 p-2.5 bg-light rounded-3 border" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-dark" style="font-size: 11.5px;">
+                                        <i class="fas fa-list-ol me-1 text-primary"></i> Rincian Segmen Penahanan (Pasal 22 &amp; 31 KUHAP)
+                                    </span>
+                                    <button type="button" class="btn btn-xs btn-primary py-1 px-2 fw-semibold" onclick="tambahBarisRiwayat()" style="font-size: 10.5px; border-radius: 6px;">
+                                        <i class="fas fa-plus me-1"></i> Tambah Periode
+                                    </button>
+                                </div>
+
+                                <div id="listRiwayatPenahanan" class="d-flex flex-column gap-2">
+                                    <!-- Dynamic rows will be rendered here -->
+                                </div>
+
+                                <!-- Summary Badge Box -->
+                                <div id="summaryRiwayatBadgeBox" class="mt-2.5 p-2.5 bg-white rounded-2 border" style="font-size: 11.5px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-muted">Total Hari Kalender:</span>
+                                        <span class="fw-bold font-monospace text-dark" id="txtTotalHariKalender">0 Hari</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1" id="rowJedaKalender" style="display: none;">
+                                        <span class="text-muted">Masa Jeda (Tangguh / Rawat RS):</span>
+                                        <span class="fw-bold font-monospace text-danger" id="txtTotalHariJeda">0 Hari (0 Hari Potah)</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center pt-1.5 border-top">
+                                        <span class="fw-bold text-success">Total Potongan Tahanan (Potah):</span>
+                                        <span class="fw-bold font-monospace text-success fs-6" id="txtTotalHariPotah">0 Hari</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center pt-1" id="rowTglAwalEfektif" style="display: none;">
+                                        <span class="text-muted" style="font-size: 10.5px;">Tgl. Mulai Ditahan Efektif:</span>
+                                        <span class="fw-bold font-monospace text-primary" id="txtTglAwalEfektif" style="font-size: 11px;">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Input Pidana Pokok (Untuk Mode Maju & Simulasi Remisi) -->
                         <div id="sectionInputVonis" class="mb-3">
                             <label class="form-label telram-text-title fw-bold mb-1.5 d-block" style="font-size: 12px;">
@@ -1390,8 +1442,242 @@
         }
     }
 
+    // ==============================================================
+    // MANAJEMEN RIWAYAT PENAHANAN & PEMBANTARAN (MULTI-PERIODE)
+    // ==============================================================
+    let riwayatIndexCounter = 0;
+
+    function toggleRiwayatPenahanan() {
+        const sw = document.getElementById('switchRiwayatPenahanan');
+        const container = document.getElementById('containerRiwayatPenahanan');
+        if (sw && sw.checked) {
+            container.style.display = 'block';
+            if (document.querySelectorAll('.item-riwayat-row').length === 0) {
+                tambahBarisRiwayat(
+                    document.getElementById('tglAwal') ? document.getElementById('tglAwal').value : '',
+                    document.getElementById('tglPutusan') ? document.getElementById('tglPutusan').value : '',
+                    'rutan',
+                    'Penahanan Rutan'
+                );
+            }
+        } else {
+            container.style.display = 'none';
+        }
+        hitungUlangRiwayat();
+    }
+
+    function tambahBarisRiwayat(tglMulai = '', tglSelesai = '', jenis = 'rutan', ket = '') {
+        const list = document.getElementById('listRiwayatPenahanan');
+        if (!list) return;
+
+        riwayatIndexCounter++;
+        const rowId = `riwayat_row_${riwayatIndexCounter}`;
+
+        const rowHtml = `
+        <div class="item-riwayat-row p-2 bg-white rounded-2 border position-relative" id="${rowId}" style="font-size: 11px;">
+            <div class="row g-1.5 align-items-center">
+                <div class="col-12 col-md-4">
+                    <label class="form-label mb-0.5 text-muted" style="font-size: 10px; font-weight: 600;">Jenis Status</label>
+                    <select class="form-select form-select-sm riwayat-jenis fw-semibold" onchange="hitungUlangRiwayat()" style="font-size: 11px; height: 32px; padding: 2px 24px 2px 8px !important; min-height: 32px !important;">
+                        <option value="rutan" ${jenis === 'rutan' ? 'selected' : ''}>Rutan (1:1 / 100%)</option>
+                        <option value="rumah" ${jenis === 'rumah' ? 'selected' : ''}>Tahanan Rumah (1/3)</option>
+                        <option value="kota" ${jenis === 'kota' ? 'selected' : ''}>Tahanan Kota (1/5)</option>
+                        <option value="tangguh" ${jenis === 'tangguh' ? 'selected' : ''}>Penangguhan (0% - Jeda)</option>
+                        <option value="bantar" ${jenis === 'bantar' ? 'selected' : ''}>Pembantaran RS (0% - Jeda)</option>
+                        <option value="masuk_kembali" ${jenis === 'masuk_kembali' ? 'selected' : ''}>Masuk Kembali Rutan (1:1)</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label mb-0.5 text-muted" style="font-size: 10px; font-weight: 600;">Tgl. Mulai</label>
+                    <input type="date" class="form-control form-control-sm riwayat-tgl-mulai fw-semibold" value="${tglMulai}" onchange="onRiwayatDateChange()" style="font-size: 11px; height: 32px;">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label mb-0.5 text-muted" style="font-size: 10px; font-weight: 600;">Tgl. Selesai</label>
+                    <input type="date" class="form-control form-control-sm riwayat-tgl-selesai fw-semibold" value="${tglSelesai}" onchange="onRiwayatDateChange()" style="font-size: 11px; height: 32px;">
+                </div>
+                <div class="col-12 col-md-2 text-end">
+                    <label class="form-label mb-0.5 text-muted d-none d-md-block" style="font-size: 10px;">Aksi</label>
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 py-1" onclick="hapusBarisRiwayat('${rowId}')" style="font-size: 11px; height: 32px;" title="Hapus segmen ini">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="col-12 col-md-8 mt-1">
+                    <input type="text" class="form-control form-control-sm riwayat-keterangan" value="${ket}" placeholder="Keterangan / No. Surat Penetapan (opsional)" style="font-size: 10.5px; height: 28px;">
+                </div>
+                <div class="col-12 col-md-4 mt-1 text-md-end">
+                    <span class="badge bg-light text-dark border riwayat-badge-info py-1 px-2" style="font-size: 10px;">0 Hari</span>
+                </div>
+            </div>
+        </div>`;
+
+        list.insertAdjacentHTML('beforeend', rowHtml);
+        hitungUlangRiwayat();
+    }
+
+    function hapusBarisRiwayat(rowId) {
+        const el = document.getElementById(rowId);
+        if (el) {
+            el.remove();
+            hitungUlangRiwayat();
+        }
+    }
+
+    function onRiwayatDateChange() {
+        hitungUlangRiwayat();
+    }
+
+    function hitungUlangRiwayat() {
+        const sw = document.getElementById('switchRiwayatPenahanan');
+        if (!sw || !sw.checked) {
+            return;
+        }
+
+        const rows = document.querySelectorAll('.item-riwayat-row');
+        let totalKalender = 0;
+        let totalPotah = 0;
+        let totalJeda = 0;
+        let earliestStart = null;
+        let latestEnd = null;
+
+        rows.forEach(row => {
+            const jenis = row.querySelector('.riwayat-jenis').value;
+            const tglMulaiStr = row.querySelector('.riwayat-tgl-mulai').value;
+            const tglSelesaiStr = row.querySelector('.riwayat-tgl-selesai').value;
+            const badge = row.querySelector('.riwayat-badge-info');
+
+            if (tglMulaiStr && tglSelesaiStr) {
+                const d1 = new Date(tglMulaiStr + 'T00:00:00');
+                const d2 = new Date(tglSelesaiStr + 'T00:00:00');
+
+                if (d2 >= d1) {
+                    // Durasi kalender inklusif
+                    const days = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+                    let potah = 0;
+                    let isJeda = false;
+
+                    if (jenis === 'rutan' || jenis === 'masuk_kembali') {
+                        potah = days;
+                    } else if (jenis === 'rumah') {
+                        potah = Math.ceil(days / 3); // favor reo
+                    } else if (jenis === 'kota') {
+                        potah = Math.ceil(days / 5); // favor reo
+                    } else if (jenis === 'tangguh' || jenis === 'bantar') {
+                        potah = 0;
+                        isJeda = true;
+                    }
+
+                    totalKalender += days;
+                    totalPotah += potah;
+                    if (isJeda) {
+                        totalJeda += days;
+                    }
+
+                    if (!earliestStart || d1 < earliestStart) earliestStart = d1;
+                    if (!latestEnd || d2 > latestEnd) latestEnd = d2;
+
+                    if (badge) {
+                        if (isJeda) {
+                            badge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2';
+                            badge.innerHTML = `<i class="fas fa-pause me-1"></i> ${days} Hari (Jeda / 0 Potah)`;
+                        } else {
+                            badge.className = 'badge bg-success-subtle text-success border border-success-subtle py-1 px-2';
+                            badge.innerHTML = `<i class="fas fa-check me-1"></i> ${days} Hari &rarr; <b>${potah} Hari Potah</b>`;
+                        }
+                    }
+                } else {
+                    if (badge) {
+                        badge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle py-1 px-2';
+                        badge.innerHTML = 'Tgl. Selesai &lt; Tgl. Mulai';
+                    }
+                }
+            } else {
+                if (badge) {
+                    badge.className = 'badge bg-light text-muted border py-1 px-2';
+                    badge.innerHTML = '0 Hari';
+                }
+            }
+        });
+
+        // Update summary text
+        const txtTotalKal = document.getElementById('txtTotalHariKalender');
+        if (txtTotalKal) txtTotalKal.innerText = `${totalKalender} Hari`;
+
+        const txtTotalPot = document.getElementById('txtTotalHariPotah');
+        if (txtTotalPot) txtTotalPot.innerText = `${totalPotah} Hari`;
+
+        const rowJeda = document.getElementById('rowJedaKalender');
+        if (rowJeda) {
+            if (totalJeda > 0) {
+                rowJeda.style.display = 'flex';
+                document.getElementById('txtTotalHariJeda').innerText = `${totalJeda} Hari (0 Hari Potah)`;
+            } else {
+                rowJeda.style.display = 'none';
+            }
+        }
+
+        const rowEfektif = document.getElementById('rowTglAwalEfektif');
+        if (rowEfektif && latestEnd && totalPotah >= 0) {
+            const dEfektif = new Date(latestEnd);
+            dEfektif.setDate(dEfektif.getDate() - totalPotah);
+            const yyyy = dEfektif.getFullYear();
+            const mm = String(dEfektif.getMonth() + 1).padStart(2, '0');
+            const dd = String(dEfektif.getDate()).padStart(2, '0');
+            rowEfektif.style.display = 'flex';
+            document.getElementById('txtTglAwalEfektif').innerText = `${dd}/${mm}/${yyyy}`;
+        } else if (rowEfektif) {
+            rowEfektif.style.display = 'none';
+        }
+
+        // Auto-sync ke tglAwal dan tglPutusan jika diisi
+        if (earliestStart) {
+            const y1 = earliestStart.getFullYear();
+            const m1 = String(earliestStart.getMonth() + 1).padStart(2, '0');
+            const d1 = String(earliestStart.getDate()).padStart(2, '0');
+            const inputAwal = document.getElementById('tglAwal');
+            if (inputAwal) inputAwal.value = `${y1}-${m1}-${d1}`;
+        }
+        if (latestEnd) {
+            const y2 = latestEnd.getFullYear();
+            const m2 = String(latestEnd.getMonth() + 1).padStart(2, '0');
+            const d2 = String(latestEnd.getDate()).padStart(2, '0');
+            const inputPutusan = document.getElementById('tglPutusan');
+            if (inputPutusan) inputPutusan.value = `${y2}-${m2}-${d2}`;
+        }
+    }
+
+    function getRiwayatPenahananArray() {
+        const sw = document.getElementById('switchRiwayatPenahanan');
+        if (!sw || !sw.checked) return [];
+
+        const rows = document.querySelectorAll('.item-riwayat-row');
+        const result = [];
+        rows.forEach(row => {
+            const jenis = row.querySelector('.riwayat-jenis').value;
+            const tgl_mulai = row.querySelector('.riwayat-tgl-mulai').value;
+            const tgl_selesai = row.querySelector('.riwayat-tgl-selesai').value;
+            const keterangan = row.querySelector('.riwayat-keterangan').value;
+
+            if (tgl_mulai && tgl_selesai) {
+                result.push({
+                    jenis: jenis,
+                    tgl_mulai: tgl_mulai,
+                    tgl_selesai: tgl_selesai,
+                    keterangan: keterangan || ''
+                });
+            }
+        });
+        return result;
+    }
+
     // Reset Form
     function resetForm() {
+        const swRiwayat = document.getElementById('switchRiwayatPenahanan');
+        if (swRiwayat) swRiwayat.checked = false;
+        const contRiwayat = document.getElementById('containerRiwayatPenahanan');
+        if (contRiwayat) contRiwayat.style.display = 'none';
+        const listRiwayat = document.getElementById('listRiwayatPenahanan');
+        if (listRiwayat) listRiwayat.innerHTML = '';
+        hitungUlangRiwayat();
         if (document.getElementById('txtNamaWbp')) document.getElementById('txtNamaWbp').value = '';
         if (document.getElementById('txtNoRegister')) document.getElementById('txtNoRegister').value = '';
         if (document.getElementById('txtPerkaraPasal')) document.getElementById('txtPerkaraPasal').value = '';
@@ -1543,6 +1829,11 @@
                 payload.kategori_tambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
                 payload.tahun_mulai_tambahan = document.getElementById('selTahunMulaiTambahan') ? (parseInt(document.getElementById('selTahunMulaiTambahan').value) || 1) : 1;
                 payload.target_basis = document.getElementById('selTargetBasis') ? document.getElementById('selTargetBasis').value : '2_3';
+
+                const riwayatData = getRiwayatPenahananArray();
+                if (riwayatData.length > 0) {
+                    payload.riwayat_penahanan = riwayatData;
+                }
             } else if (currentMode === 'maju') {
                 payload.tahun = parseInt(document.getElementById('vTahun').value) || 0;
                 payload.bulan = parseInt(document.getElementById('vBulan').value) || 0;
@@ -1687,7 +1978,7 @@
             }
 
             // Info ringkasan
-            document.getElementById('labelInfoTglAwal').innerText = 'Tgl. Ditahan:';
+            document.getElementById('labelInfoTglAwal').innerText = data.has_riwayat_penahanan ? 'Tgl. Ditahan (Fisik):' : 'Tgl. Ditahan:';
             document.getElementById('infoTglAwal').innerText = data.formatted.tgl_awal;
             document.getElementById('labelInfoTotalHari').innerText = 'Pidana Pokok:';
             document.getElementById('infoTotalHari').innerText = `${data.total_hari_vonis.toLocaleString('id-ID')} (${data.lama_pidana_teks})`;
@@ -1701,7 +1992,11 @@
                 }
                 if (wrapInfoMasaTahanan) {
                     wrapInfoMasaTahanan.classList.remove('d-none');
-                    document.getElementById('infoMasaTahanan').innerText = data.masa_tahanan_teks;
+                    if (data.has_riwayat_penahanan) {
+                        document.getElementById('infoMasaTahanan').innerHTML = `<b class="text-success">${data.masa_tahanan_teks}</b> (${data.masa_tahanan_hari} hr potah)`;
+                    } else {
+                        document.getElementById('infoMasaTahanan').innerText = data.masa_tahanan_teks;
+                    }
                 }
             } else {
                 if (wrapInfoPutusan) wrapInfoPutusan.classList.add('d-none');
@@ -2012,6 +2307,11 @@
             tahun_mulai_tambahan: tahunMulaiTambahan,
             target_basis: targetBasis
         };
+
+        const riwayatDataPdf = getRiwayatPenahananArray();
+        if (riwayatDataPdf.length > 0) {
+            fields.riwayat_penahanan = JSON.stringify(riwayatDataPdf);
+        }
 
         for (const [k, v] of Object.entries(fields)) {
             const input = document.createElement('input');

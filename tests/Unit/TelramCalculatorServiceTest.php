@@ -949,4 +949,82 @@ class TelramCalculatorServiceTest extends TestCase
         // dan Lampiran Hitungan Manual berada di halaman lampiran tersendiri (3 halaman total)
         $this->assertEquals(3, $pageCount, "PDF narapidana 10 tahun terbagi rapi 3 halaman, ditemukan: {$pageCount} halaman.");
     }
+
+    public function test_riwayat_penahanan_multi_periode_dengan_penangguhan_dan_pembantaran(): void
+    {
+        // Skenario ilustrasi sesuai kesepakatan:
+        // 1. Rutan: 01/01/2024 s.d. 31/01/2024 (31 hari) -> faktor 1/1 = 31 hari
+        // 2. Kota: 01/02/2024 s.d. 29/02/2024 (29 hari) -> faktor 1/5 = ceil(29/5) = 6 hari (favor reo)
+        // 3. Pembantaran RS: 01/03/2024 s.d. 15/03/2024 (15 hari) -> faktor 0 = 0 hari (jeda)
+        // 4. Masuk Kembali Rutan: 16/03/2024 s.d. 31/03/2024 (16 hari) -> faktor 1/1 = 16 hari
+        // Total Kalender = 91 hari. Total Potah = 31 + 6 + 0 + 16 = 53 hari. Total Jeda = 15 hari.
+        // Tgl Putusan = 31/03/2024.
+        // Tgl Ditahan Efektif = 31/03/2024 - 53 hari = 07/02/2024.
+
+        $riwayat = [
+            ['jenis' => 'rutan', 'tgl_mulai' => '2024-01-01', 'tgl_selesai' => '2024-01-31', 'keterangan' => 'Rutan Kelas I Jakarta Pusat'],
+            ['jenis' => 'kota', 'tgl_mulai' => '2024-02-01', 'tgl_selesai' => '2024-02-29', 'keterangan' => 'Tahanan Kota Jakarta'],
+            ['jenis' => 'bantar', 'tgl_mulai' => '2024-03-01', 'tgl_selesai' => '2024-03-15', 'keterangan' => 'Rawat Inap RS Pengayoman'],
+            ['jenis' => 'masuk_kembali', 'tgl_mulai' => '2024-03-16', 'tgl_selesai' => '2024-03-31', 'keterangan' => 'Masuk Kembali ke Rutan'],
+        ];
+
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            10,
+            0,
+            0,
+            'islam',
+            0,
+            'Putri Candrawathi',
+            'BI/78/2023',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 340 KUHP',
+            '2024-03-31',
+            0,
+            0,
+            0,
+            0,
+            'bb',
+            $riwayat
+        );
+
+        $this->assertTrue($res['has_riwayat_penahanan']);
+        $this->assertCount(4, $res['riwayat_penahanan']);
+        $this->assertEquals(91, $res['total_hari_kalender_tahanan']);
+        $this->assertEquals(53, $res['masa_tahanan_hari']);
+        $this->assertEquals(15, $res['total_hari_jeda_tahanan']);
+        $this->assertEquals('2024-01-01', $res['tgl_awal_fisik']);
+        $this->assertEquals('2024-02-07', $res['tgl_mulai_ditahan_efektif']);
+        $this->assertEquals('07/02/2024', $res['numeric']['tgl_mulai_ditahan_efektif']);
+
+        // Verifikasi teks hitungan manual mencakup tabel riwayat dan tgl efektif
+        $this->assertStringContainsString('Rincian Riwayat Penahanan', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('Pembantaran Penahanan (RS)', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('Tgl. Mulai Ditahan (Efektif)', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('07/02/2024', $res['hitungan_manual_teks']);
+
+        // Verifikasi hitungan manual HTML juga mencakup tabel riwayat
+        $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH) &amp; RIWAYAT PENAHANAN', $res['hitungan_manual_html']);
+        $this->assertStringContainsString('Pasal 22 &amp; 31 KUHAP', $res['hitungan_manual_html']);
+
+        // Verifikasi PDF dapat digenerate dengan sukses
+        $pdf = TelramCalculatorService::generatePdfReport($res);
+        $this->assertNotEmpty($pdf);
+    }
+
+    public function test_riwayat_penahanan_tahanan_rumah_dengan_asas_favor_reo(): void
+    {
+        // Tahanan Rumah 10 hari: 10/3 = 3.33 -> ceil = 4 hari potah
+        $riwayat = [
+            ['jenis' => 'rumah', 'tgl_mulai' => '2024-05-01', 'tgl_selesai' => '2024-05-10', 'keterangan' => 'Penahanan Rumah'],
+        ];
+
+        $calc = $this->service->hitungRiwayatPenahanan($riwayat, Carbon::parse('2024-05-10')->startOfDay());
+
+        $this->assertEquals(10, $calc['total_hari_kalender']);
+        $this->assertEquals(4, $calc['total_hari_potah'], '10 hari tahanan rumah dibagi 3 dengan asas favor reo (ceil) menghasilkan 4 hari potah.');
+    }
 }
