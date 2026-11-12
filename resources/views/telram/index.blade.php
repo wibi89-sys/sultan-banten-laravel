@@ -573,12 +573,16 @@
                                 <!-- Summary Badge Box -->
                                 <div id="summaryRiwayatBadgeBox" class="mt-2.5 p-2.5 bg-white rounded-2 border" style="font-size: 11.5px;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="text-muted">Total Hari Kalender:</span>
+                                        <span class="text-muted">Total Penahanan (Inklusif):</span>
                                         <span class="fw-bold font-monospace text-dark" id="txtTotalHariKalender">0 Hari</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-1" id="rowJedaKalender" style="display: none;">
-                                        <span class="text-muted">Masa Jeda (Tangguh / Rawat RS):</span>
+                                        <span class="text-muted">Hari di Luar UPT (T2 - T1):</span>
                                         <span class="fw-bold font-monospace text-danger" id="txtTotalHariJeda">0 Hari (0 Hari Potah)</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1" id="rowLuarUptBreakdown" style="display: none;">
+                                        <span class="text-muted" style="font-size: 10.5px;">Rincian Luar UPT:</span>
+                                        <span class="fw-semibold font-monospace text-warning-emphasis" id="txtLuarUptBreakdown" style="font-size: 10.5px;">-</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center pt-1.5 border-top">
                                         <span class="fw-bold text-success">Total Potongan Tahanan (Potah):</span>
@@ -773,38 +777,55 @@
                                     </div>
                                 </div>
 
-                                <!-- Remisi Tambahan (Pasal 4 Keppres 174/1999) -->
+                                <!-- Remisi Tambahan Independen per Tahun RU (Pasal 4 Keppres 174/1999) -->
                                 <div id="sectionRemisiTambahan">
                                     <label class="form-label telram-text-title fw-bold mb-1 d-block" style="font-size: 12px;">
                                         <i class="fas fa-award text-warning me-1.5"></i> Remisi Tambahan (Keppres 174/99):
                                     </label>
-                                    <select id="selRemisiTambahan" class="form-select fw-semibold" onchange="toggleTahunMulaiTambahan(); updateBadgeOpsiLanjutan();">
-                                        <option value="none" selected>Reguler (Tanpa Tambahan)</option>
-                                        <option value="pemuka">Pemuka Lapas (+1/3 RU)</option>
-                                        <option value="jasa_negara">Jasa Negara / Donor (+1/2 RU)</option>
-                                    </select>
-                                    <small class="text-muted d-block mt-1" style="font-size: 10px; line-height: 1.35;">
-                                        <i class="fas fa-info-circle me-0.5 text-primary"></i> Pemuka mendapat tambahan 1/3, Jasa Negara/Donor mendapat 1/2 dari RU.
+                                    <small class="text-muted d-block mb-2" style="font-size: 10px; line-height: 1.35;">
+                                        <i class="fas fa-info-circle me-0.5 text-primary"></i> Pilih secara independen tahun RU ke-berapa WBP mendapat Pemuka (+1/3 RU) dan/atau Donor Darah / Jasa Negara (+1/2 RU). Keduanya dapat dipilih bersamaan.
                                     </small>
 
-                                    <!-- Input Mulai di Tahun ke Berapa -->
-                                    <div id="wrapTahunMulaiTambahan" class="mt-2 p-2.5 rounded-3 border d-none" style="background: rgba(37, 99, 235, 0.04); border-color: rgba(37, 99, 235, 0.18) !important;">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <label class="form-label telram-text-title fw-bold mb-0 text-primary" style="font-size: 11px;">
-                                                <i class="fas fa-calendar-alt me-1"></i> Dihitung Mulai Sejak:
+                                    <!-- 1. Pemuka Lapas (+1/3 RU) -->
+                                    <div class="p-2.5 rounded-3 border mb-2" style="background: rgba(37, 99, 235, 0.04); border-color: rgba(37, 99, 235, 0.18) !important;">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="chkTambahanPemuka" onchange="togglePanelTambahan('pemuka'); updateBadgeOpsiLanjutan();">
+                                            <label class="form-check-label fw-bold text-primary" for="chkTambahanPemuka" style="font-size: 11.5px;">
+                                                Pemuka Lapas (+1/3 RU)
                                             </label>
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 9px;">Syarat 1/3 Pidana</span>
                                         </div>
-                                        <select id="selTahunMulaiTambahan" class="form-select fw-semibold">
-                                            <option value="1">Tahun Ke-1 (Sejak RU Pertama)</option>
-                                            <option value="2" selected>Tahun Ke-2 (Syarat Pemuka 1/3)</option>
-                                            <option value="3">Tahun Ke-3</option>
-                                            <option value="4">Tahun Ke-4</option>
-                                            <option value="5">Tahun Ke-5</option>
-                                        </select>
-                                        <small class="text-muted d-block mt-1" style="font-size: 9.5px; line-height: 1.35;">
-                                            Remisi tambahan dihitung mulai tahun RU yang dipilih dan seterusnya.
-                                        </small>
+                                        <div id="wrapTahunPemuka" class="mt-2 pt-2 border-top d-none">
+                                            <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
+                                                <span class="text-muted fw-semibold" style="font-size: 10px;">Pilih Tahun RU Pemuka:</span>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1.5" style="font-size: 9.5px;" onclick="setPresetTahunTambahan('pemuka', 'mulai2')">Mulai Th-2 dst</button>
+                                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1.5" style="font-size: 9.5px;" onclick="setPresetTahunTambahan('pemuka', 'all')">Semua</button>
+                                                    <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1.5" style="font-size: 9.5px;" onclick="setPresetTahunTambahan('pemuka', 'clear')">Kosongkan</button>
+                                                </div>
+                                            </div>
+                                            <div id="chipsTahunPemuka" class="d-flex flex-wrap gap-1"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 2. Donor Darah / Jasa Negara (+1/2 RU) -->
+                                    <div class="p-2.5 rounded-3 border" style="background: rgba(220, 38, 38, 0.04); border-color: rgba(220, 38, 38, 0.18) !important;">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="chkTambahanDonor" onchange="togglePanelTambahan('donor'); updateBadgeOpsiLanjutan();">
+                                            <label class="form-check-label fw-bold text-danger" for="chkTambahanDonor" style="font-size: 11.5px;">
+                                                Donor Darah / Jasa Negara (+1/2 RU)
+                                            </label>
+                                        </div>
+                                        <div id="wrapTahunDonor" class="mt-2 pt-2 border-top d-none">
+                                            <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
+                                                <span class="text-muted fw-semibold" style="font-size: 10px;">Pilih Tahun RU Donor/Jasa:</span>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1.5" style="font-size: 9.5px;" onclick="setPresetTahunTambahan('donor', 'mulai2')">Mulai Th-2 dst</button>
+                                                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1.5" style="font-size: 9.5px;" onclick="setPresetTahunTambahan('donor', 'all')">Semua</button>
+                                                    <button type="button" class="btn btn-xs btn-outline-dark py-0 px-1.5" style="font-size: 9.5px;" onclick="setPresetTahunTambahan('donor', 'clear')">Kosongkan</button>
+                                                </div>
+                                            </div>
+                                            <div id="chipsTahunDonor" class="d-flex flex-wrap gap-1"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1378,16 +1399,114 @@
         }
     }
 
-    // Toggle Tampilan Dropdown Mulai Tahun Remisi Tambahan
-    function toggleTahunMulaiTambahan() {
-        const sel = document.getElementById('selRemisiTambahan');
-        const wrap = document.getElementById('wrapTahunMulaiTambahan');
-        if (!sel || !wrap) return;
-        if (sel.value !== 'none') {
+    // State & Helper UI Remisi Tambahan Independen per Tahun RU
+    let pemukaTahunSelected = [];
+    let donorTahunSelected = [];
+
+    function getMaxTahunChips() {
+        const vTahun = parseInt(document.getElementById('vTahun') ? document.getElementById('vTahun').value : 0) || 0;
+        return Math.max(6, Math.min(25, vTahun + 2));
+    }
+
+    function renderChipsTahunTambahan(targetType = null) {
+        const types = targetType ? [targetType] : ['pemuka', 'donor'];
+        const maxTahun = getMaxTahunChips();
+
+        types.forEach(type => {
+            const container = document.getElementById(type === 'pemuka' ? 'chipsTahunPemuka' : 'chipsTahunDonor');
+            if (!container) return;
+
+            const selectedArr = type === 'pemuka' ? pemukaTahunSelected : donorTahunSelected;
+            const activeClass = type === 'pemuka' ? 'btn-primary text-white' : 'btn-danger text-white';
+
+            let html = '';
+            for (let th = 1; th <= maxTahun; th++) {
+                const isSelected = selectedArr.includes(th);
+                html += `<button type="button" class="btn btn-xs ${isSelected ? activeClass : 'btn-outline-secondary'} fw-semibold px-2 py-0.5" style="font-size: 10.5px; border-radius: 6px;" onclick="toggleTahunTambahanItem('${type}', ${th})">Th-${th}</button>`;
+            }
+            container.innerHTML = html;
+        });
+    }
+
+    function togglePanelTambahan(type) {
+        const chk = document.getElementById(type === 'pemuka' ? 'chkTambahanPemuka' : 'chkTambahanDonor');
+        const wrap = document.getElementById(type === 'pemuka' ? 'wrapTahunPemuka' : 'wrapTahunDonor');
+        if (!chk || !wrap) return;
+
+        if (chk.checked) {
             wrap.classList.remove('d-none');
+            const arr = type === 'pemuka' ? pemukaTahunSelected : donorTahunSelected;
+            if (arr.length === 0) {
+                setPresetTahunTambahan(type, 'mulai2');
+            } else {
+                renderChipsTahunTambahan(type);
+            }
         } else {
             wrap.classList.add('d-none');
+            if (type === 'pemuka') {
+                pemukaTahunSelected = [];
+            } else {
+                donorTahunSelected = [];
+            }
+            renderChipsTahunTambahan(type);
         }
+    }
+
+    function toggleTahunTambahanItem(type, tahun) {
+        const arr = type === 'pemuka' ? pemukaTahunSelected : donorTahunSelected;
+        const idx = arr.indexOf(tahun);
+        if (idx > -1) {
+            arr.splice(idx, 1);
+        } else {
+            arr.push(tahun);
+            arr.sort((a, b) => a - b);
+        }
+        renderChipsTahunTambahan(type);
+        updateBadgeOpsiLanjutan();
+    }
+
+    function setPresetTahunTambahan(type, preset) {
+        const maxTahun = getMaxTahunChips();
+        let nextArr = [];
+        if (preset === 'mulai2') {
+            for (let th = 2; th <= maxTahun; th++) nextArr.push(th);
+        } else if (preset === 'all') {
+            for (let th = 1; th <= maxTahun; th++) nextArr.push(th);
+        }
+
+        if (type === 'pemuka') {
+            pemukaTahunSelected = nextArr;
+        } else {
+            donorTahunSelected = nextArr;
+        }
+        renderChipsTahunTambahan(type);
+        updateBadgeOpsiLanjutan();
+    }
+
+    function getRemisiTambahanPayload() {
+        const chkPemuka = document.getElementById('chkTambahanPemuka');
+        const chkDonor = document.getElementById('chkTambahanDonor');
+        const pemukaList = chkPemuka && chkPemuka.checked ? [...pemukaTahunSelected].sort((a, b) => a - b) : [];
+        const donorList = chkDonor && chkDonor.checked ? [...donorTahunSelected].sort((a, b) => a - b) : [];
+
+        let kategori = 'none';
+        if (pemukaList.length > 0 && donorList.length > 0) {
+            kategori = 'kombinasi';
+        } else if (pemukaList.length > 0) {
+            kategori = 'pemuka';
+        } else if (donorList.length > 0) {
+            kategori = 'jasa_negara';
+        }
+
+        const allYears = [...pemukaList, ...donorList];
+        const tahunMulai = allYears.length > 0 ? Math.min(...allYears) : 1;
+
+        return {
+            kategori_tambahan: kategori,
+            tahun_mulai_tambahan: tahunMulai,
+            pemuka_tahun_list: pemukaList,
+            donor_tahun_list: donorList,
+        };
     }
 
     // Format input angka ribuan Rupiah
@@ -1419,19 +1538,21 @@
         if (!badge) return;
 
         const chkDasawarsa = document.getElementById('chkDasawarsa');
-        const selTambahan = document.getElementById('selRemisiTambahan');
+        const tambahanPayload = getRemisiTambahanPayload();
         const selBasis = document.getElementById('selTargetBasis');
         const remisiAwal = parseInt(document.getElementById('vRemisiAwal') ? document.getElementById('vRemisiAwal').value : 0) || 0;
 
         const dasawarsaOff = chkDasawarsa && !chkDasawarsa.checked;
-        const adaTambahan = selTambahan && selTambahan.value !== 'none';
+        const adaTambahan = tambahanPayload.kategori_tambahan !== 'none';
         const basisEkspirasi = selBasis && selBasis.value === 'ekspirasi';
         const adaRemisiAwal = remisiAwal > 0;
 
         if (dasawarsaOff || adaTambahan || basisEkspirasi || adaRemisiAwal) {
             badge.className = 'badge bg-warning text-dark border border-warning';
             let summary = [];
-            if (adaTambahan) summary.push('Tambahan');
+            if (tambahanPayload.kategori_tambahan === 'kombinasi') summary.push('Pemuka & Donor');
+            else if (tambahanPayload.kategori_tambahan === 'pemuka') summary.push('Pemuka');
+            else if (tambahanPayload.kategori_tambahan === 'jasa_negara') summary.push('Donor/Jasa');
             if (basisEkspirasi) summary.push('Ekspirasi Akhir');
             if (dasawarsaOff) summary.push('Tanpa Dasawarsa');
             if (adaRemisiAwal) summary.push(remisiAwal + ' Hri');
@@ -1483,8 +1604,9 @@
                         <option value="rutan" ${jenis === 'rutan' ? 'selected' : ''}>Tahanan Lapas/Rutan (1:1 / 100%)</option>
                         <option value="rumah" ${jenis === 'rumah' ? 'selected' : ''}>Tahanan Rumah (1/3)</option>
                         <option value="kota" ${jenis === 'kota' ? 'selected' : ''}>Tahanan Kota (1/5)</option>
-                        <option value="tangguh" ${jenis === 'tangguh' ? 'selected' : ''}>Penangguhan (0% - Jeda)</option>
-                        <option value="bantar" ${jenis === 'bantar' ? 'selected' : ''}>Pembantaran (0% - Jeda)</option>
+                        <option value="tangguh" ${jenis === 'tangguh' ? 'selected' : ''}>Penangguhan Penahanan (0% - T2-T1)</option>
+                        <option value="bantar" ${jenis === 'bantar' ? 'selected' : ''}>Pembantaran / Dirawat RS (0% - T2-T1)</option>
+                        <option value="luar_upt" ${jenis === 'luar_upt' ? 'selected' : ''}>Hari di Luar UPT Lainnya (0% - T2-T1)</option>
                         <option value="masuk_kembali" ${jenis === 'masuk_kembali' ? 'selected' : ''}>Masuk Kembali (1:1 / 100%)</option>
                     </select>
                 </div>
@@ -1543,10 +1665,17 @@
         }
 
         const rows = document.querySelectorAll('.item-riwayat-row');
-        let totalKalender = 0;
+        const tglPutusanEl = document.getElementById('tglPutusan');
+        const tglPutusanStr = tglPutusanEl ? tglPutusanEl.value : '';
+        const dPutusan = tglPutusanStr ? new Date(tglPutusanStr + 'T00:00:00') : null;
+
+        let totalPenahananInklusif = 0;
         let totalPotah = 0;
-        let totalJeda = 0;
+        let totalLuarUpt = 0;
+        let totalLuarUptPra = 0;
+        let totalLuarUptPasca = 0;
         let earliestStart = null;
+        let latestPenahananEnd = null;
         let latestEnd = null;
 
         rows.forEach(row => {
@@ -1560,40 +1689,60 @@
                 const d2 = new Date(tglSelesaiStr + 'T00:00:00');
 
                 if (d2 >= d1) {
-                    // Durasi kalender inklusif
-                    const days = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-                    let potah = 0;
-                    let isJeda = false;
+                    const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+                    const isLuarUpt = (jenis === 'tangguh' || jenis === 'bantar' || jenis === 'luar_upt');
+                    // Penahanan inklusif (T2 - T1 + 1), Hari di Luar UPT eksklusif Opsi A (T2 - T1)
+                    const days = isLuarUpt ? diffDays : (diffDays + 1);
 
+                    let potah = 0;
                     if (jenis === 'rutan' || jenis === 'masuk_kembali') {
                         potah = days;
                     } else if (jenis === 'rumah') {
                         potah = Math.ceil(days / 3); // favor reo
                     } else if (jenis === 'kota') {
                         potah = Math.ceil(days / 5); // favor reo
-                    } else if (jenis === 'tangguh' || jenis === 'bantar') {
-                        potah = 0;
-                        isJeda = true;
                     }
 
-                    totalKalender += days;
-                    totalPotah += potah;
-                    if (isJeda) {
-                        totalJeda += days;
-                    }
+                    if (isLuarUpt) {
+                        totalLuarUpt += days;
+                        let praPart = days;
+                        let pascaPart = 0;
+                        if (dPutusan) {
+                            if (d2 <= dPutusan) {
+                                praPart = days;
+                                pascaPart = 0;
+                            } else if (d1 > dPutusan) {
+                                praPart = 0;
+                                pascaPart = days;
+                            } else {
+                                praPart = Math.max(0, Math.round((dPutusan - d1) / (1000 * 60 * 60 * 24)));
+                                pascaPart = Math.max(0, days - praPart);
+                            }
+                        }
+                        totalLuarUptPra += praPart;
+                        totalLuarUptPasca += pascaPart;
 
-                    if (!earliestStart || d1 < earliestStart) earliestStart = d1;
-                    if (!latestEnd || d2 > latestEnd) latestEnd = d2;
-
-                    if (badge) {
-                        if (isJeda) {
+                        if (badge) {
                             badge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2';
-                            badge.innerHTML = `<i class="fas fa-pause me-1"></i> ${days} Hari (Jeda / 0 Potah)`;
-                        } else {
+                            if (pascaPart > 0) {
+                                badge.innerHTML = `<i class="fas fa-pause me-1"></i> ${days} H Luar UPT (${pascaPart} H Pasca-Putusan)`;
+                            } else {
+                                badge.innerHTML = `<i class="fas fa-pause me-1"></i> ${days} H Luar UPT (T2-T1 / 0 Potah)`;
+                            }
+                        }
+                    } else {
+                        totalPenahananInklusif += days;
+                        totalPotah += potah;
+                        if (!earliestStart || d1 < earliestStart) earliestStart = d1;
+                        if (!latestPenahananEnd || d2 > latestPenahananEnd) latestPenahananEnd = d2;
+
+                        if (badge) {
                             badge.className = 'badge bg-success-subtle text-success border border-success-subtle py-1 px-2';
                             badge.innerHTML = `<i class="fas fa-check me-1"></i> ${days} Hari &rarr; <b>${potah} Hari Potah</b>`;
                         }
                     }
+
+                    if (!latestEnd || d2 > latestEnd) latestEnd = d2;
                 } else {
                     if (badge) {
                         badge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle py-1 px-2';
@@ -1610,24 +1759,35 @@
 
         // Update summary text
         const txtTotalKal = document.getElementById('txtTotalHariKalender');
-        if (txtTotalKal) txtTotalKal.innerText = `${totalKalender} Hari`;
+        if (txtTotalKal) txtTotalKal.innerText = `${totalPenahananInklusif} Hari`;
 
         const txtTotalPot = document.getElementById('txtTotalHariPotah');
         if (txtTotalPot) txtTotalPot.innerText = `${totalPotah} Hari`;
 
         const rowJeda = document.getElementById('rowJedaKalender');
         if (rowJeda) {
-            if (totalJeda > 0) {
+            if (totalLuarUpt > 0) {
                 rowJeda.style.display = 'flex';
-                document.getElementById('txtTotalHariJeda').innerText = `${totalJeda} Hari (0 Hari Potah)`;
+                document.getElementById('txtTotalHariJeda').innerText = `${totalLuarUpt} Hari (0 Potah)`;
             } else {
                 rowJeda.style.display = 'none';
             }
         }
 
+        const rowLuarUptBreakdown = document.getElementById('rowLuarUptBreakdown');
+        if (rowLuarUptBreakdown) {
+            if (totalLuarUpt > 0 && dPutusan) {
+                rowLuarUptBreakdown.style.display = 'flex';
+                document.getElementById('txtLuarUptBreakdown').innerText = `Pra: ${totalLuarUptPra} H | Pasca: ${totalLuarUptPasca} H`;
+            } else {
+                rowLuarUptBreakdown.style.display = 'none';
+            }
+        }
+
         const rowEfektif = document.getElementById('rowTglAwalEfektif');
-        if (rowEfektif && latestEnd && totalPotah >= 0) {
-            const dEfektif = new Date(latestEnd);
+        const refEndForEfektif = latestPenahananEnd || latestEnd;
+        if (rowEfektif && refEndForEfektif && totalPotah >= 0) {
+            const dEfektif = new Date(refEndForEfektif);
             dEfektif.setDate(dEfektif.getDate() - totalPotah);
             const yyyy = dEfektif.getFullYear();
             const mm = String(dEfektif.getMonth() + 1).padStart(2, '0');
@@ -1638,7 +1798,7 @@
             rowEfektif.style.display = 'none';
         }
 
-        // Auto-sync ke tglAwal dan tglPutusan jika diisi
+        // Auto-sync tglAwal dari segmen penahanan pertama, dan tglPutusan hanya jika masih kosong
         if (earliestStart) {
             const y1 = earliestStart.getFullYear();
             const m1 = String(earliestStart.getMonth() + 1).padStart(2, '0');
@@ -1646,12 +1806,13 @@
             const inputAwal = document.getElementById('tglAwal');
             if (inputAwal) inputAwal.value = `${y1}-${m1}-${d1}`;
         }
-        if (latestEnd) {
-            const y2 = latestEnd.getFullYear();
-            const m2 = String(latestEnd.getMonth() + 1).padStart(2, '0');
-            const d2 = String(latestEnd.getDate()).padStart(2, '0');
-            const inputPutusan = document.getElementById('tglPutusan');
-            if (inputPutusan) inputPutusan.value = `${y2}-${m2}-${d2}`;
+        if (latestPenahananEnd) {
+            const y2 = latestPenahananEnd.getFullYear();
+            const m2 = String(latestPenahananEnd.getMonth() + 1).padStart(2, '0');
+            const d2 = String(latestPenahananEnd.getDate()).padStart(2, '0');
+            if (tglPutusanEl && !tglPutusanEl.value) {
+                tglPutusanEl.value = `${y2}-${m2}-${d2}`;
+            }
         }
     }
 
@@ -1706,9 +1867,12 @@
             toggleStatusDenda('bb');
         }
         if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
-        if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
-        if (document.getElementById('selTahunMulaiTambahan')) document.getElementById('selTahunMulaiTambahan').value = '2';
-        toggleTahunMulaiTambahan();
+        pemukaTahunSelected = [];
+        donorTahunSelected = [];
+        if (document.getElementById('chkTambahanPemuka')) document.getElementById('chkTambahanPemuka').checked = false;
+        if (document.getElementById('chkTambahanDonor')) document.getElementById('chkTambahanDonor').checked = false;
+        togglePanelTambahan('pemuka');
+        togglePanelTambahan('donor');
         if (document.getElementById('selTargetBasis')) document.getElementById('selTargetBasis').value = '2_3';
         updateHelpTargetBasis();
         document.getElementById('vRemisiAwal').value = '0';
@@ -1763,9 +1927,13 @@
             if (document.getElementById('vSubHari')) document.getElementById('vSubHari').value = '0';
             document.getElementById('selAgama').value = 'islam';
             if (document.getElementById('chkDasawarsa')) document.getElementById('chkDasawarsa').checked = true;
-            if (document.getElementById('selRemisiTambahan')) document.getElementById('selRemisiTambahan').value = 'none';
-            if (document.getElementById('selTahunMulaiTambahan')) document.getElementById('selTahunMulaiTambahan').value = '2';
-            toggleTahunMulaiTambahan();
+            pemukaTahunSelected = [];
+            donorTahunSelected = [];
+            if (document.getElementById('chkTambahanPemuka')) document.getElementById('chkTambahanPemuka').checked = false;
+            if (document.getElementById('chkTambahanDonor')) document.getElementById('chkTambahanDonor').checked = false;
+            togglePanelTambahan('pemuka');
+            togglePanelTambahan('donor');
+            renderChipsTahunTambahan();
             if (document.getElementById('selTargetBasis')) document.getElementById('selTargetBasis').value = '2_3';
             updateHelpTargetBasis();
             document.getElementById('vRemisiAwal').value = '0';
@@ -1836,8 +2004,11 @@
                 payload.no_register = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
                 payload.perkara_pasal = document.getElementById('txtPerkaraPasal') ? document.getElementById('txtPerkaraPasal').value : '';
                 payload.include_dasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? 1 : 0) : 1;
-                payload.kategori_tambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
-                payload.tahun_mulai_tambahan = document.getElementById('selTahunMulaiTambahan') ? (parseInt(document.getElementById('selTahunMulaiTambahan').value) || 1) : 1;
+                const tambahanPayload = getRemisiTambahanPayload();
+                payload.kategori_tambahan = tambahanPayload.kategori_tambahan;
+                payload.tahun_mulai_tambahan = tambahanPayload.tahun_mulai_tambahan;
+                payload.pemuka_tahun_list = tambahanPayload.pemuka_tahun_list;
+                payload.donor_tahun_list = tambahanPayload.donor_tahun_list;
                 payload.target_basis = document.getElementById('selTargetBasis') ? document.getElementById('selTargetBasis').value : '2_3';
 
                 const riwayatData = getRiwayatPenahananArray();
@@ -2283,8 +2454,7 @@
         const noRegister = document.getElementById('txtNoRegister') ? document.getElementById('txtNoRegister').value : '';
         const perkaraPasal = document.getElementById('txtPerkaraPasal') ? document.getElementById('txtPerkaraPasal').value : '';
         const includeDasawarsa = document.getElementById('chkDasawarsa') ? (document.getElementById('chkDasawarsa').checked ? '1' : '0') : '1';
-        const kategoriTambahan = document.getElementById('selRemisiTambahan') ? document.getElementById('selRemisiTambahan').value : 'none';
-        const tahunMulaiTambahan = document.getElementById('selTahunMulaiTambahan') ? document.getElementById('selTahunMulaiTambahan').value : '1';
+        const tambahanPayload = getRemisiTambahanPayload();
         const targetBasis = document.getElementById('selTargetBasis') ? document.getElementById('selTargetBasis').value : '2_3';
 
         const dendaNominal = document.getElementById('vDendaNominal') ? document.getElementById('vDendaNominal').value : '';
@@ -2313,8 +2483,10 @@
             no_register: noRegister,
             perkara_pasal: perkaraPasal,
             include_dasawarsa: includeDasawarsa,
-            kategori_tambahan: kategoriTambahan,
-            tahun_mulai_tambahan: tahunMulaiTambahan,
+            kategori_tambahan: tambahanPayload.kategori_tambahan,
+            tahun_mulai_tambahan: tambahanPayload.tahun_mulai_tambahan,
+            pemuka_tahun_list: JSON.stringify(tambahanPayload.pemuka_tahun_list),
+            donor_tahun_list: JSON.stringify(tambahanPayload.donor_tahun_list),
             target_basis: targetBasis
         };
 
@@ -2406,7 +2578,7 @@
 *Tanggal Ditahan:* ${d.formatted.tgl_awal}${putusanLine}
 *Pidana Pokok:* ${d.lama_pidana_teks}${subsiderLine}
 *Agama WBP:* ${d.agama}
-*Status Pembinaan:* ${d.kategori_tambahan_label || 'Standar (Reguler)'}
+*Status Pembinaan:* ${d.label_kategori_tambahan || d.kategori_tambahan_label || 'Standar (Reguler)'}
 *Remisi Dasawarsa:* ${d.include_dasawarsa ? 'Disertakan (1/12 vonis)' : 'Tidak Disertakan'}
 *Basis Simulasi:* ${d.target_basis_label || 'Standar 2/3 Masa Pidana'}
 ---------------------------------------
@@ -2434,7 +2606,19 @@ _Catatan: Penghitungan ini merupakan simulasi reguler berdasarkan UU No. 22/2022
     // Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
         setMode('simulasi_remisi');
-        toggleTahunMulaiTambahan();
+        renderChipsTahunTambahan();
+        updateBadgeOpsiLanjutan();
+
+        const vTahunEl = document.getElementById('vTahun');
+        if (vTahunEl) {
+            vTahunEl.addEventListener('input', () => renderChipsTahunTambahan());
+            vTahunEl.addEventListener('change', () => renderChipsTahunTambahan());
+        }
+
+        const tglPutusanEl = document.getElementById('tglPutusan');
+        if (tglPutusanEl) {
+            tglPutusanEl.addEventListener('change', () => hitungUlangRiwayat());
+        }
 
         // Deteksi layar ponsel: Jika mobile (< 768px), otomatis pilih Kartu Mobile
         if (window.innerWidth < 768) {

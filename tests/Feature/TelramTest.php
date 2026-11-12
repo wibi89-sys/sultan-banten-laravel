@@ -318,4 +318,64 @@ class TelramTest extends TestCase
         $response->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-', $response->getContent());
     }
+
+    public function test_calculate_dan_export_pdf_dengan_hari_luar_upt_dan_remisi_tambahan_ganda(): void
+    {
+        $user = $this->getTestUser();
+
+        $riwayat = [
+            ['jenis' => 'rutan', 'tgl_mulai' => '2023-01-01', 'tgl_selesai' => '2023-02-28', 'keterangan' => 'Rutan'],
+            ['jenis' => 'bantar', 'tgl_mulai' => '2023-03-01', 'tgl_selesai' => '2023-03-11', 'keterangan' => 'Bantar RS 10 Hari Opsi A'],
+            ['jenis' => 'masuk_kembali', 'tgl_mulai' => '2023-03-12', 'tgl_selesai' => '2023-03-31', 'keterangan' => 'Masuk Rutan'],
+            ['jenis' => 'luar_upt', 'tgl_mulai' => '2023-06-01', 'tgl_selesai' => '2023-06-06', 'keterangan' => 'Luar UPT Pasca Putusan 5 Hari Opsi A'],
+        ];
+
+        $calcResponse = $this->actingAs($user)->postJson('/telram/calculate', [
+            'mode' => 'simulasi_remisi',
+            'tgl_awal' => '2023-01-01',
+            'tgl_putusan' => '2023-03-31',
+            'tahun' => 5,
+            'bulan' => 0,
+            'hari' => 0,
+            'agama' => 'islam',
+            'nama_wbp' => 'Tester Ganda',
+            'include_dasawarsa' => true,
+            'kategori_tambahan' => 'kombinasi',
+            'pemuka_tahun_list' => [2, 3],
+            'donor_tahun_list' => [1, 3],
+            'riwayat_penahanan' => $riwayat,
+        ]);
+
+        $calcResponse->assertStatus(200);
+        $calcResponse->assertJson([
+            'success' => true,
+            'data' => [
+                'kategori_tambahan' => 'kombinasi',
+                'pemuka_tahun_list' => [2, 3],
+                'donor_tahun_list' => [1, 3],
+                'total_hari_luar_upt' => 15,
+                'total_hari_luar_upt_pra' => 10,
+                'total_hari_luar_upt_pasca' => 5,
+            ],
+        ]);
+
+        $pdfResponse = $this->actingAs($user)->post('/telram/export-pdf', [
+            'tgl_awal' => '2023-01-01',
+            'tgl_putusan' => '2023-03-31',
+            'tahun' => 5,
+            'bulan' => 0,
+            'hari' => 0,
+            'agama' => 'islam',
+            'nama_wbp' => 'Tester Ganda',
+            'include_dasawarsa' => '1',
+            'kategori_tambahan' => 'kombinasi',
+            'pemuka_tahun_list' => json_encode([2, 3]),
+            'donor_tahun_list' => json_encode([1, 3]),
+            'riwayat_penahanan' => json_encode($riwayat),
+        ]);
+
+        $pdfResponse->assertStatus(200);
+        $pdfResponse->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $pdfResponse->getContent());
+    }
 }

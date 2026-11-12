@@ -63,8 +63,10 @@ class TelramController extends Controller
                     'no_register' => 'nullable|string|max:100',
                     'perkara_pasal' => 'nullable|string|max:150',
                     'include_dasawarsa' => 'nullable|boolean',
-                    'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara',
+                    'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara,kombinasi',
                     'tahun_mulai_tambahan' => 'nullable|integer|min:1|max:50',
+                    'pemuka_tahun_list' => 'nullable',
+                    'donor_tahun_list' => 'nullable',
                     'target_basis' => 'nullable|string|in:2_3,ekspirasi',
                     'denda_nominal' => 'nullable',
                     'subsider_status' => 'nullable|string|in:bb,sb',
@@ -95,12 +97,9 @@ class TelramController extends Controller
                 $dendaNominal = $validated['denda_nominal'] ?? 0;
                 $subsiderStatus = $validated['subsider_status'] ?? 'bb';
 
-                $rawRiwayat = $request->input('riwayat_penahanan');
-                if (is_string($rawRiwayat)) {
-                    $decoded = json_decode($rawRiwayat, true);
-                    $rawRiwayat = is_array($decoded) ? $decoded : [];
-                }
-                $riwayatPenahanan = is_array($rawRiwayat) ? $rawRiwayat : [];
+                $riwayatPenahanan = $this->parseJsonArrayInput($request->input('riwayat_penahanan'));
+                $pemukaTahunList = $this->parseTahunListInput($request->input('pemuka_tahun_list'));
+                $donorTahunList = $this->parseTahunListInput($request->input('donor_tahun_list'));
 
                 $result = $this->calculator->hitungProyeksiRemisiDanIntegrasi(
                     $validated['tgl_awal'],
@@ -122,7 +121,9 @@ class TelramController extends Controller
                     $subHari,
                     $dendaNominal,
                     $subsiderStatus,
-                    $riwayatPenahanan
+                    $riwayatPenahanan,
+                    $pemukaTahunList,
+                    $donorTahunList
                 );
             } elseif ($mode === 'mundur') {
                 $validated = $request->validate([
@@ -217,8 +218,10 @@ class TelramController extends Controller
             'no_register' => 'nullable|string|max:100',
             'perkara_pasal' => 'nullable|string|max:150',
             'include_dasawarsa' => 'nullable|boolean',
-            'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara',
+            'kategori_tambahan' => 'nullable|string|in:none,pemuka,jasa_negara,kombinasi',
             'tahun_mulai_tambahan' => 'nullable|integer|min:1|max:50',
+            'pemuka_tahun_list' => 'nullable',
+            'donor_tahun_list' => 'nullable',
             'target_basis' => 'nullable|string|in:2_3,ekspirasi',
             'denda_nominal' => 'nullable',
             'subsider_status' => 'nullable|string|in:bb,sb',
@@ -246,12 +249,9 @@ class TelramController extends Controller
         $dendaNominal = $validated['denda_nominal'] ?? 0;
         $subsiderStatus = $validated['subsider_status'] ?? 'bb';
 
-        $rawRiwayat = $request->input('riwayat_penahanan');
-        if (is_string($rawRiwayat)) {
-            $decoded = json_decode($rawRiwayat, true);
-            $rawRiwayat = is_array($decoded) ? $decoded : [];
-        }
-        $riwayatPenahanan = is_array($rawRiwayat) ? $rawRiwayat : [];
+        $riwayatPenahanan = $this->parseJsonArrayInput($request->input('riwayat_penahanan'));
+        $pemukaTahunList = $this->parseTahunListInput($request->input('pemuka_tahun_list'));
+        $donorTahunList = $this->parseTahunListInput($request->input('donor_tahun_list'));
 
         $data = $this->calculator->hitungProyeksiRemisiDanIntegrasi(
             $validated['tgl_awal'],
@@ -273,7 +273,9 @@ class TelramController extends Controller
             $subHari,
             $dendaNominal,
             $subsiderStatus,
-            $riwayatPenahanan
+            $riwayatPenahanan,
+            $pemukaTahunList,
+            $donorTahunList
         );
 
         $pdfContent = $this->calculator->generatePdfReport($data);
@@ -283,5 +285,60 @@ class TelramController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
         ]);
+    }
+
+    /**
+     * Parse input array / JSON string riwayat penahanan dengan aman.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function parseJsonArrayInput(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : [];
+        }
+
+        return is_array($raw) ? $raw : [];
+    }
+
+    /**
+     * Parse daftar tahun ke-N Remisi Tambahan dari array, JSON string, atau CSV.
+     *
+     * @return array<int, int>
+     */
+    private function parseTahunListInput(mixed $raw): array
+    {
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        if (is_string($raw)) {
+            $trimmed = trim($raw);
+            if ($trimmed === '') {
+                return [];
+            }
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded)) {
+                $raw = $decoded;
+            } else {
+                $raw = explode(',', $trimmed);
+            }
+        }
+
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $years = [];
+        foreach ($raw as $item) {
+            $val = (int) $item;
+            if ($val >= 1 && $val <= 50) {
+                $years[$val] = $val;
+            }
+        }
+        ksort($years);
+
+        return array_values($years);
     }
 }

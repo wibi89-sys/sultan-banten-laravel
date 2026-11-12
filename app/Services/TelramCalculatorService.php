@@ -267,10 +267,12 @@ class TelramCalculatorService
     }
 
     /**
-     * Hitung riwayat penahanan multi-periode (Rutan, Rumah, Kota, Penangguhan, Pembantaran).
+     * Hitung riwayat penahanan multi-periode & hari di luar UPT (Rutan, Rumah, Kota, Penangguhan, Pembantaran).
      * Sesuai Pasal 22 & 31 KUHAP serta SEMA No. 1/1989.
-     * Menggunakan asas yang lebih menguntungkan tahanan (favor reo / pembulatan ke atas)
-     * dan perhitungan durasi kalender secara inklusif.
+     * - Untuk segmen PENAHANAN (Lapas/Rutan, Rumah, Kota, Masuk Kembali): menggunakan rumus INKLUSIF ((T2 - T1) + 1)
+     *   dan asas yang lebih menguntungkan tahanan (favor reo / ceil) untuk pecahan 1/3 dan 1/5.
+     * - Untuk segmen HARI DI LUAR UPT (Penangguhan, Pembantaran): menggunakan rumus EKSKLUSIF Opsi A (T2 - T1, tanpa +1)
+     *   serta mendeteksi otomatis apakah terjadi Pra-Putusan (jeda 0 potah) atau Pasca-Putusan (menggeser ekspirasi).
      *
      * @param  array<int, array<string, mixed>>  $riwayat
      * @return array<string, mixed>
@@ -279,8 +281,12 @@ class TelramCalculatorService
     {
         $items = [];
         $totalKalender = 0;
+        $totalKalenderPenahanan = 0;
         $totalPotah = 0;
         $totalJeda = 0;
+        $totalLuarUptPra = 0;
+        $totalLuarUptPasca = 0;
+        $luarUptPascaIntervals = [];
 
         $cleanRiwayat = [];
         foreach ($riwayat as $r) {
@@ -294,8 +300,13 @@ class TelramCalculatorService
             return [
                 'items' => [],
                 'total_hari_kalender' => 0,
+                'total_hari_penahanan_kalender' => 0,
                 'total_hari_potah' => 0,
                 'total_hari_jeda' => 0,
+                'total_hari_luar_upt' => 0,
+                'total_hari_luar_upt_pra' => 0,
+                'total_hari_luar_upt_pasca' => 0,
+                'luar_upt_pasca_intervals' => [],
                 'tgl_awal_fisik' => Carbon::today(),
                 'tgl_awal_efektif' => Carbon::today(),
                 'tgl_putusan' => $tglPutusan,
@@ -308,6 +319,32 @@ class TelramCalculatorService
 
         $earliestStart = null;
         $latestEnd = null;
+        $latestPenahananEnd = null;
+
+        // Pass 1 untuk menentukan batas tanggal penahanan bila tglPutusan tidak diisi eksplisit
+        foreach ($cleanRiwayat as $row) {
+            $m = Carbon::parse($row['tgl_mulai'])->startOfDay();
+            $s = Carbon::parse($row['tgl_selesai'])->startOfDay();
+            if ($s->lt($m)) {
+                [$m, $s] = [$s, $m];
+            }
+            if ($earliestStart === null || $m->lt($earliestStart)) {
+                $earliestStart = $m->copy();
+            }
+            if ($latestEnd === null || $s->gt($latestEnd)) {
+                $latestEnd = $s->copy();
+            }
+            $j = strtolower(trim((string) ($row['jenis'] ?? 'rutan')));
+            if (! in_array($j, ['tangguh', 'bantar', 'luar_upt'], true)) {
+                if ($latestPenahananEnd === null || $s->gt($latestPenahananEnd)) {
+                    $latestPenahananEnd = $s->copy();
+                }
+            }
+        }
+
+        if ($tglPutusan === null) {
+            $tglPutusan = $latestPenahananEnd ? $latestPenahananEnd->copy() : ($latestEnd?->copy());
+        }
 
         foreach ($cleanRiwayat as $idx => $row) {
             $mulai = Carbon::parse($row['tgl_mulai'])->startOfDay();
@@ -319,18 +356,17 @@ class TelramCalculatorService
                 $selesai = $temp;
             }
 
-            if ($earliestStart === null || $mulai->lt($earliestStart)) {
-                $earliestStart = $mulai->copy();
-            }
-            if ($latestEnd === null || $selesai->gt($latestEnd)) {
-                $latestEnd = $selesai->copy();
-            }
-
-            // Durasi kalender inklusif: (T2 - T1) + 1 hari
-            $hariKalender = (int) $mulai->diffInDays($selesai) + 1;
-
             $jenis = strtolower(trim((string) ($row['jenis'] ?? 'rutan')));
             $keterangan = trim((string) ($row['keterangan'] ?? ''));
+
+            $isLuarUpt = in_array($jenis, ['tangguh', 'bantar', 'luar_upt'], true);
+
+            // Penahanan dihitung Inklusif ((T2 - T1) + 1), sedangkan Penangguhan/Pembantaran/Hari di Luar UPT
+            // dihitung Eksklusif Opsi A (T2 - T1, tanpa +1).
+            $hariKalender = $isLuarUpt
+                ? (int) $mulai->diffInDays($selesai)
+                : (int) $mulai->diffInDays($selesai) + 1;
+            $metodeHitung = $isLuarUpt ? 'Eksklusif (T2-T1)' : 'Inklusif (T2-T1+1)';
 
             switch ($jenis) {
                 case 'rumah':
@@ -367,6 +403,14 @@ class TelramCalculatorService
                     $isJeda = true;
                     break;
 
+                case 'luar_upt':
+                    $labelJenis = 'Hari di Luar UPT';
+                    $rasio = '0';
+                    $dasarHukum = 'Di Luar Masa Pidana UPT';
+                    $hariPotah = 0;
+                    $isJeda = true;
+                    break;
+
                 case 'masuk_kembali':
                     $labelJenis = 'Masuk Kembali';
                     $rasio = '1/1';
@@ -386,10 +430,44 @@ class TelramCalculatorService
                     break;
             }
 
+            $fase = 'pra_putusan';
+            $hariLuarUptPra = 0;
+            $hariLuarUptPasca = 0;
+
+            if ($isLuarUpt && $hariKalender > 0) {
+                if ($tglPutusan !== null && $mulai->gte($tglPutusan)) {
+                    $fase = 'pasca_putusan';
+                    $hariLuarUptPasca = $hariKalender;
+                    $luarUptPascaIntervals[] = [
+                        'mulai' => $mulai->copy(),
+                        'selesai' => $selesai->copy(),
+                        'hari' => $hariLuarUptPasca,
+                    ];
+                } elseif ($tglPutusan !== null && $mulai->lt($tglPutusan) && $selesai->gt($tglPutusan)) {
+                    $fase = 'lintas_putusan';
+                    $hariLuarUptPra = (int) $mulai->diffInDays($tglPutusan);
+                    $hariLuarUptPasca = max(0, $hariKalender - $hariLuarUptPra);
+                    if ($hariLuarUptPasca > 0) {
+                        $luarUptPascaIntervals[] = [
+                            'mulai' => $tglPutusan->copy(),
+                            'selesai' => $selesai->copy(),
+                            'hari' => $hariLuarUptPasca,
+                        ];
+                    }
+                } else {
+                    $fase = 'pra_putusan';
+                    $hariLuarUptPra = $hariKalender;
+                }
+            }
+
             $totalKalender += $hariKalender;
             $totalPotah += $hariPotah;
             if ($isJeda) {
                 $totalJeda += $hariKalender;
+                $totalLuarUptPra += $hariLuarUptPra;
+                $totalLuarUptPasca += $hariLuarUptPasca;
+            } else {
+                $totalKalenderPenahanan += $hariKalender;
             }
 
             $items[] = [
@@ -398,6 +476,11 @@ class TelramCalculatorService
                 'label_jenis' => $labelJenis,
                 'rasio' => $rasio,
                 'dasar_hukum' => $dasarHukum,
+                'metode_hitung' => $metodeHitung,
+                'is_luar_upt' => $isLuarUpt,
+                'fase' => $fase,
+                'hari_luar_upt_pra' => $hariLuarUptPra,
+                'hari_luar_upt_pasca' => $hariLuarUptPasca,
                 'tgl_mulai' => $mulai->toDateString(),
                 'tgl_selesai' => $selesai->toDateString(),
                 'tgl_mulai_indo' => self::formatTanggalIndonesia($mulai),
@@ -412,18 +495,19 @@ class TelramCalculatorService
             ];
         }
 
-        if ($tglPutusan === null && $latestEnd !== null) {
-            $tglPutusan = $latestEnd->copy();
-        }
-
         $refPutusan = $tglPutusan ?? ($latestEnd ?? Carbon::today());
         $tglAwalEfektif = $refPutusan->copy()->subDays($totalPotah);
 
         return [
             'items' => $items,
             'total_hari_kalender' => $totalKalender,
+            'total_hari_penahanan_kalender' => $totalKalenderPenahanan,
             'total_hari_potah' => $totalPotah,
             'total_hari_jeda' => $totalJeda,
+            'total_hari_luar_upt' => $totalJeda,
+            'total_hari_luar_upt_pra' => $totalLuarUptPra,
+            'total_hari_luar_upt_pasca' => $totalLuarUptPasca,
+            'luar_upt_pasca_intervals' => $luarUptPascaIntervals,
             'tgl_awal_fisik' => $earliestStart ?? Carbon::today(),
             'tgl_awal_efektif' => $tglAwalEfektif,
             'tgl_putusan' => $tglPutusan,
@@ -437,6 +521,8 @@ class TelramCalculatorService
      * Serta Metode Standar SDP Ditjenpas (2/3 Murni dikurangi Full Remisi).
      *
      * @param  array<int, array<string, mixed>>  $riwayatPenahanan
+     * @param  array<int, int|string>  $pemukaTahunList
+     * @param  array<int, int|string>  $donorTahunList
      * @return array<string, mixed>
      */
     public function hitungProyeksiRemisiDanIntegrasi(
@@ -459,7 +545,9 @@ class TelramCalculatorService
         int $subHari = 0,
         float|int|string $dendaNominal = 0,
         string $subsiderStatus = 'bb',
-        array $riwayatPenahanan = []
+        array $riwayatPenahanan = [],
+        array $pemukaTahunList = [],
+        array $donorTahunList = []
     ): array {
         $tglAwal = Carbon::parse($tglAwalStr)->startOfDay();
         $tglAwalFisik = $tglAwal;
@@ -473,6 +561,10 @@ class TelramCalculatorService
         $masaTahananTeks = '-';
         $riwayatData = null;
         $hasRiwayatPenahanan = false;
+        $totalHariLuarUpt = 0;
+        $totalHariLuarUptPra = 0;
+        $totalHariLuarUptPasca = 0;
+        $luarUptPascaIntervals = [];
 
         if (! empty($riwayatPenahanan)) {
             $parsedPutusanInitial = ! empty($tglPutusanStr) ? Carbon::parse($tglPutusanStr)->startOfDay() : null;
@@ -484,6 +576,10 @@ class TelramCalculatorService
                 $masaTahananTeks = self::formatHariKeTeks($masaTahananHari);
                 $tglAwalFisik = $riwayatData['tgl_awal_fisik'];
                 $tglAwal = $riwayatData['tgl_awal_efektif'];
+                $totalHariLuarUpt = (int) ($riwayatData['total_hari_luar_upt'] ?? 0);
+                $totalHariLuarUptPra = (int) ($riwayatData['total_hari_luar_upt_pra'] ?? 0);
+                $totalHariLuarUptPasca = (int) ($riwayatData['total_hari_luar_upt_pasca'] ?? 0);
+                $luarUptPascaIntervals = (array) ($riwayatData['luar_upt_pasca_intervals'] ?? []);
             }
         }
 
@@ -510,27 +606,51 @@ class TelramCalculatorService
             $agama = 'islam';
         }
 
-        $validTambahan = ['none', 'pemuka', 'jasa_negara'];
+        $normalizeTahunList = static function (array $list): array {
+            $clean = [];
+            foreach ($list as $item) {
+                $val = (int) $item;
+                if ($val >= 1 && $val <= 50) {
+                    $clean[$val] = $val;
+                }
+            }
+            ksort($clean);
+
+            return array_values($clean);
+        };
+
+        $pemukaTahunClean = $normalizeTahunList($pemukaTahunList);
+        $donorTahunClean = $normalizeTahunList($donorTahunList);
+
+        $validTambahan = ['none', 'pemuka', 'jasa_negara', 'kombinasi'];
         if (! in_array($kategoriTambahan, $validTambahan, true)) {
             $kategoriTambahan = 'none';
+        }
+
+        if (! empty($pemukaTahunClean) && ! empty($donorTahunClean)) {
+            $kategoriTambahan = 'kombinasi';
+        } elseif (! empty($pemukaTahunClean)) {
+            $kategoriTambahan = 'pemuka';
+        } elseif (! empty($donorTahunClean)) {
+            $kategoriTambahan = 'jasa_negara';
         }
 
         if ($remisiAwalHari < 0) {
             $remisiAwalHari = 0;
         }
 
-        // 1. Ekspirasi Murni (Sebelum Remisi)
-        $tglEkspirasiMurni = self::tambahDurasiVonis($tglAwal, $tahun, $bulan, $hari);
+        // 1. Ekspirasi Murni (Sebelum Remisi), memperhitungkan jeda Hari di Luar UPT Pasca-Putusan
+        $tglEkspirasiMurni = self::tambahDurasiVonis($tglAwal, $tahun, $bulan, $hari)->addDays($totalHariLuarUptPasca);
 
         // Pentahapan Masa Pidana Murni: Proporsional dari pidana vonis (Tahun, Bulan, Hari)
-        // Dihitung dari tanggal awal penahanan dengan kaidah hitung vonis yang sama
+        // Dihitung dari tanggal awal penahanan dengan kaidah hitung vonis yang sama (+ jeda pasca-putusan)
         [$y13Murni, $m13Murni, $d13Murni] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 3);
         [$y12Murni, $m12Murni, $d12Murni] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 1, 2);
         [$y23Murni, $m23Murni, $d23Murni] = self::hitungDurasiFraksi($tahun, $bulan, $hari, 2, 3);
 
-        $tgl13Murni = self::tambahDurasiVonis($tglAwal, $y13Murni, $m13Murni, $d13Murni);
-        $tgl12Murni = self::tambahDurasiVonis($tglAwal, $y12Murni, $m12Murni, $d12Murni);
-        $tgl23Murni = self::tambahDurasiVonis($tglAwal, $y23Murni, $m23Murni, $d23Murni);
+        $tgl13Murni = self::tambahDurasiVonis($tglAwal, $y13Murni, $m13Murni, $d13Murni)->addDays($totalHariLuarUptPasca);
+        $tgl12Murni = self::tambahDurasiVonis($tglAwal, $y12Murni, $m12Murni, $d12Murni)->addDays($totalHariLuarUptPasca);
+        $tgl23Murni = self::tambahDurasiVonis($tglAwal, $y23Murni, $m23Murni, $d23Murni)->addDays($totalHariLuarUptPasca);
 
         // Total hari baku: 1 Tahun = 360 hari (12 bln x 30 hari), 1 Bulan = 30 hari
         $totalHariVonis = ($tahun * 360) + ($bulan * 30) + $hari;
@@ -578,9 +698,12 @@ class TelramCalculatorService
         });
 
         // 4. Simulasi Proyeksi Remisi Sesuai Keppres No. 174 Tahun 1999 & Keppres Dasawarsa
-        // Batas Minimal Berhak Integrasi UU No. 22 Tahun 2022
-        $tglMinIntegrasi = $tglAwal->copy()->addDays($minHariIntegrasi);
-        $tglMin12 = $tglAwal->copy()->addDays(180);
+        // Batas Minimal Berhak Integrasi UU No. 22 Tahun 2022 (+ jeda pasca-putusan)
+        $tglMin13 = $tglAwal->copy()->addDays($totalHariLuarUptPasca);
+        $tglMin12Base = $tglAwal->copy()->addDays(180);
+        $tglMinIntegrasiBase = $tglAwal->copy()->addDays($minHariIntegrasi);
+        $tglMin12 = $tglMin12Base->copy()->addDays($totalHariLuarUptPasca);
+        $tglMinIntegrasi = $tglMinIntegrasiBase->copy()->addDays($totalHariLuarUptPasca);
 
         // Inisialisasi akumulasi remisi & fungsi penghitung pentahapan dinamis
         $totalHariRemisi = $remisiAwalHari;
@@ -593,17 +716,23 @@ class TelramCalculatorService
             $bulan,
             $hari,
             $tglEkspirasiMurni,
-            $tglMinIntegrasi,
-            $tglMin12,
+            $tglMinIntegrasiBase,
+            $tglMin12Base,
+            $totalHariLuarUptPasca,
             &$totalHariRemisi
         ) {
             $curEkspirasi = $tglEkspirasiMurni->copy()->subDays($totalHariRemisi);
 
             $res13 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 3, $totalHariRemisi, $tglAwal);
-            $res12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12);
-            $res23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasi);
+            $res12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12Base);
+            $res23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasiBase);
 
-            return [$curEkspirasi, $res13['tanggal'], $res12['tanggal'], $res23['tanggal']];
+            return [
+                $curEkspirasi,
+                $res13['tanggal']->copy()->addDays($totalHariLuarUptPasca),
+                $res12['tanggal']->copy()->addDays($totalHariLuarUptPasca),
+                $res23['tanggal']->copy()->addDays($totalHariLuarUptPasca),
+            ];
         };
 
         [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
@@ -628,7 +757,15 @@ class TelramCalculatorService
                 }
             }
 
-            $hariDijalani = $evDate->gte($tglAwal) ? (int) $tglAwal->diffInDays($evDate) : 0;
+            $hariLuarUptSampaiEvent = 0;
+            foreach ($luarUptPascaIntervals as $seg) {
+                if ($evDate->gt($seg['mulai'])) {
+                    $batasSelesai = $evDate->lt($seg['selesai']) ? $evDate : $seg['selesai'];
+                    $hariLuarUptSampaiEvent += (int) $seg['mulai']->diffInDays($batasSelesai);
+                }
+            }
+
+            $hariDijalani = $evDate->gte($tglAwal) ? max(0, (int) $tglAwal->diffInDays($evDate) - $hariLuarUptSampaiEvent) : 0;
             $isSebelumPutusan = $tglPutusan && $evDate->lt($tglPutusan);
 
             // Syarat Minimal Keppres 174/1999: Minimal telah menjalani 6 bulan (180 hari)
@@ -808,36 +945,69 @@ class TelramCalculatorService
                 'keterangan_alasan' => $keteranganAlasan,
             ];
 
-            // 4a. REMISI TAMBAHAN (Pasal 4 Keppres 174/1999) - Melekat pada Remisi Umum
-            if ($item['jenis'] === 'RU' && $potonganHari > 0 && $kategoriTambahan !== 'none' && $keRu >= $tahunMulaiTambahan) {
-                $potonganTambahan = 0;
-                $rtBln = 0;
-                $rtHr = 0;
-                $keteranganTambahan = '';
-                $namaEventTambahan = '';
+            // 4a. REMISI TAMBAHAN (Keppres 174/1999 & Permenkumham 7/2022) - Melekat pada Remisi Umum
+            // Evaluasi Pemuka (+1/3 RU) & Donor Darah / Jasa Negara (+1/2 RU) secara independen agar dapat aktif sekaligus
+            if ($item['jenis'] === 'RU' && $potonganHari > 0) {
+                $hasExplicitArrays = ! empty($pemukaTahunClean) || ! empty($donorTahunClean);
 
-                if ($kategoriTambahan === 'pemuka') {
+                $isPemukaAktif = ! empty($pemukaTahunClean)
+                    ? in_array($keRu, $pemukaTahunClean, true)
+                    : (! $hasExplicitArrays && $kategoriTambahan === 'pemuka' && $keRu >= $tahunMulaiTambahan);
+
+                $isDonorAktif = ! empty($donorTahunClean)
+                    ? in_array($keRu, $donorTahunClean, true)
+                    : (! $hasExplicitArrays && $kategoriTambahan === 'jasa_negara' && $keRu >= $tahunMulaiTambahan);
+
+                $tambahanQueue = [];
+
+                if ($isPemukaAktif) {
                     // 1/3 dari Remisi Umum
                     $rtBln = (int) floor($evBln / 3);
                     $rtHr = (int) floor((($evBln % 3) * 30) / 3);
-                    $potonganTambahan = ($rtBln * 30) + $rtHr;
-                    $namaEventTambahan = "Remisi Tambahan Pemuka ({$item['tahun']})";
-                    $keteranganTambahan = "Bonus 1/3 dari Remisi Umum ({$besaranTeks}) bagi narapidana pemuka pembinaan di Lapas (Pasal 4 Keppres No. 174/1999).";
-                } elseif ($kategoriTambahan === 'jasa_negara') {
+                    $tambahanQueue[] = [
+                        'rt_bln' => $rtBln,
+                        'rt_hr' => $rtHr,
+                        'potongan' => ($rtBln * 30) + $rtHr,
+                        'nama' => "Remisi Tambahan Pemuka ({$item['tahun']})",
+                        'keterangan' => "Bonus 1/3 dari Remisi Umum ({$besaranTeks}) bagi narapidana pemuka pembinaan di Lapas (Keppres No. 174/1999).",
+                    ];
+                }
+
+                if ($isDonorAktif) {
                     // 1/2 dari Remisi Umum
                     $rtBln = (int) floor($evBln / 2);
                     $rtHr = ($evBln % 2 === 1) ? 15 : 0;
-                    $potonganTambahan = ($rtBln * 30) + $rtHr;
-                    $namaEventTambahan = "Remisi Tambahan Jasa Negara/Kemanusiaan ({$item['tahun']})";
-                    $keteranganTambahan = "Bonus 1/2 dari Remisi Umum ({$besaranTeks}) atas jasa bagi negara atau perbuatan kemanusiaan/donor darah (Pasal 4 Keppres No. 174/1999).";
+                    $tambahanQueue[] = [
+                        'rt_bln' => $rtBln,
+                        'rt_hr' => $rtHr,
+                        'potongan' => ($rtBln * 30) + $rtHr,
+                        'nama' => ! empty($donorTahunClean)
+                            ? "Remisi Tambahan Donor Darah / Jasa Negara ({$item['tahun']})"
+                            : "Remisi Tambahan Jasa Negara/Kemanusiaan ({$item['tahun']})",
+                        'keterangan' => "Bonus 1/2 dari Remisi Umum ({$besaranTeks}) atas perbuatan kemanusiaan/donor darah atau jasa bagi negara (Keppres No. 174/1999).",
+                    ];
                 }
 
-                if ($potonganTambahan > 0) {
+                foreach ($tambahanQueue as $tItem) {
+                    $potonganTambahan = $tItem['potongan'];
+                    $rtBln = $tItem['rt_bln'];
+                    $rtHr = $tItem['rt_hr'];
+                    $namaEventTambahan = $tItem['nama'];
+                    $keteranganTambahan = $tItem['keterangan'];
+
+                    if ($potonganTambahan <= 0) {
+                        continue;
+                    }
+
                     $sisaHariTambahan = (int) $evDate->diffInDays($currentEkspirasi);
                     if ($potonganTambahan > $sisaHariTambahan) {
                         $potonganTambahan = max(0, $sisaHariTambahan);
                         $rtBln = (int) floor($potonganTambahan / 30);
                         $rtHr = $potonganTambahan % 30;
+                    }
+
+                    if ($potonganTambahan <= 0) {
+                        continue;
                     }
 
                     $cumBulanRemisi += $rtBln;
@@ -989,15 +1159,24 @@ class TelramCalculatorService
             $formatVonis[] = "{$hari} Hari";
         }
 
-        $labelKategoriTambahan = match ($kategoriTambahan) {
-            'pemuka' => 'Pemuka Pembinaan Lapas (+1/3 RU)',
-            'jasa_negara' => 'Jasa Negara / Kemanusiaan (+1/2 RU)',
-            default => 'Reguler (Tanpa Remisi Tambahan)',
-        };
-
-        if ($kategoriTambahan !== 'none' && $tahunMulaiTambahan > 1) {
-            $labelKategoriTambahan .= " (Mulai Tahun ke-{$tahunMulaiTambahan})";
+        $labelTambahanParts = [];
+        if (! empty($pemukaTahunClean)) {
+            $labelTambahanParts[] = 'Pemuka (+1/3 RU: Th ke-'.implode(', ', $pemukaTahunClean).')';
+        } elseif ($kategoriTambahan === 'pemuka' && empty($donorTahunClean)) {
+            $thnInfo = $tahunMulaiTambahan > 1 ? " (Mulai Tahun ke-{$tahunMulaiTambahan})" : '';
+            $labelTambahanParts[] = "Pemuka Pembinaan Lapas (+1/3 RU){$thnInfo}";
         }
+
+        if (! empty($donorTahunClean)) {
+            $labelTambahanParts[] = 'Donor Darah / Jasa Negara (+1/2 RU: Th ke-'.implode(', ', $donorTahunClean).')';
+        } elseif ($kategoriTambahan === 'jasa_negara' && empty($pemukaTahunClean)) {
+            $thnInfo = $tahunMulaiTambahan > 1 ? " (Mulai Tahun ke-{$tahunMulaiTambahan})" : '';
+            $labelTambahanParts[] = "Jasa Negara / Kemanusiaan (+1/2 RU){$thnInfo}";
+        }
+
+        $labelKategoriTambahan = ! empty($labelTambahanParts)
+            ? implode(' & ', $labelTambahanParts)
+            : 'Reguler (Tanpa Remisi Tambahan)';
 
         $sisaPidanaPascaPutusanTeks = '-';
         $sisaHariPascaPutusan = null;
@@ -1059,8 +1238,8 @@ class TelramCalculatorService
         $durasi23Teks = self::formatDurasiTeks($thn23, $bln23, $hri23);
 
         $detailTahap13 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 3, $totalHariRemisi, $tglAwal);
-        $detailTahap12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12);
-        $detailTahap23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasi);
+        $detailTahap12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12Base);
+        $detailTahap23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasiBase);
 
         $result = [
             'mode' => 'simulasi_remisi',
@@ -1077,7 +1256,11 @@ class TelramCalculatorService
             'has_riwayat_penahanan' => $hasRiwayatPenahanan,
             'riwayat_penahanan' => $riwayatData['items'] ?? [],
             'total_hari_kalender_tahanan' => $riwayatData['total_hari_kalender'] ?? $masaTahananHari,
+            'total_hari_penahanan_kalender' => $riwayatData['total_hari_penahanan_kalender'] ?? $masaTahananHari,
             'total_hari_jeda_tahanan' => $riwayatData['total_hari_jeda'] ?? 0,
+            'total_hari_luar_upt' => $totalHariLuarUpt,
+            'total_hari_luar_upt_pra' => $totalHariLuarUptPra,
+            'total_hari_luar_upt_pasca' => $totalHariLuarUptPasca,
             'tgl_putusan' => $tglPutusan ? $tglPutusan->toDateString() : null,
             'masa_tahanan_hari' => $masaTahananHari,
             'masa_tahanan_teks' => $masaTahananTeks,
@@ -1120,6 +1303,8 @@ class TelramCalculatorService
             'include_dasawarsa' => $includeDasawarsa,
             'kategori_tambahan' => $kategoriTambahan,
             'tahun_mulai_tambahan' => $tahunMulaiTambahan,
+            'pemuka_tahun_list' => $pemukaTahunClean,
+            'donor_tahun_list' => $donorTahunClean,
             'label_kategori_tambahan' => $labelKategoriTambahan,
             'remisi_awal_hari' => $remisiAwalHari,
             'total_proyeksi_remisi_hari' => $totalHariRemisi,
@@ -1336,10 +1521,16 @@ class TelramCalculatorService
         $teks .= "Pidana Pokok        : {$lamaVonis}\n";
         $teks .= "Pidana Subsider     : {$subsiderIdentitas}\n\n";
 
+        $labelTambahanManual = $data['label_kategori_tambahan'] ?? 'Reguler (Tanpa Remisi Tambahan)';
+        if (($data['kategori_tambahan'] ?? 'none') !== 'none') {
+            $teks .= "Remisi Tambahan     : {$labelTambahanManual}\n";
+        }
+        $teks .= "\n";
+
         if (! empty($data['tgl_putusan'])) {
             $teks .= "A. POTONGAN TAHANAN (POTAH)\n";
             if (! empty($data['has_riwayat_penahanan']) && ! empty($data['riwayat_penahanan'])) {
-                $teks .= "   Rincian Riwayat Penahanan, Pembantaran & Perhitungan Potah (Ps. 22 & 31 KUHAP):\n";
+                $teks .= "   Rincian Riwayat Penahanan & Hari di Luar UPT (Ps. 22 & 31 KUHAP):\n";
                 $teks .= "   -----------------------------------------------------------------------------------------\n";
                 $teks .= "   No | Status Penahanan              | Periode                 | Hari | Rasio | Potah\n";
                 $teks .= "   -----------------------------------------------------------------------------------------\n";
@@ -1354,12 +1545,16 @@ class TelramCalculatorService
                 }
                 $teks .= "   -----------------------------------------------------------------------------------------\n";
                 $totalKal = $data['total_hari_kalender_tahanan'] ?? 0;
-                $totalJeda = $data['total_hari_jeda_tahanan'] ?? 0;
+                $totalLuarUpt = (int) ($data['total_hari_luar_upt'] ?? ($data['total_hari_jeda_tahanan'] ?? 0));
+                $totalLuarUptPasca = (int) ($data['total_hari_luar_upt_pasca'] ?? 0);
                 $tglAwalEfektifNum = $num['tgl_mulai_ditahan_efektif'] ?? '-';
                 $tglAwalEfektifIndo = $fmt['tgl_mulai_ditahan_efektif'] ?? '-';
                 $teks .= "   Total Hari Kalender        = {$totalKal} Hari\n";
-                if ($totalJeda > 0) {
-                    $teks .= "   Total Jeda (Tangguh/RS)    = {$totalJeda} Hari (0 Hari Potah)\n";
+                if ($totalLuarUpt > 0) {
+                    $teks .= "   Total Hari di Luar UPT     = {$totalLuarUpt} Hari (Eksklusif Opsi A, 0 Hari Potah)\n";
+                    if ($totalLuarUptPasca > 0) {
+                        $teks .= "   Luar UPT Pasca-Putusan     = {$totalLuarUptPasca} Hari (Menggeser Ekspirasi & Pentahapan +{$totalLuarUptPasca} Hari)\n";
+                    }
                 }
                 $teks .= "   Total Potongan Tahanan     = {$masaTahananHari} Hari ({$masaTahananTeks})\n";
                 $teks .= "   Tgl. Mulai Ditahan Efektif = Tgl. Putusan - Total Potah\n";
@@ -1372,6 +1567,7 @@ class TelramCalculatorService
             }
         }
 
+        $totalLuarUptPascaB = (int) ($data['total_hari_luar_upt_pasca'] ?? 0);
         $teks .= "B. EKSPIRASI SEBELUM REMISI\n";
         if (! empty($data['tgl_putusan'])) {
             $teks .= "   Ekspirasi Awal  = Tgl. Putusan + Lama Pidana Pokok\n";
@@ -1379,8 +1575,13 @@ class TelramCalculatorService
             $teks .= "                   = {$ekspirasiAwalNum}\n";
             $teks .= "                   = {$ekspirasiAwalIndo}\n\n";
 
-            $teks .= "   Ekspirasi Akhir = Ekspirasi Awal - Potah\n";
-            $teks .= "                   = {$ekspirasiAwalNum} - {$masaTahananTeks}\n";
+            if ($totalLuarUptPascaB > 0) {
+                $teks .= "   Ekspirasi Akhir = Ekspirasi Awal - Potah + Hari di Luar UPT Pasca-Putusan\n";
+                $teks .= "                   = {$ekspirasiAwalNum} - {$masaTahananTeks} + {$totalLuarUptPascaB} Hari\n";
+            } else {
+                $teks .= "   Ekspirasi Akhir = Ekspirasi Awal - Potah\n";
+                $teks .= "                   = {$ekspirasiAwalNum} - {$masaTahananTeks}\n";
+            }
             $teks .= "                   = {$ekspirasiSebelumRemisiNum}\n";
             $teks .= "                   = {$ekspirasiSebelumRemisiIndo}\n";
         } else {
@@ -1598,17 +1799,23 @@ HEADER;
         </div>
 IDENTITAS;
 
+        $totalLuarUptPascaHtml = (int) ($data['total_hari_luar_upt_pasca'] ?? 0);
+
         // Bagian A (Jika Tgl Putusan diisi)
         if (! empty($data['tgl_putusan'])) {
             if (! empty($data['has_riwayat_penahanan']) && ! empty($data['riwayat_penahanan'])) {
                 $rowsRiwayatHtml = '';
                 foreach ($data['riwayat_penahanan'] as $r) {
+                    $metodeTeks = htmlspecialchars($r['metode_hitung'] ?? ($r['is_jeda'] ? 'Eksklusif (T2-T1)' : 'Inklusif (T2-T1+1)'));
+                    $fasePascaBadge = ! empty($r['hari_luar_upt_pasca'])
+                        ? '<br><span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 9.5px;">Pasca-Putusan: +'.$r['hari_luar_upt_pasca'].' hr Ekspirasi</span>'
+                        : '';
                     $badgeJeda = $r['is_jeda']
-                        ? '<span class="badge bg-secondary-subtle text-secondary border">0 Hari (Jeda)</span>'
+                        ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">0 Hari (Luar UPT)</span>'.$fasePascaBadge
                         : '<b class="text-success">'.$r['hari_potah'].' hr</b>';
                     $rowsRiwayatHtml .= '<tr>'.
                         '<td class="text-center font-monospace">'.$r['no'].'</td>'.
-                        '<td><b>'.htmlspecialchars($r['label_jenis']).'</b><br><small class="text-muted">'.htmlspecialchars($r['dasar_hukum']).'</small></td>'.
+                        '<td><b>'.htmlspecialchars($r['label_jenis']).'</b><br><small class="text-muted">'.htmlspecialchars($r['dasar_hukum']).' &bull; '.$metodeTeks.'</small></td>'.
                         '<td class="text-center font-monospace">'.htmlspecialchars($r['periode_teks']).'</td>'.
                         '<td class="text-center font-monospace">'.$r['hari_kalender'].' hr</td>'.
                         '<td class="text-center font-monospace">'.htmlspecialchars($r['rasio']).'</td>'.
@@ -1618,15 +1825,22 @@ IDENTITAS;
                 }
 
                 $totalKal = $data['total_hari_kalender_tahanan'] ?? 0;
-                $totalJeda = $data['total_hari_jeda_tahanan'] ?? 0;
-                $jedaNote = $totalJeda > 0 ? " <span class=\"text-danger\">(Masa Jeda: {$totalJeda} Hari)</span>" : '';
+                $totalLuarUpt = (int) ($data['total_hari_luar_upt'] ?? ($data['total_hari_jeda_tahanan'] ?? 0));
+                $jedaNote = $totalLuarUpt > 0
+                    ? " <span class=\"text-danger\">(Hari di Luar UPT: {$totalLuarUpt} hr".($totalLuarUptPascaHtml > 0 ? ", Pasca-Putusan: {$totalLuarUptPascaHtml} hr" : '').')</span>'
+                    : '';
                 $tglAwalEfektifNum = htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? '-');
                 $tglAwalEfektifIndo = htmlspecialchars($fmt['tgl_mulai_ditahan_efektif'] ?? '-');
+
+                $rowLuarUptSummaryHtml = '';
+                if ($totalLuarUpt > 0) {
+                    $rowLuarUptSummaryHtml = '<tr><td style="font-weight: 600; color: #b91c1c;">Total Hari di Luar UPT</td><td style="text-align: center; font-weight: bold;">=</td><td><b class="text-danger">'.$totalLuarUpt.' Hari</b> <span class="text-muted">(Eksklusif T2-T1, 0 Hari Potah'.($totalLuarUptPascaHtml > 0 ? "; Pasca-Putusan {$totalLuarUptPascaHtml} hr menggeser Ekspirasi" : '').')</span></td></tr>';
+                }
 
                 $html .= <<<CARD_A
             <div class="card border mb-3" style="border-radius: 10px; border-color: #bbf7d0;">
                 <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #f0fdf4;">
-                    <strong style="color: #166534; font-size: 14px;"><i class="fas fa-layer-group me-1.5"></i> A. POTONGAN TAHANAN (POTAH) &amp; RIWAYAT PENAHANAN</strong>
+                    <strong style="color: #166534; font-size: 14px;"><i class="fas fa-layer-group me-1.5"></i> A. POTONGAN TAHANAN (POTAH) &amp; HARI DI LUAR UPT</strong>
                     <span class="badge bg-success text-white" style="font-size: 10px;">Pasal 22 &amp; 31 KUHAP</span>
                 </div>
                 <div class="card-body p-3.5" style="font-size: 13.5px;">
@@ -1658,6 +1872,7 @@ IDENTITAS;
                         </table>
                     </div>
                     <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 13px; line-height: 1.8;">
+                        {$rowLuarUptSummaryHtml}
                         <tr>
                             <td style="width: 250px; font-weight: 600; color: #0f172a;">Total Potah Diperoleh</td>
                             <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
@@ -1741,6 +1956,9 @@ CARD_A;
 SUB_B;
         }
 
+        $luarUptFormulaB = $totalLuarUptPascaHtml > 0 ? ' + Hari di Luar UPT Pasca-Putusan' : '';
+        $luarUptValB = $totalLuarUptPascaHtml > 0 ? " + {$totalLuarUptPascaHtml} Hari" : '';
+
         $barisEkspirasiAwal = '';
         if (! empty($data['tgl_putusan'])) {
             $barisEkspirasiAwal = <<<EKS_AWAL
@@ -1768,12 +1986,12 @@ SUB_B;
             <tr>
                 <td style="width: 240px; font-weight: 600; color: #0f172a;">Ekspirasi Akhir</td>
                 <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
-                <td>Ekspirasi Awal - Potah</td>
+                <td>Ekspirasi Awal - Potah{$luarUptFormulaB}</td>
             </tr>
             <tr>
                 <td></td>
                 <td style="text-align: center; font-weight: bold;">=</td>
-                <td>{$ekspirasiAwalNum} - {$masaTahananTeks}</td>
+                <td>{$ekspirasiAwalNum} - {$masaTahananTeks}{$luarUptValB}</td>
             </tr>
 EKS_AWAL;
         } else {
@@ -2548,17 +2766,20 @@ SUB;
 
         $cardSpacerPdf = '<table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 6pt; line-height: 0.7;"><tr><td>&nbsp;</td></tr></table>';
 
+        $totalLuarUptPascaPdf = (int) ($data['total_hari_luar_upt_pasca'] ?? 0);
+
         $potahPdfHtml = '';
         if (! empty($data['tgl_putusan'])) {
             if (! empty($data['has_riwayat_penahanan']) && ! empty($data['riwayat_penahanan'])) {
                 $rowsRiwayatPdf = '';
                 foreach ($data['riwayat_penahanan'] as $r) {
+                    $metodePdf = htmlspecialchars($r['metode_hitung'] ?? ($r['is_jeda'] ? 'Eksklusif (T2-T1)' : 'Inklusif'));
                     $potahBadgePdf = $r['is_jeda']
-                        ? '<span style="color: #64748b; font-weight: bold;">0 hr</span>'
+                        ? '<span style="color: #b91c1c; font-weight: bold;">0 hr (Luar UPT)</span>'
                         : '<b style="color: #166534;">'.$r['hari_potah'].' hr</b>';
                     $rowsRiwayatPdf .= '<tr nobr="true">'.
                         '<td width="5%" align="center">'.$r['no'].'</td>'.
-                        '<td width="26%" align="left"><b>'.htmlspecialchars($r['label_jenis']).'</b><br><span style="font-size: 6.2pt; color: #64748b;">'.htmlspecialchars($r['dasar_hukum']).'</span></td>'.
+                        '<td width="26%" align="left"><b>'.htmlspecialchars($r['label_jenis']).'</b><br><span style="font-size: 6pt; color: #64748b;">'.htmlspecialchars($r['dasar_hukum']).' | '.$metodePdf.'</span></td>'.
                         '<td width="23%" align="center">'.htmlspecialchars($r['periode_teks']).'</td>'.
                         '<td width="10%" align="center">'.$r['hari_kalender'].' hr</td>'.
                         '<td width="14%" align="center">'.htmlspecialchars($r['rasio']).'</td>'.
@@ -2568,17 +2789,20 @@ SUB;
                 }
 
                 $totalKal = $data['total_hari_kalender_tahanan'] ?? 0;
-                $totalJeda = $data['total_hari_jeda_tahanan'] ?? 0;
+                $totalLuarUptPdf = (int) ($data['total_hari_luar_upt'] ?? ($data['total_hari_jeda_tahanan'] ?? 0));
                 $tglAwalEfektifNum = htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? '-');
                 $tglAwalEfektifIndo = htmlspecialchars($data['formatted']['tgl_mulai_ditahan_efektif'] ?? '-');
-                $jedaTeksPdf = $totalJeda > 0 ? " (Jeda: {$totalJeda} hr)" : '';
+                $jedaTeksPdf = $totalLuarUptPdf > 0 ? " (Luar UPT: {$totalLuarUptPdf} hr)" : '';
+                $rowLuarUptPdf = $totalLuarUptPdf > 0
+                    ? '<tr><td width="30%" style="color: #b91c1c; font-weight: bold;">Total Hari di Luar UPT</td><td width="4%" align="center" style="font-weight: bold;">=</td><td width="66%"><b style="color: #b91c1c;">'.$totalLuarUptPdf.' Hari</b> (Eksklusif T2-T1, 0 Potah'.($totalLuarUptPascaPdf > 0 ? "; Pasca-Putusan: {$totalLuarUptPascaPdf} hr" : '').')</td></tr>'
+                    : '';
 
                 $potahPdfHtml = <<<POTAH
 {$cardSpacerPdf}
-<!-- A. POTONGAN TAHANAN (POTAH) & RIWAYAT PENAHANAN -->
+<!-- A. POTONGAN TAHANAN (POTAH) & HARI DI LUAR UPT -->
 <table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #bbf7d0;">
     <tr style="background-color: #f0fdf4;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 2.5px 6px;">A. POTONGAN TAHANAN (POTAH) &amp; RIWAYAT PENAHANAN (PS. 22 &amp; 31 KUHAP)</td>
+        <td style="font-weight: bold; font-size: 8.5pt; color: #166534; padding: 2.5px 6px;">A. POTONGAN TAHANAN (POTAH) &amp; HARI DI LUAR UPT (PS. 22 &amp; 31 KUHAP)</td>
     </tr>
     <tr>
         <td style="padding: 2.5px 6px;"><table width="100%" border="1" cellpadding="1.5" cellspacing="0" style="font-size: 7pt; border-collapse: collapse; border-color: #cbd5e1; margin-bottom: 3px;">
@@ -2607,6 +2831,7 @@ SUB;
                 </tfoot>
             </table>
             <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+                {$rowLuarUptPdf}
                 <tr>
                     <td width="30%" style="color: #0f172a; font-weight: bold;">Total Potah Diperoleh</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
@@ -2664,6 +2889,9 @@ POTAH;
             }
         }
 
+        $luarUptFormulaPdf = $totalLuarUptPascaPdf > 0 ? ' + Hari di Luar UPT Pasca-Putusan' : '';
+        $luarUptValPdf = $totalLuarUptPascaPdf > 0 ? " + {$totalLuarUptPascaPdf} Hari" : '';
+
         $barisEkspirasiAwalPdf = '';
         if (! empty($data['tgl_putusan'])) {
             $barisEkspirasiAwalPdf = <<<EKS_AWAL_PDF
@@ -2691,12 +2919,12 @@ POTAH;
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">Ekspirasi Akhir</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">Ekspirasi Awal - Potah</td>
+                    <td width="68%">Ekspirasi Awal - Potah{$luarUptFormulaPdf}</td>
                 </tr>
                 <tr>
                     <td width="28%"></td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$ekspirasiAwalNum} - {$masaTahananTeks}</td>
+                    <td width="68%">{$ekspirasiAwalNum} - {$masaTahananTeks}{$luarUptValPdf}</td>
                 </tr>
 EKS_AWAL_PDF;
         } else {

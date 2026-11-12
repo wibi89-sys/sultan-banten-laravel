@@ -952,12 +952,12 @@ class TelramCalculatorServiceTest extends TestCase
 
     public function test_riwayat_penahanan_multi_periode_dengan_penangguhan_dan_pembantaran(): void
     {
-        // Skenario ilustrasi sesuai kesepakatan:
-        // 1. Rutan: 01/01/2024 s.d. 31/01/2024 (31 hari) -> faktor 1/1 = 31 hari
-        // 2. Kota: 01/02/2024 s.d. 29/02/2024 (29 hari) -> faktor 1/5 = ceil(29/5) = 6 hari (favor reo)
-        // 3. Pembantaran RS: 01/03/2024 s.d. 15/03/2024 (15 hari) -> faktor 0 = 0 hari (jeda)
-        // 4. Masuk Kembali Rutan: 16/03/2024 s.d. 31/03/2024 (16 hari) -> faktor 1/1 = 16 hari
-        // Total Kalender = 91 hari. Total Potah = 31 + 6 + 0 + 16 = 53 hari. Total Jeda = 15 hari.
+        // Skenario ilustrasi sesuai kesepakatan (Opsi A: Hari di Luar UPT Eksklusif T2 - T1):
+        // 1. Rutan: 01/01/2024 s.d. 31/01/2024 (31 hari inklusif) -> faktor 1/1 = 31 hari
+        // 2. Kota: 01/02/2024 s.d. 29/02/2024 (29 hari inklusif) -> faktor 1/5 = ceil(29/5) = 6 hari (favor reo)
+        // 3. Pembantaran RS: 01/03/2024 s.d. 15/03/2024 (14 hari eksklusif T2-T1) -> faktor 0 = 0 hari (luar UPT)
+        // 4. Masuk Kembali Rutan: 16/03/2024 s.d. 31/03/2024 (16 hari inklusif) -> faktor 1/1 = 16 hari
+        // Total Kalender = 90 hari. Total Potah = 31 + 6 + 0 + 16 = 53 hari. Total Luar UPT = 14 hari.
         // Tgl Putusan = 31/03/2024.
         // Tgl Ditahan Efektif = 31/03/2024 - 53 hari = 07/02/2024.
 
@@ -993,9 +993,10 @@ class TelramCalculatorServiceTest extends TestCase
 
         $this->assertTrue($res['has_riwayat_penahanan']);
         $this->assertCount(4, $res['riwayat_penahanan']);
-        $this->assertEquals(91, $res['total_hari_kalender_tahanan']);
+        $this->assertEquals(90, $res['total_hari_kalender_tahanan']);
         $this->assertEquals(53, $res['masa_tahanan_hari']);
-        $this->assertEquals(15, $res['total_hari_jeda_tahanan']);
+        $this->assertEquals(14, $res['total_hari_jeda_tahanan']);
+        $this->assertEquals(14, $res['total_hari_luar_upt']);
         $this->assertEquals('2024-01-01', $res['tgl_awal_fisik']);
         $this->assertEquals('2024-02-07', $res['tgl_mulai_ditahan_efektif']);
         $this->assertEquals('07/02/2024', $res['numeric']['tgl_mulai_ditahan_efektif']);
@@ -1007,7 +1008,7 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertStringContainsString('07/02/2024', $res['hitungan_manual_teks']);
 
         // Verifikasi hitungan manual HTML juga mencakup tabel riwayat
-        $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH) &amp; RIWAYAT PENAHANAN', $res['hitungan_manual_html']);
+        $this->assertStringContainsString('A. POTONGAN TAHANAN (POTAH) &amp; HARI DI LUAR UPT', $res['hitungan_manual_html']);
         $this->assertStringContainsString('Pasal 22 &amp; 31 KUHAP', $res['hitungan_manual_html']);
 
         // Verifikasi PDF dapat digenerate dengan sukses
@@ -1026,5 +1027,91 @@ class TelramCalculatorServiceTest extends TestCase
 
         $this->assertEquals(10, $calc['total_hari_kalender']);
         $this->assertEquals(4, $calc['total_hari_potah'], '10 hari tahanan rumah dibagi 3 dengan asas favor reo (ceil) menghasilkan 4 hari potah.');
+    }
+
+    public function test_hari_di_luar_upt_pasca_putusan_menggeser_ekspirasi_dan_pentahapan(): void
+    {
+        // Baseline tanpa Pasca-Putusan luar UPT (hanya Rutan Pra-Putusan + Tangguh Pra-Putusan)
+        $riwayatBaseline = [
+            ['jenis' => 'rutan', 'tgl_mulai' => '2024-01-01', 'tgl_selesai' => '2024-01-31', 'keterangan' => 'Rutan'],
+            ['jenis' => 'tangguh', 'tgl_mulai' => '2024-02-01', 'tgl_selesai' => '2024-02-06', 'keterangan' => 'Tangguh Pra (5 H Opsi A)'],
+            ['jenis' => 'masuk_kembali', 'tgl_mulai' => '2024-02-07', 'tgl_selesai' => '2024-03-31', 'keterangan' => 'Masuk Kembali'],
+        ];
+
+        // Dengan Hari di Luar UPT Pasca-Putusan (10 hari Opsi A: 2024-06-01 s.d. 2024-06-11)
+        $riwayatDenganPasca = array_merge($riwayatBaseline, [
+            ['jenis' => 'luar_upt', 'tgl_mulai' => '2024-06-01', 'tgl_selesai' => '2024-06-11', 'keterangan' => 'Kabur / Di Luar UPT Pasca-Putusan'],
+        ]);
+
+        $resBase = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01', 3, 0, 0, 'islam', 0, 'Tester', 'REG-1', true, 'none', '2_3', 1, '', '2024-03-31',
+            0, 0, 0, 0, 'bb', $riwayatBaseline
+        );
+
+        $resPasca = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01', 3, 0, 0, 'islam', 0, 'Tester', 'REG-1', true, 'none', '2_3', 1, '', '2024-03-31',
+            0, 0, 0, 0, 'bb', $riwayatDenganPasca
+        );
+
+        $this->assertEquals(5, $resBase['total_hari_luar_upt_pra']);
+        $this->assertEquals(0, $resBase['total_hari_luar_upt_pasca']);
+        $this->assertEquals(5, $resPasca['total_hari_luar_upt_pra']);
+        $this->assertEquals(10, $resPasca['total_hari_luar_upt_pasca']);
+        $this->assertEquals(15, $resPasca['total_hari_luar_upt']);
+
+        $ekspBase = Carbon::parse($resBase['milestones']['ekspirasi_murni']);
+        $ekspPasca = Carbon::parse($resPasca['milestones']['ekspirasi_murni']);
+        $this->assertEquals(10, $ekspBase->diffInDays($ekspPasca, false), 'Ekspirasi Murni harus mundur 10 hari akibat Hari di Luar UPT Pasca-Putusan.');
+    }
+
+    public function test_remisi_tambahan_ganda_pemuka_dan_donor_darah_independen_per_tahun(): void
+    {
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2023-01-01',
+            5,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP Donor & Pemuka',
+            'REG-55',
+            true,
+            'kombinasi',
+            '2_3',
+            2,
+            'Pasal 362 KUHP',
+            '2023-03-01',
+            0,
+            0,
+            0,
+            0,
+            'bb',
+            [],
+            [2, 3], // Pemuka di Tahun RU ke-2 dan ke-3
+            [1, 3]  // Donor Darah di Tahun RU ke-1 dan ke-3
+        );
+
+        $this->assertEquals('kombinasi', $res['kategori_tambahan']);
+        $this->assertEquals([2, 3], $res['pemuka_tahun_list']);
+        $this->assertEquals([1, 3], $res['donor_tahun_list']);
+        $this->assertStringContainsString('Pemuka (+1/3 RU: Th ke-2, 3)', $res['label_kategori_tambahan']);
+        $this->assertStringContainsString('Donor Darah / Jasa Negara (+1/2 RU: Th ke-1, 3)', $res['label_kategori_tambahan']);
+
+        $tambahanRows = array_values(array_filter(
+            $res['proyeksi_ledger'],
+            fn (array $row): bool => ($row['tahap'] ?? '') === 'Tambahan'
+        ));
+
+        $pemukaRows = array_values(array_filter(
+            $tambahanRows,
+            fn (array $row): bool => str_contains($row['nama_event'] ?? '', 'Pemuka')
+        ));
+        $donorRows = array_values(array_filter(
+            $tambahanRows,
+            fn (array $row): bool => str_contains($row['nama_event'] ?? '', 'Donor Darah / Jasa Negara')
+        ));
+
+        $this->assertCount(2, $pemukaRows, 'Pemuka hanya diberikan di 2 tahun RU yang dipilih (Th-2 dan Th-3).');
+        $this->assertCount(2, $donorRows, 'Donor Darah hanya diberikan di 2 tahun RU yang dipilih (Th-1 dan Th-3).');
     }
 }
