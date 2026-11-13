@@ -1287,4 +1287,49 @@ class TelramCalculatorServiceTest extends TestCase
         preg_match_all('/\/Type\s*\/Page\b/', $pdfPutusanBinary, $pageMatchesPutusan);
         $this->assertCount(2, $pageMatchesPutusan[0], 'PDF dengan potah harus tetap tepat 2 halaman tanpa tumpah ke halaman 3');
     }
+
+    public function test_ekspirasi_awal_sesuai_dengan_tgl_putusan_dan_lama_pidana(): void
+    {
+        // Uji kasus pengguna: Ditahan 01/01/2026, Putusan 15/03/2026, Vonis 3 Tahun
+        // Ekspirasi Awal = 15/03/2026 + 3 Tahun = 15/03/2029 = 15 Maret 2029
+        // Ekspirasi Sebelum Remisi (Ekspirasi Murni) = 01/01/2026 + 3 Tahun = 01/01/2029 = 01 Januari 2029
+        $result = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP Ekspirasi Awal Test',
+            'REG.EKS.01',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 362 KUHP',
+            '2026-03-15'
+        );
+
+        $this->assertEquals('2029-03-15', $result['milestones']['ekspirasi_awal']);
+        $this->assertEquals('15/03/2029', $result['numeric']['ekspirasi_awal']);
+        $this->assertEquals('15 Maret 2029', $result['formatted']['ekspirasi_awal']);
+
+        $this->assertEquals('2029-01-01', $result['milestones']['ekspirasi_sebelum_remisi']);
+        $this->assertEquals('01/01/2029', $result['numeric']['ekspirasi_sebelum_remisi']);
+        $this->assertEquals('01 Januari 2029', $result['formatted']['ekspirasi_sebelum_remisi']);
+
+        // Pastikan pada teks manual, Ekspirasi Awal menampilkan 15 Maret 2029 dan bukan 01 Januari 2029
+        $teks = $result['hitungan_manual_teks'];
+        $this->assertStringContainsString("= 15/03/2026 + 3 Tahun\n                   = 15/03/2029\n                   = 15 Maret 2029", $teks);
+
+        // Pastikan pada HTML card, Ekspirasi Awal menampilkan 15 Maret 2029
+        $html = $result['hitungan_manual_html'];
+        $this->assertStringContainsString('15/03/2029', $html);
+        $this->assertStringContainsString('15 Maret 2029', $html);
+
+        // Pastikan pada PDF, Ekspirasi Awal menampilkan 15 Maret 2029
+        $pdfHtml = TelramCalculatorService::renderPdfTemplateHtml($result);
+        $this->assertStringContainsString('15/03/2029', $pdfHtml);
+        $this->assertStringContainsString('15 Maret 2029', $pdfHtml);
+    }
 }

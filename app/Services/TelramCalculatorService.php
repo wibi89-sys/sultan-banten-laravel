@@ -1439,6 +1439,7 @@ class TelramCalculatorService
             'total_proyeksi_remisi_teks' => self::formatRemisiBulanHari($totalHariRemisi),
             'status_pengusulan' => $statusPengusulan,
             'milestones' => [
+                'ekspirasi_awal' => $tglEkspirasiAwal->toDateString(),
                 'ekspirasi_sebelum_remisi' => $tglEkspirasiMurni->toDateString(),
                 'ekspirasi_murni' => $tglEkspirasiMurni->toDateString(), // alias
                 'tgl_putusan' => $tglPutusan ? $tglPutusan->toDateString() : null,
@@ -1471,6 +1472,7 @@ class TelramCalculatorService
                 'tgl_putusan' => $tglPutusan ? self::formatTanggalIndonesia($tglPutusan) : '-',
                 'masa_tahanan' => $masaTahananTeks,
                 'sisa_pidana_pasca_putusan' => $sisaPidanaPascaPutusanTeks,
+                'ekspirasi_awal' => self::formatTanggalIndonesia($tglEkspirasiAwal),
                 'ekspirasi_sebelum_remisi' => self::formatTanggalIndonesia($tglEkspirasiMurni),
                 'ekspirasi_murni' => self::formatTanggalIndonesia($tglEkspirasiMurni), // alias
                 'tgl_1_3_sebelum_remisi' => self::formatTanggalIndonesia($tgl13Murni),
@@ -1600,7 +1602,7 @@ class TelramCalculatorService
         $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
 
         $ekspirasiAwalNum = $num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-');
-        $ekspirasiAwalIndo = $fmt['ekspirasi_sebelum_remisi'] ?? '-';
+        $ekspirasiAwalIndo = $fmt['ekspirasi_awal'] ?? ($fmt['ekspirasi_sebelum_remisi'] ?? '-');
 
         $ekspirasiSebelumRemisiNum = $num['ekspirasi_sebelum_remisi'] ?? '-';
         $ekspirasiSebelumRemisiIndo = $fmt['ekspirasi_sebelum_remisi'] ?? '-';
@@ -1920,7 +1922,7 @@ class TelramCalculatorService
         $masaTahananHari = (int) ($data['masa_tahanan_hari'] ?? 0);
 
         $ekspirasiAwalNum = htmlspecialchars($num['ekspirasi_awal'] ?? ($num['ekspirasi_sebelum_remisi'] ?? '-'));
-        $ekspirasiAwalIndo = htmlspecialchars($fmt['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiAwalIndo = htmlspecialchars($fmt['ekspirasi_awal'] ?? ($fmt['ekspirasi_sebelum_remisi'] ?? '-'));
 
         $ekspirasiSebelumRemisiNum = htmlspecialchars($num['ekspirasi_sebelum_remisi'] ?? '-');
         $ekspirasiSebelumRemisiIndo = htmlspecialchars($fmt['ekspirasi_sebelum_remisi'] ?? '-');
@@ -3211,7 +3213,7 @@ SUB;
         $ekspirasiSubDefNum = htmlspecialchars($num['ekspirasi_subsider_definitif'] ?? '-');
         $tglUsulNum = htmlspecialchars($num['tgl_mulai_pengusulan'] ?? '-');
 
-        $ekspirasiAwalIndo = htmlspecialchars($data['formatted']['ekspirasi_sebelum_remisi'] ?? '-');
+        $ekspirasiAwalIndo = htmlspecialchars($data['formatted']['ekspirasi_awal'] ?? ($data['formatted']['ekspirasi_sebelum_remisi'] ?? '-'));
         $ekspirasiSebelumRemisiIndo = htmlspecialchars($data['formatted']['ekspirasi_sebelum_remisi'] ?? '-');
         $ekspirasiSubSebelumRemisiIndo = htmlspecialchars($data['formatted']['ekspirasi_subsider_sebelum_remisi'] ?? '-');
         $tgl12DefIndo = htmlspecialchars($data['formatted']['tgl_1_2_definitif'] ?? '-');
