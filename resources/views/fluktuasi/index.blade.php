@@ -44,6 +44,61 @@
         border: 1px solid #e2e8f0;
         font-weight: 600;
     }
+    /* Overcrowding Classification Badges (Terkalibrasi Banten) */
+    .badge-overcrowding-normal,
+    .badge.badge-overcrowding-normal {
+        background-color: #d1fae5 !important;
+        color: #065f46 !important;
+        border: 1px solid #10b981 !important;
+        font-weight: 600 !important;
+    }
+    .badge-overcrowding-warning,
+    .badge.badge-overcrowding-warning {
+        background-color: #fef3c7 !important;
+        color: #92400e !important;
+        border: 1px solid #f59e0b !important;
+        font-weight: 600 !important;
+    }
+    .badge-overcrowding-critical,
+    .badge.badge-overcrowding-critical {
+        background-color: #ffedd5 !important;
+        color: #9a3412 !important;
+        border: 1px solid #ea580c !important;
+        font-weight: 600 !important;
+    }
+    .badge-overcrowding-extreme,
+    .badge.badge-overcrowding-extreme {
+        background-color: #fee2e2 !important;
+        color: #991b1b !important;
+        border: 1px solid #ef4444 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 0 6px rgba(220, 38, 38, 0.25) !important;
+    }
+    [data-theme="dark"] .badge-overcrowding-normal,
+    [data-theme="dark"] .badge.badge-overcrowding-normal {
+        background-color: rgba(16, 185, 129, 0.22) !important;
+        color: #6ee7b7 !important;
+        border-color: rgba(16, 185, 129, 0.45) !important;
+    }
+    [data-theme="dark"] .badge-overcrowding-warning,
+    [data-theme="dark"] .badge.badge-overcrowding-warning {
+        background-color: rgba(245, 158, 11, 0.22) !important;
+        color: #fde68a !important;
+        border-color: rgba(245, 158, 11, 0.45) !important;
+    }
+    [data-theme="dark"] .badge-overcrowding-critical,
+    [data-theme="dark"] .badge.badge-overcrowding-critical {
+        background-color: rgba(234, 88, 12, 0.25) !important;
+        color: #fdba74 !important;
+        border-color: rgba(234, 88, 12, 0.5) !important;
+    }
+    [data-theme="dark"] .badge-overcrowding-extreme,
+    [data-theme="dark"] .badge.badge-overcrowding-extreme {
+        background-color: rgba(220, 38, 38, 0.28) !important;
+        color: #fca5a5 !important;
+        border-color: rgba(239, 68, 68, 0.55) !important;
+        box-shadow: 0 0 10px rgba(220, 38, 38, 0.35) !important;
+    }
     .table-fluktuasi {
         border-collapse: separate !important;
         border-spacing: 0 !important;

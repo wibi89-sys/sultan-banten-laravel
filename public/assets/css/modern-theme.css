@@ -2745,42 +2745,88 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* Overcrowding Classification Badges (Tingkat Hunian Standar Terkalibrasi Banten) */
-.badge-overcrowding-normal {
-    background-color: #10b981 !important;
-    color: #ffffff !important;
-    border: 1px solid #059669 !important;
+/* Light Mode / Default (Tema Terang & Putih): High Contrast Tinted Badges with Dark Legible Text */
+.badge-overcrowding-normal,
+.badge.badge-overcrowding-normal {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #10b981 !important;
+    font-weight: 600 !important;
 }
-.badge-overcrowding-warning {
-    background-color: #f59e0b !important;
-    color: #0f172a !important;
-    border: 1px solid #d97706 !important;
+.badge-overcrowding-warning,
+.badge.badge-overcrowding-warning {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #f59e0b !important;
+    font-weight: 600 !important;
 }
-.badge-overcrowding-critical {
-    background-color: #ea580c !important;
-    color: #ffffff !important;
-    border: 1px solid #c2410c !important;
+.badge-overcrowding-critical,
+.badge.badge-overcrowding-critical {
+    background-color: #ffedd5 !important;
+    color: #9a3412 !important;
+    border: 1px solid #ea580c !important;
+    font-weight: 600 !important;
 }
-.badge-overcrowding-extreme {
-    background-color: #991b1b !important;
-    color: #ffffff !important;
-    border: 1px solid #7f1d1d !important;
-    box-shadow: 0 0 8px rgba(153, 27, 27, 0.45) !important;
+.badge-overcrowding-extreme,
+.badge.badge-overcrowding-extreme {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #ef4444 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 6px rgba(220, 38, 38, 0.25) !important;
 }
-[data-theme="dark"] .badge-overcrowding-warning {
-    background-color: #b45309 !important;
-    color: #fef3c7 !important;
-    border-color: #d97706 !important;
+
+/* Explicit Light Theme confirmations */
+[data-theme="light"] .badge-overcrowding-normal,
+[data-theme="light"] .badge.badge-overcrowding-normal {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+    border-color: #10b981 !important;
 }
-[data-theme="dark"] .badge-overcrowding-critical {
-    background-color: #c2410c !important;
-    color: #ffedd5 !important;
+[data-theme="light"] .badge-overcrowding-warning,
+[data-theme="light"] .badge.badge-overcrowding-warning {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #f59e0b !important;
+}
+[data-theme="light"] .badge-overcrowding-critical,
+[data-theme="light"] .badge.badge-overcrowding-critical {
+    background-color: #ffedd5 !important;
+    color: #9a3412 !important;
     border-color: #ea580c !important;
 }
-[data-theme="dark"] .badge-overcrowding-extreme {
-    background-color: #7f1d1d !important;
-    color: #fee2e2 !important;
-    border-color: #991b1b !important;
-    box-shadow: 0 0 10px rgba(220, 38, 38, 0.4) !important;
+[data-theme="light"] .badge-overcrowding-extreme,
+[data-theme="light"] .badge.badge-overcrowding-extreme {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+    border-color: #ef4444 !important;
+}
+
+/* Dark Mode Variants: Translucent pill glow with soft luminous text */
+[data-theme="dark"] .badge-overcrowding-normal,
+[data-theme="dark"] .badge.badge-overcrowding-normal {
+    background-color: rgba(16, 185, 129, 0.22) !important;
+    color: #6ee7b7 !important;
+    border: 1px solid rgba(16, 185, 129, 0.45) !important;
+}
+[data-theme="dark"] .badge-overcrowding-warning,
+[data-theme="dark"] .badge.badge-overcrowding-warning {
+    background-color: rgba(245, 158, 11, 0.22) !important;
+    color: #fde68a !important;
+    border: 1px solid rgba(245, 158, 11, 0.45) !important;
+}
+[data-theme="dark"] .badge-overcrowding-critical,
+[data-theme="dark"] .badge.badge-overcrowding-critical {
+    background-color: rgba(234, 88, 12, 0.25) !important;
+    color: #fdba74 !important;
+    border: 1px solid rgba(234, 88, 12, 0.5) !important;
+}
+[data-theme="dark"] .badge-overcrowding-extreme,
+[data-theme="dark"] .badge.badge-overcrowding-extreme {
+    background-color: rgba(220, 38, 38, 0.28) !important;
+    color: #fca5a5 !important;
+    border: 1px solid rgba(239, 68, 68, 0.55) !important;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.35) !important;
 }
 
 /* ============================================

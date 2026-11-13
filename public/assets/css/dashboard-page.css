@@ -1932,39 +1932,105 @@
         }
 
         .pill-badge-emerald {
-            background: rgba(16, 185, 129, 0.14);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        [data-theme="dark"] .pill-badge-emerald {
+            background: rgba(16, 185, 129, 0.22);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.45);
         }
 
         .pill-badge-amber {
-            background: rgba(245, 158, 11, 0.14);
-            color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+        [data-theme="dark"] .pill-badge-amber {
+            background: rgba(245, 158, 11, 0.22);
+            color: #fde68a;
+            border-color: rgba(245, 158, 11, 0.45);
         }
 
         .pill-badge-orange {
-            background: rgba(234, 88, 12, 0.14);
-            color: #ea580c;
-            border: 1px solid rgba(234, 88, 12, 0.3);
+            background: #ffedd5;
+            color: #9a3412;
+            border: 1px solid #ea580c;
         }
         [data-theme="dark"] .pill-badge-orange {
             background: rgba(234, 88, 12, 0.25);
-            color: #fb923c;
-            border-color: rgba(234, 88, 12, 0.45);
+            color: #fdba74;
+            border-color: rgba(234, 88, 12, 0.5);
         }
 
         .pill-badge-extreme {
-            background: rgba(153, 27, 27, 0.16);
+            background: #fee2e2;
             color: #991b1b;
-            border: 1px solid rgba(153, 27, 27, 0.4);
+            border: 1px solid #ef4444;
             font-weight: 700;
         }
         [data-theme="dark"] .pill-badge-extreme {
-            background: rgba(153, 27, 27, 0.35);
+            background: rgba(220, 38, 38, 0.28);
             color: #fca5a5;
-            border-color: rgba(239, 68, 68, 0.5);
-            box-shadow: 0 0 8px rgba(220, 38, 38, 0.3);
+            border-color: rgba(239, 68, 68, 0.55);
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.35);
+        }
+
+        /* Overcrowding Classification Badges Fallback in Dashboard */
+        .badge-overcrowding-normal,
+        .badge.badge-overcrowding-normal {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            border: 1px solid #10b981 !important;
+            font-weight: 600 !important;
+        }
+        .badge-overcrowding-warning,
+        .badge.badge-overcrowding-warning {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            border: 1px solid #f59e0b !important;
+            font-weight: 600 !important;
+        }
+        .badge-overcrowding-critical,
+        .badge.badge-overcrowding-critical {
+            background-color: #ffedd5 !important;
+            color: #9a3412 !important;
+            border: 1px solid #ea580c !important;
+            font-weight: 600 !important;
+        }
+        .badge-overcrowding-extreme,
+        .badge.badge-overcrowding-extreme {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            border: 1px solid #ef4444 !important;
+            font-weight: 700 !important;
+            box-shadow: 0 0 6px rgba(220, 38, 38, 0.25) !important;
+        }
+        [data-theme="dark"] .badge-overcrowding-normal,
+        [data-theme="dark"] .badge.badge-overcrowding-normal {
+            background-color: rgba(16, 185, 129, 0.22) !important;
+            color: #6ee7b7 !important;
+            border-color: rgba(16, 185, 129, 0.45) !important;
+        }
+        [data-theme="dark"] .badge-overcrowding-warning,
+        [data-theme="dark"] .badge.badge-overcrowding-warning {
+            background-color: rgba(245, 158, 11, 0.22) !important;
+            color: #fde68a !important;
+            border-color: rgba(245, 158, 11, 0.45) !important;
+        }
+        [data-theme="dark"] .badge-overcrowding-critical,
+        [data-theme="dark"] .badge.badge-overcrowding-critical {
+            background-color: rgba(234, 88, 12, 0.25) !important;
+            color: #fdba74 !important;
+            border-color: rgba(234, 88, 12, 0.5) !important;
+        }
+        [data-theme="dark"] .badge-overcrowding-extreme,
+        [data-theme="dark"] .badge.badge-overcrowding-extreme {
+            background-color: rgba(220, 38, 38, 0.28) !important;
+            color: #fca5a5 !important;
+            border-color: rgba(239, 68, 68, 0.55) !important;
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.35) !important;
         }
 
         .pill-badge-rose {
