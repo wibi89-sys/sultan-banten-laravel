@@ -1778,7 +1778,7 @@ class TelramCalculatorService
             $o2TglUsulNum = $o2['tgl_usul_numeric'] ?? '-';
             $o2TglUsulIndo = $o2['tgl_usul_indo'] ?? '-';
 
-            $teks .= "   • Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana (Mepet Tanggal Pemberian Remisi):\n\n";
+            $teks .= "   • Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:\n\n";
 
             $teks .= "     a. Opsi 1 = 2/3 Sebelum Remisi {$remisiNama} ({$remisiJenis}):\n";
             $teks .= "        - Hitungan 2/3 Masa Pidana:\n";
@@ -1798,7 +1798,7 @@ class TelramCalculatorService
             $teks .= "        - Prediksi Tanggal Usulan Diusulkan (H-60 Hari):\n";
             $teks .= "          = Tgl. 2/3 Masa Pidana - 60 Hari\n";
             $teks .= "          = {$o1Tgl23Num} - 60 Hari\n";
-            $teks .= "          = {$o1TglUsulNum} ({$o1TglUsulIndo})\n";
+            $teks .= "          = {$o1TglUsulNum} = {$o1TglUsulIndo}\n";
             $teks .= "          *Keterangan: Usulan diajukan lebih awal menggunakan SK remisi definitif yang sudah terbit di tangan tanpa menunggu SK remisi berikutnya.\n\n";
 
             $teks .= "     b. Opsi 2 = 2/3 Setelah Remisi {$remisiNama} ({$remisiJenis}):\n";
@@ -1815,9 +1815,9 @@ class TelramCalculatorService
                 $teks .= "          - 2/3 Masa Pidana (+Subsider BB) = {$tgl23DefNum} + {$subsiderTeks} = {$tgl23SubDefNum} ({$tgl23SubDefIndo})\n";
             }
             $teks .= "        - Prediksi Tanggal Usulan Diusulkan:\n";
-            $teks .= "          Hitungan murni H-60 = {$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} ({$tglUsulMurniIndo})\n";
+            $teks .= "          Hitungan murni H-60 = {$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} = {$tglUsulMurniIndo}\n";
             $teks .= "          *Catatan: Tanggal hitungan murni mendahului tanggal pemberian remisi ({$remisiTglIndo}). Pada sistem SDP, pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit (tidak kurang dari tanggal remisi).\n";
-            $teks .= "          Maka tanggal mulai usul di SDP disesuaikan tepat pada Hari H SK {$remisiNama} = {$o2TglUsulNum} ({$o2TglUsulIndo}).\n";
+            $teks .= "          Maka tanggal mulai usul di SDP disesuaikan tepat pada Hari H SK {$remisiNama} = {$o2TglUsulNum} = {$o2TglUsulIndo}.\n";
         } else {
             $teks .= "   • 2/3 Masa Pidana = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi)\n";
             $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
@@ -1876,14 +1876,12 @@ class TelramCalculatorService
             $teks .= "   • Opsi 1 = Usul Sebelum Remisi {$remisiNama} ({$remisiJenis}):\n";
             $teks .= "     - Tgl. 2/3 Berjalan   = {$o1['tgl_2_3_numeric']} ({$o1['tgl_2_3_indo']})\n";
             $teks .= "     - Mulai Usul di SDP   = {$o1['tgl_2_3_numeric']} - 60 Hari\n";
-            $teks .= "                           = {$o1['tgl_usul_numeric']}\n";
-            $teks .= "                           = {$o1['tgl_usul_indo']}\n";
+            $teks .= "                           = {$o1['tgl_usul_numeric']} = {$o1['tgl_usul_indo']}\n";
             $teks .= "     (Petugas dapat memproses berkas lebih awal dengan SK remisi yang sudah definitif di tangan tanpa menunggu SK remisi berikutnya)\n\n";
 
             $teks .= "   • Opsi 2 = Usul Setelah Remisi {$remisiNama} ({$remisiJenis}):\n";
             $teks .= "     - Tgl. 2/3 Definitif  = {$tgl23DefNum} ({$tgl23DefIndo})\n";
-            $teks .= "     - Mulai Usul di SDP   = {$o2['tgl_usul_numeric']}\n";
-            $teks .= "                           = {$o2['tgl_usul_indo']} [Hari H SK Remisi]\n";
+            $teks .= "     - Mulai Usul di SDP   = {$o2['tgl_usul_numeric']} = {$o2['tgl_usul_indo']} [Hari H SK Remisi]\n";
             $teks .= "     (Pengusulan diajukan tepat pada tanggal pemberian remisi {$remisiNama} karena pada SDP tidak dapat diinput sebelum SK terbit)\n";
         } else {
             $teks .= "   • Pengusulan di SDP = Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)\n";
@@ -2375,7 +2373,7 @@ SUB_O1;
                             <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-2" style="background: linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%); border-left: 4px solid #f59e0b;">
                                 <i class="fas fa-code-branch text-warning fs-5"></i>
                                 <div>
-                                    <strong class="text-dark" style="font-size: 13px;">Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana</strong>
+                                    <strong class="text-dark" style="font-size: 13px;">• Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:</strong>
                                     <div class="text-muted" style="font-size: 11px;">Mepet tanggal pemberian remisi terakhir ({$remisiTerkNama} [{$remisiTerkTglIndo}])</div>
                                 </div>
                             </div>
@@ -2428,7 +2426,7 @@ SUB_O1;
                                         <span class="text-success fw-bold" style="font-size: 12px;"><i class="fas fa-paper-plane me-1"></i> Prediksi Tanggal Usulan Diusulkan (H-60 Hari)</span>
                                         <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 12px;">{$o1TglUsulIndo}</span>
                                     </div>
-                                    <div class="text-secondary small font-monospace" style="font-size: 11px;">= Tgl. 2/3 - 60 Hari = {$o1Tgl23Num} - 60 Hari = {$o1TglUsulNum}</div>
+                                    <div class="text-secondary small font-monospace" style="font-size: 11px;">= Tgl. 2/3 - 60 Hari = {$o1Tgl23Num} - 60 Hari = {$o1TglUsulNum} = <b class="text-success">{$o1TglUsulIndo}</b></div>
                                     <div class="text-muted" style="font-size: 10.5px; font-style: italic;">Petugas dapat memproses berkas lebih awal dengan SK remisi definitif di tangan tanpa menunggu SK remisi berikutnya.</div>
                                 </div>
                             </div>
@@ -2478,9 +2476,9 @@ SUB_O1;
                                         <span class="fw-bold" style="color: #c2410c; font-size: 12px;"><i class="fas fa-exclamation-triangle me-1"></i> Prediksi Tanggal Usulan Diusulkan</span>
                                         <span class="badge bg-warning text-dark font-monospace" style="font-size: 12px;">{$o2TglUsulIndo} (Hari H SK)</span>
                                     </div>
-                                    <div class="text-secondary small font-monospace" style="font-size: 11px;">Hitungan murni H-60: {$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} ({$tglUsulMurniIndo}) &lt; Tgl Remisi ({$remisiTerkTglIndo})</div>
+                                    <div class="text-secondary small font-monospace" style="font-size: 11px;">Hitungan murni H-60: {$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} = {$tglUsulMurniIndo} &lt; Tgl Remisi ({$remisiTerkTglIndo})</div>
                                     <div class="alert alert-warning py-1.5 px-2.5 mb-0 mt-1" style="font-size: 11px; border-left: 3px solid #d97706;">
-                                        <strong>Ketentuan SDP:</strong> Pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit (tidak kurang dari tanggal remisi). Tanggal usulan disesuaikan tepat pada Hari H SK {$remisiTerkNama} = <b>{$o2TglUsulIndo}</b> ({$o2TglUsulNum}).
+                                        <strong>Ketentuan SDP:</strong> Pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit (tidak kurang dari tanggal remisi). Tanggal usulan disesuaikan tepat pada Hari H SK {$remisiTerkNama} = {$o2TglUsulNum} = <b style="color: #c2410c;">{$o2TglUsulIndo}</b>.
                                     </div>
                                 </div>
                             </div>
@@ -2657,7 +2655,7 @@ CARD_C;
                             <div style="line-height: 1.6;">
                                 2/3 Berjalan: <b>{$o1Tgl23Num}</b> ({$o1Tgl23Indo})<br>
                                 Mulai Usul: <code>{$o1Tgl23Num} - 60 hr</code><br>
-                                = <b class="text-success" style="font-size: 14px;">{$o1TglUsulIndo}</b> ({$o1TglUsulNum})
+                                = {$o1TglUsulNum} = <b class="text-success" style="font-size: 14px;">{$o1TglUsulIndo}</b>
                             </div>
                         </div>
                     </div>
@@ -2668,7 +2666,7 @@ CARD_C;
                             <div style="line-height: 1.6;">
                                 2/3 Definitif: <b>{$tgl23DefNum}</b> ({$tgl23DefIndo})<br>
                                 SK Remisi Terakhir: <b>{$remisiTerkTglIndo}</b><br>
-                                Mulai Usul: = <b style="color: #c2410c; font-size: 14px;">{$o2TglUsulIndo}</b> ({$o2TglUsulNum}) [Hari H SK]
+                                Mulai Usul: = {$o2TglUsulNum} = <b style="color: #c2410c; font-size: 14px;">{$o2TglUsulIndo}</b> [Hari H SK]
                             </div>
                         </div>
                     </div>
@@ -3538,7 +3536,7 @@ SUB_O2_PDF;
             $baris23PdfHtml = <<<BARIS_23_BENTURAN_PDF
                 <tr>
                     <td colspan="3" style="padding-top: 2px; padding-bottom: 2px;">
-                        <span style="color: #b45309; font-weight: bold; font-size: 8.3pt;">&bull; Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana (Mepet Tanggal Pemberian Remisi):</span>
+                        <span style="color: #b45309; font-weight: bold; font-size: 8.3pt;">&bull; Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:</span>
                     </td>
                 </tr>
                 <tr>
@@ -3561,7 +3559,7 @@ SUB_O2_PDF;
                             <tr>
                                 <td width="28%" style="color: #166534; font-weight: bold; padding-left: 4px;">- Prediksi Tgl. Usulan</td>
                                 <td width="4%" align="center" style="font-weight: bold;">=</td>
-                                <td width="68%">Tgl. 2/3 - 60 Hari = {$o1Tgl23PdfNum} - 60 Hari = <b style="color: #15803d; font-size: 8.5pt;">{$o1TglUsulPdfNum}</b> ({$o1TglUsulPdfIndo})</td>
+                                <td width="68%">Tgl. 2/3 - 60 Hari = {$o1Tgl23PdfNum} - 60 Hari = {$o1TglUsulPdfNum} = <b style="color: #15803d; font-size: 8.5pt;">{$o1TglUsulPdfIndo}</b></td>
                             </tr>
                         </table>
                     </td>
@@ -3587,7 +3585,7 @@ SUB_O2_PDF;
                             <tr>
                                 <td width="28%" style="color: #9a3412; font-weight: bold; padding-left: 4px;">- Prediksi Tgl. Usulan</td>
                                 <td width="4%" align="center" style="font-weight: bold;">=</td>
-                                <td width="68%">Hitungan murni ({$tgl23DefNum} - 60 hr = {$tglUsulMurniPdfNum}) &lt; tgl remisi ({$remisiTerkTglPdfIndo}).<br>Pada SDP, usulan tidak dapat kurang dari tgl remisi &rarr; Disesuaikan tepat Hari H SK = <b style="color: #c2410c; font-size: 8.5pt;">{$o2TglUsulPdfNum}</b> ({$o2TglUsulPdfIndo})</td>
+                                <td width="68%">Hitungan murni ({$tgl23DefNum} - 60 hr = {$tglUsulMurniPdfNum}) &lt; tgl remisi ({$remisiTerkTglPdfIndo}).<br>Pada SDP, usulan tidak dapat kurang dari tgl remisi &rarr; Disesuaikan tepat Hari H SK = {$o2TglUsulPdfNum} = <b style="color: #c2410c; font-size: 8.5pt;">{$o2TglUsulPdfIndo}</b></td>
                             </tr>
                         </table>
                     </td>
@@ -3739,12 +3737,12 @@ BANNER_BENTURAN_PDF;
                 <tr>
                     <td width="38%" style="color: #0369a1; font-weight: bold;">&bull; Opsi 1 = Usul Sebelum Remisi ({$remisiTerkJenisPdf})</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="58%">2/3 Berjalan - 60 Hari = <b style="color: #0369a1; font-size: 8.5pt;">{$o1TglUsulPdfNum}</b> ({$o1TglUsulPdfIndo})</td>
+                    <td width="58%">2/3 Berjalan - 60 Hari = {$o1TglUsulPdfNum} = <b style="color: #0369a1; font-size: 8.5pt;">{$o1TglUsulPdfIndo}</b></td>
                 </tr>
                 <tr>
                     <td width="38%" style="color: #c2410c; font-weight: bold;">&bull; Opsi 2 = Usul Setelah Remisi ({$remisiTerkJenisPdf})</td>
                     <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="58%">Hari H SK {$remisiTerkNamaPdf} = <b style="color: #c2410c; font-size: 8.5pt;">{$o2TglUsulPdfNum}</b> ({$o2TglUsulPdfIndo})</td>
+                    <td width="58%">Hari H SK {$remisiTerkNamaPdf} = {$o2TglUsulPdfNum} = <b style="color: #c2410c; font-size: 8.5pt;">{$o2TglUsulPdfIndo}</b></td>
                 </tr>
                 <tr>
                     <td colspan="3" style="font-size: 6.8pt; color: #78350f; padding-top: 1px;">*Catatan: Hitungan murni ({$tgl23DefNum} - 60 hr = {$tglUsulMurniPdfNum} [{$tglUsulMurniPdfIndo}]) mendahului tgl remisi ({$remisiTerkTglPdfIndo}). Di SDP, usulan tidak dapat diinput sebelum SK terbit (tidak kurang dari tanggal remisi).</td>

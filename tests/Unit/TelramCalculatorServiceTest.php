@@ -1225,24 +1225,30 @@ class TelramCalculatorServiceTest extends TestCase
         // Perhitungan 2/3 pada Hitungan Manual Teks memuat kedua opsi secara detail
         $teks = $res['hitungan_manual_teks'];
         $this->assertStringContainsString('PERHITUNGAN CUTI BERSYARAT (CB)', $teks);
-        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana', $teks);
+        $this->assertStringContainsString('• Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:', $teks);
+        $this->assertStringNotContainsString('• Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana (Mepet Tanggal Pemberian Remisi):', $teks);
         $this->assertStringContainsString('a. Opsi 1 = 2/3 Sebelum Remisi', $teks);
         $this->assertStringContainsString('17/04/2027', $teks);
         $this->assertStringContainsString('b. Opsi 2 = 2/3 Setelah Remisi', $teks);
         $this->assertStringContainsString('28/03/2027', $teks);
         $this->assertStringContainsString('Prediksi Tanggal Usulan Diusulkan', $teks);
+        $this->assertStringContainsString('16/02/2027 = 16 Februari 2027', $teks);
 
         // Visual HTML memuat kedua opsi pada Card C (2/3) dan Card D (Usul SDP)
         $html = $res['hitungan_manual_html'];
-        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana', $html);
+        $this->assertStringContainsString('• Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:', $html);
         $this->assertStringContainsString('Opsi 1 = 2/3 Sebelum Remisi', $html);
         $this->assertStringContainsString('Opsi 2 = 2/3 Setelah Remisi', $html);
+        $this->assertStringContainsString('16/02/2027 = <b class="text-success">16 Februari 2027</b>', $html);
 
         // PDF Template memuat judul rapi dan rincian lengkap 2 opsi
         $pdfHtml = TelramCalculatorService::renderPdfTemplateHtml($res);
-        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana', $pdfHtml);
+        $this->assertStringContainsString('&bull; Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:</span>', $pdfHtml);
+        $this->assertStringNotContainsString('(Mepet Tanggal Pemberian Remisi):</span>', $pdfHtml);
         $this->assertStringContainsString('Opsi 1 = 2/3 Sebelum Remisi', $pdfHtml);
         $this->assertStringContainsString('Opsi 2 = 2/3 Setelah Remisi', $pdfHtml);
+        $this->assertStringContainsString('16/02/2027 = <b style="color: #15803d; font-size: 8.5pt;">16 Februari 2027</b>', $pdfHtml);
+        $this->assertStringContainsString('2/3 Berjalan - 60 Hari = 16/02/2027 = <b style="color: #0369a1; font-size: 8.5pt;">16 Februari 2027</b>', $pdfHtml);
 
         // PDF Report dapat di-generate dengan sukses dan tepat 2 halaman
         $pdfBinary = TelramCalculatorService::generatePdfReport($res);
