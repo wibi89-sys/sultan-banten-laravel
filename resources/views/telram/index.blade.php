@@ -13,25 +13,27 @@
         letter-spacing: -0.2px;
     }
 
-    /* Card Styles for Telram */
+    /* Card Styles for Telram - Modern Glassmorphic Elevated Surfaces */
     .telram-card {
-        background: var(--card-bg, #ffffff) !important;
-        border: 1px solid var(--border-color, #e2e8f0) !important;
-        border-radius: 14px;
-        color: var(--text-primary, #1f2937);
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
-        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        background: rgba(255, 255, 255, 0.92) !important;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(226, 232, 240, 0.85) !important;
+        border-radius: 16px;
+        color: var(--text-primary, #0f172a);
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
     }
     [data-theme="dark"] .telram-card {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #f1f5f9 !important;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+        background: rgba(30, 41, 59, 0.85) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        color: #f8fafc !important;
+        box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.45);
     }
 
     /* Text & Label Visibility */
     .telram-text-title {
-        color: var(--text-primary, #1f2937);
+        color: var(--text-primary, #0f172a);
     }
     [data-theme="dark"] .telram-text-title,
     [data-theme="dark"] .text-dark {
@@ -46,74 +48,80 @@
         color: #94a3b8 !important;
     }
 
-    /* Mode Switcher Grid: Clean 2x2 Grid with Native Pill Feel */
+    /* Mode Switcher Grid: macOS / Linear Style Segmented Controller */
     .mode-switch-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 6px;
         background: #f1f5f9;
-        padding: 6px;
-        border-radius: 12px;
+        padding: 5px;
+        border-radius: 14px;
         border: 1px solid #e2e8f0;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
     }
     [data-theme="dark"] .mode-switch-grid {
-        background: #0f172a !important;
-        border-color: #334155 !important;
+        background: #0b1329 !important;
+        border-color: #1e293b !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
     }
 
     .btn-mode-tab {
         background: transparent;
         color: #64748b;
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 700;
         border: none;
-        border-radius: 8px;
-        padding: 10px 10px;
+        border-radius: 10px;
+        padding: 10px 12px;
         text-align: center;
-        transition: all 0.2s ease;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         line-height: 1.25;
         white-space: nowrap;
+        position: relative;
     }
     .btn-mode-tab:hover {
-        color: var(--text-primary, #1f2937);
-        background: rgba(255, 255, 255, 0.6);
+        color: #0f172a;
+        background: rgba(255, 255, 255, 0.7);
+        transform: translateY(-1px);
     }
     [data-theme="dark"] .btn-mode-tab {
         color: #94a3b8;
     }
     [data-theme="dark"] .btn-mode-tab:hover {
-        color: #f8fafc;
-        background: rgba(30, 41, 59, 0.6);
+        color: #ffffff;
+        background: rgba(51, 65, 85, 0.6);
     }
     .btn-mode-tab.active {
         background: #ffffff;
-        color: #0f172a;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0,0,0,0.04);
+        color: #1e40af;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        transform: translateY(0);
     }
     [data-theme="dark"] .btn-mode-tab.active {
         background: #1e293b;
-        color: #f8fafc;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255,255,255,0.06);
+        color: #60a5fa;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     /* Parameter Box Containers - Tinted Layered Surfaces */
     .param-group-box {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 15px 14px;
+        border-radius: 14px;
+        padding: 16px 15px;
         margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-        transition: all 0.2s ease;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .param-group-box:hover {
         border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }
     .param-box-wbp {
         border-left: 4px solid #6366f1 !important;
@@ -147,11 +155,11 @@
         color: #60a5fa !important;
     }
 
-    /* Stepper Touch Buttons (- / +) */
+    /* Stepper Touch Buttons with Tactile Animation */
     .btn-stepper {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -161,7 +169,7 @@
         font-size: 12px;
         font-weight: 700;
         padding: 0;
-        transition: all 0.15s ease;
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         user-select: none;
         flex-shrink: 0;
     }
@@ -169,9 +177,11 @@
         background: #e2e8f0;
         border-color: #94a3b8;
         color: #0f172a;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
     .btn-stepper:active {
-        transform: scale(0.92);
+        transform: scale(0.90);
         background: #cbd5e1;
     }
     [data-theme="dark"] .btn-stepper {
@@ -182,37 +192,10 @@
     [data-theme="dark"] .btn-stepper:hover {
         background: #475569;
         border-color: #64748b;
+        color: #ffffff;
     }
     [data-theme="dark"] .btn-stepper:active {
         background: #1e293b;
-    }
-
-    /* Preset Chips */
-    .btn-preset-chip {
-        font-size: 10px;
-        font-weight: 700;
-        padding: 2.5px 7px;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
-        color: #475569;
-        transition: all 0.15s ease;
-        cursor: pointer;
-        line-height: 1.3;
-    }
-    .btn-preset-chip:hover {
-        background: #e2e8f0;
-        color: #0f172a;
-        border-color: #cbd5e1;
-    }
-    [data-theme="dark"] .btn-preset-chip {
-        background: #0f172a;
-        border-color: #334155;
-        color: #cbd5e1;
-    }
-    [data-theme="dark"] .btn-preset-chip:hover {
-        background: #334155;
-        color: #ffffff;
     }
 
     /* Collapsible Accordion Parameter Box */
@@ -406,37 +389,51 @@
         border-color: #334155 !important;
     }
 
-    /* Fraction Cards (1/3, 1/2, 2/3) */
+    /* Fraction Cards (1/3, 1/2, 2/3) - Modern Metrics Dashboard */
+    .fraction-card-blue,
+    .fraction-card-amber,
+    .fraction-card-emerald {
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    }
+    .fraction-card-blue:hover,
+    .fraction-card-amber:hover,
+    .fraction-card-emerald:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+    }
     .fraction-card-blue {
-        background: rgba(59, 130, 246, 0.06);
+        background: linear-gradient(to bottom, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.95) 45%);
+        border: 1px solid rgba(59, 130, 246, 0.2) !important;
         border-top: 4px solid #3b82f6 !important;
-        border-radius: 12px;
     }
     [data-theme="dark"] .fraction-card-blue {
-        background: rgba(59, 130, 246, 0.12) !important;
-        border: 1px solid rgba(59, 130, 246, 0.25) !important;
+        background: linear-gradient(to bottom, rgba(59, 130, 246, 0.18), #1e293b 50%) !important;
+        border: 1px solid rgba(59, 130, 246, 0.3) !important;
         border-top: 4px solid #3b82f6 !important;
     }
 
     .fraction-card-amber {
-        background: rgba(245, 158, 11, 0.06);
+        background: linear-gradient(to bottom, rgba(245, 158, 11, 0.08), rgba(255, 255, 255, 0.95) 45%);
+        border: 1px solid rgba(245, 158, 11, 0.2) !important;
         border-top: 4px solid #f59e0b !important;
-        border-radius: 12px;
     }
     [data-theme="dark"] .fraction-card-amber {
-        background: rgba(245, 158, 11, 0.12) !important;
-        border: 1px solid rgba(245, 158, 11, 0.25) !important;
+        background: linear-gradient(to bottom, rgba(245, 158, 11, 0.18), #1e293b 50%) !important;
+        border: 1px solid rgba(245, 158, 11, 0.3) !important;
         border-top: 4px solid #f59e0b !important;
     }
 
     .fraction-card-emerald {
-        background: rgba(16, 185, 129, 0.06);
+        background: linear-gradient(to bottom, rgba(16, 185, 129, 0.08), rgba(255, 255, 255, 0.95) 45%);
+        border: 1px solid rgba(16, 185, 129, 0.2) !important;
         border-top: 4px solid #10b981 !important;
-        border-radius: 12px;
     }
     [data-theme="dark"] .fraction-card-emerald {
-        background: rgba(16, 185, 129, 0.12) !important;
-        border: 1px solid rgba(16, 185, 129, 0.25) !important;
+        background: linear-gradient(to bottom, rgba(16, 185, 129, 0.18), #1e293b 50%) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
         border-top: 4px solid #10b981 !important;
     }
 
@@ -454,7 +451,7 @@
     .summary-info-box {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 12px;
         font-size: 12.5px;
     }
     [data-theme="dark"] .summary-info-box {
@@ -468,13 +465,15 @@
         color: #f8fafc !important;
     }
 
-    /* Hero Alert Pengusulan PB */
+    /* Hero Alert Pengusulan PB / CB */
     .hero-usulan-pb {
-        background: linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%);
+        background: linear-gradient(135deg, #78350f 0%, #b45309 45%, #d97706 100%);
         color: #ffffff;
-        border-radius: 14px;
-        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 16px;
+        border: 1px solid rgba(251, 191, 36, 0.35);
+        box-shadow: 0 12px 30px -4px rgba(180, 83, 9, 0.35);
         overflow: hidden;
+        position: relative;
     }
 
     /* Table Ledger & Cards */
@@ -764,17 +763,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Preset Vonis Quick Chips -->
-                            <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
-                                <span class="text-muted fw-bold me-0.5" style="font-size: 9.5px;">PRESET:</span>
-                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(1,0,0)">1 Th</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(1,6,0)">1.5 Th</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(2,0,0)">2 Th</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(3,0,0)">3 Th</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(4,0,0)">4 Th</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(5,0,0)">5 Th</button>
-                                <button type="button" class="btn btn-preset-chip text-danger" onclick="setVonisPreset(0,0,0)" title="Kosongkan Vonis"><i class="fas fa-times"></i></button>
-                            </div>
                         </div>
 
                         <!-- Input Pidana Denda & Subsider Kurungan -->
@@ -841,16 +829,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Preset Subsider Quick Chips -->
-                            <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
-                                <span class="text-muted fw-bold me-0.5" style="font-size: 9.5px;">PRESET:</span>
-                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,1,0)">1 Bln</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,2,0)">2 Bln</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,3,0)">3 Bln</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,6,0)">6 Bln</button>
-                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(1,0,0)">1 Th</button>
-                                <button type="button" class="btn btn-preset-chip text-danger" onclick="setSubsiderPreset(0,0,0)" title="Kosongkan Subsider"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
 
@@ -1522,31 +1500,6 @@
         el.value = val;
         if (inputId === 'vTahun') {
             renderChipsTahunTambahan();
-        }
-    }
-
-    // Helper Preset Vonis Pokok (1 Tap)
-    function setVonisPreset(y, m, d) {
-        document.getElementById('vTahun').value = y;
-        document.getElementById('vBulan').value = m;
-        document.getElementById('vHari').value = d;
-        renderChipsTahunTambahan();
-        if (y === 0 && m === 0 && d === 0) {
-            showToast('Lama vonis pokok dikosongkan', 'info');
-        } else {
-            showToast(`Preset vonis diatur ke ${y} Th ${m > 0 ? m + ' Bln ' : ''}${d > 0 ? d + ' Hari' : ''}`, 'info');
-        }
-    }
-
-    // Helper Preset Pidana Subsider (1 Tap)
-    function setSubsiderPreset(y, m, d) {
-        if (document.getElementById('vSubTahun')) document.getElementById('vSubTahun').value = y;
-        if (document.getElementById('vSubBulan')) document.getElementById('vSubBulan').value = m;
-        if (document.getElementById('vSubHari')) document.getElementById('vSubHari').value = d;
-        if (y === 0 && m === 0 && d === 0) {
-            showToast('Subsider dikosongkan', 'info');
-        } else {
-            showToast(`Preset subsider diatur ke ${y > 0 ? y + ' Th ' : ''}${m > 0 ? m + ' Bln ' : ''}${d > 0 ? d + ' Hari' : ''}`, 'info');
         }
     }
 
@@ -2513,7 +2466,12 @@
 
             document.getElementById('badgeLabel23').innerText = `2/3 ${data.jenis_program}`;
             document.getElementById('res23').innerText = data.formatted.tgl_2_3_definitif;
-            document.getElementById('subInfo23').innerText = `(Murni: ${data.formatted.tgl_2_3_murni})`;
+            if (data.opsi_pengusulan && data.opsi_pengusulan.has_benturan) {
+                const o1Tgl23 = data.opsi_pengusulan.opsi_1_pra_remisi?.tgl_2_3_indo || '-';
+                document.getElementById('subInfo23').innerHTML = `<span class="badge bg-warning text-dark me-1" style="font-size: 9.5px;">2 Opsi</span> Definitif: ${data.formatted.tgl_2_3_definitif}<br>Opsi 1 (Berjalan): <strong>${o1Tgl23}</strong>`;
+            } else {
+                document.getElementById('subInfo23').innerText = `(Murni: ${data.formatted.tgl_2_3_murni})`;
+            }
 
             // Render Ledger Tabel & Cards
             renderTableLedger(data.proyeksi_ledger);
@@ -3024,7 +2982,12 @@
         const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan:* ${d.formatted.tgl_putusan}\n*Potongan Tahanan (Potah):* ${d.masa_tahanan_teks}` : '';
         const subsiderLine = d.formatted && d.formatted.subsider_identitas_teks && d.formatted.subsider_identitas_teks !== '-' ? `\n*Pidana Subsider:* ${d.formatted.subsider_identitas_teks}` : '';
         let usulanSection = '';
+        let baris23Wa = '';
         if (d.opsi_pengusulan && d.opsi_pengusulan.has_benturan) {
+            baris23Wa = `• *2/3 Masa Pidana (Tersedia 2 Opsi):*
+  - *Opsi 1 (Pra-Remisi):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_2_3_indo}
+  - *Opsi 2 (Definitif):* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_murni || d.formatted.tgl_2_3_sebelum_remisi})`;
+
             usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (2 OPSI OPERASIONAL SDP):*
 • *Opsi 1 (Pra-Remisi Terakhir):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_usul_indo}
   _(Dasar 2/3: ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_2_3_indo} - Usul lebih awal dengan SK di tangan)_
@@ -3032,6 +2995,7 @@
   _(Hari H SK ${d.opsi_pengusulan.remisi_terakhir.nama_event} - Dasar 2/3: ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_2_3_indo})_
 *Catatan:* Hitungan murni (${d.opsi_pengusulan.tgl_usul_murni_indo}) mendahului tanggal remisi terakhir sehingga disesuaikan dengan alur SDP.`;
         } else {
+            baris23Wa = `• *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_sebelum_remisi || d.formatted.tgl_2_3_murni})`;
             usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (H-2 BULAN):*
 *Tanggal:* ${d.formatted.tgl_mulai_pengusulan}
 *Status:* ${d.status_pengusulan.label}
@@ -3054,7 +3018,7 @@
 *Pentahapan Masa Pidana:*
 • *1/3 Masa Pidana:* ${d.formatted.tgl_1_3_definitif || d.formatted.tgl_1_3_sebelum_remisi || d.formatted.tgl_1_3_murni}
 • *1/2 Asimilasi:* ${d.formatted.tgl_1_2_definitif} (Sebelum Remisi: ${d.formatted.tgl_1_2_sebelum_remisi || d.formatted.tgl_1_2_murni})
-• *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_sebelum_remisi || d.formatted.tgl_2_3_murni})
+${baris23Wa}
 • *Ekspirasi Definitif:* ${d.formatted.ekspirasi_definitif} (Sebelum Remisi: ${d.formatted.ekspirasi_sebelum_remisi || d.formatted.ekspirasi_murni})
 • *Total Perkiraan Remisi:* ${d.total_proyeksi_remisi_hari} Hari (${d.total_proyeksi_remisi_teks})
 ---------------------------------------

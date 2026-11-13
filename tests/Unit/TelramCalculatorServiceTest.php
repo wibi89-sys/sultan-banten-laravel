@@ -1184,4 +1184,62 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertEquals('2027-01-13', $opsi['tgl_usul_murni']);
         $this->assertEquals('2027-01-13', $res['milestones']['tgl_mulai_pengusulan']);
     }
+
+    public function test_skenario_cuti_bersyarat_cb_dua_opsi_perhitungan_2_3_karena_mepet_remisi(): void
+    {
+        // Penahanan awal: 17/04/2026, Pidana: 1 Tahun 6 Bulan, Islam
+        // 2/3 vonis = 12 bulan (1 Tahun)
+        // Remisi Khusus Idul Fitri 2027 (10 Maret 2027) = 15 hari
+        // Mepet dengan tanggal 2/3 sehingga timbul benturan pengusulan SDP
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-04-17',
+            1,
+            6,
+            0,
+            'islam',
+            0,
+            'WBP CB Contoh',
+            'REG.CB.01',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 362 KUHP'
+        );
+
+        $this->assertEquals('CB', $res['kode_program']);
+        $this->assertEquals('PERHITUNGAN CUTI BERSYARAT (CB)', $res['judul_program']);
+
+        $opsi = $res['opsi_pengusulan'];
+        $this->assertTrue($opsi['has_benturan'], 'Harus terjadi benturan karena tgl usul murni mendahului Idul Fitri 2027');
+        $this->assertEquals('2027-03-10', $opsi['remisi_terakhir']['tanggal']);
+
+        // Opsi 1 (Pra-Remisi): 2/3 = 17/04/2027, usul = 16/02/2027
+        $this->assertEquals('2027-04-17', $opsi['opsi_1_pra_remisi']['tgl_2_3']);
+        $this->assertEquals('2027-02-16', $opsi['opsi_1_pra_remisi']['tgl_usul']);
+
+        // Opsi 2 (Pasca-Remisi): 2/3 = 28/03/2027, usul = 10/03/2027 (Hari H SK)
+        $this->assertEquals('2027-03-28', $opsi['opsi_2_pasca_remisi']['tgl_2_3']);
+        $this->assertEquals('2027-03-10', $opsi['opsi_2_pasca_remisi']['tgl_usul']);
+
+        // Perhitungan 2/3 pada Hitungan Manual Teks memuat kedua opsi secara detail
+        $teks = $res['hitungan_manual_teks'];
+        $this->assertStringContainsString('PERHITUNGAN CUTI BERSYARAT (CB)', $teks);
+        $this->assertStringContainsString('TERSEDIA 2 OPSI PERHITUNGAN 2/3', $teks);
+        $this->assertStringContainsString('a. OPSI 1 (2/3 Berjalan / Pra-Remisi Terakhir):', $teks);
+        $this->assertStringContainsString('17/04/2027', $teks);
+        $this->assertStringContainsString('b. OPSI 2 (2/3 Definitif / Pasca-Terbit SK Remisi Terakhir):', $teks);
+        $this->assertStringContainsString('28/03/2027', $teks);
+
+        // Visual HTML memuat kedua opsi pada Card C (2/3) dan Card D (Usul SDP)
+        $html = $res['hitungan_manual_html'];
+        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3', $html);
+        $this->assertStringContainsString('a. OPSI 1 (2/3 Berjalan / Pra-Remisi Terakhir)', $html);
+        $this->assertStringContainsString('b. OPSI 2 (2/3 Definitif / Pasca-Terbit SK Remisi Terakhir)', $html);
+
+        // PDF Report dapat di-generate dengan sukses
+        $pdfBinary = TelramCalculatorService::generatePdfReport($res);
+        $this->assertNotEmpty($pdfBinary);
+        $this->assertStringStartsWith('%PDF', $pdfBinary);
+    }
 }

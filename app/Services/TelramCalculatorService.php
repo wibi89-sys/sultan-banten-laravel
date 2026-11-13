@@ -770,6 +770,7 @@ class TelramCalculatorService
                 'tgl_1_3' => $current13Date->copy(),
                 'tgl_1_2' => $current12Date->copy(),
                 'tgl_2_3' => $current23Date->copy(),
+                'total_remisi_hari' => $totalHariRemisi,
             ];
             $remisiHariEventIni = 0;
 
@@ -1343,6 +1344,31 @@ class TelramCalculatorService
         $detailTahap12 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 1, 2, $totalHariRemisi, $tglMin12Base);
         $detailTahap23 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $totalHariRemisi, $tglMinIntegrasiBase);
 
+        $o1RemisiHari = $milestonesSebelumRemisiTerakhir ? ($milestonesSebelumRemisiTerakhir['total_remisi_hari'] ?? 0) : 0;
+        $o1RemisiTeks = self::formatRemisiBulanHari($o1RemisiHari);
+        $detailTahap23Opsi1 = self::hitungPentahapanSetelahRemisi($tglAwal, $tahun, $bulan, $hari, 2, 3, $o1RemisiHari, $tglMinIntegrasiBase);
+        $tgl23SubsiderOpsi1 = $isSubsiderAktifBb ? self::tambahDurasiVonis($tgl23PraRemisi, $subTahun, $subBulan, $subHari) : null;
+
+        $opsiPengusulan['opsi_1_pra_remisi']['tgl_2_3_subsider'] = $tgl23SubsiderOpsi1?->toDateString();
+        $opsiPengusulan['opsi_1_pra_remisi']['tgl_2_3_subsider_indo'] = $tgl23SubsiderOpsi1 ? self::formatTanggalIndonesia($tgl23SubsiderOpsi1) : null;
+        $opsiPengusulan['opsi_1_pra_remisi']['tgl_2_3_subsider_numeric'] = $tgl23SubsiderOpsi1 ? self::formatTanggalNumeric($tgl23SubsiderOpsi1) : null;
+        $opsiPengusulan['opsi_1_pra_remisi']['remisi_hari'] = $o1RemisiHari;
+        $opsiPengusulan['opsi_1_pra_remisi']['remisi_teks'] = $o1RemisiTeks;
+        $opsiPengusulan['opsi_1_pra_remisi']['pidana_bulan_teks'] = $detailTahap23Opsi1['pidana_bulan_teks'];
+        $opsiPengusulan['opsi_1_pra_remisi']['fraksi_2_3_bulan_teks'] = $detailTahap23Opsi1['fraksi_bulan_teks'];
+        $opsiPengusulan['opsi_1_pra_remisi']['selisih_2_3_bulan_teks'] = $detailTahap23Opsi1['selisih_bulan_teks'];
+        $opsiPengusulan['opsi_1_pra_remisi']['selisih_2_3_tahun_teks'] = $detailTahap23Opsi1['selisih_tahun_teks'];
+
+        $opsiPengusulan['opsi_2_pasca_remisi']['tgl_2_3_subsider'] = $tgl23SubsiderDefinitif?->toDateString();
+        $opsiPengusulan['opsi_2_pasca_remisi']['tgl_2_3_subsider_indo'] = $tgl23SubsiderDefinitif ? self::formatTanggalIndonesia($tgl23SubsiderDefinitif) : null;
+        $opsiPengusulan['opsi_2_pasca_remisi']['tgl_2_3_subsider_numeric'] = $tgl23SubsiderDefinitif ? self::formatTanggalNumeric($tgl23SubsiderDefinitif) : null;
+        $opsiPengusulan['opsi_2_pasca_remisi']['remisi_hari'] = $totalHariRemisi;
+        $opsiPengusulan['opsi_2_pasca_remisi']['remisi_teks'] = self::formatRemisiBulanHari($totalHariRemisi);
+        $opsiPengusulan['opsi_2_pasca_remisi']['pidana_bulan_teks'] = $detailTahap23['pidana_bulan_teks'];
+        $opsiPengusulan['opsi_2_pasca_remisi']['fraksi_2_3_bulan_teks'] = $detailTahap23['fraksi_bulan_teks'];
+        $opsiPengusulan['opsi_2_pasca_remisi']['selisih_2_3_bulan_teks'] = $detailTahap23['selisih_bulan_teks'];
+        $opsiPengusulan['opsi_2_pasca_remisi']['selisih_2_3_tahun_teks'] = $detailTahap23['selisih_tahun_teks'];
+
         $result = [
             'mode' => 'simulasi_remisi',
             'target_basis' => $targetBasis,
@@ -1728,21 +1754,68 @@ class TelramCalculatorService
         $teks .= "                     = {$tgl12DefNum}\n";
         $teks .= "                     = {$tgl12DefIndo}\n\n";
 
-        $teks .= "   • 2/3 Masa Pidana = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi)\n";
-        $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})\n";
-        $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih23BulanTeks}\n";
-        $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih23TahunTeks}\n";
-        $teks .= "                     = {$tgl23DefNum}\n";
-        $teks .= "                     = {$tgl23DefIndo}\n";
+        $opsi = $data['opsi_pengusulan'] ?? [];
+        $hasBenturan = ! empty($opsi['has_benturan']);
 
-        if ($hasSubsiderBb) {
+        if ($hasBenturan) {
+            $o1 = $opsi['opsi_1_pra_remisi'] ?? [];
+            $o2 = $opsi['opsi_2_pasca_remisi'] ?? [];
+            $remisiTerk = $opsi['remisi_terakhir'] ?? [];
+
+            $o1RemisiTeks = $o1['remisi_teks'] ?? '0 Hari';
+            $o1SelisihBulanTeks = $o1['selisih_2_3_bulan_teks'] ?? $fraksi23BulanTeks;
+            $o1SelisihTahunTeks = $o1['selisih_2_3_tahun_teks'] ?? $fraksi23BulanTeks;
+            $o1Tgl23Num = $o1['tgl_2_3_numeric'] ?? '-';
+            $o1Tgl23Indo = $o1['tgl_2_3_indo'] ?? '-';
+
+            $teks .= "   • 2/3 Masa Pidana:\n";
+            $teks .= "     [TERSEDIA 2 OPSI PERHITUNGAN 2/3 KARENA MEPET TANGGAL SK REMISI TERAKHIR]\n\n";
+
+            $teks .= "     a. OPSI 1 (2/3 Berjalan / Pra-Remisi Terakhir):\n";
+            $teks .= "        = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi Berjalan)\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$o1RemisiTeks})\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$o1RemisiTeks})\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$o1RemisiTeks})\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + {$o1SelisihBulanTeks}\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + {$o1SelisihTahunTeks}\n";
+            $teks .= "        = {$o1Tgl23Num}\n";
+            $teks .= "        = {$o1Tgl23Indo}\n";
+            if ($hasSubsiderBb) {
+                $o1SubNum = $o1['tgl_2_3_subsider_numeric'] ?? '-';
+                $o1SubIndo = $o1['tgl_2_3_subsider_indo'] ?? '-';
+                $teks .= "        - 2/3 Masa Pidana (+Subsider BB) = {$o1Tgl23Num} + {$subsiderTeks} = {$o1SubNum} ({$o1SubIndo})\n";
+            }
             $teks .= "\n";
-            $teks .= "   • 2/3 Masa Pidana (+Subsider BB) = 2/3 Masa Pidana + Pidana Subsider\n";
-            $teks .= "                                    = {$tgl23DefNum} + {$subsiderTeks}\n";
-            $teks .= "                                    = {$tgl23SubDefNum}\n";
-            $teks .= "                                    = {$tgl23SubDefIndo}\n";
+
+            $teks .= "     b. OPSI 2 (2/3 Definitif / Pasca-Terbit SK Remisi Terakhir):\n";
+            $teks .= "        = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi Definitif)\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + {$selisih23BulanTeks}\n";
+            $teks .= "        = {$tglDitahanAcuanNum} + {$selisih23TahunTeks}\n";
+            $teks .= "        = {$tgl23DefNum}\n";
+            $teks .= "        = {$tgl23DefIndo}\n";
+            if ($hasSubsiderBb) {
+                $teks .= "        - 2/3 Masa Pidana (+Subsider BB) = {$tgl23DefNum} + {$subsiderTeks} = {$tgl23SubDefNum} ({$tgl23SubDefIndo})\n";
+            }
+        } else {
+            $teks .= "   • 2/3 Masa Pidana = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi)\n";
+            $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
+            $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})\n";
+            $teks .= "                     = {$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})\n";
+            $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih23BulanTeks}\n";
+            $teks .= "                     = {$tglDitahanAcuanNum} + {$selisih23TahunTeks}\n";
+            $teks .= "                     = {$tgl23DefNum}\n";
+            $teks .= "                     = {$tgl23DefIndo}\n";
+
+            if ($hasSubsiderBb) {
+                $teks .= "\n";
+                $teks .= "   • 2/3 Masa Pidana (+Subsider BB) = 2/3 Masa Pidana + Pidana Subsider\n";
+                $teks .= "                                    = {$tgl23DefNum} + {$subsiderTeks}\n";
+                $teks .= "                                    = {$tgl23SubDefNum}\n";
+                $teks .= "                                    = {$tgl23SubDefIndo}\n";
+            }
         }
         $teks .= "\n";
 
@@ -2237,6 +2310,177 @@ SUB_EKS_C;
         $labelDitahanHtml = ! empty($data['has_riwayat_penahanan']) ? 'Tgl. Mulai Ditahan (Efektif)' : 'Tgl. Mulai Ditahan';
         $tglDitahanAcuanNum = ! empty($data['has_riwayat_penahanan']) ? htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? $tglAwalNum) : $tglAwalNum;
 
+        $opsiHtml = $data['opsi_pengusulan'] ?? [];
+        $hasBenturanHtml = ! empty($opsiHtml['has_benturan']);
+
+        $baris23HtmlC = '';
+        if ($hasBenturanHtml) {
+            $remisiTerk = $opsiHtml['remisi_terakhir'] ?? [];
+            $o1 = $opsiHtml['opsi_1_pra_remisi'] ?? [];
+            $o2 = $opsiHtml['opsi_2_pasca_remisi'] ?? [];
+            $remisiTerkNama = htmlspecialchars($remisiTerk['nama_event'] ?? 'Remisi Terakhir');
+            $remisiTerkTglIndo = htmlspecialchars($remisiTerk['tanggal_indo'] ?? '-');
+
+            $o1RemisiTeks = htmlspecialchars($o1['remisi_teks'] ?? '0 Hari');
+            $o1SelisihTahunTeks = htmlspecialchars($o1['selisih_2_3_tahun_teks'] ?? $fraksi23BulanTeks);
+            $o1Tgl23Num = htmlspecialchars($o1['tgl_2_3_numeric'] ?? '-');
+            $o1Tgl23Indo = htmlspecialchars($o1['tgl_2_3_indo'] ?? '-');
+            $o1TglUsulIndo = htmlspecialchars($o1['tgl_usul_indo'] ?? '-');
+
+            $o2TglUsulIndo = htmlspecialchars($o2['tgl_usul_indo'] ?? '-');
+
+            $subsider23Opsi1Html = '';
+            if ($hasSubsiderBb) {
+                $o1SubNum = htmlspecialchars($o1['tgl_2_3_subsider_numeric'] ?? '-');
+                $o1SubIndo = htmlspecialchars($o1['tgl_2_3_subsider_indo'] ?? '-');
+                $subsider23Opsi1Html = <<<SUB_O1
+                    <tr>
+                        <td style="color: #14532d; font-weight: 600;">(+Subsider BB)</td>
+                        <td style="text-align: center; font-weight: bold; color: #14532d;">=</td>
+                        <td>{$o1Tgl23Num} + {$subsiderTeks} = {$o1SubNum} = <b style="color: #14532d;">{$o1SubIndo}</b></td>
+                    </tr>
+SUB_O1;
+            }
+
+            $baris23HtmlC = <<<BARIS_23_BENTURAN
+                    <tr>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
+                        <td colspan="2">
+                            <span class="badge bg-warning text-dark mb-1" style="font-size: 11px;">Tersedia 2 Opsi Perhitungan 2/3 (Mepet Tanggal Remisi)</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="pt-1 pb-2">
+                            <div class="p-2.5 rounded-3 mb-2" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <strong class="text-success" style="font-size: 12.5px;"><i class="fas fa-calendar-alt me-1"></i> a. OPSI 1 (2/3 Berjalan / Pra-Remisi Terakhir)</strong>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">Usulan Berkas Awal</span>
+                                </div>
+                                <div class="text-muted small mb-1.5" style="font-size: 11px;">Dihitung dari remisi berjalan ({$o1RemisiTeks}) untuk pengusulan lebih awal di SDP tanpa menunggu SK remisi berikutnya.</div>
+                                <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 12.5px; line-height: 1.6;">
+                                    <tr>
+                                        <td style="width: 210px; color: #15803d; font-weight: 600;">Rumus 2/3 Berjalan</td>
+                                        <td style="width: 22px; text-align: center; font-weight: bold;">=</td>
+                                        <td>{$labelDitahanHtml} + ((2/3 x Masa Pidana) - Remisi Berjalan)</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$o1RemisiTeks})</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$o1RemisiTeks})</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tglDitahanAcuanNum} + {$o1SelisihTahunTeks}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$o1Tgl23Num}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td><b class="text-success" style="font-size: 14.5px;">{$o1Tgl23Indo}</b> <span class="badge bg-light text-dark border ms-1" style="font-size: 11px;">Mulai Usul SDP: {$o1TglUsulIndo}</span></td>
+                                    </tr>
+                                    {$subsider23Opsi1Html}
+                                </table>
+                            </div>
+
+                            <div class="p-2.5 rounded-3" style="background-color: #fff7ed; border: 1px solid #fed7aa;">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <strong style="color: #c2410c; font-size: 12.5px;"><i class="fas fa-check-circle me-1"></i> b. OPSI 2 (2/3 Definitif / Pasca-Terbit SK Remisi Terakhir)</strong>
+                                    <span class="badge bg-warning text-dark border border-warning-subtle" style="font-size: 10px;">Definitif Pasca-SK</span>
+                                </div>
+                                <div class="text-muted small mb-1.5" style="font-size: 11px;">Dihitung setelah remisi definitif ({$totalRemisiTeks}), pengusulan diajukan tepat saat/pasca terbit SK {$remisiTerkNama}.</div>
+                                <table class="table-borderless w-100 font-monospace mb-0" style="font-size: 12.5px; line-height: 1.6;">
+                                    <tr>
+                                        <td style="width: 210px; color: #c2410c; font-weight: 600;">Rumus 2/3 Definitif</td>
+                                        <td style="width: 22px; text-align: center; font-weight: bold;">=</td>
+                                        <td>{$labelDitahanHtml} + ((2/3 x Masa Pidana) - Remisi Definitif)</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tglDitahanAcuanNum} + {$selisih23TahunTeks}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td>{$tgl23DefNum}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td style="text-align: center; font-weight: bold;">=</td>
+                                        <td><b style="color: #c2410c; font-size: 14.5px;">{$tgl23DefIndo}</b> <span class="badge bg-light text-dark border ms-1" style="font-size: 11px;">Mulai Usul SDP: {$o2TglUsulIndo} (Hari H SK)</span></td>
+                                    </tr>
+                                    {$subsider23HtmlC}
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+BARIS_23_BENTURAN;
+        } else {
+            $baris23HtmlC = <<<BARIS_23_NORMAL
+                    <tr>
+                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
+                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
+                        <td>{$labelDitahanHtml} + ((2/3 x Masa Pidana) - Remisi)</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglDitahanAcuanNum} + {$selisih23BulanTeks}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tglDitahanAcuanNum} + {$selisih23TahunTeks}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td>{$tgl23DefNum}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: center; font-weight: bold;">=</td>
+                        <td><b class="text-success" style="font-size: 15px;">{$tgl23DefIndo}</b></td>
+                    </tr>
+                    {$subsider23HtmlC}
+BARIS_23_NORMAL;
+        }
+
         $html .= <<<CARD_C
         <div class="card border mb-3" style="border-radius: 10px; border-color: #fecaca;">
             <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #fef2f2;">
@@ -2292,47 +2536,7 @@ SUB_EKS_C;
                         <td><b style="color: #0284c7; font-size: 14.5px;">{$tgl12DefIndo}</b></td>
                     </tr>
                     <tr style="height: 8px;"><td colspan="3"></td></tr>
-                    <tr>
-                        <td style="width: 240px; font-weight: 600; color: #0f172a;">• 2/3 Masa Pidana</td>
-                        <td style="width: 25px; text-align: center; font-weight: bold;">=</td>
-                        <td>{$labelDitahanHtml} + ((2/3 x Masa Pidana) - Remisi)</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglDitahanAcuanNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglDitahanAcuanNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglDitahanAcuanNum} + {$selisih23BulanTeks}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tglDitahanAcuanNum} + {$selisih23TahunTeks}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td>{$tgl23DefNum}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="text-align: center; font-weight: bold;">=</td>
-                        <td><b class="text-success" style="font-size: 15px;">{$tgl23DefIndo}</b></td>
-                    </tr>
-                    {$subsider23HtmlC}
+                    {$baris23HtmlC}
                     <tr style="height: 8px;"><td colspan="3"></td></tr>
                     <tr>
                         <td style="width: 240px; font-weight: 600; color: #0f172a;">• Ekspirasi Akhir</td>
@@ -2986,6 +3190,10 @@ SUB;
         $o2TglUsulPdfNum = htmlspecialchars($o2Pdf['tgl_usul_numeric'] ?? '-');
         $o2TglUsulPdfIndo = htmlspecialchars($o2Pdf['tgl_usul_indo'] ?? '-');
 
+        $cell23Pdf = $hasBenturanPdf
+            ? '<b style="color: #047857; font-size: 8.5pt;">'.$tgl23Def.'</b><br><span style="font-size: 6.5pt; color: #15803d; font-weight: bold;">(Opsi 1: '.$o1Tgl23PdfIndo.')</span>'
+            : '<b style="color: #047857; font-size: 9pt;">'.$tgl23Def.'</b>';
+
         $labelPentahapanPdf = ! empty($data['has_riwayat_penahanan']) ? 'Tgl. Mulai Ditahan (Efektif)' : 'Tgl. Mulai Ditahan';
         $tglPentahapanPdfNum = ! empty($data['has_riwayat_penahanan']) ? htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? $tglAwalNum) : $tglAwalNum;
 
@@ -3248,6 +3456,99 @@ SUB_23_PDF;
 SUB_EKS_C_PDF;
         }
 
+        $baris23PdfHtml = '';
+        if ($hasBenturanPdf) {
+            $o1RemisiTeksPdf = htmlspecialchars($o1Pdf['remisi_teks'] ?? '0 Hari');
+            $o1SelisihTahunTeksPdf = htmlspecialchars($o1Pdf['selisih_2_3_tahun_teks'] ?? $fraksi23BulanTeks);
+            $sub23Opsi1Pdf = '';
+            if ($hasSubsiderBb) {
+                $o1SubNumPdf = htmlspecialchars($o1Pdf['tgl_2_3_subsider_numeric'] ?? '-');
+                $o1SubIndoPdf = htmlspecialchars($o1Pdf['tgl_2_3_subsider_indo'] ?? '-');
+                $sub23Opsi1Pdf = <<<SUB_O1_PDF
+                <tr>
+                    <td width="28%" style="padding-left: 8px; color: #14532d; font-size: 7.5pt;">&bull; 2/3 Opsi 1 (+Subsider BB)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$o1Tgl23PdfNum} + {$subsiderTeks} = {$o1SubNumPdf} = <b style="color: #14532d; font-size: 8.5pt;">{$o1SubIndoPdf}</b></td>
+                </tr>
+SUB_O1_PDF;
+            }
+
+            $baris23PdfHtml = <<<BARIS_23_BENTURAN_PDF
+                <tr>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
+                    <td width="4%" align="center" style="font-weight: bold;">:</td>
+                    <td width="68%"><b style="color: #b45309; font-size: 8pt;">Tersedia 2 Opsi Perhitungan 2/3 (Mepet Tanggal Remisi Terakhir)</b></td>
+                </tr>
+                <tr>
+                    <td width="28%" style="padding-left: 8px; color: #15803d; font-weight: bold;">a. OPSI 1 (2/3 Berjalan)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$labelPentahapanPdf} + ((2/3 x {$lamaVonis}) - {$o1RemisiTeksPdf})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$o1SelisihTahunTeksPdf} = {$o1Tgl23PdfNum} = <b style="color: #15803d; font-size: 9pt;">{$o1Tgl23PdfIndo}</b> <span style="font-size: 7.2pt; color: #15803d;">(Mulai Usul: {$o1TglUsulPdfIndo})</span></td>
+                </tr>
+                {$sub23Opsi1Pdf}
+                <tr style="font-size: 1.5pt; line-height: 0.2;"><td colspan="3">&nbsp;</td></tr>
+                <tr>
+                    <td width="28%" style="padding-left: 8px; color: #c2410c; font-weight: bold;">b. OPSI 2 (2/3 Definitif)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$labelPentahapanPdf} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23TahunTeks} = {$tgl23DefNum} = <b style="color: #c2410c; font-size: 9pt;">{$tgl23DefIndo}</b> <span style="font-size: 7.2pt; color: #c2410c;">(Mulai Usul: {$o2TglUsulPdfIndo} [Hari H SK])</span></td>
+                </tr>
+                {$subsiderPdf23}
+BARIS_23_BENTURAN_PDF;
+        } else {
+            $baris23PdfHtml = <<<BARIS_23_NORMAL_PDF
+                <tr>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$labelPentahapanPdf} + ((2/3 x Masa Pidana) - Remisi)</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23BulanTeks}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23TahunTeks}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tgl23DefNum}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%"><b style="color: #15803d; font-size: 9.5pt;">{$tgl23DefIndo}</b></td>
+                </tr>
+                {$subsiderPdf23}
+BARIS_23_NORMAL_PDF;
+        }
+
         // Render Ledger Rows (Tabel Rincian Proyeksi Remisi 7 Kolom)
         $ledgerRowsHtml = '';
         $ledger = (array) ($data['proyeksi_ledger'] ?? []);
@@ -3480,7 +3781,7 @@ SEC_D_NORMAL_PDF;
         <tr style="text-align: center; font-size: 8.8pt; background-color: #f8fafc;">
             <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px;"><b style="color: #0284c7; font-size: 8.8pt;">{$tgl13Def}</b></td>
             <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px;"><b style="color: #d97706; font-size: 8.8pt;">{$tgl12Def}</b></td>
-            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #ecfdf5;"><b style="color: #047857; font-size: 9pt;">{$tgl23Def}</b></td>
+            <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #ecfdf5;">{$cell23Pdf}</td>
             <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #fef2f2;"><b style="color: #b91c1c; font-size: 9pt;">{$tglEkspirasiDef}</b></td>
             <td width="20%" style="border: 0.5px solid #cbd5e1; padding: 2.5px 2px; background-color: #fffbeb;"><b style="color: #b45309; font-size: 9pt;">{$totalRemisiHari} Hari</b><br><span style="font-size: 7.2pt; color: #92400e;">({$totalRemisiTeks})</span></td>
         </tr>
@@ -3646,47 +3947,7 @@ SEC_D_NORMAL_PDF;
                     <td width="68%"><b style="color: #0284c7; font-size: 9.5pt;">{$tgl12DefIndo}</b></td>
                 </tr>
                 <tr style="font-size: 2pt; line-height: 0.3;"><td colspan="3">&nbsp;</td></tr>
-                <tr>
-                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; 2/3 Masa Pidana</td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$labelPentahapanPdf} + ((2/3 x Masa Pidana) - Remisi)</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglPentahapanPdfNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglPentahapanPdfNum} + ((2/3 x {$pidanaBulanTeks}) - {$totalRemisiTeks})</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglPentahapanPdfNum} + ({$fraksi23BulanTeks} - {$totalRemisiTeks})</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23BulanTeks}</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglPentahapanPdfNum} + {$selisih23TahunTeks}</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tgl23DefNum}</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%"><b style="color: #15803d; font-size: 9.5pt;">{$tgl23DefIndo}</b></td>
-                </tr>
-                {$subsiderPdf23}
+{$baris23PdfHtml}
                 <tr style="font-size: 2pt; line-height: 0.3;"><td colspan="3">&nbsp;</td></tr>
                 <tr>
                     <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Ekspirasi Akhir</td>
