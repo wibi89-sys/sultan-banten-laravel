@@ -3809,10 +3809,10 @@ SEC_D_NORMAL_PDF;
 <h1 style="color: #0f172a;">PERKIRAAN PEROLEHAN REMISI</h1>
 <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 2pt; line-height: 0.3;"><tr><td>&nbsp;</td></tr></table>
 
-<!-- I. IDENTITAS WARGA BINAAN PEMASYARAKATAN & PARAMETER VONIS -->
+<!-- I. IDENTITAS WARGA BINAAN -->
 <table width="100%" cellpadding="2" cellspacing="0" class="table-identitas" style="border: 0.5px solid #cbd5e1; border-collapse: collapse; margin-bottom: 4px;">
     <tr style="background-color: #f1f5f9;">
-        <td colspan="6" style="font-weight: bold; font-size: 8.8pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 2.5px 6px;">I. IDENTITAS WARGA BINAAN PEMASYARAKATAN &amp; PARAMETER VONIS</td>
+        <td colspan="6" style="font-weight: bold; font-size: 8.8pt; color: #0f172a; border-bottom: 0.5px solid #cbd5e1; padding: 2.5px 6px;">I. IDENTITAS WARGA BINAAN</td>
     </tr>
     <tr>
         <td width="19%" style="border-bottom: 0.5px solid #e2e8f0; color: #475569; padding: 2px 6px; font-size: 8.5pt;">Nama</td>

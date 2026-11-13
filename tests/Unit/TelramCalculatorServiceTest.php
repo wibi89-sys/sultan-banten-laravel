@@ -1243,6 +1243,8 @@ class TelramCalculatorServiceTest extends TestCase
 
         // PDF Template memuat judul rapi dan rincian lengkap 2 opsi
         $pdfHtml = TelramCalculatorService::renderPdfTemplateHtml($res);
+        $this->assertStringContainsString('I. IDENTITAS WARGA BINAAN', $pdfHtml);
+        $this->assertStringNotContainsString('I. IDENTITAS WARGA BINAAN PEMASYARAKATAN &amp; PARAMETER VONIS', $pdfHtml);
         $this->assertStringContainsString('&bull; Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:</span>', $pdfHtml);
         $this->assertStringNotContainsString('(Mepet Tanggal Pemberian Remisi):</span>', $pdfHtml);
         $this->assertStringContainsString('Opsi 1 = 2/3 Sebelum Remisi', $pdfHtml);
