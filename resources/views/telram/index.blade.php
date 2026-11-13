@@ -593,16 +593,16 @@
                         <label class="stepper-label mb-1.5 d-block">PILIH MODE PERHITUNGAN:</label>
                         <div class="mode-switch-grid">
                             <button type="button" id="btnModeRemisi" onclick="setMode('simulasi_remisi')" class="btn-mode-tab active">
-                                <i class="fas fa-calendar-check me-1.5 text-primary"></i> Perkiraan Remisi
+                                Perkiraan Remisi
                             </button>
                             <button type="button" id="btnModeMaju" onclick="setMode('maju')" class="btn-mode-tab">
-                                <i class="fas fa-arrow-right me-1.5 text-primary"></i> Cari Ekspirasi
+                                Cari Ekspirasi
                             </button>
                             <button type="button" id="btnModeMundur" onclick="setMode('mundur')" class="btn-mode-tab">
-                                <i class="fas fa-history me-1.5 text-secondary"></i> Lama Pidana
+                                Lama Pidana
                             </button>
                             <button type="button" id="btnModeSisa" onclick="setMode('sisa')" class="btn-mode-tab">
-                                <i class="fas fa-hourglass-half me-1.5 text-info"></i> Sisa Pidana
+                                Sisa Pidana
                             </button>
                         </div>
                     </div>
