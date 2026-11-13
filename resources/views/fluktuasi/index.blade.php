@@ -7,42 +7,213 @@
 
 @push('styles')
 <style>
+    .font-speedometer {
+        font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    /* ===================================================
+       4 KPI SUMMARY CARDS (THEME ADAPTIVE & RESPONSIVE)
+       =================================================== */
     .stat-kpi-card {
-        border: none;
-        border-radius: 12px;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border-radius: 14px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         position: relative;
         overflow: hidden;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     }
     .stat-kpi-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     }
     .stat-kpi-card .stat-icon {
         position: absolute;
-        right: 15px;
-        bottom: 12px;
-        font-size: 42px;
+        right: 14px;
+        bottom: 10px;
+        font-size: 44px;
         opacity: 0.16;
+        pointer-events: none;
+        transition: transform 0.2s ease;
     }
-    .badge-delta-pos {
-        background-color: #dcfce7;
-        color: #15803d;
-        border: 1px solid #bbf7d0;
+    .stat-kpi-card:hover .stat-icon {
+        transform: scale(1.08);
+    }
+    .kpi-card-label {
+        font-size: 11.5px;
         font-weight: 700;
-    }
-    .badge-delta-neg {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-        font-weight: 700;
-    }
-    .badge-delta-zero {
-        background-color: #f1f5f9;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
         color: #475569;
-        border: 1px solid #e2e8f0;
-        font-weight: 600;
+    }
+    .kpi-card-value {
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.15;
+        color: #0f172a;
+    }
+    .kpi-card-sub {
+        font-size: 11px;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    /* Light Mode Accent Gradients & Borders */
+    .kpi-card-tahanan {
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
+        border-color: #bfdbfe !important;
+        border-left: 4px solid #3b82f6 !important;
+    }
+    .kpi-card-tahanan .kpi-card-label { color: #1e40af; }
+    .kpi-card-tahanan .kpi-card-value { color: #1d4ed8; }
+    .kpi-card-tahanan .stat-icon { color: #3b82f6; }
+
+    .kpi-card-napi {
+        background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%) !important;
+        border-color: #a5f3fc !important;
+        border-left: 4px solid #06b6d4 !important;
+    }
+    .kpi-card-napi .kpi-card-label { color: #0e7490; }
+    .kpi-card-napi .kpi-card-value { color: #0891b2; }
+    .kpi-card-napi .stat-icon { color: #06b6d4; }
+
+    .kpi-card-total {
+        background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%) !important;
+        border-color: #c7d2fe !important;
+        border-left: 4px solid #6366f1 !important;
+    }
+    .kpi-card-total .kpi-card-label { color: #4338ca; }
+    .kpi-card-total .kpi-card-value { color: #4f46e5; }
+    .kpi-card-total .stat-icon { color: #6366f1; }
+
+    .kpi-card-pengeluaran {
+        background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%) !important;
+        border-color: #a7f3d0 !important;
+        border-left: 4px solid #10b981 !important;
+    }
+    .kpi-card-pengeluaran .kpi-card-label { color: #065f46; }
+    .kpi-card-pengeluaran .kpi-card-value { color: #059669; }
+    .kpi-card-pengeluaran .stat-icon { color: #10b981; }
+
+    /* KPI Badges - Light Mode */
+    .kpi-badge-pos {
+        background-color: #dcfce7 !important;
+        color: #15803d !important;
+        border: 1px solid #86efac !important;
+        font-size: 11px;
+    }
+    .kpi-badge-neg {
+        background-color: #fee2e2 !important;
+        color: #b91c1c !important;
+        border: 1px solid #fca5a5 !important;
+        font-size: 11px;
+    }
+    .kpi-badge-zero {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-size: 11px;
+    }
+    .kpi-badge-amber {
+        background-color: #fef3c7 !important;
+        color: #92400e !important;
+        border: 1px solid #fcd34d !important;
+        font-size: 11px;
+    }
+    .kpi-badge-mutasi {
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-size: 10px;
+    }
+    .kpi-badge-bdh {
+        background-color: #fee2e2 !important;
+        color: #b91c1c !important;
+        border: 1px solid #fecaca !important;
+        font-size: 10px;
+    }
+
+    /* Dark Mode KPI Card Overrides */
+    [data-theme="dark"] .stat-kpi-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+    }
+    [data-theme="dark"] .stat-kpi-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    }
+    [data-theme="dark"] .kpi-card-sub {
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .kpi-card-tahanan {
+        background: linear-gradient(135deg, #1e293b 0%, rgba(30, 58, 138, 0.25) 100%) !important;
+        border-color: rgba(59, 130, 246, 0.35) !important;
+        border-left: 4px solid #60a5fa !important;
+    }
+    [data-theme="dark"] .kpi-card-tahanan .kpi-card-label { color: #93c5fd !important; }
+    [data-theme="dark"] .kpi-card-tahanan .kpi-card-value { color: #ffffff !important; }
+    [data-theme="dark"] .kpi-card-tahanan .stat-icon { color: #60a5fa !important; opacity: 0.22 !important; }
+
+    [data-theme="dark"] .kpi-card-napi {
+        background: linear-gradient(135deg, #1e293b 0%, rgba(8, 145, 178, 0.22) 100%) !important;
+        border-color: rgba(6, 182, 212, 0.35) !important;
+        border-left: 4px solid #22d3ee !important;
+    }
+    [data-theme="dark"] .kpi-card-napi .kpi-card-label { color: #67e8f9 !important; }
+    [data-theme="dark"] .kpi-card-napi .kpi-card-value { color: #ffffff !important; }
+    [data-theme="dark"] .kpi-card-napi .stat-icon { color: #22d3ee !important; opacity: 0.22 !important; }
+
+    [data-theme="dark"] .kpi-card-total {
+        background: linear-gradient(135deg, #1e293b 0%, rgba(67, 56, 202, 0.22) 100%) !important;
+        border-color: rgba(99, 102, 241, 0.35) !important;
+        border-left: 4px solid #818cf8 !important;
+    }
+    [data-theme="dark"] .kpi-card-total .kpi-card-label { color: #a5b4fc !important; }
+    [data-theme="dark"] .kpi-card-total .kpi-card-value { color: #ffffff !important; }
+    [data-theme="dark"] .kpi-card-total .stat-icon { color: #818cf8 !important; opacity: 0.22 !important; }
+
+    [data-theme="dark"] .kpi-card-pengeluaran {
+        background: linear-gradient(135deg, #1e293b 0%, rgba(6, 95, 70, 0.22) 100%) !important;
+        border-color: rgba(16, 185, 129, 0.35) !important;
+        border-left: 4px solid #34d399 !important;
+    }
+    [data-theme="dark"] .kpi-card-pengeluaran .kpi-card-label { color: #6ee7b7 !important; }
+    [data-theme="dark"] .kpi-card-pengeluaran .kpi-card-value { color: #ffffff !important; }
+    [data-theme="dark"] .kpi-card-pengeluaran .stat-icon { color: #34d399 !important; opacity: 0.22 !important; }
+
+    /* Dark Mode Badges */
+    [data-theme="dark"] .kpi-badge-pos {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        color: #4ade80 !important;
+        border-color: rgba(34, 197, 94, 0.45) !important;
+    }
+    [data-theme="dark"] .kpi-badge-neg {
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
+    }
+    [data-theme="dark"] .kpi-badge-zero {
+        background-color: rgba(148, 163, 184, 0.15) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(148, 163, 184, 0.35) !important;
+    }
+    [data-theme="dark"] .kpi-badge-amber {
+        background-color: rgba(245, 158, 11, 0.2) !important;
+        color: #fde68a !important;
+        border-color: rgba(245, 158, 11, 0.45) !important;
+    }
+    [data-theme="dark"] .kpi-badge-mutasi {
+        background-color: rgba(148, 163, 184, 0.15) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(148, 163, 184, 0.35) !important;
+    }
+    [data-theme="dark"] .kpi-badge-bdh {
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
     }
     /* Overcrowding Classification Badges (Terkalibrasi Banten) */
     .badge-overcrowding-normal,
@@ -561,8 +732,25 @@
         color: #ffffff !important;
     }
 
-    /* View Switcher */
+    /* View Switcher & Header */
+    .fluktuasi-card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    [data-theme="dark"] .fluktuasi-card-header {
+        background-color: #1e293b !important;
+        border-bottom-color: #334155 !important;
+    }
+    .fluktuasi-toggle-group {
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+    }
+    [data-theme="dark"] .fluktuasi-toggle-group {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
     .btn-view-mode {
+        color: #64748b;
         transition: all 0.2s ease;
     }
     .btn-view-mode.active {
@@ -570,26 +758,220 @@
         color: #ffffff !important;
         box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3) !important;
     }
+    [data-theme="dark"] .btn-view-mode {
+        color: #94a3b8;
+    }
+    [data-theme="dark"] .btn-view-mode.active {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
+    }
+
+    /* Edukasi Dinamika Alert & Reset Button */
+    .fluktuasi-info-alert {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #334155;
+    }
+    [data-theme="dark"] .fluktuasi-info-alert {
+        background-color: rgba(30, 41, 59, 0.75) !important;
+        border-color: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .fluktuasi-info-alert strong {
+        color: #f1f5f9 !important;
+    }
+    .btn-reset-fluktuasi {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+    }
+    .btn-reset-fluktuasi:hover {
+        background: #f1f5f9;
+        color: #334155;
+    }
+    [data-theme="dark"] .btn-reset-fluktuasi {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .btn-reset-fluktuasi:hover {
+        background: #475569 !important;
+        color: #ffffff !important;
+    }
+
+    /* Table Matrix Subheaders & Dark Mode */
+    .th-col-tahanan {
+        background-color: #eff6ff !important;
+        color: #1d4ed8 !important;
+    }
+    .th-col-napi {
+        background-color: #ecfeff !important;
+        color: #0e7490 !important;
+    }
+    .th-col-total {
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+    }
+    [data-theme="dark"] .table-fluktuasi thead.table-light {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border-color: #475569 !important;
+    }
+    [data-theme="dark"] .table-fluktuasi thead th {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border-color: #475569 !important;
+    }
+    [data-theme="dark"] .th-col-tahanan {
+        background-color: rgba(30, 58, 138, 0.35) !important;
+        color: #93c5fd !important;
+    }
+    [data-theme="dark"] .th-col-napi {
+        background-color: rgba(8, 145, 178, 0.3) !important;
+        color: #67e8f9 !important;
+    }
+    [data-theme="dark"] .th-col-total {
+        background-color: rgba(51, 65, 85, 0.5) !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .table-fluktuasi td {
+        border-color: #334155 !important;
+        color: #f1f5f9;
+    }
+    [data-theme="dark"] .table-fluktuasi td.col-sticky-upt {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+    }
+    [data-theme="dark"] .table-fluktuasi td.col-sticky-no {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .table-fluktuasi tbody tr:hover td {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+    [data-theme="dark"] .table-fluktuasi tbody tr:hover td.col-sticky-no,
+    [data-theme="dark"] .table-fluktuasi tbody tr:hover td.col-sticky-upt {
+        background-color: #273549 !important;
+    }
+    [data-theme="dark"] .table-fluktuasi tfoot {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
+
+    /* Modal Detail Fluktuasi Header, Body, Footer & Pill Badges */
+    #modalDetailFluktuasi .modal-header {
+        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+    #modalDetailFluktuasi .modal-title {
+        color: #ffffff !important;
+    }
+    #modalDetailFluktuasi .badge-kapasitas-pill {
+        background: rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .badge-kapasitas-pill {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .modal-content {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .modal-body {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .modal-footer {
+        background-color: #1e293b !important;
+        border-top: 1px solid #334155 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .table thead.table-light th,
+    [data-theme="dark"] #modalDetailFluktuasi .table tfoot.table-light td {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border-color: #475569 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .table td {
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .nav-pills .nav-link:not(.active) {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #94a3b8 !important;
+        border: 1px solid #334155 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .nav-pills .nav-link.active {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .bg-light {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: #334155 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .text-dark {
+        color: #f1f5f9 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .alert-warning {
+        background-color: rgba(245, 158, 11, 0.15) !important;
+        border-color: rgba(245, 158, 11, 0.35) !important;
+        color: #fef3c7 !important;
+    }
+    [data-theme="dark"] #modalDetailFluktuasi .alert-success {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        border-color: rgba(16, 185, 129, 0.35) !important;
+        color: #d1fae5 !important;
+    }
+
+    /* Mobile Responsive Optimizations */
     @media (max-width: 575.98px) {
         .stat-kpi-card {
-            padding: 10px 12px !important;
+            padding: 10px 10px !important;
+            border-radius: 10px !important;
         }
-        .stat-kpi-card .h3 {
-            font-size: 18px !important;
+        .kpi-card-label {
+            font-size: 9.5px !important;
+            letter-spacing: 0.2px !important;
         }
-        .stat-kpi-card .small {
-            font-size: 10.5px !important;
+        .kpi-card-value {
+            font-size: 17px !important;
+            margin: 2px 0 !important;
+        }
+        .kpi-card-sub {
+            font-size: 9.5px !important;
+            margin-top: 2px !important;
         }
         .stat-kpi-card .badge {
-            font-size: 9.5px !important;
-            padding: 2px 6px !important;
+            font-size: 8.5px !important;
+            padding: 2px 4px !important;
         }
         .stat-kpi-card .stat-icon {
-            font-size: 26px !important;
-            right: 8px !important;
-            bottom: 8px !important;
+            font-size: 24px !important;
+            right: 6px !important;
+            bottom: 6px !important;
+            opacity: 0.12 !important;
+        }
+        .fluktuasi-banner-card {
+            padding: 6px 3px !important;
+        }
+        .fluktuasi-banner-label,
+        .fluktuasi-banner-label-total {
+            font-size: 9px !important;
+        }
+        .fluktuasi-banner-val,
+        .fluktuasi-banner-val-total {
+            font-size: 14px !important;
         }
     }
+
     @media print {
         .sidebar, .navbar, .top-header, .btn, form, th:last-child, td:last-child {
             display: none !important;
@@ -616,29 +998,6 @@
             size: landscape;
             margin: 8mm;
         }
-    }
-
-    /* Modal Detail Fluktuasi Header & Pill Badges */
-    #modalDetailFluktuasi .modal-header {
-        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
-        color: #ffffff !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-    }
-    #modalDetailFluktuasi .modal-title {
-        color: #ffffff !important;
-    }
-    #modalDetailFluktuasi .badge-kapasitas-pill {
-        background: rgba(255, 255, 255, 0.22) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(255, 255, 255, 0.45) !important;
-        font-weight: 600;
-        letter-spacing: 0.2px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    }
-    [data-theme="dark"] #modalDetailFluktuasi .badge-kapasitas-pill {
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: #ffffff !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
     }
 </style>
 @endpush
@@ -685,7 +1044,7 @@
                     <button type="submit" class="btn btn-primary btn-sm px-3 w-100">
                         <i class="fas fa-filter me-1"></i>Analisis
                     </button>
-                    <a href="{{ route('fluktuasi.index') }}" class="btn btn-light btn-sm text-secondary border">
+                    <a href="{{ route('fluktuasi.index') }}" class="btn btn-reset-fluktuasi btn-sm" title="Reset Filter">
                         <i class="fas fa-undo"></i>
                     </a>
                 </div>
@@ -694,24 +1053,24 @@
     </div>
 
     <!-- 4 Kartu KPI Ringkasan Fluktuasi Se-Banten -->
-    <div class="row g-3 mb-4">
+    <div class="row g-2 g-sm-3 mb-4">
         <!-- Kartu 1: Tahanan -->
         <div class="col-6 col-xl-3">
-            <div class="card stat-kpi-card bg-primary text-white p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="small fw-semibold text-white-50">Tahanan Se-Banten</div>
-                        <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_tahanan_curr']) }}</div>
+            <div class="card stat-kpi-card kpi-card-tahanan p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-1">
+                    <div style="min-width: 0;">
+                        <div class="kpi-card-label text-truncate">Tahanan Se-Banten</div>
+                        <div class="kpi-card-value font-speedometer my-1">{{ number_format($summary['total_tahanan_curr']) }}</div>
                     </div>
                     @if($summary['delta_tahanan'] > 0)
-                        <span class="badge bg-white text-danger fw-bold shadow-xs">+{{ number_format($summary['delta_tahanan']) }} (Naik)</span>
+                        <span class="badge kpi-badge-neg fw-bold shadow-xs">+{{ number_format($summary['delta_tahanan']) }} (Naik)</span>
                     @elseif($summary['delta_tahanan'] < 0)
-                        <span class="badge bg-white text-success fw-bold shadow-xs">{{ number_format($summary['delta_tahanan']) }} (Turun)</span>
+                        <span class="badge kpi-badge-pos fw-bold shadow-xs">{{ number_format($summary['delta_tahanan']) }} (Turun)</span>
                     @else
-                        <span class="badge bg-white text-secondary fw-semibold shadow-xs">0 (Stabil)</span>
+                        <span class="badge kpi-badge-zero fw-semibold shadow-xs">0 (Stabil)</span>
                     @endif
                 </div>
-                <div class="small mt-2 text-white-50">
+                <div class="kpi-card-sub text-truncate">
                     Kemarin: <strong>{{ number_format($summary['total_tahanan_prev']) }}</strong> Orang
                 </div>
                 <i class="fas fa-user-lock stat-icon"></i>
@@ -720,21 +1079,21 @@
 
         <!-- Kartu 2: Narapidana -->
         <div class="col-6 col-xl-3">
-            <div class="card stat-kpi-card bg-info text-white p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="small fw-semibold text-white-50">Narapidana Se-Banten</div>
-                        <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_napi_curr']) }}</div>
+            <div class="card stat-kpi-card kpi-card-napi p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-1">
+                    <div style="min-width: 0;">
+                        <div class="kpi-card-label text-truncate">Narapidana Se-Banten</div>
+                        <div class="kpi-card-value font-speedometer my-1">{{ number_format($summary['total_napi_curr']) }}</div>
                     </div>
                     @if($summary['delta_napi'] > 0)
-                        <span class="badge bg-white text-warning text-dark fw-bold shadow-xs">+{{ number_format($summary['delta_napi']) }}</span>
+                        <span class="badge kpi-badge-amber fw-bold shadow-xs">+{{ number_format($summary['delta_napi']) }}</span>
                     @elseif($summary['delta_napi'] < 0)
-                        <span class="badge bg-white text-danger fw-bold shadow-xs">{{ number_format($summary['delta_napi']) }}</span>
+                        <span class="badge kpi-badge-neg fw-bold shadow-xs">{{ number_format($summary['delta_napi']) }}</span>
                     @else
-                        <span class="badge bg-white text-secondary fw-semibold shadow-xs">0 (Stabil)</span>
+                        <span class="badge kpi-badge-zero fw-semibold shadow-xs">0 (Stabil)</span>
                     @endif
                 </div>
-                <div class="small mt-2 text-white-50">
+                <div class="kpi-card-sub text-truncate">
                     Kemarin: <strong>{{ number_format($summary['total_napi_prev']) }}</strong> Orang
                 </div>
                 <i class="fas fa-users stat-icon"></i>
@@ -743,21 +1102,21 @@
 
         <!-- Kartu 3: Total Isi Penghuni -->
         <div class="col-6 col-xl-3">
-            <div class="card stat-kpi-card bg-dark text-white p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="small fw-semibold text-white-50">Total Isi Penghuni</div>
-                        <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_penghuni_curr']) }}</div>
+            <div class="card stat-kpi-card kpi-card-total p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-1">
+                    <div style="min-width: 0;">
+                        <div class="kpi-card-label text-truncate">Total Isi Penghuni</div>
+                        <div class="kpi-card-value font-speedometer my-1">{{ number_format($summary['total_penghuni_curr']) }}</div>
                     </div>
                     @if($summary['delta_penghuni'] > 0)
-                        <span class="badge bg-danger text-white fw-bold shadow-xs">+{{ number_format($summary['delta_penghuni']) }} Net</span>
+                        <span class="badge kpi-badge-neg fw-bold shadow-xs">+{{ number_format($summary['delta_penghuni']) }} Net</span>
                     @elseif($summary['delta_penghuni'] < 0)
-                        <span class="badge bg-success text-white fw-bold shadow-xs">{{ number_format($summary['delta_penghuni']) }} Net</span>
+                        <span class="badge kpi-badge-pos fw-bold shadow-xs">{{ number_format($summary['delta_penghuni']) }} Net</span>
                     @else
-                        <span class="badge bg-secondary text-white fw-semibold shadow-xs">0 Net</span>
+                        <span class="badge kpi-badge-zero fw-semibold shadow-xs">0 Net</span>
                     @endif
                 </div>
-                <div class="small mt-2 text-white-50">
+                <div class="kpi-card-sub text-truncate">
                     Kemarin: <strong>{{ number_format($summary['total_penghuni_prev']) }}</strong> Orang
                 </div>
                 <i class="fas fa-chart-line stat-icon"></i>
@@ -766,19 +1125,23 @@
 
         <!-- Kartu 4: Total Bebas Harian, BDH & Mutasi -->
         <div class="col-6 col-xl-3">
-            <div class="card stat-kpi-card bg-success text-white p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="small fw-semibold text-white-50">Total Pengeluaran (Bebas &amp; Mutasi)</div>
-                        <div class="h3 fw-bold mb-0 mt-1">{{ number_format($summary['total_pengurang']) }} <span class="fs-6 fw-normal">Orang</span></div>
+            <div class="card stat-kpi-card kpi-card-pengeluaran p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-1">
+                    <div style="min-width: 0;">
+                        <div class="kpi-card-label text-truncate">Total Pengeluaran</div>
+                        <div class="kpi-card-value font-speedometer my-1">
+                            {{ number_format($summary['total_pengurang']) }} <span class="fs-6 fw-normal">Orang</span>
+                        </div>
                     </div>
                     @if($summary['total_mutasi_keluar'] > 0)
-                        <span class="badge bg-secondary text-white fw-bold shadow-xs">{{ $summary['total_mutasi_keluar'] }} Mutasi</span>
+                        <span class="badge kpi-badge-mutasi fw-bold shadow-xs">{{ $summary['total_mutasi_keluar'] }} Mutasi</span>
                     @elseif($summary['total_bdh'] > 0)
-                        <span class="badge bg-warning text-dark fw-bold shadow-xs">{{ $summary['total_bdh'] }} BDH</span>
+                        <span class="badge kpi-badge-bdh fw-bold shadow-xs">{{ $summary['total_bdh'] }} BDH</span>
+                    @else
+                        <span class="badge kpi-badge-pos fw-semibold shadow-xs">{{ $summary['total_bebas'] }} Bebas</span>
                     @endif
                 </div>
-                <div class="small mt-2 text-white-50">
+                <div class="kpi-card-sub text-truncate">
                     Bebas: {{ $summary['total_bebas'] }} &bull; Mutasi: {{ $summary['total_mutasi_keluar'] }} &bull; BDH: {{ $summary['total_bdh'] }}
                 </div>
                 <i class="fas fa-door-open stat-icon"></i>
@@ -787,7 +1150,7 @@
     </div>
 
     <!-- Alert Edukasi Dinamika Status -->
-    <div class="alert alert-light border d-flex align-items-center gap-3 p-3 rounded-3 shadow-xs mb-4" style="background-color: #f8fafc;">
+    <div class="alert fluktuasi-info-alert d-flex align-items-center gap-3 p-3 rounded-3 shadow-xs mb-4">
         <i class="fas fa-info-circle text-primary fs-3 flex-shrink-0"></i>
         <div class="small">
             <strong>Panduan Membaca Dinamika Tambah Kurang:</strong> 
@@ -799,9 +1162,9 @@
 
     <!-- Tabel & Kartu Matriks Fluktuasi Tambah Kurang Per UPT -->
     <div class="card border-0 shadow-sm mb-4" style="overflow: hidden;">
-        <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="card-header fluktuasi-card-header py-2.5 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
-                <h6 class="fw-bold mb-0 text-dark">
+                <h6 class="fw-bold mb-0">
                     <i class="fas fa-table me-2 text-primary"></i>Matriks Fluktuasi Harian Per UPT
                 </h6>
                 <small class="text-muted" style="font-size: 11px;">
@@ -809,11 +1172,11 @@
                 </small>
             </div>
             <!-- View Switcher (Kartu vs Tabel) -->
-            <div class="btn-group btn-group-sm p-0.5 bg-light rounded-pill border shadow-xs" role="group" id="fluktuasiViewToggle" aria-label="Pilihan Tampilan">
+            <div class="btn-group btn-group-sm p-0.5 fluktuasi-toggle-group rounded-pill border shadow-xs" role="group" id="fluktuasiViewToggle" aria-label="Pilihan Tampilan">
                 <button type="button" class="btn btn-sm rounded-pill px-2.5 px-sm-3 py-1 fw-semibold btn-view-mode active" id="btnViewCards" onclick="switchFluktuasiView('cards')" title="Tampilan Kartu Ringkasan (Nyaman di Mobile)">
-                    <i class="fas fa-th-large me-1"></i><span>Mode Kartu</span> <span class="badge bg-white text-primary ms-1 d-none d-sm-inline" style="font-size: 9.5px; font-weight: 700;">Mobile</span>
+                    <i class="fas fa-th-large me-1"></i><span>Mode Kartu</span> <span class="badge bg-primary bg-opacity-10 text-primary ms-1 d-none d-sm-inline" style="font-size: 9.5px; font-weight: 700;">Mobile</span>
                 </button>
-                <button type="button" class="btn btn-sm rounded-pill px-2.5 px-sm-3 py-1 fw-semibold text-secondary btn-view-mode" id="btnViewTable" onclick="switchFluktuasiView('table')" title="Tampilan Tabel Matriks Spreadsheet">
+                <button type="button" class="btn btn-sm rounded-pill px-2.5 px-sm-3 py-1 fw-semibold btn-view-mode" id="btnViewTable" onclick="switchFluktuasiView('table')" title="Tampilan Tabel Matriks Spreadsheet">
                     <i class="fas fa-table-list me-1"></i><span>Tabel Matriks</span>
                 </button>
             </div>
@@ -1095,9 +1458,9 @@
                         <tr>
                             <th rowspan="2" class="col-sticky-no text-center">No</th>
                             <th rowspan="2" class="col-sticky-upt text-start">Unit Pelaksana Teknis (UPT)</th>
-                        <th colspan="3" class="bg-primary bg-opacity-10 text-primary">1. Tahanan (Overstaying A1-A5)</th>
-                        <th colspan="3" class="bg-info bg-opacity-10 text-info">2. Narapidana</th>
-                        <th colspan="3" class="bg-dark bg-opacity-10 text-dark">3. Total Penghuni</th>
+                        <th colspan="3" class="th-col-tahanan">1. Tahanan (Overstaying A1-A5)</th>
+                        <th colspan="3" class="th-col-napi">2. Narapidana</th>
+                        <th colspan="3" class="th-col-total">3. Total Penghuni</th>
                         <th rowspan="2" style="min-width: 140px;">
                             4. Pengeluaran (Bebas &amp; Mutasi)
                             <div class="small text-muted fw-normal" style="font-size: 10px; text-transform: none;">
@@ -1452,7 +1815,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light py-2">
+            <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm px-4 rounded-pill" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
