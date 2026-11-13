@@ -737,6 +737,14 @@ class TelramCalculatorService
 
         [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
+        $milestonesSebelumRemisiTerakhir = [
+            'ekspirasi' => $currentEkspirasi->copy(),
+            'tgl_1_3' => $current13Date->copy(),
+            'tgl_1_2' => $current12Date->copy(),
+            'tgl_2_3' => $current23Date->copy(),
+        ];
+        $remisiTerakhirInfo = null;
+
         $keRu = 0;
         $keRk = 0;
         $ledger = [];
@@ -756,6 +764,14 @@ class TelramCalculatorService
                     break;
                 }
             }
+
+            $snapshotMilestoneSebelumEvent = [
+                'ekspirasi' => $currentEkspirasi->copy(),
+                'tgl_1_3' => $current13Date->copy(),
+                'tgl_1_2' => $current12Date->copy(),
+                'tgl_2_3' => $current23Date->copy(),
+            ];
+            $remisiHariEventIni = 0;
 
             $hariLuarUptSampaiEvent = 0;
             foreach ($luarUptPascaIntervals as $seg) {
@@ -913,6 +929,7 @@ class TelramCalculatorService
                 $cumHariRemisi = $cumHariRemisi % 30;
             }
             $totalHariRemisi += $potonganHari;
+            $remisiHariEventIni += $potonganHari;
             [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
             $statusEvent = $isSebelumPutusan ? 'Memenuhi Syarat (Remisi Susulan)' : 'Memenuhi Syarat';
@@ -1017,6 +1034,7 @@ class TelramCalculatorService
                         $cumHariRemisi = $cumHariRemisi % 30;
                     }
                     $totalHariRemisi += $potonganTambahan;
+                    $remisiHariEventIni += $potonganTambahan;
                     [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
                     $statusTambahan = $isSebelumPutusan ? 'Memenuhi Syarat (Tambahan - Susulan)' : 'Memenuhi Syarat (Tambahan)';
@@ -1072,6 +1090,7 @@ class TelramCalculatorService
                         $cumHariRemisi = $cumHariRemisi % 30;
                     }
                     $totalHariRemisi += $potonganDasawarsa;
+                    $remisiHariEventIni += $potonganDasawarsa;
                     [$currentEkspirasi, $current13Date, $current12Date, $current23Date] = $calcCurrentMilestones();
 
                     $statusDasawarsa = $isSebelumPutusan ? 'Memenuhi Syarat (Dasawarsa - Susulan)' : 'Memenuhi Syarat (Dasawarsa)';
@@ -1106,6 +1125,19 @@ class TelramCalculatorService
                     ];
                 }
             }
+
+            if ($remisiHariEventIni > 0) {
+                $milestonesSebelumRemisiTerakhir = $snapshotMilestoneSebelumEvent;
+                $remisiTerakhirInfo = [
+                    'nama_event' => $item['nama_event'],
+                    'jenis' => $item['jenis'],
+                    'tahun' => $item['tahun'],
+                    'tanggal' => $item['tanggal'],
+                    'tanggal_carbon' => $evDate->copy(),
+                    'besaran_hari' => $remisiHariEventIni,
+                    'besaran_teks' => self::formatHariKeTeks($remisiHariEventIni),
+                ];
+            }
         }
 
         // 5. Penetapan Pentahapan Definitif Akhir Hasil Simulasi
@@ -1114,28 +1146,58 @@ class TelramCalculatorService
         $tgl23Definitif = $current23Date->copy();
         $tglEkspirasiDefinitif = $currentEkspirasi->copy();
 
-        // 6. Tanggal Mulai Pengusulan PB/CB (H-2 Bulan / 60 Hari sebelum 2/3 tercapai)
-        $tglMulaiPengusulan = $tgl23Definitif->copy()->subDays(60);
+        // 6. Tanggal Mulai Pengusulan PB/CB (H-2 Bulan / 60 Hari sebelum 2/3 tercapai) & Evaluasi 2 Opsi Realistis SDP
+        $tglUsulMurni = $tgl23Definitif->copy()->subDays(60);
+        $hasBenturanRemisiTerakhir = false;
+        $tglUsulOpsi1 = $tglUsulMurni->copy();
+        $tglUsulOpsi2 = $tglUsulMurni->copy();
+        $tgl23PraRemisi = $tgl23Definitif->copy();
+        $tglRemisiTerakhir = null;
+
+        if ($remisiTerakhirInfo) {
+            $tglRemisiTerakhir = $remisiTerakhirInfo['tanggal_carbon'];
+            $tgl23PraRemisi = $milestonesSebelumRemisiTerakhir['tgl_2_3']->copy();
+            $tglUsulOpsi1 = $tgl23PraRemisi->copy()->subDays(60);
+
+            if ($tglUsulMurni->lt($tglRemisiTerakhir)) {
+                $hasBenturanRemisiTerakhir = true;
+                $tglUsulOpsi2 = $tglRemisiTerakhir->copy();
+            } else {
+                $tglUsulOpsi2 = $tglUsulMurni->copy();
+            }
+        }
+
+        // Tanggal mulai pengusulan default: jika terdapat benturan di SDP, gunakan Opsi 2 (Pasca-Remisi Terakhir)
+        // karena di SDP pengusulan tidak mungkin kurang dari tanggal pemberian remisi
+        $tglMulaiPengusulan = $hasBenturanRemisiTerakhir ? $tglUsulOpsi2->copy() : $tglUsulMurni->copy();
 
         // Status Pengusulan terhadap hari ini
         $today = Carbon::today();
         if ($today->lt($tglMulaiPengusulan)) {
             $sisaHariMenujuUsul = (int) $today->diffInDays($tglMulaiPengusulan);
+            $pesanPengusulan = "Pengusulan di SDP dapat dimulai pada {$this->formatTanggalIndonesia($tglMulaiPengusulan)} (tersisa {$sisaHariMenujuUsul} hari lagi).";
+            if ($hasBenturanRemisiTerakhir) {
+                $pesanPengusulan .= " (Opsi 2: Mengikuti terbitnya SK {$remisiTerakhirInfo['nama_event']} pada {$this->formatTanggalIndonesia($tglRemisiTerakhir)}. Untuk pengusulan lebih awal, UPT dapat menggunakan Opsi 1 sejak {$this->formatTanggalIndonesia($tglUsulOpsi1)}).";
+            }
             $statusPengusulan = [
                 'kode' => 'menunggu',
                 'label' => "Belum Waktunya ({$sisaHariMenujuUsul} hari lagi)",
                 'badge_class' => 'bg-secondary',
                 'sisa_hari' => $sisaHariMenujuUsul,
-                'pesan' => "Pengusulan di SDP dapat dimulai pada {$this->formatTanggalIndonesia($tglMulaiPengusulan)} (tersisa {$sisaHariMenujuUsul} hari lagi).",
+                'pesan' => $pesanPengusulan,
             ];
         } elseif ($today->lte($tgl23Definitif)) {
             $sisaHari23 = (int) $today->diffInDays($tgl23Definitif);
+            $pesanPengusulan = "Waktunya Pengusulan! Pengusulan di SDP dapat diproses (H-2 bulan sebelum 2/3). Tanggal 2/3 masa pidana tercapai dalam {$sisaHari23} hari lagi ({$this->formatTanggalIndonesia($tgl23Definitif)}).";
+            if ($hasBenturanRemisiTerakhir && $today->gte($tglRemisiTerakhir)) {
+                $pesanPengusulan = "Waktunya Pengusulan! SK {$remisiTerakhirInfo['nama_event']} telah terbit ({$this->formatTanggalIndonesia($tglRemisiTerakhir)}), pengusulan integrasi di SDP dapat segera diproses.";
+            }
             $statusPengusulan = [
                 'kode' => 'waktunya_usul',
                 'label' => 'Waktunya Pengusulan!',
                 'badge_class' => 'bg-warning text-dark',
                 'sisa_hari' => $sisaHari23,
-                'pesan' => "Waktunya Pengusulan! Pengusulan di SDP dapat diproses (H-2 bulan sebelum 2/3). Tanggal 2/3 masa pidana tercapai dalam {$sisaHari23} hari lagi ({$this->formatTanggalIndonesia($tgl23Definitif)}).",
+                'pesan' => $pesanPengusulan,
             ];
         } else {
             $hariLewat = (int) $tgl23Definitif->diffInDays($today);
@@ -1147,6 +1209,46 @@ class TelramCalculatorService
                 'pesan' => "Masa pidana telah melewati tanggal 2/3 sejak {$this->formatTanggalIndonesia($tgl23Definitif)} ({$hariLewat} hari yang lalu). Pastikan SK {$namaProgram} telah terbit atau dalam proses.",
             ];
         }
+
+        $opsiPengusulan = [
+            'has_benturan' => $hasBenturanRemisiTerakhir,
+            'remisi_terakhir' => $remisiTerakhirInfo ? [
+                'nama_event' => $remisiTerakhirInfo['nama_event'],
+                'jenis' => $remisiTerakhirInfo['jenis'],
+                'tahun' => $remisiTerakhirInfo['tahun'],
+                'tanggal' => $remisiTerakhirInfo['tanggal'],
+                'tanggal_indo' => self::formatTanggalIndonesia($tglRemisiTerakhir),
+                'tanggal_numeric' => self::formatTanggalNumeric($tglRemisiTerakhir),
+                'besaran_hari' => $remisiTerakhirInfo['besaran_hari'],
+                'besaran_teks' => $remisiTerakhirInfo['besaran_teks'],
+            ] : null,
+            'tgl_usul_murni' => $tglUsulMurni->toDateString(),
+            'tgl_usul_murni_indo' => self::formatTanggalIndonesia($tglUsulMurni),
+            'tgl_usul_murni_numeric' => self::formatTanggalNumeric($tglUsulMurni),
+            'opsi_1_pra_remisi' => [
+                'label' => 'Opsi 1: Usulan Berdasarkan Remisi Berjalan (Sebelum Remisi Terakhir)',
+                'tgl_2_3' => $tgl23PraRemisi->toDateString(),
+                'tgl_2_3_indo' => self::formatTanggalIndonesia($tgl23PraRemisi),
+                'tgl_2_3_numeric' => self::formatTanggalNumeric($tgl23PraRemisi),
+                'tgl_usul' => $tglUsulOpsi1->toDateString(),
+                'tgl_usul_indo' => self::formatTanggalIndonesia($tglUsulOpsi1),
+                'tgl_usul_numeric' => self::formatTanggalNumeric($tglUsulOpsi1),
+                'deskripsi' => 'Pengusulan diajukan H-60 sebelum 2/3 berjalan, menggunakan SK remisi yang sudah definitif tanpa menunggu remisi berikutnya.',
+            ],
+            'opsi_2_pasca_remisi' => [
+                'label' => 'Opsi 2: Usulan Pasca-Terbit SK Remisi Terakhir (Hari H SK)',
+                'tgl_2_3' => $tgl23Definitif->toDateString(),
+                'tgl_2_3_indo' => self::formatTanggalIndonesia($tgl23Definitif),
+                'tgl_2_3_numeric' => self::formatTanggalNumeric($tgl23Definitif),
+                'tgl_usul' => $tglUsulOpsi2->toDateString(),
+                'tgl_usul_indo' => self::formatTanggalIndonesia($tglUsulOpsi2),
+                'tgl_usul_numeric' => self::formatTanggalNumeric($tglUsulOpsi2),
+                'is_disesuaikan_ke_tgl_remisi' => $hasBenturanRemisiTerakhir,
+                'deskripsi' => $hasBenturanRemisiTerakhir
+                    ? "Pengusulan diajukan tepat pada hari H pemberian remisi terakhir ({$this->formatTanggalIndonesia($tglRemisiTerakhir)}) karena SK baru terbit pada tanggal tersebut."
+                    : 'Pengusulan diajukan normal H-60 hari sebelum 2/3 definitif.',
+            ],
+        ];
 
         $formatVonis = [];
         if ($tahun > 0) {
@@ -1325,6 +1427,10 @@ class TelramCalculatorService
                 'tgl_2_3_definitif' => $tgl23Definitif->toDateString(),
                 'tgl_2_3_subsider_definitif' => $tgl23SubsiderDefinitif?->toDateString(),
                 'tgl_mulai_pengusulan' => $tglMulaiPengusulan->toDateString(),
+                'tgl_mulai_pengusulan_murni' => $tglUsulMurni->toDateString(),
+                'tgl_mulai_pengusulan_opsi_1' => $tglUsulOpsi1->toDateString(),
+                'tgl_mulai_pengusulan_opsi_2' => $tglUsulOpsi2->toDateString(),
+                'tgl_2_3_sebelum_remisi_terakhir' => $tgl23PraRemisi->toDateString(),
                 'ekspirasi_definitif' => $tglEkspirasiDefinitif->toDateString(),
                 'ekspirasi_subsider_sebelum_remisi' => $tglEkspirasiSubsiderSebelumRemisi?->toDateString(),
                 'ekspirasi_subsider_murni' => $tglEkspirasiSubsiderSebelumRemisi?->toDateString(), // alias
@@ -1352,6 +1458,9 @@ class TelramCalculatorService
                 'tgl_2_3_definitif' => self::formatTanggalIndonesia($tgl23Definitif),
                 'tgl_2_3_subsider_definitif' => $tgl23SubsiderDefinitif ? self::formatTanggalIndonesia($tgl23SubsiderDefinitif) : '-',
                 'tgl_mulai_pengusulan' => self::formatTanggalIndonesia($tglMulaiPengusulan),
+                'tgl_mulai_pengusulan_murni' => self::formatTanggalIndonesia($tglUsulMurni),
+                'tgl_mulai_pengusulan_opsi_1' => self::formatTanggalIndonesia($tglUsulOpsi1),
+                'tgl_mulai_pengusulan_opsi_2' => self::formatTanggalIndonesia($tglUsulOpsi2),
                 'ekspirasi_definitif' => self::formatTanggalIndonesia($tglEkspirasiDefinitif),
                 'ekspirasi_subsider_sebelum_remisi' => $tglEkspirasiSubsiderSebelumRemisi ? self::formatTanggalIndonesia($tglEkspirasiSubsiderSebelumRemisi) : '-',
                 'ekspirasi_subsider_murni' => $tglEkspirasiSubsiderSebelumRemisi ? self::formatTanggalIndonesia($tglEkspirasiSubsiderSebelumRemisi) : '-', // alias
@@ -1376,7 +1485,11 @@ class TelramCalculatorService
                 'ekspirasi_definitif' => self::formatTanggalNumeric($tglEkspirasiDefinitif),
                 'ekspirasi_subsider_definitif' => $tglEkspirasiSubsiderDefinitif ? self::formatTanggalNumeric($tglEkspirasiSubsiderDefinitif) : '-',
                 'tgl_mulai_pengusulan' => self::formatTanggalNumeric($tglMulaiPengusulan),
+                'tgl_mulai_pengusulan_murni' => self::formatTanggalNumeric($tglUsulMurni),
+                'tgl_mulai_pengusulan_opsi_1' => self::formatTanggalNumeric($tglUsulOpsi1),
+                'tgl_mulai_pengusulan_opsi_2' => self::formatTanggalNumeric($tglUsulOpsi2),
             ],
+            'opsi_pengusulan' => $opsiPengusulan,
             'proyeksi_ledger' => $ledger,
         ];
 
@@ -1647,11 +1760,43 @@ class TelramCalculatorService
         }
         $teks .= "\n";
 
+        $opsi = $data['opsi_pengusulan'] ?? [];
+        $hasBenturan = ! empty($opsi['has_benturan']);
+
         $teks .= "D. USUL SDP (H-2 BULAN)\n";
-        $teks .= "   • Pengusulan di SDP = Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)\n";
-        $teks .= "                       = {$tgl23DefNum} - 60 Hari\n";
-        $teks .= "                       = {$tglUsulNum}\n";
-        $teks .= "                       = {$tglUsulIndo}\n";
+        if ($hasBenturan) {
+            $remisiTerk = $opsi['remisi_terakhir'] ?? [];
+            $o1 = $opsi['opsi_1_pra_remisi'] ?? [];
+            $o2 = $opsi['opsi_2_pasca_remisi'] ?? [];
+            $tglUsulMurniNum = $num['tgl_mulai_pengusulan_murni'] ?? '-';
+            $tglUsulMurniIndo = $fmt['tgl_mulai_pengusulan_murni'] ?? '-';
+
+            $teks .= "   [CATATAN OPERASIONAL SDP: PENYESUAIAN REMISI TERAKHIR]\n";
+            $teks .= "   Hitungan matematis murni 2/3 Definitif - 60 Hari:\n";
+            $teks .= "   = {$tgl23DefNum} - 60 Hari\n";
+            $teks .= "   = {$tglUsulMurniNum} ({$tglUsulMurniIndo})\n";
+            $teks .= "   *Catatan: Tanggal di atas mendahului tanggal pemberian {$remisiTerk['nama_event']} ({$remisiTerk['tanggal_numeric']}).\n";
+            $teks .= "   Pada sistem SDP, pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit.\n";
+            $teks .= "   Oleh karena itu tersedia 2 Opsi Pengusulan:\n\n";
+
+            $teks .= "   • OPSI 1 (Usulan Berdasarkan Remisi Berjalan / Pra-Remisi Terakhir):\n";
+            $teks .= "     - Tgl. 2/3 Berjalan   = {$o1['tgl_2_3_numeric']} ({$o1['tgl_2_3_indo']})\n";
+            $teks .= "     - Mulai Usul di SDP   = {$o1['tgl_2_3_numeric']} - 60 Hari\n";
+            $teks .= "                           = {$o1['tgl_usul_numeric']}\n";
+            $teks .= "                           = {$o1['tgl_usul_indo']}\n";
+            $teks .= "     (Petugas dapat memproses berkas lebih awal dengan SK remisi yang sudah definitif di tangan)\n\n";
+
+            $teks .= "   • OPSI 2 (Usulan Pasca-Terbit SK Remisi Terakhir / Hari H Remisi):\n";
+            $teks .= "     - Tgl. 2/3 Definitif  = {$tgl23DefNum} ({$tgl23DefIndo})\n";
+            $teks .= "     - Mulai Usul di SDP   = {$o2['tgl_usul_numeric']}\n";
+            $teks .= "                           = {$o2['tgl_usul_indo']}\n";
+            $teks .= "     (Pengusulan diajukan tepat saat/setelah SK {$remisiTerk['nama_event']} resmi terbit di SDP)\n";
+        } else {
+            $teks .= "   • Pengusulan di SDP = Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)\n";
+            $teks .= "                       = {$tgl23DefNum} - 60 Hari\n";
+            $teks .= "                       = {$tglUsulNum}\n";
+            $teks .= "                       = {$tglUsulIndo}\n";
+        }
         $teks .= "========================================================\n";
 
         return $teks;
@@ -2215,7 +2360,67 @@ SUB_EKS_C;
         </div>
 CARD_C;
 
-        $html .= <<<CARD_D
+        $opsiHtml = $data['opsi_pengusulan'] ?? [];
+        $hasBenturanHtml = ! empty($opsiHtml['has_benturan']);
+
+        if ($hasBenturanHtml) {
+            $remisiTerk = $opsiHtml['remisi_terakhir'] ?? [];
+            $o1 = $opsiHtml['opsi_1_pra_remisi'] ?? [];
+            $o2 = $opsiHtml['opsi_2_pasca_remisi'] ?? [];
+            $tglUsulMurniNum = htmlspecialchars($num['tgl_mulai_pengusulan_murni'] ?? '-');
+            $tglUsulMurniIndo = htmlspecialchars($fmt['tgl_mulai_pengusulan_murni'] ?? '-');
+            $remisiTerkNama = htmlspecialchars($remisiTerk['nama_event'] ?? 'Remisi Terakhir');
+            $remisiTerkTglIndo = htmlspecialchars($remisiTerk['tanggal_indo'] ?? '-');
+            $o1Tgl23Num = htmlspecialchars($o1['tgl_2_3_numeric'] ?? '-');
+            $o1Tgl23Indo = htmlspecialchars($o1['tgl_2_3_indo'] ?? '-');
+            $o1TglUsulNum = htmlspecialchars($o1['tgl_usul_numeric'] ?? '-');
+            $o1TglUsulIndo = htmlspecialchars($o1['tgl_usul_indo'] ?? '-');
+            $o2TglUsulNum = htmlspecialchars($o2['tgl_usul_numeric'] ?? '-');
+            $o2TglUsulIndo = htmlspecialchars($o2['tgl_usul_indo'] ?? '-');
+
+            $html .= <<<CARD_D
+        <div class="card border mb-3" style="border-radius: 10px; border-color: #fed7aa;">
+            <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #fff7ed;">
+                <strong style="color: #c2410c; font-size: 14px;"><i class="fas fa-calendar-check me-1.5"></i> D. USUL SDP (H-2 BULAN &amp; 2 OPSI OPERASIONAL)</strong>
+                <span class="badge bg-warning text-dark" style="font-size: 11.5px;">Integrasi PB/CB</span>
+            </div>
+            <div class="card-body p-3.5" style="font-size: 13.5px;">
+                <div class="alert alert-warning py-2 px-3 mb-3 border-0 d-flex align-items-start gap-2" style="background-color: #fef3c7; color: #92400e; font-size: 12px; border-radius: 8px;">
+                    <i class="fas fa-info-circle mt-0.5"></i>
+                    <div>
+                        <strong>Catatan Operasional SDP:</strong> Hitungan matematis murni (<code>{$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} [{$tglUsulMurniIndo}]</code>) mendahului tanggal pemberian {$remisiTerkNama} ({$remisiTerkTglIndo}). Pada sistem SDP, pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit. Berikut 2 opsi operasional SDP:
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-0 font-monospace" style="font-size: 12.5px;">
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 border rounded-3 h-100" style="background-color: #f0fdf4; border-color: #bbf7d0 !important;">
+                            <div class="fw-bold text-success mb-1" style="font-size: 12px;">OPSI 1: USUL BERJALAN (PRA-REMISI TERAKHIR)</div>
+                            <div class="text-muted small mb-2">Usul lebih awal dengan SK yang sudah definitif di tangan</div>
+                            <div style="line-height: 1.6;">
+                                2/3 Berjalan: <b>{$o1Tgl23Num}</b> ({$o1Tgl23Indo})<br>
+                                Mulai Usul: <code>{$o1Tgl23Num} - 60 hr</code><br>
+                                = <b class="text-success" style="font-size: 14px;">{$o1TglUsulIndo}</b> ({$o1TglUsulNum})
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 border rounded-3 h-100" style="background-color: #fff7ed; border-color: #fed7aa !important;">
+                            <div class="fw-bold text-warning-emphasis mb-1" style="font-size: 12px; color: #c2410c;">OPSI 2: PASCA-SK REMISI TERAKHIR (HARI H)</div>
+                            <div class="text-muted small mb-2">Usul segera setelah SK remisi terakhir resmi terbit</div>
+                            <div style="line-height: 1.6;">
+                                2/3 Definitif: <b>{$tgl23DefNum}</b> ({$tgl23DefIndo})<br>
+                                SK Remisi Terakhir: <b>{$remisiTerkTglIndo}</b><br>
+                                Mulai Usul: = <b style="color: #c2410c; font-size: 14px;">{$o2TglUsulIndo}</b> ({$o2TglUsulNum})
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+CARD_D;
+        } else {
+            $html .= <<<CARD_D
         <div class="card border mb-3" style="border-radius: 10px; border-color: #fed7aa;">
             <div class="card-header py-2.5 px-3.5 border-bottom d-flex align-items-center justify-content-between" style="background-color: #fff7ed;">
                 <strong style="color: #c2410c; font-size: 14px;"><i class="fas fa-calendar-check me-1.5"></i> D. USUL SDP (H-2 BULAN)</strong>
@@ -2247,6 +2452,7 @@ CARD_C;
             </div>
         </div>
 CARD_D;
+        }
 
         $html .= '</div>';
 
@@ -2761,6 +2967,25 @@ SUB;
         $ekspirasiSubDefIndo = htmlspecialchars($data['formatted']['ekspirasi_subsider_definitif'] ?? '-');
         $tglUsulIndo = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan'] ?? '-');
 
+        $opsiPdf = $data['opsi_pengusulan'] ?? [];
+        $hasBenturanPdf = ! empty($opsiPdf['has_benturan']);
+        $remisiTerkPdf = $opsiPdf['remisi_terakhir'] ?? [];
+        $o1Pdf = $opsiPdf['opsi_1_pra_remisi'] ?? [];
+        $o2Pdf = $opsiPdf['opsi_2_pasca_remisi'] ?? [];
+
+        $tglUsulMurniPdfIndo = htmlspecialchars($data['formatted']['tgl_mulai_pengusulan_murni'] ?? ($opsiPdf['tgl_usul_murni_indo'] ?? '-'));
+        $tglUsulMurniPdfNum = htmlspecialchars($num['tgl_mulai_pengusulan_murni'] ?? ($opsiPdf['tgl_usul_murni_numeric'] ?? '-'));
+        $remisiTerkNamaPdf = htmlspecialchars($remisiTerkPdf['nama_event'] ?? 'Remisi Terakhir');
+        $remisiTerkTglPdfIndo = htmlspecialchars($remisiTerkPdf['tanggal_indo'] ?? '-');
+
+        $o1Tgl23PdfNum = htmlspecialchars($o1Pdf['tgl_2_3_numeric'] ?? '-');
+        $o1Tgl23PdfIndo = htmlspecialchars($o1Pdf['tgl_2_3_indo'] ?? '-');
+        $o1TglUsulPdfNum = htmlspecialchars($o1Pdf['tgl_usul_numeric'] ?? '-');
+        $o1TglUsulPdfIndo = htmlspecialchars($o1Pdf['tgl_usul_indo'] ?? '-');
+
+        $o2TglUsulPdfNum = htmlspecialchars($o2Pdf['tgl_usul_numeric'] ?? '-');
+        $o2TglUsulPdfIndo = htmlspecialchars($o2Pdf['tgl_usul_indo'] ?? '-');
+
         $labelPentahapanPdf = ! empty($data['has_riwayat_penahanan']) ? 'Tgl. Mulai Ditahan (Efektif)' : 'Tgl. Mulai Ditahan';
         $tglPentahapanPdfNum = ! empty($data['has_riwayat_penahanan']) ? htmlspecialchars($num['tgl_mulai_ditahan_efektif'] ?? $tglAwalNum) : $tglAwalNum;
 
@@ -3089,6 +3314,101 @@ ROW;
             }
         }
 
+        if ($hasBenturanPdf) {
+            $bannerPengusulanPdfHtml = <<<BANNER_BENTURAN_PDF
+<!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP (2 OPSI OPERASIONAL SDP) -->
+<table width="100%" cellpadding="2" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 2px;">
+    <tr>
+        <td width="73%" valign="middle" style="padding: 1.5px 6px;">
+            <span style="font-size: 7.5pt; font-weight: bold; color: #92400e; text-transform: uppercase;">MULAI PENGUSULAN DI SDP (2 OPSI REALISTIS):</span><br>
+            <span style="font-size: 8pt; color: #0f172a; line-height: 1.15;">
+                <b>[Opsi 1: Pra-Remisi]</b> <b style="color: #0369a1;">{$o1TglUsulPdfIndo}</b> &nbsp;|&nbsp;
+                <b>[Opsi 2: Hari H SK]</b> <b style="color: #b45309;">{$o2TglUsulPdfIndo}</b>
+            </span><br>
+            <span style="font-size: 6.2pt; color: #78350f; line-height: 1;">Hitungan murni ({$tglUsulMurniPdfIndo}) &lt; tgl remisi ({$remisiTerkTglPdfIndo}). Di SDP, usulan tidak dapat diinput sebelum SK terbit.</span>
+        </td>
+        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 1.5px 4px;">
+            <span style="font-size: 7.2pt; color: #78350f; font-weight: bold;">2/3 MASA PIDANA</span><br>
+            <span style="font-size: 9.5pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br>
+            <span style="font-size: 6.5pt; color: #555;">(2/3 Pokok - Full Remisi)</span>
+        </td>
+    </tr>
+</table>
+BANNER_BENTURAN_PDF;
+
+            $sectionDPdfHtml = <<<SEC_D_BENTURAN_PDF
+<!-- D. USUL SDP (H-2 BULAN & 2 OPSI OPERASIONAL) -->
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fed7aa;">
+    <tr style="background-color: #fff7ed;">
+        <td style="font-weight: bold; font-size: 8.2pt; color: #c2410c; padding: 2px 6px;">D. USUL SDP (H-2 BULAN &amp; 2 OPSI OPERASIONAL)</td>
+    </tr>
+    <tr>
+        <td style="padding: 2px 6px;">
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8pt; line-height: 1.1;">
+                <tr>
+                    <td width="38%" style="color: #0369a1; font-weight: bold;">&bull; Opsi 1 (Pra-Remisi Terakhir)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="58%">2/3 Berjalan - 60 Hari = <b style="color: #0369a1; font-size: 8.8pt;">{$o1TglUsulPdfNum}</b> ({$o1TglUsulPdfIndo})</td>
+                </tr>
+                <tr>
+                    <td width="38%" style="color: #c2410c; font-weight: bold;">&bull; Opsi 2 (Pasca-SK Remisi Terakhir)</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="58%">Hari H Terbit SK {$remisiTerkNamaPdf} = <b style="color: #c2410c; font-size: 8.8pt;">{$o2TglUsulPdfNum}</b> ({$o2TglUsulPdfIndo})</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="font-size: 6.8pt; color: #78350f; padding-top: 1px;">*Catatan: Hitungan murni ({$tgl23DefNum} - 60 hr = {$tglUsulMurniPdfNum} [{$tglUsulMurniPdfIndo}]) mendahului tgl remisi ({$remisiTerkTglPdfIndo}). Di SDP, usulan tidak dapat diinput sebelum SK terbit.</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+SEC_D_BENTURAN_PDF;
+        } else {
+            $bannerPengusulanPdfHtml = <<<BANNER_NORMAL_PDF
+<!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3) -->
+<table width="100%" cellpadding="2.5" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 4px;">
+    <tr>
+        <td width="73%" valign="middle" style="padding: 2.5px 8px;"><span style="font-size: 8pt; font-weight: bold; color: #92400e; text-transform: uppercase;">MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3):</span><br><span style="font-size: 10pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br><span style="font-size: 7.5pt; color: #78350f;">{$statusPesan}</span></td>
+        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 2.5px 6px;"><span style="font-size: 7.5pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br><span style="font-size: 10pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br><span style="font-size: 7pt; color: #555;">(2/3 Pokok - Full Remisi)</span></td>
+    </tr>
+</table>
+BANNER_NORMAL_PDF;
+
+            $sectionDPdfHtml = <<<SEC_D_NORMAL_PDF
+<!-- D. USUL SDP (H-2 BULAN) -->
+<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fed7aa;">
+    <tr style="background-color: #fff7ed;">
+        <td style="font-weight: bold; font-size: 8.5pt; color: #c2410c; padding: 2.5px 6px;">D. USUL SDP (H-2 BULAN)</td>
+    </tr>
+    <tr>
+        <td style="padding: 2.5px 6px;"><table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
+                <tr>
+                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Pengusulan di SDP</td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tgl23DefNum} - 60 Hari</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%">{$tglUsulNum}</td>
+                </tr>
+                <tr>
+                    <td width="28%"></td>
+                    <td width="4%" align="center" style="font-weight: bold;">=</td>
+                    <td width="68%"><b style="color: #c2410c; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+SEC_D_NORMAL_PDF;
+        }
+
         return <<<HTML
 <style>
     body { font-family: helvetica, sans-serif; font-size: 8pt; color: #0f172a; line-height: 1.15; }
@@ -3167,13 +3487,8 @@ ROW;
     </tbody>
 </table>
 
-<!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3) -->
-<table width="100%" cellpadding="2.5" cellspacing="0" style="border: 1px solid #d97706; background-color: #fffbeb; margin-bottom: 4px;">
-    <tr>
-        <td width="73%" valign="middle" style="padding: 2.5px 8px;"><span style="font-size: 8pt; font-weight: bold; color: #92400e; text-transform: uppercase;">MULAI PENGUSULAN DI SDP (H-2 BULAN SEBELUM 2/3):</span><br><span style="font-size: 10pt; font-weight: bold; color: #b45309;">{$tglUsul}</span><br><span style="font-size: 7.5pt; color: #78350f;">{$statusPesan}</span></td>
-        <td width="27%" align="center" valign="middle" style="background-color: #fef3c7; border-left: 1px dashed #d97706; padding: 2.5px 6px;"><span style="font-size: 7.5pt; color: #78350f; font-weight: bold;">TANGGAL 2/3 MASA PIDANA</span><br><span style="font-size: 10pt; font-weight: bold; color: #047857;">{$tgl23Def}</span><br><span style="font-size: 7pt; color: #555;">(2/3 Pokok - Full Remisi)</span></td>
-    </tr>
-</table>
+<!-- HIGHLIGHT ALERT: MULAI PENGUSULAN DI SDP -->
+{$bannerPengusulanPdfHtml}
 
 <!-- III. PERKIRAAN PEROLEHAN REMISI -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -3399,37 +3714,7 @@ ROW;
     </tr>
 </table>
 {$cardSpacerPdf}
-<!-- D. USUL SDP (H-2 BULAN) -->
-<table width="100%" cellpadding="0" cellspacing="0" style="border: 0.5px solid #fed7aa;">
-    <tr style="background-color: #fff7ed;">
-        <td style="font-weight: bold; font-size: 8.5pt; color: #c2410c; padding: 2.5px 6px;">D. USUL SDP (H-2 BULAN)</td>
-    </tr>
-    <tr>
-        <td style="padding: 2.5px 6px;"><table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 8.5pt; line-height: 1.12;">
-                <tr>
-                    <td width="28%" style="color: #0f172a; font-weight: bold;">&bull; Pengusulan di SDP</td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">Tgl. 2/3 Masa Pidana - 60 Hari (H-2 Bulan)</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tgl23DefNum} - 60 Hari</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%">{$tglUsulNum}</td>
-                </tr>
-                <tr>
-                    <td width="28%"></td>
-                    <td width="4%" align="center" style="font-weight: bold;">=</td>
-                    <td width="68%"><b style="color: #c2410c; font-size: 9.5pt;">{$tglUsulIndo}</b></td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+{$sectionDPdfHtml}
 HTML;
     }
 }

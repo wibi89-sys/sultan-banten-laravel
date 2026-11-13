@@ -916,6 +916,44 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Sub-Container 2 Opsi Pengusulan Riil SDP (Muncul jika ada penyesuaian remisi terakhir) -->
+                        <div id="boxDuaOpsiPengusulan" class="mt-3 pt-3 border-top border-white border-opacity-10 d-none">
+                            <div class="alert alert-warning text-dark border-0 py-2 px-3 mb-2.5 d-flex align-items-start gap-2 shadow-sm" style="font-size: 11.5px; border-radius: 8px; background: rgba(254, 240, 138, 0.95);">
+                                <i class="fas fa-exclamation-triangle mt-0.5 text-warning-emphasis"></i>
+                                <div>
+                                    <strong>Penyesuaian Kalender SDP:</strong> Hitungan matematis murni (<span id="resTglUsulMurniText">-</span>) mendahului tanggal pemberian remisi terakhir (<span id="resTglRemisiTerakhirText">-</span>). Pada SDP, pengusulan tidak dapat diinput sebelum SK remisi terbit. Tersedia 2 opsi operasional SDP:
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
+                                    <div class="p-2.5 rounded-3 h-100" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="badge bg-info text-dark fw-bold" style="font-size: 10px;">OPSI 1: USUL LEBIH AWAL</span>
+                                            <small class="text-white-50" style="font-size: 9.5px;">Pra-Remisi Terakhir</small>
+                                        </div>
+                                        <div class="text-white fw-bold mb-1" style="font-size: clamp(15px, 3vw, 18px);" id="resTglUsulOpsi1">-</div>
+                                        <div class="text-white-50" style="font-size: 11px; line-height: 1.35;">
+                                            Dasar 2/3 Berjalan: <strong class="text-white" id="resTgl23Opsi1">-</strong><br>
+                                            <span class="text-white-50">Pengusulan diajukan H-60 sebelum 2/3 berjalan dengan SK yang sudah definitif di tangan.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="p-2.5 rounded-3 h-100" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="badge bg-success text-white fw-bold" style="font-size: 10px;">OPSI 2: HARI H SK REMISI</span>
+                                            <small class="text-white-50" style="font-size: 9.5px;">Pasca-SK Terbit</small>
+                                        </div>
+                                        <div class="text-white fw-bold mb-1" style="font-size: clamp(15px, 3vw, 18px);" id="resTglUsulOpsi2">-</div>
+                                        <div class="text-white-50" style="font-size: 11px; line-height: 1.35;">
+                                            Dasar 2/3 Definitif: <strong class="text-white" id="resTgl23Opsi2">-</strong><br>
+                                            <span class="text-white-50">Pengusulan diajukan segera setelah SK remisi terakhir resmi terbit di SDP.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2111,6 +2149,24 @@
             document.getElementById('resTgl23Highlight').innerText = data.formatted.tgl_2_3_definitif;
             document.getElementById('pesanPengusulan').innerText = data.status_pengusulan.pesan;
 
+            const boxDuaOpsi = document.getElementById('boxDuaOpsiPengusulan');
+            if (boxDuaOpsi) {
+                if (data.opsi_pengusulan && data.opsi_pengusulan.has_benturan) {
+                    boxDuaOpsi.classList.remove('d-none');
+                    const remisiTerk = data.opsi_pengusulan.remisi_terakhir || {};
+                    const o1 = data.opsi_pengusulan.opsi_1_pra_remisi || {};
+                    const o2 = data.opsi_pengusulan.opsi_2_pasca_remisi || {};
+                    document.getElementById('resTglUsulMurniText').innerText = data.opsi_pengusulan.tgl_usul_murni_indo;
+                    document.getElementById('resTglRemisiTerakhirText').innerText = (remisiTerk.tanggal_indo || '-') + ' (' + (remisiTerk.nama_event || '-') + ')';
+                    document.getElementById('resTglUsulOpsi1').innerText = o1.tgl_usul_indo || '-';
+                    document.getElementById('resTgl23Opsi1').innerText = o1.tgl_2_3_indo || '-';
+                    document.getElementById('resTglUsulOpsi2').innerText = o2.tgl_usul_indo || '-';
+                    document.getElementById('resTgl23Opsi2').innerText = o2.tgl_2_3_indo || '-';
+                } else {
+                    boxDuaOpsi.classList.add('d-none');
+                }
+            }
+
             const badgeStatusPengusulan = document.getElementById('badgeStatusPengusulan');
             if (badgeStatusPengusulan) {
                 badgeStatusPengusulan.innerText = data.status_pengusulan.label;
@@ -2569,6 +2625,21 @@
         const d = lastResult;
         const putusanLine = d.formatted && d.formatted.tgl_putusan ? `\n*Tgl. Putusan:* ${d.formatted.tgl_putusan}\n*Potongan Tahanan (Potah):* ${d.masa_tahanan_teks}` : '';
         const subsiderLine = d.formatted && d.formatted.subsider_identitas_teks && d.formatted.subsider_identitas_teks !== '-' ? `\n*Pidana Subsider:* ${d.formatted.subsider_identitas_teks}` : '';
+        let usulanSection = '';
+        if (d.opsi_pengusulan && d.opsi_pengusulan.has_benturan) {
+            usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (2 OPSI OPERASIONAL SDP):*
+• *Opsi 1 (Pra-Remisi Terakhir):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_usul_indo}
+  _(Dasar 2/3: ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_2_3_indo} - Usul lebih awal dengan SK di tangan)_
+• *Opsi 2 (Pasca-SK Remisi Terakhir):* ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_usul_indo}
+  _(Hari H SK ${d.opsi_pengusulan.remisi_terakhir.nama_event} - Dasar 2/3: ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_2_3_indo})_
+*Catatan:* Hitungan murni (${d.opsi_pengusulan.tgl_usul_murni_indo}) mendahului tanggal remisi terakhir sehingga disesuaikan dengan alur SDP.`;
+        } else {
+            usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (H-2 BULAN):*
+*Tanggal:* ${d.formatted.tgl_mulai_pengusulan}
+*Status:* ${d.status_pengusulan.label}
+*Catatan:* ${d.status_pengusulan.pesan}`;
+        }
+
         const text = `*${d.judul_program || 'PERKIRAAN PEROLEHAN REMISI'}*
 *Sultan Banten - Kemenimipas Banten*
 ---------------------------------------
@@ -2589,10 +2660,7 @@
 • *Ekspirasi Definitif:* ${d.formatted.ekspirasi_definitif} (Sebelum Remisi: ${d.formatted.ekspirasi_sebelum_remisi || d.formatted.ekspirasi_murni})
 • *Total Perkiraan Remisi:* ${d.total_proyeksi_remisi_hari} Hari (${d.total_proyeksi_remisi_teks})
 ---------------------------------------
-⚠️ *MULAI PENGUSULAN DI SDP (H-2 BULAN):*
-*Tanggal:* ${d.formatted.tgl_mulai_pengusulan}
-*Status:* ${d.status_pengusulan.label}
-*Catatan:* ${d.status_pengusulan.pesan}
+${usulanSection}
 ---------------------------------------
 _Catatan: Penghitungan ini merupakan simulasi reguler berdasarkan UU No. 22/2022, Keppres No. 174/1999 dan standar rumus SDP Ditjenpas._`;
 

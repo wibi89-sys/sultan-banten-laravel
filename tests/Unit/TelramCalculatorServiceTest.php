@@ -255,10 +255,14 @@ class TelramCalculatorServiceTest extends TestCase
         // Ekspirasi definitif = Ekspirasi murni minus total remisi (240 hari dari 1 Jan 2027 -> 6 Mei 2026)
         $this->assertEquals('2026-05-06', $result['milestones']['ekspirasi_definitif']);
 
-        // Tanggal mulai pengusulan PB = 60 hari sebelum 2/3 definitif
+        // Tanggal mulai pengusulan PB = 60 hari sebelum 2/3 definitif (murni matematis)
         $tgl23Definitif = Carbon::parse($result['milestones']['tgl_2_3_definitif']);
         $expectedPengusulan = $tgl23Definitif->copy()->subDays(60)->toDateString();
-        $this->assertEquals($expectedPengusulan, $result['milestones']['tgl_mulai_pengusulan']);
+        $this->assertEquals($expectedPengusulan, $result['milestones']['tgl_mulai_pengusulan_murni']);
+        // Karena tanggal usul murni (02/03/2025) < tanggal remisi terakhir (17/08/2025), maka opsi 2 disesuaikan ke tanggal remisi
+        $this->assertTrue($result['opsi_pengusulan']['has_benturan']);
+        $this->assertEquals('2025-08-17', $result['milestones']['tgl_mulai_pengusulan_opsi_2']);
+        $this->assertEquals('2025-08-17', $result['milestones']['tgl_mulai_pengusulan']);
     }
 
     public function test_simulasi_remisi_dan_integrasi_vonis_pendek_cb(): void
@@ -1113,5 +1117,71 @@ class TelramCalculatorServiceTest extends TestCase
 
         $this->assertCount(2, $pemukaRows, 'Pemuka hanya diberikan di 2 tahun RU yang dipilih (Th-2 dan Th-3).');
         $this->assertCount(2, $donorRows, 'Donor Darah hanya diberikan di 2 tahun RU yang dipilih (Th-1 dan Th-3).');
+    }
+
+    public function test_dua_opsi_pengusulan_sdp_saat_terjadi_benturan_remisi_terakhir(): void
+    {
+        // Narapidana ditahan 1 Januari 2024, Vonis 3 Tahun, Islam
+        // Pada event RU 17/08/2025, remisi RU + Dasawarsa total 180 hari memajukan 2/3 definitif ke Mei 2025
+        // Akibatnya H-60 jatuh pada 2 Maret 2025 (< 17 Agustus 2025)
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2024-01-01',
+            3,
+            0,
+            0,
+            'islam'
+        );
+
+        $this->assertArrayHasKey('opsi_pengusulan', $res);
+        $opsi = $res['opsi_pengusulan'];
+
+        // Terdeteksi benturan kalender SDP
+        $this->assertTrue($opsi['has_benturan'], 'Harus terdeteksi benturan karena tgl usul murni mendahului remisi terakhir.');
+        $this->assertNotNull($opsi['remisi_terakhir']);
+        $this->assertEquals('2025-08-17', $opsi['remisi_terakhir']['tanggal']);
+
+        // Opsi 1 (Pra-Remisi Terakhir): Dihitung dari 2/3 berjalan sebelum 17/08/2025 (yaitu setelah RK 31/03/2025)
+        $this->assertEquals('2025-10-28', $opsi['opsi_1_pra_remisi']['tgl_2_3']);
+        $this->assertEquals('2025-08-29', $opsi['opsi_1_pra_remisi']['tgl_usul']);
+
+        // Opsi 2 (Pasca-Terbit SK Remisi Terakhir): Disesuaikan ke tanggal pemberian remisi terakhir (17/08/2025)
+        $this->assertTrue($opsi['opsi_2_pasca_remisi']['is_disesuaikan_ke_tgl_remisi']);
+        $this->assertEquals('2025-08-17', $opsi['opsi_2_pasca_remisi']['tgl_usul']);
+        $this->assertEquals('2025-05-01', $opsi['opsi_2_pasca_remisi']['tgl_2_3']);
+
+        // Tanggal usul murni matematis tetap tersimpan
+        $this->assertEquals('2025-03-02', $opsi['tgl_usul_murni']);
+
+        // Hitungan manual teks dan HTML memuat catatan operasional SDP
+        $this->assertStringContainsString('CATATAN OPERASIONAL SDP', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('OPSI 1', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('OPSI 2', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('Catatan Operasional SDP', $res['hitungan_manual_html']);
+    }
+
+    public function test_pengusulan_sdp_tanpa_benturan_remisi_terakhir(): void
+    {
+        // Narapidana ditahan 30 September 2022, Pidana 10 Tahun, Katolik, Donor mulai tahun ke-2
+        // 2/3 definitif jatuh pada 14 Maret 2027, H-60 = 13 Januari 2027
+        // Remisi terakhir Natal 25 Desember 2026. 13 Januari 2027 > 25 Desember 2026 (Tanpa benturan)
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2022-09-30',
+            10,
+            0,
+            0,
+            'katolik',
+            0,
+            'Narapidana',
+            '-',
+            true,
+            'jasa_negara',
+            '2_3',
+            2
+        );
+
+        $opsi = $res['opsi_pengusulan'];
+        $this->assertFalse($opsi['has_benturan'], 'Tidak boleh ada benturan karena tgl usul jatuh setelah remisi terakhir.');
+        $this->assertEquals('2027-01-13', $opsi['tgl_usul_murni']);
+        $this->assertEquals('2027-01-13', $res['milestones']['tgl_mulai_pengusulan']);
     }
 }
