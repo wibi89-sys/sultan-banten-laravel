@@ -5,18 +5,28 @@
 
 @push('styles')
 <style>
+    /* Monospace Numeric Font for Ultra-Accurate Numbers */
+    .font-mono-num {
+        font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        font-feature-settings: "tnum" 1;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.2px;
+    }
+
     /* Card Styles for Telram */
     .telram-card {
         background: var(--card-bg, #ffffff) !important;
         border: 1px solid var(--border-color, #e2e8f0) !important;
         border-radius: 14px;
         color: var(--text-primary, #1f2937);
-        transition: background-color 0.2s ease, border-color 0.2s ease;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
     [data-theme="dark"] .telram-card {
         background: #1e293b !important;
         border-color: #334155 !important;
         color: #f1f5f9 !important;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
     }
 
     /* Text & Label Visibility */
@@ -36,7 +46,7 @@
         color: #94a3b8 !important;
     }
 
-    /* Mode Switcher Grid: Clean 2x2 Grid (No cramped/awkward wrapping) */
+    /* Mode Switcher Grid: Clean 2x2 Grid with Native Pill Feel */
     .mode-switch-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -70,7 +80,7 @@
     }
     .btn-mode-tab:hover {
         color: var(--text-primary, #1f2937);
-        background: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.6);
     }
     [data-theme="dark"] .btn-mode-tab {
         color: #94a3b8;
@@ -82,15 +92,17 @@
     .btn-mode-tab.active {
         background: #ffffff;
         color: #0f172a;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0,0,0,0.04);
     }
     [data-theme="dark"] .btn-mode-tab.active {
         background: #1e293b;
         color: #f8fafc;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255,255,255,0.06);
     }
 
-    /* Parameter Box Containers - Clean Modern Card */
+    /* Parameter Box Containers - Tinted Layered Surfaces */
     .param-group-box {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -103,11 +115,28 @@
     .param-group-box:hover {
         border-color: #cbd5e1;
     }
+    .param-box-wbp {
+        border-left: 4px solid #6366f1 !important;
+        background: linear-gradient(to right, rgba(99, 102, 241, 0.03), #ffffff 20%);
+    }
+    .param-box-vonis {
+        border-left: 4px solid #2563eb !important;
+        background: linear-gradient(to right, rgba(37, 99, 235, 0.03), #ffffff 20%);
+    }
     [data-theme="dark"] .param-group-box {
         background: #1e293b !important;
         border-color: #334155 !important;
         box-shadow: none;
     }
+    [data-theme="dark"] .param-box-wbp {
+        border-left: 4px solid #818cf8 !important;
+        background: linear-gradient(to right, rgba(99, 102, 241, 0.12), #1e293b 25%) !important;
+    }
+    [data-theme="dark"] .param-box-vonis {
+        border-left: 4px solid #3b82f6 !important;
+        background: linear-gradient(to right, rgba(37, 99, 235, 0.12), #1e293b 25%) !important;
+    }
+
     .param-group-title {
         font-size: 11.5px;
         font-weight: 800;
@@ -118,10 +147,79 @@
         color: #60a5fa !important;
     }
 
+    /* Stepper Touch Buttons (- / +) */
+    .btn-stepper {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 0;
+        transition: all 0.15s ease;
+        user-select: none;
+        flex-shrink: 0;
+    }
+    .btn-stepper:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+    .btn-stepper:active {
+        transform: scale(0.92);
+        background: #cbd5e1;
+    }
+    [data-theme="dark"] .btn-stepper {
+        background: #334155;
+        border-color: #475569;
+        color: #f8fafc;
+    }
+    [data-theme="dark"] .btn-stepper:hover {
+        background: #475569;
+        border-color: #64748b;
+    }
+    [data-theme="dark"] .btn-stepper:active {
+        background: #1e293b;
+    }
+
+    /* Preset Chips */
+    .btn-preset-chip {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2.5px 7px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        line-height: 1.3;
+    }
+    .btn-preset-chip:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+    [data-theme="dark"] .btn-preset-chip {
+        background: #0f172a;
+        border-color: #334155;
+        color: #cbd5e1;
+    }
+    [data-theme="dark"] .btn-preset-chip:hover {
+        background: #334155;
+        color: #ffffff;
+    }
+
     /* Collapsible Accordion Parameter Box */
     .param-accordion-box {
         background: #ffffff;
         border: 1px solid #cbd5e1 !important;
+        border-left: 4px solid #10b981 !important;
         border-radius: 12px;
         overflow: hidden;
         transition: all 0.2s ease;
@@ -129,6 +227,7 @@
     [data-theme="dark"] .param-accordion-box {
         background: rgba(15, 23, 42, 0.6) !important;
         border-color: #334155 !important;
+        border-left: 4px solid #10b981 !important;
     }
     .transition-icon {
         transition: transform 0.25s ease;
@@ -225,7 +324,7 @@
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 10px;
-        padding: 8px 6px;
+        padding: 6px 4px;
         text-align: center;
         transition: all 0.2s ease;
     }
@@ -243,7 +342,7 @@
     }
     .stepper-box input {
         color: var(--text-primary, #1f2937) !important;
-        font-size: 18px;
+        font-size: 19px;
     }
     .stepper-box input:focus {
         outline: none;
@@ -261,13 +360,38 @@
         color: #f8fafc !important;
     }
     .stepper-label {
-        font-size: 11px;
-        font-weight: 700;
+        font-size: 10.5px;
+        font-weight: 800;
         letter-spacing: 0.5px;
         color: #64748b;
     }
     [data-theme="dark"] .stepper-label {
         color: #94a3b8;
+    }
+
+    /* Mobile Sticky Bottom Bar */
+    .mobile-sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid #e2e8f0;
+        z-index: 1030;
+        padding-bottom: max(6px, env(safe-area-inset-bottom));
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    }
+    [data-theme="dark"] .mobile-sticky-action-bar {
+        background: rgba(15, 23, 42, 0.95);
+        border-color: #334155;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+    }
+    @media (max-width: 991.98px) {
+        body {
+            padding-bottom: 74px !important;
+        }
     }
 
     /* Placeholder Section */
@@ -433,11 +557,18 @@
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <h4 class="fw-bold mb-0 text-white" style="font-size: clamp(16px, 3.5vw, 20px);">Kalkulator Telram &amp; Integrasi</h4>
                             <span class="badge bg-warning text-dark fw-bold px-2 py-0.5" style="font-size: 10.5px;">SDP DITJENPAS</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 d-none d-sm-inline-block" style="font-size: 10px;">Kanwil Ditjenpas Banten</span>
                         </div>
                         <small class="text-white-50 d-block mt-0.5" style="font-size: 11.5px;">
                             Perhitungan Ekspirasi, Perkiraan Remisi (Keppres 174/1999) &amp; Waktu Pengusulan PB/CB (UU 22/2022)
                         </small>
                     </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" id="btnInstallTelramPwa" onclick="installTelramApp()" style="font-size: 11.5px; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.1);">
+                        <i class="fas fa-mobile-alt text-warning"></i>
+                        <span>Install Aplikasi (PWA)</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -477,7 +608,7 @@
                     </div>
 
                     <!-- GRUP 1: Identitas Narapidana / WBP (Khusus Simulasi Remisi & Cetak PDF) -->
-                    <div class="param-group-box mb-3" id="sectionIdentitasWbp">
+                    <div class="param-group-box param-box-wbp mb-3" id="sectionIdentitasWbp">
                         <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom" style="border-color: rgba(0,0,0,0.05) !important;">
                             <span class="param-group-title text-primary">
                                 <i class="fas fa-id-card me-1.5"></i> Identitas WBP
@@ -501,7 +632,7 @@
                     </div>
 
                     <!-- GRUP 2: Parameter Penahanan, Vonis Pokok & Agama -->
-                    <div class="param-group-box mb-3" id="groupIdentitasVonis">
+                    <div class="param-group-box param-box-vonis mb-3" id="groupIdentitasVonis">
                         <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom" style="border-color: rgba(0,0,0,0.05) !important;">
                             <span class="param-group-title text-primary">
                                 <i class="fas fa-balance-scale me-1.5"></i> Periode Penahanan &amp; Vonis
@@ -520,7 +651,7 @@
                                         Hari Ini
                                     </button>
                                 </div>
-                                <input type="date" id="tglAwal" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
+                                <input type="date" id="tglAwal" class="form-control fw-semibold font-mono-num" style="height: 38px; border-radius: 8px; font-size: 12.5px;">
                             </div>
                             <div class="col-6" id="wrapTglPutusan">
                                 <div class="d-flex justify-content-between align-items-center mb-1" style="height: 22px;">
@@ -531,7 +662,7 @@
                                         Opsional
                                     </span>
                                 </div>
-                                <input type="date" id="tglPutusan" class="form-control fw-semibold" style="height: 38px; border-radius: 8px; font-size: 12.5px;" title="Tanggal putusan pengadilan / vonis berkekuatan hukum tetap">
+                                <input type="date" id="tglPutusan" class="form-control fw-semibold font-mono-num" style="height: 38px; border-radius: 8px; font-size: 12.5px;" title="Tanggal putusan pengadilan / vonis berkekuatan hukum tetap">
                             </div>
                             <div class="col-12" id="helpTglPutusanWrap">
                                 <small class="text-muted d-block mt-0.5" style="font-size: 10.5px; line-height: 1.35;">
@@ -574,23 +705,23 @@
                                 <div id="summaryRiwayatBadgeBox" class="mt-2.5 p-2.5 bg-white rounded-2 border" style="font-size: 11.5px;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="text-muted">Total Penahanan (Inklusif):</span>
-                                        <span class="fw-bold font-monospace text-dark" id="txtTotalHariKalender">0 Hari</span>
+                                        <span class="fw-bold font-mono-num text-dark" id="txtTotalHariKalender">0 Hari</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-1" id="rowJedaKalender" style="display: none;">
                                         <span class="text-muted">Hari di Luar UPT (T2 - T1):</span>
-                                        <span class="fw-bold font-monospace text-danger" id="txtTotalHariJeda">0 Hari (0 Hari Potah)</span>
+                                        <span class="fw-bold font-mono-num text-danger" id="txtTotalHariJeda">0 Hari (0 Hari Potah)</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-1" id="rowLuarUptBreakdown" style="display: none;">
                                         <span class="text-muted" style="font-size: 10.5px;">Rincian Luar UPT:</span>
-                                        <span class="fw-semibold font-monospace text-warning-emphasis" id="txtLuarUptBreakdown" style="font-size: 10.5px;">-</span>
+                                        <span class="fw-semibold font-mono-num text-warning-emphasis" id="txtLuarUptBreakdown" style="font-size: 10.5px;">-</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center pt-1.5 border-top">
                                         <span class="fw-bold text-success">Total Potongan Tahanan (Potah):</span>
-                                        <span class="fw-bold font-monospace text-success fs-6" id="txtTotalHariPotah">0 Hari</span>
+                                        <span class="fw-bold font-mono-num text-success fs-6" id="txtTotalHariPotah">0 Hari</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center pt-1" id="rowTglAwalEfektif" style="display: none;">
                                         <span class="text-muted" style="font-size: 10.5px;">Tgl. Mulai Ditahan Efektif:</span>
-                                        <span class="fw-bold font-monospace text-primary" id="txtTglAwalEfektif" style="font-size: 11px;">-</span>
+                                        <span class="fw-bold font-mono-num text-primary" id="txtTglAwalEfektif" style="font-size: 11px;">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -604,22 +735,45 @@
                             <div class="row g-2">
                                 <div class="col-4">
                                     <div class="stepper-box">
-                                        <label class="d-block stepper-label mb-0.5">TAHUN</label>
-                                        <input type="number" id="vTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                        <label class="d-block stepper-label mb-1">TAHUN</label>
+                                        <div class="d-flex align-items-center justify-content-between px-1">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vTahun', -1)" aria-label="Kurangi Tahun"><i class="fas fa-minus"></i></button>
+                                            <input type="number" id="vTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0 font-mono-num" style="font-size: 19px;">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vTahun', 1)" aria-label="Tambah Tahun"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="stepper-box">
-                                        <label class="d-block stepper-label mb-0.5">BULAN</label>
-                                        <input type="number" id="vBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                        <label class="d-block stepper-label mb-1">BULAN</label>
+                                        <div class="d-flex align-items-center justify-content-between px-1">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vBulan', -1)" aria-label="Kurangi Bulan"><i class="fas fa-minus"></i></button>
+                                            <input type="number" id="vBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0 font-mono-num" style="font-size: 19px;">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vBulan', 1)" aria-label="Tambah Bulan"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="stepper-box">
-                                        <label class="d-block stepper-label mb-0.5">HARI</label>
-                                        <input type="number" id="vHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                        <label class="d-block stepper-label mb-1">HARI</label>
+                                        <div class="d-flex align-items-center justify-content-between px-1">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vHari', -1)" aria-label="Kurangi Hari"><i class="fas fa-minus"></i></button>
+                                            <input type="number" id="vHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0 font-mono-num" style="font-size: 19px;">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vHari', 1)" aria-label="Tambah Hari"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                            <!-- Preset Vonis Quick Chips -->
+                            <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
+                                <span class="text-muted fw-bold me-0.5" style="font-size: 9.5px;">PRESET:</span>
+                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(1,0,0)">1 Th</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(1,6,0)">1.5 Th</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(2,0,0)">2 Th</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(3,0,0)">3 Th</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(4,0,0)">4 Th</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setVonisPreset(5,0,0)">5 Th</button>
+                                <button type="button" class="btn btn-preset-chip text-danger" onclick="setVonisPreset(0,0,0)" title="Kosongkan Vonis"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
 
@@ -638,7 +792,7 @@
                                     <label class="form-label text-muted mb-1" style="font-size: 11px; font-weight: 600;">Besaran Denda (Rp)</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text fw-bold text-muted" style="font-size: 12px;">Rp</span>
-                                        <input type="text" id="vDendaNominal" class="form-control fw-bold" placeholder="0" style="font-size: 13px;" oninput="formatRupiahInput(this)">
+                                        <input type="text" id="vDendaNominal" class="form-control fw-bold font-mono-num" placeholder="0" style="font-size: 13px;" oninput="formatRupiahInput(this)">
                                     </div>
                                 </div>
                                 <div class="col-5">
@@ -659,22 +813,44 @@
                             <div class="row g-2">
                                 <div class="col-4">
                                     <div class="stepper-box">
-                                        <label class="d-block stepper-label mb-0.5">TAHUN</label>
-                                        <input type="number" id="vSubTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                        <label class="d-block stepper-label mb-1">TAHUN</label>
+                                        <div class="d-flex align-items-center justify-content-between px-1">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vSubTahun', -1)" aria-label="Kurangi Subsider Tahun"><i class="fas fa-minus"></i></button>
+                                            <input type="number" id="vSubTahun" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0 font-mono-num" style="font-size: 19px;">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vSubTahun', 1)" aria-label="Tambah Subsider Tahun"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="stepper-box">
-                                        <label class="d-block stepper-label mb-0.5">BULAN</label>
-                                        <input type="number" id="vSubBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                        <label class="d-block stepper-label mb-1">BULAN</label>
+                                        <div class="d-flex align-items-center justify-content-between px-1">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vSubBulan', -1)" aria-label="Kurangi Subsider Bulan"><i class="fas fa-minus"></i></button>
+                                            <input type="number" id="vSubBulan" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0 font-mono-num" style="font-size: 19px;">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vSubBulan', 1)" aria-label="Tambah Subsider Bulan"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-4">
                                     <div class="stepper-box">
-                                        <label class="d-block stepper-label mb-0.5">HARI</label>
-                                        <input type="number" id="vSubHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0" style="font-size: 19px;">
+                                        <label class="d-block stepper-label mb-1">HARI</label>
+                                        <div class="d-flex align-items-center justify-content-between px-1">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vSubHari', -1)" aria-label="Kurangi Subsider Hari"><i class="fas fa-minus"></i></button>
+                                            <input type="number" id="vSubHari" min="0" value="0" class="form-control text-center fw-bold border-0 bg-transparent p-0 font-mono-num" style="font-size: 19px;">
+                                            <button type="button" class="btn-stepper" onclick="stepVal('vSubHari', 1)" aria-label="Tambah Subsider Hari"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                            <!-- Preset Subsider Quick Chips -->
+                            <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
+                                <span class="text-muted fw-bold me-0.5" style="font-size: 9.5px;">PRESET:</span>
+                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,1,0)">1 Bln</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,2,0)">2 Bln</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,3,0)">3 Bln</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(0,6,0)">6 Bln</button>
+                                <button type="button" class="btn btn-preset-chip" onclick="setSubsiderPreset(1,0,0)">1 Th</button>
+                                <button type="button" class="btn btn-preset-chip text-danger" onclick="setSubsiderPreset(0,0,0)" title="Kosongkan Subsider"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
 
@@ -891,6 +1067,65 @@
                     </div>
                 </div>
 
+                <!-- 1.5. Interactive Milestone Timeline Progress Card (Roadmap Visual Perjalanan Pidana) -->
+                <div id="boxMilestoneTimeline" class="card border-0 shadow-sm mb-3 telram-card">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 10.5px;">
+                                    <i class="fas fa-stream me-1"></i> TIMELINE MASA PIDANA
+                                </span>
+                                <span class="fw-bold telram-text-title" style="font-size: 12px;">Visualisasi Progres Tahapan</span>
+                            </div>
+                            <span class="badge bg-primary text-white font-mono-num px-2 py-1" id="badgeProgressHariIni" style="font-size: 10.5px;">Hari Ini: 0%</span>
+                        </div>
+                        
+                        <!-- Progress Bar Track -->
+                        <div class="position-relative my-2.5 pt-1">
+                            <div class="progress" style="height: 10px; border-radius: 6px; background: #e2e8f0; overflow: visible;">
+                                <div id="progressBarHariIni" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%; border-radius: 6px; transition: width 0.6s ease;"></div>
+                            </div>
+                            
+                            <!-- Milestone Labels -->
+                            <div class="d-flex justify-content-between mt-2 font-mono-num text-center" style="font-size: 10px;">
+                                <div style="flex: 1;" class="text-start">
+                                    <span class="text-muted d-block" style="font-size: 9.5px;">Ditahan</span>
+                                    <strong id="tmTglAwal" class="telram-text-title d-block" style="font-size: 10px;">-</strong>
+                                </div>
+                                <div style="flex: 1;">
+                                    <span class="text-primary d-block fw-bold" style="font-size: 9.5px;">1/3</span>
+                                    <strong id="tmTgl13" class="text-primary d-block" style="font-size: 10px;">-</strong>
+                                </div>
+                                <div style="flex: 1;">
+                                    <span class="text-warning-emphasis d-block fw-bold" style="font-size: 9.5px;">1/2</span>
+                                    <strong id="tmTgl12" class="text-warning-emphasis d-block" style="font-size: 10px;">-</strong>
+                                </div>
+                                <div style="flex: 1.3;" class="px-1 py-0.5 rounded bg-warning-subtle border border-warning-subtle">
+                                    <span class="text-danger fw-bold d-block" style="font-size: 9.5px;"><i class="fas fa-bullhorn me-0.5"></i> Usul SDP</span>
+                                    <strong id="tmTglUsul" class="text-danger d-block fw-bold" style="font-size: 10.5px;">-</strong>
+                                </div>
+                                <div style="flex: 1;">
+                                    <span class="text-success d-block fw-bold" style="font-size: 9.5px;">2/3</span>
+                                    <strong id="tmTgl23" class="text-success d-block" style="font-size: 10px;">-</strong>
+                                </div>
+                                <div style="flex: 1;" class="text-end">
+                                    <span class="text-danger d-block fw-bold" style="font-size: 9.5px;">Bebas</span>
+                                    <strong id="tmTglEkspirasi" class="text-danger d-block" style="font-size: 10px;">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Real-time Status Card Alert -->
+                        <div class="p-2 px-2.5 rounded-2 mt-2 d-flex align-items-center justify-content-between flex-wrap gap-2" id="alertProgresHariIni" style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.18); font-size: 11px;">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="fas fa-info-circle text-primary" id="iconProgresStatus"></i>
+                                <span id="textProgresStatus" class="telram-text-title fw-semibold">Menghitung progres masa pidana...</span>
+                            </div>
+                            <span class="badge bg-white text-primary border font-mono-num fw-bold shadow-xs" id="textProgresHariBerjalan" style="font-size: 10px;">- Hari Dijalani</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 2. Hero Card Mulai Pengusulan di SDP & Tanggal 2/3 Masa Pidana -->
                 <div id="boxHeroPengusulan" class="card border-0 shadow-sm mb-3 hero-usulan-pb">
                     <div class="card-body p-3 p-md-4">
@@ -900,7 +1135,7 @@
                                     <div class="text-white-50 fw-bold mb-1" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
                                         <i class="fas fa-calendar-check text-warning me-1"></i> Mulai Pengusulan di SDP:
                                     </div>
-                                    <h2 class="fw-black mb-1.5 text-white" id="resTglMulaiPengusulan" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px); word-break: break-word;">-</h2>
+                                    <h2 class="fw-black mb-1.5 text-white font-mono-num" id="resTglMulaiPengusulan" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px); word-break: break-word;">-</h2>
                                 </div>
                                 <p class="mb-0 text-white-50" id="pesanPengusulan" style="font-size: 12px; line-height: 1.45;">
                                     -
@@ -911,7 +1146,7 @@
                                     <div class="text-white-50 fw-bold" style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px;">
                                         2/3 Masa Pidana:
                                     </div>
-                                    <strong class="text-white d-block my-1" id="resTgl23Highlight" style="font-weight: 800; font-size: clamp(16px, 3.5vw, 20px); word-break: break-word;">-</strong>
+                                    <strong class="text-white d-block my-1 font-mono-num" id="resTgl23Highlight" style="font-weight: 800; font-size: clamp(16px, 3.5vw, 20px); word-break: break-word;">-</strong>
                                     <div class="text-white-50" style="font-size: 10.5px;">Metode SDP: 2/3 Pokok - Full Remisi</div>
                                 </div>
                             </div>
@@ -932,9 +1167,9 @@
                                             <span class="badge bg-info text-dark fw-bold" style="font-size: 10px;">OPSI 1: USUL LEBIH AWAL</span>
                                             <small class="text-white-50" style="font-size: 9.5px;">Pra-Remisi Terakhir</small>
                                         </div>
-                                        <div class="text-white fw-bold mb-1" style="font-size: clamp(15px, 3vw, 18px);" id="resTglUsulOpsi1">-</div>
+                                        <div class="text-white fw-bold mb-1 font-mono-num" style="font-size: clamp(15px, 3vw, 18px);" id="resTglUsulOpsi1">-</div>
                                         <div class="text-white-50" style="font-size: 11px; line-height: 1.35;">
-                                            Dasar 2/3 Berjalan: <strong class="text-white" id="resTgl23Opsi1">-</strong><br>
+                                            Dasar 2/3 Berjalan: <strong class="text-white font-mono-num" id="resTgl23Opsi1">-</strong><br>
                                             <span class="text-white-50">Pengusulan diajukan H-60 sebelum 2/3 berjalan dengan SK yang sudah definitif di tangan.</span>
                                         </div>
                                     </div>
@@ -945,9 +1180,9 @@
                                             <span class="badge bg-success text-white fw-bold" style="font-size: 10px;">OPSI 2: HARI H SK REMISI</span>
                                             <small class="text-white-50" style="font-size: 9.5px;">Pasca-SK Terbit</small>
                                         </div>
-                                        <div class="text-white fw-bold mb-1" style="font-size: clamp(15px, 3vw, 18px);" id="resTglUsulOpsi2">-</div>
+                                        <div class="text-white fw-bold mb-1 font-mono-num" style="font-size: clamp(15px, 3vw, 18px);" id="resTglUsulOpsi2">-</div>
                                         <div class="text-white-50" style="font-size: 11px; line-height: 1.35;">
-                                            Dasar 2/3 Definitif: <strong class="text-white" id="resTgl23Opsi2">-</strong><br>
+                                            Dasar 2/3 Definitif: <strong class="text-white font-mono-num" id="resTgl23Opsi2">-</strong><br>
                                             <span class="text-white-50">Pengusulan diajukan segera setelah SK remisi terakhir resmi terbit di SDP.</span>
                                         </div>
                                     </div>
@@ -965,7 +1200,7 @@
                                 <span class="badge bg-white text-success px-2.5 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">
                                     <i class="fas fa-hourglass-half me-1"></i> SISA MASA PIDANA
                                 </span>
-                                <h2 class="fw-black mb-0 text-white" id="resSisaPidana" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px);">-</h2>
+                                <h2 class="fw-black mb-0 text-white font-mono-num" id="resSisaPidana" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px);">-</h2>
                             </div>
                             <div class="d-none d-sm-block text-white" style="font-size: 44px; opacity: 0.25;">
                                 <i class="fas fa-clock"></i>
@@ -981,7 +1216,7 @@
                             <span class="text-uppercase fw-bold text-white-50" style="font-size: 11px; letter-spacing: 1px;">
                                 Total Lama Pidana (Vonis Pokok)
                             </span>
-                            <h3 class="fw-bold mb-0 text-white mt-1" id="resLamaPidana" style="font-size: clamp(18px, 4vw, 24px);">-</h3>
+                            <h3 class="fw-bold mb-0 text-white mt-1 font-mono-num" id="resLamaPidana" style="font-size: clamp(18px, 4vw, 24px);">-</h3>
                         </div>
                         <div style="font-size: 30px; opacity: 0.3;">
                             <i class="fas fa-hourglass-half"></i>
@@ -997,14 +1232,14 @@
                                 <span class="badge bg-white text-danger px-2.5 py-1 mb-1.5 fw-bold" id="badgeEkspirasiTitle" style="font-size: 11px; letter-spacing: 0.3px;">
                                     <i class="fas fa-door-open me-1"></i> EKSPIRASI BEBAS DEFINITIF
                                 </span>
-                                <h2 class="fw-black mb-0 text-white" id="resEkspirasi" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px); word-break: break-word;">-</h2>
+                                <h2 class="fw-black mb-0 text-white font-mono-num" id="resEkspirasi" style="font-weight: 800; font-size: clamp(20px, 4.5vw, 26px); word-break: break-word;">-</h2>
                                 <div id="subEkspirasiMurni" class="mt-1 text-white-50" style="font-size: 12px;">
-                                    Ekspirasi Pokok (Sebelum Remisi): <span class="text-white fw-bold" id="resEkspirasiMurniText">-</span>
+                                    Ekspirasi Pokok (Sebelum Remisi): <span class="text-white fw-bold font-mono-num" id="resEkspirasiMurniText">-</span>
                                 </div>
                             </div>
                             <div class="text-start text-sm-end" id="boxTotalRemisiBadge">
                                 <div class="text-white-50" style="font-size: 10.5px; text-transform: uppercase;">Total Perkiraan Remisi:</div>
-                                <div class="fw-bold text-warning mt-0.5" id="resTotalRemisiText" style="font-size: clamp(17px, 3.8vw, 22px);">0 Hari</div>
+                                <div class="fw-bold text-warning mt-0.5 font-mono-num" id="resTotalRemisiText" style="font-size: clamp(17px, 3.8vw, 22px);">0 Hari</div>
                             </div>
                         </div>
                         <!-- Highlight Ekspirasi Subsider Jika Ada -->
@@ -1017,8 +1252,8 @@
                                     <div class="text-white-50 mt-1" style="font-size: 11.5px;">Ekspirasi Akhir (+ Kurungan Pengganti Denda):</div>
                                 </div>
                                 <div class="text-start text-sm-end">
-                                    <strong class="text-white d-block" id="resEkspirasiSubsiderVal" style="font-size: 18px; font-weight: 800;">-</strong>
-                                    <small class="text-white-50" style="font-size: 11px;">Sebelum Remisi: <span id="resEkspirasiSubsiderMurniVal" class="text-white fw-semibold">-</span></small>
+                                    <strong class="text-white d-block font-mono-num" id="resEkspirasiSubsiderVal" style="font-size: 18px; font-weight: 800;">-</strong>
+                                    <small class="text-white-50" style="font-size: 11px;">Sebelum Remisi: <span id="resEkspirasiSubsiderMurniVal" class="text-white fw-semibold font-mono-num">-</span></small>
                                 </div>
                             </div>
                         </div>
@@ -1035,7 +1270,7 @@
                                 </span>
                                 <i class="fas fa-book-reader text-primary opacity-75 fs-6"></i>
                             </div>
-                            <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res13">-</h4>
+                            <h4 class="fw-bold fraction-date-val font-mono-num mt-2 mb-0" id="res13">-</h4>
                             <small class="text-muted d-block mt-0.5" id="subInfo13" style="font-size: 10.5px;">Syarat dasar pembinaan</small>
                         </div>
                     </div>
@@ -1047,7 +1282,7 @@
                                 </span>
                                 <i class="fas fa-hands-helping text-warning opacity-75 fs-6"></i>
                             </div>
-                            <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res12">-</h4>
+                            <h4 class="fw-bold fraction-date-val font-mono-num mt-2 mb-0" id="res12">-</h4>
                             <small class="text-muted d-block mt-0.5" id="subInfo12" style="font-size: 10.5px;">Mulai berhak Asimilasi Lapas</small>
                         </div>
                     </div>
@@ -1059,7 +1294,7 @@
                                 </span>
                                 <i class="fas fa-user-check text-success opacity-75 fs-6"></i>
                             </div>
-                            <h4 class="fw-bold fraction-date-val mt-2 mb-0" id="res23">-</h4>
+                            <h4 class="fw-bold fraction-date-val font-mono-num mt-2 mb-0" id="res23">-</h4>
                             <small class="text-muted d-block mt-0.5" id="subInfo23" style="font-size: 10.5px;">Syarat substantif waktu PB/CB</small>
                         </div>
                     </div>
@@ -1069,19 +1304,19 @@
                 <div class="p-2.5 px-3 summary-info-box mb-3">
                     <div class="row g-2 text-muted" style="font-size: 12px;">
                         <div class="col-sm-6">
-                            <i class="fas fa-calendar-alt text-primary me-1"></i> <span id="labelInfoTglAwal">Tgl. Ditahan:</span> <strong class="telram-text-title" id="infoTglAwal">-</strong>
+                            <i class="fas fa-calendar-alt text-primary me-1"></i> <span id="labelInfoTglAwal">Tgl. Ditahan:</span> <strong class="telram-text-title font-mono-num" id="infoTglAwal">-</strong>
                         </div>
                         <div class="col-sm-6">
-                            <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Pidana Pokok:</span> <strong class="telram-text-title" id="infoTotalHari">-</strong>
+                            <i class="fas fa-clock text-info me-1"></i> <span id="labelInfoTotalHari">Pidana Pokok:</span> <strong class="telram-text-title font-mono-num" id="infoTotalHari">-</strong>
                         </div>
                         <div class="col-sm-6 d-none" id="wrapInfoSubsider">
-                            <i class="fas fa-hand-holding-usd text-warning me-1"></i> Pidana Subsider: <strong class="telram-text-title" id="infoSubsider">-</strong>
+                            <i class="fas fa-hand-holding-usd text-warning me-1"></i> Pidana Subsider: <strong class="telram-text-title font-mono-num" id="infoSubsider">-</strong>
                         </div>
                         <div class="col-sm-6 d-none" id="wrapInfoPutusan">
-                            <i class="fas fa-gavel text-warning me-1"></i> Tgl. Putusan: <strong class="telram-text-title" id="infoTglPutusan">-</strong>
+                            <i class="fas fa-gavel text-warning me-1"></i> Tgl. Putusan: <strong class="telram-text-title font-mono-num" id="infoTglPutusan">-</strong>
                         </div>
                         <div class="col-sm-6 d-none" id="wrapInfoMasaTahanan">
-                            <i class="fas fa-user-clock text-success me-1"></i> Potongan Tahanan (Potah): <strong class="telram-text-title" id="infoMasaTahanan">-</strong>
+                            <i class="fas fa-user-clock text-success me-1"></i> Potongan Tahanan (Potah): <strong class="telram-text-title font-mono-num" id="infoMasaTahanan">-</strong>
                         </div>
                     </div>
                 </div>
@@ -1228,11 +1463,92 @@
     </div>
 </div>
 
+<!-- Mobile Sticky Bottom Action Bar (Khusus Layar < 992px / Mobile-First) -->
+<div id="mobileStickyActionBar" class="d-lg-none mobile-sticky-action-bar">
+    <div class="d-flex align-items-center justify-content-between gap-2 px-3 py-2">
+        <button type="button" class="btn btn-warning text-dark fw-bold rounded-pill py-2 px-3 flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="hitungSesuaiMode()" id="btnHitungMobile" style="font-size: 12.5px;">
+            <i class="fas fa-calculator fs-6"></i>
+            <span id="txtBtnHitungMobile">Hitung Sekarang</span>
+        </button>
+        <div class="d-flex align-items-center gap-1.5 d-none" id="mobileResultQuickGroup">
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center shadow-xs" onclick="tampilkanModalHitunganManual()" title="Rumus &amp; Hitungan Manual" style="width: 38px; height: 38px;">
+                <i class="fas fa-calculator" style="font-size: 13.5px;"></i>
+            </button>
+            <button type="button" class="btn btn-danger btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center shadow-xs" onclick="unduhPdfResmi()" title="Unduh Lembar Resmi PDF" style="width: 38px; height: 38px;">
+                <i class="fas fa-file-pdf" style="font-size: 13.5px;"></i>
+            </button>
+            <button type="button" class="btn btn-success btn-sm rounded-circle p-0 d-inline-flex align-items-center justify-content-center shadow-xs" onclick="salinRingkasanTeks()" title="Salin Ringkasan untuk WhatsApp" style="width: 38px; height: 38px;">
+                <i class="fab fa-whatsapp" style="font-size: 16px;"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // State Aplikasi
     let currentMode = 'simulasi_remisi';
-    let currentLedgerView = 'table';
+    let currentLedgerView = window.innerWidth < 768 ? 'cards' : 'table';
     let lastResult = null;
+    let deferredInstallPrompt = null;
+
+    // Listener PWA Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        const btnInstall = document.getElementById('btnInstallTelramPwa');
+        if (btnInstall) btnInstall.classList.remove('d-none');
+    });
+
+    function installTelramApp() {
+        if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    showToast('Aplikasi Kalkulator Telram berhasil ditambahkan ke perangkat!', 'success');
+                }
+                deferredInstallPrompt = null;
+            });
+        } else {
+            showToast('Buka menu browser Anda lalu pilih "Install App" atau "Tambahkan ke Layar Utama"', 'info');
+        }
+    }
+
+    // Helper Touch Stepper (- / +) untuk Layar Sentuh Mobile
+    function stepVal(inputId, delta) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        let val = parseInt(el.value, 10) || 0;
+        val = Math.max(0, val + delta);
+        el.value = val;
+        if (inputId === 'vTahun') {
+            renderChipsTahunTambahan();
+        }
+    }
+
+    // Helper Preset Vonis Pokok (1 Tap)
+    function setVonisPreset(y, m, d) {
+        document.getElementById('vTahun').value = y;
+        document.getElementById('vBulan').value = m;
+        document.getElementById('vHari').value = d;
+        renderChipsTahunTambahan();
+        if (y === 0 && m === 0 && d === 0) {
+            showToast('Lama vonis pokok dikosongkan', 'info');
+        } else {
+            showToast(`Preset vonis diatur ke ${y} Th ${m > 0 ? m + ' Bln ' : ''}${d > 0 ? d + ' Hari' : ''}`, 'info');
+        }
+    }
+
+    // Helper Preset Pidana Subsider (1 Tap)
+    function setSubsiderPreset(y, m, d) {
+        if (document.getElementById('vSubTahun')) document.getElementById('vSubTahun').value = y;
+        if (document.getElementById('vSubBulan')) document.getElementById('vSubBulan').value = m;
+        if (document.getElementById('vSubHari')) document.getElementById('vSubHari').value = d;
+        if (y === 0 && m === 0 && d === 0) {
+            showToast('Subsider dikosongkan', 'info');
+        } else {
+            showToast(`Preset subsider diatur ke ${y > 0 ? y + ' Th ' : ''}${m > 0 ? m + ' Bln ' : ''}${d > 0 ? d + ' Hari' : ''}`, 'info');
+        }
+    }
 
     // Toast Notification System
     function showToast(message, type = 'success') {
@@ -1931,6 +2247,12 @@
 
         document.getElementById('hasilSection').classList.add('d-none');
         document.getElementById('placeholderSection').classList.remove('d-none');
+        const boxTimeline = document.getElementById('boxMilestoneTimeline');
+        if (boxTimeline) boxTimeline.classList.add('d-none');
+        const txtBtnHitungMobile = document.getElementById('txtBtnHitungMobile');
+        if (txtBtnHitungMobile) txtBtnHitungMobile.innerText = 'Hitung Sekarang';
+        const mobileResultGroup = document.getElementById('mobileResultQuickGroup');
+        if (mobileResultGroup) mobileResultGroup.classList.add('d-none');
         lastResult = null;
         showToast('Form berhasil di-reset', 'info');
     }
@@ -2381,12 +2703,88 @@
         document.getElementById('placeholderSection').classList.add('d-none');
         document.getElementById('hasilSection').classList.remove('d-none');
 
+        // Update Milestone Timeline & Mobile Sticky Bar
+        updateMilestoneTimeline(data);
+        const txtBtnHitungMobile = document.getElementById('txtBtnHitungMobile');
+        if (txtBtnHitungMobile) txtBtnHitungMobile.innerText = 'Hitung Ulang';
+        const mobileResultGroup = document.getElementById('mobileResultQuickGroup');
+        if (mobileResultGroup) mobileResultGroup.classList.remove('d-none');
+
         // Mobile UX: Auto smooth scroll ke hasil kalkulasi agar user langsung melihat angka
         if (window.innerWidth < 992) {
             setTimeout(() => {
                 const el = document.getElementById('hasilSection');
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
+        }
+    }
+
+    // Update Visual Milestone Timeline Masa Pidana (Progress Hari Ini)
+    function updateMilestoneTimeline(data) {
+        const box = document.getElementById('boxMilestoneTimeline');
+        if (!box) return;
+
+        if (data.mode !== 'simulasi_remisi' && data.mode !== 'maju') {
+            box.classList.add('d-none');
+            return;
+        }
+        box.classList.remove('d-none');
+
+        const tglAwalStr = data.raw ? data.raw.tgl_awal : null;
+        const tgl23Str = data.raw ? (data.raw.tgl_2_3_definitif || data.raw.tgl_2_3) : null;
+        const tglEkspirasiStr = data.raw ? (data.raw.ekspirasi_definitif || data.raw.tgl_ekspirasi) : null;
+        const tglUsulStr = (data.opsi_pengusulan && data.opsi_pengusulan.has_benturan && data.opsi_pengusulan.opsi_2_pasca_remisi)
+            ? data.opsi_pengusulan.opsi_2_pasca_remisi.tgl_usul
+            : (data.raw ? data.raw.tgl_mulai_pengusulan : null);
+
+        document.getElementById('tmTglAwal').innerText = data.formatted.tgl_awal || '-';
+        document.getElementById('tmTgl13').innerText = data.formatted.tgl_1_3_definitif || data.formatted.tgl_1_3 || data.formatted.tgl_1_3_murni || '-';
+        document.getElementById('tmTgl12').innerText = data.formatted.tgl_1_2_definitif || data.formatted.tgl_1_2 || '-';
+        document.getElementById('tmTglUsul').innerText = data.formatted.tgl_mulai_pengusulan || '-';
+        document.getElementById('tmTgl23').innerText = data.formatted.tgl_2_3_definitif || data.formatted.tgl_2_3 || '-';
+        document.getElementById('tmTglEkspirasi').innerText = data.formatted.ekspirasi_definitif || data.formatted.tgl_ekspirasi || '-';
+
+        if (!tglAwalStr || !tglEkspirasiStr) return;
+
+        const dStart = new Date(tglAwalStr);
+        const dEnd = new Date(tglEkspirasiStr);
+        const dToday = new Date();
+        const dUsul = tglUsulStr ? new Date(tglUsulStr) : null;
+        const d23 = tgl23Str ? new Date(tgl23Str) : null;
+
+        const totalMs = dEnd - dStart;
+        const elapsedMs = Math.max(0, dToday - dStart);
+        let pct = totalMs > 0 ? Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100)) : 0;
+        pct = Math.round(pct * 10) / 10;
+
+        const progressBar = document.getElementById('progressBarHariIni');
+        const badgeProgress = document.getElementById('badgeProgressHariIni');
+        const textHari = document.getElementById('textProgresHariBerjalan');
+        const textStatus = document.getElementById('textProgresStatus');
+        const iconStatus = document.getElementById('iconProgresStatus');
+
+        if (progressBar) progressBar.style.width = pct + '%';
+        if (badgeProgress) badgeProgress.innerText = `Hari Ini: ${pct}%`;
+
+        const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+        if (textHari) textHari.innerText = `${elapsedDays.toLocaleString('id-ID')} Hari Dijalani`;
+
+        if (dToday < dStart) {
+            if (textStatus) textStatus.innerHTML = '<span class="text-secondary">Masa penahanan belum dimulai atau tanggal awal berada di masa depan.</span>';
+            if (iconStatus) iconStatus.className = 'fas fa-clock text-secondary';
+        } else if (dUsul && dToday < dUsul) {
+            const daysToUsul = Math.ceil((dUsul - dToday) / (1000 * 60 * 60 * 24));
+            if (textStatus) textStatus.innerHTML = `Tahap pembinaan awal. Kurang lebih <b>${daysToUsul} hari lagi</b> menuju batas mulai pengusulan di SDP.`;
+            if (iconStatus) iconStatus.className = 'fas fa-hourglass-start text-primary';
+        } else if (d23 && dToday <= d23) {
+            if (textStatus) textStatus.innerHTML = '<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Masa aktif pengusulan integrasi PB/CB di SDP (H-60 s.d. 2/3). Segera proses berkas!</span>';
+            if (iconStatus) iconStatus.className = 'fas fa-bullhorn text-warning';
+        } else if (dToday <= dEnd) {
+            if (textStatus) textStatus.innerHTML = 'Telah melewati 2/3 masa pidana. Sedang menjalani tahap akhir pidana / integrasi Bapas.';
+            if (iconStatus) iconStatus.className = 'fas fa-walking text-info';
+        } else {
+            if (textStatus) textStatus.innerHTML = '<span class="text-danger fw-bold">Narapidana telah melewati tanggal ekspirasi bebas!</span>';
+            if (iconStatus) iconStatus.className = 'fas fa-flag-checkered text-danger';
         }
     }
 
@@ -2424,17 +2822,17 @@
             if (badgeBg) tr.setAttribute('style', badgeBg);
 
             tr.innerHTML = `
-                <td class="text-center fw-bold text-muted">${index + 1}</td>
+                <td class="text-center fw-bold text-muted font-mono-num">${index + 1}</td>
                 <td>
                     <strong class="text-dark">${row.nama_event}</strong>
                     ${row.tahap && row.tahap !== '-' ? `<br><small class="text-primary fw-semibold" style="font-size: 11px;">[Tahap: ${row.tahap}]</small>` : ''}
                 </td>
-                <td style="white-space: nowrap;">${row.tanggal_indo}</td>
-                <td style="white-space: nowrap;"><small class="text-muted fw-semibold">${row.hari_dijalani} hr<br><span style="font-size: 10.5px;">(${row.masa_dijalani_teks})</span></small></td>
+                <td style="white-space: nowrap;" class="font-mono-num">${row.tanggal_indo}</td>
+                <td style="white-space: nowrap;" class="font-mono-num"><small class="text-muted fw-semibold">${row.hari_dijalani} hr<br><span style="font-size: 10.5px;">(${row.masa_dijalani_teks})</span></small></td>
                 <td style="white-space: nowrap;">${statusBadge}</td>
-                <td style="white-space: nowrap;" class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}">${row.besaran_teks}</td>
+                <td style="white-space: nowrap;" class="fw-bold font-mono-num ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}">${row.besaran_teks}</td>
                 <td style="white-space: nowrap;">
-                    <div style="font-size: 12px; line-height: 1.45; font-weight: 700;">
+                    <div style="font-size: 12px; line-height: 1.45; font-weight: 700;" class="font-mono-num">
                         <div class="text-danger">Eks: ${row.perkiraan_ekspirasi_baru_indo}</div>
                         <div class="text-primary">1/3: ${row.tgl_1_3_baru_indo || '-'}</div>
                         <div style="color: #b45309;">1/2: ${row.tgl_1_2_baru_indo || '-'}</div>
@@ -2453,7 +2851,7 @@
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-secondary text-white rounded-circle" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px;">${index + 1}</span>
+                        <span class="badge bg-secondary text-white rounded-circle font-mono-num" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px;">${index + 1}</span>
                         <div>
                             <strong class="text-dark" style="font-size: 13px;">${row.nama_event}</strong>
                             ${row.tahap && row.tahap !== '-' ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1.5" style="font-size: 10px;">${row.tahap}</span>` : ''}
@@ -2464,17 +2862,17 @@
                 <div class="row g-2 mb-2 pt-1 border-top" style="border-color: rgba(0,0,0,0.06) !important;">
                     <div class="col-6">
                         <small class="text-muted d-block" style="font-size: 10px; text-transform: uppercase;">TANGGAL EVENT</small>
-                        <span class="fw-bold text-dark" style="font-size: 12.5px;">${row.tanggal_indo}</span>
-                        <small class="text-muted d-block" style="font-size: 10.5px;">Dijalani: ${row.hari_dijalani} hr (${row.masa_dijalani_teks})</small>
+                        <span class="fw-bold text-dark font-mono-num" style="font-size: 12.5px;">${row.tanggal_indo}</span>
+                        <small class="text-muted d-block font-mono-num" style="font-size: 10.5px;">Dijalani: ${row.hari_dijalani} hr (${row.masa_dijalani_teks})</small>
                     </div>
                     <div class="col-6 text-end">
                         <small class="text-muted d-block" style="font-size: 10px; text-transform: uppercase;">BESARAN REMISI</small>
-                        <span class="fw-bold ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}" style="font-size: 13.5px;">${row.besaran_teks}</span>
-                        <small class="text-success fw-bold d-block" style="font-size: 10.5px;">Akumulasi: ${row.total_akumulasi_hari} Hari</small>
+                        <span class="fw-bold font-mono-num ${row.besaran_hari > 0 ? 'text-primary' : 'text-danger'}" style="font-size: 13.5px;">${row.besaran_teks}</span>
+                        <small class="text-success fw-bold d-block font-mono-num" style="font-size: 10.5px;">Akumulasi: ${row.total_akumulasi_hari} Hari</small>
                     </div>
                 </div>
                 <div class="p-2 rounded-2 border mb-1.5" style="background: rgba(254, 242, 242, 0.6); border-color: #fecaca !important;">
-                    <div class="row g-1" style="font-size: 12px; font-weight: 700; line-height: 1.4;">
+                    <div class="row g-1 font-mono-num" style="font-size: 12px; font-weight: 700; line-height: 1.4;">
                         <div class="col-6 text-danger">Eks: ${row.perkiraan_ekspirasi_baru_indo}</div>
                         <div class="col-6 text-primary">1/3: ${row.tgl_1_3_baru_indo || '-'}</div>
                         <div class="col-6" style="color: #b45309;">1/2: ${row.tgl_1_2_baru_indo || '-'}</div>

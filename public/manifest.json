@@ -1,7 +1,7 @@
 {
   "name": "SULTAN Banten - Sistem Pelayanan Terpadu Pemasyarakatan",
   "short_name": "SULTAN Banten",
-  "description": "Sistem Informasi & Pelaporan Terpadu Divisi Pemasyarakatan Kantor Wilayah Kemenkumham Banten",
+  "description": "Sistem Informasi & Pelaporan Terpadu Divisi Pemasyarakatan Kantor Wilayah Ditjenpas Banten",
   "id": "/?source=pwa",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -44,6 +44,13 @@
     }
   ],
   "shortcuts": [
+    {
+      "name": "Kalkulator Telram",
+      "short_name": "Telram",
+      "description": "Perhitungan ekspirasi, perkiraan remisi & integrasi SDP Ditjenpas",
+      "url": "/telram?source=pwa",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
     {
       "name": "Dashboard Utama",
       "short_name": "Dashboard",

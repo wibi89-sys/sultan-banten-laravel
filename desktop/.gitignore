@@ -1,0 +1,7 @@
+# Desktop Distribution Build Cache & Output
+dist/*.exe
+dist/*.zip
+temp/
+php_portable/
+*.log
+*.tmp
