@@ -529,7 +529,7 @@
         document.getElementById('cmpCleanCreator').innerText = cleaned.creator || 'Aplikasi SULTAN Banten';
         document.getElementById('cmpOrigProducer').innerText = orig.producer || 'Tidak Terdeteksi';
         document.getElementById('cmpOrigAuthor').innerText = orig.author || 'Tidak Terdeteksi';
-        document.getElementById('cmpCleanAuthor').innerText = cleaned.author || 'Kantor Wilayah Kemenimipas Banten';
+        document.getElementById('cmpCleanAuthor').innerText = cleaned.author || 'Kantor Wilayah Ditjenpas Banten';
         document.getElementById('cmpOrigDate').innerText = orig.creation_date !== '-' ? orig.creation_date : (orig.mod_date !== '-' ? orig.mod_date : '-');
         document.getElementById('cmpCleanDate').innerText = cleaned.sanitized_at || '-';
 

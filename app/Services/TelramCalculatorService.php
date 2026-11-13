@@ -1621,7 +1621,7 @@ class TelramCalculatorService
         $selisih23TahunTeks = $data['selisih_2_3_tahun_teks'] ?? $calc23['selisih_tahun_teks'];
 
         $teks = "{$judulProgram}\n";
-        $teks .= "Sultan Banten - Kantor Wilayah Kemenimipas Banten\n";
+        $teks .= "Sultan Banten - Kantor Wilayah Ditjenpas Banten\n";
         $teks .= "========================================================\n\n";
 
         $teks .= "IDENTITAS WARGA BINAAN PEMASYARAKATAN\n";

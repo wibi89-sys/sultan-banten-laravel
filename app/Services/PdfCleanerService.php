@@ -118,7 +118,7 @@ class PdfCleanerService
 
         $customTitle = ! empty($options['title']) ? trim($options['title']) : 'Naskah Resmi Kedinasan';
         $customCreator = ! empty($options['creator']) ? trim($options['creator']) : 'Aplikasi SULTAN Banten';
-        $customAuthor = ! empty($options['author']) ? trim($options['author']) : 'Kantor Wilayah Kemenimipas Banten';
+        $customAuthor = ! empty($options['author']) ? trim($options['author']) : 'Kantor Wilayah Ditjenpas Banten';
         $customSubject = ! empty($options['subject']) ? trim($options['subject']) : 'Naskah Dinas Terstandarisasi';
         $lockDoc = isset($options['lock_document']) ? (bool) $options['lock_document'] : true;
         $allowCopy = isset($options['allow_copy']) ? (bool) $options['allow_copy'] : true;

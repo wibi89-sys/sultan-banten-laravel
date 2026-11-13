@@ -22,7 +22,7 @@ class PembersihPdfController extends Controller
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses modul Utilitas.');
         }
 
-        $defaultAuthor = $user && $user->upt ? $user->upt->nama_upt : 'Kantor Wilayah Kemenimipas Banten';
+        $defaultAuthor = $user && $user->upt ? $user->upt->nama_upt : 'Kantor Wilayah Ditjenpas Banten';
         $defaultCreator = 'Aplikasi SULTAN Banten';
 
         return view('pembersih_pdf.index', compact('defaultAuthor', 'defaultCreator'));
@@ -69,7 +69,7 @@ class PembersihPdfController extends Controller
             $options = [
                 'title' => $request->input('custom_title') ?: pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                 'creator' => $request->input('custom_creator') ?: 'Aplikasi SULTAN Banten',
-                'author' => $request->input('custom_author') ?: 'Kantor Wilayah Kemenimipas Banten',
+                'author' => $request->input('custom_author') ?: 'Kantor Wilayah Ditjenpas Banten',
                 'subject' => $request->input('custom_subject') ?: 'Naskah Dinas Terstandarisasi',
                 'lock_document' => $request->boolean('lock_document', true),
                 'allow_copy' => $request->boolean('allow_copy', true),

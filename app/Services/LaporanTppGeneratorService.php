@@ -84,7 +84,7 @@ class LaporanTppGeneratorService
         $pdf->kodeVerifikasi = $params['kode_verifikasi'] ?? '';
 
         $pdf->SetCreator('Sultan Banten');
-        $pdf->SetAuthor('Kanwil Kemenimipas Banten');
+        $pdf->SetAuthor('Kanwil Ditjenpas Banten');
         $pdf->SetTitle('Laporan Pelaksanaan Sidang TPP - '.($params['upt_nama'] ?? 'Kanwil'));
         $pdf->SetMargins(18, 15, 18);
         $pdf->SetAutoPageBreak(true, 25);

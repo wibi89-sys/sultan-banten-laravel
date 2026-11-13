@@ -559,7 +559,7 @@ KONTEKS DASAR KEGIATAN:
 
 PRINSIP PENYUSUNAN NASKAH & TATA BAHASA (EYD V):
 1. KEPATUHAN TATA NASKAH DINAS:
-   - Susun naskah laporan kedinasan yang utuh, berwibawa, dan terstruktur sesuai Pedoman Tata Naskah Dinas resmi instansi pemerintah (Permenkumham No. 31 Tahun 2020 / Permenimipas).
+   - Susun naskah laporan kedinasan yang utuh, berwibawa, dan terstruktur sesuai Pedoman Tata Naskah Dinas resmi instansi pemerintah (Permenkumham No. 31 Tahun 2020 / Pedoman Tata Naskah Dinas Kementerian).
    - Laporan harus mencerminkan fungsi pembinaan, monitoring, pengawasan, dan pengendalian (Bintorwasdal) teknis pemasyarakatan.
 2. BAHASA BAKU, LUWES, DAN TIDAK KAKU:
    - JANGAN mengulang-ulang kalimat template klise yang kaku ("Pada hari..., Kantor Wilayah mengikuti..."). Susun kalimat dengan variasi aktif dan pasif kedinasan yang mengalir alami dan enak dibaca.

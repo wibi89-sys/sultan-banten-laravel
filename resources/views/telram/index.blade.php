@@ -2641,7 +2641,7 @@
         }
 
         const text = `*${d.judul_program || 'PERKIRAAN PEROLEHAN REMISI'}*
-*Sultan Banten - Kemenimipas Banten*
+*Sultan Banten - Kanwil Ditjenpas Banten*
 ---------------------------------------
 *Nama:* ${d.nama_wbp || 'Narapidana'}
 *No. Register:* ${d.no_register || '-'}

@@ -223,7 +223,7 @@ class NotaDinasGeneratorService
 </head>
 <body>
 <div class="WordSection1">
-    <!-- Kop Surat Kemenimipas -->
+    <!-- Kop Surat Resmi -->
     <div class="header-instansi">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN RI</div>
     <div class="header-instansi">DIREKTORAT JENDERAL PEMASYARAKATAN</div>
     <div class="header-instansi">KANTOR WILAYAH BANTEN</div>
