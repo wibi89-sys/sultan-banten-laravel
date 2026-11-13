@@ -2984,16 +2984,20 @@
         let usulanSection = '';
         let baris23Wa = '';
         if (d.opsi_pengusulan && d.opsi_pengusulan.has_benturan) {
-            baris23Wa = `• *2/3 Masa Pidana (Tersedia 2 Opsi):*
-  - *Opsi 1 (Pra-Remisi):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_2_3_indo}
-  - *Opsi 2 (Definitif):* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_murni || d.formatted.tgl_2_3_sebelum_remisi})`;
+            const remisiNama = d.opsi_pengusulan.remisi_terakhir?.nama_event || 'Remisi Terakhir';
+            const remisiJenis = d.opsi_pengusulan.remisi_terakhir?.jenis || 'RK';
+            baris23Wa = `• *Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana:*
+  - *Opsi 1 = 2/3 Sebelum Remisi ${remisiNama} (${remisiJenis}):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_2_3_indo}
+    _(Prediksi Usul SDP: ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_usul_indo})_
+  - *Opsi 2 = 2/3 Setelah Remisi ${remisiNama} (${remisiJenis}):* ${d.formatted.tgl_2_3_definitif}
+    _(Prediksi Usul SDP: ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_usul_indo} [Hari H SK Remisi])_`;
 
             usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (2 OPSI OPERASIONAL SDP):*
-• *Opsi 1 (Pra-Remisi Terakhir):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_usul_indo}
+• *Opsi 1 = Usul Sebelum Remisi (${remisiJenis}):* ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_usul_indo}
   _(Dasar 2/3: ${d.opsi_pengusulan.opsi_1_pra_remisi.tgl_2_3_indo} - Usul lebih awal dengan SK di tangan)_
-• *Opsi 2 (Pasca-SK Remisi Terakhir):* ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_usul_indo}
-  _(Hari H SK ${d.opsi_pengusulan.remisi_terakhir.nama_event} - Dasar 2/3: ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_2_3_indo})_
-*Catatan:* Hitungan murni (${d.opsi_pengusulan.tgl_usul_murni_indo}) mendahului tanggal remisi terakhir sehingga disesuaikan dengan alur SDP.`;
+• *Opsi 2 = Usul Setelah Remisi (${remisiJenis}):* ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_usul_indo}
+  _(Hari H SK ${remisiNama} - Dasar 2/3: ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_2_3_indo})_
+*Catatan:* Hitungan murni (${d.opsi_pengusulan.tgl_usul_murni_indo}) mendahului tanggal remisi. Di SDP, pengusulan tidak kurang dari tanggal remisi, sehingga disesuaikan tepat pada Hari H SK.`;
         } else {
             baris23Wa = `• *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_sebelum_remisi || d.formatted.tgl_2_3_murni})`;
             usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (H-2 BULAN):*

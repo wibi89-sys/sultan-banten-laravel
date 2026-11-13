@@ -1154,8 +1154,8 @@ class TelramCalculatorServiceTest extends TestCase
 
         // Hitungan manual teks dan HTML memuat catatan operasional SDP
         $this->assertStringContainsString('CATATAN OPERASIONAL SDP', $res['hitungan_manual_teks']);
-        $this->assertStringContainsString('OPSI 1', $res['hitungan_manual_teks']);
-        $this->assertStringContainsString('OPSI 2', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('Opsi 1', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('Opsi 2', $res['hitungan_manual_teks']);
         $this->assertStringContainsString('Catatan Operasional SDP', $res['hitungan_manual_html']);
     }
 
@@ -1225,21 +1225,51 @@ class TelramCalculatorServiceTest extends TestCase
         // Perhitungan 2/3 pada Hitungan Manual Teks memuat kedua opsi secara detail
         $teks = $res['hitungan_manual_teks'];
         $this->assertStringContainsString('PERHITUNGAN CUTI BERSYARAT (CB)', $teks);
-        $this->assertStringContainsString('TERSEDIA 2 OPSI PERHITUNGAN 2/3', $teks);
-        $this->assertStringContainsString('a. OPSI 1 (2/3 Berjalan / Pra-Remisi Terakhir):', $teks);
+        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana', $teks);
+        $this->assertStringContainsString('a. Opsi 1 = 2/3 Sebelum Remisi', $teks);
         $this->assertStringContainsString('17/04/2027', $teks);
-        $this->assertStringContainsString('b. OPSI 2 (2/3 Definitif / Pasca-Terbit SK Remisi Terakhir):', $teks);
+        $this->assertStringContainsString('b. Opsi 2 = 2/3 Setelah Remisi', $teks);
         $this->assertStringContainsString('28/03/2027', $teks);
+        $this->assertStringContainsString('Prediksi Tanggal Usulan Diusulkan', $teks);
 
         // Visual HTML memuat kedua opsi pada Card C (2/3) dan Card D (Usul SDP)
         $html = $res['hitungan_manual_html'];
-        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3', $html);
-        $this->assertStringContainsString('a. OPSI 1 (2/3 Berjalan / Pra-Remisi Terakhir)', $html);
-        $this->assertStringContainsString('b. OPSI 2 (2/3 Definitif / Pasca-Terbit SK Remisi Terakhir)', $html);
+        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana', $html);
+        $this->assertStringContainsString('Opsi 1 = 2/3 Sebelum Remisi', $html);
+        $this->assertStringContainsString('Opsi 2 = 2/3 Setelah Remisi', $html);
 
-        // PDF Report dapat di-generate dengan sukses
+        // PDF Template memuat judul rapi dan rincian lengkap 2 opsi
+        $pdfHtml = TelramCalculatorService::renderPdfTemplateHtml($res);
+        $this->assertStringContainsString('Tersedia 2 Opsi Perhitungan 2/3 Masa Pidana', $pdfHtml);
+        $this->assertStringContainsString('Opsi 1 = 2/3 Sebelum Remisi', $pdfHtml);
+        $this->assertStringContainsString('Opsi 2 = 2/3 Setelah Remisi', $pdfHtml);
+
+        // PDF Report dapat di-generate dengan sukses dan tepat 2 halaman
         $pdfBinary = TelramCalculatorService::generatePdfReport($res);
         $this->assertNotEmpty($pdfBinary);
         $this->assertStringStartsWith('%PDF', $pdfBinary);
+        preg_match_all('/\/Type\s*\/Page\b/', $pdfBinary, $pageMatches);
+        $this->assertCount(2, $pageMatches[0], 'PDF harus tepat 2 halaman tanpa tumpah ke halaman 3');
+
+        // Test skenario dengan putusan (ada tabel Potah di Hal 2) tetap tepat 2 halaman
+        $resPutusan = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-04-17',
+            1,
+            6,
+            0,
+            'islam',
+            0,
+            'WBP CB Contoh',
+            'REG.CB.01',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 362 KUHP',
+            '2026-07-01'
+        );
+        $pdfPutusanBinary = TelramCalculatorService::generatePdfReport($resPutusan);
+        preg_match_all('/\/Type\s*\/Page\b/', $pdfPutusanBinary, $pageMatchesPutusan);
+        $this->assertCount(2, $pageMatchesPutusan[0], 'PDF dengan potah harus tetap tepat 2 halaman tanpa tumpah ke halaman 3');
     }
 }
