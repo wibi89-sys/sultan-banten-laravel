@@ -259,8 +259,9 @@ class TelramCalculatorServiceTest extends TestCase
         $tgl23Definitif = Carbon::parse($result['milestones']['tgl_2_3_definitif']);
         $expectedPengusulan = $tgl23Definitif->copy()->subDays(60)->toDateString();
         $this->assertEquals($expectedPengusulan, $result['milestones']['tgl_mulai_pengusulan_murni']);
-        // Karena tanggal usul murni (02/03/2025) < tanggal remisi terakhir (17/08/2025), maka opsi 2 disesuaikan ke tanggal remisi
-        $this->assertTrue($result['opsi_pengusulan']['has_benturan']);
+        // Karena tanggal usul murni (02/03/2025) < tanggal remisi terakhir (17/08/2025), maka di SDP disesuaikan ke tanggal remisi (Hari H SK)
+        $this->assertFalse($result['opsi_pengusulan']['has_benturan']);
+        $this->assertTrue($result['opsi_pengusulan']['is_usul_tertahan_remisi']);
         $this->assertEquals('2025-08-17', $result['milestones']['tgl_mulai_pengusulan_opsi_2']);
         $this->assertEquals('2025-08-17', $result['milestones']['tgl_mulai_pengusulan']);
     }
@@ -853,9 +854,9 @@ class TelramCalculatorServiceTest extends TestCase
         $tglEksSub = Carbon::parse($resBb['milestones']['ekspirasi_subsider_definitif']);
         $this->assertEquals(90, (int) $tglEksPokok->diffInDays($tglEksSub));
 
-        // Hitungan manual memuat rincian 2/3 (+Subsider BB)
-        $this->assertStringContainsString('2/3 Masa Pidana (+Subsider BB)', $resBb['hitungan_manual_teks']);
-        $this->assertStringContainsString('2/3 (+Subsider BB)', $resBb['hitungan_manual_html']);
+        // Hitungan manual memuat rincian Ekspirasi Subsider (2/3 + Subsider BB)
+        $this->assertStringContainsString('Ekspirasi Subsider (2/3 + Subsider BB)', $resBb['hitungan_manual_teks']);
+        $this->assertStringContainsString('Ekspirasi Subsider (2/3 + Subsider BB)', $resBb['hitungan_manual_html']);
 
         // 2. Kasus SB (Sudah Bayar): Denda Rp 1.000.000.000, Subsider 3 Bulan (SB)
         $resSb = $this->service->hitungProyeksiRemisiDanIntegrasi(
@@ -1119,11 +1120,14 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertCount(2, $donorRows, 'Donor Darah hanya diberikan di 2 tahun RU yang dipilih (Th-1 dan Th-3).');
     }
 
-    public function test_dua_opsi_pengusulan_sdp_saat_terjadi_benturan_remisi_terakhir(): void
+    public function test_pengusulan_sdp_tertahan_remisi_tanpa_dua_opsi_karena_menunggu_remisi_lebih_cepat(): void
     {
         // Narapidana ditahan 1 Januari 2024, Vonis 3 Tahun, Islam
         // Pada event RU 17/08/2025, remisi RU + Dasawarsa total 180 hari memajukan 2/3 definitif ke Mei 2025
-        // Akibatnya H-60 jatuh pada 2 Maret 2025 (< 17 Agustus 2025)
+        // Akibatnya H-60 jatuh pada 2 Maret 2025 (< 17 Agustus 2025).
+        // Namun jika dihitung pra-remisi, 2/3 jatuh pada 28 Oktober 2025, H-60 jatuh pada 29 Agustus 2025 (> 17 Agustus 2025).
+        // Karena pengusulan pasca-remisi (17 Agustus) LEBIH CEPAT dibanding pra-remisi (29 Agustus),
+        // maka TIDAK ADA 2 Opsi pilihan (has_benturan = false, wargabinaan disarankan menunggu remisi).
         $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
             '2024-01-01',
             3,
@@ -1135,28 +1139,19 @@ class TelramCalculatorServiceTest extends TestCase
         $this->assertArrayHasKey('opsi_pengusulan', $res);
         $opsi = $res['opsi_pengusulan'];
 
-        // Terdeteksi benturan kalender SDP
-        $this->assertTrue($opsi['has_benturan'], 'Harus terdeteksi benturan karena tgl usul murni mendahului remisi terakhir.');
+        // Tidak ada 2 opsi karena pra-remisi (29/08) lebih lambat dari pasca-remisi (17/08)
+        $this->assertFalse($opsi['has_benturan'], 'Tidak boleh ada 2 opsi jika pra-remisi justru lebih lambat dari pasca-remisi.');
+        $this->assertTrue($opsi['is_usul_tertahan_remisi']);
         $this->assertNotNull($opsi['remisi_terakhir']);
         $this->assertEquals('2025-08-17', $opsi['remisi_terakhir']['tanggal']);
-
-        // Opsi 1 (Pra-Remisi Terakhir): Dihitung dari 2/3 berjalan sebelum 17/08/2025 (yaitu setelah RK 31/03/2025)
-        $this->assertEquals('2025-10-28', $opsi['opsi_1_pra_remisi']['tgl_2_3']);
-        $this->assertEquals('2025-08-29', $opsi['opsi_1_pra_remisi']['tgl_usul']);
-
-        // Opsi 2 (Pasca-Terbit SK Remisi Terakhir): Disesuaikan ke tanggal pemberian remisi terakhir (17/08/2025)
-        $this->assertTrue($opsi['opsi_2_pasca_remisi']['is_disesuaikan_ke_tgl_remisi']);
-        $this->assertEquals('2025-08-17', $opsi['opsi_2_pasca_remisi']['tgl_usul']);
-        $this->assertEquals('2025-05-01', $opsi['opsi_2_pasca_remisi']['tgl_2_3']);
+        $this->assertEquals('2025-08-17', $res['milestones']['tgl_mulai_pengusulan']);
 
         // Tanggal usul murni matematis tetap tersimpan
         $this->assertEquals('2025-03-02', $opsi['tgl_usul_murni']);
 
-        // Hitungan manual teks dan HTML memuat catatan operasional SDP
-        $this->assertStringContainsString('CATATAN OPERASIONAL SDP', $res['hitungan_manual_teks']);
-        $this->assertStringContainsString('Opsi 1', $res['hitungan_manual_teks']);
-        $this->assertStringContainsString('Opsi 2', $res['hitungan_manual_teks']);
-        $this->assertStringContainsString('Catatan Operasional SDP', $res['hitungan_manual_html']);
+        // Hitungan manual teks dan HTML memuat saran untuk menunggu remisi
+        $this->assertStringContainsString('WBP disarankan menunggu terbitnya SK', $res['hitungan_manual_teks']);
+        $this->assertStringContainsString('WBP disarankan untuk tetap menunggu terbitnya SK', $res['hitungan_manual_html']);
     }
 
     public function test_pengusulan_sdp_tanpa_benturan_remisi_terakhir(): void
@@ -1331,5 +1326,79 @@ class TelramCalculatorServiceTest extends TestCase
         $pdfHtml = TelramCalculatorService::renderPdfTemplateHtml($result);
         $this->assertStringContainsString('15/03/2029', $pdfHtml);
         $this->assertStringContainsString('15 Maret 2029', $pdfHtml);
+    }
+
+    public function test_anomali_dua_opsi_teratasi_dan_ekspirasi_subsider_di_bawah_dua_pertiga(): void
+    {
+        // Kasus pengguna: Ditahan 01/01/2026, Vonis 3 Tahun, Subsider 3 Bulan (status 'bb', denda 0)
+        // Tanpa remisi: 2/3 tercapai 01/01/2028.
+        // Remisi RU 17/08/2026: 1 bulan (30 hr) -> 2/3 = 02/12/2027.
+        // Remisi RK Idul Fitri 10/03/2027: 1 bulan (30 hr) -> 2/3 = 02/11/2027.
+        // Remisi RU 17/08/2027: 2 bulan (60 hr) -> 2/3 Definitif = 03/09/2027.
+        // H-60 dari 03/09/2027 adalah 05/07/2027 (< 17/08/2027).
+        // Jika pra-remisi (sebelum RU 17/08/2027), 2/3 adalah 02/11/2027, H-60 = 03/09/2027 (> 17/08/2027).
+        // Karena usul pasca-remisi (17/08/2027) LEBIH CEPAT dibanding usul pra-remisi (03/09/2027),
+        // maka TIDAK ADA 2 Opsi pilihan. WBP cukup menunggu remisi karena mengusulkan setelah remisi lebih cepat.
+        $res = $this->service->hitungProyeksiRemisiDanIntegrasi(
+            '2026-01-01',
+            3,
+            0,
+            0,
+            'islam',
+            0,
+            'WBP Anomali Test',
+            'REG.ANOMALI.01',
+            true,
+            'none',
+            '2_3',
+            1,
+            'Pasal 362 KUHP',
+            null, // tglPutusanStr
+            0,    // subTahun
+            3,    // subBulan
+            0,    // subHari
+            0,    // dendaNominal
+            'bb'  // subsiderStatus
+        );
+
+        $this->assertFalse($res['opsi_pengusulan']['has_benturan'], 'Tidak boleh ada 2 opsi jika pra-remisi lebih lambat dari pasca-remisi.');
+        $this->assertTrue($res['opsi_pengusulan']['is_usul_tertahan_remisi']);
+        $this->assertEquals('2027-08-17', $res['milestones']['tgl_mulai_pengusulan']);
+        $this->assertEquals('17/08/2027', $res['numeric']['tgl_mulai_pengusulan']);
+        $this->assertEquals('17 Agustus 2027', $res['formatted']['tgl_mulai_pengusulan']);
+
+        // 2/3 Definitif = 30/07/2027, Ekspirasi Subsider (+3 Bulan = +90 Hari) = 28/10/2027
+        $this->assertEquals('2027-07-30', $res['milestones']['tgl_2_3_definitif']);
+        $this->assertEquals('2027-10-28', $res['milestones']['tgl_2_3_subsider_definitif']);
+        $this->assertEquals('28/10/2027', $res['numeric']['tgl_2_3_subsider_definitif']);
+        $this->assertEquals('28 Oktober 2027', $res['formatted']['tgl_2_3_subsider_definitif']);
+
+        // Hitungan manual teks memuat baris Ekspirasi Subsider di bawah 2/3
+        $teks = $res['hitungan_manual_teks'];
+        $this->assertStringContainsString('• Ekspirasi Subsider (2/3 + Subsider BB) = 2/3 Masa Pidana + Pidana Subsider', $teks);
+        $this->assertStringContainsString('30/07/2027 + 3 Bulan', $teks);
+        $this->assertStringContainsString('28/10/2027', $teks);
+        $this->assertStringContainsString('28 Oktober 2027', $teks);
+
+        // Keterangan mengarahkan wargabinaan menunggu remisi
+        $this->assertStringContainsString('WBP disarankan menunggu terbitnya SK', $teks);
+
+        // Visual HTML memuat baris Ekspirasi Subsider di bawah 2/3
+        $html = $res['hitungan_manual_html'];
+        $this->assertStringContainsString('• Ekspirasi Subsider (2/3 + Subsider BB)', $html);
+        $this->assertStringContainsString('28/10/2027', $html);
+        $this->assertStringContainsString('28 Oktober 2027', $html);
+
+        // PDF Template memuat Ekspirasi Subsider di bawah 2/3
+        $pdfHtml = TelramCalculatorService::renderPdfTemplateHtml($res);
+        $this->assertStringContainsString('&bull; Ekspirasi Subsider (2/3 + Subsider BB)', $pdfHtml);
+        $this->assertStringContainsString('28/10/2027', $pdfHtml);
+        $this->assertStringContainsString('28 Oktober 2027', $pdfHtml);
+
+        // PDF Report tepat 2 halaman
+        $pdfBinary = TelramCalculatorService::generatePdfReport($res);
+        $this->assertNotEmpty($pdfBinary);
+        preg_match_all('/\/Type\s*\/Page\b/', $pdfBinary, $pageMatches);
+        $this->assertCount(2, $pageMatches[0], 'PDF harus tetap tepat 2 halaman');
     }
 }

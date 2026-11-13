@@ -1274,6 +1274,9 @@
                             </div>
                             <h4 class="fw-bold fraction-date-val font-mono-num mt-2 mb-0" id="res23">-</h4>
                             <small class="text-muted d-block mt-0.5" id="subInfo23" style="font-size: 10.5px;">Syarat substantif waktu PB/CB</small>
+                            <div id="boxSubsider23" class="mt-1.5 pt-1 border-top d-none" style="font-size: 11px; color: #14532d;">
+                                <i class="fas fa-plus-circle me-1"></i>Ekspirasi Subsider: <b id="res23SubsiderVal" class="font-mono-num">-</b>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2531,8 +2534,19 @@
                     document.getElementById('resEkspirasiSubsiderVal').innerText = data.formatted.ekspirasi_subsider_definitif || '-';
                     document.getElementById('resEkspirasiSubsiderMurniVal').innerText = data.formatted.ekspirasi_subsider_sebelum_remisi || data.formatted.ekspirasi_subsider_murni || '-';
                 }
+                const boxSubsider23 = document.getElementById('boxSubsider23');
+                if (data.formatted.tgl_2_3_subsider_definitif && data.formatted.tgl_2_3_subsider_definitif !== '-') {
+                    if (boxSubsider23) {
+                        boxSubsider23.classList.remove('d-none');
+                        document.getElementById('res23SubsiderVal').innerText = data.formatted.tgl_2_3_subsider_definitif;
+                    }
+                } else if (boxSubsider23) {
+                    boxSubsider23.classList.add('d-none');
+                }
             } else {
                 if (boxEkspirasiSubsider) boxEkspirasiSubsider.classList.add('d-none');
+                const boxSubsider23 = document.getElementById('boxSubsider23');
+                if (boxSubsider23) boxSubsider23.classList.add('d-none');
             }
 
             if (data.has_subsider || data.has_denda) {
@@ -2999,7 +3013,11 @@
   _(Hari H SK ${remisiNama} - Dasar 2/3: ${d.opsi_pengusulan.opsi_2_pasca_remisi.tgl_2_3_indo})_
 *Catatan:* Hitungan murni (${d.opsi_pengusulan.tgl_usul_murni_indo}) mendahului tanggal remisi. Di SDP, pengusulan tidak kurang dari tanggal remisi, sehingga disesuaikan tepat pada Hari H SK.`;
         } else {
-            baris23Wa = `• *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_sebelum_remisi || d.formatted.tgl_2_3_murni})`;
+            let subsider23Wa = '';
+            if (d.has_subsider && ((d.subsider_status || 'bb') === 'bb') && d.formatted.tgl_2_3_subsider_definitif && d.formatted.tgl_2_3_subsider_definitif !== '-') {
+                subsider23Wa = `\n  - *Ekspirasi Subsider (2/3 + Subsider BB):* ${d.formatted.tgl_2_3_subsider_definitif}`;
+            }
+            baris23Wa = `• *2/3 Masa Pidana:* ${d.formatted.tgl_2_3_definitif} (Sebelum Remisi: ${d.formatted.tgl_2_3_sebelum_remisi || d.formatted.tgl_2_3_murni})${subsider23Wa}`;
             usulanSection = `⚠️ *MULAI PENGUSULAN DI SDP (H-2 BULAN):*
 *Tanggal:* ${d.formatted.tgl_mulai_pengusulan}
 *Status:* ${d.status_pengusulan.label}
