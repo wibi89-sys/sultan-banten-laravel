@@ -1815,9 +1815,8 @@ class TelramCalculatorService
                 $teks .= "          - 2/3 Masa Pidana (+Subsider BB) = {$tgl23DefNum} + {$subsiderTeks} = {$tgl23SubDefNum} ({$tgl23SubDefIndo})\n";
             }
             $teks .= "        - Prediksi Tanggal Usulan Diusulkan:\n";
-            $teks .= "          Hitungan murni H-60 = {$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} = {$tglUsulMurniIndo}\n";
-            $teks .= "          *Catatan: Tanggal hitungan murni mendahului tanggal pemberian remisi ({$remisiTglIndo}). Pada sistem SDP, pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit (tidak kurang dari tanggal remisi).\n";
-            $teks .= "          Maka tanggal mulai usul di SDP disesuaikan tepat pada Hari H SK {$remisiNama} = {$o2TglUsulNum} = {$o2TglUsulIndo}.\n";
+            $teks .= "          {$tgl23DefNum} - 60 hr = {$tglUsulMurniNum} < tgl remisi {$remisiTglIndo}\n";
+            $teks .= "          *Catatan: Pada sistem SDP, usulan tidak dapat kurang dari tgl remisi, disesuaikan tepat Hari H SK {$remisiNama} = {$o2TglUsulNum} = {$o2TglUsulIndo}.\n";
         } else {
             $teks .= "   • 2/3 Masa Pidana = {$labelDitahan} + ((2/3 x Masa Pidana) - Remisi)\n";
             $teks .= "                     = {$tglDitahanAcuanNum} + ((2/3 x {$lamaVonis}) - {$totalRemisiTeks})\n";
@@ -2476,9 +2475,9 @@ SUB_O1;
                                         <span class="fw-bold" style="color: #c2410c; font-size: 12px;"><i class="fas fa-exclamation-triangle me-1"></i> Prediksi Tanggal Usulan Diusulkan</span>
                                         <span class="badge bg-warning text-dark font-monospace" style="font-size: 12px;">{$o2TglUsulIndo} (Hari H SK)</span>
                                     </div>
-                                    <div class="text-secondary small font-monospace" style="font-size: 11px;">Hitungan murni H-60: {$tgl23DefNum} - 60 Hari = {$tglUsulMurniNum} = {$tglUsulMurniIndo} &lt; Tgl Remisi ({$remisiTerkTglIndo})</div>
+                                    <div class="text-secondary small font-monospace" style="font-size: 11px;">{$tgl23DefNum} - 60 hr = <b>{$tglUsulMurniNum}</b> &lt; tgl remisi <b>{$remisiTerkTglIndo}</b></div>
                                     <div class="alert alert-warning py-1.5 px-2.5 mb-0 mt-1" style="font-size: 11px; border-left: 3px solid #d97706;">
-                                        <strong>Ketentuan SDP:</strong> Pengusulan tidak dapat diinput sebelum SK remisi bersangkutan terbit (tidak kurang dari tanggal remisi). Tanggal usulan disesuaikan tepat pada Hari H SK {$remisiTerkNama} = {$o2TglUsulNum} = <b style="color: #c2410c;">{$o2TglUsulIndo}</b>.
+                                        <strong>Ketentuan SDP:</strong> Pada SDP, usulan tidak dapat kurang dari tgl remisi, disesuaikan tepat Hari H SK {$remisiTerkNama} = {$o2TglUsulNum} = <b style="color: #c2410c;">{$o2TglUsulIndo}</b>.
                                     </div>
                                 </div>
                             </div>
@@ -3585,7 +3584,7 @@ SUB_O2_PDF;
                             <tr>
                                 <td width="28%" style="color: #9a3412; font-weight: bold; padding-left: 4px;">- Prediksi Tgl. Usulan</td>
                                 <td width="4%" align="center" style="font-weight: bold;">=</td>
-                                <td width="68%">Hitungan murni ({$tgl23DefNum} - 60 hr = {$tglUsulMurniPdfNum}) &lt; tgl remisi ({$remisiTerkTglPdfIndo}).<br>Pada SDP, usulan tidak dapat kurang dari tgl remisi &rarr; Disesuaikan tepat Hari H SK = {$o2TglUsulPdfNum} = <b style="color: #c2410c; font-size: 8.5pt;">{$o2TglUsulPdfIndo}</b></td>
+                                <td width="68%">{$tgl23DefNum} - 60 hr = <b>{$tglUsulMurniPdfNum}</b> &lt; tgl remisi <b>{$remisiTerkTglPdfIndo}</b>.<br>Pada SDP, usulan tidak dapat kurang dari tgl remisi, disesuaikan tepat Hari H SK = {$o2TglUsulPdfNum} = <b style="color: #c2410c; font-size: 8.5pt;">{$o2TglUsulPdfIndo}</b></td>
                             </tr>
                         </table>
                     </td>
