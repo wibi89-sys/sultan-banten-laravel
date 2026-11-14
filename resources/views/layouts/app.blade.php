@@ -427,13 +427,28 @@
             @endif
 
             @if($user->hasAccess('sidang_tpp'))
-            <div class="menu-parent {{ request()->routeIs('sidang-tpp.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuSidangTPP">
+            <div class="menu-parent {{ request()->routeIs('sidang-tpp.*') || request()->routeIs('sidang-tpp-kanwil.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuSidangTPP">
                 <i class="fas fa-gavel"></i>
                 <span>Sidang TPP</span>
                 <i class="fas fa-chevron-down arrow"></i>
             </div>
-            <div class="collapse {{ request()->routeIs('sidang-tpp.*') ? 'show' : '' }}" id="menuSidangTPP">
+            <div class="collapse {{ request()->routeIs('sidang-tpp.*') || request()->routeIs('sidang-tpp-kanwil.*') ? 'show' : '' }}" id="menuSidangTPP">
                 <div class="sidebar-submenu">
+                    @if($user->isKanwil())
+                    <div class="px-3 pt-2 pb-1 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em; color: #38bdf8;">
+                        <i class="fas fa-university me-1"></i>Pelaksanaan TPP Kanwil
+                    </div>
+                    <a href="{{ route('sidang-tpp-kanwil.index') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.index') || request()->routeIs('sidang-tpp-kanwil.show') ? 'active' : '' }}">
+                        <i class="fas fa-balance-scale"></i><span>Sidang TPP Kanwil</span>
+                    </a>
+                    <a href="{{ route('sidang-tpp-kanwil.create') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.create') ? 'active' : '' }}">
+                        <i class="fas fa-plus-circle text-success"></i><span>Registrasi Sidang Baru</span>
+                    </a>
+
+                    <div class="px-3 pt-2 pb-1 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em; color: #94a3b8;">
+                        <i class="fas fa-desktop me-1"></i>Monitoring TPP Satker UPT
+                    </div>
+                    @endif
                     <a href="{{ Route::has('sidang-tpp.index') ? route('sidang-tpp.index') : url('/sidang-tpp') }}" class="{{ request()->routeIs('sidang-tpp.index') || request()->routeIs('sidang-tpp.create') || request()->routeIs('sidang-tpp.show') ? 'active' : '' }}">
                         <i class="fas fa-calendar-alt"></i><span>1. Jadwal &amp; Undangan</span>
                     </a>

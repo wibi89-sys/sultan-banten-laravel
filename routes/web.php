@@ -19,6 +19,7 @@ use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SidangTppController;
 use App\Http\Controllers\SidangTppDokumenKanwilController;
+use App\Http\Controllers\SidangTppKanwilController;
 use App\Http\Controllers\TelramController;
 use App\Http\Controllers\UptController;
 use App\Http\Controllers\UserController;
@@ -38,6 +39,10 @@ Route::get('/offline', function () {
 // Public Link Surat Undangan TPP (Dapat dibuka langsung tanpa login untuk pesan WhatsApp & anggota TPP)
 Route::get('/undangan-tpp/{id}', [SidangTppController::class, 'publicUndangan'])->whereNumber('id')->name('sidang-tpp.public-undangan');
 Route::get('/tpp/undangan/{id}', [SidangTppController::class, 'publicUndangan'])->whereNumber('id');
+
+// Public Portal Pengisian Presensi & Pendapat Sidang TPP Kanwil (Akses Instan via Token WhatsApp)
+Route::get('/tpp-kanwil/portal/{token}', [SidangTppKanwilController::class, 'portalAnggota'])->name('sidang-tpp-kanwil.portal-anggota');
+Route::post('/tpp-kanwil/portal/{token}', [SidangTppKanwilController::class, 'submitPortalAnggota'])->name('sidang-tpp-kanwil.portal-anggota.submit');
 
 // Public Otentifikasi Keabsahan Dokumen Digital Resmi (Scan QR Code via Smartphone)
 Route::get('/verifikasi-dokumen/{kode}', [VerifikasiDokumenController::class, 'show'])->name('verifikasi-dokumen.show');
@@ -160,6 +165,27 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/nota-dinas/parse-ai', [AiSettingController::class, 'parseUndanganAi'])->whereNumber('id')->name('nota-dinas.parse-ai');
         Route::match(['get', 'post'], '/{id}/nota-dinas/draft-ai', [SidangTppDokumenKanwilController::class, 'draftNotaDinasAi'])->whereNumber('id')->name('nota-dinas.draft-ai');
         Route::post('/{id}/nota-dinas/generate', [AiSettingController::class, 'generateNotaDinas'])->whereNumber('id')->name('nota-dinas.generate');
+    });
+
+    // Pelaksanaan Sidang TPP Tingkat Kantor Wilayah
+    Route::prefix('sidang-tpp-kanwil')->name('sidang-tpp-kanwil.')->group(function () {
+        Route::get('/', [SidangTppKanwilController::class, 'index'])->name('index');
+        Route::get('/create', [SidangTppKanwilController::class, 'create'])->name('create');
+        Route::post('/', [SidangTppKanwilController::class, 'store'])->name('store');
+        Route::get('/{id}', [SidangTppKanwilController::class, 'show'])->whereNumber('id')->name('show');
+        Route::delete('/{id}', [SidangTppKanwilController::class, 'destroy'])->whereNumber('id')->name('destroy');
+
+        // Sebar Undangan & Link Pendapat WA
+        Route::post('/{id}/broadcast-wa', [SidangTppKanwilController::class, 'broadcastWaAll'])->whereNumber('id')->name('broadcast-wa');
+        Route::post('/{id}/broadcast-wa/{anggotaId}', [SidangTppKanwilController::class, 'broadcastWaSingle'])->whereNumber('id')->name('broadcast-wa-single');
+
+        // Unduh Nota Dinas & Berita Acara Siap Cetak (Word / PDF)
+        Route::get('/{id}/download-nota/{format}', [SidangTppKanwilController::class, 'downloadNotaDinas'])->whereNumber('id')->name('download-nota');
+        Route::get('/{id}/download-ba/{format}', [SidangTppKanwilController::class, 'downloadBaDraft'])->whereNumber('id')->name('download-ba');
+
+        // Pemberkasan Fisik: Upload BA Signed & Lembar Disposisi Kakanwil
+        Route::post('/{id}/upload-ba-signed', [SidangTppKanwilController::class, 'uploadBaSigned'])->whereNumber('id')->name('upload-ba-signed');
+        Route::post('/{id}/upload-disposisi-kakanwil', [SidangTppKanwilController::class, 'uploadDisposisiKakanwil'])->whereNumber('id')->name('upload-disposisi-kakanwil');
     });
 
     // Mutasi Narapidana Antar-UPT Wilayah Banten

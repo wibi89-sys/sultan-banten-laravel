@@ -8,6 +8,7 @@ use App\Models\DataOverstaying;
 use App\Models\DataPenghuni;
 use App\Models\MutasiNarapidana;
 use App\Models\SidangTpp;
+use App\Models\SidangTppKanwilAnggota;
 use App\Models\Upt;
 use App\Models\User;
 use App\Models\WaBroadcast;
@@ -1539,6 +1540,74 @@ class WhatsAppService
             ]);
         } catch (\Throwable $e) {
             Log::warning('Gagal mencatat log wa_notification_logs pengingat: '.$e->getMessage());
+        }
+
+        return $res;
+    }
+
+    /**
+     * Kirim notifikasi WhatsApp undangan personal Sidang TPP Kanwil beserta link token pengisian presensi dan pendapat.
+     */
+    public static function notifyUndanganSidangTppKanwil(SidangTppKanwilAnggota $anggota): array
+    {
+        $sidang = $anggota->sidangKanwil;
+        if (! $sidang) {
+            return ['success' => false, 'message' => 'Sidang TPP Kanwil tidak ditemukan.'];
+        }
+
+        $cleanWa = preg_replace('/[^0-9]/', '', $anggota->no_wa ?? '');
+        if (empty($cleanWa) || strlen($cleanWa) < 9) {
+            $anggota->update([
+                'wa_sent_status' => 'gagal',
+                'wa_error_message' => 'Nomor WhatsApp tidak valid atau belum diisi.',
+            ]);
+
+            return ['success' => false, 'message' => 'Nomor WhatsApp anggota tidak valid atau belum diisi.'];
+        }
+
+        $hariTanggal = $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-';
+        $jamMulai = substr((string) $sidang->jam_mulai, 0, 5);
+        $jamSelesai = ! empty($sidang->jam_selesai) ? substr((string) $sidang->jam_selesai, 0, 5) : 'Selesai';
+        $portalUrl = route('sidang-tpp-kanwil.portal-anggota', $anggota->token_akses);
+
+        $metodeText = match ($sidang->metode) {
+            'daring' => "💻 Daring (Virtual Zoom/Meet)\nLink: ".($sidang->link_daring ?: '-').(! empty($sidang->meeting_id) ? "\nMeeting ID: {$sidang->meeting_id} | Passcode: {$sidang->passcode}" : ''),
+            'hybrid' => "🏢 Hybrid (Ruang Rapat & Virtual)\nTempat: {$sidang->tempat}\nLink: ".($sidang->link_daring ?: '-'),
+            default => "🏢 Tatap Muka Langsung\nTempat: {$sidang->tempat}",
+        };
+
+        $nomorNota = $sidang->nomor_nota_dinas ?: '-';
+
+        $message = "*UNDANGAN SIDANG TPP KANTOR WILAYAH*\n".
+            "-------------------------------------------\n".
+            "Yth. Bapak/Ibu *{$anggota->nama}*\n".
+            "Jabatan: {$anggota->jabatan}\n".
+            "Peran: *{$anggota->peran_sidang} Tim Sidang TPP Kanwil*\n\n".
+            "Disampaikan dengan hormat pelaksanaan Sidang Tim Pengamat Pemasyarakatan (TPP) Tingkat Kantor Wilayah:\n\n".
+            "📅 *Hari, Tanggal*: {$hariTanggal}\n".
+            "⏰ *Waktu*: {$jamMulai} s/d {$jamSelesai} WIB\n".
+            "📍 *Pelaksanaan*:\n{$metodeText}\n".
+            "📑 *Nomor Nota Dinas*: {$nomorNota}\n".
+            "🎯 *Agenda Pembahasan*:\n*{$sidang->agenda_judul}*\n".
+            ($sidang->agenda_deskripsi ? "_{$sidang->agenda_deskripsi}_\n\n" : "\n").
+            "-------------------------------------------\n".
+            "Mohon kesediaan Bapak/Ibu untuk mengisi *Konfirmasi Presensi Kehadiran* serta memberikan *Tanggapan/Pendapat Sidang* melalui tautan resmi berikut:\n\n".
+            "👉 {$portalUrl}\n\n".
+            "Atas perhatian dan kerja sama Bapak/Ibu, diucapkan terima kasih.\n\n".
+            '_Sekretariat Sidang TPP Kantor Wilayah Banten_';
+
+        $res = self::send($cleanWa, $message, 2);
+        if (! empty($res['success'])) {
+            $anggota->update([
+                'wa_sent_status' => 'terkirim',
+                'wa_sent_at' => now(),
+                'wa_error_message' => null,
+            ]);
+        } else {
+            $anggota->update([
+                'wa_sent_status' => 'gagal',
+                'wa_error_message' => $res['message'] ?? 'Gagal mengirim pesan',
+            ]);
         }
 
         return $res;
