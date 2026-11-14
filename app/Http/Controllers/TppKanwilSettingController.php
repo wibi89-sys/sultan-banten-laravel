@@ -47,11 +47,88 @@ class TppKanwilSettingController extends Controller
     {
         $this->checkAccess('full');
 
+        $section = $request->input('setting_section');
+        $setting = TppKanwilSetting::getFirst();
+
+        // 1. Jika Menyimpan Tab 2: Profil & Spesimen Kakanwil
+        if ($section === 'kakanwil' || ($request->has('kakanwil_nama') && ! $request->has('nomor_nota_prefix'))) {
+            $validated = $request->validate([
+                'kakanwil_nama' => 'nullable|string|max:150',
+                'kakanwil_nip' => 'nullable|string|max:50',
+                'kakanwil_pangkat' => 'nullable|string|max:100',
+                'kakanwil_jabatan' => 'nullable|string|max:150',
+                'auto_embed_ttd' => 'nullable|boolean',
+                'kakanwil_ttd_image' => 'nullable|image|mimes:png,webp,jpg,jpeg|max:2048',
+                'kanwil_stempel_image' => 'nullable|image|mimes:png,webp,jpg,jpeg|max:2048',
+            ]);
+
+            $uploadDir = public_path('uploads/sidang_tpp_kanwil');
+            if (! File::isDirectory($uploadDir)) {
+                File::makeDirectory($uploadDir, 0755, true, true);
+            }
+
+            // Upload TTD Digital Kakanwil
+            if ($request->hasFile('kakanwil_ttd_image')) {
+                $file = $request->file('kakanwil_ttd_image');
+                $filename = 'ttd_kakanwil_'.time().'.'.$file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+                $validated['kakanwil_ttd_image'] = 'uploads/sidang_tpp_kanwil/'.$filename;
+            }
+
+            // Upload Stempel Resmi Kanwil
+            if ($request->hasFile('kanwil_stempel_image')) {
+                $file = $request->file('kanwil_stempel_image');
+                $filename = 'stempel_kanwil_'.time().'.'.$file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+                $validated['kanwil_stempel_image'] = 'uploads/sidang_tpp_kanwil/'.$filename;
+            }
+
+            $validated['kakanwil_nama'] = ! empty($validated['kakanwil_nama']) ? $validated['kakanwil_nama'] : ($setting->kakanwil_nama ?: 'Dody Fahrudin, Bc.IP., S.H., M.H.');
+            $validated['kakanwil_jabatan'] = ! empty($validated['kakanwil_jabatan']) ? $validated['kakanwil_jabatan'] : ($setting->kakanwil_jabatan ?: 'Kepala Kantor Wilayah');
+            $validated['auto_embed_ttd'] = $request->has('auto_embed_ttd');
+
+            $setting->update($validated);
+
+            ActivityLog::log('edit', 'sidang_tpp_kanwil', 'Memperbarui Profil & Spesimen TTD Kakanwil');
+
+            return redirect()->to(route('sidang-tpp-kanwil.setting').'#tab-kakanwil')
+                ->with('success', 'Profil Kepala Kantor Wilayah dan spesimen TTD/Stempel berhasil disimpan.');
+        }
+
+        // 2. Jika Menyimpan Tab 3: Format Naskah & Lokasi Standar
+        if ($section === 'naskah' || $request->has('nomor_nota_prefix') || $request->has('dasar_hukum')) {
+            $validated = $request->validate([
+                'nomor_nota_prefix' => 'nullable|string|max:50',
+                'nomor_risalah_prefix' => 'nullable|string|max:50',
+                'nomor_laporan_prefix' => 'nullable|string|max:50',
+                'tempat_sidang_default' => 'nullable|string|max:255',
+                'link_daring_default' => 'nullable|url|max:255',
+                'meeting_id_default' => 'nullable|string|max:100',
+                'passcode_default' => 'nullable|string|max:50',
+                'dasar_hukum' => 'nullable|array',
+                'dasar_hukum.*' => 'nullable|string|max:500',
+            ]);
+
+            if (isset($validated['dasar_hukum'])) {
+                $filteredDasar = array_values(array_filter($validated['dasar_hukum'], fn ($val) => ! empty(trim((string) $val))));
+                $validated['dasar_hukum_json'] = $filteredDasar;
+                unset($validated['dasar_hukum']);
+            }
+
+            $setting->update($validated);
+
+            ActivityLog::log('edit', 'sidang_tpp_kanwil', 'Memperbarui Format Penomoran Naskah & Dasar Hukum Sidang TPP Kanwil');
+
+            return redirect()->to(route('sidang-tpp-kanwil.setting').'#tab-naskah')
+                ->with('success', 'Format penomoran naskah dinas, lokasi standar, dan dasar hukum berhasil disimpan.');
+        }
+
+        // 3. Fallback jika dikirim bersamaan
         $validated = $request->validate([
-            'kakanwil_nama' => 'required|string|max:150',
+            'kakanwil_nama' => 'nullable|string|max:150',
             'kakanwil_nip' => 'nullable|string|max:50',
             'kakanwil_pangkat' => 'nullable|string|max:100',
-            'kakanwil_jabatan' => 'required|string|max:150',
+            'kakanwil_jabatan' => 'nullable|string|max:150',
             'auto_embed_ttd' => 'nullable|boolean',
             'nomor_nota_prefix' => 'nullable|string|max:50',
             'nomor_risalah_prefix' => 'nullable|string|max:50',
@@ -66,14 +143,11 @@ class TppKanwilSettingController extends Controller
             'kanwil_stempel_image' => 'nullable|image|mimes:png,webp,jpg,jpeg|max:2048',
         ]);
 
-        $setting = TppKanwilSetting::getFirst();
-
         $uploadDir = public_path('uploads/sidang_tpp_kanwil');
         if (! File::isDirectory($uploadDir)) {
             File::makeDirectory($uploadDir, 0755, true, true);
         }
 
-        // Upload TTD Digital Kakanwil
         if ($request->hasFile('kakanwil_ttd_image')) {
             $file = $request->file('kakanwil_ttd_image');
             $filename = 'ttd_kakanwil_'.time().'.'.$file->getClientOriginalExtension();
@@ -81,7 +155,6 @@ class TppKanwilSettingController extends Controller
             $validated['kakanwil_ttd_image'] = 'uploads/sidang_tpp_kanwil/'.$filename;
         }
 
-        // Upload Stempel Resmi Kanwil
         if ($request->hasFile('kanwil_stempel_image')) {
             $file = $request->file('kanwil_stempel_image');
             $filename = 'stempel_kanwil_'.time().'.'.$file->getClientOriginalExtension();
@@ -89,7 +162,11 @@ class TppKanwilSettingController extends Controller
             $validated['kanwil_stempel_image'] = 'uploads/sidang_tpp_kanwil/'.$filename;
         }
 
-        $validated['auto_embed_ttd'] = $request->has('auto_embed_ttd');
+        if ($request->has('kakanwil_nama')) {
+            $validated['kakanwil_nama'] = ! empty($validated['kakanwil_nama']) ? $validated['kakanwil_nama'] : ($setting->kakanwil_nama ?: 'Dody Fahrudin, Bc.IP., S.H., M.H.');
+            $validated['kakanwil_jabatan'] = ! empty($validated['kakanwil_jabatan']) ? $validated['kakanwil_jabatan'] : ($setting->kakanwil_jabatan ?: 'Kepala Kantor Wilayah');
+            $validated['auto_embed_ttd'] = $request->has('auto_embed_ttd');
+        }
 
         if (isset($validated['dasar_hukum'])) {
             $filteredDasar = array_values(array_filter($validated['dasar_hukum'], fn ($val) => ! empty(trim((string) $val))));
@@ -97,12 +174,12 @@ class TppKanwilSettingController extends Controller
             unset($validated['dasar_hukum']);
         }
 
-        $setting->update($validated);
+        $setting->update(array_filter($validated, fn ($v) => $v !== null));
 
-        ActivityLog::log('edit', 'sidang_tpp_kanwil', 'Memperbarui Pengaturan Sidang TPP Kanwil & TTD Kakanwil');
+        ActivityLog::log('edit', 'sidang_tpp_kanwil', 'Memperbarui Pengaturan Sidang TPP Kanwil');
 
         return redirect()->route('sidang-tpp-kanwil.setting')
-            ->with('success', 'Pengaturan Sidang TPP Kanwil, profil Kakanwil, dan spesimen TTD/Stempel berhasil disimpan.');
+            ->with('success', 'Pengaturan Sidang TPP Kanwil berhasil disimpan.');
     }
 
     /**

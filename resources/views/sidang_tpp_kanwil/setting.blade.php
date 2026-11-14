@@ -181,6 +181,7 @@
                 <div class="tab-pane fade" id="tab-kakanwil" role="tabpanel">
                     <form action="{{ route('sidang-tpp-kanwil.setting.update') }}" method="POST" enctype="multipart/form-data">
                         @csrf
+                        <input type="hidden" name="setting_section" value="kakanwil">
                         <div class="row g-4">
                             <!-- Kolom Kiri: Biodata Kakanwil -->
                             <div class="col-lg-6">
@@ -288,6 +289,7 @@
                 <div class="tab-pane fade" id="tab-naskah" role="tabpanel">
                     <form action="{{ route('sidang-tpp-kanwil.setting.update') }}" method="POST">
                         @csrf
+                        <input type="hidden" name="setting_section" value="naskah">
                         <div class="row g-4">
                             <!-- Prefix Penomoran Naskah -->
                             <div class="col-lg-6">
@@ -541,5 +543,16 @@
         container.appendChild(div);
         div.querySelector('input').focus();
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const hash = window.location.hash;
+        if (hash) {
+            const targetBtn = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (targetBtn) {
+                const tab = new bootstrap.Tab(targetBtn);
+                tab.show();
+            }
+        }
+    });
 </script>
 @endpush

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
+use App\Models\TppKanwilSetting;
 use App\Models\User;
 use App\Services\GeminiAiService;
 use App\Services\TppKanwilDokumenService;
@@ -222,5 +223,51 @@ class SidangTppKanwilDokumenAiTest extends TestCase
 
         $this->sidang->refresh();
         $this->assertNull($this->sidang->dokumen_custom);
+    }
+
+    /**
+     * Memastikan Form Tab 3 (Format Naskah & Dasar Hukum) dapat disimpan tanpa error validasi kakanwil_nama/kakanwil_jabatan.
+     */
+    public function test_setting_naskah_tab_can_be_saved_without_kakanwil_fields(): void
+    {
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.setting.update'), [
+                'setting_section' => 'naskah',
+                'nomor_nota_prefix' => 'WP.12.TEST.NOTA-',
+                'nomor_risalah_prefix' => 'WP.12.TEST.RIS-',
+                'nomor_laporan_prefix' => 'WP.12.TEST.LAP-',
+                'tempat_sidang_default' => 'Ruang Sidang Baru',
+                'dasar_hukum' => ['UU Baru No. 1', 'Permen Baru No. 2'],
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('sidang-tpp-kanwil.setting').'#tab-naskah');
+
+        $setting = TppKanwilSetting::getFirst();
+        $this->assertEquals('WP.12.TEST.NOTA-', $setting->nomor_nota_prefix);
+        $this->assertEquals('Ruang Sidang Baru', $setting->tempat_sidang_default);
+    }
+
+    /**
+     * Memastikan Form Tab 2 (Profil & Spesimen Kakanwil) dapat disimpan dengan sukses.
+     */
+    public function test_setting_kakanwil_tab_can_be_saved_successfully(): void
+    {
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.setting.update'), [
+                'setting_section' => 'kakanwil',
+                'kakanwil_nama' => 'Dody Fahrudin, Bc.IP., S.H., M.H.',
+                'kakanwil_nip' => '197205141994031001',
+                'kakanwil_pangkat' => 'Pembina Utama Madya (IV/d)',
+                'kakanwil_jabatan' => 'Kepala Kantor Wilayah',
+                'auto_embed_ttd' => '1',
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('sidang-tpp-kanwil.setting').'#tab-kakanwil');
+
+        $setting = TppKanwilSetting::getFirst();
+        $this->assertEquals('Dody Fahrudin, Bc.IP., S.H., M.H.', $setting->kakanwil_nama);
+        $this->assertTrue((bool) $setting->auto_embed_ttd);
     }
 }
