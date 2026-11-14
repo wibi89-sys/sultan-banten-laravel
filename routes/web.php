@@ -21,6 +21,7 @@ use App\Http\Controllers\SidangTppController;
 use App\Http\Controllers\SidangTppDokumenKanwilController;
 use App\Http\Controllers\SidangTppKanwilController;
 use App\Http\Controllers\TelramController;
+use App\Http\Controllers\TppKanwilSettingController;
 use App\Http\Controllers\UptController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerifikasiDokumenController;
@@ -175,16 +176,27 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}', [SidangTppKanwilController::class, 'show'])->whereNumber('id')->name('show');
         Route::delete('/{id}', [SidangTppKanwilController::class, 'destroy'])->whereNumber('id')->name('destroy');
 
+        // Pengaturan TPP Kanwil (Tim Sidang, No WA, TTD Kakanwil & Stempel)
+        Route::get('/setting', [TppKanwilSettingController::class, 'index'])->name('setting');
+        Route::post('/setting', [TppKanwilSettingController::class, 'updateSetting'])->name('setting.update');
+        Route::post('/setting/pegawai', [TppKanwilSettingController::class, 'storePegawai'])->name('setting.pegawai.store');
+        Route::put('/setting/pegawai/{id}', [TppKanwilSettingController::class, 'updatePegawai'])->whereNumber('id')->name('setting.pegawai.update');
+        Route::delete('/setting/pegawai/{id}', [TppKanwilSettingController::class, 'destroyPegawai'])->whereNumber('id')->name('setting.pegawai.destroy');
+
         // Sebar Undangan & Link Pendapat WA
         Route::post('/{id}/broadcast-wa', [SidangTppKanwilController::class, 'broadcastWaAll'])->whereNumber('id')->name('broadcast-wa');
         Route::post('/{id}/broadcast-wa/{anggotaId}', [SidangTppKanwilController::class, 'broadcastWaSingle'])->whereNumber('id')->name('broadcast-wa-single');
 
-        // Unduh Nota Dinas & Berita Acara Siap Cetak (Word / PDF)
+        // Unduh Naskah Dinas Siap Cetak (Word / PDF)
         Route::get('/{id}/download-nota/{format}', [SidangTppKanwilController::class, 'downloadNotaDinas'])->whereNumber('id')->name('download-nota');
         Route::get('/{id}/download-ba/{format}', [SidangTppKanwilController::class, 'downloadBaDraft'])->whereNumber('id')->name('download-ba');
+        Route::get('/{id}/download-risalah/{format}', [SidangTppKanwilController::class, 'downloadRisalah'])->whereNumber('id')->name('download-risalah');
+        Route::get('/{id}/download-laporan/{format}', [SidangTppKanwilController::class, 'downloadLaporan'])->whereNumber('id')->name('download-laporan');
 
-        // Pemberkasan Fisik: Upload BA Signed & Lembar Disposisi Kakanwil
+        // Pemberkasan Fisik: Upload BA Signed, Risalah, Laporan & Lembar Disposisi Kakanwil
         Route::post('/{id}/upload-ba-signed', [SidangTppKanwilController::class, 'uploadBaSigned'])->whereNumber('id')->name('upload-ba-signed');
+        Route::post('/{id}/upload-risalah-signed', [SidangTppKanwilController::class, 'uploadRisalahSigned'])->whereNumber('id')->name('upload-risalah-signed');
+        Route::post('/{id}/upload-laporan-signed', [SidangTppKanwilController::class, 'uploadLaporanSigned'])->whereNumber('id')->name('upload-laporan-signed');
         Route::post('/{id}/upload-disposisi-kakanwil', [SidangTppKanwilController::class, 'uploadDisposisiKakanwil'])->whereNumber('id')->name('upload-disposisi-kakanwil');
     });
 

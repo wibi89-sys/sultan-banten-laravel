@@ -518,6 +518,9 @@
                         <a href="{{ route('sidang-tpp-kanwil.create') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.create') ? 'active' : '' }}">
                             <i class="fas fa-plus-circle text-success"></i><span>Registrasi Sidang Baru</span>
                         </a>
+                        <a href="{{ route('sidang-tpp-kanwil.setting') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.setting') ? 'active' : '' }}">
+                            <i class="fas fa-cog text-primary"></i><span>Pengaturan TPP Kanwil</span>
+                        </a>
                     </div>
                     @endif
 

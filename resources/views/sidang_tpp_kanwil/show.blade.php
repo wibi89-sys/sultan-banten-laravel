@@ -31,30 +31,54 @@
             <!-- Dropdown Cetak Dokumen -->
             <div class="dropdown">
                 <button class="btn btn-primary btn-sm px-3 shadow-sm dropdown-toggle fw-bold" style="border-radius: 20px;" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-print me-1"></i> Cetak Dokumen Fisik
+                    <i class="fas fa-file-invoice me-1"></i> Berkas Naskah Dinas
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size: 13px;">
-                    <li class="dropdown-header text-uppercase fw-bold" style="font-size: 10px;">Berita Acara (BA) &amp; Disposisi Fisik</li>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size: 13px; min-width: 250px;">
+                    <li class="dropdown-header text-uppercase fw-bold text-primary" style="font-size: 10.5px;"><i class="fas fa-file-contract me-1"></i>Risalah Hasil Sidang TPP</li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-risalah', [$sidang->id, 'pdf']) }}" target="_blank">
+                            <i class="fas fa-file-pdf text-danger me-2"></i>Risalah Sidang (PDF)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-risalah', [$sidang->id, 'word']) }}">
+                            <i class="fas fa-file-word text-primary me-2"></i>Risalah Sidang (Word .doc)
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 10.5px;"><i class="fas fa-file-signature me-1"></i>Laporan Pelaksanaan Sidang</li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-laporan', [$sidang->id, 'pdf']) }}" target="_blank">
+                            <i class="fas fa-file-pdf text-danger me-2"></i>Laporan Pelaksanaan (PDF)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-laporan', [$sidang->id, 'word']) }}">
+                            <i class="fas fa-file-word text-primary me-2"></i>Laporan Pelaksanaan (Word .doc)
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-header text-uppercase fw-bold text-secondary" style="font-size: 10.5px;"><i class="fas fa-stamp me-1"></i>Berita Acara &amp; Disposisi Fisik</li>
                     <li>
                         <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-ba', [$sidang->id, 'pdf']) }}" target="_blank">
-                            <i class="fas fa-file-pdf text-danger me-2"></i>Cetak Berita Acara (PDF)
+                            <i class="fas fa-file-pdf text-danger me-2"></i>Berita Acara (PDF)
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-ba', [$sidang->id, 'word']) }}">
-                            <i class="fas fa-file-word text-primary me-2"></i>Unduh Berita Acara (Word .doc)
+                            <i class="fas fa-file-word text-primary me-2"></i>Berita Acara (Word .doc)
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
-                    <li class="dropdown-header text-uppercase fw-bold" style="font-size: 10px;">Nota Dinas Undangan</li>
+                    <li class="dropdown-header text-uppercase fw-bold text-secondary" style="font-size: 10.5px;"><i class="fas fa-envelope-open-text me-1"></i>Nota Dinas Undangan</li>
                     <li>
                         <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-nota', [$sidang->id, 'pdf']) }}" target="_blank">
-                            <i class="fas fa-file-pdf text-danger me-2"></i>Cetak Nota Dinas (PDF)
+                            <i class="fas fa-file-pdf text-danger me-2"></i>Nota Dinas (PDF)
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" href="{{ route('sidang-tpp-kanwil.download-nota', [$sidang->id, 'word']) }}">
-                            <i class="fas fa-file-word text-primary me-2"></i>Unduh Nota Dinas (Word .doc)
+                            <i class="fas fa-file-word text-primary me-2"></i>Nota Dinas (Word .doc)
                         </a>
                     </li>
                 </ul>
@@ -101,6 +125,62 @@
                     <h5 class="fw-bold mb-2 text-dark" style="font-size: 18px;">{{ $sidang->agenda_judul }}</h5>
                     @if($sidang->agenda_deskripsi)
                     <p class="text-secondary small mb-3">{{ $sidang->agenda_deskripsi }}</p>
+                    @endif
+
+                    @if($sidang->is_klien_bapas && !empty($sidang->klien_data))
+                    @php $kd = $sidang->klien_data; @endphp
+                    <div class="card border border-primary border-opacity-25 bg-primary-subtle bg-opacity-10 shadow-none mb-3" style="border-radius: 10px;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary text-white"><i class="fas fa-passport me-1"></i>Klien Pemasyarakatan</span>
+                                    <span class="fw-bold text-primary">{{ $kd['nama_klien'] ?? '-' }} {{ !empty($kd['bin']) ? 'BIN ' . strtoupper($kd['bin']) : '' }}</span>
+                                </div>
+                                <span class="badge bg-light text-dark border">{{ $kd['program_integrasi'] ?? 'PB' }}</span>
+                            </div>
+                            <div class="row g-2 small text-dark">
+                                <div class="col-12 col-md-4">
+                                    <span class="text-muted">Bapas Asal:</span> <b>{{ $kd['bapas_nama'] ?? '-' }}</b><br>
+                                    <span class="text-muted">No. Register:</span> <code>{{ $kd['no_register_bapas'] ?? '-' }}</code><br>
+                                    <span class="text-muted">PK Bapas:</span> <b>{{ $kd['nama_pk'] ?? '-' }}</b>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <span class="text-muted">Keperluan:</span> <b>{{ $kd['keperluan_ln'] ?? '-' }}</b><br>
+                                    <span class="text-muted">Negara Tujuan:</span> <b><i class="fas fa-plane text-primary me-1"></i>{{ $kd['negara_tujuan'] ?? '-' }}</b><br>
+                                    <span class="text-muted">Jadwal:</span> <b>{{ !empty($kd['tgl_berangkat']) ? \Carbon\Carbon::parse($kd['tgl_berangkat'])->format('d/m/Y') : '-' }} s/d {{ !empty($kd['tgl_kembali']) ? \Carbon\Carbon::parse($kd['tgl_kembali'])->format('d/m/Y') : '-' }} ({{ $kd['durasi_hari'] ?? '-' }} Hari)</b>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <span class="text-muted">Penjamin:</span> <b>{{ $kd['penjamin_nama'] ?? '-' }}</b> ({{ $kd['penjamin_hubungan'] ?? '-' }})<br>
+                                    <span class="text-muted">Kontak/WA:</span> <b>{{ $kd['penjamin_telepon'] ?? '-' }}</b><br>
+                                    <span class="text-muted">Surat Bapas:</span> {{ $kd['nomor_surat_bapas'] ?? '-' }} ({{ !empty($kd['tanggal_surat_bapas']) ? \Carbon\Carbon::parse($kd['tanggal_surat_bapas'])->format('d/m/Y') : '-' }})
+                                </div>
+                            </div>
+                            @if(!empty($kd['file_litmas_bapas']) || !empty($kd['file_surat_bapas']) || !empty($kd['file_bukti_travel']) || !empty($kd['file_surat_jaminan']))
+                            <div class="d-flex flex-wrap gap-2 mt-2 pt-2 border-top">
+                                @if(!empty($kd['file_litmas_bapas']))
+                                <a href="{{ asset($kd['file_litmas_bapas']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                    <i class="fas fa-file-pdf me-1"></i>Litmas Bapas
+                                </a>
+                                @endif
+                                @if(!empty($kd['file_surat_bapas']))
+                                <a href="{{ asset($kd['file_surat_bapas']) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                    <i class="fas fa-file-pdf me-1"></i>Surat Usulan Bapas
+                                </a>
+                                @endif
+                                @if(!empty($kd['file_bukti_travel']))
+                                <a href="{{ asset($kd['file_bukti_travel']) }}" target="_blank" class="btn btn-outline-info btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                    <i class="fas fa-ticket-alt me-1"></i>Bukti Tiket / Travel / RS
+                                </a>
+                                @endif
+                                @if(!empty($kd['file_surat_jaminan']))
+                                <a href="{{ asset($kd['file_surat_jaminan']) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                    <i class="fas fa-shield-alt me-1"></i>Surat Jaminan Penjamin
+                                </a>
+                                @endif
+                            </div>
+                            @endif
+                        </div>
+                    </div>
                     @endif
 
                     <div class="d-flex flex-wrap gap-4 small text-muted">
@@ -315,36 +395,84 @@
         <!-- TAB 2: PEMBERKASAN FISIK & DISPOSISI KAKANWIL -->
         <div class="tab-pane fade" id="tab-fisik" role="tabpanel">
             <div class="row g-4">
-                <!-- Kolom Kiri: Panduan & Generator Dokumen Siap Cetak -->
+                <!-- Kolom Kiri: Generator Dokumen Resmi Siap Cetak -->
                 <div class="col-lg-5">
                     <div class="card border-0 shadow-sm mb-4" style="background: var(--bg-card); border-radius: 12px;">
                         <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center gap-2">
                             <span class="badge bg-primary-subtle text-primary p-2" style="border-radius: 8px;">
-                                <i class="fas fa-print"></i>
+                                <i class="fas fa-file-invoice"></i>
                             </span>
-                            <h6 class="fw-bold mb-0 text-dark">Tahap 1: Cetak Berkas Fisik</h6>
+                            <h6 class="fw-bold mb-0 text-dark">Tahap 1: Cetak Naskah Dinas Resmi</h6>
                         </div>
                         <div class="card-body p-4">
                             <p class="small text-muted mb-3" style="line-height: 1.5;">
-                                Sistem telah menyusun <b>Berita Acara (BA) Sidang TPP Kanwil</b> yang memuat rekapitulasi kehadiran, pendapat tim, matriks tanda tangan manual basah, dan lembar tanggapan/petunjuk Kepala Kantor Wilayah.
+                                Sistem secara otomatis menyusun seluruh naskah dinas resmi Sidang TPP Kanwil sesuai tata naskah Kementerian Imigrasi dan Pemasyarakatan.
                             </p>
-                            <div class="d-grid gap-2 mb-3">
-                                <a href="{{ route('sidang-tpp-kanwil.download-ba', [$sidang->id, 'pdf']) }}" target="_blank" class="btn btn-primary btn-sm py-2 fw-bold">
-                                    <i class="fas fa-file-pdf me-2"></i>Buka &amp; Cetak Berita Acara (PDF)
-                                </a>
-                                <a href="{{ route('sidang-tpp-kanwil.download-ba', [$sidang->id, 'word']) }}" class="btn btn-outline-primary btn-sm py-2">
-                                    <i class="fas fa-file-word me-2"></i>Unduh Format Word (.doc)
-                                </a>
+
+                            <!-- 1. Risalah Hasil Sidang TPP -->
+                            <div class="p-3 bg-light rounded border mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold text-dark small"><i class="fas fa-file-contract text-primary me-1"></i>1. Risalah Hasil Sidang TPP</div>
+                                    <span class="badge bg-primary-subtle text-primary" style="font-size: 10px;">Ditandatangani Ketua TPP</span>
+                                </div>
+                                <div class="small text-muted mb-2" style="font-size: 11.5px;">Memuat 9 butir dasar hukum, tabel anggota sidang, materi sidang, dan amar putusan sidang.</div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('sidang-tpp-kanwil.download-risalah', [$sidang->id, 'pdf']) }}" target="_blank" class="btn btn-primary btn-sm py-1.5 px-2.5 fw-bold w-50">
+                                        <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                                    </a>
+                                    <a href="{{ route('sidang-tpp-kanwil.download-risalah', [$sidang->id, 'word']) }}" class="btn btn-outline-primary btn-sm py-1.5 px-2.5 w-50">
+                                        <i class="fas fa-file-word me-1"></i> Word (.doc)
+                                    </a>
+                                </div>
                             </div>
 
-                            <div class="p-3 bg-light rounded border small">
-                                <div class="fw-bold text-dark mb-1"><i class="fas fa-info-circle text-primary me-1"></i>Alur Tanda Tangan Basah:</div>
-                                <ol class="mb-0 ps-3 text-muted" style="line-height: 1.45;">
-                                    <li>Cetak dokumen Berita Acara di atas pada kertas F4/A4.</li>
-                                    <li>Lakukan penandatanganan manual basah oleh Ketua, Sekretaris, dan Anggota sidang.</li>
-                                    <li>Serahkan berkas kepada Kepala Kantor Wilayah untuk memperoleh tanggapan/disposisi fisik dan tanda tangan.</li>
-                                    <li>Scan dokumen yang sudah lengkap bertanda tangan, lalu unggah pada form di samping.</li>
-                                </ol>
+                            <!-- 2. Laporan Pelaksanaan Sidang TPP -->
+                            <div class="p-3 bg-light rounded border mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold text-dark small"><i class="fas fa-file-signature text-success me-1"></i>2. Laporan Pelaksanaan Sidang</div>
+                                    <span class="badge bg-success-subtle text-success" style="font-size: 10px;">TTD Ketua TPP &amp; Kakanwil</span>
+                                </div>
+                                <div class="small text-muted mb-2" style="font-size: 11.5px;">Dilengkapi foto dokumentasi sidang, QR Code verifikasi otentikasi, dan tanda tangan ganda.</div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('sidang-tpp-kanwil.download-laporan', [$sidang->id, 'pdf']) }}" target="_blank" class="btn btn-success btn-sm py-1.5 px-2.5 fw-bold w-50">
+                                        <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                                    </a>
+                                    <a href="{{ route('sidang-tpp-kanwil.download-laporan', [$sidang->id, 'word']) }}" class="btn btn-outline-success btn-sm py-1.5 px-2.5 w-50">
+                                        <i class="fas fa-file-word me-1"></i> Word (.doc)
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- 3. Berita Acara & Lembar Disposisi -->
+                            <div class="p-3 bg-light rounded border mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold text-dark small"><i class="fas fa-stamp text-danger me-1"></i>3. Berita Acara (BA) &amp; Disposisi Fisik</div>
+                                </div>
+                                <div class="small text-muted mb-2" style="font-size: 11.5px;">Daftar presensi, telaahan pendapat anggota, dan kotak lembar disposisi fisik pimpinan.</div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('sidang-tpp-kanwil.download-ba', [$sidang->id, 'pdf']) }}" target="_blank" class="btn btn-outline-secondary btn-sm py-1.5 px-2.5 w-50">
+                                        <i class="fas fa-file-pdf text-danger me-1"></i> Cetak PDF
+                                    </a>
+                                    <a href="{{ route('sidang-tpp-kanwil.download-ba', [$sidang->id, 'word']) }}" class="btn btn-outline-secondary btn-sm py-1.5 px-2.5 w-50">
+                                        <i class="fas fa-file-word text-primary me-1"></i> Word (.doc)
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- 4. Nota Dinas Undangan -->
+                            <div class="p-3 bg-light rounded border">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold text-dark small"><i class="fas fa-envelope-open-text text-info me-1"></i>4. Nota Dinas Undangan Sidang</div>
+                                </div>
+                                <div class="small text-muted mb-2" style="font-size: 11.5px;">Surat undangan resmi dinas beserta lampiran susunan tim sidang TPP Kanwil.</div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('sidang-tpp-kanwil.download-nota', [$sidang->id, 'pdf']) }}" target="_blank" class="btn btn-outline-secondary btn-sm py-1.5 px-2.5 w-50">
+                                        <i class="fas fa-file-pdf text-danger me-1"></i> Cetak PDF
+                                    </a>
+                                    <a href="{{ route('sidang-tpp-kanwil.download-nota', [$sidang->id, 'word']) }}" class="btn btn-outline-secondary btn-sm py-1.5 px-2.5 w-50">
+                                        <i class="fas fa-file-word text-primary me-1"></i> Word (.doc)
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -352,14 +480,134 @@
 
                 <!-- Kolom Kanan: Form Upload Berkas Fisik & Disposisi Kakanwil -->
                 <div class="col-lg-7">
-                    <!-- Card Upload Berita Acara Bertanda Tangan Basah -->
+                    <!-- Card 1: Upload Risalah Hasil Sidang Bertanda Tangan Basah -->
+                    <div class="card border-0 shadow-sm mb-4" style="background: var(--bg-card); border-radius: 12px;">
+                        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary-subtle text-primary p-2" style="border-radius: 8px;">
+                                    <i class="fas fa-file-contract"></i>
+                                </span>
+                                <h6 class="fw-bold mb-0 text-dark">Unggah Risalah Hasil Sidang TPP Bertanda Tangan</h6>
+                            </div>
+                            @if($sidang->file_risalah_signed)
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                            @else
+                            <span class="badge bg-secondary">Belum Diunggah</span>
+                            @endif
+                        </div>
+                        <div class="card-body p-4">
+                            @if($sidang->file_risalah_signed)
+                            <div class="alert alert-success border-0 p-3 mb-3 d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                    <div>
+                                        <div class="fw-bold small text-dark">Berkas Scan Risalah Sidang Bertanda Tangan Basah</div>
+                                        <small class="text-muted">Nomor Risalah: {{ $sidang->nomor_risalah ?: '-' }}</small>
+                                    </div>
+                                </div>
+                                <a href="{{ asset($sidang->file_risalah_signed) }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt me-1"></i>Lihat Berkas
+                                </a>
+                            </div>
+                            @endif
+
+                            <form action="{{ route('sidang-tpp-kanwil.upload-risalah-signed', $sidang->id) }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Nomor Risalah Sah <span class="text-danger">*</span></label>
+                                        <input type="text" name="nomor_risalah" class="form-control form-control-sm" value="{{ old('nomor_risalah', $sidang->nomor_risalah ?: ('WP.12.PK.06.05-'.str_pad($sidang->id, 2, '0', STR_PAD_LEFT))) }}" required>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label small fw-bold text-dark">File Scan Risalah Bertanda Tangan <span class="text-danger">*</span></label>
+                                        <input type="file" name="file_risalah_signed" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                                        <small class="text-muted" style="font-size: 11px;">Format PDF/Gambar (Maks. 15 MB)</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm">
+                                            <i class="fas fa-upload me-1"></i> Simpan &amp; Unggah Risalah Sidang
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Upload Laporan Pelaksanaan Sidang Sah + Foto Dokumentasi -->
+                    <div class="card border-0 shadow-sm mb-4" style="background: var(--bg-card); border-radius: 12px;">
+                        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success-subtle text-success p-2" style="border-radius: 8px;">
+                                    <i class="fas fa-file-signature"></i>
+                                </span>
+                                <h6 class="fw-bold mb-0 text-dark">Unggah Laporan Pelaksanaan Sidang TPP &amp; Dokumentasi</h6>
+                            </div>
+                            @if($sidang->file_laporan_signed)
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                            @else
+                            <span class="badge bg-secondary">Belum Diunggah</span>
+                            @endif
+                        </div>
+                        <div class="card-body p-4">
+                            @if($sidang->file_laporan_signed)
+                            <div class="alert alert-success border-0 p-3 mb-3 d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                    <div>
+                                        <div class="fw-bold small text-dark">Berkas Scan Laporan Pelaksanaan Sidang Sah</div>
+                                        <small class="text-muted">Nomor Laporan: {{ $sidang->nomor_laporan ?: '-' }}</small>
+                                    </div>
+                                </div>
+                                <a href="{{ asset($sidang->file_laporan_signed) }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt me-1"></i>Lihat Berkas
+                                </a>
+                            </div>
+                            @endif
+
+                            <form action="{{ route('sidang-tpp-kanwil.upload-laporan-signed', $sidang->id) }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label small fw-bold text-dark">Nomor Laporan Sah <span class="text-danger">*</span></label>
+                                        <input type="text" name="nomor_laporan" class="form-control form-control-sm" value="{{ old('nomor_laporan', $sidang->nomor_laporan ?: ('WP.12.PK.06.06-'.str_pad($sidang->id, 2, '0', STR_PAD_LEFT))) }}" required>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Foto Dokumentasi 1 (Sidang/Deliberasi)</label>
+                                        <input type="file" name="foto_dokumentasi_1" class="form-control form-control-sm" accept="image/*">
+                                        @if($sidang->foto_dokumentasi_1)
+                                        <small class="text-success"><i class="fas fa-check me-1"></i>Foto 1 sudah terunggah</small>
+                                        @endif
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Foto Dokumentasi 2 (Verifikasi Berkas)</label>
+                                        <input type="file" name="foto_dokumentasi_2" class="form-control form-control-sm" accept="image/*">
+                                        @if($sidang->foto_dokumentasi_2)
+                                        <small class="text-success"><i class="fas fa-check me-1"></i>Foto 2 sudah terunggah</small>
+                                        @endif
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-bold text-dark">File Scan Laporan Pelaksanaan Sah <span class="text-danger">*</span></label>
+                                        <input type="file" name="file_laporan_signed" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" required>
+                                        <small class="text-muted" style="font-size: 11px;">Format PDF/Gambar (Maks. 15 MB)</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-success btn-sm px-3 shadow-sm">
+                                            <i class="fas fa-upload me-1"></i> Simpan &amp; Unggah Laporan Pelaksanaan
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Upload Berita Acara Bertanda Tangan Basah -->
                     <div class="card border-0 shadow-sm mb-4" style="background: var(--bg-card); border-radius: 12px;">
                         <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-info-subtle text-info p-2" style="border-radius: 8px;">
-                                    <i class="fas fa-file-signature"></i>
+                                    <i class="fas fa-stamp"></i>
                                 </span>
-                                <h6 class="fw-bold mb-0 text-dark">Tahap 2: Unggah Berita Acara Fisik Bertanda Tangan</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Unggah Berita Acara Fisik Bertanda Tangan</h6>
                             </div>
                             @if($sidang->file_ba_signed)
                             <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
@@ -400,8 +648,8 @@
                                         <textarea name="kesimpulan_sidang" class="form-control form-control-sm" rows="2" placeholder="Catat kesimpulan musyawarah sidang...">{{ old('kesimpulan_sidang', $sidang->kesimpulan_sidang) }}</textarea>
                                     </div>
                                     <div class="col-12">
-                                        <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm">
-                                            <i class="fas fa-upload me-1"></i> Simpan &amp; Unggah Berita Acara Bertanda Tangan
+                                        <button type="submit" class="btn btn-outline-primary btn-sm px-3 shadow-sm">
+                                            <i class="fas fa-upload me-1"></i> Simpan &amp; Unggah Berita Acara
                                         </button>
                                     </div>
                                 </div>
@@ -409,14 +657,14 @@
                         </div>
                     </div>
 
-                    <!-- Card Tanggapan / Disposisi Fisik Kepala Kantor Wilayah -->
+                    <!-- Card 4: Tanggapan / Disposisi Fisik Kepala Kantor Wilayah -->
                     <div class="card border-0 shadow-sm" style="background: var(--bg-card); border-radius: 12px;">
                         <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-danger-subtle text-danger p-2" style="border-radius: 8px;">
                                     <i class="fas fa-stamp"></i>
                                 </span>
-                                <h6 class="fw-bold mb-0 text-dark">Tahap 3: Tanggapan &amp; Disposisi Fisik Kakanwil</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Tanggapan &amp; Disposisi Fisik Kepala Kantor Wilayah</h6>
                             </div>
                             {!! $sidang->tanggapan_badge !!}
                         </div>
@@ -454,11 +702,11 @@
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <label class="form-label small fw-bold text-dark">Nama Kepala Kantor Wilayah <span class="text-danger">*</span></label>
-                                        <input type="text" name="kakanwil_nama" class="form-control form-control-sm" value="{{ old('kakanwil_nama', $sidang->kakanwil_nama ?: 'DODOT ADIKOESWANTO, S.H., M.Si.') }}" required>
+                                        <input type="text" name="kakanwil_nama" class="form-control form-control-sm" value="{{ old('kakanwil_nama', $sidang->kakanwil_nama ?: 'Dody Fahrudin, Bc.IP., S.H., M.H.') }}" required>
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <label class="form-label small fw-bold text-dark">NIP Kepala Kantor Wilayah</label>
-                                        <input type="text" name="kakanwil_nip" class="form-control form-control-sm" value="{{ old('kakanwil_nip', $sidang->kakanwil_nip ?: '196811201991031001') }}">
+                                        <input type="text" name="kakanwil_nip" class="form-control form-control-sm" value="{{ old('kakanwil_nip', $sidang->kakanwil_nip ?: '197205141994031001') }}">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label small fw-bold text-dark">Catatan / Arahan Tertulis Kakanwil</label>

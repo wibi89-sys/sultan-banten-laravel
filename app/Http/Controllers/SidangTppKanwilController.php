@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\KanwilPegawai;
 use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
+use App\Models\TppKanwilSetting;
 use App\Models\User;
 use App\Services\TppKanwilDokumenService;
 use App\Services\WhatsAppService;
@@ -102,6 +103,8 @@ class SidangTppKanwilController extends Controller
     {
         $this->checkKanwilAccess('full');
 
+        $setting = TppKanwilSetting::getFirst();
+
         $pegawaiList = KanwilPegawai::where('is_active', true)
             ->orderBy('urutan')
             ->orderBy('nama')
@@ -112,8 +115,25 @@ class SidangTppKanwilController extends Controller
             ->whereMonth('tanggal_sidang', date('m'))
             ->count() + 1;
         $suggestedNomorSidang = 'STPP-KW/'.date('Y/m').'/'.str_pad($countThisMonth, 3, '0', STR_PAD_LEFT);
+        $suggestedNomorNota = ($setting->nomor_nota_prefix ?? 'WP.12.UM.01.01-').str_pad($countThisMonth, 3, '0', STR_PAD_LEFT);
+        $suggestedNomorRisalah = ($setting->nomor_risalah_prefix ?? 'WP.12.PK.06.05-').str_pad($countThisMonth, 2, '0', STR_PAD_LEFT);
+        $suggestedNomorLaporan = ($setting->nomor_laporan_prefix ?? 'WP.12.PK.06.06-').str_pad($countThisMonth, 2, '0', STR_PAD_LEFT);
 
-        return view('sidang_tpp_kanwil.create', compact('pegawaiList', 'suggestedNomorSidang'));
+        $defaultKetua = $pegawaiList->firstWhere('peran_tpp', 'Ketua') ?? $pegawaiList->first();
+        $defaultSekretaris = $pegawaiList->firstWhere('peran_tpp', 'Sekretaris');
+        $defaultAnggotaIds = $pegawaiList->where('peran_tpp', 'Anggota')->pluck('id')->toArray();
+
+        return view('sidang_tpp_kanwil.create', compact(
+            'pegawaiList',
+            'suggestedNomorSidang',
+            'suggestedNomorNota',
+            'suggestedNomorRisalah',
+            'suggestedNomorLaporan',
+            'setting',
+            'defaultKetua',
+            'defaultSekretaris',
+            'defaultAnggotaIds'
+        ));
     }
 
     /**
@@ -122,6 +142,7 @@ class SidangTppKanwilController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $this->checkKanwilAccess('full');
+        $setting = TppKanwilSetting::getFirst();
 
         $validated = $request->validate([
             'nomor_sidang' => 'required|string|max:100',
@@ -135,6 +156,8 @@ class SidangTppKanwilController extends Controller
             'passcode' => 'nullable|string|max:100',
             'nomor_nota_dinas' => 'nullable|string|max:150',
             'tanggal_nota_dinas' => 'nullable|date',
+            'nomor_risalah' => 'nullable|string|max:150',
+            'nomor_laporan' => 'nullable|string|max:150',
             'agenda_kategori' => 'required|string|max:100',
             'agenda_judul' => 'required|string|max:255',
             'agenda_deskripsi' => 'nullable|string',
@@ -143,6 +166,27 @@ class SidangTppKanwilController extends Controller
             'sekretaris_id' => 'required|exists:kanwil_pegawai,id',
             'anggota_ids' => 'required|array|min:1',
             'anggota_ids.*' => 'exists:kanwil_pegawai,id',
+            'is_klien_bapas' => 'nullable|boolean',
+            'klien_nama' => 'nullable|string|max:150',
+            'klien_bin' => 'nullable|string|max:100',
+            'klien_no_register' => 'nullable|string|max:100',
+            'klien_bapas_nama' => 'nullable|string|max:150',
+            'klien_nomor_surat_bapas' => 'nullable|string|max:150',
+            'klien_tanggal_surat_bapas' => 'nullable|date',
+            'klien_nama_pk' => 'nullable|string|max:150',
+            'klien_program' => 'nullable|string|max:50',
+            'klien_keperluan_ln' => 'nullable|string|max:150',
+            'klien_negara_tujuan' => 'nullable|string|max:100',
+            'klien_tgl_berangkat' => 'nullable|date',
+            'klien_tgl_kembali' => 'nullable|date',
+            'klien_durasi_hari' => 'nullable|numeric',
+            'klien_penjamin_nama' => 'nullable|string|max:150',
+            'klien_penjamin_hubungan' => 'nullable|string|max:100',
+            'klien_penjamin_telepon' => 'nullable|string|max:50',
+            'file_litmas_bapas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_surat_bapas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_bukti_travel' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip|max:15360',
+            'file_surat_jaminan' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip|max:15360',
         ]);
 
         $ketua = KanwilPegawai::findOrFail($request->ketua_id);
@@ -160,6 +204,80 @@ class SidangTppKanwilController extends Controller
             $fileBahanPath = 'uploads/sidang_tpp_kanwil/bahan/'.$filename;
         }
 
+        $isKlienBapas = $request->boolean('is_klien_bapas')
+            || str_contains(strtolower($request->agenda_kategori), 'klien')
+            || str_contains(strtolower($request->agenda_kategori), 'luar negeri')
+            || str_contains(strtolower($request->agenda_kategori), 'bapas')
+            || str_contains(strtolower($request->agenda_kategori), 'umroh')
+            || str_contains(strtolower($request->agenda_kategori), 'berobat');
+
+        $klienData = null;
+        if ($isKlienBapas) {
+            $dirKlien = public_path('uploads/sidang_tpp_kanwil/klien');
+            if (! File::isDirectory($dirKlien)) {
+                File::makeDirectory($dirKlien, 0755, true, true);
+            }
+
+            $litmasPath = null;
+            if ($request->hasFile('file_litmas_bapas')) {
+                $f = $request->file('file_litmas_bapas');
+                $fn = 'litmas_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirKlien, $fn);
+                $litmasPath = 'uploads/sidang_tpp_kanwil/klien/'.$fn;
+            }
+
+            $suratBapasPath = null;
+            if ($request->hasFile('file_surat_bapas')) {
+                $f = $request->file('file_surat_bapas');
+                $fn = 'surat_bapas_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirKlien, $fn);
+                $suratBapasPath = 'uploads/sidang_tpp_kanwil/klien/'.$fn;
+            }
+
+            $buktiTravelPath = null;
+            if ($request->hasFile('file_bukti_travel')) {
+                $f = $request->file('file_bukti_travel');
+                $fn = 'travel_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirKlien, $fn);
+                $buktiTravelPath = 'uploads/sidang_tpp_kanwil/klien/'.$fn;
+            }
+
+            $suratJaminanPath = null;
+            if ($request->hasFile('file_surat_jaminan')) {
+                $f = $request->file('file_surat_jaminan');
+                $fn = 'jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirKlien, $fn);
+                $suratJaminanPath = 'uploads/sidang_tpp_kanwil/klien/'.$fn;
+            }
+
+            $klienData = [
+                'nama_klien' => $request->input('klien_nama', $request->agenda_judul),
+                'bin' => $request->input('klien_bin'),
+                'no_register_bapas' => $request->input('klien_no_register'),
+                'bapas_nama' => $request->input('klien_bapas_nama', 'Balai Pemasyarakatan Kelas I Serang'),
+                'nomor_surat_bapas' => $request->input('klien_nomor_surat_bapas'),
+                'tanggal_surat_bapas' => $request->input('klien_tanggal_surat_bapas'),
+                'nama_pk' => $request->input('klien_nama_pk', 'Pembimbing Kemasyarakatan'),
+                'program_integrasi' => $request->input('klien_program', 'Pembebasan Bersyarat (PB)'),
+                'keperluan_ln' => $request->input('klien_keperluan_ln', 'Ibadah Umroh'),
+                'negara_tujuan' => $request->input('klien_negara_tujuan', 'Kerajaan Arab Saudi'),
+                'tgl_berangkat' => $request->input('klien_tgl_berangkat'),
+                'tgl_kembali' => $request->input('klien_tgl_kembali'),
+                'durasi_hari' => $request->input('klien_durasi_hari', 14),
+                'penjamin_nama' => $request->input('klien_penjamin_nama'),
+                'penjamin_hubungan' => $request->input('klien_penjamin_hubungan', 'Keluarga'),
+                'penjamin_telepon' => $request->input('klien_penjamin_telepon'),
+                'file_litmas_bapas' => $litmasPath,
+                'file_surat_bapas' => $suratBapasPath,
+                'file_bukti_travel' => $buktiTravelPath,
+                'file_surat_jaminan' => $suratJaminanPath,
+            ];
+        }
+
+        $countTotal = SidangTppKanwil::count() + 1;
+        $nomorRisalah = $request->input('nomor_risalah') ?: (($setting->nomor_risalah_prefix ?? 'WP.12.PK.06.05-').str_pad($countTotal, 2, '0', STR_PAD_LEFT));
+        $nomorLaporan = $request->input('nomor_laporan') ?: (($setting->nomor_laporan_prefix ?? 'WP.12.PK.06.06-').str_pad($countTotal, 2, '0', STR_PAD_LEFT));
+
         $sidang = SidangTppKanwil::create([
             'nomor_sidang' => $validated['nomor_sidang'],
             'tanggal_sidang' => $validated['tanggal_sidang'],
@@ -172,9 +290,13 @@ class SidangTppKanwilController extends Controller
             'passcode' => $validated['passcode'],
             'nomor_nota_dinas' => $validated['nomor_nota_dinas'],
             'tanggal_nota_dinas' => $validated['tanggal_nota_dinas'],
+            'nomor_risalah' => $nomorRisalah,
+            'nomor_laporan' => $nomorLaporan,
             'agenda_kategori' => $validated['agenda_kategori'],
             'agenda_judul' => $validated['agenda_judul'],
             'agenda_deskripsi' => $validated['agenda_deskripsi'],
+            'is_klien_bapas' => $isKlienBapas,
+            'klien_data' => $klienData,
             'file_bahan_sidang' => $fileBahanPath,
             'ketua_id' => $ketua->id,
             'ketua_nama' => $ketua->nama,
@@ -247,10 +369,14 @@ class SidangTppKanwilController extends Controller
     }
 
     /**
-     * Helper cari nomor WhatsApp pegawai dari tabel User jika ada.
+     * Helper cari nomor WhatsApp pegawai dari master KanwilPegawai atau User jika ada.
      */
     protected function getPegawaiWa(KanwilPegawai $pegawai): ?string
     {
+        if (! empty($pegawai->no_wa)) {
+            return $pegawai->no_wa;
+        }
+
         // Cari user yang NIP-nya sama atau namanya sama
         $user = User::where(function ($q) use ($pegawai) {
             if (! empty($pegawai->nip)) {
@@ -438,6 +564,135 @@ class SidangTppKanwilController extends Controller
         }
 
         return TppKanwilDokumenService::generateBeritaAcaraPdf($sidang);
+    }
+
+    /**
+     * Download Risalah Hasil Sidang TPP (Word / PDF).
+     */
+    public function downloadRisalah(int $id, string $format = 'pdf'): Response
+    {
+        $this->checkKanwilAccess();
+        $sidang = SidangTppKanwil::with('anggota')->findOrFail($id);
+
+        if ($format === 'doc' || $format === 'word') {
+            return TppKanwilDokumenService::generateRisalahWord($sidang);
+        }
+
+        return TppKanwilDokumenService::generateRisalahPdf($sidang);
+    }
+
+    /**
+     * Download Laporan Pelaksanaan Sidang TPP (Word / PDF).
+     */
+    public function downloadLaporan(int $id, string $format = 'pdf'): Response
+    {
+        $this->checkKanwilAccess();
+        $sidang = SidangTppKanwil::with('anggota')->findOrFail($id);
+
+        if ($format === 'doc' || $format === 'word') {
+            return TppKanwilDokumenService::generateLaporanWord($sidang);
+        }
+
+        return TppKanwilDokumenService::generateLaporanPdf($sidang);
+    }
+
+    /**
+     * Upload Berkas Fisik Risalah Hasil Sidang Bertanda Tangan Basah.
+     */
+    public function uploadRisalahSigned(Request $request, int $id): RedirectResponse
+    {
+        $this->checkKanwilAccess('full');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        $request->validate([
+            'nomor_risalah' => 'required|string|max:150',
+            'file_risalah_signed' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
+        ]);
+
+        $dir = public_path('uploads/sidang_tpp_kanwil/risalah_signed');
+        if (! File::isDirectory($dir)) {
+            File::makeDirectory($dir, 0755, true, true);
+        }
+
+        $file = $request->file('file_risalah_signed');
+        $filename = 'risalah_signed_'.$sidang->id.'_'.date('Ymd_His').'.'.$file->getClientOriginalExtension();
+        $file->move($dir, $filename);
+        $filePath = 'uploads/sidang_tpp_kanwil/risalah_signed/'.$filename;
+
+        $sidang->update([
+            'nomor_risalah' => $request->nomor_risalah,
+            'file_risalah_signed' => $filePath,
+        ]);
+
+        ActivityLog::record(
+            'upload',
+            'Sidang TPP Kanwil',
+            "Mengunggah berkas fisik Risalah Hasil Sidang bertanda tangan basah Sidang TPP Kanwil #{$sidang->id}",
+            $sidang
+        );
+
+        return back()->with('success', 'Berkas fisik Risalah Hasil Sidang bertanda tangan basah berhasil diunggah.');
+    }
+
+    /**
+     * Upload Berkas Fisik Laporan Pelaksanaan Sidang Bertanda Tangan Sah.
+     */
+    public function uploadLaporanSigned(Request $request, int $id): RedirectResponse
+    {
+        $this->checkKanwilAccess('full');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        $request->validate([
+            'nomor_laporan' => 'required|string|max:150',
+            'foto_dokumentasi_1' => 'nullable|image|max:10240',
+            'foto_dokumentasi_2' => 'nullable|image|max:10240',
+            'file_laporan_signed' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
+        ]);
+
+        $dir = public_path('uploads/sidang_tpp_kanwil/laporan_signed');
+        if (! File::isDirectory($dir)) {
+            File::makeDirectory($dir, 0755, true, true);
+        }
+
+        $file = $request->file('file_laporan_signed');
+        $filename = 'laporan_signed_'.$sidang->id.'_'.date('Ymd_His').'.'.$file->getClientOriginalExtension();
+        $file->move($dir, $filename);
+        $filePath = 'uploads/sidang_tpp_kanwil/laporan_signed/'.$filename;
+
+        $updates = [
+            'nomor_laporan' => $request->nomor_laporan,
+            'file_laporan_signed' => $filePath,
+        ];
+
+        $dirFoto = public_path('uploads/sidang_tpp_kanwil/dokumentasi');
+        if (! File::isDirectory($dirFoto)) {
+            File::makeDirectory($dirFoto, 0755, true, true);
+        }
+
+        if ($request->hasFile('foto_dokumentasi_1')) {
+            $f = $request->file('foto_dokumentasi_1');
+            $fn = 'foto1_'.$sidang->id.'_'.date('Ymd_His').'.'.$f->getClientOriginalExtension();
+            $f->move($dirFoto, $fn);
+            $updates['foto_dokumentasi_1'] = 'uploads/sidang_tpp_kanwil/dokumentasi/'.$fn;
+        }
+
+        if ($request->hasFile('foto_dokumentasi_2')) {
+            $f = $request->file('foto_dokumentasi_2');
+            $fn = 'foto2_'.$sidang->id.'_'.date('Ymd_His').'.'.$f->getClientOriginalExtension();
+            $f->move($dirFoto, $fn);
+            $updates['foto_dokumentasi_2'] = 'uploads/sidang_tpp_kanwil/dokumentasi/'.$fn;
+        }
+
+        $sidang->update($updates);
+
+        ActivityLog::record(
+            'upload',
+            'Sidang TPP Kanwil',
+            "Mengunggah berkas fisik Laporan Pelaksanaan Sidang bertanda tangan sah Sidang TPP Kanwil #{$sidang->id}",
+            $sidang
+        );
+
+        return back()->with('success', 'Berkas fisik Laporan Pelaksanaan Sidang bertanda tangan sah berhasil diunggah.');
     }
 
     /**

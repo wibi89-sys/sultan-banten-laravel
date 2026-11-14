@@ -15,6 +15,8 @@ class KanwilPegawai extends Model
         'nama',
         'nip',
         'jabatan',
+        'no_wa',
+        'peran_tpp',
         'pangkat_golongan',
         'urutan',
         'is_active',
