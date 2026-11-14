@@ -8,8 +8,10 @@ use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
 use App\Models\TppKanwilSetting;
 use App\Models\User;
+use App\Services\GeminiAiService;
 use App\Services\TppKanwilDokumenService;
 use App\Services\WhatsAppService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -803,5 +805,101 @@ class SidangTppKanwilController extends Controller
         ActivityLog::record('delete', 'Sidang TPP Kanwil', "Menghapus data Sidang TPP Kanwil {$nomor}");
 
         return redirect()->route('sidang-tpp-kanwil.index')->with('success', "Sidang TPP Kanwil {$nomor} berhasil dihapus.");
+    }
+
+    /**
+     * AI Asisten: Generate draft naskah dinas Sidang TPP Kanwil (Laporan, Risalah, Berita Acara).
+     */
+    public function aiGenerateNaskah(Request $request, int $id): JsonResponse
+    {
+        $this->checkKanwilAccess('edit');
+        $sidang = SidangTppKanwil::with('anggota')->findOrFail($id);
+
+        $request->validate([
+            'jenis_dokumen' => 'required|in:laporan,risalah,berita_acara',
+            'instruksi_khusus' => 'nullable|string|max:1000',
+        ]);
+
+        $result = GeminiAiService::generateNaskahSidangTppKanwil([
+            'jenis_dokumen' => $request->jenis_dokumen,
+            'sidang' => $sidang,
+            'instruksi_khusus' => $request->instruksi_khusus,
+        ]);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Simpan kustomisasi naskah dinas hasil penyelarasan AI / pengeditan operator ke dalam database.
+     */
+    public function aiSaveNaskah(Request $request, int $id): JsonResponse
+    {
+        $this->checkKanwilAccess('edit');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        $request->validate([
+            'jenis_dokumen' => 'required|in:laporan,risalah,berita_acara',
+            'data' => 'required',
+        ]);
+
+        $custom = $sidang->dokumen_custom ?: [];
+        $data = is_array($request->data) ? $request->data : json_decode($request->data, true);
+
+        if (! is_array($data)) {
+            return response()->json(['success' => false, 'message' => 'Format data naskah tidak valid.'], 422);
+        }
+
+        $custom[$request->jenis_dokumen] = $data;
+        $sidang->dokumen_custom = $custom;
+        $sidang->save();
+
+        ActivityLog::record(
+            'update',
+            'Sidang TPP Kanwil',
+            "Menyimpan kustomisasi naskah dinas ({$request->jenis_dokumen}) untuk Sidang TPP Kanwil #{$sidang->id}",
+            $sidang
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Naskah dinas ('.ucfirst(str_replace('_', ' ', $request->jenis_dokumen)).') berhasil disimpan ke dokumen sidang.',
+            'dokumen_custom' => $sidang->dokumen_custom,
+        ]);
+    }
+
+    /**
+     * Reset naskah dinas agar kembali ke formula/template standar sistem.
+     */
+    public function aiResetNaskah(Request $request, int $id): JsonResponse
+    {
+        $this->checkKanwilAccess('edit');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        $jenis = $request->input('jenis_dokumen');
+        $custom = $sidang->dokumen_custom ?: [];
+
+        if ($jenis && isset($custom[$jenis])) {
+            unset($custom[$jenis]);
+            $sidang->dokumen_custom = ! empty($custom) ? $custom : null;
+            $msg = 'Naskah dinas ('.ucfirst(str_replace('_', ' ', $jenis)).') berhasil di-reset ke standar bawaan dinas.';
+        } else {
+            $sidang->dokumen_custom = null;
+            $msg = 'Seluruh naskah dinas berhasil di-reset ke standar bawaan dinas.';
+        }
+
+        $sidang->save();
+
+        ActivityLog::record(
+            'update',
+            'Sidang TPP Kanwil',
+            "Mereset kustomisasi naskah dinas untuk Sidang TPP Kanwil #{$sidang->id}",
+            $sidang
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $msg,
+            'dokumen_custom' => $sidang->dokumen_custom,
+        ]);
     }
 }

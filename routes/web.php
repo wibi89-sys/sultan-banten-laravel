@@ -198,6 +198,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/upload-risalah-signed', [SidangTppKanwilController::class, 'uploadRisalahSigned'])->whereNumber('id')->name('upload-risalah-signed');
         Route::post('/{id}/upload-laporan-signed', [SidangTppKanwilController::class, 'uploadLaporanSigned'])->whereNumber('id')->name('upload-laporan-signed');
         Route::post('/{id}/upload-disposisi-kakanwil', [SidangTppKanwilController::class, 'uploadDisposisiKakanwil'])->whereNumber('id')->name('upload-disposisi-kakanwil');
+
+        // AI Asisten Naskah Sidang TPP Kanwil (Generate, Simpan Kustom, Reset)
+        Route::post('/{id}/ai-generate-naskah', [SidangTppKanwilController::class, 'aiGenerateNaskah'])->whereNumber('id')->name('ai-generate-naskah');
+        Route::post('/{id}/ai-save-naskah', [SidangTppKanwilController::class, 'aiSaveNaskah'])->whereNumber('id')->name('ai-save-naskah');
+        Route::post('/{id}/ai-reset-naskah', [SidangTppKanwilController::class, 'aiResetNaskah'])->whereNumber('id')->name('ai-reset-naskah');
     });
 
     // Mutasi Narapidana Antar-UPT Wilayah Banten

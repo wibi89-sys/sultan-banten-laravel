@@ -460,16 +460,36 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                 <!-- Kolom Kiri: Generator Dokumen Resmi Siap Cetak -->
                 <div class="col-lg-5">
                     <div class="card border-0 shadow-sm mb-4" style="background: var(--bg-card); border-radius: 12px;">
-                        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center gap-2">
-                            <span class="badge bg-primary-subtle text-primary p-2" style="border-radius: 8px;">
-                                <i class="fas fa-file-invoice"></i>
-                            </span>
-                            <h6 class="fw-bold mb-0 text-dark">Tahap 1: Cetak Naskah Dinas Resmi</h6>
+                        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary-subtle text-primary p-2" style="border-radius: 8px;">
+                                    <i class="fas fa-file-invoice"></i>
+                                </span>
+                                <h6 class="fw-bold mb-0 text-dark">Tahap 1: Cetak Naskah Dinas Resmi</h6>
+                            </div>
+                            <button type="button" class="btn btn-sm text-white fw-bold shadow-sm d-flex align-items-center gap-1.5" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); border-radius: 8px; font-size: 11.5px; padding: 6px 12px;" data-bs-toggle="modal" data-bs-target="#modalAiNaskah">
+                                <i class="fas fa-wand-magic-sparkles"></i> AI Asisten Naskah
+                            </button>
                         </div>
                         <div class="card-body p-4">
                             <p class="small text-muted mb-3" style="line-height: 1.5;">
-                                Sistem secara otomatis menyusun seluruh naskah dinas resmi Sidang TPP Kanwil sesuai tata naskah Kementerian Imigrasi dan Pemasyarakatan.
+                                Sistem secara otomatis menyusun seluruh naskah dinas resmi Sidang TPP Kanwil sesuai standar tata naskah Kementerian Imigrasi dan Pemasyarakatan Ditjenpas Banten (huruf Arial).
                             </p>
+
+                            @if (! empty($sidang->dokumen_custom))
+                                <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between" style="font-size: 11.5px; border-radius: 8px;">
+                                    <div>
+                                        <i class="fas fa-sparkles text-primary me-1.5"></i>
+                                        <strong>Naskah Kustom / AI Aktif:</strong>
+                                        @if(isset($sidang->dokumen_custom['laporan'])) <span class="badge bg-success-subtle text-success me-1">Laporan</span> @endif
+                                        @if(isset($sidang->dokumen_custom['risalah'])) <span class="badge bg-primary-subtle text-primary me-1">Risalah</span> @endif
+                                        @if(isset($sidang->dokumen_custom['berita_acara'])) <span class="badge bg-warning-subtle text-dark me-1">Berita Acara</span> @endif
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" onclick="resetSemuaNaskahAi()">
+                                        <i class="fas fa-undo me-1"></i>Reset ke Default
+                                    </button>
+                                </div>
+                            @endif
 
                             <!-- 1. Risalah Hasil Sidang TPP -->
                             <div class="p-3 bg-light rounded border mb-3">
@@ -793,10 +813,359 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         </div>
     </div>
 
+    <!-- Modal AI Asisten Naskah Dinas -->
+    <div class="modal fade" id="modalAiNaskah" tabindex="-1" aria-labelledby="modalAiNaskahLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-bottom py-3 px-4" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #fff;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="p-2 bg-white bg-opacity-25 rounded-circle text-white">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </span>
+                        <div>
+                            <h6 class="modal-title fw-bold mb-0 text-white" id="modalAiNaskahLabel">AI Asisten Perumusan Tata Naskah Dinas Sidang TPP</h6>
+                            <small class="text-white-50" style="font-size: 11px;">Sesuaikan narasi Laporan, Risalah, atau Berita Acara secara otomatis atau fleksibel</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Pilihan Jenis Dokumen -->
+                    <label class="form-label fw-bold small text-dark mb-2">Pilih Naskah Dinas yang Ingin Diselaraskan / Diedit:</label>
+                    <div class="btn-group w-100 mb-3" role="group">
+                        <input type="radio" class="btn-check" name="ai_jenis_dokumen" id="jenis_laporan" value="laporan" checked onchange="switchAiDokumenTab('laporan')">
+                        <label class="btn btn-outline-primary py-2 fw-semibold" for="jenis_laporan" style="font-size: 12px;">
+                            <i class="fas fa-file-signature me-1"></i> Laporan Pelaksanaan
+                        </label>
+
+                        <input type="radio" class="btn-check" name="ai_jenis_dokumen" id="jenis_risalah" value="risalah" onchange="switchAiDokumenTab('risalah')">
+                        <label class="btn btn-outline-primary py-2 fw-semibold" for="jenis_risalah" style="font-size: 12px;">
+                            <i class="fas fa-file-contract me-1"></i> Risalah Hasil Sidang
+                        </label>
+
+                        <input type="radio" class="btn-check" name="ai_jenis_dokumen" id="jenis_ba" value="berita_acara" onchange="switchAiDokumenTab('berita_acara')">
+                        <label class="btn btn-outline-primary py-2 fw-semibold" for="jenis_ba" style="font-size: 12px;">
+                            <i class="fas fa-stamp me-1"></i> Berita Acara &amp; Rekomendasi
+                        </label>
+                    </div>
+
+                    <!-- Input Instruksi Khusus -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark d-flex justify-content-between">
+                            <span><i class="fas fa-comment-dots text-primary me-1"></i> Instruksi Khusus untuk AI (Opsional):</span>
+                            <span class="text-muted fw-normal" style="font-size: 11px;">Misal: penekanan alasan khusus, rekomendasi tambahan, dll</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm" id="ai_instruksi_khusus" placeholder="Contoh: Tekankan kelakuan baik klien, masa pembinaan, atau perbaiki redaksi saran...">
+                            <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" id="btnRunAiGenerate" onclick="jalankanGenerateAi()">
+                                <i class="fas fa-robot me-1"></i> Generate AI
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="aiLoadingIndicator" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary mb-2" role="status" style="width: 2rem; height: 2rem;"></div>
+                        <div class="fw-bold small text-dark">AI sedang menyelaraskan naskah dinas...</div>
+                        <div class="text-muted" style="font-size: 11.5px;">Menerapkan pedoman tata naskah dinas Ditjenpas dan kaidah hukum yang berlaku.</div>
+                    </div>
+
+                    <!-- Status Feedback Banner -->
+                    <div id="aiFeedbackBanner" class="alert d-none py-2 px-3 mb-3" style="font-size: 12px; border-radius: 8px;"></div>
+
+                    <!-- Form Editor Konten: Laporan -->
+                    <div id="editorGroupLaporan" class="ai-editor-pane">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">A. Narasi Kegiatan yang Dilaksanakan:</label>
+                            <textarea class="form-control font-monospace" id="field_lap_kegiatan" rows="4" style="font-size: 12px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">B. Butir Hasil yang Dicapai (Satu butir per baris):</label>
+                            <textarea class="form-control font-monospace" id="field_lap_hasil" rows="3" style="font-size: 12px;"></textarea>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">C. Simpulan (Satu butir per baris):</label>
+                                <textarea class="form-control font-monospace" id="field_lap_simpulan" rows="3" style="font-size: 12px;"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">C. Saran (Satu butir per baris):</label>
+                                <textarea class="form-control font-monospace" id="field_lap_saran" rows="3" style="font-size: 12px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Editor Konten: Risalah -->
+                    <div id="editorGroupRisalah" class="ai-editor-pane d-none">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">III. Materi Sidang TPP (Satu butir per baris):</label>
+                            <textarea class="form-control font-monospace" id="field_ris_materi" rows="4" style="font-size: 12px;"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold small text-dark">IV. Hasil Sidang TPP (Satu butir per baris):</label>
+                            <textarea class="form-control font-monospace" id="field_ris_hasil" rows="4" style="font-size: 12px;"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Form Editor Konten: Berita Acara -->
+                    <div id="editorGroupBeritaAcara" class="ai-editor-pane d-none">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-dark">Uraian / Ringkasan Agenda Sidang:</label>
+                            <textarea class="form-control font-monospace" id="field_ba_uraian" rows="3" style="font-size: 12px;"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold small text-dark">Kesimpulan / Rekomendasi Sidang:</label>
+                            <textarea class="form-control font-monospace" id="field_ba_kesimpulan" rows="3" style="font-size: 12px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top bg-light py-2.5 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetCurrentNaskahAi()">
+                        <i class="fas fa-undo me-1"></i> Reset Naskah Ini ke Default
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                        <button type="button" class="btn btn-success btn-sm fw-bold px-3" id="btnSaveAiNaskah" onclick="simpanNaskahAi()">
+                            <i class="fas fa-check-circle me-1"></i> Terapkan &amp; Simpan ke Dokumen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
 <script>
+    const CSRF_TOKEN = '{{ csrf_token() }}';
+    const SIDANG_ID = {{ $sidang->id }};
+    let dokumenCustomData = @json($sidang->dokumen_custom ?? []);
+
+    let activeJenisDokumen = 'laporan';
+
+    function switchAiDokumenTab(jenis) {
+        activeJenisDokumen = jenis;
+        document.querySelectorAll('.ai-editor-pane').forEach(el => el.classList.add('d-none'));
+
+        if (jenis === 'laporan') {
+            document.getElementById('editorGroupLaporan').classList.remove('d-none');
+        } else if (jenis === 'risalah') {
+            document.getElementById('editorGroupRisalah').classList.remove('d-none');
+        } else if (jenis === 'berita_acara') {
+            document.getElementById('editorGroupBeritaAcara').classList.remove('d-none');
+        }
+
+        loadSavedValuesIntoForm(jenis);
+    }
+
+    function loadSavedValuesIntoForm(jenis) {
+        const saved = dokumenCustomData[jenis] || {};
+
+        if (jenis === 'laporan') {
+            document.getElementById('field_lap_kegiatan').value = Array.isArray(saved.kegiatan_dilaksanakan) ? saved.kegiatan_dilaksanakan.join("\n\n") : (saved.kegiatan_dilaksanakan || '');
+            document.getElementById('field_lap_hasil').value = Array.isArray(saved.hasil_dicapai) ? saved.hasil_dicapai.join("\n") : (saved.hasil_dicapai || '');
+            document.getElementById('field_lap_simpulan').value = Array.isArray(saved.simpulan) ? saved.simpulan.join("\n") : (saved.simpulan || '');
+            document.getElementById('field_lap_saran').value = Array.isArray(saved.saran) ? saved.saran.join("\n") : (saved.saran || '');
+        } else if (jenis === 'risalah') {
+            document.getElementById('field_ris_materi').value = Array.isArray(saved.materi_sidang) ? saved.materi_sidang.join("\n") : (saved.materi_sidang || '');
+            document.getElementById('field_ris_hasil').value = Array.isArray(saved.hasil_sidang) ? saved.hasil_sidang.join("\n") : (saved.hasil_sidang || '');
+        } else if (jenis === 'berita_acara') {
+            document.getElementById('field_ba_uraian').value = saved.uraian_sidang || '';
+            document.getElementById('field_ba_kesimpulan').value = saved.kesimpulan_rekomendasi || '';
+        }
+    }
+
+    async function jalankanGenerateAi() {
+        const btn = document.getElementById('btnRunAiGenerate');
+        const loading = document.getElementById('aiLoadingIndicator');
+        const banner = document.getElementById('aiFeedbackBanner');
+        const instruksi = document.getElementById('ai_instruksi_khusus').value.trim();
+
+        btn.disabled = true;
+        loading.classList.remove('d-none');
+        banner.className = 'alert d-none py-2 px-3 mb-3';
+
+        try {
+            const resp = await fetch(`{{ url('/sidang-tpp-kanwil') }}/${SIDANG_ID}/ai-generate-naskah`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    jenis_dokumen: activeJenisDokumen,
+                    instruksi_khusus: instruksi
+                })
+            });
+
+            const res = await resp.json();
+
+            if (res.success && res.data) {
+                banner.className = 'alert alert-success py-2 px-3 mb-3 d-flex align-items-center gap-2';
+                banner.innerHTML = `<i class="fas fa-check-circle"></i> <div>${res.message || 'Naskah berhasil diselaraskan AI. Silakan tinjau dan edit bila diperlukan sebelum disimpan.'}</div>`;
+                populateAiGeneratedData(activeJenisDokumen, res.data);
+            } else {
+                banner.className = 'alert alert-danger py-2 px-3 mb-3';
+                banner.innerText = res.message || 'Gagal menyelaraskan naskah.';
+            }
+        } catch (e) {
+            banner.className = 'alert alert-danger py-2 px-3 mb-3';
+            banner.innerText = 'Terjadi kesalahan koneksi saat memproses AI: ' + e;
+        } finally {
+            btn.disabled = false;
+            loading.classList.add('d-none');
+        }
+    }
+
+    function populateAiGeneratedData(jenis, data) {
+        if (jenis === 'laporan') {
+            if (data.kegiatan_dilaksanakan) {
+                document.getElementById('field_lap_kegiatan').value = Array.isArray(data.kegiatan_dilaksanakan) ? data.kegiatan_dilaksanakan.join("\n\n") : data.kegiatan_dilaksanakan;
+            }
+            if (data.hasil_dicapai) {
+                document.getElementById('field_lap_hasil').value = Array.isArray(data.hasil_dicapai) ? data.hasil_dicapai.join("\n") : data.hasil_dicapai;
+            }
+            if (data.simpulan) {
+                document.getElementById('field_lap_simpulan').value = Array.isArray(data.simpulan) ? data.simpulan.join("\n") : data.simpulan;
+            }
+            if (data.saran) {
+                document.getElementById('field_lap_saran').value = Array.isArray(data.saran) ? data.saran.join("\n") : data.saran;
+            }
+        } else if (jenis === 'risalah') {
+            if (data.materi_sidang) {
+                document.getElementById('field_ris_materi').value = Array.isArray(data.materi_sidang) ? data.materi_sidang.join("\n") : data.materi_sidang;
+            }
+            if (data.hasil_sidang) {
+                document.getElementById('field_ris_hasil').value = Array.isArray(data.hasil_sidang) ? data.hasil_sidang.join("\n") : data.hasil_sidang;
+            }
+        } else if (jenis === 'berita_acara') {
+            if (data.uraian_sidang) {
+                document.getElementById('field_ba_uraian').value = data.uraian_sidang;
+            }
+            if (data.kesimpulan_rekomendasi) {
+                document.getElementById('field_ba_kesimpulan').value = data.kesimpulan_rekomendasi;
+            }
+        }
+    }
+
+    async function simpanNaskahAi() {
+        const btn = document.getElementById('btnSaveAiNaskah');
+        const banner = document.getElementById('aiFeedbackBanner');
+        btn.disabled = true;
+
+        let payloadData = {};
+        if (activeJenisDokumen === 'laporan') {
+            const lapKegiatan = document.getElementById('field_lap_kegiatan').value.trim();
+            const lapHasil = document.getElementById('field_lap_hasil').value.trim().split("\n").filter(x => x.trim().length > 0);
+            const lapSimpulan = document.getElementById('field_lap_simpulan').value.trim().split("\n").filter(x => x.trim().length > 0);
+            const lapSaran = document.getElementById('field_lap_saran').value.trim().split("\n").filter(x => x.trim().length > 0);
+
+            payloadData = {
+                kegiatan_dilaksanakan: lapKegiatan,
+                hasil_dicapai: lapHasil,
+                simpulan: lapSimpulan,
+                saran: lapSaran
+            };
+        } else if (activeJenisDokumen === 'risalah') {
+            const risMateri = document.getElementById('field_ris_materi').value.trim().split("\n").filter(x => x.trim().length > 0);
+            const risHasil = document.getElementById('field_ris_hasil').value.trim().split("\n").filter(x => x.trim().length > 0);
+
+            payloadData = {
+                materi_sidang: risMateri,
+                hasil_sidang: risHasil
+            };
+        } else if (activeJenisDokumen === 'berita_acara') {
+            const baUraian = document.getElementById('field_ba_uraian').value.trim();
+            const baKesimpulan = document.getElementById('field_ba_kesimpulan').value.trim();
+
+            payloadData = {
+                uraian_sidang: baUraian,
+                kesimpulan_rekomendasi: baKesimpulan
+            };
+        }
+
+        try {
+            const resp = await fetch(`{{ url('/sidang-tpp-kanwil') }}/${SIDANG_ID}/ai-save-naskah`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    jenis_dokumen: activeJenisDokumen,
+                    data: payloadData
+                })
+            });
+
+            const res = await resp.json();
+            if (res.success) {
+                alert(res.message || 'Naskah dinas berhasil disimpan! Dokumen PDF & Word akan langsung menggunakan rumusan baru ini.');
+                location.reload();
+            } else {
+                banner.className = 'alert alert-danger py-2 px-3 mb-3';
+                banner.innerText = res.message || 'Gagal menyimpan naskah.';
+            }
+        } catch (e) {
+            banner.className = 'alert alert-danger py-2 px-3 mb-3';
+            banner.innerText = 'Terjadi kesalahan saat menyimpan naskah: ' + e;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function resetCurrentNaskahAi() {
+        if (!confirm(`Kembalikan naskah ${activeJenisDokumen} ke standar formula sistem bawaan?`)) return;
+
+        try {
+            const resp = await fetch(`{{ url('/sidang-tpp-kanwil') }}/${SIDANG_ID}/ai-reset-naskah`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    jenis_dokumen: activeJenisDokumen
+                })
+            });
+
+            const res = await resp.json();
+            alert(res.message || 'Naskah berhasil dikembalikan ke standar bawaan.');
+            location.reload();
+        } catch (e) {
+            alert('Gagal mereset naskah: ' + e);
+        }
+    }
+
+    async function resetSemuaNaskahAi() {
+        if (!confirm('Kembalikan seluruh naskah dinas ke standar formula dinas bawaan sistem?')) return;
+
+        try {
+            const resp = await fetch(`{{ url('/sidang-tpp-kanwil') }}/${SIDANG_ID}/ai-reset-naskah`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+
+            const res = await resp.json();
+            alert(res.message || 'Seluruh naskah dinas berhasil dikembalikan ke standar bawaan.');
+            location.reload();
+        } catch (e) {
+            alert('Gagal mereset naskah: ' + e);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSavedValuesIntoForm('laporan');
+    });
+
     function copyFormatGrupWa() {
         const text = document.getElementById('rawTeksGrupWa').value.trim();
         copyToClipboard(text, 'Seluruh daftar tautan dan format siaran undangan grup WhatsApp berhasil disalin! Silakan langsung paste (Ctrl+V) ke grup WhatsApp.');

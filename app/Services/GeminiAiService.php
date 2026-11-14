@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AiSetting;
+use Carbon\Carbon;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -828,5 +829,262 @@ PROMPT;
                 'message' => 'Kendala AI: '.$e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Generate / Sempurnakan Naskah Sidang TPP Kanwil (Laporan, Risalah, atau Berita Acara) menggunakan AI.
+     *
+     * @param  array<string, mixed>  $params
+     * @return array<string, mixed>
+     */
+    public static function generateNaskahSidangTppKanwil(array $params): array
+    {
+        $setting = AiSetting::getFirst();
+        $jenis = strtolower($params['jenis_dokumen'] ?? 'laporan');
+        $sidang = $params['sidang'] ?? null;
+        $instruksiKhusus = trim($params['instruksi_khusus'] ?? '');
+
+        if (! $sidang) {
+            return ['success' => false, 'message' => 'Data sidang tidak ditemukan.'];
+        }
+
+        $nomorSidang = $sidang->nomor_sidang ?? '-';
+        $agendaJudul = $sidang->agenda_judul ?? '-';
+        $agendaKategori = $sidang->agenda_kategori ?? '-';
+        $agendaDeskripsi = $sidang->agenda_deskripsi ?? '-';
+        $tempat = $sidang->tempat ?? 'Ruang Rapat Divisi Pemasyarakatan';
+        $metode = ucfirst($sidang->metode ?? 'luring');
+        $hariTanggal = $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : date('d F Y');
+        $totalAnggota = $sidang->total_anggota ?? 6;
+        $totalHadir = $sidang->total_hadir ?? 6;
+        $totalSetuju = $sidang->total_setuju ?? 6;
+        $isKlien = ! empty($sidang->is_klien_bapas);
+        $kd = $sidang->klien_data ?? [];
+
+        $klienInfo = '';
+        if ($isKlien && ! empty($kd)) {
+            $klienInfo = "DATA KLIEN BAPAS:\n"
+                .'- Nama: '.($kd['nama_klien'] ?? '-').' BIN '.($kd['bin'] ?? '-')."\n"
+                .'- No. Reg Bapas: '.($kd['no_register_bapas'] ?? '-')."\n"
+                .'- Bapas Asal: '.($kd['bapas_nama'] ?? 'Bapas Serang')."\n"
+                .'- PK Bapas: '.($kd['nama_pk'] ?? '-')."\n"
+                .'- Program: '.($kd['program_integrasi'] ?? 'PB')."\n"
+                .'- Keperluan: '.($kd['keperluan_ln'] ?? 'Umroh').' ke '.($kd['negara_tujuan'] ?? 'Arab Saudi')."\n"
+                .'- Jadwal: '.($kd['tgl_berangkat'] ?? '-').' s/d '.($kd['tgl_kembali'] ?? '-').' ('.($kd['durasi_hari'] ?? '14')." hari)\n"
+                .'- Penjamin: '.($kd['penjamin_nama'] ?? '-').' ('.($kd['penjamin_hubungan'] ?? '-').') - Telp: '.($kd['penjamin_telepon'] ?? '-')."\n";
+        }
+
+        // Cek jika API AI aktif, jika tidak, gunakan Smart Generator Template
+        if (! $setting->is_active || empty($setting->api_key)) {
+            return self::fallbackGenerateNaskahTpp($jenis, $sidang, $instruksiKhusus);
+        }
+
+        $prompt = <<<PROMPT
+Anda adalah Pakar Tata Naskah Dinas dan Analis Kebijakan Hukum Pemasyarakatan Tingkat Tinggi di Direktorat Jenderal Pemasyarakatan / Kementerian Imigrasi dan Pemasyarakatan RI.
+Tugas Anda adalah menyusun redaksi resmi naskah dinas SIDANG TIM PENGAMAT PEMASYARAKATAN (TPP) TINGKAT KANTOR WILAYAH BANTEN.
+
+JENIS NASKAH YANG DIMINTA: {$jenis} (Pilihan: 'laporan' atau 'risalah' atau 'berita_acara')
+
+KONTEKS DATA PERSIDANGAN:
+- Nomor Register Sidang: {$nomorSidang}
+- Kategori Agenda: {$agendaKategori}
+- Judul Agenda: {$agendaJudul}
+- Deskripsi/Materi Awal: {$agendaDeskripsi}
+- Waktu & Tempat: {$hariTanggal}, bertempat di {$tempat} ({$metode})
+- Deliberasi Tim: {$totalHadir} dari {$totalAnggota} personil hadir, {$totalSetuju} menyatakan setuju.
+{$klienInfo}
+CATATAN / INSTRUKSI KHUSUS PENGGUNA:
+"{$instruksiKhusus}"
+
+ATURAN GAYA BAHASA & STANDARISASI:
+1. Menggunakan Bahasa Indonesia formal baku (EYD V), tegas, lugas, elegan, dan mencerminkan marwah naskah dinas resmi Kantor Wilayah Kementerian Imigrasi dan Pemasyarakatan.
+2. Hindari kata-kata informal atau kalimat pasif yang menggantung.
+3. Rujuk ketentuan UU No. 22 Tahun 2022 tentang Pemasyarakatan dan peraturan perundang-undangan terkait.
+
+KEMBALIKAN HANYA OBJEK JSON VALID DENGAN FORMAT BERIKUT SESUAI JENIS NASKAH:
+
+Jika jenis == 'laporan':
+{
+  "kegiatan_dilaksanakan": "Paragraf naratif komprehensif Bagian A...",
+  "hasil_dicapai": [
+    "Poin 1 telaah berkas dan kepatuhan substantif...",
+    "Poin 2 telaah litmas/dokumen penjamin/kesehatan...",
+    "Poin 3 mufakat dan rekomendasi tim sidang..."
+  ],
+  "simpulan": [
+    "Simpulan 1...",
+    "Simpulan 2..."
+  ],
+  "saran": [
+    "Saran 1...",
+    "Saran 2..."
+  ]
+}
+
+Jika jenis == 'risalah':
+{
+  "materi_sidang": [
+    "1. Surat Kepala UPT/Bapas...",
+    "2. Laporan Hasil Penelitian Kemasyarakatan (Litmas)...",
+    "3. Surat Pernyataan Jaminan Keluarga..."
+  ],
+  "hasil_sidang": [
+    "1. Menyetujui dan merekomendasikan...",
+    "2. Syarat kewajiban melapor dan kepatuhan bimbingan...",
+    "3. Meneruskan berkas kepada Kepala Kantor Wilayah..."
+  ]
+}
+
+Jika jenis == 'berita_acara':
+{
+  "uraian_sidang": "Paragraf narasi jalannya persidangan TPP Kanwil secara substantif...",
+  "kesimpulan_rekomendasi": "Rumusan rekomendasi mufakat tim untuk diajukan kepada Kepala Kantor Wilayah..."
+}
+
+Hanya berikan JSON valid tanpa markdown atau teks tambahan.
+PROMPT;
+
+        try {
+            $chosenModel = ! empty($setting->model) ? $setting->model : 'gemini-2.5-flash';
+            $contents = [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                    ],
+                ],
+            ];
+
+            $res = self::postGenerateContentWithFallback(
+                apiKey: $setting->api_key,
+                primaryModel: $chosenModel,
+                contents: $contents,
+                extraConfig: ['responseMimeType' => 'application/json'],
+                timeout: 50
+            );
+
+            if (! $res['response'] || ! $res['response']->successful()) {
+                // Fallback otomatis jika AI google sedang high demand / timeout
+                return self::fallbackGenerateNaskahTpp($jenis, $sidang, $instruksiKhusus);
+            }
+
+            $resJson = $res['response']->json();
+            $candidate = $resJson['candidates'][0] ?? null;
+            $rawText = self::extractTextFromCandidate($candidate) ?? '';
+            $cleanedJson = self::cleanJsonPayload($rawText);
+
+            $data = json_decode($cleanedJson, true);
+            if (! is_array($data)) {
+                return self::fallbackGenerateNaskahTpp($jenis, $sidang, $instruksiKhusus);
+            }
+
+            return [
+                'success' => true,
+                'source' => 'gemini',
+                'message' => 'Naskah berhasil disusun dan diselaraskan oleh AI sesuai standar tata naskah dinas.',
+                'data' => $data,
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('Gemini generateNaskahSidangTppKanwil fallback: '.$e->getMessage());
+
+            return self::fallbackGenerateNaskahTpp($jenis, $sidang, $instruksiKhusus);
+        }
+    }
+
+    /**
+     * Fallback cerdas tanpa AI external jika koneksi/API Key AI tidak aktif.
+     */
+    protected static function fallbackGenerateNaskahTpp(string $jenis, $sidang, string $instruksi): array
+    {
+        $hariTanggal = $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : date('d F Y');
+        $isKlien = ! empty($sidang->is_klien_bapas);
+        $kd = $sidang->klien_data ?? [];
+
+        if ($jenis === 'risalah') {
+            if ($isKlien && ! empty($kd)) {
+                $nama = $kd['nama_klien'] ?? $sidang->agenda_judul;
+                $bin = ! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '';
+                $bapas = $kd['bapas_nama'] ?? 'Bapas Kelas I Serang';
+                $noSurat = $kd['nomor_surat_bapas'] ?? ('WP.12.PAS.BAPAS-'.str_pad($sidang->id, 3, '0', STR_PAD_LEFT));
+                $tglSurat = ! empty($kd['tanggal_surat_bapas']) ? Carbon::parse($kd['tanggal_surat_bapas'])->translatedFormat('d F Y') : $hariTanggal;
+                $keperluan = $kd['keperluan_ln'] ?? 'Menjalankan Ibadah Umroh';
+                $negara = $kd['negara_tujuan'] ?? 'Kerajaan Arab Saudi';
+                $tglBerangkat = ! empty($kd['tgl_berangkat']) ? Carbon::parse($kd['tgl_berangkat'])->translatedFormat('d F Y') : '-';
+                $tglKembali = ! empty($kd['tgl_kembali']) ? Carbon::parse($kd['tgl_kembali'])->translatedFormat('d F Y') : '-';
+                $durasi = $kd['durasi_hari'] ?? 14;
+
+                return [
+                    'success' => true,
+                    'source' => 'template_smart',
+                    'message' => 'Naskah Risalah berhasil diformulasikan sesuai standar tata naskah dinas.',
+                    'data' => [
+                        'materi_sidang' => [
+                            "Surat Kepala {$bapas} Nomor : {$noSurat} tanggal {$tglSurat} perihal Permohonan Izin Bepergian ke Luar Negeri ({$keperluan}) Klien Pemasyarakatan an. {$nama}{$bin} (Nomor Register : ".($kd['no_register_bapas'] ?? '-').').',
+                            'Laporan Hasil Penelitian Kemasyarakatan (Litmas) Pembimbing Kemasyarakatan an. '.($kd['nama_pk'] ?? 'PK Bapas').' yang menerangkan kelayakan perilaku, kepatuhan bimbingan, dan analisis risiko rendah.',
+                            'Surat Pernyataan Jaminan Bermaterai sah dari Penjamin Keluarga an. '.($kd['penjamin_nama'] ?? 'Keluarga').' ('.($kd['penjamin_hubungan'] ?? 'Penjamin').') serta bukti jadwal perjalanan resmi.',
+                        ],
+                        'hasil_sidang' => [
+                            "Menyetujui dan merekomendasikan permohonan izin bepergian ke luar negeri ke {$negara} untuk keperluan {$keperluan} selama {$durasi} hari terhitung mulai tanggal {$tglBerangkat} s/d {$tglKembali} kepada Klien Pemasyarakatan an. {$nama}{$bin}.",
+                            'Klien Pemasyarakatan diwajibkan melapor secara langsung kepada Pembimbing Kemasyarakatan pada Balai Pemasyarakatan bersangkutan paling lambat 3 (tiga) hari kerja terhitung setelah tiba kembali di wilayah Republik Indonesia.',
+                            'Meneruskan hasil rekomendasi Sidang TPP ini kepada Kepala Kantor Wilayah Kementerian Imigrasi dan Pemasyarakatan Banten guna penerbitan penetapan persetujuan izin resmi.',
+                        ],
+                    ],
+                ];
+            }
+
+            return [
+                'success' => true,
+                'source' => 'template_smart',
+                'message' => 'Naskah Risalah berhasil diformulasikan sesuai standar tata naskah dinas.',
+                'data' => [
+                    'materi_sidang' => [
+                        'Usulan materi sidang : '.htmlspecialchars($sidang->agenda_judul).(! empty($sidang->agenda_deskripsi) ? ' - '.htmlspecialchars($sidang->agenda_deskripsi) : ''),
+                        'Pencermatan kelengkapan dokumen substantif dan administratif warga binaan pemasyarakatan yang diusulkan oleh UPT jajaran.',
+                    ],
+                    'hasil_sidang' => [
+                        'Menyetujui usulan materi Sidang TPP Kantor Wilayah untuk diproses lebih lanjut sesuai dengan peraturan perundang-undangan yang berlaku.',
+                        'Merekomendasikan hasil pembahasan sidang kepada Kepala Kantor Wilayah guna pengesahan dan penerbitan persetujuan definitif.',
+                    ],
+                ],
+            ];
+        }
+
+        if ($jenis === 'berita_acara') {
+            return [
+                'success' => true,
+                'source' => 'template_smart',
+                'message' => 'Naskah Berita Acara berhasil diformulasikan sesuai standar tata naskah dinas.',
+                'data' => [
+                    'uraian_sidang' => "Pada hari ini, {$hariTanggal}, bertempat di {$sidang->tempat}, telah dilaksanakan persidangan Tim Pengamat Pemasyarakatan (TPP) Tingkat Kantor Wilayah dengan agenda pembahasan \"{$sidang->agenda_judul}\". Tim sidang telah melakukan pencermatan mendalam terhadap aspek hukum, keamanan, dan perkembangan pembinaan/pembimbingan.",
+                    'kesimpulan_rekomendasi' => 'Berdasarkan hasil musyawarah deliberasi Tim Sidang TPP Kantor Wilayah, seluruh anggota secara mufakat menyatakan DAPAT DISETUJUI dan merekomendasikan usulan ini untuk diteruskan kepada Kepala Kantor Wilayah guna memperoleh persetujuan dan arahan kebijakan lebih lanjut.',
+                ],
+            ];
+        }
+
+        // Laporan
+        $pokok = $isKlien && ! empty($kd)
+            ? 'Pembahasan Permohonan Izin Bepergian ke Luar Negeri ('.($kd['keperluan_ln'] ?? 'Umroh').') bagi Klien Pembebasan Bersyarat '.($kd['bapas_nama'] ?? 'Bapas').' an. '.($kd['nama_klien'] ?? '-').(! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '')
+            : htmlspecialchars($sidang->agenda_judul).' ('.htmlspecialchars($sidang->agenda_kategori).')';
+
+        return [
+            'success' => true,
+            'source' => 'template_smart',
+            'message' => 'Naskah Laporan Pelaksanaan berhasil diformulasikan sesuai standar tata naskah dinas.',
+            'data' => [
+                'kegiatan_dilaksanakan' => "Sebagai wujud nyata akuntabilitas dalam pelaksanaan fungsi pengawasan teknis pemasyarakatan, perwakilan Tim Sidang TPP Kantor Wilayah Ditjenpas Banten menyelenggarakan persidangan Tim Pengamat Pemasyarakatan (TPP) pada hari {$hariTanggal} bertempat di {$sidang->tempat}. Sidang TPP ini memegang peranan krusial sebagai dapur kebijakan internal Kantor Wilayah dalam mengevaluasi kelayakan program pembinaan dan bimbingan warga binaan secara komprehensif. Pembahasan diarahkan untuk memastikan bahwa setiap usulan hak bersyarat maupun perizinan didasarkan pada penilaian objektif terhadap perkembangan perilaku, penurunan tingkat risiko, serta pemenuhan kewajiban substantif dan administratif, guna mendukung tercapainya tujuan akhir Sistem Pemasyarakatan yaitu mengembalikan warga binaan/klien sebagai insan yang bertakwa, produktif, dan taat hukum. Adapun pokok materi sidang TPP kali ini adalah {$pokok}.",
+                'hasil_dicapai' => [
+                    'Seluruh warga binaan / klien pemasyarakatan yang diusulkan telah menunjukkan perkembangan pembinaan kepribadian dan kemandirian yang baik serta memenuhi syarat substantif.',
+                    'Kelengkapan dokumen administratif seperti kutipan putusan pengadilan, laporan Litmas Pembimbing Kemasyarakatan, asesmen risiko, dan surat jaminan keluarga telah terverifikasi keabsahannya.',
+                    'Tim TPP secara mufakat menyetujui dan merekomendasikan usulan dimaksud untuk diproses lebih lanjut guna diterbitkan penetapan persetujuan resmi oleh Kepala Kantor Wilayah.',
+                ],
+                'simpulan' => [
+                    'Penyelenggaraan Sidang TPP di Tingkat Kantor Wilayah Banten telah dilaksanakan secara tertib, objektif, transparan, dan sesuai dengan Standar Operasional Prosedur (SOP).',
+                    'Pertimbangan pembinaan/pembimbingan dan mitigasi risiko keamanan telah diintegrasikan secara seimbang dalam memutuskan kelayakan usulan.',
+                ],
+                'saran' => [
+                    'Jajaran UPT / Bapas agar senantiasa teliti dalam mengunggah data dan dokumen usulan ke dalam Sistem Database Pemasyarakatan guna menghindari pengembalian berkas.',
+                    'Meningkatkan monitoring dan evaluasi secara berkala pasca-sidang serta memperkuat koordinasi dengan Kantor Wilayah dalam mengawal proses pembimbingan dan kepatuhan klien.',
+                ],
+            ],
+        ];
     }
 }

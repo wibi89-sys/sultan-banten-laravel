@@ -60,4 +60,13 @@ class ActivityLog extends Model
             'created_at' => now(),
         ]);
     }
+
+    public static function record(
+        string $aksi,
+        string $modul,
+        string $deskripsi,
+        $detail = null
+    ): static {
+        return static::log($aksi, $modul, $deskripsi, $detail);
+    }
 }
