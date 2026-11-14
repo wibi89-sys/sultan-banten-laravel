@@ -24,8 +24,15 @@ class SidangTppKanwilController extends Controller
     protected function checkKanwilAccess(string $requiredLevel = 'view'): void
     {
         $user = auth()->user();
-        if (! $user || ! $user->hasAccess('sidang_tpp', $requiredLevel) || ! $user->isKanwil()) {
-            abort(403, 'Akses ditolak. Fitur Pelaksanaan Sidang TPP Kantor Wilayah hanya diperuntukkan bagi pegawai Kantor Wilayah.');
+        if (! $user || ! $user->isKanwil()) {
+            abort(403, 'Akses ditolak. Fitur Pelaksanaan Sidang TPP Kantor Wilayah hanya diperuntukkan bagi personil Kantor Wilayah.');
+        }
+
+        if (! $user->hasAccess('sidang_tpp_kanwil', $requiredLevel)) {
+            $msg = $requiredLevel === 'full'
+                ? 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Sidang TPP Kanwil.'
+                : 'Akses ditolak. Anda tidak memiliki izin untuk mengakses fitur Sidang TPP Kanwil.';
+            abort(403, $msg);
         }
     }
 

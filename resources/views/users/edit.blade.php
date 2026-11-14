@@ -185,7 +185,7 @@
 
                     <div class="mb-3" id="container_upt">
                         <label for="upt_id" class="form-label small fw-semibold">Penetapan Unit Pelaksana Teknis (UPT)</label>
-                        <select name="upt_id" id="upt_id" class="form-select form-select-sm">
+                        <select name="upt_id" id="upt_id" class="form-select form-select-sm" onchange="handleRoleChange(document.getElementById('role').value, false)">
                             <option value="">-- Kantor Wilayah / Semua UPT --</option>
                             @foreach ($uptList as $upt)
                             <option value="{{ $upt->id }}" {{ old('upt_id', $targetUser->upt_id) == $upt->id ? 'selected' : '' }}>{{ $upt->nama_upt }}</option>
@@ -257,15 +257,25 @@
                             @php
                                 $currentLevel = old('akses_' . $modKey, $targetUser->getAccessLevel($modKey));
                             @endphp
-                            <div class="perm-row d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="perm-row d-flex flex-wrap align-items-center justify-content-between gap-3" id="row_mod_{{ $modKey }}">
                                 <div class="flex-grow-1" style="min-width: 260px;">
                                     <div class="d-flex align-items-center mb-0.5">
                                         <i class="{{ $mod['icon'] }} me-2" style="width: 18px; font-size: 14px;"></i>
                                         <span class="fw-bold text-dark fs-6">{{ $mod['label'] }}</span>
+                                        @if($modKey === 'sidang_tpp_kanwil')
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-2" style="font-size: 10px;">Khusus Kanwil</span>
+                                        @elseif($modKey === 'sidang_tpp')
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-2" style="font-size: 10px;">Khusus Satker UPT</span>
+                                        @endif
                                     </div>
                                     <p class="text-muted mb-0 small" style="font-size: 11.5px; line-height: 1.4;">
                                         {{ $mod['desc'] }}
                                     </p>
+                                    @if($modKey === 'sidang_tpp_kanwil')
+                                    <small id="hint_locked_kanwil" class="text-danger d-none" style="font-size: 11px;">
+                                        <i class="fas fa-lock me-1"></i>Terkunci untuk akun UPT (Sidang TPP Kanwil hanya untuk Kantor Wilayah).
+                                    </small>
+                                    @endif
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="radio-pill-group">
@@ -335,15 +345,50 @@
             }
         });
 
-        // Pastikan seluruh opsi radio selalu aktif dan dapat dikustomisasi secara bebas
+        // Pastikan seluruh opsi radio aktif terlebih dahulu
         document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = false);
 
+        const uptSelect = document.getElementById('upt_id');
+        const hasUptSelected = uptSelect && uptSelect.value !== '';
+        const isUptUser = (role === 'operator') || (hasUptSelected && role !== 'admin' && role !== 'operator_wilayah');
+        const hintLockedKanwil = document.getElementById('hint_locked_kanwil');
+
+        if (isUptUser) {
+            // UPT HANYA AKSES TPP UPT (DILARANG AKSES SIDANG TPP KANWIL)
+            const kanwilRadios = document.querySelectorAll('input[name="akses_sidang_tpp_kanwil"]');
+            kanwilRadios.forEach(r => {
+                if (r.value === 'none') {
+                    r.checked = true;
+                }
+                r.disabled = true;
+            });
+            if (hintLockedKanwil) hintLockedKanwil.classList.remove('d-none');
+
+            if (isManualChange && role === 'operator') {
+                const radioFullUpt = document.getElementById('edit_akses_sidang_tpp_full');
+                if (radioFullUpt) radioFullUpt.checked = true;
+            }
+        } else {
+            if (hintLockedKanwil) hintLockedKanwil.classList.add('d-none');
+        }
+
         if (isManualChange) {
-            const uptSelect = document.getElementById('upt_id');
             if (role === 'admin' || role === 'operator_wilayah') {
                 if (uptSelect) {
                     uptSelect.value = '';
                 }
+            }
+
+            if (role === 'admin') {
+                setAllPermissions('full');
+            } else if (role === 'operator_wilayah') {
+                // KANWIL: Default akses Sidang TPP Kanwil = full, sedangkan Monitoring TPP UPT = none
+                const radioFullKanwil = document.getElementById('edit_akses_sidang_tpp_kanwil_full');
+                if (radioFullKanwil) radioFullKanwil.checked = true;
+                const radioNoneUpt = document.getElementById('edit_akses_sidang_tpp_none');
+                if (radioNoneUpt) radioNoneUpt.checked = true;
+            } else if (role === 'viewer') {
+                setAllPermissions('view');
             }
         }
     }

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'akses_integrasi',
         'akses_bebas_harian',
         'akses_sidang_tpp',
+        'akses_sidang_tpp_kanwil',
         'akses_mutasi',
         'akses_utilitas',
         'akses_upt',
@@ -97,6 +98,11 @@ class User extends Authenticatable
         // Dashboard bersifat terbuka otomatis untuk semua pengguna (minimal view)
         if ($menu === 'dashboard') {
             return 'view';
+        }
+
+        // Modul Sidang TPP Kanwil DILARANG KERAS untuk akun UPT
+        if ($menu === 'sidang_tpp_kanwil' && ! $this->isKanwil()) {
+            return 'none';
         }
 
         $property = 'akses_'.$menu;

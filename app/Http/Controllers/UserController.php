@@ -21,6 +21,7 @@ class UserController extends Controller
         'akses_integrasi',
         'akses_bebas_harian',
         'akses_sidang_tpp',
+        'akses_sidang_tpp_kanwil',
         'akses_mutasi',
         'akses_utilitas',
         'akses_upt',
@@ -196,6 +197,12 @@ class UserController extends Controller
         // Dashboard selalu terbuka otomatis untuk semua pengguna
         $data['akses_dashboard'] = ($data['role'] === 'admin') ? 'full' : 'view';
 
+        // Proteksi UPT vs Kanwil: Akun UPT tidak boleh mengakses Sidang TPP Kanwil
+        $targetIsUpt = ($data['role'] === 'operator') || (! empty($data['upt_id']) && $data['role'] !== 'admin' && $data['role'] !== 'operator_wilayah');
+        if ($targetIsUpt) {
+            $data['akses_sidang_tpp_kanwil'] = 'none';
+        }
+
         try {
             $newUser = User::create($data);
             ActivityLog::log('tambah', 'user', "Menambahkan user baru: {$newUser->nama_lengkap} ({$newUser->username})", $newUser->toArray());
@@ -252,6 +259,12 @@ class UserController extends Controller
 
         // Dashboard selalu terbuka otomatis untuk semua pengguna
         $data['akses_dashboard'] = ($data['role'] === 'admin') ? 'full' : 'view';
+
+        // Proteksi UPT vs Kanwil: Akun UPT tidak boleh mengakses Sidang TPP Kanwil
+        $targetIsUpt = ($data['role'] === 'operator') || (! empty($data['upt_id']) && $data['role'] !== 'admin' && $data['role'] !== 'operator_wilayah');
+        if ($targetIsUpt) {
+            $data['akses_sidang_tpp_kanwil'] = 'none';
+        }
 
         try {
             $targetUser->update($data);
@@ -314,9 +327,14 @@ class UserController extends Controller
                     'icon' => 'fas fa-door-open text-info',
                 ],
                 'sidang_tpp' => [
-                    'label' => 'Agenda Sidang TPP',
-                    'desc' => 'Jadwal, undangan, unggah usulan WBP, verifikasi Kanwil, & hasil sidang.',
-                    'icon' => 'fas fa-gavel text-secondary',
+                    'label' => 'Monitoring Sidang TPP Satker UPT',
+                    'desc' => 'Jadwal, undangan, usulan WBP, verifikasi & monitoring sidang TPP satuan kerja Lapas/Rutan/Bapas (Khusus UPT).',
+                    'icon' => 'fas fa-desktop text-secondary',
+                ],
+                'sidang_tpp_kanwil' => [
+                    'label' => 'Pelaksanaan Sidang TPP Kantor Wilayah',
+                    'desc' => 'Pendaftaran sidang internal Kanwil, sebar link WA ke tim, presensi/pendapat, BA fisik & disposisi Kakanwil (Khusus Kanwil).',
+                    'icon' => 'fas fa-balance-scale text-primary',
                 ],
                 'mutasi' => [
                     'label' => 'Usulan Mutasi Narapidana Antar-UPT',

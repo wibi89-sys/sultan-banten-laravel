@@ -29,8 +29,8 @@ class SidangTppController extends Controller
         $user = auth()->user();
         if (! $user || ! $user->hasAccess('sidang_tpp', $requiredLevel)) {
             $msg = $requiredLevel === 'full'
-                ? 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Sidang TPP.'
-                : 'Akses ditolak. Anda tidak memiliki izin untuk mengakses fitur Sidang TPP.';
+                ? 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Monitoring Sidang TPP Satker UPT.'
+                : 'Akses ditolak. Anda tidak memiliki izin untuk mengakses fitur Monitoring Sidang TPP Satker UPT.';
             abort(403, $msg);
         }
     }
