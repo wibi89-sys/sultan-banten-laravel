@@ -918,18 +918,18 @@ class SidangTppController extends Controller
 
     /**
      * Hapus Sidang TPP
-     * Hanya dapat dilakukan oleh operator UPT pelaksana sebelum disahkan Kanwil.
+     * Hanya dapat dilakukan oleh Administrator Kantor Wilayah sebelum disahkan.
      */
     public function destroy(int $id): RedirectResponse
     {
         $this->checkAccess('full');
         $user = auth()->user();
 
-        $sidang = SidangTpp::findOrFail($id);
-
-        if (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id) {
-            abort(403, 'Akses ditolak. Hanya operator UPT pelaksana pemilik berkas yang berwenang menghapus jadwal sidang.');
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'Akses ditolak. Hanya Administrator Kantor Wilayah yang memiliki wewenang untuk menghapus agenda Sidang TPP.');
         }
+
+        $sidang = SidangTpp::findOrFail($id);
 
         if ($sidang->status_verifikasi_kanwil === 'sesuai' || ! empty($sidang->file_laporan_kakanwil)) {
             abort(403, 'Jadwal sidang yang telah diverifikasi sesuai atau diterbitkan Laporan Ka. Kanwil tidak dapat dihapus.');

@@ -789,10 +789,17 @@ class SidangTppKanwilController extends Controller
 
     /**
      * Hapus Sidang TPP Kanwil.
+     * Hanya dapat dilakukan oleh Administrator Kantor Wilayah.
      */
     public function destroy(int $id): RedirectResponse
     {
         $this->checkKanwilAccess('full');
+        $user = auth()->user();
+
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'Akses ditolak. Hanya Administrator Kantor Wilayah yang memiliki wewenang untuk menghapus Sidang TPP Kanwil.');
+        }
+
         $sidang = SidangTppKanwil::findOrFail($id);
 
         if ($sidang->status_sidang === 'selesai') {

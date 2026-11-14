@@ -323,11 +323,11 @@
                                         <i class="fab fa-whatsapp"></i>
                                     </button>
                                 </form>
-                                @if(auth()->user()->canManage('sidang_tpp') && !empty(auth()->user()->upt_id) && auth()->user()->upt_id == $s->upt_id && !in_array($s->status_verifikasi_kanwil, ['sesuai', 'terverifikasi']))
+                                @if(auth()->user()->isAdmin() && !in_array($s->status_verifikasi_kanwil, ['sesuai', 'terverifikasi']))
                                 <form action="{{ route('sidang-tpp.destroy', $s->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda sidang ini? Seluruh data usulan dan berkas terkait akan terhapus.');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-action" title="Hapus Sidang">
+                                    <button type="submit" class="btn btn-outline-danger btn-action" title="Hapus Sidang (Khusus Admin Kanwil)">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>

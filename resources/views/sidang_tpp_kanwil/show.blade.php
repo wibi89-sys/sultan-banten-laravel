@@ -87,6 +87,17 @@
             <a href="{{ route('sidang-tpp-kanwil.index') }}" class="btn btn-outline-secondary btn-sm" style="border-radius: 20px;">
                 <i class="fas fa-arrow-left me-1"></i> Kembali
             </a>
+
+            <!-- Tombol Hapus Sidang (Khusus Administrator Kanwil) -->
+            @if(auth()->user()->isAdmin() && $sidang->status_sidang !== 'selesai')
+            <form action="{{ route('sidang-tpp-kanwil.destroy', $sidang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Sidang TPP Kanwil {{ $sidang->nomor_sidang }}? Tindakan ini tidak dapat dibatalkan.');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm" style="border-radius: 20px;" title="Hapus Sidang">
+                    <i class="fas fa-trash-alt me-1"></i> Hapus Sidang
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 

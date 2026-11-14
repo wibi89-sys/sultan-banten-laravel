@@ -270,4 +270,33 @@ class SidangTppKanwilDokumenAiTest extends TestCase
         $this->assertEquals('Dody Fahrudin, Bc.IP., S.H., M.H.', $setting->kakanwil_nama);
         $this->assertTrue((bool) $setting->auto_embed_ttd);
     }
+
+    /**
+     * Memastikan user non-admin (operator wilayah biasa) DITOLAK (403) saat mencoba menghapus Sidang TPP Kanwil.
+     */
+    public function test_non_admin_cannot_delete_sidang_tpp_kanwil(): void
+    {
+        // $this->userKanwil memiliki role 'operator_wilayah' (bukan 'admin')
+        $response = $this->actingAs($this->userKanwil)
+            ->delete(route('sidang-tpp-kanwil.destroy', $this->sidang->id));
+
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
+    }
+
+    /**
+     * Memastikan hanya Admin Kanwil (role: admin) yang diizinkan menghapus Sidang TPP Kanwil.
+     */
+    public function test_admin_can_delete_sidang_tpp_kanwil(): void
+    {
+        $admin = User::where('role', 'admin')->first()
+            ?? User::factory()->create(['role' => 'admin', 'upt_id' => null]);
+
+        $response = $this->actingAs($admin)
+            ->delete(route('sidang-tpp-kanwil.destroy', $this->sidang->id));
+
+        $response->assertRedirect(route('sidang-tpp-kanwil.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
+    }
 }
