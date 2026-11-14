@@ -355,6 +355,69 @@
         [data-theme="dark"] .topbar-user-menu hr {
             border-color: #334155 !important;
         }
+
+        /* Nested Menu Subparent (Level 2 Submenu under Sidang TPP) */
+        .menu-subparent {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px 10px 20px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            text-decoration: none;
+            user-select: none;
+        }
+        .menu-subparent:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .menu-subparent.active-subparent {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+            border-left-color: #38bdf8;
+        }
+        .menu-subparent .subarrow {
+            margin-left: auto;
+            font-size: 10px;
+            transition: transform 0.2s ease;
+            opacity: 0.7;
+        }
+        .menu-subparent.collapsed .subarrow {
+            transform: rotate(-90deg);
+        }
+        .sidebar-submenu-level3 {
+            background: rgba(0, 0, 0, 0.22);
+            border-left: 2px solid rgba(255, 255, 255, 0.08);
+            margin-left: 14px;
+        }
+        .sidebar-submenu-level3 a {
+            padding: 8px 14px 8px 24px !important;
+            font-size: 12px !important;
+            color: rgba(255, 255, 255, 0.7) !important;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .sidebar-submenu-level3 a:hover {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+        .sidebar-submenu-level3 a.active {
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.15) !important;
+            font-weight: 600;
+            border-left: 2px solid #38bdf8;
+        }
+        .sidebar-submenu-level3 a i {
+            width: 18px;
+            text-align: center;
+            margin-right: 8px;
+            font-size: 12px;
+        }
     </style>
     @stack('styles')
 </head>
@@ -429,55 +492,68 @@
             @php
                 $hasTppUpt = $user->hasAccess('sidang_tpp');
                 $hasTppKanwil = $user->isKanwil() && $user->hasAccess('sidang_tpp_kanwil');
+                $isTppKanwilActive = request()->routeIs('sidang-tpp-kanwil.*');
+                $isTppUptActive = request()->routeIs('sidang-tpp.*');
+                $isAnyTppActive = $isTppKanwilActive || $isTppUptActive;
             @endphp
             @if($hasTppUpt || $hasTppKanwil)
-            <div class="menu-parent {{ request()->routeIs('sidang-tpp.*') || request()->routeIs('sidang-tpp-kanwil.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuSidangTPP">
+            <div class="menu-parent {{ $isAnyTppActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#menuSidangTPP">
                 <i class="fas fa-gavel"></i>
                 <span>Sidang TPP</span>
                 <i class="fas fa-chevron-down arrow"></i>
             </div>
-            <div class="collapse {{ request()->routeIs('sidang-tpp.*') || request()->routeIs('sidang-tpp-kanwil.*') ? 'show' : '' }}" id="menuSidangTPP">
+            <div class="collapse {{ $isAnyTppActive ? 'show' : '' }}" id="menuSidangTPP">
                 <div class="sidebar-submenu">
                     @if($hasTppKanwil)
-                    <div class="px-3 pt-2 pb-1 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em; color: #38bdf8;">
-                        <i class="fas fa-university me-1"></i>Pelaksanaan TPP Kanwil
+                    <!-- Sub Menu 1: TPP Kantor Wilayah -->
+                    <div class="menu-subparent {{ $isTppKanwilActive ? 'active-subparent' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#subTppKanwil">
+                        <i class="fas fa-university text-info me-2"></i>
+                        <span>TPP Kantor Wilayah</span>
+                        <i class="fas fa-chevron-down subarrow"></i>
                     </div>
-                    <a href="{{ route('sidang-tpp-kanwil.index') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.index') || request()->routeIs('sidang-tpp-kanwil.show') ? 'active' : '' }}">
-                        <i class="fas fa-balance-scale"></i><span>Sidang TPP Kanwil</span>
-                    </a>
-                    <a href="{{ route('sidang-tpp-kanwil.create') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.create') ? 'active' : '' }}">
-                        <i class="fas fa-plus-circle text-success"></i><span>Registrasi Sidang Baru</span>
-                    </a>
+                    <div class="collapse {{ $isTppKanwilActive ? 'show' : '' }} sidebar-submenu-level3" id="subTppKanwil">
+                        <a href="{{ route('sidang-tpp-kanwil.index') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.index') || request()->routeIs('sidang-tpp-kanwil.show') ? 'active' : '' }}">
+                            <i class="fas fa-balance-scale"></i><span>Daftar Sidang Kanwil</span>
+                        </a>
+                        <a href="{{ route('sidang-tpp-kanwil.create') }}" class="{{ request()->routeIs('sidang-tpp-kanwil.create') ? 'active' : '' }}">
+                            <i class="fas fa-plus-circle text-success"></i><span>Registrasi Sidang Baru</span>
+                        </a>
+                    </div>
                     @endif
 
                     @if($hasTppUpt)
-                    <div class="px-3 pt-2 pb-1 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em; color: #94a3b8;">
-                        <i class="fas fa-desktop me-1"></i>Monitoring TPP Satker UPT
+                    <!-- Sub Menu 2: TPP Satker UPT -->
+                    <div class="menu-subparent {{ $isTppUptActive ? 'active-subparent' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#subTppUpt">
+                        <i class="fas fa-desktop text-warning me-2"></i>
+                        <span>TPP Satker UPT</span>
+                        <i class="fas fa-chevron-down subarrow"></i>
                     </div>
-                    <a href="{{ Route::has('sidang-tpp.index') ? route('sidang-tpp.index') : url('/sidang-tpp') }}" class="{{ request()->routeIs('sidang-tpp.index') || request()->routeIs('sidang-tpp.create') || request()->routeIs('sidang-tpp.show') ? 'active' : '' }}">
-                        <i class="fas fa-calendar-alt"></i><span>1. Jadwal &amp; Undangan</span>
-                    </a>
-                    <a href="{{ Route::has('sidang-tpp.hasil') ? route('sidang-tpp.hasil') : url('/sidang-tpp/hasil') }}" class="{{ request()->routeIs('sidang-tpp.hasil*') ? 'active' : '' }}">
-                        <i class="fas fa-clipboard-check"></i><span>2. Hasil Sidang UPT</span>
-                    </a>
-                    @if($user->isKanwil())
-                    <a href="{{ route('sidang-tpp.dokumen-kanwil.index') }}" class="{{ request()->routeIs('sidang-tpp.dokumen-kanwil.*') ? 'active' : '' }}">
-                        <i class="fas fa-file-signature text-warning"></i><span>3. Naskah &amp; Laporan Kanwil</span>
-                    </a>
-                    <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
-                        <i class="fas fa-stamp"></i><span>4. Verifikasi &amp; TTD Kanwil</span>
-                    </a>
-                    <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
-                        <i class="fas fa-file-download"></i><span>5. Rekap &amp; Download Dokumen</span>
-                    </a>
-                    @else
-                    <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
-                        <i class="fas fa-stamp"></i><span>3. Verifikasi &amp; TTD Kanwil</span>
-                    </a>
-                    <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
-                        <i class="fas fa-file-download"></i><span>4. Rekap &amp; Download Dokumen</span>
-                    </a>
-                    @endif
+                    <div class="collapse {{ $isTppUptActive ? 'show' : '' }} sidebar-submenu-level3" id="subTppUpt">
+                        <a href="{{ Route::has('sidang-tpp.index') ? route('sidang-tpp.index') : url('/sidang-tpp') }}" class="{{ request()->routeIs('sidang-tpp.index') || request()->routeIs('sidang-tpp.create') || request()->routeIs('sidang-tpp.show') ? 'active' : '' }}">
+                            <i class="fas fa-calendar-alt"></i><span>1. Jadwal &amp; Undangan</span>
+                        </a>
+                        <a href="{{ Route::has('sidang-tpp.hasil') ? route('sidang-tpp.hasil') : url('/sidang-tpp/hasil') }}" class="{{ request()->routeIs('sidang-tpp.hasil*') ? 'active' : '' }}">
+                            <i class="fas fa-clipboard-check"></i><span>2. Hasil Sidang UPT</span>
+                        </a>
+                        @if($user->isKanwil())
+                        <a href="{{ route('sidang-tpp.dokumen-kanwil.index') }}" class="{{ request()->routeIs('sidang-tpp.dokumen-kanwil.*') ? 'active' : '' }}">
+                            <i class="fas fa-file-signature text-warning"></i><span>3. Naskah &amp; Laporan Kanwil</span>
+                        </a>
+                        <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
+                            <i class="fas fa-stamp"></i><span>4. Verifikasi &amp; TTD Kanwil</span>
+                        </a>
+                        <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
+                            <i class="fas fa-file-download"></i><span>5. Rekap &amp; Download Dokumen</span>
+                        </a>
+                        @else
+                        <a href="{{ Route::has('sidang-tpp.kanwil') ? route('sidang-tpp.kanwil') : url('/sidang-tpp/kanwil') }}" class="{{ request()->routeIs('sidang-tpp.kanwil*') ? 'active' : '' }}">
+                            <i class="fas fa-stamp"></i><span>3. Verifikasi &amp; TTD Kanwil</span>
+                        </a>
+                        <a href="{{ Route::has('sidang-tpp.rekapitulasi') ? route('sidang-tpp.rekapitulasi') : url('/sidang-tpp/rekapitulasi') }}" class="{{ request()->routeIs('sidang-tpp.rekapitulasi*') ? 'active' : '' }}">
+                            <i class="fas fa-file-download"></i><span>4. Rekap &amp; Download Dokumen</span>
+                        </a>
+                        @endif
+                    </div>
                     @endif
                 </div>
             </div>
