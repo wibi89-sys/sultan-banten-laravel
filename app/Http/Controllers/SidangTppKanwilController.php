@@ -533,6 +533,24 @@ class SidangTppKanwilController extends Controller
                     'dokumen_tambahan' => $dokumenTambahan,
                 ],
             ];
+
+            if ($request->filled('mutasi_id')) {
+                $mObj = MutasiNarapidana::find($request->input('mutasi_id'));
+                if ($mObj) {
+                    $narapidanaData['mutasi_id'] = $mObj->id;
+                    $narapidanaData['nomor_surat_usulan'] = $mObj->nomor_surat;
+                    $narapidanaData['tanggal_surat_usulan'] = $mObj->tanggal_surat?->format('Y-m-d');
+                    $narapidanaData['kategori_mutasi'] = $mObj->kategori_mutasi;
+                    $narapidanaData['total_usulan'] = (int) $mObj->total_usulan;
+                    $narapidanaData['jumlah_usulan_narkotika'] = (int) $mObj->jumlah_narkotika;
+                    $narapidanaData['jumlah_usulan_pidum'] = (int) $mObj->jumlah_pidum;
+                    $narapidanaData['jumlah_usulan_korupsi'] = (int) $mObj->jumlah_korupsi;
+                    $narapidanaData['keterangan_usulan'] = $mObj->keterangan;
+                    $narapidanaData['file_surat_usulan'] = $mObj->file_surat_usulan;
+                    $narapidanaData['file_lampiran_wbp'] = $mObj->file_lampiran_wbp;
+                    $narapidanaData['file_ba_tpp'] = $mObj->file_bap ?: ($mObj->file_ba_tpp_upt ?: $mObj->file_asesmen);
+                }
+            }
         } elseif ($subjekTipe === 'izin_berobat') {
             $fileRekam = null;
             if ($request->hasFile('file_medis_rekam')) {
@@ -839,7 +857,7 @@ class SidangTppKanwilController extends Controller
                         $mNarapidanaData['keterangan_usulan'] = $mutasiObj->keterangan;
                         $mNarapidanaData['file_surat_usulan'] = $mutasiObj->file_surat_usulan;
                         $mNarapidanaData['file_lampiran_wbp'] = $mutasiObj->file_lampiran_wbp;
-                        $mNarapidanaData['file_ba_tpp'] = $mutasiObj->file_bap ?: $mutasiObj->file_asesmen;
+                        $mNarapidanaData['file_ba_tpp'] = $mutasiObj->file_bap ?: ($mutasiObj->file_ba_tpp_upt ?: $mutasiObj->file_asesmen);
                     }
                 } elseif ($mKategori === 'izin_berobat') {
                     $berkasMedis = [];
@@ -2344,6 +2362,25 @@ class SidangTppKanwilController extends Controller
 
         $narapidanaData = $materi->narapidana_data ?? [];
         if ($validated['kategori_materi'] === 'mutasi_narapidana' || $validated['kategori_materi'] === 'mutasi_keinginan_sendiri') {
+            $mutasiObj = ! empty($updateData['mutasi_id'])
+                ? MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])->find($updateData['mutasi_id'])
+                : null;
+
+            if ($mutasiObj) {
+                $narapidanaData['mutasi_id'] = $mutasiObj->id;
+                $narapidanaData['nomor_surat_usulan'] = $narapidanaData['nomor_surat_usulan'] ?? $mutasiObj->nomor_surat;
+                $narapidanaData['tanggal_surat_usulan'] = $narapidanaData['tanggal_surat_usulan'] ?? $mutasiObj->tanggal_surat?->format('Y-m-d');
+                $narapidanaData['kategori_mutasi'] = $narapidanaData['kategori_mutasi'] ?? $mutasiObj->kategori_mutasi;
+                $narapidanaData['total_usulan'] = (int) ($narapidanaData['total_usulan'] ?? $mutasiObj->total_usulan);
+                $narapidanaData['jumlah_usulan_narkotika'] = (int) ($narapidanaData['jumlah_usulan_narkotika'] ?? $mutasiObj->jumlah_narkotika);
+                $narapidanaData['jumlah_usulan_pidum'] = (int) ($narapidanaData['jumlah_usulan_pidum'] ?? $mutasiObj->jumlah_pidum);
+                $narapidanaData['jumlah_usulan_korupsi'] = (int) ($narapidanaData['jumlah_usulan_korupsi'] ?? $mutasiObj->jumlah_korupsi);
+                $narapidanaData['keterangan_usulan'] = $narapidanaData['keterangan_usulan'] ?? $mutasiObj->keterangan;
+                $narapidanaData['file_surat_usulan'] = $narapidanaData['file_surat_usulan'] ?? $mutasiObj->file_surat_usulan;
+                $narapidanaData['file_lampiran_wbp'] = $narapidanaData['file_lampiran_wbp'] ?? $mutasiObj->file_lampiran_wbp;
+                $narapidanaData['file_ba_tpp'] = $narapidanaData['file_ba_tpp'] ?? ($mutasiObj->file_bap ?: ($mutasiObj->file_ba_tpp_upt ?: $mutasiObj->file_asesmen));
+            }
+
             if ($request->filled('mutasi_wbp_nama')) {
                 $narapidanaData['nama'] = $request->input('mutasi_wbp_nama');
             }

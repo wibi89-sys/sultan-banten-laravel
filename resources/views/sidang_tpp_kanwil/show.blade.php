@@ -341,7 +341,7 @@
                                     $ndm = $m->narapidana_data; 
                                     $bm = $ndm['berkas'] ?? [];
                                     $alokasiList = $ndm['alokasi'] ?? [];
-                                    $isKolektif = !empty($alokasiList) || !empty($ndm['total_usulan']) || !empty($ndm['nomor_surat_usulan']);
+                                    $isKolektif = !empty($m->mutasi_id) || !empty($alokasiList) || !empty($ndm['total_usulan']) || !empty($ndm['nomor_surat_usulan']);
                                 @endphp
                                 <div class="p-2.5 bg-warning-subtle bg-opacity-25 rounded border border-warning border-opacity-50 mb-2 small">
                                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
@@ -2570,19 +2570,81 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
 
                             @if($m->isMutasiNarapidana())
                             <!-- TABEL PENETAPAN DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA (HASIL SIDANG) -->
+                            @php
+                                $targetNarkotika = (int) ($ndm['jumlah_usulan_narkotika'] ?? ($m->mutasi?->jumlah_narkotika ?? 0));
+                                $targetPidum = (int) ($ndm['jumlah_usulan_pidum'] ?? ($m->mutasi?->jumlah_pidum ?? 0));
+                                $targetKorupsi = (int) ($ndm['jumlah_usulan_korupsi'] ?? ($m->mutasi?->jumlah_korupsi ?? 0));
+                                $targetTotal = (int) ($ndm['total_usulan'] ?? ($m->mutasi?->total_usulan ?? ($targetNarkotika + $targetPidum + $targetKorupsi)));
+                                $aloks = $ndm['alokasi'] ?? [];
+
+                                if (empty($aloks) && $targetTotal > 0) {
+                                    if ($m->mutasi && $m->mutasi->tujuans && $m->mutasi->tujuans->count() > 0) {
+                                        $aloks = $m->mutasi->tujuans->map(function($t) {
+                                            return [
+                                                'upt_tujuan_id' => $t->upt_tujuan_id,
+                                                'upt_tujuan_nama' => $t->uptTujuan?->nama_upt ?? '',
+                                                'jumlah_narkotika' => (int) ($t->jumlah_disetujui_narkotika ?: $t->jumlah_narkotika),
+                                                'jumlah_pidum' => (int) ($t->jumlah_disetujui_pidum ?: $t->jumlah_pidum),
+                                                'jumlah_korupsi' => (int) ($t->jumlah_disetujui_korupsi ?: $t->jumlah_korupsi),
+                                                'total' => (int) ($t->total_disetujui ?: ($t->jumlah_narkotika + $t->jumlah_pidum + $t->jumlah_korupsi)),
+                                            ];
+                                        })->values()->toArray();
+                                    } else {
+                                        $aloks = [
+                                            [
+                                                'upt_tujuan_id' => $m->upt_tujuan_rekomendasi_id ?? ($ndm['upt_tujuan_id'] ?? null),
+                                                'upt_tujuan_nama' => $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? ''),
+                                                'jumlah_narkotika' => $targetNarkotika,
+                                                'jumlah_pidum' => $targetPidum,
+                                                'jumlah_korupsi' => $targetKorupsi,
+                                                'total' => $targetTotal,
+                                            ]
+                                        ];
+                                    }
+                                }
+
+                                $sumNarkotika = !empty($aloks) ? collect($aloks)->sum('jumlah_narkotika') : ($ndm['total_disetujui_narkotika'] ?? 0);
+                                $sumPidum = !empty($aloks) ? collect($aloks)->sum('jumlah_pidum') : ($ndm['total_disetujui_pidum'] ?? 0);
+                                $sumKorupsi = !empty($aloks) ? collect($aloks)->sum('jumlah_korupsi') : ($ndm['total_disetujui_korupsi'] ?? 0);
+                                $sumTotal = !empty($aloks) ? collect($aloks)->sum(fn($a) => ($a['total'] ?? (($a['jumlah_narkotika'] ?? 0) + ($a['jumlah_pidum'] ?? 0) + ($a['jumlah_korupsi'] ?? 0)))) : ($ndm['total_disetujui'] ?? 0);
+                            @endphp
                             <div class="col-12 mt-3">
                                 <div class="p-3 bg-light rounded border border-warning">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                                         <div>
                                             <span class="fw-bold text-dark small" style="font-size: 12px;">
                                                 <i class="fas fa-balance-scale text-warning-emphasis me-1"></i>Penetapan Distribusi UPT Tujuan &amp; Alokasi Kuota Hasil Sidang TPP
                                             </span>
                                             <span class="text-muted d-block" style="font-size: 11px;">Tentukan UPT penerima dan alokasi kuota narapidana berdasarkan hasil musyawarah sidang TPP.</span>
                                         </div>
-                                        <button type="button" class="btn btn-primary btn-xs py-1 px-2.5 shadow-sm fw-bold" onclick="tambahBarisAlokasiEdit({{ $m->id }})">
-                                            <i class="fas fa-plus me-1"></i>Tambah UPT Penerima
-                                        </button>
+                                        <div class="d-flex gap-1.5">
+                                            @if($targetTotal > 0)
+                                            <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 fw-semibold" style="font-size: 11px;" onclick="resetAlokasiKeUsulan({{ $m->id }}, {{ $targetNarkotika }}, {{ $targetPidum }}, {{ $targetKorupsi }}, '{{ addslashes($m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')) }}')" title="Muat ulang angka usulan pengajuan dari UPT asal">
+                                                <i class="fas fa-undo me-1"></i>Salin Angka Usulan UPT
+                                            </button>
+                                            @endif
+                                            <button type="button" class="btn btn-primary btn-xs py-1 px-2.5 shadow-sm fw-bold" onclick="tambahBarisAlokasiEdit({{ $m->id }})">
+                                                <i class="fas fa-plus me-1"></i>Tambah UPT Penerima
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    @if($targetTotal > 0)
+                                    <!-- BANNER STATISTIK USULAN UPT UNTUK ACUAN -->
+                                    <div class="p-2 bg-white rounded border border-warning-subtle mb-2 d-flex justify-content-between align-items-center flex-wrap gap-2 small">
+                                        <div>
+                                            <span class="text-muted">Target Usulan UPT:</span> 
+                                            <strong class="text-dark">{{ $m->mutasi?->uptAsal?->nama_upt ?? ($ndm['upt_asal_nama'] ?? 'UPT') }}</strong>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Narkotika: <b>{{ $targetNarkotika }}</b></span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Pidum: <b>{{ $targetPidum }}</b></span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Korupsi: <b>{{ $targetKorupsi }}</b></span>
+                                            <span class="badge bg-dark text-white fw-bold">Total Usulan: <b>{{ $targetTotal }}</b> WBP</span>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                     <div class="table-responsive">
                                         <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11.5px;" id="tableAlokasiEdit_{{ $m->id }}">
                                             <thead class="table-light">
@@ -2596,9 +2658,6 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                                 </tr>
                                             </thead>
                                             <tbody id="tbodyAlokasiEdit_{{ $m->id }}">
-                                                @php
-                                                    $aloks = $ndm['alokasi'] ?? [];
-                                                @endphp
                                                 @foreach($aloks as $aIdx => $alok)
                                                 <tr id="row_alokasi_edit_{{ $m->id }}_{{ $aIdx }}" class="alokasi-row-edit-{{ $m->id }}">
                                                     <td class="text-start">
@@ -2614,7 +2673,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                                         <input type="number" min="0" name="alokasi[{{ $aIdx }}][jumlah_korupsi]" class="form-control form-control-sm text-center input-korupsi" value="{{ $alok['jumlah_korupsi'] ?? 0 }}" oninput="hitungAlokasiEdit({{ $m->id }})">
                                                     </td>
                                                     <td>
-                                                        <span class="fw-bold text-dark subtotal-cell">{{ $alok['total'] ?? 0 }}</span>
+                                                        <span class="fw-bold text-dark subtotal-cell">{{ $alok['total'] ?? (($alok['jumlah_narkotika'] ?? 0) + ($alok['jumlah_pidum'] ?? 0) + ($alok['jumlah_korupsi'] ?? 0)) }}</span>
                                                     </td>
                                                     <td>
                                                         <button type="button" class="btn btn-outline-danger btn-xs py-0 px-1" onclick="hapusBarisAlokasiEdit({{ $m->id }}, {{ $aIdx }})"><i class="fas fa-times"></i></button>
@@ -2625,10 +2684,10 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             <tfoot class="table-light fw-bold">
                                                 <tr>
                                                     <td class="text-start">Total Kuota yang Ditetapkan:</td>
-                                                    <td id="foot_narkotika_edit_{{ $m->id }}">{{ $ndm['total_disetujui_narkotika'] ?? 0 }}</td>
-                                                    <td id="foot_pidum_edit_{{ $m->id }}">{{ $ndm['total_disetujui_pidum'] ?? 0 }}</td>
-                                                    <td id="foot_korupsi_edit_{{ $m->id }}">{{ $ndm['total_disetujui_korupsi'] ?? 0 }}</td>
-                                                    <td id="foot_subtotal_edit_{{ $m->id }}" class="text-primary fs-6">{{ $ndm['total_disetujui'] ?? 0 }}</td>
+                                                    <td id="foot_narkotika_edit_{{ $m->id }}">{{ $sumNarkotika }}</td>
+                                                    <td id="foot_pidum_edit_{{ $m->id }}">{{ $sumPidum }}</td>
+                                                    <td id="foot_korupsi_edit_{{ $m->id }}">{{ $sumKorupsi }}</td>
+                                                    <td id="foot_subtotal_edit_{{ $m->id }}" class="text-primary fs-6">{{ $sumTotal }}</td>
                                                     <td></td>
                                                 </tr>
                                             </tfoot>
@@ -3086,6 +3145,19 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
             row.remove();
             hitungAlokasiEdit(materiId);
         }
+    }
+
+    function resetAlokasiKeUsulan(materiId, narkotika, pidum, korupsi, uptNama) {
+        const tbody = document.getElementById('tbodyAlokasiEdit_' + materiId);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        alokasiEditCounters[materiId] = 0;
+        tambahBarisAlokasiEdit(materiId, {
+            upt_tujuan_nama: uptNama || '',
+            jumlah_narkotika: parseInt(narkotika) || 0,
+            jumlah_pidum: parseInt(pidum) || 0,
+            jumlah_korupsi: parseInt(korupsi) || 0,
+        });
     }
 
     function hitungAlokasiEdit(materiId) {
