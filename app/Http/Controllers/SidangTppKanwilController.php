@@ -136,7 +136,7 @@ class SidangTppKanwilController extends Controller
 
         // Data integrasi usulan Mutasi Narapidana UPT & Daftar UPT se-Banten
         $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
-            ->whereIn('status', ['diajukan', 'perlu_perbaikan'])
+            ->orderByRaw("FIELD(status, 'diajukan', 'perlu_perbaikan', 'disetujui', 'selesai')")
             ->latest('tanggal_surat')
             ->get();
         $uptList = Upt::orderBy('nama_upt')->get();
@@ -1000,7 +1000,7 @@ class SidangTppKanwilController extends Controller
         $totalWaTerkirim = $anggotaList->where('wa_sent_status', 'terkirim')->count();
 
         $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
-            ->whereIn('status', ['diajukan', 'perlu_perbaikan'])
+            ->orderByRaw("FIELD(status, 'diajukan', 'perlu_perbaikan', 'disetujui', 'selesai')")
             ->latest('tanggal_surat')
             ->get();
         $uptList = Upt::orderBy('nama_upt')->get();
@@ -2364,6 +2364,56 @@ class SidangTppKanwilController extends Controller
             if ($mUptInput !== null && trim((string) $mUptInput) !== '') {
                 $narapidanaData['upt_tujuan_id'] = $uptTujuanId;
                 $narapidanaData['upt_tujuan_nama'] = $uptTujuanNama;
+            }
+            if ($request->has('alokasi')) {
+                $alokasiInput = $request->input('alokasi', []);
+                $cleanAlokasi = [];
+                $totalAlokasiNarkotika = 0;
+                $totalAlokasiPidum = 0;
+                $totalAlokasiKorupsi = 0;
+                $grandTotalAlokasi = 0;
+
+                if (is_array($alokasiInput)) {
+                    foreach ($alokasiInput as $alok) {
+                        $uptInputRaw = $alok['upt_tujuan_id'] ?? ($alok['upt_tujuan_nama'] ?? null);
+                        if (empty($uptInputRaw)) {
+                            continue;
+                        }
+                        [$uId, $uNama] = $this->resolveUptTujuan($uptInputRaw);
+                        $narkotika = max(0, (int) ($alok['jumlah_narkotika'] ?? 0));
+                        $pidum = max(0, (int) ($alok['jumlah_pidum'] ?? 0));
+                        $korupsi = max(0, (int) ($alok['jumlah_korupsi'] ?? 0));
+                        $subtotal = $narkotika + $pidum + $korupsi;
+
+                        $cleanAlokasi[] = [
+                            'upt_tujuan_id' => $uId,
+                            'upt_tujuan_nama' => $uNama,
+                            'jumlah_narkotika' => $narkotika,
+                            'jumlah_pidum' => $pidum,
+                            'jumlah_korupsi' => $korupsi,
+                            'total' => $subtotal,
+                        ];
+
+                        $totalAlokasiNarkotika += $narkotika;
+                        $totalAlokasiPidum += $pidum;
+                        $totalAlokasiKorupsi += $korupsi;
+                        $grandTotalAlokasi += $subtotal;
+                    }
+                }
+
+                $narapidanaData['alokasi'] = $cleanAlokasi;
+                $narapidanaData['total_disetujui'] = $grandTotalAlokasi;
+                $narapidanaData['total_disetujui_narkotika'] = $totalAlokasiNarkotika;
+                $narapidanaData['total_disetujui_pidum'] = $totalAlokasiPidum;
+                $narapidanaData['total_disetujui_korupsi'] = $totalAlokasiKorupsi;
+
+                if (! empty($cleanAlokasi)) {
+                    $uptTujuanId = $cleanAlokasi[0]['upt_tujuan_id'] ?: $uptTujuanId;
+                    $uptTujuanNama = $cleanAlokasi[0]['upt_tujuan_nama'] ?: $uptTujuanNama;
+                    $updateData['upt_tujuan_rekomendasi_id'] = $uptTujuanId;
+                    $narapidanaData['upt_tujuan_id'] = $uptTujuanId;
+                    $narapidanaData['upt_tujuan_nama'] = $uptTujuanNama;
+                }
             }
             if ($request->filled('nama_pk_bapas')) {
                 $narapidanaData['nama_pk_bapas'] = $request->input('nama_pk_bapas');

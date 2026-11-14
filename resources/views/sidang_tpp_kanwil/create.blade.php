@@ -18,7 +18,14 @@
             'total_usulan' => (int) $mu->total_usulan,
             'file_surat_usulan' => $mu->file_surat_usulan ? asset($mu->file_surat_usulan) : null,
             'file_lampiran_wbp' => $mu->file_lampiran_wbp ? asset($mu->file_lampiran_wbp) : null,
-            'file_ba_tpp' => ($mu->file_bap ?: $mu->file_asesmen) ? asset($mu->file_bap ?: $mu->file_asesmen) : null,
+            'file_ba_tpp' => ($mu->file_bap ?: ($mu->file_ba_tpp_upt ?: $mu->file_asesmen)) ? asset($mu->file_bap ?: ($mu->file_ba_tpp_upt ?: $mu->file_asesmen)) : null,
+            'tujuans' => $mu->tujuans->map(fn($t) => [
+                'upt_tujuan_id' => $t->upt_tujuan_id,
+                'upt_tujuan_nama' => $t->uptTujuan?->nama_upt ?? '',
+                'jumlah_narkotika' => (int) $t->jumlah_disetujui_narkotika,
+                'jumlah_pidum' => (int) $t->jumlah_disetujui_pidum,
+                'jumlah_korupsi' => (int) $t->jumlah_disetujui_korupsi,
+            ])->values()->all(),
         ];
     });
 @endphp
@@ -1630,7 +1637,7 @@
         const formUptTujuanEl = document.getElementById('upt_tujuan_rekomendasi_id_' + index);
         const alasanEl = document.getElementById('mutasi_alasan_' + index);
 
-        if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
+        if (judulEl) {
             judulEl.value = 'Pemindahan Narapidana Kolektif ' + data.upt_asal_nama + ' (' + data.total_usulan + ' Orang)';
         }
         if (wbpNamaEl) wbpNamaEl.value = 'Kolektif ' + data.upt_asal_nama + ' (' + data.total_usulan + ' Orang)';
@@ -1638,15 +1645,22 @@
         if (formUptTujuanEl) formUptTujuanEl.value = data.upt_tujuan_nama || '';
         if (alasanEl) alasanEl.value = data.kategori_mutasi || 'Overkapasitas / Redistribusi Narapidana';
 
-        // Auto initialize allocation table if empty
+        // Auto initialize allocation table with full distribution
         const tbody = document.getElementById('tbodyAlokasi_' + index);
-        if (tbody && tbody.children.length === 0) {
-            tambahBarisAlokasi(index, {
-                upt_tujuan_nama: data.upt_tujuan_nama || '',
-                jumlah_narkotika: data.jumlah_narkotika,
-                jumlah_pidum: data.jumlah_pidum,
-                jumlah_korupsi: data.jumlah_korupsi,
-            });
+        if (tbody) {
+            tbody.innerHTML = '';
+            if (data.tujuans && data.tujuans.length > 0) {
+                data.tujuans.forEach(t => {
+                    tambahBarisAlokasi(index, t);
+                });
+            } else {
+                tambahBarisAlokasi(index, {
+                    upt_tujuan_nama: data.upt_tujuan_nama || '',
+                    jumlah_narkotika: data.jumlah_narkotika,
+                    jumlah_pidum: data.jumlah_pidum,
+                    jumlah_korupsi: data.jumlah_korupsi,
+                });
+            }
         }
     }
 

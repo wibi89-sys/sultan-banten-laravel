@@ -1,5 +1,35 @@
 @extends('layouts.app')
 
+@php
+    $mutasiJsonMap = $mutasiList->keyBy('id')->map(function($mu) {
+        return [
+            'id' => $mu->id,
+            'nomor_surat' => $mu->nomor_surat,
+            'tanggal_surat' => $mu->tanggal_surat ? $mu->tanggal_surat->format('d/m/Y') : '-',
+            'kategori_mutasi' => $mu->kategori_mutasi ?? 'Pemindahan Antar-UPT',
+            'keterangan' => $mu->keterangan ?? '',
+            'upt_asal_id' => $mu->upt_asal_id,
+            'upt_asal_nama' => $mu->uptAsal?->nama_upt ?? '-',
+            'upt_tujuan_id' => $mu->upt_tujuan_id,
+            'upt_tujuan_nama' => $mu->uptTujuan?->nama_upt ?? '',
+            'jumlah_narkotika' => (int) $mu->jumlah_narkotika,
+            'jumlah_pidum' => (int) $mu->jumlah_pidum,
+            'jumlah_korupsi' => (int) $mu->jumlah_korupsi,
+            'total_usulan' => (int) $mu->total_usulan,
+            'file_surat_usulan' => $mu->file_surat_usulan ? asset($mu->file_surat_usulan) : null,
+            'file_lampiran_wbp' => $mu->file_lampiran_wbp ? asset($mu->file_lampiran_wbp) : null,
+            'file_ba_tpp' => ($mu->file_bap ?: ($mu->file_ba_tpp_upt ?: $mu->file_asesmen)) ? asset($mu->file_bap ?: ($mu->file_ba_tpp_upt ?: $mu->file_asesmen)) : null,
+            'tujuans' => $mu->tujuans->map(fn($t) => [
+                'upt_tujuan_id' => $t->upt_tujuan_id,
+                'upt_tujuan_nama' => $t->uptTujuan?->nama_upt ?? '',
+                'jumlah_narkotika' => (int) $t->jumlah_disetujui_narkotika,
+                'jumlah_pidum' => (int) $t->jumlah_disetujui_pidum,
+                'jumlah_korupsi' => (int) $t->jumlah_disetujui_korupsi,
+            ])->values()->all(),
+        ];
+    });
+@endphp
+
 @section('title', 'Detail Sidang TPP Kanwil - ' . $sidang->nomor_sidang)
 @section('page_title', 'Detail Sidang TPP Kanwil')
 
@@ -1684,7 +1714,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                     <!-- Dropdown Usulan Mutasi UPT -->
                                     <div class="mb-2">
                                         <label class="form-label small text-muted mb-1">Tarik Usulan dari Modul Mutasi UPT (Opsional):</label>
-                                        <select name="mutasi_id" class="form-select form-select-sm" onchange="autoFillMutasiModal(this, 'tambah')">
+                                        <select name="mutasi_id" id="tambah_mutasi_id" class="form-select form-select-sm" onchange="autoFillMutasiModal(this, 'tambah')">
                                             <option value="">-- Pilih Usulan Mutasi UPT --</option>
                                             @foreach($mutasiList as $mu)
                                             <option value="{{ $mu->id }}"
@@ -1699,7 +1729,90 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                         </select>
                                     </div>
 
-                                    <div class="row g-2">
+                                    <!-- KARTU INFORMASI USULAN MUTASI UPT (AUTO-FILL FULL DARI MUTASI NARAPIDANA) -->
+                                    <div id="infoCardMutasi_tambah" class="card border border-warning bg-white shadow-sm mb-3 d-none">
+                                        <div class="card-body p-2.5">
+                                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-2 mb-2">
+                                                <div>
+                                                    <span class="badge bg-warning text-dark me-1" id="info_kategori_tambah">Kolektif</span>
+                                                    <span class="fw-bold text-dark small" id="info_surat_tambah">-</span>
+                                                    <span class="text-muted small ms-1" id="info_tanggal_tambah">(-)</span>
+                                                </div>
+                                                <div>
+                                                    <span class="badge bg-light text-dark border">
+                                                        UPT Asal: <b id="info_upt_asal_tambah">-</b>
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 align-items-center mb-2">
+                                                <div class="col-12 col-md-7">
+                                                    <div class="d-flex flex-wrap align-items-center gap-1">
+                                                        <span class="small text-muted me-1">Statistik:</span>
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Narkotika">Narkotika: <b id="info_stat_narkotika_tambah">0</b></span>
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Pidana Umum">Pidum: <b id="info_stat_pidum_tambah">0</b></span>
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Korupsi">Korupsi: <b id="info_stat_korupsi_tambah">0</b></span>
+                                                        <span class="badge bg-dark text-white fw-bold" title="Total Usulan">Total: <b id="info_stat_total_tambah">0</b> Orang</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-md-5 text-md-end">
+                                                    <div class="d-flex flex-wrap justify-content-md-end gap-1" id="info_berkas_links_tambah">
+                                                        <a id="info_file_surat_tambah" href="#" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                            <i class="fas fa-file-pdf me-1"></i>Surat Usulan
+                                                        </a>
+                                                        <a id="info_file_lampiran_tambah" href="#" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                            <i class="fas fa-file-excel me-1"></i>Daftar Nominatif WBP
+                                                        </a>
+                                                        <a id="info_file_ba_tambah" href="#" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                            <i class="fas fa-file-alt me-1"></i>BA TPP UPT
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- TABEL DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA SIDANG TPP -->
+                                            <div class="p-2 bg-light rounded border border-warning-subtle">
+                                                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                                    <span class="fw-bold text-dark small" style="font-size: 11.5px;">
+                                                        <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan & Alokasi Kuota Sidang TPP Kanwil
+                                                    </span>
+                                                    <button type="button" class="btn btn-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisAlokasi('tambah')">
+                                                        <i class="fas fa-plus me-1"></i>Tambah UPT Tujuan
+                                                    </button>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11px;" id="tableAlokasi_tambah">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th class="text-start" style="min-width: 170px;">UPT Tujuan Penerima</th>
+                                                                <th style="width: 80px;">Narkotika</th>
+                                                                <th style="width: 80px;">Pidum</th>
+                                                                <th style="width: 80px;">Korupsi</th>
+                                                                <th style="width: 85px;">Subtotal</th>
+                                                                <th style="width: 40px;">#</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="tbodyAlokasi_tambah">
+                                                            <!-- Diisi otomatis oleh JavaScript -->
+                                                        </tbody>
+                                                        <tfoot class="table-light fw-bold">
+                                                            <tr>
+                                                                <td class="text-start">Total Alokasi Direkomendasikan:</td>
+                                                                <td id="foot_narkotika_tambah">0</td>
+                                                                <td id="foot_pidum_tambah">0</td>
+                                                                <td id="foot_korupsi_tambah">0</td>
+                                                                <td id="foot_subtotal_tambah" class="text-primary fs-6">0</td>
+                                                                <td></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                                <div id="info_alokasi_status_tambah" class="small mt-1 text-muted" style="font-size: 11px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="manualWbpBox_tambah" class="row g-2">
                                         <div class="col-md-7">
                                             <label class="form-label small text-muted mb-1">Nama Narapidana / WBP <span class="text-danger">*</span></label>
                                             <input type="text" name="mutasi_wbp_nama" id="tambah_mutasi_wbp_nama" class="form-control form-control-sm" placeholder="Nama narapidana">
@@ -2715,6 +2828,136 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         loadSavedValuesIntoForm('laporan');
     });
 
+    window.mutasiLookup = @json($mutasiJsonMap);
+    let alokasiCounters = {};
+
+    function tambahBarisAlokasi(materiIdx, defaultData = null) {
+        if (!alokasiCounters[materiIdx]) {
+            alokasiCounters[materiIdx] = 0;
+        }
+        const alokIdx = alokasiCounters[materiIdx]++;
+        const tbody = document.getElementById('tbodyAlokasi_' + materiIdx);
+        if (!tbody) return;
+
+        const uptVal = defaultData ? (defaultData.upt_tujuan_nama || defaultData.upt_tujuan_id || '') : '';
+        const narkotika = defaultData ? (defaultData.jumlah_narkotika || 0) : 0;
+        const pidum = defaultData ? (defaultData.jumlah_pidum || 0) : 0;
+        const korupsi = defaultData ? (defaultData.jumlah_korupsi || 0) : 0;
+        const subtotal = narkotika + pidum + korupsi;
+
+        const inputPrefix = (materiIdx === 'tambah') ? 'alokasi' : `materis[${materiIdx}][alokasi]`;
+
+        const tr = document.createElement('tr');
+        tr.id = `row_alokasi_${materiIdx}_${alokIdx}`;
+        tr.className = 'alokasi-row';
+        tr.innerHTML = `
+            <td class="text-start">
+                <input type="text" name="${inputPrefix}[${alokIdx}][upt_tujuan_id]" 
+                    class="form-control form-control-sm alokasi-upt-input" 
+                    list="listUptTujuan" 
+                    value="${uptVal}" 
+                    placeholder="Pilih/Ketik UPT Tujuan..." 
+                    onchange="hitungAlokasi('${materiIdx}')" required>
+            </td>
+            <td>
+                <input type="number" min="0" name="${inputPrefix}[${alokIdx}][jumlah_narkotika]" 
+                    class="form-control form-control-sm text-center input-narkotika" 
+                    value="${narkotika}" 
+                    oninput="hitungAlokasi('${materiIdx}')">
+            </td>
+            <td>
+                <input type="number" min="0" name="${inputPrefix}[${alokIdx}][jumlah_pidum]" 
+                    class="form-control form-control-sm text-center input-pidum" 
+                    value="${pidum}" 
+                    oninput="hitungAlokasi('${materiIdx}')">
+            </td>
+            <td>
+                <input type="number" min="0" name="${inputPrefix}[${alokIdx}][jumlah_korupsi]" 
+                    class="form-control form-control-sm text-center input-korupsi" 
+                    value="${korupsi}" 
+                    oninput="hitungAlokasi('${materiIdx}')">
+            </td>
+            <td>
+                <span class="fw-bold text-dark subtotal-cell" id="subtotal_${materiIdx}_${alokIdx}">${subtotal}</span>
+            </td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-xs py-0 px-1" onclick="hapusBarisAlokasi('${materiIdx}', ${alokIdx})" title="Hapus baris alokasi">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        hitungAlokasi(materiIdx);
+    }
+
+    function hapusBarisAlokasi(materiIdx, alokIdx) {
+        const row = document.getElementById(`row_alokasi_${materiIdx}_${alokIdx}`);
+        if (row) {
+            row.remove();
+            hitungAlokasi(materiIdx);
+        }
+    }
+
+    function hitungAlokasi(materiIdx) {
+        const tbody = document.getElementById('tbodyAlokasi_' + materiIdx);
+        if (!tbody) return;
+
+        let totNarkotika = 0;
+        let totPidum = 0;
+        let totKorupsi = 0;
+        let grandTot = 0;
+
+        const rows = tbody.querySelectorAll('.alokasi-row');
+        rows.forEach(r => {
+            const nInput = r.querySelector('.input-narkotika');
+            const pInput = r.querySelector('.input-pidum');
+            const kInput = r.querySelector('.input-korupsi');
+            const subCell = r.querySelector('.subtotal-cell');
+
+            const n = parseInt(nInput ? nInput.value : 0) || 0;
+            const p = parseInt(pInput ? pInput.value : 0) || 0;
+            const k = parseInt(kInput ? kInput.value : 0) || 0;
+            const sub = n + p + k;
+
+            if (subCell) subCell.textContent = sub;
+
+            totNarkotika += n;
+            totPidum += p;
+            totKorupsi += k;
+            grandTot += sub;
+        });
+
+        const footN = document.getElementById('foot_narkotika_' + materiIdx);
+        const footP = document.getElementById('foot_pidum_' + materiIdx);
+        const footK = document.getElementById('foot_korupsi_' + materiIdx);
+        const footSub = document.getElementById('foot_subtotal_' + materiIdx);
+        const statusEl = document.getElementById('info_alokasi_status_' + materiIdx);
+
+        if (footN) footN.textContent = totNarkotika;
+        if (footP) footP.textContent = totPidum;
+        if (footK) footK.textContent = totKorupsi;
+        if (footSub) footSub.textContent = grandTot;
+
+        const statTotalEl = document.getElementById('info_stat_total_' + materiIdx);
+        const totalUsulan = parseInt(statTotalEl ? statTotalEl.textContent : 0) || 0;
+
+        if (statusEl) {
+            if (totalUsulan > 0) {
+                if (grandTot === totalUsulan) {
+                    statusEl.innerHTML = `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i>Alokasi kuota sesuai dengan total usulan (${grandTot} / ${totalUsulan} Orang)</span>`;
+                } else if (grandTot < totalUsulan) {
+                    const sisa = totalUsulan - grandTot;
+                    statusEl.innerHTML = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-exclamation-triangle me-1"></i>Alokasi (${grandTot} Orang) masih kurang ${sisa} orang dari total usulan (${totalUsulan} Orang)</span>`;
+                } else {
+                    const lebih = grandTot - totalUsulan;
+                    statusEl.innerHTML = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-exclamation-circle me-1"></i>Alokasi (${grandTot} Orang) melebihi ${lebih} orang dari total usulan (${totalUsulan} Orang)</span>`;
+                }
+            } else {
+                statusEl.innerHTML = `<span class="text-muted"><i class="fas fa-info-circle me-1"></i>Total alokasi narapidana: <b>${grandTot} Orang</b></span>`;
+            }
+        }
+    }
+
     function switchModalMateriCategory(prefix, val) {
         let boxMutasi, boxMutasiPribadi, boxBerobat, boxKlien;
         if (prefix === 'tambah') {
@@ -2741,6 +2984,126 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
     }
 
     function autoFillMutasiModal(selectEl, prefix) {
+        if (prefix === 'tambah') {
+            const mId = selectEl.value;
+            const cardEl = document.getElementById('infoCardMutasi_tambah');
+            const manualBox = document.getElementById('manualWbpBox_tambah');
+
+            if (!mId || !window.mutasiLookup || !window.mutasiLookup[mId]) {
+                if (cardEl) cardEl.classList.add('d-none');
+                if (manualBox) manualBox.classList.remove('d-none');
+                return;
+            }
+
+            const data = window.mutasiLookup[mId];
+            if (cardEl) cardEl.classList.remove('d-none');
+            if (manualBox) manualBox.classList.add('d-none');
+
+            // Fill card info
+            const suratEl = document.getElementById('info_surat_tambah');
+            const tglEl = document.getElementById('info_tanggal_tambah');
+            const uptAsalEl = document.getElementById('info_upt_asal_tambah');
+            const katEl = document.getElementById('info_kategori_tambah');
+            const nEl = document.getElementById('info_stat_narkotika_tambah');
+            const pEl = document.getElementById('info_stat_pidum_tambah');
+            const kEl = document.getElementById('info_stat_korupsi_tambah');
+            const tEl = document.getElementById('info_stat_total_tambah');
+
+            if (suratEl) suratEl.textContent = 'Surat Usulan No: ' + (data.nomor_surat || '-');
+            if (tglEl) tglEl.textContent = '(' + (data.tanggal_surat || '-') + ')';
+            if (uptAsalEl) uptAsalEl.textContent = data.upt_asal_nama || '-';
+            if (katEl) katEl.textContent = data.kategori_mutasi || 'Kolektif';
+            if (nEl) nEl.textContent = data.jumlah_narkotika;
+            if (pEl) pEl.textContent = data.jumlah_pidum;
+            if (kEl) kEl.textContent = data.jumlah_korupsi;
+            if (tEl) tEl.textContent = data.total_usulan;
+
+            // Berkas buttons
+            const fSurat = document.getElementById('info_file_surat_tambah');
+            const fLamp = document.getElementById('info_file_lampiran_tambah');
+            const fBa = document.getElementById('info_file_ba_tambah');
+
+            if (fSurat) {
+                if (data.file_surat_usulan) {
+                    fSurat.href = data.file_surat_usulan;
+                    fSurat.classList.remove('d-none');
+                } else {
+                    fSurat.classList.add('d-none');
+                }
+            }
+            if (fLamp) {
+                if (data.file_lampiran_wbp) {
+                    fLamp.href = data.file_lampiran_wbp;
+                    fLamp.classList.remove('d-none');
+                } else {
+                    fLamp.classList.add('d-none');
+                }
+            }
+            if (fBa) {
+                if (data.file_ba_tpp) {
+                    fBa.href = data.file_ba_tpp;
+                    fBa.classList.remove('d-none');
+                } else {
+                    fBa.classList.add('d-none');
+                }
+            }
+
+            // Fill inputs
+            const judulEl = document.getElementById('tambah_judul_materi');
+            const wbpNamaEl = document.getElementById('tambah_mutasi_wbp_nama');
+            const formUptAsalEl = document.getElementById('tambah_mutasi_upt_asal_id');
+            const formUptTujuanEl = document.getElementById('tambah_upt_tujuan_rekomendasi_id');
+            const alasanEl = document.getElementById('tambah_mutasi_alasan');
+
+            if (judulEl) judulEl.value = 'Pemindahan Narapidana Kolektif ' + data.upt_asal_nama + ' (' + data.total_usulan + ' Orang)';
+            if (wbpNamaEl) wbpNamaEl.value = 'Kolektif ' + data.upt_asal_nama + ' (' + data.total_usulan + ' Orang)';
+            if (formUptAsalEl && data.upt_asal_id) formUptAsalEl.value = data.upt_asal_id;
+            if (formUptTujuanEl) formUptTujuanEl.value = data.upt_tujuan_nama || '';
+            if (alasanEl) alasanEl.value = data.kategori_mutasi || 'Overkapasitas / Redistribusi Narapidana';
+
+            // Auto initialize allocation table
+            const tbody = document.getElementById('tbodyAlokasi_tambah');
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (data.tujuans && data.tujuans.length > 0) {
+                    data.tujuans.forEach(t => {
+                        tambahBarisAlokasi('tambah', t);
+                    });
+                } else {
+                    tambahBarisAlokasi('tambah', {
+                        upt_tujuan_nama: data.upt_tujuan_nama || '',
+                        jumlah_narkotika: data.jumlah_narkotika,
+                        jumlah_pidum: data.jumlah_pidum,
+                        jumlah_korupsi: data.jumlah_korupsi,
+                    });
+                }
+            }
+            return;
+        }
+
+        if (prefix === 'tambah_pribadi') {
+            const opt = selectEl.options[selectEl.selectedIndex];
+            if (!opt || !opt.value) return;
+            const nama = opt.getAttribute('data-nama') || '';
+            const uptAsal = opt.getAttribute('data-uptasal') || '';
+            const uptTujuan = opt.getAttribute('data-upttujuan') || '';
+            const uptTujuanNama = opt.getAttribute('data-upttujuannama') || '';
+            const alasan = opt.getAttribute('data-alasan') || '';
+
+            const namaEl = document.getElementById('tambah_pribadi_mutasi_wbp_nama');
+            const uptAsalEl = document.getElementById('tambah_pribadi_mutasi_upt_asal_id');
+            const uptTujuanEl = document.getElementById('tambah_pribadi_upt_tujuan_rekomendasi_id');
+            const alasanEl = document.getElementById('tambah_pribadi_mutasi_alasan');
+            const judulEl = document.getElementById('tambah_judul_materi');
+
+            if (namaEl && nama) namaEl.value = nama;
+            if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
+            if (uptTujuanEl) uptTujuanEl.value = uptTujuanNama || uptTujuan;
+            if (alasanEl && alasan) alasanEl.value = alasan;
+            if (judulEl) judulEl.value = 'Permohonan Pemindahan Mandiri (Mendekati Keluarga) an. ' + nama;
+            return;
+        }
+
         const opt = selectEl.options[selectEl.selectedIndex];
         if (!opt || !opt.value) return;
         const nama = opt.getAttribute('data-nama') || '';
@@ -2760,7 +3123,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
         if (uptTujuanEl) uptTujuanEl.value = uptTujuanNama || uptTujuan;
         if (alasanEl && alasan) alasanEl.value = alasan;
-        if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
+        if (judulEl) {
             judulEl.value = 'Usulan Pemindahan Narapidana an. ' + nama;
         }
     }
