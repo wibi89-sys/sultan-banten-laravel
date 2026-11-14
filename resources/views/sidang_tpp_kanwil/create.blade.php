@@ -201,6 +201,7 @@
                                                             data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                                             data-uptasal="{{ $mu->upt_asal_id }}"
                                                             data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                                            data-upttujuannama="{{ $mu->uptTujuan?->nama_upt ?? '' }}"
                                                             data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
                                                             {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
                                                         </option>
@@ -235,13 +236,8 @@
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
-                                                        <select name="materis[0][upt_tujuan_rekomendasi_id]" id="upt_tujuan_rekomendasi_id_0" class="form-select form-select-sm border-warning">
-                                                            <option value="">-- Rekomendasi Ditentukan Saat Sidang --</option>
-                                                            @foreach($uptList as $u)
-                                                            <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
-                                                            @endforeach
-                                                        </select>
+                                                        <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                                        <input type="text" name="materis[0][mutasi_upt_tujuan]" id="upt_tujuan_rekomendasi_id_0" class="form-control form-control-sm border-warning" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                                     </div>
                                                     <div class="col-12">
                                                         <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -308,6 +304,7 @@
                                                             data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                                             data-uptasal="{{ $mu->upt_asal_id }}"
                                                             data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                                            data-upttujuannama="{{ $mu->uptTujuan?->nama_upt ?? '' }}"
                                                             data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
                                                             {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
                                                         </option>
@@ -342,13 +339,8 @@
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil</label>
-                                                        <select name="materis[0][upt_tujuan_rekomendasi_id]" id="mutasi_pribadi_upt_tujuan_id_0" class="form-select form-select-sm border-primary">
-                                                            <option value="">-- Rekomendasi Ditentukan Saat Sidang --</option>
-                                                            @foreach($uptList as $u)
-                                                            <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
-                                                            @endforeach
-                                                        </select>
+                                                        <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                                        <input type="text" name="materis[0][mutasi_upt_tujuan]" id="mutasi_pribadi_upt_tujuan_id_0" class="form-control form-control-sm border-primary" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                                                     </div>
                                                     <div class="col-12">
                                                         <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -620,15 +612,23 @@
                                         </div>
 
                                         <!-- Upload File Pokok Bahan Sidang & Dokumen Tambahan Lainnya -->
+                                        <!-- Upload File Pokok Bahan Sidang & Dokumen Tambahan Lainnya -->
                                         <div class="col-12 col-md-6 mt-2">
                                             <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-file-download text-primary me-1"></i>Bahan Materi Sidang Utama (Opsional)</label>
                                             <input type="file" name="materis[0][file_bahan_sidang]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                                            <div class="form-text text-muted" style="font-size: 11px;">Format: PDF, Word, Excel, ZIP (Maks. 15MB)</div>
                                         </div>
                                         <div class="col-12 col-md-6 mt-2">
-                                            <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Tambahan Lainnya</label>
-                                            <div class="input-group input-group-sm">
-                                                <input type="text" name="materis[0][dokumen_tambahan_nama]" class="form-control" placeholder="Nama Berkas (Kustom)">
-                                                <input type="file" name="materis[0][dokumen_tambahan_file]" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                            <div class="p-2 bg-white rounded border">
+                                                <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
+                                                <div class="row g-1">
+                                                    <div class="col-12 col-sm-5">
+                                                        <input type="text" name="materis[0][dokumen_tambahan_nama]" class="form-control form-control-sm" placeholder="Nama Dokumen (Kustom)">
+                                                    </div>
+                                                    <div class="col-12 col-sm-7">
+                                                        <input type="file" name="materis[0][dokumen_tambahan_file]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -771,6 +771,7 @@
                                     data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                     data-uptasal="{{ $mu->upt_asal_id }}"
                                     data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                    data-upttujuannama="{{ $mu->uptTujuan?->nama_upt ?? '' }}"
                                     data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
                                     {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
                                 </option>
@@ -805,13 +806,8 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
-                                <select name="materis[__INDEX__][upt_tujuan_rekomendasi_id]" id="upt_tujuan_rekomendasi_id___INDEX__" class="form-select form-select-sm border-warning">
-                                    <option value="">-- Rekomendasi Ditentukan Saat Sidang --</option>
-                                    @foreach($uptList as $u)
-                                    <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
-                                    @endforeach
-                                </select>
+                                <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                <input type="text" name="materis[__INDEX__][mutasi_upt_tujuan]" id="upt_tujuan_rekomendasi_id___INDEX__" class="form-control form-control-sm border-warning" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                             </div>
                             <div class="col-12">
                                 <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -878,6 +874,7 @@
                                     data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                     data-uptasal="{{ $mu->upt_asal_id }}"
                                     data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                    data-upttujuannama="{{ $mu->uptTujuan?->nama_upt ?? '' }}"
                                     data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
                                     {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
                                 </option>
@@ -912,13 +909,8 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil</label>
-                                <select name="materis[__INDEX__][upt_tujuan_rekomendasi_id]" id="mutasi_pribadi_upt_tujuan_id___INDEX__" class="form-select form-select-sm border-primary">
-                                    <option value="">-- Rekomendasi Ditentukan Saat Sidang --</option>
-                                    @foreach($uptList as $u)
-                                    <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
-                                    @endforeach
-                                </select>
+                                <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                <input type="text" name="materis[__INDEX__][mutasi_upt_tujuan]" id="mutasi_pribadi_upt_tujuan_id___INDEX__" class="form-control form-control-sm border-primary" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                             </div>
                             <div class="col-12">
                                 <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -1193,18 +1185,31 @@
                 <div class="col-12 col-md-6 mt-2">
                     <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-file-download text-primary me-1"></i>Bahan Materi Sidang Utama (Opsional)</label>
                     <input type="file" name="materis[__INDEX__][file_bahan_sidang]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                    <div class="form-text text-muted" style="font-size: 11px;">Format: PDF, Word, Excel, ZIP (Maks. 15MB)</div>
                 </div>
                 <div class="col-12 col-md-6 mt-2">
-                    <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Tambahan Lainnya</label>
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="materis[__INDEX__][dokumen_tambahan_nama]" class="form-control" placeholder="Nama Berkas (Kustom)">
-                        <input type="file" name="materis[__INDEX__][dokumen_tambahan_file]" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                    <div class="p-2 bg-white rounded border">
+                        <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
+                        <div class="row g-1">
+                            <div class="col-12 col-sm-5">
+                                <input type="text" name="materis[__INDEX__][dokumen_tambahan_nama]" class="form-control form-control-sm" placeholder="Nama Dokumen (Kustom)">
+                            </div>
+                            <div class="col-12 col-sm-7">
+                                <input type="file" name="materis[__INDEX__][dokumen_tambahan_file]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
+<datalist id="listUptTujuan">
+    @foreach($uptList as $u)
+    <option value="{{ $u->nama_upt }}"></option>
+    @endforeach
+</datalist>
 
 @push('scripts')
 <script>
@@ -1238,6 +1243,7 @@
         const nama = opt.getAttribute('data-nama') || '';
         const uptAsal = opt.getAttribute('data-uptasal') || '';
         const uptTujuan = opt.getAttribute('data-upttujuan') || '';
+        const uptTujuanNama = opt.getAttribute('data-upttujuannama') || '';
         const alasan = opt.getAttribute('data-alasan') || '';
 
         const namaEl = document.getElementById('mutasi_wbp_nama_' + index);
@@ -1248,7 +1254,7 @@
 
         if (namaEl && nama && !namaEl.value) namaEl.value = nama;
         if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
-        if (uptTujuanEl && uptTujuan) uptTujuanEl.value = uptTujuan;
+        if (uptTujuanEl) uptTujuanEl.value = uptTujuanNama || uptTujuan;
         if (alasanEl && alasan && !alasanEl.value) alasanEl.value = alasan;
         if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
             judulEl.value = 'Usulan Pemindahan Narapidana an. ' + nama;
@@ -1261,6 +1267,7 @@
         const nama = opt.getAttribute('data-nama') || '';
         const uptAsal = opt.getAttribute('data-uptasal') || '';
         const uptTujuan = opt.getAttribute('data-upttujuan') || '';
+        const uptTujuanNama = opt.getAttribute('data-upttujuannama') || '';
         const alasan = opt.getAttribute('data-alasan') || '';
 
         const namaEl = document.getElementById('mutasi_pribadi_wbp_nama_' + index);
@@ -1271,7 +1278,7 @@
 
         if (namaEl && nama && !namaEl.value) namaEl.value = nama;
         if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
-        if (uptTujuanEl && uptTujuan) uptTujuanEl.value = uptTujuan;
+        if (uptTujuanEl) uptTujuanEl.value = uptTujuanNama || uptTujuan;
         if (alasanEl && alasan && !alasanEl.value) alasanEl.value = alasan;
         if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
             judulEl.value = 'Permohonan Pemindahan Mandiri (Mendekati Keluarga) an. ' + nama;

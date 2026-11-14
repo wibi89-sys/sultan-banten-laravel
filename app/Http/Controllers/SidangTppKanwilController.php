@@ -182,7 +182,8 @@ class SidangTppKanwilController extends Controller
             'materis' => 'nullable|array',
             'subjek_tipe' => 'nullable|string|in:umum,klien_umroh,mutasi_narapidana,izin_berobat',
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
-            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable',
+            'mutasi_upt_tujuan' => 'nullable|string|max:150',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             'ketua_id' => 'required|exists:kanwil_pegawai,id',
             'sekretaris_id' => 'required|exists:kanwil_pegawai,id',
@@ -393,6 +394,7 @@ class SidangTppKanwilController extends Controller
         }
 
         $narapidanaData = null;
+        $uptTujuanId = null;
         if ($subjekTipe === 'mutasi_narapidana' || $subjekTipe === 'mutasi_keinginan_sendiri') {
             $filePermohonan = null;
             if ($request->hasFile('file_mutasi_permohonan')) {
@@ -462,10 +464,8 @@ class SidangTppKanwilController extends Controller
             if ($request->filled('mutasi_upt_asal_id')) {
                 $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
             }
-            $uptTujuanNama = null;
-            if ($request->filled('upt_tujuan_rekomendasi_id')) {
-                $uptTujuanNama = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
-            }
+            $uptInput = $request->input('mutasi_upt_tujuan') ?: $request->input('upt_tujuan_rekomendasi_id');
+            [$uptTujuanId, $uptTujuanNama] = $this->resolveUptTujuan($uptInput);
 
             $narapidanaData = [
                 'nama' => $request->input('mutasi_wbp_nama', $request->agenda_judul),
@@ -474,7 +474,7 @@ class SidangTppKanwilController extends Controller
                 'lama_pidana' => $request->input('mutasi_lama_pidana'),
                 'upt_asal_id' => $request->input('mutasi_upt_asal_id'),
                 'upt_asal_nama' => $uptAsalNama,
-                'upt_tujuan_id' => $request->input('upt_tujuan_rekomendasi_id'),
+                'upt_tujuan_id' => $uptTujuanId,
                 'upt_tujuan_nama' => $uptTujuanNama,
                 'alasan_pemindahan' => $request->input('mutasi_alasan', 'Keinginan sendiri mendekati keluarga'),
                 'nama_pk_bapas' => $request->input('nama_pk_bapas'),
@@ -609,7 +609,7 @@ class SidangTppKanwilController extends Controller
             'agenda_deskripsi' => $validated['agenda_deskripsi'] ?? null,
             'subjek_tipe' => $subjekTipe,
             'mutasi_id' => $request->mutasi_id,
-            'upt_tujuan_rekomendasi_id' => $request->upt_tujuan_rekomendasi_id,
+            'upt_tujuan_rekomendasi_id' => $uptTujuanId,
             'is_klien_bapas' => $isKlienBapas,
             'klien_data' => $klienData,
             'narapidana_data' => $narapidanaData,
@@ -706,6 +706,7 @@ class SidangTppKanwilController extends Controller
 
                 $mNarapidanaData = null;
                 $mKlienData = null;
+                $mUptTujuanId = null;
 
                 if ($mKategori === 'mutasi_narapidana' || $mKategori === 'mutasi_keinginan_sendiri') {
                     $berkasMutasi = [];
@@ -723,7 +724,8 @@ class SidangTppKanwilController extends Controller
                     }
 
                     $uptAsalNama = ! empty($mVal['mutasi_upt_asal_id']) ? Upt::find($mVal['mutasi_upt_asal_id'])?->nama_upt : null;
-                    $uptTujuanNama = ! empty($mVal['upt_tujuan_rekomendasi_id']) ? Upt::find($mVal['upt_tujuan_rekomendasi_id'])?->nama_upt : null;
+                    $mUptInput = $mVal['mutasi_upt_tujuan'] ?? ($mVal['upt_tujuan_rekomendasi_id'] ?? null);
+                    [$mUptTujuanId, $mUptTujuanNama] = $this->resolveUptTujuan($mUptInput);
 
                     $mNarapidanaData = [
                         'nama' => $mVal['mutasi_wbp_nama'] ?? $mVal['judul_materi'],
@@ -732,8 +734,8 @@ class SidangTppKanwilController extends Controller
                         'lama_pidana' => $mVal['mutasi_lama_pidana'] ?? null,
                         'upt_asal_id' => $mVal['mutasi_upt_asal_id'] ?? null,
                         'upt_asal_nama' => $uptAsalNama,
-                        'upt_tujuan_id' => $mVal['upt_tujuan_rekomendasi_id'] ?? null,
-                        'upt_tujuan_nama' => $uptTujuanNama,
+                        'upt_tujuan_id' => $mUptTujuanId,
+                        'upt_tujuan_nama' => $mUptTujuanNama,
                         'alasan_pemindahan' => $mVal['mutasi_alasan'] ?? null,
                         'nama_pk_bapas' => $mVal['nama_pk_bapas'] ?? null,
                         'nip_pk_bapas' => $mVal['nip_pk_bapas'] ?? null,
@@ -840,7 +842,7 @@ class SidangTppKanwilController extends Controller
                     'judul_materi' => $mVal['judul_materi'],
                     'deskripsi_materi' => $mVal['deskripsi_materi'] ?? null,
                     'mutasi_id' => ! empty($mVal['mutasi_id']) ? $mVal['mutasi_id'] : null,
-                    'upt_tujuan_rekomendasi_id' => ! empty($mVal['upt_tujuan_rekomendasi_id']) ? $mVal['upt_tujuan_rekomendasi_id'] : null,
+                    'upt_tujuan_rekomendasi_id' => $mUptTujuanId,
                     'narapidana_data' => $mNarapidanaData,
                     'klien_data' => $mKlienData,
                     'file_bahan_sidang' => $mBahanPath,
@@ -860,7 +862,7 @@ class SidangTppKanwilController extends Controller
                 'judul_materi' => $validated['agenda_judul'],
                 'deskripsi_materi' => $validated['agenda_deskripsi'] ?? null,
                 'mutasi_id' => $request->mutasi_id,
-                'upt_tujuan_rekomendasi_id' => $request->upt_tujuan_rekomendasi_id,
+                'upt_tujuan_rekomendasi_id' => $uptTujuanId,
                 'narapidana_data' => $narapidanaData,
                 'klien_data' => $klienData,
                 'file_bahan_sidang' => $fileBahanPath,
@@ -1491,7 +1493,8 @@ class SidangTppKanwilController extends Controller
             'kesimpulan_sidang' => 'nullable|string',
             'subjek_tipe' => 'nullable|string|in:umum,klien_umroh,mutasi_narapidana,izin_berobat',
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
-            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable',
+            'mutasi_upt_tujuan' => 'nullable|string|max:150',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             // Field Mutasi
             'mutasi_wbp_nama' => 'nullable|string|max:150',
@@ -1549,7 +1552,16 @@ class SidangTppKanwilController extends Controller
         $subjekTipe = $request->input('subjek_tipe', $sidang->subjek_tipe ?? 'umum');
         $validated['subjek_tipe'] = $subjekTipe;
         $validated['mutasi_id'] = $request->input('mutasi_id', $sidang->mutasi_id);
-        $validated['upt_tujuan_rekomendasi_id'] = $request->input('upt_tujuan_rekomendasi_id', $sidang->upt_tujuan_rekomendasi_id);
+
+        $uptInput = $request->filled('mutasi_upt_tujuan') ? $request->input('mutasi_upt_tujuan') : ($request->filled('upt_tujuan_rekomendasi_id') ? $request->input('upt_tujuan_rekomendasi_id') : null);
+        if ($uptInput !== null && trim((string) $uptInput) !== '') {
+            [$uptTujuanId, $uptTujuanNama] = $this->resolveUptTujuan($uptInput);
+            $validated['upt_tujuan_rekomendasi_id'] = $uptTujuanId;
+        } else {
+            $uptTujuanId = $sidang->upt_tujuan_rekomendasi_id;
+            $uptTujuanNama = $sidang->narapidana_data['upt_tujuan_nama'] ?? null;
+            $validated['upt_tujuan_rekomendasi_id'] = $uptTujuanId;
+        }
 
         $narapidanaData = $sidang->narapidana_data ?? [];
         $dokumenTambahan = $narapidanaData['berkas']['dokumen_tambahan'] ?? null;
@@ -1605,10 +1617,6 @@ class SidangTppKanwilController extends Controller
             if ($request->filled('mutasi_upt_asal_id')) {
                 $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
             }
-            $uptTujuanNama = $narapidanaData['upt_tujuan_nama'] ?? null;
-            if ($request->filled('upt_tujuan_rekomendasi_id')) {
-                $uptTujuanNama = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
-            }
 
             $validated['narapidana_data'] = [
                 'nama' => $request->input('mutasi_wbp_nama', $narapidanaData['nama'] ?? $request->agenda_judul),
@@ -1617,7 +1625,7 @@ class SidangTppKanwilController extends Controller
                 'lama_pidana' => $request->input('mutasi_lama_pidana', $narapidanaData['lama_pidana'] ?? null),
                 'upt_asal_id' => $request->input('mutasi_upt_asal_id', $narapidanaData['upt_asal_id'] ?? null),
                 'upt_asal_nama' => $uptAsalNama,
-                'upt_tujuan_id' => $request->input('upt_tujuan_rekomendasi_id', $narapidanaData['upt_tujuan_id'] ?? null),
+                'upt_tujuan_id' => $uptTujuanId,
                 'upt_tujuan_nama' => $uptTujuanNama,
                 'alasan_pemindahan' => $request->input('mutasi_alasan', $narapidanaData['alasan_pemindahan'] ?? null),
                 'penjamin_nama' => $request->input('mutasi_penjamin_nama', $narapidanaData['penjamin_nama'] ?? null),
@@ -1742,7 +1750,8 @@ class SidangTppKanwilController extends Controller
             'judul_materi' => 'required|string|max:255',
             'deskripsi_materi' => 'nullable|string',
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
-            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable',
+            'mutasi_upt_tujuan' => 'nullable|string|max:150',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             'dokumen_tambahan_nama' => 'nullable|string|max:150',
             'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
@@ -1843,6 +1852,7 @@ class SidangTppKanwilController extends Controller
 
         $narapidanaData = null;
         $klienData = null;
+        $uptTujuanId = null;
         $kategori = $validated['kategori_materi'];
 
         if ($kategori === 'mutasi_narapidana' || $kategori === 'mutasi_keinginan_sendiri') {
@@ -1864,10 +1874,8 @@ class SidangTppKanwilController extends Controller
             if ($request->filled('mutasi_upt_asal_id')) {
                 $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
             }
-            $uptTujuanNama = null;
-            if ($request->filled('upt_tujuan_rekomendasi_id')) {
-                $uptTujuanNama = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
-            }
+            $mUptInput = $request->input('mutasi_upt_tujuan') ?: $request->input('upt_tujuan_rekomendasi_id');
+            [$uptTujuanId, $uptTujuanNama] = $this->resolveUptTujuan($mUptInput);
 
             $narapidanaData = [
                 'nama' => $request->input('mutasi_wbp_nama', $validated['judul_materi']),
@@ -1876,7 +1884,7 @@ class SidangTppKanwilController extends Controller
                 'lama_pidana' => $request->input('mutasi_lama_pidana'),
                 'upt_asal_id' => $request->input('mutasi_upt_asal_id'),
                 'upt_asal_nama' => $uptAsalNama,
-                'upt_tujuan_id' => $request->input('upt_tujuan_rekomendasi_id'),
+                'upt_tujuan_id' => $uptTujuanId,
                 'upt_tujuan_nama' => $uptTujuanNama,
                 'alasan_pemindahan' => $request->input('mutasi_alasan'),
                 'nama_pk_bapas' => $request->input('nama_pk_bapas'),
@@ -1989,7 +1997,7 @@ class SidangTppKanwilController extends Controller
             'judul_materi' => $validated['judul_materi'],
             'deskripsi_materi' => $validated['deskripsi_materi'] ?? null,
             'mutasi_id' => $request->mutasi_id,
-            'upt_tujuan_rekomendasi_id' => $request->upt_tujuan_rekomendasi_id,
+            'upt_tujuan_rekomendasi_id' => $uptTujuanId,
             'narapidana_data' => $narapidanaData,
             'klien_data' => $klienData,
             'file_bahan_sidang' => $fileBahanPath,
@@ -2032,7 +2040,8 @@ class SidangTppKanwilController extends Controller
             'judul_materi' => 'required|string|max:255',
             'deskripsi_materi' => 'nullable|string',
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
-            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable',
+            'mutasi_upt_tujuan' => 'nullable|string|max:150',
             'rekomendasi_sidang' => 'nullable|string|max:50',
             'catatan_rekomendasi' => 'nullable|string',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
@@ -2070,12 +2079,19 @@ class SidangTppKanwilController extends Controller
             $dokumenTambahan['nama'] = $request->input('dokumen_tambahan_nama');
         }
 
+        $mUptInput = $request->filled('mutasi_upt_tujuan') ? $request->input('mutasi_upt_tujuan') : ($request->filled('upt_tujuan_rekomendasi_id') ? $request->input('upt_tujuan_rekomendasi_id') : null);
+        $uptTujuanId = $materi->upt_tujuan_rekomendasi_id;
+        $uptTujuanNama = $materi->narapidana_data['upt_tujuan_nama'] ?? null;
+        if ($mUptInput !== null && trim((string) $mUptInput) !== '') {
+            [$uptTujuanId, $uptTujuanNama] = $this->resolveUptTujuan($mUptInput);
+        }
+
         $updateData = [
             'kategori_materi' => $validated['kategori_materi'],
             'judul_materi' => $validated['judul_materi'],
             'deskripsi_materi' => $validated['deskripsi_materi'] ?? null,
             'mutasi_id' => $request->input('mutasi_id', $materi->mutasi_id),
-            'upt_tujuan_rekomendasi_id' => $request->input('upt_tujuan_rekomendasi_id', $materi->upt_tujuan_rekomendasi_id),
+            'upt_tujuan_rekomendasi_id' => $uptTujuanId,
             'rekomendasi_sidang' => $validated['rekomendasi_sidang'] ?? $materi->rekomendasi_sidang,
             'catatan_rekomendasi' => $validated['catatan_rekomendasi'] ?? $materi->catatan_rekomendasi,
             'file_bahan_sidang' => $fileBahanPath,
@@ -2103,9 +2119,9 @@ class SidangTppKanwilController extends Controller
                 $narapidanaData['upt_asal_id'] = $request->input('mutasi_upt_asal_id');
                 $narapidanaData['upt_asal_nama'] = Upt::find($request->input('mutasi_upt_asal_id'))?->nama_upt;
             }
-            if ($request->filled('upt_tujuan_rekomendasi_id')) {
-                $narapidanaData['upt_tujuan_id'] = $request->upt_tujuan_rekomendasi_id;
-                $narapidanaData['upt_tujuan_nama'] = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
+            if ($mUptInput !== null && trim((string) $mUptInput) !== '') {
+                $narapidanaData['upt_tujuan_id'] = $uptTujuanId;
+                $narapidanaData['upt_tujuan_nama'] = $uptTujuanNama;
             }
             if ($request->filled('nama_pk_bapas')) {
                 $narapidanaData['nama_pk_bapas'] = $request->input('nama_pk_bapas');
@@ -2353,5 +2369,44 @@ class SidangTppKanwilController extends Controller
             'message' => $msg,
             'dokumen_custom' => $sidang->dokumen_custom,
         ]);
+    }
+
+    /**
+     * Resolusi UPT tujuan rekomendasi sidang, baik berupa ID UPT lokal atau teks nama UPT bebas / luar wilayah.
+     *
+     * @return array{0: ?int, 1: ?string} [uptTujuanId, uptTujuanNama]
+     */
+    private function resolveUptTujuan(mixed $input): array
+    {
+        if (empty($input)) {
+            return [null, null];
+        }
+
+        $inputStr = trim((string) $input);
+        if ($inputStr === '') {
+            return [null, null];
+        }
+
+        // Jika berupa ID numerik dari tabel UPT
+        if (ctype_digit($inputStr) || is_int($input)) {
+            $upt = Upt::find((int) $inputStr);
+            if ($upt) {
+                return [$upt->id, $upt->nama_upt];
+            }
+        }
+
+        // Cek kesesuaian nama UPT di database (UPT lokal Banten)
+        $uptByName = Upt::where('nama_upt', $inputStr)->first();
+        if ($uptByName) {
+            return [$uptByName->id, $uptByName->nama_upt];
+        }
+
+        $uptLike = Upt::whereRaw('LOWER(nama_upt) = ?', [strtolower($inputStr)])->first();
+        if ($uptLike) {
+            return [$uptLike->id, $uptLike->nama_upt];
+        }
+
+        // Jika tidak cocok dengan data UPT lokal, maka merupakan UPT luar wilayah (manual string)
+        return [null, $inputStr];
     }
 }

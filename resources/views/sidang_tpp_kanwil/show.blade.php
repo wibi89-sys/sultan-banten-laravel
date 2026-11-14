@@ -1436,13 +1436,8 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-exchange-alt text-warning-emphasis me-1"></i>Penyesuaian Usulan Mutasi Narapidana</h6>
                                 <div class="row g-2">
                                     <div class="col-md-6">
-                                        <label class="form-label small fw-semibold text-dark mb-1">Rekomendasi UPT Tujuan Sidang</label>
-                                        <select name="upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-warning">
-                                            <option value="">-- Tetapkan / Ubah UPT Tujuan --</option>
-                                            @foreach($uptList as $u)
-                                            <option value="{{ $u->id }}" {{ old('upt_tujuan_rekomendasi_id', $sidang->upt_tujuan_rekomendasi_id) == $u->id ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
-                                            @endforeach
-                                        </select>
+                                        <label class="form-label small fw-semibold text-dark mb-1">Rekomendasi UPT Tujuan Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                        <input type="text" name="mutasi_upt_tujuan" class="form-control form-control-sm border-warning" value="{{ old('mutasi_upt_tujuan', $sidang->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? '')) }}" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-semibold text-dark mb-1">Alasan Pemindahan</label>
@@ -1580,6 +1575,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                                 data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                                 data-uptasal="{{ $mu->upt_asal_id }}"
                                                 data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                                data-upttujuannama="{{ $mu->uptTujuan?->nama_upt ?? '' }}"
                                                 data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
                                                 {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
                                             </option>
@@ -1614,13 +1610,8 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
-                                            <select name="upt_tujuan_rekomendasi_id" id="tambah_upt_tujuan_rekomendasi_id" class="form-select form-select-sm">
-                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
-                                                @foreach($uptList as $u)
-                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
-                                                @endforeach
-                                            </select>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                            <input type="text" name="mutasi_upt_tujuan" id="tambah_upt_tujuan_rekomendasi_id" class="form-control form-control-sm border-warning" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -1687,6 +1678,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                                 data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                                 data-uptasal="{{ $mu->upt_asal_id }}"
                                                 data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                                data-upttujuannama="{{ $mu->uptTujuan?->nama_upt ?? '' }}"
                                                 data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
                                                 {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
                                             </option>
@@ -1721,13 +1713,8 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
-                                            <select name="upt_tujuan_rekomendasi_id" id="tambah_pribadi_upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-primary">
-                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
-                                                @foreach($uptList as $u)
-                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
-                                                @endforeach
-                                            </select>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                            <input type="text" name="mutasi_upt_tujuan" id="tambah_pribadi_upt_tujuan_rekomendasi_id" class="form-control form-control-sm border-primary" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -2108,13 +2095,8 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             <input type="text" name="mutasi_perkara" class="form-control form-control-sm" value="{{ $ndm['tindak_pidana'] ?? '' }}">
                                         </div>
                                         <div class="col-md-5">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
-                                            <select name="upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-warning">
-                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
-                                                @foreach($uptList as $u)
-                                                <option value="{{ $u->id }}" {{ ($m->upt_tujuan_rekomendasi_id == $u->id || ($ndm['upt_tujuan_id'] ?? null) == $u->id) ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
-                                                @endforeach
-                                            </select>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                            <input type="text" name="mutasi_upt_tujuan" class="form-control form-control-sm border-warning" value="{{ old('mutasi_upt_tujuan', $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')) }}" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -2158,13 +2140,8 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
-                                            <select name="upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-primary">
-                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
-                                                @foreach($uptList as $u)
-                                                <option value="{{ $u->id }}" {{ ($m->upt_tujuan_rekomendasi_id == $u->id || ($ndm['upt_tujuan_id'] ?? null) == $u->id) ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
-                                                @endforeach
-                                            </select>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                            <input type="text" name="mutasi_upt_tujuan" class="form-control form-control-sm border-primary" value="{{ old('mutasi_upt_tujuan', $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')) }}" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
@@ -2384,6 +2361,15 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
     </div>
     @endforeach
     @endif
+</div>
+
+<datalist id="listUptTujuan">
+    @foreach($uptList as $u)
+    <option value="{{ $u->nama_upt }}"></option>
+    @endforeach
+</datalist>
+
+@push('scripts')
 <script>
     const CSRF_TOKEN = '{{ csrf_token() }}';
     const SIDANG_ID = {{ $sidang->id }};
@@ -2644,6 +2630,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         const nama = opt.getAttribute('data-nama') || '';
         const uptAsal = opt.getAttribute('data-uptasal') || '';
         const uptTujuan = opt.getAttribute('data-upttujuan') || '';
+        const uptTujuanNama = opt.getAttribute('data-upttujuannama') || '';
         const alasan = opt.getAttribute('data-alasan') || '';
         
         const namaEl = document.getElementById(prefix + '_mutasi_wbp_nama');
@@ -2655,7 +2642,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
 
         if (namaEl && nama) namaEl.value = nama;
         if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
-        if (uptTujuanEl && uptTujuan) uptTujuanEl.value = uptTujuan;
+        if (uptTujuanEl) uptTujuanEl.value = uptTujuanNama || uptTujuan;
         if (alasanEl && alasan) alasanEl.value = alasan;
         if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
             judulEl.value = 'Usulan Pemindahan Narapidana an. ' + nama;

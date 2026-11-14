@@ -1065,4 +1065,105 @@ class SidangTppKanwilDokumenAiTest extends TestCase
         $laporanHtml = TppKanwilDokumenService::renderLaporanHtml($this->sidang);
         $this->assertStringContainsString('Ahmad Sobari bin Hasan', $laporanHtml);
     }
+
+    /**
+     * Test pengisian UPT Tujuan secara manual untuk pemindahan narapidana ke luar wilayah Banten.
+     */
+    public function test_mutasi_narapidana_manual_upt_tujuan_luar_wilayah(): void
+    {
+        $nomorSidang = 'TPP-MANUAL-UPT-'.uniqid();
+        $uptAsal = Upt::firstOrCreate(
+            ['nama_upt' => 'Lapas Kelas IIA Cilegon'],
+            ['jenis_upt' => 'Lapas', 'wilayah' => 'Banten']
+        );
+
+        $pegawaiKetua = KanwilPegawai::firstOrCreate(
+            ['nip' => '197001012000011099'],
+            ['nama' => 'Drs. Supriyadi, M.H.', 'jabatan' => 'Kepala Divisi Pemasyarakatan']
+        );
+        $pegawaiSekretaris = KanwilPegawai::firstOrCreate(
+            ['nip' => '198002022005011099'],
+            ['nama' => 'Hendra Setiawan, S.H.', 'jabatan' => 'Kepala Bidang Pelayanan Tahanan']
+        );
+
+        // 1. Buat Sidang dengan UPT Tujuan luar wilayah (Lapas Kelas I Semarang)
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.store'), [
+                'nomor_sidang' => $nomorSidang,
+                'tanggal_sidang' => date('Y-m-d'),
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Rapat Divpas',
+                'metode' => 'luring',
+                'agenda_kategori' => 'Usulan Mutasi Narapidana Antar-Wilayah',
+                'agenda_judul' => 'Pemindahan Narapidana ke Luar Wilayah',
+                'subjek_tipe' => 'mutasi_narapidana',
+                'mutasi_upt_asal_id' => $uptAsal->id,
+                'mutasi_upt_tujuan' => 'Lapas Kelas I Semarang',
+                'mutasi_wbp_nama' => 'Joko Widodo bin Sudarto',
+                'mutasi_nomor_register' => 'BI.999/2025',
+                'mutasi_perkara' => 'Narkotika Ps 114',
+                'mutasi_lama_pidana' => '8 Tahun Penjara',
+                'mutasi_alasan' => 'Mendekati keluarga di Jawa Tengah',
+                'ketua_id' => $pegawaiKetua->id,
+                'sekretaris_id' => $pegawaiSekretaris->id,
+                'anggota_ids' => [$pegawaiKetua->id, $pegawaiSekretaris->id],
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $sidang = SidangTppKanwil::where('nomor_sidang', $nomorSidang)->first();
+        $this->assertNotNull($sidang);
+
+        // UPT Tujuan di luar Banten sehingga ID null namun nama tersimpan rapi di narapidana_data
+        $this->assertNull($sidang->upt_tujuan_rekomendasi_id);
+        $this->assertEquals('Lapas Kelas I Semarang', $sidang->narapidana_data['upt_tujuan_nama']);
+
+        $materi1 = $sidang->materis()->first();
+        $this->assertNotNull($materi1);
+        $this->assertEquals('Lapas Kelas I Semarang', $materi1->narapidana_data['upt_tujuan_nama']);
+
+        // 2. Tambah materi kedua dengan UPT Tujuan ke Lapas Besi Nusakambangan
+        $responseMateri = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.materi.store', $sidang->id), [
+                'kategori_materi' => 'mutasi_keinginan_sendiri',
+                'judul_materi' => 'Permohonan Mutasi Mandiri an. Rudyanto',
+                'mutasi_wbp_nama' => 'Rudyanto bin Karno',
+                'mutasi_nomor_register' => 'BI.888/2025',
+                'mutasi_upt_asal_id' => $uptAsal->id,
+                'mutasi_upt_tujuan' => 'Lapas Kelas IIA Besi Nusakambangan',
+                'mutasi_alasan' => 'Permohonan pribadi mendekati domisili Cilacap',
+                'nama_pk_bapas' => 'Sudirman, S.H.',
+                'bapas_nama' => 'Bapas Kelas I Serang',
+                'rekomendasi_litmas' => 'Memenuhi syarat substantif',
+            ]);
+
+        $responseMateri->assertSessionHasNoErrors();
+        $materi2 = $sidang->materis()->where('kategori_materi', 'mutasi_keinginan_sendiri')->first();
+        $this->assertNotNull($materi2);
+        $this->assertNull($materi2->upt_tujuan_rekomendasi_id);
+        $this->assertEquals('Lapas Kelas IIA Besi Nusakambangan', $materi2->narapidana_data['upt_tujuan_nama']);
+
+        // 3. Update materi kedua menjadi UPT Tujuan Lapas Kelas I Malang
+        $responseUpdate = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.materi.update', [$sidang->id, $materi2->id]), [
+                'kategori_materi' => 'mutasi_keinginan_sendiri',
+                'judul_materi' => 'Permohonan Mutasi Mandiri an. Rudyanto (Revisi Tujuan)',
+                'mutasi_wbp_nama' => 'Rudyanto bin Karno',
+                'mutasi_upt_tujuan' => 'Lapas Kelas I Malang',
+                'rekomendasi_sidang' => 'setuju',
+            ]);
+
+        $responseUpdate->assertSessionHasNoErrors();
+        $materi2->refresh();
+        $this->assertEquals('Lapas Kelas I Malang', $materi2->narapidana_data['upt_tujuan_nama']);
+
+        // 4. Verifikasi dokumen dinas merender nama UPT manual luar wilayah
+        $sidang->refresh();
+        $risalahHtml = TppKanwilDokumenService::renderRisalahHtml($sidang);
+        $this->assertStringContainsString('Lapas Kelas I Semarang', $risalahHtml);
+        $this->assertStringContainsString('Lapas Kelas I Malang', $risalahHtml);
+
+        $laporanHtml = TppKanwilDokumenService::renderLaporanHtml($sidang);
+        $this->assertStringContainsString('Lapas Kelas I Semarang', $laporanHtml);
+        $this->assertStringContainsString('Lapas Kelas I Malang', $laporanHtml);
+    }
 }
