@@ -159,27 +159,27 @@
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
                                     @if($m->file_surat_usulan)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-danger text-white border-0 shadow-xs text-decoration-none" title="Buka Surat Usulan di Tab Baru">
+                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-danger-subtle text-danger border border-danger-subtle shadow-xs text-decoration-none" title="Buka Surat Usulan di Tab Baru">
                                         <i class="fas fa-file-pdf me-1"></i>Surat
                                     </a>
                                     @endif
                                     @if($m->file_asesmen)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'asesmen', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-secondary text-white border-0 shadow-xs text-decoration-none" title="Buka Asesmen Penempatan di Tab Baru">
+                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'asesmen', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle shadow-xs text-decoration-none" title="Buka Asesmen Penempatan di Tab Baru">
                                         <i class="fas fa-file-alt me-1"></i>Asesmen
                                     </a>
                                     @endif
                                     @if($m->file_bap)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bap', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-warning text-dark border-0 shadow-xs text-decoration-none" title="Buka BAP di Tab Baru">
+                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'bap', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle shadow-xs text-decoration-none" title="Buka BAP di Tab Baru">
                                         <i class="fas fa-file-contract me-1"></i>BAP
                                     </a>
                                     @endif
                                     @if($m->file_reg_f)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'reg_f', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-info text-white border-0 shadow-xs text-decoration-none" title="Buka Register F di Tab Baru">
+                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'reg_f', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-info-subtle text-info border border-info-subtle shadow-xs text-decoration-none" title="Buka Register F di Tab Baru">
                                         <i class="fas fa-clipboard-list me-1"></i>Reg F
                                     </a>
                                     @endif
                                     @if($m->file_lampiran_wbp)
-                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-dark text-white border-0 shadow-xs text-decoration-none" title="Buka Daftar WBP di Tab Baru">
+                                    <a href="{{ route('mutasi.download-file', ['id' => $m->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="badge bg-dark-subtle text-dark border border-dark-subtle shadow-xs text-decoration-none" title="Buka Daftar WBP di Tab Baru">
                                         <i class="fas fa-users me-1"></i>WBP
                                     </a>
                                     @endif

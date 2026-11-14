@@ -184,12 +184,12 @@ class SidangTppKanwil extends Model
     public function getStatusBadgeAttribute(): string
     {
         return match ($this->status_sidang) {
-            'draft' => '<span class="badge bg-secondary"><i class="fas fa-edit me-1"></i>Draf</span>',
-            'undangan_terbit' => '<span class="badge bg-info text-dark"><i class="fas fa-envelope-open-text me-1"></i>Undangan Terbit</span>',
-            'berlangsung' => '<span class="badge bg-primary text-white"><i class="fas fa-comments me-1"></i>Berlangsung</span>',
-            'menunggu_kakanwil' => '<span class="badge bg-warning text-dark"><i class="fas fa-user-clock me-1"></i>Menunggu Kakanwil</span>',
-            'selesai' => '<span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Selesai</span>',
-            default => '<span class="badge bg-secondary">-</span>',
+            'draft' => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-edit me-1"></i>Draf</span>',
+            'undangan_terbit' => '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-envelope-open-text me-1"></i>Undangan Terbit</span>',
+            'berlangsung' => '<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-comments me-1"></i>Berlangsung</span>',
+            'menunggu_kakanwil' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-user-clock me-1"></i>Menunggu Kakanwil</span>',
+            'selesai' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i>Selesai</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">-</span>',
         };
     }
 
@@ -199,10 +199,10 @@ class SidangTppKanwil extends Model
     public function getTanggapanBadgeAttribute(): string
     {
         return match ($this->tanggapan_kakanwil_status) {
-            'disetujui' => '<span class="badge bg-success text-white"><i class="fas fa-check-double me-1"></i>Disetujui</span>',
-            'disetujui_bersyarat' => '<span class="badge bg-info text-white"><i class="fas fa-clipboard-check me-1"></i>Disetujui dg Catatan</span>',
-            'ditolak' => '<span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i>Ditolak</span>',
-            'perlu_pendalaman' => '<span class="badge bg-warning text-dark"><i class="fas fa-search me-1"></i>Perlu Pendalaman</span>',
+            'disetujui' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-double me-1"></i>Disetujui</span>',
+            'disetujui_bersyarat' => '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-clipboard-check me-1"></i>Disetujui dg Catatan</span>',
+            'ditolak' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times-circle me-1"></i>Ditolak</span>',
+            'perlu_pendalaman' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-search me-1"></i>Perlu Pendalaman</span>',
             default => '<span class="badge bg-light text-muted border"><i class="fas fa-clock me-1"></i>Menunggu Disposisi</span>',
         };
     }

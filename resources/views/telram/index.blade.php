@@ -2823,7 +2823,7 @@
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-secondary text-white rounded-circle font-mono-num" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px;">${index + 1}</span>
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-circle font-mono-num" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px;">${index + 1}</span>
                         <div>
                             <strong class="text-dark" style="font-size: 13px;">${row.nama_event}</strong>
                             ${row.tahap && row.tahap !== '-' ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1.5" style="font-size: 10px;">${row.tahap}</span>` : ''}

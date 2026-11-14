@@ -971,38 +971,152 @@ body {
 
 .badge.bg-primary {
     background: var(--bg-gradient) !important;
-    color: white !important;
+    color: #ffffff !important;
 }
 
 .badge.bg-success {
     background: var(--bg-gradient-success) !important;
-    color: white !important;
+    color: #ffffff !important;
 }
 
-.badge.bg-warning {
-    background: var(--bg-gradient-warning) !important;
-    color: white !important;
+.badge.bg-warning,
+.badge.bg-warning.text-white,
+.badge.bg-warning.text-dark {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #f59e0b !important;
 }
 
 .badge.bg-danger {
     background: var(--bg-gradient-danger) !important;
-    color: white !important;
+    color: #ffffff !important;
 }
 
-.badge.bg-secondary {
+.badge.bg-secondary,
+.badge.bg-secondary.text-white {
     background: var(--gray-200) !important;
-    color: var(--gray-700) !important;
+    color: var(--gray-800) !important;
+    border: 1px solid var(--gray-300) !important;
 }
 
-.badge.bg-info {
-    background: var(--bg-gradient-accent) !important;
-    color: white !important;
+.badge.bg-info,
+.badge.bg-info.text-white {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #7dd3fc !important;
+}
+
+.badge.bg-dark,
+.badge.bg-dark.text-white {
+    background: var(--gray-100) !important;
+    color: var(--gray-800) !important;
+    border: 1px solid var(--gray-300) !important;
+}
+
+/* Subtle Badge Styles (Bootstrap 5.3 Enhanced) */
+.badge.bg-primary-subtle {
+    background-color: #e0e7ff !important;
+    color: #4338ca !important;
+    border: 1px solid #c7d2fe !important;
+}
+.badge.bg-success-subtle {
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+    border: 1px solid #86efac !important;
+}
+.badge.bg-warning-subtle {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+}
+.badge.bg-danger-subtle {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    border: 1px solid #fca5a5 !important;
+}
+.badge.bg-info-subtle {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+}
+.badge.bg-secondary-subtle {
+    background-color: var(--gray-100) !important;
+    color: var(--gray-700) !important;
+    border: 1px solid var(--gray-300) !important;
+}
+.badge.bg-dark-subtle {
+    background-color: var(--gray-100) !important;
+    color: var(--gray-800) !important;
+    border: 1px solid var(--gray-300) !important;
 }
 
 /* Dark Mode Badges */
-[data-theme="dark"] .badge.bg-secondary {
+[data-theme="dark"] .badge.bg-secondary,
+[data-theme="dark"] .badge.bg-secondary.text-white {
     background: var(--gray-200) !important;
     color: var(--gray-800) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .badge.bg-warning,
+[data-theme="dark"] .badge.bg-warning.text-white,
+[data-theme="dark"] .badge.bg-warning.text-dark {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+[data-theme="dark"] .badge.bg-info,
+[data-theme="dark"] .badge.bg-info.text-white {
+    background: rgba(6, 182, 212, 0.2) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(6, 182, 212, 0.4) !important;
+}
+
+[data-theme="dark"] .badge.bg-dark,
+[data-theme="dark"] .badge.bg-dark.text-white {
+    background: var(--gray-100) !important;
+    color: var(--gray-800) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .badge.bg-primary-subtle {
+    background-color: rgba(99, 102, 241, 0.2) !important;
+    color: #a5b4fc !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+}
+[data-theme="dark"] .badge.bg-success-subtle {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+    color: #86efac !important;
+    border-color: rgba(34, 197, 94, 0.4) !important;
+}
+[data-theme="dark"] .badge.bg-warning-subtle {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fde68a !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+[data-theme="dark"] .badge.bg-danger-subtle {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+[data-theme="dark"] .badge.bg-info-subtle {
+    background-color: rgba(6, 182, 212, 0.2) !important;
+    color: #7dd3fc !important;
+    border-color: rgba(6, 182, 212, 0.4) !important;
+}
+[data-theme="dark"] .badge.bg-secondary-subtle,
+[data-theme="dark"] .badge.bg-dark-subtle {
+    background-color: var(--gray-100) !important;
+    color: var(--gray-700) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Light Mode Safeguard: cegah huruf putih pada background terang */
+:root:not([data-theme="dark"]) .card .badge.text-white:not(.bg-primary):not(.bg-danger):not(.bg-success):not([style*="background"]):not([style*="color"]),
+:root:not([data-theme="dark"]) .table .badge.text-white:not(.bg-primary):not(.bg-danger):not(.bg-success):not([style*="background"]):not([style*="color"]),
+:root:not([data-theme="dark"]) .modal-body .badge.text-white:not(.bg-primary):not(.bg-danger):not(.bg-success):not([style*="background"]):not([style*="color"]) {
+    color: var(--text-primary) !important;
 }
 
 /* ============================================

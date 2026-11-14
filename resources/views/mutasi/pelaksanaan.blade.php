@@ -187,7 +187,7 @@
                                                 <div class="progress-bar {{ $completedDocs === 3 ? 'bg-success' : ($completedDocs > 0 ? 'bg-primary' : 'bg-secondary') }}" 
                                                      style="width: {{ $percentDocs }}%"></div>
                                             </div>
-                                            <span class="badge {{ $completedDocs === 3 ? 'bg-success text-white' : ($completedDocs > 0 ? 'bg-warning text-dark' : 'bg-secondary text-white') }}" style="font-size: 9.5px; min-width: 34px; text-align: center;">
+                                            <span class="badge {{ $completedDocs === 3 ? 'bg-success-subtle text-success border border-success-subtle' : ($completedDocs > 0 ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle') }}" style="font-size: 9.5px; min-width: 34px; text-align: center;">
                                                 {{ $completedDocs }}/3
                                             </span>
                                         </div>

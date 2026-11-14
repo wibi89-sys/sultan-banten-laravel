@@ -297,7 +297,7 @@
                     <h6 class="fw-bold mb-0 text-dark">
                         <i class="fas fa-layer-group text-primary me-2"></i>2. Pendapat &amp; Catatan Khusus Per Materi Sidang
                     </h6>
-                    <span class="badge bg-primary text-white" style="font-size: 11px;">{{ $sidang->materis->count() }} Agenda</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 11px;">{{ $sidang->materis->count() }} Agenda</span>
                 </div>
                 <p class="text-muted small mb-3">Mohon telaah berkas dan tentukan sikap serta catatan khusus Anda untuk masing-masing materi sidang di bawah ini:</p>
 
@@ -310,7 +310,7 @@
                 <div class="bento-card mb-3 border-start border-4 border-primary" style="background: #ffffff;">
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-dark text-white font-mono-num" style="font-size: 11px;">Materi #{{ $m->urutan }}</span>
+                            <span class="badge bg-dark-subtle text-dark border border-dark-subtle font-mono-num" style="font-size: 11px;">Materi #{{ $m->urutan }}</span>
                             {!! $m->kategori_badge !!}
                         </div>
                         @if($pMateri && $pMateri->status_pendapat !== 'belum_mengisi')
@@ -337,7 +337,7 @@
                     <div class="p-2.5 rounded border mb-3 small" style="background-color: #fbf7ff; border-color: #6f42c1 !important;">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <div class="fw-bold" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Rincian Mutasi Permintaan Sendiri (Mendekati Keluarga):</div>
-                            <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 9.5px;">Biaya Mandiri &amp; Litmas</span>
+                            <span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); font-size: 9.5px;">Biaya Mandiri &amp; Litmas</span>
                         </div>
                         <div class="row g-1 text-dark" style="font-size: 11.5px;">
                             <div class="col-12 col-sm-6">
@@ -438,7 +438,7 @@
                                     @if(!empty($ndm['tanggal_surat_usulan']) || !empty($m->mutasi?->tanggal_surat))
                                     <span class="text-muted ms-1">({{ !empty($ndm['tanggal_surat_usulan']) ? \Carbon\Carbon::parse($ndm['tanggal_surat_usulan'])->format('d/m/Y') : $m->mutasi?->tanggal_surat?->format('d/m/Y') }})</span>
                                     @endif
-                                    &bull; <span class="badge bg-secondary text-white">{{ $ndm['kategori_mutasi'] ?? ($m->mutasi?->kategori_mutasi ?? 'Pemindahan Antar UPT') }}</span>
+                                    &bull; <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ $ndm['kategori_mutasi'] ?? ($m->mutasi?->kategori_mutasi ?? 'Pemindahan Antar UPT') }}</span>
                                 </div>
                                 <div>
                                     <span class="text-muted">UPT Pengusul:</span> <b>{{ $ndm['upt_asal_nama'] ?? ($m->mutasi?->uptAsal?->nama_upt ?? '-') }}</b>
@@ -449,7 +449,7 @@
                                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Narkotika: <b>{{ $ndm['jumlah_usulan_narkotika'] ?? ($m->mutasi?->jumlah_narkotika ?? 0) }}</b></span>
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Pidum: <b>{{ $ndm['jumlah_usulan_pidum'] ?? ($m->mutasi?->jumlah_pidum ?? 0) }}</b></span>
                                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Korupsi: <b>{{ $ndm['jumlah_usulan_korupsi'] ?? ($m->mutasi?->jumlah_korupsi ?? 0) }}</b></span>
-                                    <span class="badge bg-dark text-white fw-bold">Total Usulan: <b>{{ $ndm['total_usulan'] ?? ($m->mutasi?->total_usulan ?? 0) }}</b> Orang</span>
+                                    <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-bold">Total Usulan: <b>{{ $ndm['total_usulan'] ?? ($m->mutasi?->total_usulan ?? 0) }}</b> Orang</span>
                                 </div>
                                 <div class="d-flex flex-wrap gap-1">
                                     @php
@@ -520,7 +520,7 @@
                                             <td>{{ $totN }}</td>
                                             <td>{{ $totP }}</td>
                                             <td>{{ $totK }}</td>
-                                            <td><span class="badge bg-success">{{ $grandTot }} Orang</span></td>
+                                            <td><span class="badge bg-success-subtle text-success border border-success-subtle">{{ $grandTot }} Orang</span></td>
                                         </tr>
                                     </tfoot>
                                 </table>

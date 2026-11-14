@@ -840,13 +840,13 @@
             const kep = (u.keputusan || '').toLowerCase();
             let kepBadge = '';
             if (kep === 'setuju' || kep === 'disetujui') {
-                kepBadge = '<span class="badge bg-success text-white py-1.5 px-2.5 fw-bold shadow-sm"><i class="fas fa-check-circle me-1"></i>Setuju / Disetujui</span>';
+                kepBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle py-1.5 px-2.5 fw-bold"><i class="fas fa-check-circle me-1"></i>Setuju / Disetujui</span>';
             } else if (kep === 'tunda' || kep === 'ditunda') {
-                kepBadge = '<span class="badge bg-warning text-dark py-1.5 px-2.5 fw-bold shadow-sm"><i class="fas fa-pause-circle me-1"></i>Ditunda / Tunda</span>';
+                kepBadge = '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-1.5 px-2.5 fw-bold"><i class="fas fa-pause-circle me-1"></i>Ditunda / Tunda</span>';
             } else if (kep === 'tidak_setuju' || kep === 'ditolak') {
-                kepBadge = '<span class="badge bg-danger text-white py-1.5 px-2.5 fw-bold shadow-sm"><i class="fas fa-times-circle me-1"></i>Tidak Setuju / Ditolak</span>';
+                kepBadge = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1.5 px-2.5 fw-bold"><i class="fas fa-times-circle me-1"></i>Tidak Setuju / Ditolak</span>';
             } else {
-                kepBadge = '<span class="badge bg-secondary text-white py-1.5 px-2.5"><i class="fas fa-question-circle me-1"></i>Belum Putus</span>';
+                kepBadge = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle py-1.5 px-2.5"><i class="fas fa-question-circle me-1"></i>Belum Putus</span>';
             }
 
             // Atensi badge

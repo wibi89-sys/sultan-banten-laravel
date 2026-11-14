@@ -169,7 +169,7 @@
                         {!! $sidang->status_badge !!}
                         {!! $sidang->tanggapan_badge !!}
                         @if($sidang->isVerifiedKakanwil())
-                        <span class="badge bg-secondary text-white" title="Sidang telah diverifikasi/disposisi final oleh Ka. Kanwil. Data terkunci bagi user biasa."><i class="fas fa-lock me-1"></i>Terkunci (Final Ka. Kanwil)</span>
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" title="Sidang telah diverifikasi/disposisi final oleh Ka. Kanwil. Data terkunci bagi user biasa."><i class="fas fa-lock me-1"></i>Terkunci (Final Ka. Kanwil)</span>
                         @endif
                     </div>
                     <h5 class="fw-bold mb-2 text-dark" style="font-size: 18px;">{{ $sidang->agenda_judul }}</h5>
@@ -183,7 +183,7 @@
                     <div class="mb-3">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-primary text-white p-1.5" style="border-radius: 6px;"><i class="fas fa-layer-group"></i></span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle p-1.5" style="border-radius: 6px;"><i class="fas fa-layer-group"></i></span>
                                 <h6 class="fw-bold mb-0 text-dark" style="font-size: 14.5px;">Daftar Materi / Agenda Sidang ({{ $sidang->materis->count() }})</h6>
                             </div>
                             @if($sidang->canEdit(auth()->user()))
@@ -194,24 +194,24 @@
                         </div>
 
                         @foreach($sidang->materis as $m)
-                        <div class="card border border-2 mb-3 shadow-none" style="border-radius: 10px; background: #ffffff;">
+                        <div class="card border border-2 mb-3 shadow-none" style="border-radius: 10px; background: var(--card-bg, #ffffff);">
                             <div class="card-header bg-light py-2 px-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-dark text-white font-mono-num" style="font-size: 11px;">Materi #{{ $m->urutan }}</span>
+                                    <span class="badge bg-dark-subtle text-dark border border-dark-subtle font-mono-num" style="font-size: 11px;">Materi #{{ $m->urutan }}</span>
                                     {!! $m->kategori_badge !!}
                                     <span class="fw-bold text-dark" style="font-size: 13.5px;">{{ $m->judul_materi }}</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     @if($m->rekomendasi_sidang == 'setuju')
-                                    <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Rekomendasi: Disetujui</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i>Rekomendasi: Disetujui</span>
                                     @elseif($m->rekomendasi_sidang == 'setuju_catatan')
-                                    <span class="badge bg-info text-white"><i class="fas fa-clipboard-check me-1"></i>Rekomendasi: Setuju dg Catatan</span>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-clipboard-check me-1"></i>Rekomendasi: Setuju dg Catatan</span>
                                     @elseif($m->rekomendasi_sidang == 'tunda')
-                                    <span class="badge bg-warning text-dark"><i class="fas fa-pause-circle me-1"></i>Rekomendasi: Ditunda</span>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-pause-circle me-1"></i>Rekomendasi: Ditunda</span>
                                     @elseif($m->rekomendasi_sidang == 'tolak')
-                                    <span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i>Rekomendasi: Ditolak</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times-circle me-1"></i>Rekomendasi: Ditolak</span>
                                     @else
-                                    <span class="badge bg-secondary-subtle text-secondary border"><i class="fas fa-hourglass-start me-1"></i>Rekomendasi: Belum Diputuskan</span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-hourglass-start me-1"></i>Rekomendasi: Belum Diputuskan</span>
                                     @endif
 
                                     @if($sidang->canEdit(auth()->user()))
@@ -240,10 +240,10 @@
                                     $ndm = $m->narapidana_data; 
                                     $bm = $ndm['berkas'] ?? [];
                                 @endphp
-                                <div class="p-2.5 rounded border mb-2 small" style="background-color: #fbf9ff; border-color: #6f42c1 !important;">
+                                <div class="p-2.5 rounded border mb-2 small" style="background-color: rgba(111, 66, 193, 0.05); border-color: rgba(111, 66, 193, 0.3) !important;">
                                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge text-white" style="background-color: #6f42c1 !important;"><i class="fas fa-user-friends me-1"></i>Mutasi Permintaan Sendiri</span>
+                                            <span class="badge" style="background: rgba(111, 66, 193, 0.15); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); font-weight: 600;"><i class="fas fa-user-friends me-1"></i>Mutasi Permintaan Sendiri</span>
                                             <span class="fw-bold text-dark fs-6">{{ $ndm['nama'] ?? '-' }}</span>
                                             @if(!empty($ndm['nomor_register']))
                                             <code>{{ $ndm['nomor_register'] }}</code>
@@ -251,7 +251,7 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             @if($m->mutasi_id)
-                                            <a href="{{ route('mutasi.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
+                                            <a href="{{ route('mutasi.show', $m->mutasi_id) }}" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
                                                 <i class="fas fa-external-link-alt me-1"></i>Terkoneksi ke Mutasi UPT #{{ $m->mutasi_id }}
                                             </a>
                                             @endif
@@ -346,7 +346,7 @@
                                 <div class="p-2.5 bg-warning-subtle bg-opacity-25 rounded border border-warning border-opacity-50 mb-2 small">
                                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-warning text-dark"><i class="fas fa-exchange-alt me-1"></i>{{ $isKolektif ? 'Pemindahan Narapidana Kolektif' : 'Mutasi Narapidana' }}</span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-exchange-alt me-1"></i>{{ $isKolektif ? 'Pemindahan Narapidana Kolektif' : 'Mutasi Narapidana' }}</span>
                                             <span class="fw-bold text-dark fs-6">{{ $ndm['nama'] ?? '-' }}</span>
                                             @if(!empty($ndm['nomor_register']))
                                             <code>{{ $ndm['nomor_register'] }}</code>
@@ -354,7 +354,7 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             @if($m->mutasi_id)
-                                            <a href="{{ route('mutasi.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
+                                            <a href="{{ route('mutasi.show', $m->mutasi_id) }}" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
                                                 <i class="fas fa-external-link-alt me-1"></i>Terkoneksi ke Mutasi UPT #{{ $m->mutasi_id }}
                                             </a>
                                             @endif
@@ -376,7 +376,7 @@
                                                 @if(!empty($ndm['tanggal_surat_usulan']) || !empty($m->mutasi?->tanggal_surat))
                                                 <span class="text-muted ms-1">({{ !empty($ndm['tanggal_surat_usulan']) ? \Carbon\Carbon::parse($ndm['tanggal_surat_usulan'])->format('d/m/Y') : $m->mutasi?->tanggal_surat?->format('d/m/Y') }})</span>
                                                 @endif
-                                                &bull; <span class="badge bg-secondary text-white">{{ $ndm['kategori_mutasi'] ?? ($m->mutasi?->kategori_mutasi ?? 'Pemindahan Antar UPT') }}</span>
+                                                &bull; <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ $ndm['kategori_mutasi'] ?? ($m->mutasi?->kategori_mutasi ?? 'Pemindahan Antar UPT') }}</span>
                                             </div>
                                             <div>
                                                 <span class="text-muted">UPT Asal Pengusul:</span> <b>{{ $ndm['upt_asal_nama'] ?? ($m->mutasi?->uptAsal?->nama_upt ?? '-') }}</b>
@@ -388,7 +388,7 @@
                                                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Narkotika: <b>{{ $ndm['jumlah_usulan_narkotika'] ?? ($m->mutasi?->jumlah_narkotika ?? 0) }}</b></span>
                                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Pidum: <b>{{ $ndm['jumlah_usulan_pidum'] ?? ($m->mutasi?->jumlah_pidum ?? 0) }}</b></span>
                                                 <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Korupsi: <b>{{ $ndm['jumlah_usulan_korupsi'] ?? ($m->mutasi?->jumlah_korupsi ?? 0) }}</b></span>
-                                                <span class="badge bg-dark text-white fw-bold">Total Usulan: <b>{{ $ndm['total_usulan'] ?? ($m->mutasi?->total_usulan ?? 0) }}</b> Orang</span>
+                                                <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-bold">Total Usulan: <b>{{ $ndm['total_usulan'] ?? ($m->mutasi?->total_usulan ?? 0) }}</b> Orang</span>
                                             </div>
                                             <div class="d-flex flex-wrap gap-1">
                                                 @php
@@ -424,7 +424,7 @@
                                             </span>
                                             <div class="d-flex align-items-center gap-1.5">
                                                 @if($sidang->isVerifiedKakanwil())
-                                                <span class="badge bg-success text-white py-1 px-2" style="font-size: 10px;">
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2" style="font-size: 10px;">
                                                     <i class="fas fa-check-circle me-1"></i>Disahkan Kakanwil &bull; Terhubung ke UPT
                                                 </span>
                                                 @elseif($sidang->canEdit(auth()->user()))
@@ -472,7 +472,7 @@
                                                         <td>{{ $totN }}</td>
                                                         <td>{{ $totP }}</td>
                                                         <td>{{ $totK }}</td>
-                                                        <td><span class="badge bg-success fs-6">{{ $grandTot }} Orang</span></td>
+                                                        <td><span class="badge bg-success-subtle text-success border border-success-subtle fs-6">{{ $grandTot }} Orang</span></td>
                                                     </tr>
                                                 </tfoot>
                                             </table>
@@ -482,7 +482,7 @@
                                     <!-- ALERT JIKA BELUM DIRUMUSKAN HASIL SIDANG -->
                                     <div class="p-2.5 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 mb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
                                         <div class="small">
-                                            <span class="badge bg-primary text-white me-1"><i class="fas fa-clipboard-list me-1"></i>Bahan Sidang Terdaftar</span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1"><i class="fas fa-clipboard-list me-1"></i>Bahan Sidang Terdaftar</span>
                                             <span class="text-dark fw-bold">Menunggu Perumusan Hasil Sidang</span>
                                             <div class="text-muted" style="font-size: 11px;">UPT Tujuan Penerima dan Alokasi Kuota narapidana belum ditetapkan. Tim Sidang dapat menetapkannya saat perumusan hasil sidang.</div>
                                         </div>
@@ -560,7 +560,7 @@
                                 <div class="p-2.5 bg-danger-subtle bg-opacity-25 rounded border border-danger border-opacity-50 mb-2 small">
                                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-danger text-white"><i class="fas fa-heartbeat me-1"></i>Izin Berobat Keluar Kota</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-heartbeat me-1"></i>Izin Berobat Keluar Kota</span>
                                             <span class="fw-bold text-danger fs-6">{{ $ndm['nama'] ?? '-' }}</span>
                                             @if(!empty($ndm['nomor_register']))
                                             <code>{{ $ndm['nomor_register'] }}</code>
@@ -626,7 +626,7 @@
                                 <div class="p-2.5 bg-primary-subtle bg-opacity-25 rounded border border-primary border-opacity-50 mb-2 small">
                                     <div class="d-flex align-items-center justify-content-between mb-1.5">
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-primary text-white"><i class="fas fa-passport me-1"></i>Klien Pemasyarakatan</span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-passport me-1"></i>Klien Pemasyarakatan</span>
                                             <span class="fw-bold text-primary">{{ $kdm['nama_klien'] ?? '-' }} {{ !empty($kdm['bin']) ? 'BIN ' . strtoupper($kdm['bin']) : '' }}</span>
                                         </div>
                                         <span class="badge bg-light text-dark border">{{ $kdm['program_integrasi'] ?? 'PB' }}</span>
@@ -735,10 +735,10 @@
                                     <div class="p-2.5 bg-light rounded border">
                                         <div class="fw-bold small text-dark mb-1" style="font-size: 11px;"><i class="fas fa-user-edit text-primary me-1"></i>Catatan Khusus Anggota Sidang untuk Materi #{{ $m->urutan }}:</div>
                                         @foreach($notes as $note)
-                                        <div class="border-bottom py-1 small" style="font-size: 11px;">
+                                        <div class="border-bottom py-1 small d-flex flex-wrap align-items-center gap-1" style="font-size: 11px;">
                                             <b>{{ $note->anggota?->nama ?? 'Anggota' }}:</b>
                                             <span class="text-secondary fst-italic">"{{ $note->catatan_pendapat }}"</span>
-                                            <span class="badge bg-light text-dark border ms-1" style="font-size: 9px;">{{ $note->status_pendapat_badge }}</span>
+                                            {!! $note->pendapat_badge !!}
                                         </div>
                                         @endforeach
                                     </div>
@@ -841,9 +841,9 @@
             <button class="nav-link fw-bold py-2.5 px-3" id="tab-fisik-btn" data-bs-toggle="tab" data-bs-target="#tab-fisik" type="button" role="tab">
                 <i class="fas fa-stamp text-danger me-2"></i>Pemberkasan Fisik &amp; Disposisi Kakanwil
                 @if($sidang->file_ba_signed && $sidang->file_disposisi_kakanwil)
-                <span class="badge bg-success ms-1">Lengkap</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Lengkap</span>
                 @elseif($sidang->file_ba_signed)
-                <span class="badge bg-warning ms-1">Menunggu Kakanwil</span>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1">Menunggu Kakanwil</span>
                 @endif
             </button>
         </li>
@@ -859,7 +859,7 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge bg-success text-white p-2" style="border-radius: 8px;">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle p-2" style="border-radius: 8px;">
                                     <i class="fab fa-whatsapp fs-5"></i>
                                 </span>
                                 <div>
@@ -1138,9 +1138,9 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <h6 class="fw-bold mb-0 text-dark">Unggah Risalah Hasil Sidang TPP Bertanda Tangan</h6>
                             </div>
                             @if($sidang->file_risalah_signed)
-                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
                             @else
-                            <span class="badge bg-secondary">Belum Diunggah</span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Belum Diunggah</span>
                             @endif
                         </div>
                         <div class="card-body p-4">
@@ -1191,9 +1191,9 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <h6 class="fw-bold mb-0 text-dark">Unggah Laporan Pelaksanaan Sidang TPP &amp; Dokumentasi</h6>
                             </div>
                             @if($sidang->file_laporan_signed)
-                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
                             @else
-                            <span class="badge bg-secondary">Belum Diunggah</span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Belum Diunggah</span>
                             @endif
                         </div>
                         <div class="card-body p-4">
@@ -1258,9 +1258,9 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <h6 class="fw-bold mb-0 text-dark">Unggah Berita Acara Fisik Bertanda Tangan</h6>
                             </div>
                             @if($sidang->file_ba_signed)
-                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Sudah Diunggah</span>
                             @else
-                            <span class="badge bg-secondary">Belum Diunggah</span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Belum Diunggah</span>
                             @endif
                         </div>
                         <div class="card-body p-4">
@@ -1772,7 +1772,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Narkotika">Narkotika: <b id="info_stat_narkotika_tambah">0</b></span>
                                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Pidana Umum">Pidum: <b id="info_stat_pidum_tambah">0</b></span>
                                                         <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Korupsi">Korupsi: <b id="info_stat_korupsi_tambah">0</b></span>
-                                                        <span class="badge bg-dark text-white fw-bold" title="Total Usulan">Total: <b id="info_stat_total_tambah">0</b> Orang</span>
+                                                        <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-bold" title="Total Usulan">Total: <b id="info_stat_total_tambah">0</b> Orang</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-12 col-md-5 text-md-end">
@@ -1883,7 +1883,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <div class="p-3 bg-light rounded border" style="border-color: #6f42c1 !important;">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div class="fw-bold small" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Data Mutasi Permintaan Sendiri (Mendekati Keluarga & Biaya Mandiri)</div>
-                                        <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 10px;">Khusus Keinginan Sendiri</span>
+                                        <span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); font-size: 10px;">Khusus Keinginan Sendiri</span>
                                     </div>
                                     <div class="alert alert-info py-1.5 px-2.5 mb-2.5 small" style="font-size: 11px;">
                                         <i class="fas fa-info-circle me-1"></i>Dilengkapi surat pernyataan bermaterai kesanggupan biaya mandiri, Litmas PK Bapas, Berita Acara (BA) Sidang TPP UPT asal, dan jaminan keluarga.
@@ -2270,7 +2270,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                 <form action="{{ route('sidang-tpp-kanwil.materi.update', [$sidang->id, $m->id]) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
-                    <div class="modal-header bg-dark text-white py-3 px-4">
+                    <div class="modal-header bg-primary text-white py-3 px-4">
                         <h6 class="modal-title fw-bold" id="modalEditMateriLabel_{{ $m->id }}">
                             <i class="fas fa-edit me-2"></i>Edit Materi #{{ $m->urutan }} - {{ $m->judul_materi }}
                         </h6>
@@ -2331,7 +2331,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <div class="p-3 bg-light rounded border" style="border-color: #6f42c1 !important;">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div class="fw-bold small" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Data Mutasi Permintaan Sendiri (Mendekati Keluarga & Biaya Mandiri)</div>
-                                        <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 10px;">Khusus Keinginan Sendiri</span>
+                                        <span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); font-size: 10px;">Khusus Keinginan Sendiri</span>
                                     </div>
                                     <div class="row g-2">
                                         <div class="col-md-7">
@@ -2640,7 +2640,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Narkotika: <b>{{ $targetNarkotika }}</b></span>
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Pidum: <b>{{ $targetPidum }}</b></span>
                                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Korupsi: <b>{{ $targetKorupsi }}</b></span>
-                                            <span class="badge bg-dark text-white fw-bold">Total Usulan: <b>{{ $targetTotal }}</b> WBP</span>
+                                            <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-bold">Total Usulan: <b>{{ $targetTotal }}</b> WBP</span>
                                         </div>
                                     </div>
                                     @endif

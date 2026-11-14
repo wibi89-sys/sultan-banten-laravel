@@ -133,23 +133,23 @@ class SidangTpp extends Model
     public function getStatusBadgeAttribute(): string
     {
         return match ($this->status_sidang) {
-            'dijadwalkan' => '<span class="badge bg-primary text-white"><i class="fas fa-calendar-check me-1"></i>Dijadwalkan</span>',
-            'menunggu_hasil_upt' => '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu Input Hasil</span>',
-            'menunggu_verifikasi_kanwil' => '<span class="badge bg-info text-white"><i class="fas fa-hourglass-half me-1"></i>Verifikasi Kanwil</span>',
-            'selesai_ttd_kakanwil' => '<span class="badge bg-success text-white"><i class="fas fa-check-double me-1"></i>Selesai &amp; TTD Ka. Kanwil</span>',
-            'dibatalkan' => '<span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i>Dibatalkan</span>',
-            default => '<span class="badge bg-secondary text-white">'.htmlspecialchars((string) $this->status_sidang).'</span>',
+            'dijadwalkan' => '<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-calendar-check me-1"></i>Dijadwalkan</span>',
+            'menunggu_hasil_upt' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-clock me-1"></i>Menunggu Input Hasil</span>',
+            'menunggu_verifikasi_kanwil' => '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-hourglass-half me-1"></i>Verifikasi Kanwil</span>',
+            'selesai_ttd_kakanwil' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-double me-1"></i>Selesai &amp; TTD Ka. Kanwil</span>',
+            'dibatalkan' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times-circle me-1"></i>Dibatalkan</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">'.htmlspecialchars((string) $this->status_sidang).'</span>',
         };
     }
 
     public function getVerifikasiBadgeAttribute(): string
     {
         return match ($this->status_verifikasi_kanwil) {
-            'sesuai', 'terverifikasi' => '<span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Sesuai</span>',
-            'tidak_sesuai', 'ditolak' => '<span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i>Tidak Sesuai</span>',
-            'perbaikan', 'perlu_perbaikan' => '<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i>Perbaikan</span>',
-            'menunggu_verifikasi' => '<span class="badge bg-primary text-white"><i class="fas fa-hourglass-half me-1"></i>Menunggu Verifikasi</span>',
-            default => '<span class="badge bg-secondary text-white"><i class="fas fa-minus me-1"></i>Menunggu Sidang</span>',
+            'sesuai', 'terverifikasi' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i>Sesuai</span>',
+            'tidak_sesuai', 'ditolak' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times-circle me-1"></i>Tidak Sesuai</span>',
+            'perbaikan', 'perlu_perbaikan' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-exclamation-triangle me-1"></i>Perbaikan</span>',
+            'menunggu_verifikasi' => '<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-hourglass-half me-1"></i>Menunggu Verifikasi</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-minus me-1"></i>Menunggu Sidang</span>',
         };
     }
 

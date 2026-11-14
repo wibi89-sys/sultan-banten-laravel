@@ -79,10 +79,10 @@ class SidangTppUsulan extends Model
     public function getKeputusanBadgeAttribute(): string
     {
         return match ($this->keputusan) {
-            'setuju', 'disetujui' => '<span class="badge bg-success text-white"><i class="fas fa-check me-1"></i>Setuju</span>',
-            'tidak_setuju', 'ditolak' => '<span class="badge bg-danger text-white"><i class="fas fa-times me-1"></i>Tidak Setuju</span>',
-            'tunda', 'ditunda' => '<span class="badge bg-warning text-dark"><i class="fas fa-pause me-1"></i>Tunda</span>',
-            default => '<span class="badge bg-secondary text-white"><i class="fas fa-question me-1"></i>Belum Putus</span>',
+            'setuju', 'disetujui' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Setuju</span>',
+            'tidak_setuju', 'ditolak' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times me-1"></i>Tidak Setuju</span>',
+            'tunda', 'ditunda' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-pause me-1"></i>Tunda</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-question me-1"></i>Belum Putus</span>',
         };
     }
 
@@ -90,22 +90,22 @@ class SidangTppUsulan extends Model
     {
         $jenis = (string) ($this->jenis_usulan ?: 'PB');
         if (str_contains(strtoupper($jenis), 'BEROBAT')) {
-            return '<span class="badge bg-danger text-white"><i class="fas fa-notes-medical me-1"></i>Izin Berobat Luar Kota</span>';
+            return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-notes-medical me-1"></i>Izin Berobat Luar Kota</span>';
         }
         if (str_contains(strtoupper($jenis), 'MUTASI') || str_contains(strtoupper($jenis), 'PENEMPATAN') || str_contains(strtoupper($jenis), 'PINDAH')) {
-            return '<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>Mutasi (Pindah UPT)</span>';
+            return '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-exchange-alt me-1"></i>Mutasi (Pindah UPT)</span>';
         }
         if (strtoupper($jenis) === 'REGISTER F') {
-            return '<span class="badge bg-dark text-white"><i class="fas fa-file-contract me-1"></i>Register F</span>';
+            return '<span class="badge bg-dark-subtle text-dark border border-dark-subtle"><i class="fas fa-file-contract me-1"></i>Register F</span>';
         }
         if (strtoupper($jenis) === 'REMISI') {
-            return '<span class="badge bg-warning text-dark"><i class="fas fa-award me-1"></i>Remisi</span>';
+            return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-award me-1"></i>Remisi</span>';
         }
         if (strtoupper($jenis) === 'ASIMILASI') {
-            return '<span class="badge bg-secondary text-white">Asimilasi</span>';
+            return '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Asimilasi</span>';
         }
 
-        return '<span class="badge bg-primary">'.e($jenis).'</span>';
+        return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle">'.e($jenis).'</span>';
     }
 
     public function getLitmasBadgeAttribute(): string

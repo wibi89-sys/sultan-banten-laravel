@@ -99,11 +99,11 @@ class SidangTppKanwilAnggota extends Model
     public function getPendapatBadgeAttribute(): string
     {
         return match ($this->status_pendapat) {
-            'setuju' => '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Setuju</span>',
-            'setuju_catatan' => '<span class="badge bg-info text-white"><i class="fas fa-check-double me-1"></i>Setuju dg Catatan</span>',
-            'tolak' => '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Tolak</span>',
-            'tunda' => '<span class="badge bg-warning text-dark"><i class="fas fa-pause me-1"></i>Tunda</span>',
-            default => '<span class="badge bg-secondary opacity-75"><i class="fas fa-minus me-1"></i>Belum Mengisi</span>',
+            'setuju' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Setuju</span>',
+            'setuju_catatan' => '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-check-double me-1"></i>Setuju dg Catatan</span>',
+            'tolak' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times me-1"></i>Tolak</span>',
+            'tunda' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-pause me-1"></i>Tunda</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-minus me-1"></i>Belum Mengisi</span>',
         };
     }
 
@@ -113,9 +113,9 @@ class SidangTppKanwilAnggota extends Model
     public function getWaBadgeAttribute(): string
     {
         return match ($this->wa_sent_status) {
-            'terkirim' => '<span class="badge bg-success" title="Terkirim: '.($this->wa_sent_at ? $this->wa_sent_at->format('d/m/Y H:i') : '-').'"><i class="fab fa-whatsapp me-1"></i>Terkirim</span>',
-            'gagal' => '<span class="badge bg-danger" title="'.htmlspecialchars($this->wa_error_message ?? 'Gagal').'"><i class="fas fa-exclamation-circle me-1"></i>Gagal</span>',
-            default => '<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Belum Dikirim</span>',
+            'terkirim' => '<span class="badge bg-success-subtle text-success border border-success-subtle" title="Terkirim: '.($this->wa_sent_at ? $this->wa_sent_at->format('d/m/Y H:i') : '-').'"><i class="fab fa-whatsapp me-1"></i>Terkirim</span>',
+            'gagal' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="'.htmlspecialchars($this->wa_error_message ?? 'Gagal').'"><i class="fas fa-exclamation-circle me-1"></i>Gagal</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-clock me-1"></i>Belum Dikirim</span>',
         };
     }
 }

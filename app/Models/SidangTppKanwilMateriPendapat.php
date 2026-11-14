@@ -32,11 +32,11 @@ class SidangTppKanwilMateriPendapat extends Model
     public function getPendapatBadgeAttribute(): string
     {
         return match ($this->status_pendapat) {
-            'setuju' => '<span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Setuju</span>',
-            'setuju_catatan' => '<span class="badge bg-info text-white"><i class="fas fa-comment-dots me-1"></i>Setuju Catatan</span>',
-            'tolak' => '<span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i>Tolak</span>',
-            'tunda' => '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Tunda</span>',
-            default => '<span class="badge bg-secondary text-white"><i class="fas fa-hourglass-start me-1"></i>Belum Mengisi</span>',
+            'setuju' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i>Setuju</span>',
+            'setuju_catatan' => '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-comment-dots me-1"></i>Setuju Catatan</span>',
+            'tolak' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-times-circle me-1"></i>Tolak</span>',
+            'tunda' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-clock me-1"></i>Tunda</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-hourglass-start me-1"></i>Belum Mengisi</span>',
         };
     }
 }

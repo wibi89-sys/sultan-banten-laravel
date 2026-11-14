@@ -91,11 +91,11 @@ class SidangTppKanwilMateri extends Model
     public function getKategoriBadgeAttribute(): string
     {
         return match ($this->kategori_materi) {
-            'mutasi_keinginan_sendiri' => '<span class="badge text-white" style="background-color: #6f42c1 !important;"><i class="fas fa-user-friends me-1"></i>Mutasi Permintaan Sendiri</span>',
-            'mutasi_narapidana' => '<span class="badge bg-warning text-dark"><i class="fas fa-exchange-alt me-1"></i>Mutasi Narapidana</span>',
-            'izin_berobat' => '<span class="badge bg-danger text-white"><i class="fas fa-notes-medical me-1"></i>Izin Berobat</span>',
-            'klien_bapas', 'klien_umroh' => '<span class="badge bg-primary text-white"><i class="fas fa-passport me-1"></i>Klien Bapas</span>',
-            default => '<span class="badge bg-secondary text-white"><i class="fas fa-file-alt me-1"></i>Lainnya</span>',
+            'mutasi_keinginan_sendiri' => '<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3);"><i class="fas fa-user-friends me-1"></i>Mutasi Permintaan Sendiri</span>',
+            'mutasi_narapidana' => '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-exchange-alt me-1"></i>Mutasi Narapidana</span>',
+            'izin_berobat' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-notes-medical me-1"></i>Izin Berobat</span>',
+            'klien_bapas', 'klien_umroh' => '<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-passport me-1"></i>Klien Bapas</span>',
+            default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-file-alt me-1"></i>Lainnya</span>',
         };
     }
 }

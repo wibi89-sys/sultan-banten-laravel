@@ -1301,7 +1301,7 @@
                                             {!! renderOvercrowdingBadge($r['penghuni_prev'], $r['kapasitas']) !!}
                                             <small class="text-muted" style="font-size: 10px;">(Data Kemarin)</small>
                                         @else
-                                            <span class="badge bg-secondary text-white" style="font-size: 10px;">Nihil Data</span>
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size: 10px;">Nihil Data</span>
                                         @endif
                                     </div>
                                 </div>
@@ -1499,7 +1499,7 @@
                                     {!! renderOvercrowdingBadge($r['penghuni_prev'], $r['kapasitas']) !!}
                                     <small class="text-muted" style="font-size: 10px;">(Data Kemarin)</small>
                                 @else
-                                    <span class="badge bg-secondary text-white" style="font-size: 10px;">Nihil Data</span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size: 10px;">Nihil Data</span>
                                 @endif
                             </div>
                         </td>
@@ -1557,13 +1557,13 @@
                         </td>
                         <td class="text-center">
                             @if(!$r['has_input_curr'])
-                                <span class="badge bg-secondary text-white px-2 py-1">Pending</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">Pending</span>
                             @elseif($r['delta_penghuni'] > 0)
-                                <span class="badge bg-danger text-white px-2 py-1 fw-bold">+{{ $r['delta_penghuni'] }}</span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-bold">+{{ $r['delta_penghuni'] }}</span>
                             @elseif($r['delta_penghuni'] < 0)
-                                <span class="badge bg-success text-white px-2 py-1 fw-bold">{{ $r['delta_penghuni'] }}</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fw-bold">{{ $r['delta_penghuni'] }}</span>
                             @else
-                                <span class="badge bg-secondary text-white px-2 py-1">0</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">0</span>
                             @endif
                         </td>
 
@@ -1575,17 +1575,17 @@
                                 </span>
                                 @if($r['mutasi_keluar'] > 0)
                                 <div class="mt-1">
-                                    <span class="badge bg-secondary text-white" style="font-size: 10px;">{{ $r['mutasi_keluar'] }} Mutasi Keluar</span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size: 10px;">{{ $r['mutasi_keluar'] }} Mutasi Keluar</span>
                                 </div>
                                 @endif
                                 @if($r['bdh'] > 0)
                                 <div class="mt-1">
-                                    <span class="badge bg-danger text-white" style="font-size: 10px;">{{ $r['bdh'] }} BDH</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10px;">{{ $r['bdh'] }} BDH</span>
                                 </div>
                                 @endif
                                 @if($r['lainnya'] > 0)
                                 <div class="mt-1">
-                                    <span class="badge bg-secondary text-white" style="font-size: 10px;" title="{{ implode('; ', $r['rincian_lainnya']) }}">{{ $r['lainnya'] }} Lainnya</span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size: 10px;" title="{{ implode('; ', $r['rincian_lainnya']) }}">{{ $r['lainnya'] }} Lainnya</span>
                                 </div>
                                 @endif
                             @else

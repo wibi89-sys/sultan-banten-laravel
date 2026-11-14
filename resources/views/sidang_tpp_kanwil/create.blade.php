@@ -174,7 +174,7 @@
                 <div class="card border-0 shadow-sm mb-4" style="background: var(--bg-card); border-radius: 12px;">
                     <div class="card-header bg-transparent py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-primary text-white p-2" style="border-radius: 8px;">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle p-2" style="border-radius: 8px;">
                                 <i class="fas fa-layer-group"></i>
                             </span>
                             <div>
@@ -263,7 +263,7 @@
                                                                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Narkotika">Narkotika: <b id="info_stat_narkotika_0">0</b></span>
                                                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Pidana Umum">Pidum: <b id="info_stat_pidum_0">0</b></span>
                                                                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Korupsi">Korupsi: <b id="info_stat_korupsi_0">0</b></span>
-                                                                    <span class="badge bg-dark text-white fw-bold" title="Total Usulan">Total: <b id="info_stat_total_0">0</b> Orang</span>
+                                                                    <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-bold" title="Total Usulan">Total: <b id="info_stat_total_0">0</b> Orang</span>
                                                                 </div>
                                                             </div>
                                                             <div class="col-12 col-md-5 text-md-end">
@@ -374,7 +374,7 @@
                                             <div class="p-3 bg-light rounded border" style="border-color: #6f42c1 !important;">
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <div class="fw-bold small" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Data Mutasi Permintaan Sendiri (Mendekati Keluarga & Biaya Mandiri)</div>
-                                                    <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 10px;">Khusus Keinginan Sendiri</span>
+                                                    <span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); font-size: 10px;">Khusus Keinginan Sendiri</span>
                                                 </div>
                                                 <div class="alert alert-info py-1.5 px-2.5 mb-2.5 small" style="font-size: 11px;">
                                                     <i class="fas fa-info-circle me-1"></i>Dilengkapi surat pernyataan bermaterai kesanggupan biaya mandiri, Litmas PK Bapas, Berita Acara (BA) Sidang TPP UPT asal, dan jaminan keluarga.
@@ -889,7 +889,7 @@
                                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Narkotika">Narkotika: <b id="info_stat_narkotika___INDEX__">0</b></span>
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Pidana Umum">Pidum: <b id="info_stat_pidum___INDEX__">0</b></span>
                                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Korupsi">Korupsi: <b id="info_stat_korupsi___INDEX__">0</b></span>
-                                            <span class="badge bg-dark text-white fw-bold" title="Total Usulan">Total: <b id="info_stat_total___INDEX__">0</b> Orang</span>
+                                            <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-bold" title="Total Usulan">Total: <b id="info_stat_total___INDEX__">0</b> Orang</span>
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-5 text-md-end">
@@ -1000,7 +1000,7 @@
                     <div class="p-3 bg-light rounded border" style="border-color: #6f42c1 !important;">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="fw-bold small" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Data Mutasi Permintaan Sendiri (Mendekati Keluarga & Biaya Mandiri)</div>
-                            <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 10px;">Khusus Keinginan Sendiri</span>
+                            <span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; border: 1px solid rgba(111, 66, 193, 0.3); font-size: 10px;">Khusus Keinginan Sendiri</span>
                         </div>
                         <div class="alert alert-info py-1.5 px-2.5 mb-2.5 small" style="font-size: 11px;">
                             <i class="fas fa-info-circle me-1"></i>Dilengkapi surat pernyataan bermaterai kesanggupan biaya mandiri, Litmas PK Bapas, Berita Acara (BA) Sidang TPP UPT asal, dan jaminan keluarga.
