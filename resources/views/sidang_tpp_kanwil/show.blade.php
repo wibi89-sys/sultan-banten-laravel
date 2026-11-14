@@ -286,6 +286,68 @@
     <div class="tab-content" id="sidangTabsContent">
         <!-- TAB 1: DAFTAR HADIR & PENDAPAT ANGGOTA -->
         <div class="tab-pane fade show active" id="tab-anggota" role="tabpanel">
+
+            <!-- ACTION BANNER: SEBAR UNDANGAN OTOMATIS KE SELURUH ANGGOTA -->
+            <div class="card border border-success border-opacity-25 bg-success-subtle bg-opacity-10 mb-3 shadow-sm" style="border-radius: 12px;">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-success text-white p-2" style="border-radius: 8px;">
+                                    <i class="fab fa-whatsapp fs-5"></i>
+                                </span>
+                                <div>
+                                    <h6 class="fw-bold text-success mb-0" style="font-size: 15px;">Kirim Link Presensi &amp; Pendapat ke Seluruh Tim Sidang Sekaligus</h6>
+                                    <small class="text-muted">Kirim otomatis via WhatsApp Gateway ke <b>{{ $totalAnggota }} Anggota</b> (Ketua, Sekretaris, dan seluruh Anggota sidang) dengan 1 kali klik.</small>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 mt-2 text-dark small" style="font-size: 11.5px;">
+                                <span><i class="fas fa-users text-primary me-1"></i>Total Tim: <b>{{ $totalAnggota }} Orang</b></span>
+                                <span><i class="fas fa-check-circle text-success me-1"></i>Sudah Terkirim: <b>{{ $totalWaTerkirim }}</b></span>
+                                <span><i class="fas fa-clock text-warning-emphasis me-1"></i>Belum Terkirim: <b>{{ max(0, $totalAnggota - $totalWaTerkirim) }}</b></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <!-- Tombol 1-Klik Kirim Otomatis via Gateway -->
+                            <form action="{{ route('sidang-tpp-kanwil.broadcast-wa', $sidang->id) }}" method="POST" onsubmit="return confirm('Kirim notifikasi undangan resmi dan link portal pengisian pendapat ke SELURUH {{ $totalAnggota }} anggota tim sidang (Ketua, Sekretaris, dan Anggota) melalui WhatsApp secara serentak?');">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-sm px-3 py-2 shadow-sm fw-bold text-nowrap" style="border-radius: 8px;">
+                                    <i class="fab fa-whatsapp fs-6 me-1"></i> Kirim Otomatis ke Seluruh Tim (1 Klik)
+                                </button>
+                            </form>
+
+                            <!-- Tombol Salin Format Pesan Siaran Grup WA -->
+                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-2 fw-bold text-nowrap" style="border-radius: 8px;" onclick="copyFormatGrupWa()">
+                                <i class="fas fa-clipboard-list me-1"></i> Salin Semua Link untuk Grup WA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teks Format Siaran Grup WA (Hidden) -->
+            <textarea id="rawTeksGrupWa" class="d-none">
+*UNDANGAN & TAUTAN PENGISIAN SIDANG TPP KANTOR WILAYAH*
+Nomor Sidang: {{ $sidang->nomor_sidang }}
+Agenda: {{ $sidang->agenda_judul }}
+Hari/Tanggal: {{ $sidang->tanggal_sidang ? $sidang->tanggal_sidang->translatedFormat('l, d F Y') : '-' }}
+Pukul: {{ substr($sidang->jam_mulai, 0, 5) }} WIB s/d {{ substr($sidang->jam_selesai, 0, 5) }} WIB
+Tempat: {{ $sidang->tempat }} ({{ ucfirst($sidang->metode) }})
+@if(!empty($sidang->link_daring))Link Daring: {{ $sidang->link_daring }}
+@endif
+
+Kepada Yth. Ketua, Sekretaris, dan Anggota Tim Sidang TPP Kanwil, mohon kesediaannya untuk mengonfirmasi kehadiran serta mengisi formulir telaahan & pendapat sidang melalui tautan personal masing-masing berikut:
+
+@foreach($anggotaList as $idx => $a)
+{{ $idx + 1 }}. *{{ $a->nama }}* ({{ $a->peran_sidang }}):
+👉 {{ route('sidang-tpp-kanwil.portal-anggota', $a->token_akses) }}
+
+@endforeach
+Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
+- Sekretariat TPP Kantor Wilayah
+            </textarea>
+
             <div class="card border-0 shadow-sm" style="background: var(--bg-card); border-radius: 12px; overflow: hidden;">
                 <div class="card-header bg-transparent py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
@@ -735,6 +797,11 @@
 
 @push('scripts')
 <script>
+    function copyFormatGrupWa() {
+        const text = document.getElementById('rawTeksGrupWa').value.trim();
+        copyToClipboard(text, 'Seluruh daftar tautan dan format siaran undangan grup WhatsApp berhasil disalin! Silakan langsung paste (Ctrl+V) ke grup WhatsApp.');
+    }
+
     function copyToClipboard(text, successMsg) {
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text).then(() => {
