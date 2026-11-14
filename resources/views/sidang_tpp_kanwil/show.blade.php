@@ -2267,7 +2267,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
     <div class="modal fade" id="modalEditMateri_{{ $m->id }}" tabindex="-1" aria-labelledby="modalEditMateriLabel_{{ $m->id }}" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content border-0 shadow">
-                <form action="{{ route('sidang-tpp-kanwil.materi.update', [$sidang->id, $m->id]) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('sidang-tpp-kanwil.materi.update', [$sidang->id, $m->id]) }}" method="POST" enctype="multipart/form-data" id="formEditMateri_{{ $m->id }}" onsubmit="return validateFormMateri(this, {{ $m->id }})">
                     @csrf
                     @method('PUT')
                     <div class="modal-header bg-primary text-white py-3 px-4">
@@ -2608,7 +2608,11 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 $sumKorupsi = !empty($aloks) ? collect($aloks)->sum('jumlah_korupsi') : ($ndm['total_disetujui_korupsi'] ?? 0);
                                 $sumTotal = !empty($aloks) ? collect($aloks)->sum(fn($a) => ($a['total'] ?? (($a['jumlah_narkotika'] ?? 0) + ($a['jumlah_pidum'] ?? 0) + ($a['jumlah_korupsi'] ?? 0)))) : ($ndm['total_disetujui'] ?? 0);
                             @endphp
-                            <div class="col-12 mt-3">
+                                @php
+                                    $defaultUptTujuanId = $m->upt_tujuan_rekomendasi_id ?? ($m->mutasi?->upt_tujuan_id ?? ($m->mutasi?->tujuans?->first()?->upt_tujuan_id ?? ''));
+                                    $defaultUptTujuanNama = $m->uptTujuanRekomendasi?->nama_upt ?? ($m->mutasi?->uptTujuan?->nama_upt ?? ($m->mutasi?->tujuans?->first()?->uptTujuan?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')));
+                                @endphp
+                                <div class="col-12 mt-3">
                                 <div class="p-3 bg-light rounded border border-warning">
                                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                                         <div>
@@ -2619,7 +2623,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                         </div>
                                         <div class="d-flex gap-1.5">
                                             @if($targetTotal > 0)
-                                            <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 fw-semibold" style="font-size: 11px;" onclick="resetAlokasiKeUsulan({{ $m->id }}, {{ $targetNarkotika }}, {{ $targetPidum }}, {{ $targetKorupsi }}, '{{ addslashes($m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')) }}')" title="Muat ulang angka usulan pengajuan dari UPT asal">
+                                            <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 fw-semibold" style="font-size: 11px;" onclick="resetAlokasiKeUsulan({{ $m->id }}, {{ $targetNarkotika }}, {{ $targetPidum }}, {{ $targetKorupsi }}, '{{ $defaultUptTujuanId }}', '{{ addslashes($defaultUptTujuanNama) }}')" title="Muat ulang angka usulan pengajuan dari UPT asal">
                                                 <i class="fas fa-undo me-1"></i>Salin Angka Usulan UPT
                                             </button>
                                             @endif
@@ -2646,10 +2650,16 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                     @endif
 
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11.5px;" id="tableAlokasiEdit_{{ $m->id }}">
+                                        <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" 
+                                            style="font-size: 11.5px;" 
+                                            id="tableAlokasiEdit_{{ $m->id }}"
+                                            data-target-total="{{ $targetTotal }}"
+                                            data-target-narkotika="{{ $targetNarkotika }}"
+                                            data-target-pidum="{{ $targetPidum }}"
+                                            data-target-korupsi="{{ $targetKorupsi }}">
                                             <thead class="table-light">
                                                 <tr>
-                                                    <th class="text-start" style="min-width: 180px;">UPT Tujuan Penerima</th>
+                                                    <th class="text-start" style="min-width: 190px;">UPT Tujuan Penerima</th>
                                                     <th style="width: 85px;">Narkotika</th>
                                                     <th style="width: 85px;">Pidum</th>
                                                     <th style="width: 85px;">Korupsi</th>
@@ -2659,9 +2669,34 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </thead>
                                             <tbody id="tbodyAlokasiEdit_{{ $m->id }}">
                                                 @foreach($aloks as $aIdx => $alok)
+                                                @php
+                                                    $rowUptId = $alok['upt_tujuan_id'] ?? null;
+                                                    $rowUptNama = $alok['upt_tujuan_nama'] ?? '';
+                                                    $isLuar = ($rowUptId === 'luar_wilayah') || (empty($rowUptId) && !empty($rowUptNama) && !$uptList->contains('nama_upt', $rowUptNama));
+                                                @endphp
                                                 <tr id="row_alokasi_edit_{{ $m->id }}_{{ $aIdx }}" class="alokasi-row-edit-{{ $m->id }}">
                                                     <td class="text-start">
-                                                        <input type="text" name="alokasi[{{ $aIdx }}][upt_tujuan_id]" class="form-control form-control-sm" list="listUptTujuan" value="{{ $alok['upt_tujuan_nama'] ?? ($alok['upt_tujuan_id'] ?? '') }}" placeholder="Pilih/Ketik UPT..." onchange="hitungAlokasiEdit({{ $m->id }})" required>
+                                                        <select name="alokasi[{{ $aIdx }}][upt_tujuan_id]" 
+                                                            class="form-select form-select-sm select-upt-tujuan-{{ $m->id }}" 
+                                                            onchange="handleSelectUptChange(this, {{ $m->id }})" required>
+                                                            <option value="">-- Pilih UPT Penerima --</option>
+                                                            <optgroup label="UPT Pemasyarakatan Wilayah Banten">
+                                                                @foreach($uptList as $u)
+                                                                    <option value="{{ $u->id }}" {{ ((!$isLuar && (string)$rowUptId === (string)$u->id) || (!$isLuar && empty($rowUptId) && $rowUptNama === $u->nama_upt)) ? 'selected' : '' }}>
+                                                                        {{ $u->nama_upt }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </optgroup>
+                                                            <optgroup label="Lainnya">
+                                                                <option value="luar_wilayah" {{ $isLuar ? 'selected' : '' }}>[UPT Luar Wilayah / Ketik Manual]</option>
+                                                            </optgroup>
+                                                        </select>
+                                                        <div class="custom-upt-wrapper mt-1 {{ $isLuar ? '' : 'd-none' }}">
+                                                            <input type="text" name="alokasi[{{ $aIdx }}][upt_tujuan_nama_custom]" 
+                                                                class="form-control form-control-sm text-muted input-custom-upt" 
+                                                                value="{{ $isLuar ? $rowUptNama : '' }}" 
+                                                                placeholder="Ketik Nama UPT Luar Wilayah...">
+                                                        </div>
                                                     </td>
                                                     <td>
                                                         <input type="number" min="0" name="alokasi[{{ $aIdx }}][jumlah_narkotika]" class="form-control form-control-sm text-center input-narkotika" value="{{ $alok['jumlah_narkotika'] ?? 0 }}" oninput="hitungAlokasiEdit({{ $m->id }})">
@@ -3079,7 +3114,25 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         }
     }
 
+    const UPT_LIST = @json($uptList->map(fn($u) => ['id' => $u->id, 'nama_upt' => $u->nama_upt]));
     let alokasiEditCounters = {};
+
+    function handleSelectUptChange(selectEl, materiId) {
+        const parentTd = selectEl.closest('td');
+        if (parentTd) {
+            const customWrapper = parentTd.querySelector('.custom-upt-wrapper');
+            if (customWrapper) {
+                if (selectEl.value === 'luar_wilayah') {
+                    customWrapper.classList.remove('d-none');
+                    const customInput = customWrapper.querySelector('.input-custom-upt');
+                    if (customInput) customInput.focus();
+                } else {
+                    customWrapper.classList.add('d-none');
+                }
+            }
+        }
+        hitungAlokasiEdit(materiId);
+    }
 
     function tambahBarisAlokasiEdit(materiId, defaultData = null) {
         if (!alokasiEditCounters[materiId]) {
@@ -3090,23 +3143,39 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         const tbody = document.getElementById('tbodyAlokasiEdit_' + materiId);
         if (!tbody) return;
 
-        const uptVal = defaultData ? (defaultData.upt_tujuan_nama || defaultData.upt_tujuan_id || '') : '';
+        const selUptId = defaultData ? (defaultData.upt_tujuan_id || '') : '';
+        const selUptNama = defaultData ? (defaultData.upt_tujuan_nama || '') : '';
+        const isLuar = (selUptId === 'luar_wilayah') || (selUptId === '' && selUptNama !== '' && !UPT_LIST.some(u => u.nama_upt === selUptNama));
         const narkotika = defaultData ? (defaultData.jumlah_narkotika || 0) : 0;
         const pidum = defaultData ? (defaultData.jumlah_pidum || 0) : 0;
         const korupsi = defaultData ? (defaultData.jumlah_korupsi || 0) : 0;
         const subtotal = narkotika + pidum + korupsi;
+
+        let optionsHtml = '<option value="">-- Pilih UPT Penerima --</option>';
+        optionsHtml += '<optgroup label="UPT Pemasyarakatan Wilayah Banten">';
+        UPT_LIST.forEach(u => {
+            const isSelected = (!isLuar && (String(selUptId) === String(u.id) || (selUptId === '' && selUptNama === u.nama_upt))) ? 'selected' : '';
+            optionsHtml += `<option value="${u.id}" ${isSelected}>${u.nama_upt}</option>`;
+        });
+        optionsHtml += '</optgroup>';
+        optionsHtml += `<optgroup label="Lainnya"><option value="luar_wilayah" ${isLuar ? 'selected' : ''}>[UPT Luar Wilayah / Ketik Manual]</option></optgroup>`;
 
         const tr = document.createElement('tr');
         tr.id = `row_alokasi_edit_${materiId}_${alokIdx}`;
         tr.className = `alokasi-row-edit-${materiId}`;
         tr.innerHTML = `
             <td class="text-start">
-                <input type="text" name="alokasi[${alokIdx}][upt_tujuan_id]" 
-                    class="form-control form-control-sm" 
-                    list="listUptTujuan" 
-                    value="${uptVal}" 
-                    placeholder="Pilih/Ketik UPT Tujuan..." 
-                    onchange="hitungAlokasiEdit(${materiId})" required>
+                <select name="alokasi[${alokIdx}][upt_tujuan_id]" 
+                    class="form-select form-select-sm select-upt-tujuan-${materiId}" 
+                    onchange="handleSelectUptChange(this, ${materiId})" required>
+                    ${optionsHtml}
+                </select>
+                <div class="custom-upt-wrapper mt-1 ${isLuar ? '' : 'd-none'}">
+                    <input type="text" name="alokasi[${alokIdx}][upt_tujuan_nama_custom]" 
+                        class="form-control form-control-sm text-muted input-custom-upt" 
+                        value="${isLuar ? selUptNama : ''}" 
+                        placeholder="Ketik Nama UPT Luar Wilayah...">
+                </div>
             </td>
             <td>
                 <input type="number" min="0" name="alokasi[${alokIdx}][jumlah_narkotika]" 
@@ -3147,12 +3216,13 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         }
     }
 
-    function resetAlokasiKeUsulan(materiId, narkotika, pidum, korupsi, uptNama) {
+    function resetAlokasiKeUsulan(materiId, narkotika, pidum, korupsi, defaultUptId, uptNama) {
         const tbody = document.getElementById('tbodyAlokasiEdit_' + materiId);
         if (!tbody) return;
         tbody.innerHTML = '';
         alokasiEditCounters[materiId] = 0;
         tambahBarisAlokasiEdit(materiId, {
+            upt_tujuan_id: defaultUptId || '',
             upt_tujuan_nama: uptNama || '',
             jumlah_narkotika: parseInt(narkotika) || 0,
             jumlah_pidum: parseInt(pidum) || 0,
@@ -3163,6 +3233,9 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
     function hitungAlokasiEdit(materiId) {
         const tbody = document.getElementById('tbodyAlokasiEdit_' + materiId);
         if (!tbody) return;
+
+        const table = document.getElementById('tableAlokasiEdit_' + materiId);
+        const targetTotal = table ? (parseInt(table.dataset.targetTotal) || 0) : 0;
 
         let totNarkotika = 0;
         let totPidum = 0;
@@ -3201,9 +3274,100 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         if (footSub) footSub.textContent = grandTot;
 
         if (statusEl) {
-            statusEl.innerHTML = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-check-circle me-1"></i>Total alokasi kuota yang ditetapkan: <b>${grandTot} Orang</b></span>`;
+            if (targetTotal > 0) {
+                if (grandTot === 0) {
+                    statusEl.innerHTML = `
+                        <div class="alert alert-danger py-1.5 px-3 mb-0 d-flex align-items-center gap-2 border border-danger-subtle">
+                            <i class="fas fa-times-circle text-danger"></i>
+                            <div>
+                                <strong class="text-danger-emphasis">Alokasi Belum Ditentukan:</strong> Status rekomendasi disetujui memerlukan minimal 1 WBP dialokasikan ke UPT penerima.
+                            </div>
+                        </div>
+                    `;
+                } else if (grandTot === targetTotal) {
+                    statusEl.innerHTML = `
+                        <div class="alert alert-success py-1.5 px-3 mb-0 d-flex align-items-center justify-content-between gap-2 border border-success-subtle">
+                            <div>
+                                <i class="fas fa-check-circle text-success me-1"></i>
+                                <strong class="text-success-emphasis">Alokasi Sesuai Kuota Usulan:</strong> Total kuota sidang cocok 100% dengan usulan (${grandTot} WBP).
+                            </div>
+                            <span class="badge bg-success">${grandTot} / ${targetTotal} WBP</span>
+                        </div>
+                    `;
+                } else if (grandTot < targetTotal) {
+                    const diff = targetTotal - grandTot;
+                    statusEl.innerHTML = `
+                        <div class="alert alert-warning py-1.5 px-3 mb-0 d-flex align-items-center justify-content-between gap-2 border border-warning-subtle">
+                            <div>
+                                <i class="fas fa-exclamation-triangle text-warning-emphasis me-1"></i>
+                                <strong class="text-warning-emphasis">Persetujuan Sebagian (Parsial):</strong> Alokasi sidang (${grandTot} WBP) kurang dari usulan (${targetTotal} WBP). Selisih <strong>-${diff} WBP</strong>.
+                                <div class="small text-muted mt-0.5"><i class="fas fa-info-circle me-1"></i>Wajib mengisi kolom <u>Catatan Rekomendasi Sidang</u> di atas untuk menerangkan alasan pembatasan kuota ini.</div>
+                            </div>
+                            <span class="badge bg-warning text-dark">${grandTot} / ${targetTotal} WBP</span>
+                        </div>
+                    `;
+                } else {
+                    const diff = grandTot - targetTotal;
+                    statusEl.innerHTML = `
+                        <div class="alert alert-info py-1.5 px-3 mb-0 d-flex align-items-center justify-content-between gap-2 border border-info-subtle">
+                            <div>
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                <strong class="text-info-emphasis">Penambahan Kuota Alokasi:</strong> Alokasi sidang (${grandTot} WBP) melebihi usulan (${targetTotal} WBP). Kelebihan <strong>+${diff} WBP</strong>.
+                                <div class="small text-muted mt-0.5"><i class="fas fa-info-circle me-1"></i>Wajib mengisi kolom <u>Catatan Rekomendasi Sidang</u> di atas untuk menerangkan pertimbangan penambahan kuota ini.</div>
+                            </div>
+                            <span class="badge bg-info text-dark">+${diff} WBP</span>
+                        </div>
+                    `;
+                }
+            } else {
+                statusEl.innerHTML = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2"><i class="fas fa-check-circle me-1"></i>Total alokasi kuota yang ditetapkan: <b>${grandTot} Orang</b></span>`;
+            }
         }
     }
+
+    function validateFormMateri(form, materiId) {
+        const table = document.getElementById('tableAlokasiEdit_' + materiId);
+        if (!table) return true;
+
+        const targetTotal = parseInt(table.dataset.targetTotal) || 0;
+        const rekomendasiSelect = form.querySelector('[name="rekomendasi_sidang"]');
+        const rekomendasi = rekomendasiSelect ? rekomendasiSelect.value : '';
+        const catatanInput = form.querySelector('[name="catatan_rekomendasi"]');
+        const catatan = catatanInput ? catatanInput.value.trim() : '';
+
+        if (rekomendasi === 'setuju' || rekomendasi === 'setuju_catatan') {
+            const footSub = document.getElementById('foot_subtotal_edit_' + materiId);
+            const grandTot = footSub ? (parseInt(footSub.textContent) || 0) : 0;
+
+            if (grandTot <= 0 && targetTotal > 0) {
+                alert('Status rekomendasi disetujui memerlukan alokasi kuota minimal 1 WBP ke UPT Penerima.');
+                return false;
+            }
+
+            if (targetTotal > 0 && grandTot !== targetTotal && catatan === '') {
+                const tipe = grandTot < targetTotal ? 'Persetujuan Sebagian (kuota berkurang)' : 'Penambahan Kuota (melebihi usulan)';
+                alert(`Untuk ${tipe}, kolom "Catatan Rekomendasi Sidang" wajib diisi untuk memberikan keterangan pertimbangan sidang.`);
+                if (catatanInput) {
+                    catatanInput.focus();
+                    catatanInput.classList.add('is-invalid');
+                    catatanInput.addEventListener('input', function() {
+                        if (this.value.trim() !== '') {
+                            this.classList.remove('is-invalid');
+                        }
+                    }, { once: true });
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[id^="tableAlokasiEdit_"]').forEach(tbl => {
+            const mId = tbl.id.replace('tableAlokasiEdit_', '');
+            hitungAlokasiEdit(mId);
+        });
+    });
 
     function switchModalMateriCategory(prefix, val) {
         let boxMutasi, boxMutasiPribadi, boxBerobat, boxKlien;

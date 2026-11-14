@@ -1296,4 +1296,119 @@ class SidangTppKanwilDokumenAiTest extends TestCase
         $this->assertEquals(3, $tujuan2->jumlah_disetujui_korupsi);
         $this->assertEquals(10, $tujuan2->total_disetujui);
     }
+
+    public function test_materi_update_mismatched_quota_without_catatan_fails(): void
+    {
+        $uptAsal = Upt::firstOrCreate(['nama_upt' => 'Lapas Asal Test'], ['kapasitas' => 500]);
+        $uptTujuan = Upt::firstOrCreate(['nama_upt' => 'Lapas Tujuan Test'], ['kapasitas' => 600]);
+
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'USUL/TEST/001',
+            'tanggal_surat' => '2026-11-10',
+            'upt_asal_id' => $uptAsal->id,
+            'kategori_mutasi' => 'keamanan',
+            'jumlah_narkotika' => 15,
+            'jumlah_pidum' => 5,
+            'jumlah_korupsi' => 0,
+            'total_usulan' => 20,
+            'status' => 'diajukan',
+        ]);
+
+        $materi = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $this->sidang->id,
+            'urutan' => 1,
+            'kategori_materi' => 'mutasi_narapidana',
+            'judul_materi' => 'Usulan Mutasi 20 WBP Lapas Asal Test',
+            'mutasi_id' => $mutasi->id,
+            'narapidana_data' => [
+                'total_usulan' => 20,
+                'jumlah_usulan_narkotika' => 15,
+                'jumlah_usulan_pidum' => 5,
+                'jumlah_usulan_korupsi' => 0,
+            ],
+        ]);
+
+        // Coba simpan persetujuan sebagian (15 orang alokasi dari 20 usulan) tanpa catatan pertimbangan
+        $resp = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.materi.update', [$this->sidang->id, $materi->id]), [
+                'kategori_materi' => 'mutasi_narapidana',
+                'judul_materi' => 'Usulan Mutasi 20 WBP Lapas Asal Test',
+                'rekomendasi_sidang' => 'setuju_catatan',
+                'catatan_rekomendasi' => '', // kosong!
+                'alokasi' => [
+                    [
+                        'upt_tujuan_id' => $uptTujuan->id,
+                        'jumlah_narkotika' => 10,
+                        'jumlah_pidum' => 5,
+                        'jumlah_korupsi' => 0,
+                    ],
+                ],
+            ]);
+
+        $resp->assertSessionHas('error');
+    }
+
+    public function test_materi_update_partial_quota_with_catatan_succeeds_and_syncs_tujuans(): void
+    {
+        $uptAsal = Upt::firstOrCreate(['nama_upt' => 'Lapas Asal Test 2'], ['kapasitas' => 500]);
+        $uptTujuan = Upt::firstOrCreate(['nama_upt' => 'Lapas Tujuan Test 2'], ['kapasitas' => 600]);
+
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'USUL/TEST/002',
+            'tanggal_surat' => '2026-11-10',
+            'upt_asal_id' => $uptAsal->id,
+            'kategori_mutasi' => 'keamanan',
+            'jumlah_narkotika' => 20,
+            'jumlah_pidum' => 0,
+            'jumlah_korupsi' => 0,
+            'total_usulan' => 20,
+            'status' => 'diajukan',
+        ]);
+
+        $materi = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $this->sidang->id,
+            'urutan' => 2,
+            'kategori_materi' => 'mutasi_narapidana',
+            'judul_materi' => 'Usulan Mutasi 20 WBP',
+            'mutasi_id' => $mutasi->id,
+            'narapidana_data' => [
+                'total_usulan' => 20,
+                'jumlah_usulan_narkotika' => 20,
+                'jumlah_usulan_pidum' => 0,
+                'jumlah_usulan_korupsi' => 0,
+            ],
+        ]);
+
+        // Simpan persetujuan sebagian (12 orang alokasi dari 20 usulan) DENGAN catatan pertimbangan
+        $resp = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.materi.update', [$this->sidang->id, $materi->id]), [
+                'kategori_materi' => 'mutasi_narapidana',
+                'judul_materi' => 'Usulan Mutasi 20 WBP',
+                'rekomendasi_sidang' => 'setuju_catatan',
+                'catatan_rekomendasi' => 'Kapasitas Lapas Tujuan terbatas, hanya disetujui 12 orang. Sisanya 8 orang ditunda.',
+                'alokasi' => [
+                    [
+                        'upt_tujuan_id' => $uptTujuan->id,
+                        'jumlah_narkotika' => 12,
+                        'jumlah_pidum' => 0,
+                        'jumlah_korupsi' => 0,
+                    ],
+                ],
+            ]);
+
+        $resp->assertSessionHasNoErrors();
+        $resp->assertSessionHas('success');
+
+        // Pastikan sinkronisasi ke tabel mutasi_narapidana_tujuan berhasil
+        $tujuans = MutasiNarapidanaTujuan::where('mutasi_id', $mutasi->id)->get();
+        $this->assertCount(1, $tujuans);
+        $this->assertEquals($uptTujuan->id, $tujuans->first()->upt_tujuan_id);
+        $this->assertEquals(12, $tujuans->first()->total_disetujui);
+
+        // Pastikan mutasi_narapidana juga tersinkronisasi
+        $mutasi->refresh();
+        $this->assertEquals(12, $mutasi->total_disetujui);
+        $this->assertEquals($uptTujuan->id, $mutasi->upt_tujuan_id);
+        $this->assertStringContainsString('Kapasitas Lapas Tujuan terbatas', $mutasi->catatan_kanwil);
+    }
 }

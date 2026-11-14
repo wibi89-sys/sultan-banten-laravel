@@ -2415,10 +2415,22 @@ class SidangTppKanwilController extends Controller
                 if (is_array($alokasiInput)) {
                     foreach ($alokasiInput as $alok) {
                         $uptInputRaw = $alok['upt_tujuan_id'] ?? ($alok['upt_tujuan_nama'] ?? null);
-                        if (empty($uptInputRaw)) {
+                        $uCustom = trim((string) ($alok['upt_tujuan_nama_custom'] ?? ''));
+
+                        if ($uptInputRaw === 'luar_wilayah') {
+                            $uId = null;
+                            $uNama = $uCustom !== '' ? $uCustom : 'UPT Luar Wilayah';
+                        } else {
+                            [$uId, $uNama] = $this->resolveUptTujuan($uptInputRaw);
+                            if ($uId === null && $uCustom !== '') {
+                                $uNama = $uCustom;
+                            }
+                        }
+
+                        if (empty($uId) && empty($uNama)) {
                             continue;
                         }
-                        [$uId, $uNama] = $this->resolveUptTujuan($uptInputRaw);
+
                         $narkotika = max(0, (int) ($alok['jumlah_narkotika'] ?? 0));
                         $pidum = max(0, (int) ($alok['jumlah_pidum'] ?? 0));
                         $korupsi = max(0, (int) ($alok['jumlah_korupsi'] ?? 0));
@@ -2452,6 +2464,41 @@ class SidangTppKanwilController extends Controller
                     $updateData['upt_tujuan_rekomendasi_id'] = $uptTujuanId;
                     $narapidanaData['upt_tujuan_id'] = $uptTujuanId;
                     $narapidanaData['upt_tujuan_nama'] = $uptTujuanNama;
+                }
+
+                // Validasi kuota vs usulan serta keharusan Catatan Pertimbangan Sidang
+                $rekomendasi = $validated['rekomendasi_sidang'] ?? $materi->rekomendasi_sidang;
+                $catatanRekomendasi = trim((string) ($validated['catatan_rekomendasi'] ?? $materi->catatan_rekomendasi ?? ''));
+                $targetUsulan = (int) ($narapidanaData['total_usulan'] ?? ($mutasiObj?->total_usulan ?? 0));
+
+                if (in_array($rekomendasi, ['setuju', 'setuju_catatan'])) {
+                    if ($targetUsulan > 0 && $grandTotalAlokasi <= 0) {
+                        return back()->withInput()->with('error', 'Status rekomendasi Disetujui memerlukan alokasi kuota minimal 1 WBP ke UPT Penerima.');
+                    }
+
+                    if ($targetUsulan > 0 && $grandTotalAlokasi !== $targetUsulan && empty($catatanRekomendasi)) {
+                        $selisih = abs($targetUsulan - $grandTotalAlokasi);
+                        $tipeSelisih = $grandTotalAlokasi < $targetUsulan ? 'persetujuan sebagian (kuota berkurang)' : 'penambahan kuota di atas usulan';
+
+                        return back()->withInput()->with('error', "Untuk {$tipeSelisih} (Alokasi: {$grandTotalAlokasi} WBP, Usulan: {$targetUsulan} WBP, Selisih: {$selisih} WBP), Catatan Rekomendasi/Pertimbangan Sidang wajib diisi.");
+                    }
+                }
+
+                // Validasi kuota vs usulan serta keharusan Catatan Pertimbangan Sidang
+                $rekomendasi = $validated['rekomendasi_sidang'] ?? $materi->rekomendasi_sidang;
+                $catatanRekomendasi = trim((string) ($validated['catatan_rekomendasi'] ?? $materi->catatan_rekomendasi ?? ''));
+                $targetUsulan = (int) ($narapidanaData['total_usulan'] ?? ($mutasiObj?->total_usulan ?? 0));
+
+                if (in_array($rekomendasi, ['setuju', 'setuju_catatan'])) {
+                    if ($targetUsulan > 0 && $grandTotalAlokasi <= 0) {
+                        return back()->withInput()->with('error', 'Status rekomendasi Disetujui memerlukan alokasi kuota minimal 1 WBP ke UPT Penerima.');
+                    }
+
+                    if ($targetUsulan > 0 && $grandTotalAlokasi !== $targetUsulan && empty($catatanRekomendasi)) {
+                        $selisih = abs($targetUsulan - $grandTotalAlokasi);
+                        $tipeSelisih = $grandTotalAlokasi < $targetUsulan ? 'persetujuan sebagian (kuota berkurang)' : 'penambahan kuota di atas usulan';
+                        return back()->withInput()->with('error', "Untuk {$tipeSelisih} (Alokasi: {$grandTotalAlokasi} WBP, Usulan: {$targetUsulan} WBP, Selisih: {$selisih} WBP), Catatan Rekomendasi/Pertimbangan Sidang wajib diisi.");
+                    }
                 }
             }
             if ($request->filled('nama_pk_bapas')) {
@@ -2537,7 +2584,41 @@ class SidangTppKanwilController extends Controller
         $materi->update($updateData);
 
         if (! empty($updateData['mutasi_id'])) {
-            MutasiNarapidana::find($updateData['mutasi_id'])?->update(['sidang_tpp_kanwil_id' => $sidang->id]);
+            $mutasiRecord = MutasiNarapidana::find($updateData['mutasi_id']);
+            if ($mutasiRecord) {
+                $mutasiUpdatePayload = [
+                    'sidang_tpp_kanwil_id' => $sidang->id,
+                ];
+
+                if (! empty($cleanAlokasi)) {
+                    // Sinkronkan langsung ke tabel mutasi_narapidana_tujuan
+                    $mutasiRecord->tujuans()->delete();
+                    foreach ($cleanAlokasi as $alokItem) {
+                        if (! empty($alokItem['upt_tujuan_id']) && is_numeric($alokItem['upt_tujuan_id'])) {
+                            MutasiNarapidanaTujuan::create([
+                                'mutasi_id' => $mutasiRecord->id,
+                                'upt_tujuan_id' => (int) $alokItem['upt_tujuan_id'],
+                                'jumlah_disetujui_narkotika' => $alokItem['jumlah_narkotika'],
+                                'jumlah_disetujui_pidum' => $alokItem['jumlah_pidum'],
+                                'jumlah_disetujui_korupsi' => $alokItem['jumlah_korupsi'],
+                                'total_disetujui' => $alokItem['total'],
+                            ]);
+                        }
+                    }
+
+                    $mutasiUpdatePayload['upt_tujuan_id'] = $cleanAlokasi[0]['upt_tujuan_id'] ?? $mutasiRecord->upt_tujuan_id;
+                    $mutasiUpdatePayload['total_disetujui'] = $grandTotalAlokasi;
+                    $mutasiUpdatePayload['jumlah_disetujui_narkotika'] = $totalAlokasiNarkotika;
+                    $mutasiUpdatePayload['jumlah_disetujui_pidum'] = $totalAlokasiPidum;
+                    $mutasiUpdatePayload['jumlah_disetujui_korupsi'] = $totalAlokasiKorupsi;
+                }
+
+                if (! empty($validated['catatan_rekomendasi'])) {
+                    $mutasiUpdatePayload['catatan_kanwil'] = $validated['catatan_rekomendasi'];
+                }
+
+                $mutasiRecord->update($mutasiUpdatePayload);
+            }
         }
 
         ActivityLog::record(
@@ -2714,7 +2795,7 @@ class SidangTppKanwilController extends Controller
         }
 
         $inputStr = trim((string) $input);
-        if ($inputStr === '') {
+        if ($inputStr === '' || $inputStr === 'luar_wilayah') {
             return [null, null];
         }
 
