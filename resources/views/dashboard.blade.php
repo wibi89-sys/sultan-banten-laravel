@@ -523,7 +523,37 @@
                 </div>
             </div>
 
-            <!-- Card 3: WNA -->
+            <!-- Card 3: Anak -->
+            <div class="col-6 col-sm-4 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">Anak</span>
+                        <span class="snapshot-card-icon" style="background: rgba(14, 165, 233, 0.14); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.25);">
+                            <i class="fas fa-child"></i>
+                        </span>
+                    </div>
+                    <div class="snapshot-card-value font-speedometer text-info count-up" data-target="{{ $stats['total_anak'] }}">
+                        {{ number_format($stats['total_anak'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Wanita -->
+            <div class="col-6 col-sm-4 col-xl">
+                <div class="snapshot-card bento-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="snapshot-card-label">Wanita</span>
+                        <span class="snapshot-card-icon" style="background: rgba(236, 72, 153, 0.14); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.25);">
+                            <i class="fas fa-female"></i>
+                        </span>
+                    </div>
+                    <div class="snapshot-card-value font-speedometer text-pink count-up" data-target="{{ $stats['total_wanita'] }}">
+                        {{ number_format($stats['total_wanita'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: WNA -->
             <div class="col-6 col-sm-4 col-xl">
                 <div class="snapshot-card bento-card h-100">
                     <div class="d-flex align-items-center justify-content-between mb-1">
@@ -538,8 +568,8 @@
                 </div>
             </div>
 
-            <!-- Card 4: Lansia > 70 Tahun -->
-            <div class="col-6 col-sm-6 col-xl">
+            <!-- Card 6: Lansia > 70 Tahun -->
+            <div class="col-6 col-sm-4 col-xl">
                 <div class="snapshot-card bento-card h-100">
                     <div class="d-flex align-items-center justify-content-between mb-1">
                         <span class="snapshot-card-label">Lansia > 70 Thn</span>
@@ -553,8 +583,8 @@
                 </div>
             </div>
 
-            <!-- Card 5: Bebas Hari Ini -->
-            <div class="col-12 col-sm-6 col-xl">
+            <!-- Card 7: Bebas Hari Ini -->
+            <div class="col-12 col-sm-12 col-xl">
                 <div class="snapshot-card bento-card h-100">
                     <div class="d-flex align-items-center justify-content-between mb-1">
                         <span class="snapshot-card-label">Bebas Hari Ini</span>
@@ -1012,13 +1042,13 @@
             <div class="section-header command-section-title mb-0" style="font-size: 12px;">
                 <i class="fas fa-shield-virus text-warning me-2"></i>Atensi Khusus, Kelompok Rentan & Vonis Berat
             </div>
-            <span class="text-xs text-muted">5 Indikator Pengawasan Intensif</span>
+            <span class="text-xs text-muted">7 Indikator Pengawasan Intensif</span>
         </div>
 
-        <!-- 5 Snapshot Bento Cards Row -->
+        <!-- 7 Snapshot Bento Cards Row -->
         <div class="row mb-3 g-2">
             <!-- WNA -->
-            <div class="col-6 col-md-2-4">
+            <div class="col-6 col-sm-4 col-xl">
                 <div class="bento-card snapshot-card h-100">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="snapshot-card-label">WNA</span>
@@ -1033,7 +1063,7 @@
             </div>
 
             <!-- Sakit Berkepanjangan -->
-            <div class="col-6 col-md-2-4">
+            <div class="col-6 col-sm-4 col-xl">
                 <div class="bento-card snapshot-card h-100">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="snapshot-card-label">Sakit Menahun</span>
@@ -1048,7 +1078,7 @@
             </div>
 
             <!-- Lansia >70 Tahun -->
-            <div class="col-6 col-md-2-4">
+            <div class="col-6 col-sm-4 col-xl">
                 <div class="bento-card snapshot-card h-100">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="snapshot-card-label">Lansia >70 Thn</span>
@@ -1063,7 +1093,7 @@
             </div>
 
             <!-- Pidana Mati -->
-            <div class="col-6 col-md-2-4">
+            <div class="col-6 col-sm-4 col-xl">
                 <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #f43f5e;">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="snapshot-card-label text-danger">Pidana Mati</span>
@@ -1078,7 +1108,7 @@
             </div>
 
             <!-- Seumur Hidup -->
-            <div class="col-12 col-md-2-4">
+            <div class="col-6 col-sm-4 col-xl">
                 <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #8b5cf6;">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="snapshot-card-label text-purple">Seumur Hidup</span>
@@ -1088,6 +1118,36 @@
                     </div>
                     <div class="snapshot-card-value text-purple count-up" data-target="{{ $stats['total_seumur_hidup'] }}">
                         {{ number_format($stats['total_seumur_hidup'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anak -->
+            <div class="col-6 col-sm-4 col-xl">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #0ea5e9;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-info">Anak</span>
+                        <div class="snapshot-card-icon" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">
+                            <i class="fas fa-child"></i>
+                        </div>
+                    </div>
+                    <div class="snapshot-card-value text-info count-up" data-target="{{ $stats['total_anak'] }}">
+                        {{ number_format($stats['total_anak'], 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wanita -->
+            <div class="col-12 col-sm-12 col-xl">
+                <div class="bento-card snapshot-card h-100" style="border-left: 3px solid #ec4899;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="snapshot-card-label text-pink" style="color: #ec4899;">Wanita</span>
+                        <div class="snapshot-card-icon" style="background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                            <i class="fas fa-female"></i>
+                        </div>
+                    </div>
+                    <div class="snapshot-card-value text-pink count-up" data-target="{{ $stats['total_wanita'] }}">
+                        {{ number_format($stats['total_wanita'], 0, ',', '.') }}
                     </div>
                 </div>
             </div>

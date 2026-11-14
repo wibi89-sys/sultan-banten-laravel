@@ -2400,7 +2400,10 @@
         [data-theme="dark"] .snapshot-card-label.text-warning,
         [data-theme="dark"] .snapshot-card-label.text-warning-emphasis { color: #fbbf24 !important; }
         [data-theme="dark"] .snapshot-card-label.text-purple { color: #c084fc !important; }
+        [data-theme="dark"] .snapshot-card-label.text-pink { color: #f472b6 !important; }
         [data-theme="dark"] .snapshot-card-label.text-muted { color: #94a3b8 !important; }
+
+        .text-pink { color: #ec4899 !important; }
 
         [data-theme="dark"] .snapshot-card-value {
             color: #ffffff !important;
@@ -2435,6 +2438,12 @@
         [data-theme="dark"] .snapshot-card-value.text-purple {
             color: #c084fc !important;
             text-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+        }
+
+        [data-theme="dark"] .snapshot-card-value.text-pink,
+        [data-theme="dark"] .text-pink {
+            color: #f472b6 !important;
+            text-shadow: 0 0 12px rgba(236, 72, 153, 0.4);
         }
 
         [data-theme="dark"] .snapshot-card-value.text-secondary {

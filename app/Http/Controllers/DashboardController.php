@@ -55,13 +55,17 @@ class DashboardController extends Controller
             ->whereNotIn('klasifikasi_pidana', $klasifikasiLainnya)
             ->selectRaw('
                 COALESCE(SUM(tahanan_dewasa_laki + tahanan_dewasa_perempuan + tahanan_anak_laki + tahanan_anak_perempuan), 0) as total_tahanan,
-                COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as total_narapidana
+                COALESCE(SUM(narapidana_dewasa_laki + narapidana_dewasa_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as total_narapidana,
+                COALESCE(SUM(tahanan_anak_laki + tahanan_anak_perempuan + narapidana_anak_laki + narapidana_anak_perempuan), 0) as total_anak,
+                COALESCE(SUM(tahanan_dewasa_perempuan + tahanan_anak_perempuan + narapidana_dewasa_perempuan + narapidana_anak_perempuan), 0) as total_wanita
             ')
             ->first();
 
         $totalTahanan = (int) ($mainPenghuni->total_tahanan ?? 0);
         $totalNarapidana = (int) ($mainPenghuni->total_narapidana ?? 0);
         $totalPenghuni = $totalTahanan + $totalNarapidana;
+        $totalAnak = (int) ($mainPenghuni->total_anak ?? 0);
+        $totalWanita = (int) ($mainPenghuni->total_wanita ?? 0);
 
         $persenOverkapasitas = $totalKapasitas > 0
             ? round((($totalPenghuni - $totalKapasitas) / $totalKapasitas) * 100, 1)
@@ -133,6 +137,8 @@ class DashboardController extends Controller
             'total_lansia' => $totalLansia,
             'total_pidana_mati' => $totalPidanaMati,
             'total_seumur_hidup' => $totalSeumurHidup,
+            'total_anak' => $totalAnak,
+            'total_wanita' => $totalWanita,
             'bebas_murni' => (int) ($bebasRes->bm ?? 0),
             'bebas_pb' => (int) ($bebasRes->pb ?? 0),
             'bebas_cb' => (int) ($bebasRes->cb ?? 0),
