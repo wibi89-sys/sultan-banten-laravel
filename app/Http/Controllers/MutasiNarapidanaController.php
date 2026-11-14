@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\MutasiNarapidana;
 use App\Models\MutasiNarapidanaTujuan;
+use App\Models\SidangTppKanwil;
+use App\Models\SidangTppKanwilMateri;
 use App\Models\Upt;
 use App\Services\WhatsAppService;
 use Illuminate\Http\RedirectResponse;
@@ -168,6 +170,8 @@ class MutasiNarapidanaController extends Controller
                 : 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'file_reg_f' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'file_lampiran_wbp' => 'nullable|file|mimes:pdf,xls,xlsx,csv|max:10240',
+            'nomor_ba_tpp_upt' => 'nullable|string|max:100',
+            'file_ba_tpp_upt' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ], [
             'kategori_lainnya.required' => 'Mohon sebutkan kategori lainnya secara manual.',
             'file_bap.required' => 'Untuk kategori Keamanan, Berita Acara Pemeriksaan (BAP) wajib dilampirkan.',
@@ -192,6 +196,7 @@ class MutasiNarapidanaController extends Controller
         $fileBap = $this->handleUpload($request, 'file_bap', 'bap');
         $fileRegF = $this->handleUpload($request, 'file_reg_f', 'reg_f');
         $fileLampiranWbp = $this->handleUpload($request, 'file_lampiran_wbp', 'lampiran_wbp');
+        $fileBaTppUpt = $this->handleUpload($request, 'file_ba_tpp_upt', 'ba_tpp_upt');
 
         $kategoriFinal = $validated['kategori_mutasi'];
         if ($kategoriFinal === 'Lainnya' && $request->filled('kategori_lainnya')) {
@@ -211,11 +216,13 @@ class MutasiNarapidanaController extends Controller
             'jumlah_pidum' => (int) $validated['jumlah_pidum'],
             'jumlah_korupsi' => (int) $validated['jumlah_korupsi'],
             'total_usulan' => $totalUsulan,
+            'nomor_ba_tpp_upt' => $validated['nomor_ba_tpp_upt'] ?? null,
             'file_surat_usulan' => $fileSuratUsulan,
             'file_asesmen' => $fileAsesmen,
             'file_bap' => $fileBap,
             'file_reg_f' => $fileRegF,
             'file_lampiran_wbp' => $fileLampiranWbp,
+            'file_ba_tpp_upt' => $fileBaTppUpt,
             'status' => 'diajukan',
             'created_by' => $user->id,
         ]);
@@ -243,7 +250,14 @@ class MutasiNarapidanaController extends Controller
         $this->checkAccess();
         $user = auth()->user();
 
-        $mutasi = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan', 'creator', 'verifikator'])->findOrFail($id);
+        $mutasi = MutasiNarapidana::with([
+            'uptAsal',
+            'uptTujuan',
+            'tujuans.uptTujuan',
+            'creator',
+            'verifikator',
+            'sidangTppKanwil',
+        ])->findOrFail($id);
 
         // Proteksi jika operator mencoba membuka mutasi UPT lain
         if ($user->isOperator() && $user->upt_id) {
@@ -254,7 +268,15 @@ class MutasiNarapidanaController extends Controller
 
         $uptList = Upt::orderBy('nama_upt')->get();
 
-        return view('mutasi.show', compact('mutasi', 'uptList', 'user'));
+        // Daftar Sidang TPP Kanwil aktif yang dapat menerima agenda materi baru
+        $sidangAktifList = collect();
+        if ($user->isAdmin() || empty($user->upt_id)) {
+            $sidangAktifList = SidangTppKanwil::whereIn('status_sidang', ['draft', 'undangan_terbit', 'berlangsung'])
+                ->orderByDesc('tanggal_sidang')
+                ->get();
+        }
+
+        return view('mutasi.show', compact('mutasi', 'uptList', 'user', 'sidangAktifList'));
     }
 
     public function verifikasi(Request $request, int $id): RedirectResponse
@@ -471,6 +493,75 @@ class MutasiNarapidanaController extends Controller
 
         return redirect()->route('mutasi.show', $mutasi->id)
             ->with('success', $pesan);
+    }
+
+    public function hubungkanSidang(Request $request, int $id): RedirectResponse
+    {
+        $this->checkAccess('full');
+        $user = auth()->user();
+
+        if (! $user->isAdmin() && ! empty($user->upt_id)) {
+            abort(403, 'Akses ditolak. Hanya Tim Kantor Wilayah yang berwenang menjadwalkan ke Sidang TPP Kanwil.');
+        }
+
+        $mutasi = MutasiNarapidana::with('uptAsal')->findOrFail($id);
+
+        $request->validate([
+            'sidang_tpp_kanwil_id' => 'required|exists:sidang_tpp_kanwil,id',
+        ], [
+            'sidang_tpp_kanwil_id.required' => 'Pilih agenda Sidang TPP Kanwil yang aktif.',
+        ]);
+
+        $sidang = SidangTppKanwil::findOrFail($request->input('sidang_tpp_kanwil_id'));
+
+        // Cek apakah mutasi ini sudah ada di daftar materi sidang tersebut
+        $existingMateri = $sidang->materis()->where('mutasi_id', $mutasi->id)->first();
+        if (! $existingMateri) {
+            $nextUrutan = (int) $sidang->materis()->max('urutan') + 1;
+            $narapidanaData = [
+                'nama' => 'Kolektif '.($mutasi->uptAsal?->nama_upt ?? 'UPT').' ('.$mutasi->total_usulan.' Orang)',
+                'mutasi_id' => $mutasi->id,
+                'upt_asal_id' => $mutasi->upt_asal_id,
+                'upt_asal_nama' => $mutasi->uptAsal?->nama_upt,
+                'nomor_surat_usulan' => $mutasi->nomor_surat,
+                'tanggal_surat_usulan' => $mutasi->tanggal_surat?->format('Y-m-d'),
+                'kategori_mutasi' => $mutasi->kategori_mutasi,
+                'total_usulan' => (int) $mutasi->total_usulan,
+                'jumlah_usulan_narkotika' => (int) $mutasi->jumlah_narkotika,
+                'jumlah_usulan_pidum' => (int) $mutasi->jumlah_pidum,
+                'jumlah_usulan_korupsi' => (int) $mutasi->jumlah_korupsi,
+                'keterangan_usulan' => $mutasi->keterangan,
+                'nomor_ba_tpp_upt' => $mutasi->nomor_ba_tpp_upt,
+                'file_surat_usulan' => $mutasi->file_surat_usulan,
+                'file_lampiran_wbp' => $mutasi->file_lampiran_wbp,
+                'file_ba_tpp' => $mutasi->file_ba_tpp_upt ?: ($mutasi->file_bap ?: $mutasi->file_asesmen),
+                'alasan_pemindahan' => $mutasi->kategori_mutasi ?: 'Overkapasitas / Redistribusi Narapidana',
+            ];
+
+            SidangTppKanwilMateri::create([
+                'sidang_tpp_kanwil_id' => $sidang->id,
+                'urutan' => $nextUrutan,
+                'kategori_materi' => 'mutasi_narapidana',
+                'judul_materi' => 'Pemindahan Narapidana Kolektif '.($mutasi->uptAsal?->nama_upt ?? 'UPT').' ('.$mutasi->total_usulan.' Orang)',
+                'deskripsi_materi' => $mutasi->keterangan,
+                'mutasi_id' => $mutasi->id,
+                'narapidana_data' => $narapidanaData,
+            ]);
+        }
+
+        $mutasi->update([
+            'sidang_tpp_kanwil_id' => $sidang->id,
+        ]);
+
+        ActivityLog::record(
+            'ubah',
+            'Mutasi Narapidana',
+            "Menghubungkan Usulan Mutasi No. {$mutasi->nomor_surat} ke Sidang TPP Kanwil #{$sidang->nomor_sidang}",
+            $mutasi
+        );
+
+        return redirect()->route('sidang-tpp-kanwil.show', $sidang->id)
+            ->with('success', "Usulan mutasi No. {$mutasi->nomor_surat} berhasil dijadwalkan ke Sidang TPP Kanwil #{$sidang->nomor_sidang}.");
     }
 
     public function laporanPemindahanStore(Request $request, int $id): RedirectResponse
@@ -755,6 +846,7 @@ class MutasiNarapidanaController extends Controller
                 'bap' => $mutasi->file_bap,
                 'reg_f' => $mutasi->file_reg_f,
                 'lampiran_wbp' => $mutasi->file_lampiran_wbp,
+                'ba_tpp_upt', 'ba_tpp' => $mutasi->file_ba_tpp_upt ?: $mutasi->file_bap,
                 'persetujuan_kanwil' => $mutasi->file_persetujuan_kanwil,
                 'laporan_pemindahan' => $mutasi->file_laporan_pemindahan,
                 'laporan_penerimaan' => $mutasi->file_laporan_penerimaan,

@@ -422,11 +422,17 @@
                                             <span class="fw-bold text-dark small" style="font-size: 11.5px;">
                                                 <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan &amp; Alokasi Kuota Hasil Sidang TPP Kanwil
                                             </span>
-                                            @if($sidang->isVerifiedKakanwil())
-                                            <span class="badge bg-success text-white py-1 px-2" style="font-size: 10px;">
-                                                <i class="fas fa-check-circle me-1"></i>Disahkan Kakanwil &bull; Terhubung ke UPT
-                                            </span>
-                                            @endif
+                                            <div class="d-flex align-items-center gap-1.5">
+                                                @if($sidang->isVerifiedKakanwil())
+                                                <span class="badge bg-success text-white py-1 px-2" style="font-size: 10px;">
+                                                    <i class="fas fa-check-circle me-1"></i>Disahkan Kakanwil &bull; Terhubung ke UPT
+                                                </span>
+                                                @elseif($sidang->canEdit(auth()->user()))
+                                                <button type="button" class="btn btn-outline-warning btn-xs py-0.5 px-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEditMateri_{{ $m->id }}">
+                                                    <i class="fas fa-edit me-1"></i>Ubah Penetapan UPT Tujuan
+                                                </button>
+                                                @endif
+                                            </div>
                                         </div>
                                         <div class="table-responsive">
                                             <table class="table table-sm table-bordered align-middle mb-0 bg-white text-center" style="font-size: 11px;">
@@ -471,6 +477,20 @@
                                                 </tfoot>
                                             </table>
                                         </div>
+                                    </div>
+                                    @else
+                                    <!-- ALERT JIKA BELUM DIRUMUSKAN HASIL SIDANG -->
+                                    <div class="p-2.5 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 mb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <div class="small">
+                                            <span class="badge bg-primary text-white me-1"><i class="fas fa-clipboard-list me-1"></i>Bahan Sidang Terdaftar</span>
+                                            <span class="text-dark fw-bold">Menunggu Perumusan Hasil Sidang</span>
+                                            <div class="text-muted" style="font-size: 11px;">UPT Tujuan Penerima dan Alokasi Kuota narapidana belum ditetapkan. Tim Sidang dapat menetapkannya saat perumusan hasil sidang.</div>
+                                        </div>
+                                        @if($sidang->canEdit(auth()->user()))
+                                        <button type="button" class="btn btn-warning btn-xs py-1 px-2.5 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditMateri_{{ $m->id }}">
+                                            <i class="fas fa-balance-scale me-1"></i>Rumuskan Hasil Sidang &amp; UPT Tujuan
+                                        </button>
+                                        @endif
                                     </div>
                                     @endif
 
@@ -1604,10 +1624,10 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                     <div class="col-12 mt-2">
                                         <label class="form-label small fw-bold text-dark mb-1">Upload / Perbarui Dokumen Tambahan Lainnya</label>
                                         <div class="row g-2">
-                                            <div class="col-md-5">
-                                                <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ old('dokumen_tambahan_nama', $bMutasi['dokumen_tambahan']['nama'] ?? '') }}" placeholder="Nama Dokumen Tambahan">
+                                            <div class="col-12">
+                                                <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ old('dokumen_tambahan_nama', $bMutasi['dokumen_tambahan']['nama'] ?? '') }}" placeholder="Nama Dokumen Tambahan (misal: Surat Pernyataan / Rekomendasi)">
                                             </div>
-                                            <div class="col-md-7">
+                                            <div class="col-12">
                                                 <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm">
                                             </div>
                                         </div>
@@ -1643,10 +1663,10 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                     <div class="col-12 mt-2">
                                         <label class="form-label small fw-bold text-dark mb-1">Upload / Perbarui Dokumen Tambahan Lainnya</label>
                                         <div class="row g-2">
-                                            <div class="col-md-5">
-                                                <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ old('dokumen_tambahan_nama', $bMedis['dokumen_tambahan']['nama'] ?? '') }}" placeholder="Nama Dokumen Tambahan">
+                                            <div class="col-12">
+                                                <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ old('dokumen_tambahan_nama', $bMedis['dokumen_tambahan']['nama'] ?? '') }}" placeholder="Nama Dokumen Tambahan (misal: Hasil Lab / Rujukan RS)">
                                             </div>
-                                            <div class="col-md-7">
+                                            <div class="col-12">
                                                 <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm">
                                             </div>
                                         </div>
@@ -1770,44 +1790,15 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                                 </div>
                                             </div>
 
-                                            <!-- TABEL DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA SIDANG TPP -->
-                                            <div class="p-2 bg-light rounded border border-warning-subtle">
-                                                <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                                    <span class="fw-bold text-dark small" style="font-size: 11.5px;">
-                                                        <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan & Alokasi Kuota Sidang TPP Kanwil
-                                                    </span>
-                                                    <button type="button" class="btn btn-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisAlokasi('tambah')">
-                                                        <i class="fas fa-plus me-1"></i>Tambah UPT Tujuan
-                                                    </button>
+                                            <!-- CALLOUT TAHAP BAHAN SIDANG (PENETAPAN UPT TUJUAN DI TAHAP HASIL SIDANG) -->
+                                            <div class="p-2.5 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 mt-2">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="fas fa-info-circle text-primary fs-5"></i>
+                                                    <div class="small">
+                                                        <span class="fw-bold text-dark d-block" style="font-size: 11.5px;">Bahan Permohonan Usulan Mutasi Siap Sidang</span>
+                                                        <span class="text-muted" style="font-size: 11px;">Penetapan UPT Tujuan Penerima dan Alokasi Kuota yang disetujui akan diputuskan dan dirumuskan pada tahap <b>Pelaksanaan &amp; Perumusan Hasil Sidang TPP Kanwil</b>.</span>
+                                                    </div>
                                                 </div>
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11px;" id="tableAlokasi_tambah">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th class="text-start" style="min-width: 170px;">UPT Tujuan Penerima</th>
-                                                                <th style="width: 80px;">Narkotika</th>
-                                                                <th style="width: 80px;">Pidum</th>
-                                                                <th style="width: 80px;">Korupsi</th>
-                                                                <th style="width: 85px;">Subtotal</th>
-                                                                <th style="width: 40px;">#</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="tbodyAlokasi_tambah">
-                                                            <!-- Diisi otomatis oleh JavaScript -->
-                                                        </tbody>
-                                                        <tfoot class="table-light fw-bold">
-                                                            <tr>
-                                                                <td class="text-start">Total Alokasi Direkomendasikan:</td>
-                                                                <td id="foot_narkotika_tambah">0</td>
-                                                                <td id="foot_pidum_tambah">0</td>
-                                                                <td id="foot_korupsi_tambah">0</td>
-                                                                <td id="foot_subtotal_tambah" class="text-primary fs-6">0</td>
-                                                                <td></td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-                                                </div>
-                                                <div id="info_alokasi_status_tambah" class="small mt-1 text-muted" style="font-size: 11px;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -2227,10 +2218,10 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                         <i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya (Opsional)
                                     </label>
                                     <div class="row g-2">
-                                        <div class="col-md-5">
-                                            <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: KTP / Hasil Lab)">
+                                        <div class="col-12">
+                                            <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: KTP / Hasil Lab / Surat Rekomendasi)">
                                         </div>
-                                        <div class="col-md-7">
+                                        <div class="col-12">
                                             <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
                                         </div>
                                     </div>
@@ -2542,10 +2533,10 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                     </div>
                                     @endif
                                     <div class="row g-2">
-                                        <div class="col-md-5">
-                                            <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ $m->dokumen_tambahan['nama'] ?? '' }}" placeholder="Nama Dokumen Tambahan">
+                                        <div class="col-12">
+                                            <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ $m->dokumen_tambahan['nama'] ?? '' }}" placeholder="Nama Dokumen Tambahan (misal: Surat Pernyataan / Rekomendasi)">
                                         </div>
-                                        <div class="col-md-7">
+                                        <div class="col-12">
                                             <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
                                         </div>
                                     </div>
@@ -2566,8 +2557,8 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <label class="form-label small fw-bold text-dark mb-1">Status Rekomendasi Sidang</label>
                                 <select name="rekomendasi_sidang" class="form-select form-select-sm">
                                     <option value="" {{ empty($m->rekomendasi_sidang) ? 'selected' : '' }}>-- Belum Diputuskan --</option>
-                                    <option value="setuju" {{ $m->rekomendasi_sidang == 'setuju' ? 'selected' : '' }}>Disetujui</option>
-                                    <option value="setuju_catatan" {{ $m->rekomendasi_sidang == 'setuju_catatan' ? 'selected' : '' }}>Disetujui Bersyarat (dg Catatan)</option>
+                                    <option value="setuju" {{ $m->rekomendasi_sidang == 'setuju' ? 'selected' : '' }}>Disetujui Penuh</option>
+                                    <option value="setuju_catatan" {{ $m->rekomendasi_sidang == 'setuju_catatan' ? 'selected' : '' }}>Disetujui Sebagian (dg Catatan)</option>
                                     <option value="tunda" {{ $m->rekomendasi_sidang == 'tunda' ? 'selected' : '' }}>Ditunda</option>
                                     <option value="tolak" {{ $m->rekomendasi_sidang == 'tolak' ? 'selected' : '' }}>Ditolak</option>
                                 </select>
@@ -2576,6 +2567,77 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <label class="form-label small fw-bold text-dark mb-1">Catatan Rekomendasi Sidang</label>
                                 <input type="text" name="catatan_rekomendasi" class="form-control form-control-sm" value="{{ old('catatan_rekomendasi', $m->catatan_rekomendasi) }}" placeholder="Catatan hasil rekomendasi">
                             </div>
+
+                            @if($m->isMutasiNarapidana())
+                            <!-- TABEL PENETAPAN DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA (HASIL SIDANG) -->
+                            <div class="col-12 mt-3">
+                                <div class="p-3 bg-light rounded border border-warning">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <span class="fw-bold text-dark small" style="font-size: 12px;">
+                                                <i class="fas fa-balance-scale text-warning-emphasis me-1"></i>Penetapan Distribusi UPT Tujuan &amp; Alokasi Kuota Hasil Sidang TPP
+                                            </span>
+                                            <span class="text-muted d-block" style="font-size: 11px;">Tentukan UPT penerima dan alokasi kuota narapidana berdasarkan hasil musyawarah sidang TPP.</span>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-xs py-1 px-2.5 shadow-sm fw-bold" onclick="tambahBarisAlokasiEdit({{ $m->id }})">
+                                            <i class="fas fa-plus me-1"></i>Tambah UPT Penerima
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11.5px;" id="tableAlokasiEdit_{{ $m->id }}">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="text-start" style="min-width: 180px;">UPT Tujuan Penerima</th>
+                                                    <th style="width: 85px;">Narkotika</th>
+                                                    <th style="width: 85px;">Pidum</th>
+                                                    <th style="width: 85px;">Korupsi</th>
+                                                    <th style="width: 90px;">Subtotal</th>
+                                                    <th style="width: 45px;">#</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbodyAlokasiEdit_{{ $m->id }}">
+                                                @php
+                                                    $aloks = $ndm['alokasi'] ?? [];
+                                                @endphp
+                                                @foreach($aloks as $aIdx => $alok)
+                                                <tr id="row_alokasi_edit_{{ $m->id }}_{{ $aIdx }}" class="alokasi-row-edit-{{ $m->id }}">
+                                                    <td class="text-start">
+                                                        <input type="text" name="alokasi[{{ $aIdx }}][upt_tujuan_id]" class="form-control form-control-sm" list="listUptTujuan" value="{{ $alok['upt_tujuan_nama'] ?? ($alok['upt_tujuan_id'] ?? '') }}" placeholder="Pilih/Ketik UPT..." onchange="hitungAlokasiEdit({{ $m->id }})" required>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" min="0" name="alokasi[{{ $aIdx }}][jumlah_narkotika]" class="form-control form-control-sm text-center input-narkotika" value="{{ $alok['jumlah_narkotika'] ?? 0 }}" oninput="hitungAlokasiEdit({{ $m->id }})">
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" min="0" name="alokasi[{{ $aIdx }}][jumlah_pidum]" class="form-control form-control-sm text-center input-pidum" value="{{ $alok['jumlah_pidum'] ?? 0 }}" oninput="hitungAlokasiEdit({{ $m->id }})">
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" min="0" name="alokasi[{{ $aIdx }}][jumlah_korupsi]" class="form-control form-control-sm text-center input-korupsi" value="{{ $alok['jumlah_korupsi'] ?? 0 }}" oninput="hitungAlokasiEdit({{ $m->id }})">
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-bold text-dark subtotal-cell">{{ $alok['total'] ?? 0 }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-outline-danger btn-xs py-0 px-1" onclick="hapusBarisAlokasiEdit({{ $m->id }}, {{ $aIdx }})"><i class="fas fa-times"></i></button>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot class="table-light fw-bold">
+                                                <tr>
+                                                    <td class="text-start">Total Kuota yang Ditetapkan:</td>
+                                                    <td id="foot_narkotika_edit_{{ $m->id }}">{{ $ndm['total_disetujui_narkotika'] ?? 0 }}</td>
+                                                    <td id="foot_pidum_edit_{{ $m->id }}">{{ $ndm['total_disetujui_pidum'] ?? 0 }}</td>
+                                                    <td id="foot_korupsi_edit_{{ $m->id }}">{{ $ndm['total_disetujui_korupsi'] ?? 0 }}</td>
+                                                    <td id="foot_subtotal_edit_{{ $m->id }}" class="text-primary fs-6">{{ $ndm['total_disetujui'] ?? 0 }}</td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div id="info_alokasi_status_edit_{{ $m->id }}" class="small mt-1 text-muted" style="font-size: 11px;"></div>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                     </div>
                     <div class="modal-footer bg-light py-2 px-4">
@@ -2958,6 +3020,119 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
         }
     }
 
+    let alokasiEditCounters = {};
+
+    function tambahBarisAlokasiEdit(materiId, defaultData = null) {
+        if (!alokasiEditCounters[materiId]) {
+            const existingRows = document.querySelectorAll(`.alokasi-row-edit-${materiId}`);
+            alokasiEditCounters[materiId] = existingRows.length;
+        }
+        const alokIdx = alokasiEditCounters[materiId]++;
+        const tbody = document.getElementById('tbodyAlokasiEdit_' + materiId);
+        if (!tbody) return;
+
+        const uptVal = defaultData ? (defaultData.upt_tujuan_nama || defaultData.upt_tujuan_id || '') : '';
+        const narkotika = defaultData ? (defaultData.jumlah_narkotika || 0) : 0;
+        const pidum = defaultData ? (defaultData.jumlah_pidum || 0) : 0;
+        const korupsi = defaultData ? (defaultData.jumlah_korupsi || 0) : 0;
+        const subtotal = narkotika + pidum + korupsi;
+
+        const tr = document.createElement('tr');
+        tr.id = `row_alokasi_edit_${materiId}_${alokIdx}`;
+        tr.className = `alokasi-row-edit-${materiId}`;
+        tr.innerHTML = `
+            <td class="text-start">
+                <input type="text" name="alokasi[${alokIdx}][upt_tujuan_id]" 
+                    class="form-control form-control-sm" 
+                    list="listUptTujuan" 
+                    value="${uptVal}" 
+                    placeholder="Pilih/Ketik UPT Tujuan..." 
+                    onchange="hitungAlokasiEdit(${materiId})" required>
+            </td>
+            <td>
+                <input type="number" min="0" name="alokasi[${alokIdx}][jumlah_narkotika]" 
+                    class="form-control form-control-sm text-center input-narkotika" 
+                    value="${narkotika}" 
+                    oninput="hitungAlokasiEdit(${materiId})">
+            </td>
+            <td>
+                <input type="number" min="0" name="alokasi[${alokIdx}][jumlah_pidum]" 
+                    class="form-control form-control-sm text-center input-pidum" 
+                    value="${pidum}" 
+                    oninput="hitungAlokasiEdit(${materiId})">
+            </td>
+            <td>
+                <input type="number" min="0" name="alokasi[${alokIdx}][jumlah_korupsi]" 
+                    class="form-control form-control-sm text-center input-korupsi" 
+                    value="${korupsi}" 
+                    oninput="hitungAlokasiEdit(${materiId})">
+            </td>
+            <td>
+                <span class="fw-bold text-dark subtotal-cell">${subtotal}</span>
+            </td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-xs py-0 px-1" onclick="hapusBarisAlokasiEdit(${materiId}, ${alokIdx})" title="Hapus baris alokasi">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        hitungAlokasiEdit(materiId);
+    }
+
+    function hapusBarisAlokasiEdit(materiId, alokIdx) {
+        const row = document.getElementById(`row_alokasi_edit_${materiId}_${alokIdx}`);
+        if (row) {
+            row.remove();
+            hitungAlokasiEdit(materiId);
+        }
+    }
+
+    function hitungAlokasiEdit(materiId) {
+        const tbody = document.getElementById('tbodyAlokasiEdit_' + materiId);
+        if (!tbody) return;
+
+        let totNarkotika = 0;
+        let totPidum = 0;
+        let totKorupsi = 0;
+        let grandTot = 0;
+
+        const rows = tbody.querySelectorAll(`.alokasi-row-edit-${materiId}`);
+        rows.forEach(r => {
+            const nInput = r.querySelector('.input-narkotika');
+            const pInput = r.querySelector('.input-pidum');
+            const kInput = r.querySelector('.input-korupsi');
+            const subCell = r.querySelector('.subtotal-cell');
+
+            const n = parseInt(nInput ? nInput.value : 0) || 0;
+            const p = parseInt(pInput ? pInput.value : 0) || 0;
+            const k = parseInt(kInput ? kInput.value : 0) || 0;
+            const sub = n + p + k;
+
+            if (subCell) subCell.textContent = sub;
+
+            totNarkotika += n;
+            totPidum += p;
+            totKorupsi += k;
+            grandTot += sub;
+        });
+
+        const footN = document.getElementById('foot_narkotika_edit_' + materiId);
+        const footP = document.getElementById('foot_pidum_edit_' + materiId);
+        const footK = document.getElementById('foot_korupsi_edit_' + materiId);
+        const footSub = document.getElementById('foot_subtotal_edit_' + materiId);
+        const statusEl = document.getElementById('info_alokasi_status_edit_' + materiId);
+
+        if (footN) footN.textContent = totNarkotika;
+        if (footP) footP.textContent = totPidum;
+        if (footK) footK.textContent = totKorupsi;
+        if (footSub) footSub.textContent = grandTot;
+
+        if (statusEl) {
+            statusEl.innerHTML = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-check-circle me-1"></i>Total alokasi kuota yang ditetapkan: <b>${grandTot} Orang</b></span>`;
+        }
+    }
+
     function switchModalMateriCategory(prefix, val) {
         let boxMutasi, boxMutasiPribadi, boxBerobat, boxKlien;
         if (prefix === 'tambah') {
@@ -3060,24 +3235,6 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
             if (formUptAsalEl && data.upt_asal_id) formUptAsalEl.value = data.upt_asal_id;
             if (formUptTujuanEl) formUptTujuanEl.value = data.upt_tujuan_nama || '';
             if (alasanEl) alasanEl.value = data.kategori_mutasi || 'Overkapasitas / Redistribusi Narapidana';
-
-            // Auto initialize allocation table
-            const tbody = document.getElementById('tbodyAlokasi_tambah');
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (data.tujuans && data.tujuans.length > 0) {
-                    data.tujuans.forEach(t => {
-                        tambahBarisAlokasi('tambah', t);
-                    });
-                } else {
-                    tambahBarisAlokasi('tambah', {
-                        upt_tujuan_nama: data.upt_tujuan_nama || '',
-                        jumlah_narkotika: data.jumlah_narkotika,
-                        jumlah_pidum: data.jumlah_pidum,
-                        jumlah_korupsi: data.jumlah_korupsi,
-                    });
-                }
-            }
             return;
         }
 

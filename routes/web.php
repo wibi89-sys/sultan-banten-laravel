@@ -222,6 +222,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/export-excel', [MutasiNarapidanaController::class, 'exportExcel'])->name('export-excel');
         Route::get('/{id}', [MutasiNarapidanaController::class, 'show'])->whereNumber('id')->name('show');
         Route::post('/{id}/verifikasi', [MutasiNarapidanaController::class, 'verifikasi'])->whereNumber('id')->name('verifikasi');
+        Route::post('/{id}/hubungkan-sidang', [MutasiNarapidanaController::class, 'hubungkanSidang'])->whereNumber('id')->name('hubungkan-sidang');
         Route::post('/{id}/upload-persetujuan', [MutasiNarapidanaController::class, 'uploadPersetujuanKanwil'])->whereNumber('id')->name('upload-persetujuan');
         Route::post('/{id}/laporan-pemindahan', [MutasiNarapidanaController::class, 'laporanPemindahanStore'])->whereNumber('id')->name('laporan-pemindahan.store');
         Route::post('/{id}/laporan-penerimaan', [MutasiNarapidanaController::class, 'laporanPenerimaanStore'])->whereNumber('id')->name('laporan-penerimaan.store');

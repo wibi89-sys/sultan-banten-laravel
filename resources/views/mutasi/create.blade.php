@@ -163,10 +163,23 @@
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Catatan riwayat disiplin WBP (PDF, Maks. 10 MB)</small>
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-12 col-md-6">
                         <label class="form-label small fw-semibold"><i class="fas fa-users text-info me-1"></i>5. Daftar Wargabinaan yang diusulkan</label>
                         <input type="file" name="file_lampiran_wbp" class="form-control form-control-sm" accept=".pdf,.xls,.xlsx,.csv">
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Daftar nama, nomor register, perkara, ekspirasi, dan sisa pidana (PDF / Excel / CSV, Maks. 10 MB)</small>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold"><i class="fas fa-gavel text-success me-1"></i>6. Hasil / Berita Acara (BA) Sidang TPP UPT</label>
+                        <div class="row g-2 mb-1">
+                            <div class="col-12">
+                                <input type="text" name="nomor_ba_tpp_upt" class="form-control form-control-sm" placeholder="Nomor BA Sidang TPP UPT (Opsional)" value="{{ old('nomor_ba_tpp_upt') }}">
+                            </div>
+                            <div class="col-12">
+                                <input type="file" name="file_ba_tpp_upt" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 11px;">Hasil musyawarah sidang TPP UPT pengusul (PDF / Gambar, Maks. 10 MB)</small>
                     </div>
                 </div>
             </div>

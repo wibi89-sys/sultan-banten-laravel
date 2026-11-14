@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\MutasiNarapidana;
+use App\Models\SidangTppKanwil;
+use App\Models\SidangTppKanwilMateri;
 use App\Models\Upt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -530,5 +532,93 @@ class MutasiNarapidanaTest extends TestCase
             'file_persetujuan_kanwil' => $replacementPdf,
         ]);
         $responseOperator->assertStatus(403);
+    }
+
+    public function test_store_accepts_ba_tpp_upt_and_nomor_ba(): void
+    {
+        $fileSurat = UploadedFile::fake()->create('surat_usulan.pdf', 100, 'application/pdf');
+        $fileBa = UploadedFile::fake()->create('ba_tpp_upt.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->operator)->post(route('mutasi.store'), [
+            'nomor_surat' => 'W12.PAS-TEST-BA-01',
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Overkapasitas',
+            'jumlah_narkotika' => 5,
+            'jumlah_pidum' => 3,
+            'jumlah_korupsi' => 0,
+            'nomor_ba_tpp_upt' => 'BA-TPP-UPT/TEST/001',
+            'file_surat_usulan' => $fileSurat,
+            'file_ba_tpp_upt' => $fileBa,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('mutasi_narapidana', [
+            'nomor_surat' => 'W12.PAS-TEST-BA-01',
+            'nomor_ba_tpp_upt' => 'BA-TPP-UPT/TEST/001',
+        ]);
+
+        $mutasi = MutasiNarapidana::where('nomor_surat', 'W12.PAS-TEST-BA-01')->first();
+        $this->assertNotNull($mutasi->file_ba_tpp_upt);
+    }
+
+    public function test_hubungkan_sidang_attaches_mutasi_to_active_sidang_tpp_kanwil(): void
+    {
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'MUTASI-TO-SIDANG-01',
+            'tanggal_surat' => now()->toDateString(),
+            'upt_asal_id' => $this->uptAsal->id,
+            'kategori_mutasi' => 'Overkapasitas',
+            'jumlah_narkotika' => 10,
+            'jumlah_pidum' => 5,
+            'jumlah_korupsi' => 0,
+            'total_usulan' => 15,
+            'file_surat_usulan' => 'uploads/test_surat.pdf',
+            'status' => 'diajukan',
+            'created_by' => $this->operator->id,
+        ]);
+
+        $sidang = SidangTppKanwil::create([
+            'nomor_sidang' => 'STPP-KW/TEST/HUB-01',
+            'nomor_nota_dinas' => 'ND-TEST-01',
+            'nomor_berita_acara' => 'BA-TEST-01',
+            'nomor_risalah' => 'RIS-TEST-01',
+            'nomor_laporan' => 'LAP-TEST-01',
+            'tanggal_sidang' => now()->toDateString(),
+            'jam_mulai' => '09:00:00',
+            'jam_selesai' => '11:00:00',
+            'tempat' => 'Ruang Rapat Kanwil',
+            'metode' => 'luring',
+            'agenda_kategori' => 'Mutasi Narapidana',
+            'agenda_judul' => 'Sidang Pembahasan Mutasi Test',
+            'agenda_deskripsi' => 'Deskripsi sidang mutasi test',
+            'status_sidang' => 'draft',
+            'subjek_tipe' => 'mutasi_narapidana',
+            'ketua_nama' => 'Ketua Test',
+            'ketua_nip' => '197501011999031001',
+            'ketua_jabatan' => 'Ketua TPP',
+            'sekretaris_nama' => 'Sekretaris Test',
+            'sekretaris_nip' => '198002022005011002',
+            'sekretaris_jabatan' => 'Sekretaris TPP',
+            'created_by' => $this->admin->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('mutasi.hubungkan-sidang', $mutasi->id), [
+            'sidang_tpp_kanwil_id' => $sidang->id,
+        ]);
+
+        $response->assertRedirect(route('sidang-tpp-kanwil.show', $sidang->id));
+        $response->assertSessionHas('success');
+
+        $mutasi->refresh();
+        $this->assertEquals($sidang->id, $mutasi->sidang_tpp_kanwil_id);
+
+        $materi = SidangTppKanwilMateri::where('sidang_tpp_kanwil_id', $sidang->id)
+            ->where('mutasi_id', $mutasi->id)
+            ->first();
+
+        $this->assertNotNull($materi);
+        $this->assertEquals('mutasi_narapidana', $materi->kategori_materi);
+        $this->assertEquals(15, $materi->narapidana_data['total_usulan']);
     }
 }

@@ -224,10 +224,11 @@
                                                 
                                                 <div class="mb-2">
                                                     <label class="form-label small text-muted mb-1">Tarik Usulan dari Modul Mutasi UPT (Opsional):</label>
-                                                    <select name="materis[0][mutasi_id]" class="form-select form-select-sm" onchange="autoFillMutasiRepeater(this, 0)">
+                                                    <select name="materis[0][mutasi_id]" id="selMutasi_0" class="form-select form-select-sm" onchange="autoFillMutasiRepeater(this, 0)">
                                                         <option value="">-- Pilih Usulan Mutasi UPT --</option>
                                                         @foreach($mutasiList as $mu)
                                                         <option value="{{ $mu->id }}"
+                                                            {{ ($selectedMutasiId ?? null) == $mu->id ? 'selected' : '' }}
                                                             data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
                                                             data-uptasal="{{ $mu->upt_asal_id }}"
                                                             data-upttujuan="{{ $mu->upt_tujuan_id }}"
@@ -280,44 +281,15 @@
                                                             </div>
                                                         </div>
 
-                                                        <!-- TABEL DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA SIDANG TPP -->
-                                                        <div class="p-2 bg-light rounded border border-warning-subtle">
-                                                            <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                                                <span class="fw-bold text-dark small" style="font-size: 11.5px;">
-                                                                    <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan & Alokasi Kuota Sidang TPP Kanwil
-                                                                </span>
-                                                                <button type="button" class="btn btn-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisAlokasi(0)">
-                                                                    <i class="fas fa-plus me-1"></i>Tambah UPT Tujuan
-                                                                </button>
+                                                        <!-- CALLOUT TAHAP BAHAN SIDANG (PENETAPAN UPT TUJUAN DI TAHAP HASIL SIDANG) -->
+                                                        <div class="p-2.5 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 mt-2">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <i class="fas fa-info-circle text-primary fs-5"></i>
+                                                                <div class="small">
+                                                                    <span class="fw-bold text-dark d-block" style="font-size: 11.5px;">Bahan Permohonan Usulan Mutasi Siap Sidang</span>
+                                                                    <span class="text-muted" style="font-size: 11px;">Penetapan UPT Tujuan Penerima dan Alokasi Kuota yang disetujui akan diputuskan dan dirumuskan pada tahap <b>Pelaksanaan &amp; Perumusan Hasil Sidang TPP Kanwil</b>.</span>
+                                                                </div>
                                                             </div>
-                                                            <div class="table-responsive">
-                                                                <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11px;" id="tableAlokasi_0">
-                                                                    <thead class="table-light">
-                                                                        <tr>
-                                                                            <th class="text-start" style="min-width: 170px;">UPT Tujuan Penerima</th>
-                                                                            <th style="width: 80px;">Narkotika</th>
-                                                                            <th style="width: 80px;">Pidum</th>
-                                                                            <th style="width: 80px;">Korupsi</th>
-                                                                            <th style="width: 85px;">Subtotal</th>
-                                                                            <th style="width: 40px;">#</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="tbodyAlokasi_0">
-                                                                        <!-- Diisi otomatis oleh JavaScript -->
-                                                                    </tbody>
-                                                                    <tfoot class="table-light fw-bold">
-                                                                        <tr>
-                                                                            <td class="text-start">Total Alokasi Direkomendasikan:</td>
-                                                                            <td id="foot_narkotika_0">0</td>
-                                                                            <td id="foot_pidum_0">0</td>
-                                                                            <td id="foot_korupsi_0">0</td>
-                                                                            <td id="foot_subtotal_0" class="text-primary fs-6">0</td>
-                                                                            <td></td>
-                                                                        </tr>
-                                                                    </tfoot>
-                                                                </table>
-                                                            </div>
-                                                            <div id="info_alokasi_status_0" class="small mt-1 text-muted" style="font-size: 11px;"></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -935,44 +907,15 @@
                                     </div>
                                 </div>
 
-                                <!-- TABEL DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA SIDANG TPP -->
-                                <div class="p-2 bg-light rounded border border-warning-subtle">
-                                    <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                        <span class="fw-bold text-dark small" style="font-size: 11.5px;">
-                                            <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan & Alokasi Kuota Sidang TPP Kanwil
-                                        </span>
-                                        <button type="button" class="btn btn-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisAlokasi(__INDEX__)">
-                                            <i class="fas fa-plus me-1"></i>Tambah UPT Tujuan
-                                        </button>
+                                <!-- CALLOUT TAHAP BAHAN SIDANG (PENETAPAN UPT TUJUAN DI TAHAP HASIL SIDANG) -->
+                                <div class="p-2.5 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 mt-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fas fa-info-circle text-primary fs-5"></i>
+                                        <div class="small">
+                                            <span class="fw-bold text-dark d-block" style="font-size: 11.5px;">Bahan Permohonan Usulan Mutasi Siap Sidang</span>
+                                            <span class="text-muted" style="font-size: 11px;">Penetapan UPT Tujuan Penerima dan Alokasi Kuota yang disetujui akan diputuskan dan dirumuskan pada tahap <b>Pelaksanaan &amp; Perumusan Hasil Sidang TPP Kanwil</b>.</span>
+                                        </div>
                                     </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11px;" id="tableAlokasi___INDEX__">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th class="text-start" style="min-width: 170px;">UPT Tujuan Penerima</th>
-                                                    <th style="width: 80px;">Narkotika</th>
-                                                    <th style="width: 80px;">Pidum</th>
-                                                    <th style="width: 80px;">Korupsi</th>
-                                                    <th style="width: 85px;">Subtotal</th>
-                                                    <th style="width: 40px;">#</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="tbodyAlokasi___INDEX__">
-                                                <!-- Diisi otomatis oleh JavaScript -->
-                                            </tbody>
-                                            <tfoot class="table-light fw-bold">
-                                                <tr>
-                                                    <td class="text-start">Total Alokasi Direkomendasikan:</td>
-                                                    <td id="foot_narkotika___INDEX__">0</td>
-                                                    <td id="foot_pidum___INDEX__">0</td>
-                                                    <td id="foot_korupsi___INDEX__">0</td>
-                                                    <td id="foot_subtotal___INDEX__" class="text-primary fs-6">0</td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                    <div id="info_alokasi_status___INDEX__" class="small mt-1 text-muted" style="font-size: 11px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1645,23 +1588,6 @@
         if (formUptTujuanEl) formUptTujuanEl.value = data.upt_tujuan_nama || '';
         if (alasanEl) alasanEl.value = data.kategori_mutasi || 'Overkapasitas / Redistribusi Narapidana';
 
-        // Auto initialize allocation table with full distribution
-        const tbody = document.getElementById('tbodyAlokasi_' + index);
-        if (tbody) {
-            tbody.innerHTML = '';
-            if (data.tujuans && data.tujuans.length > 0) {
-                data.tujuans.forEach(t => {
-                    tambahBarisAlokasi(index, t);
-                });
-            } else {
-                tambahBarisAlokasi(index, {
-                    upt_tujuan_nama: data.upt_tujuan_nama || '',
-                    jumlah_narkotika: data.jumlah_narkotika,
-                    jumlah_pidum: data.jumlah_pidum,
-                    jumlah_korupsi: data.jumlah_korupsi,
-                });
-            }
-        }
     }
 
     function autoFillMutasiPribadiRepeater(selectEl, index) {
@@ -1784,6 +1710,13 @@
             }
         });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const sel0 = document.getElementById('selMutasi_0');
+        if (sel0 && sel0.value) {
+            autoFillMutasiRepeater(sel0, 0);
+        }
+    });
 </script>
 @endpush
 @endsection

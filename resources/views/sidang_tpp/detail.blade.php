@@ -820,10 +820,10 @@
                                         <div class="p-2 bg-white rounded border">
                                             <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
                                             <div class="row g-2">
-                                                <div class="col-md-5">
+                                                <div class="col-12">
                                                     <input type="text" name="dokumen_tambahan_nama" id="pd_dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen Tambahan (Kustom)">
                                                 </div>
-                                                <div class="col-md-7">
+                                                <div class="col-12">
                                                     <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
                                                 </div>
                                             </div>
@@ -890,10 +890,10 @@
                                         <div class="p-2 bg-white rounded border">
                                             <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
                                             <div class="row g-2">
-                                                <div class="col-md-5">
+                                                <div class="col-12">
                                                     <input type="text" name="dokumen_tambahan_nama" id="pd_berobat_dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: Hasil Lab / Rontgen)">
                                                 </div>
-                                                <div class="col-md-7">
+                                                <div class="col-12">
                                                     <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
                                                 </div>
                                             </div>

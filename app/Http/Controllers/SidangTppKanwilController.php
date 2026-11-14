@@ -110,7 +110,7 @@ class SidangTppKanwilController extends Controller
     /**
      * Formulir Registrasi Sidang TPP Kanwil Baru.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
         $this->checkKanwilAccess('full');
 
@@ -140,6 +140,7 @@ class SidangTppKanwilController extends Controller
             ->latest('tanggal_surat')
             ->get();
         $uptList = Upt::orderBy('nama_upt')->get();
+        $selectedMutasiId = $request->query('mutasi_id') ? (int) $request->query('mutasi_id') : null;
 
         return view('sidang_tpp_kanwil.create', compact(
             'pegawaiList',
@@ -152,7 +153,8 @@ class SidangTppKanwilController extends Controller
             'defaultSekretaris',
             'defaultAnggotaIds',
             'mutasiList',
-            'uptList'
+            'uptList',
+            'selectedMutasiId'
         ));
     }
 

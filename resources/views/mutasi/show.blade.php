@@ -292,6 +292,28 @@
                             <span class="badge bg-light text-muted border">Tidak Dilampirkan</span>
                             @endif
                         </div>
+
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
+                            <div>
+                                <i class="fas fa-gavel text-success me-2"></i>
+                                <span class="fw-semibold small">6. Hasil / Berita Acara (BA) Sidang TPP UPT</span>
+                                @if($mutasi->nomor_ba_tpp_upt)
+                                <small class="text-muted d-block ms-4" style="font-size: 11px;">Nomor: {{ $mutasi->nomor_ba_tpp_upt }}</small>
+                                @endif
+                            </div>
+                            @if($mutasi->file_ba_tpp_upt || $mutasi->file_bap)
+                            <div class="d-flex align-items-center gap-1">
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'ba_tpp_upt', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm py-0.5 px-2.5 shadow-xs fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Buka Dokumen
+                                </a>
+                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'ba_tpp_upt']) }}" class="btn btn-outline-secondary btn-sm py-0.5 px-2" title="Unduh Berkas">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                            @else
+                            <span class="badge bg-light text-muted border">Tidak Dilampirkan</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -472,208 +494,118 @@
                 </div>
             </div>
 
-            <!-- FORM VERIFIKASI KANWIL (Khusus Admin / Tim Kanwil) -->
-            @if(auth()->user()->isAdmin() || empty(auth()->user()->upt_id))
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-header bg-primary text-white py-2.5">
-                    <h6 class="mb-0 fw-bold fs-6"><i class="fas fa-user-shield me-2"></i>Aksi Verifikasi &amp; Penetapan Kanwil</h6>
+            <!-- PANEL STATUS & INTEGRASI SIDANG TPP KANTOR WILAYAH -->
+            @if($mutasi->sidangTppKanwil)
+            <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden border-top border-primary border-3">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-landmark text-primary me-2"></i>Agenda Sidang TPP Kantor Wilayah
+                    </h6>
+                    <span class="badge {{ $mutasi->sidangTppKanwil->status_badge_class }}">
+                        {{ $mutasi->sidangTppKanwil->status_label }}
+                    </span>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('mutasi.verifikasi', $mutasi->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        
-                        <!-- Panel Cepat: Buka Dokumen Usulan UPT di Tab Baru -->
-                        <div class="alert alert-light border border-primary-subtle bg-primary-subtle bg-opacity-10 py-2.5 px-3 mb-3 small rounded-3">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                                <span class="fw-bold text-primary"><i class="fas fa-search-plus me-1"></i>Dokumen UPT yang Perlu Diverifikasi:</span>
-                                <span class="badge bg-white text-secondary border small"><i class="fas fa-external-link-alt me-1"></i>Buka di Tab Baru</span>
-                            </div>
-                            <div class="d-flex flex-wrap gap-1.5">
-                                @if($mutasi->file_surat_usulan)
-                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'surat_usulan', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-primary rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
-                                    <i class="fas fa-file-pdf me-1"></i>1. Surat Usulan
-                                </a>
-                                @endif
-                                @if($mutasi->file_asesmen)
-                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'asesmen', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
-                                    <i class="fas fa-file-alt me-1"></i>2. Asesmen
-                                </a>
-                                @endif
-                                @if($mutasi->file_bap)
-                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'bap', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-warning text-dark rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
-                                    <i class="fas fa-file-contract me-1"></i>3. BAP
-                                </a>
-                                @endif
-                                @if($mutasi->file_reg_f)
-                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'reg_f', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
-                                    <i class="fas fa-clipboard-list me-1"></i>4. Register F
-                                </a>
-                                @endif
-                                @if($mutasi->file_lampiran_wbp)
-                                <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'lampiran_wbp', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-info rounded-pill px-2.5 py-1 fw-semibold shadow-xs">
-                                    <i class="fas fa-users me-1"></i>5. Daftar WBP
-                                </a>
-                                @endif
-                            </div>
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small">Nomor Sidang:</span>
+                            <span class="fw-bold font-monospace text-primary">{{ $mutasi->sidangTppKanwil->nomor_sidang }}</span>
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">Keputusan Kantor Wilayah <span class="text-danger">*</span></label>
-                            <select name="status" id="selectStatusVerifikasi" class="form-select form-select-sm" required>
-                                <option value="disetujui" {{ $mutasi->status === 'disetujui' ? 'selected' : '' }}>Disetujui &amp; Tetapkan UPT Penerima</option>
-                                <option value="perlu_perbaikan" {{ $mutasi->status === 'perlu_perbaikan' ? 'selected' : '' }}>Perlu Perbaikan Berkas</option>
-                                <option value="ditolak" {{ $mutasi->status === 'ditolak' ? 'selected' : '' }}>Tolak Usulan</option>
-                            </select>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small">Tanggal Sidang:</span>
+                            <span class="fw-semibold text-dark">{{ $mutasi->sidangTppKanwil->tanggal_sidang ? $mutasi->sidangTppKanwil->tanggal_sidang->format('d F Y') : '-' }}</span>
                         </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted small">Pimpinan Sidang:</span>
+                            <span class="text-secondary small">{{ $mutasi->sidangTppKanwil->ketua?->nama ?? 'Ketua Tim TPP' }}</span>
+                        </div>
+                    </div>
 
-                        <!-- Bagian Jika Disetujui -->
-                        <div id="sectionDisetujui">
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor Surat Persetujuan Kanwil <span class="text-danger">*</span></label>
-                                    <input type="text" name="nomor_surat_kanwil" class="form-control form-control-sm font-monospace" placeholder="Nomor Surat Persetujuan Kanwil" value="{{ old('nomor_surat_kanwil', $mutasi->nomor_surat_kanwil) }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Tanggal Surat Kanwil <span class="text-danger">*</span></label>
-                                    <input type="date" name="tanggal_surat_kanwil" class="form-control form-control-sm" value="{{ old('tanggal_surat_kanwil', $mutasi->tanggal_surat_kanwil ? $mutasi->tanggal_surat_kanwil->format('Y-m-d') : date('Y-m-d')) }}">
-                                </div>
-                            </div>
+                    @if($mutasi->sidangTppKanwil->isVerifiedKakanwil() || $mutasi->status === 'disetujui')
+                    <div class="alert alert-success border-0 small mb-3">
+                        <i class="fas fa-check-circle me-1 text-success"></i>
+                        Permohonan mutasi ini telah disahkan melalui Sidang TPP Kanwil. Penetapan UPT tujuan penerima dan alokasi kuota telah resmi berlaku.
+                    </div>
+                    @else
+                    <div class="alert alert-info border-0 small mb-3">
+                        <i class="fas fa-info-circle me-1 text-primary"></i>
+                        Usulan mutasi ini terdaftar dalam agenda Sidang TPP Kanwil. Rekomendasi, penunjukan UPT Tujuan, dan kuota pemindahan narapidana diputuskan melalui musyawarah tim sidang ini.
+                    </div>
+                    @endif
 
-                            <!-- Multi UPT Tujuan Allocation Repeater -->
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="form-label small fw-bold mb-0 text-dark">
-                                        <i class="fas fa-sitemap me-1 text-primary"></i>Distribusi UPT Tujuan &amp; Alokasi Kuota <span class="text-danger">*</span>
-                                    </label>
-                                    <button type="button" class="btn btn-outline-primary btn-sm py-0.5 px-2" id="btnTambahAlokasi" style="font-size: 11px;">
-                                        <i class="fas fa-plus me-1"></i> Tambah UPT Tujuan
-                                    </button>
-                                </div>
-                                <p class="text-muted" style="font-size: 11px; margin-bottom: 8px;">
-                                    Tentukan 1 atau beberapa UPT Penerima beserta rincian narapidana per perkara:
+                    <a href="{{ route('sidang-tpp-kanwil.show', $mutasi->sidang_tpp_kanwil_id) }}" class="btn btn-primary btn-sm w-100 fw-bold shadow-sm">
+                        <i class="fas fa-door-open me-1"></i> Buka Ruang Sidang TPP Kanwil
+                    </a>
+                </div>
+            </div>
+            @else
+            <!-- KETIKA BELUM MASUK AGENDA SIDANG TPP KANWIL -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-landmark text-secondary me-2"></i>Status Sidang TPP Kanwil
+                    </h6>
+                    <span class="badge bg-warning text-dark">Belum Disidangkan</span>
+                </div>
+                <div class="card-body">
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-info-circle text-primary fa-lg mt-0.5"></i>
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1 small">Penetapan Melalui Sidang TPP Kanwil</h6>
+                                <p class="text-muted small mb-0" style="font-size: 11.5px;">
+                                    Sesuai Standar Operasional Prosedur (SOP) Pemasyarakatan Ditjenpas, UPT Pengusul hanya menyampaikan permohonan narapidana dan kelengkapan berkas. Penetapan UPT Tujuan Penerima dan alokasi kuota diputuskan secara sah melalui musyawarah Sidang TPP Kantor Wilayah.
                                 </p>
-
-                                <div id="alokasiContainer">
-                                    @php
-                                        $initialAlokasi = old('alokasi');
-                                        if (empty($initialAlokasi)) {
-                                            if ($mutasi->tujuans->isNotEmpty()) {
-                                                $initialAlokasi = $mutasi->tujuans->map(fn($t) => [
-                                                    'upt_tujuan_id' => $t->upt_tujuan_id,
-                                                    'jumlah_narkotika' => $t->jumlah_disetujui_narkotika,
-                                                    'jumlah_pidum' => $t->jumlah_disetujui_pidum,
-                                                    'jumlah_korupsi' => $t->jumlah_disetujui_korupsi,
-                                                ])->toArray();
-                                            } else {
-                                                $initialAlokasi = [
-                                                    [
-                                                        'upt_tujuan_id' => $mutasi->upt_tujuan_id,
-                                                        'jumlah_narkotika' => $mutasi->jumlah_disetujui_narkotika ?? $mutasi->jumlah_narkotika,
-                                                        'jumlah_pidum' => $mutasi->jumlah_disetujui_pidum ?? $mutasi->jumlah_pidum,
-                                                        'jumlah_korupsi' => $mutasi->jumlah_disetujui_korupsi ?? $mutasi->jumlah_korupsi,
-                                                    ]
-                                                ];
-                                            }
-                                        }
-                                    @endphp
-
-                                    @foreach($initialAlokasi as $index => $alok)
-                                    <div class="card border rounded-3 p-2.5 mb-2 alokasi-item bg-light shadow-none" data-index="{{ $index }}">
-                                        <div class="d-flex justify-content-between align-items-center mb-1.5">
-                                            <span class="fw-bold small text-primary alokasi-title">
-                                                <i class="fas fa-building me-1"></i>UPT Penerima #{{ $index + 1 }}
-                                            </span>
-                                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1.5 btn-hapus-alokasi" style="font-size: 10px;" title="Hapus UPT Tujuan">
-                                                <i class="fas fa-times me-0.5"></i> Hapus
-                                            </button>
-                                        </div>
-                                        <div class="mb-2">
-                                            <select name="alokasi[{{ $index }}][upt_tujuan_id]" class="form-select form-select-sm select-upt-tujuan" required>
-                                                <option value="">-- Pilih UPT Penerima --</option>
-                                                @foreach($uptList as $u)
-                                                @if($u->id !== $mutasi->upt_asal_id)
-                                                <option value="{{ $u->id }}" {{ (isset($alok['upt_tujuan_id']) && $alok['upt_tujuan_id'] == $u->id) ? 'selected' : '' }}>
-                                                    {{ $u->nama_upt }} (Kapasitas: {{ $u->kapasitas }})
-                                                </option>
-                                                @endif
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="row g-1 text-center">
-                                            <div class="col-4">
-                                                <label class="small text-danger fw-bold" style="font-size: 9px;">Narkotika</label>
-                                                <input type="number" min="0" name="alokasi[{{ $index }}][jumlah_narkotika]" class="form-control form-control-sm text-center input-kuota input-narkotika" value="{{ $alok['jumlah_narkotika'] ?? 0 }}">
-                                            </div>
-                                            <div class="col-4">
-                                                <label class="small text-primary fw-bold" style="font-size: 9px;">Pidum</label>
-                                                <input type="number" min="0" name="alokasi[{{ $index }}][jumlah_pidum]" class="form-control form-control-sm text-center input-kuota input-pidum" value="{{ $alok['jumlah_pidum'] ?? 0 }}">
-                                            </div>
-                                            <div class="col-4">
-                                                <label class="small text-warning text-dark fw-bold" style="font-size: 9px;">Korupsi</label>
-                                                <input type="number" min="0" name="alokasi[{{ $index }}][jumlah_korupsi]" class="form-control form-control-sm text-center input-kuota input-korupsi" value="{{ $alok['jumlah_korupsi'] ?? 0 }}">
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top" style="font-size: 11px;">
-                                            <span class="text-muted">Subtotal UPT Ini:</span>
-                                            <span class="badge bg-secondary badge-subtotal">0 Orang</span>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-
-                                <div class="p-2 border rounded-3 bg-white mt-2 d-flex justify-content-between align-items-center small">
-                                    <span class="text-muted">Target Usulan UPT: <strong>{{ $mutasi->total_usulan }} WBP</strong></span>
-                                    <div>
-                                        <span class="text-muted me-1">Total Alokasi:</span>
-                                        <span id="badgeGrandTotal" class="badge bg-primary fs-7">0 WBP</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Upload Scan Surat Persetujuan Kanwil (PDF) <span class="text-danger">*</span></label>
-                                @if($mutasi->file_persetujuan_kanwil)
-                                <div class="d-flex align-items-center justify-content-between gap-2 p-2 bg-light rounded border mb-2">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <i class="fas fa-file-pdf text-danger fa-lg flex-shrink-0"></i>
-                                        <div class="text-truncate" style="font-size: 11.5px;">
-                                            <span class="fw-semibold text-dark d-block text-truncate">Surat Persetujuan Saat Ini</span>
-                                            <span class="text-muted font-monospace" style="font-size: 10px;">{{ $mutasi->nomor_surat_kanwil ?: 'Berkas Tersimpan' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil', 'preview' => 1]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary" style="font-size: 11px; padding: 2px 7px;">
-                                            <i class="fas fa-external-link-alt me-1"></i>Buka PDF
-                                        </a>
-                                        <a href="{{ route('mutasi.download-file', ['id' => $mutasi->id, 'type' => 'persetujuan_kanwil']) }}" class="btn btn-xs btn-outline-secondary" style="font-size: 11px; padding: 2px 7px;" title="Unduh File">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                                @endif
-                                <div class="input-group input-group-sm">
-                                    <input type="file" name="file_persetujuan_kanwil" class="form-control form-control-sm" accept=".pdf">
-                                    @if($mutasi->file_persetujuan_kanwil)
-                                    <span class="input-group-text bg-white text-muted small" style="font-size: 11px;">Pilih PDF baru untuk mengganti</span>
-                                    @endif
-                                </div>
-                                @if($mutasi->file_persetujuan_kanwil)
-                                <small class="text-muted d-block mt-1" style="font-size: 11px;"><i class="fas fa-info-circle me-1 text-primary"></i>Berkas PDF saat ini tetap dipertahankan jika tidak memilih berkas pengganti.</small>
-                                @endif
                             </div>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold">Catatan / Disposisi Kanwil</label>
-                            <textarea name="catatan_kanwil" class="form-control form-control-sm" rows="2" placeholder="Catatan atau instruksi pelaksanaan dari Kanwil...">{{ old('catatan_kanwil', $mutasi->catatan_kanwil) }}</textarea>
-                        </div>
+                    @if(auth()->user()->isAdmin() || empty(auth()->user()->upt_id))
+                    <!-- OPSI KANWIL: JADWALKAN KE SIDANG TPP KANWIL -->
+                    <div class="d-grid gap-2 mb-3">
+                        <a href="{{ route('sidang-tpp-kanwil.create', ['mutasi_id' => $mutasi->id]) }}" class="btn btn-primary btn-sm fw-semibold shadow-sm">
+                            <i class="fas fa-calendar-plus me-1"></i> Buat Sidang TPP Kanwil Baru (Jadwalkan Usulan Ini)
+                        </a>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-sm fw-bold shadow-sm">
-                                <i class="fas fa-save me-1"></i> Simpan Penetapan &amp; Distribusikan
+                        @if(!empty($sidangAktifList) && $sidangAktifList->isNotEmpty())
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalHubungkanSidang">
+                            <i class="fas fa-link me-1"></i> Masukkan ke Sidang TPP Terjadwal ({{ $sidangAktifList->count() }} Sidang Aktif)
+                        </button>
+                        @endif
+                    </div>
+
+                    <!-- PEMERIKSAAN KELAYAKAN AWAL BERKAS UPT (PRA-SIDANG) -->
+                    <div class="border-top pt-3">
+                        <h6 class="small fw-bold text-dark mb-2">
+                            <i class="fas fa-clipboard-check text-secondary me-1"></i>Pemeriksaan Awal Berkas UPT (Pra-Sidang)
+                        </h6>
+                        <form action="{{ route('mutasi.verifikasi', $mutasi->id) }}" method="POST">
+                            @csrf
+                            <div class="mb-2">
+                                <label class="form-label small text-muted mb-1">Status Kelayakan Berkas:</label>
+                                <select name="status" class="form-select form-select-sm" required>
+                                    <option value="perlu_perbaikan" {{ $mutasi->status === 'perlu_perbaikan' ? 'selected' : '' }}>Perlu Perbaikan Berkas (Kembalikan ke UPT)</option>
+                                    <option value="ditolak" {{ $mutasi->status === 'ditolak' ? 'selected' : '' }}>Tolak Usulan (Tidak Memenuhi Syarat)</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small text-muted mb-1">Catatan / Kekurangan Berkas:</label>
+                                <textarea name="catatan_kanwil" class="form-control form-control-sm" rows="2" placeholder="Tuliskan catatan perbaikan berkas untuk UPT..." required>{{ old('catatan_kanwil', $mutasi->catatan_kanwil) }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-secondary btn-sm w-100 fw-semibold">
+                                <i class="fas fa-paper-plane me-1"></i> Kirim Catatan Verifikasi Awal ke UPT
                             </button>
-                        </div>
-                    </form>
+                            <small class="text-muted d-block text-center mt-1" style="font-size: 10.5px;">
+                                Penetapan UPT Tujuan Penerima dilakukan pada tahap Perumusan Hasil Sidang TPP Kanwil.
+                            </small>
+                        </form>
+                    </div>
+                    @else
+                    <div class="text-center text-muted small py-2">
+                        <i class="fas fa-clock me-1 text-warning"></i>
+                        Menunggu Tim Divisi Pemasyarakatan Kantor Wilayah mengagendakan usulan ini ke Sidang TPP Kanwil.
+                    </div>
+                    @endif
                 </div>
             </div>
             @endif
@@ -1028,6 +960,53 @@
         </div>
     </div>
 </div>
+@endif
+
+<!-- MODAL HUBUNGKAN KE SIDANG TPP KANWIL TERJADWAL -->
+@if(auth()->user()->isAdmin() || empty(auth()->user()->upt_id))
+@if(!empty($sidangAktifList) && $sidangAktifList->isNotEmpty())
+<div class="modal fade" id="modalHubungkanSidang" tabindex="-1" aria-labelledby="modalHubungkanSidangLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form action="{{ route('mutasi.hubungkan-sidang', $mutasi->id) }}" method="POST">
+                @csrf
+                <div class="modal-header bg-primary text-white py-2.5">
+                    <h6 class="modal-title fw-bold" id="modalHubungkanSidangLabel">
+                        <i class="fas fa-landmark me-2"></i>Jadwalkan ke Sidang TPP Kanwil Terjadwal
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="p-2.5 bg-light rounded border mb-3 small">
+                        <div class="fw-bold text-dark">Usulan Mutasi Narapidana:</div>
+                        <div class="text-primary font-monospace">{{ $mutasi->nomor_surat }}</div>
+                        <div class="text-muted">UPT Pengusul: <strong>{{ $mutasi->uptAsal?->nama_upt }}</strong> ({{ $mutasi->total_usulan }} Orang)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Pilih Jadwal Sidang TPP Kanwil: <span class="text-danger">*</span></label>
+                        <select name="sidang_tpp_kanwil_id" class="form-select form-select-sm" required>
+                            <option value="">-- Pilih Sidang TPP Kanwil Aktif --</option>
+                            @foreach($sidangAktifList as $sk)
+                            <option value="{{ $sk->id }}">
+                                {{ $sk->nomor_sidang }} &bull; {{ $sk->tanggal_sidang ? $sk->tanggal_sidang->format('d/m/Y') : '-' }} (Status: {{ $sk->status_label }})
+                            </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text small text-muted">Usulan ini akan langsung ditambahkan sebagai materi agenda sidang terpilih.</div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3 fw-bold">
+                        <i class="fas fa-check-circle me-1"></i> Jadwalkan Usulan ke Sidang Ini
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 @endif
 @endsection
 
