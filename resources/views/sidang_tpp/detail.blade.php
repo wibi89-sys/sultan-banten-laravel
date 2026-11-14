@@ -608,6 +608,56 @@
                             @if($u->perlu_perhatian)
                                 <span class="badge bg-danger text-white ms-1" title="Atensi Kanwil (Menarik Perhatian)"><i class="fas fa-exclamation-triangle"></i></span>
                             @endif
+
+                            @if($u->isMutasiNarapidana() || $u->jenis_usulan === 'Penempatan/Mutasi')
+                                <div class="mt-1">
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 10px;">
+                                        <i class="fas fa-exchange-alt me-1"></i>Tujuan: {{ $u->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }}
+                                    </span>
+                                    @if($u->alasan_pemindahan)
+                                    <div class="text-muted fst-italic" style="font-size: 10.5px;">"{{ Str::limit($u->alasan_pemindahan, 40) }}"</div>
+                                    @endif
+                                </div>
+                            @elseif($u->isIzinBerobat() || $u->jenis_usulan === 'Izin Berobat')
+                                <div class="mt-1">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10px;">
+                                        <i class="fas fa-hospital me-1"></i>RS: {{ $u->rs_rujukan_nama ?? '-' }} ({{ $u->rs_rujukan_kota ?? '-' }})
+                                    </span>
+                                    @if($u->diagnosa_medis)
+                                    <div class="text-danger fw-semibold" style="font-size: 10.5px;">{{ Str::limit($u->diagnosa_medis, 35) }}</div>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if(!empty($u->berkas_khusus))
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                @if(!empty($u->berkas_khusus['file_litmas']))
+                                <a href="{{ asset($u->berkas_khusus['file_litmas']) }}" target="_blank" class="badge bg-light text-danger border py-1" style="font-size: 9.5px;" title="Litmas Bapas">
+                                    <i class="fas fa-file-pdf me-0.5"></i>Litmas
+                                </a>
+                                @endif
+                                @if(!empty($u->berkas_khusus['file_permohonan']))
+                                <a href="{{ asset($u->berkas_khusus['file_permohonan']) }}" target="_blank" class="badge bg-light text-primary border py-1" style="font-size: 9.5px;" title="Surat Permohonan">
+                                    <i class="fas fa-file-alt me-0.5"></i>Permohonan
+                                </a>
+                                @endif
+                                @if(!empty($u->berkas_khusus['file_rekam_medis']))
+                                <a href="{{ asset($u->berkas_khusus['file_rekam_medis']) }}" target="_blank" class="badge bg-light text-danger border py-1" style="font-size: 9.5px;" title="Resume Rekam Medis">
+                                    <i class="fas fa-file-medical me-0.5"></i>Medis
+                                </a>
+                                @endif
+                                @if(!empty($u->berkas_khusus['file_rujukan']))
+                                <a href="{{ asset($u->berkas_khusus['file_rujukan']) }}" target="_blank" class="badge bg-light text-info border py-1" style="font-size: 9.5px;" title="Rujukan RS">
+                                    <i class="fas fa-hospital me-0.5"></i>Rujukan
+                                </a>
+                                @endif
+                                @if(!empty($u->berkas_khusus['dokumen_tambahan']['file']))
+                                <a href="{{ asset($u->berkas_khusus['dokumen_tambahan']['file']) }}" target="_blank" class="badge bg-light text-dark border py-1" style="font-size: 9.5px;" title="{{ $u->berkas_khusus['dokumen_tambahan']['nama'] ?? 'Dokumen Tambahan' }}">
+                                    <i class="fas fa-paperclip me-0.5"></i>{{ Str::limit($u->berkas_khusus['dokumen_tambahan']['nama'] ?? 'Tambahan', 12) }}
+                                </a>
+                                @endif
+                            </div>
+                            @endif
                         </td>
                         <td><code>{{ $u->nomor_register }}</code></td>
                         <td>{{ $u->perkara_pasal }}</td>
@@ -659,7 +709,7 @@
 <div class="modal fade" id="modalPesertaDetail" tabindex="-1" aria-labelledby="modalPesertaDetailTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="formPesertaDetail" method="POST">
+            <form id="formPesertaDetail" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div id="methodField"></div>
                 <div class="modal-header bg-success text-white py-3">
@@ -700,13 +750,14 @@
                         </div>
                         <div class="col-md-6">
                             <label for="pd_jenis_usulan" class="form-label small fw-semibold">Jenis Usulan <span class="text-danger">*</span></label>
-                            <select name="jenis_usulan" id="pd_jenis_usulan" class="form-select form-select-sm" required>
+                            <select name="jenis_usulan" id="pd_jenis_usulan" class="form-select form-select-sm" required onchange="toggleFormKhususPeserta(this.value)">
                                 <option value="PB">PB (Pembebasan Bersyarat)</option>
                                 <option value="CB">CB (Cuti Bersyarat)</option>
                                 <option value="CMB">CMB (Cuti Menjelang Bebas)</option>
                                 <option value="Asimilasi">Asimilasi</option>
                                 <option value="Remisi">Remisi</option>
-                                <option value="Penempatan/Mutasi">Penempatan / Mutasi</option>
+                                <option value="Penempatan/Mutasi">Penempatan / Mutasi Narapidana (Pindah UPT)</option>
+                                <option value="Izin Berobat">Izin Berobat Keluar Kota</option>
                                 <option value="Register F">Register F</option>
                                 <option value="Lainnya">Lainnya</option>
                             </select>
@@ -714,6 +765,143 @@
                         <div class="col-md-6">
                             <label for="pd_keterangan" class="form-label small fw-semibold">Keterangan Tambahan</label>
                             <input type="text" name="alasan_keterangan" id="pd_keterangan" class="form-control form-control-sm" placeholder="Catatan syarat, penjamin, dll">
+                        </div>
+
+                        <!-- SUB-FORM KHUSUS 1: MUTASI / PINDAH UPT -->
+                        <div id="pd_box_mutasi" class="col-12 d-none">
+                            <div class="p-3 bg-light rounded border border-warning border-opacity-50">
+                                <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-exchange-alt text-warning-emphasis me-1"></i>Rincian Usulan Mutasi Narapidana Antar-UPT</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Rekomendasi UPT Tujuan <span class="text-danger">*</span></label>
+                                        <select name="upt_tujuan_id" id="pd_upt_tujuan_id" class="form-select form-select-sm">
+                                            <option value="">-- Pilih UPT Tujuan --</option>
+                                            @foreach($uptList as $u)
+                                            <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Alasan Pemindahan</label>
+                                        <input type="text" name="alasan_pemindahan" id="pd_alasan_pemindahan" class="form-control form-control-sm" placeholder="Contoh: Keinginan sendiri mendekati keluarga">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1">Nama Penjamin</label>
+                                        <input type="text" name="penjamin_nama" id="pd_penjamin_nama" class="form-control form-control-sm" placeholder="Nama penjamin keluarga">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1">Hubungan Penjamin</label>
+                                        <input type="text" name="penjamin_hubungan" id="pd_penjamin_hubungan" class="form-control form-control-sm" placeholder="Contoh: Istri / Orang Tua">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1">Alamat Penjamin</label>
+                                        <input type="text" name="penjamin_alamat" id="pd_penjamin_alamat" class="form-control form-control-sm" placeholder="Alamat domisili">
+                                    </div>
+
+                                    <!-- Berkas Upload Mutasi -->
+                                    <div class="col-12 mt-2 pt-2 border-top">
+                                        <small class="fw-bold text-dark d-block mb-1">Unggah Berkas Persyaratan Mutasi (PDF/Doc/Zip maks 15MB):</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-file-pdf text-danger me-1"></i>Litmas Bapas</label>
+                                        <input type="file" name="file_litmas" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-file-alt text-primary me-1"></i>Surat Permohonan</label>
+                                        <input type="file" name="file_permohonan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-shield-alt text-success me-1"></i>Jaminan Keluarga</label>
+                                        <input type="file" name="file_jaminan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                    </div>
+
+                                    <!-- Dokumen Tambahan Lainnya -->
+                                    <div class="col-12 mt-2">
+                                        <div class="p-2 bg-white rounded border">
+                                            <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
+                                            <div class="row g-2">
+                                                <div class="col-md-5">
+                                                    <input type="text" name="dokumen_tambahan_nama" id="pd_dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen Tambahan (Kustom)">
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted" style="font-size: 10.5px;">Satu tempat upload file tambahan jika tidak ada pada pilihan default dengan memberi nama dokumen di sana.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SUB-FORM KHUSUS 2: IZIN BEROBAT KELUAR KOTA -->
+                        <div id="pd_box_berobat" class="col-12 d-none">
+                            <div class="p-3 bg-light rounded border border-danger border-opacity-50">
+                                <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-heartbeat text-danger me-1"></i>Rincian Usulan Izin Berobat Keluar Kota</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Diagnosa Medis / Penyakit <span class="text-danger">*</span></label>
+                                        <input type="text" name="diagnosa_medis" id="pd_diagnosa_medis" class="form-control form-control-sm" placeholder="Contoh: Kanker Hati / Gagal Ginjal / Kedaruratan Medis">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Dokter Spesialis / Penanggung Jawab</label>
+                                        <input type="text" name="dokter_penanggung_jawab" id="pd_dokter_penanggung_jawab" class="form-control form-control-sm" placeholder="dr. Sp.B / Dokter RS Lapas">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">RS Rujukan Luar Kota <span class="text-danger">*</span></label>
+                                        <input type="text" name="rs_rujukan_nama" id="pd_rs_rujukan_nama" class="form-control form-control-sm" placeholder="Contoh: RSCM Jakarta / RS Kanker Dharmais">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Kota RS Rujukan</label>
+                                        <input type="text" name="rs_rujukan_kota" id="pd_rs_rujukan_kota" class="form-control form-control-sm" placeholder="Contoh: Jakarta Pusat">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1">Nama Penjamin Biaya / Keluarga</label>
+                                        <input type="text" name="penjamin_nama" id="pd_berobat_penjamin_nama" class="form-control form-control-sm" placeholder="Nama keluarga penjamin">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1">Hubungan Penjamin</label>
+                                        <input type="text" name="penjamin_hubungan" id="pd_berobat_penjamin_hubungan" class="form-control form-control-sm" placeholder="Contoh: Istri / Saudara Kandung">
+                                    </div>
+
+                                    <!-- Berkas Upload Medis -->
+                                    <div class="col-12 mt-2 pt-2 border-top">
+                                        <small class="fw-bold text-dark d-block mb-1">Unggah Berkas Medis &amp; Sidang UPT (PDF/Doc/Zip maks 15MB):</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-file-medical text-danger me-1"></i>Resume Rekam Medis</label>
+                                        <input type="file" name="file_rekam_medis" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-hospital text-primary me-1"></i>Surat Rujukan Dokter/RSUD</label>
+                                        <input type="file" name="file_rujukan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-gavel text-secondary me-1"></i>BA Sidang TPP UPT</label>
+                                        <input type="file" name="file_ba_upt" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1"><i class="fas fa-shield-alt text-success me-1"></i>Jaminan Pembiayaan Keluarga</label>
+                                        <input type="file" name="file_jaminan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                    </div>
+
+                                    <!-- Dokumen Tambahan Lainnya -->
+                                    <div class="col-12 mt-2">
+                                        <div class="p-2 bg-white rounded border">
+                                            <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
+                                            <div class="row g-2">
+                                                <div class="col-md-5">
+                                                    <input type="text" name="dokumen_tambahan_nama" id="pd_berobat_dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: Hasil Lab / Rontgen)">
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted" style="font-size: 10.5px;">Satu tempat upload file tambahan jika tidak ada pada pilihan default dengan memberi nama dokumen di sana.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- CENTANG MENARIK PERHATIAN DENGAN LABEL MERAH UNTUK KANWIL -->
@@ -753,6 +941,20 @@
     const formPesertaDetail = document.getElementById('formPesertaDetail');
     const methodField = document.getElementById('methodField');
 
+    function toggleFormKhususPeserta(jenis) {
+        const boxMutasi = document.getElementById('pd_box_mutasi');
+        const boxBerobat = document.getElementById('pd_box_berobat');
+        boxMutasi.classList.add('d-none');
+        boxBerobat.classList.add('d-none');
+
+        const jUpper = (jenis || '').toUpperCase();
+        if (jUpper.includes('MUTASI') || jUpper.includes('PENEMPATAN') || jUpper.includes('PINDAH')) {
+            boxMutasi.classList.remove('d-none');
+        } else if (jUpper.includes('BEROBAT')) {
+            boxBerobat.classList.remove('d-none');
+        }
+    }
+
     function bukaModalTambahPesertaDetail() {
         formPesertaDetail.action = "{{ route('sidang-tpp.peserta.store', $sidang->id) }}";
         methodField.innerHTML = '';
@@ -760,6 +962,7 @@
         formPesertaDetail.reset();
         document.getElementById('pd_perlu_perhatian').checked = false;
         document.getElementById('pd_jenis_usulan').value = 'PB';
+        toggleFormKhususPeserta('PB');
         modalPesertaDetail.show();
     }
 
@@ -780,6 +983,49 @@
         document.getElementById('pd_catatan_perhatian').value = u.catatan_perhatian || '';
         document.getElementById('pd_keterangan').value = u.alasan_keterangan || '';
 
+        // Field khusus Mutasi
+        if (document.getElementById('pd_upt_tujuan_id')) {
+            document.getElementById('pd_upt_tujuan_id').value = u.upt_tujuan_id || '';
+        }
+        if (document.getElementById('pd_alasan_pemindahan')) {
+            document.getElementById('pd_alasan_pemindahan').value = u.alasan_pemindahan || '';
+        }
+        if (document.getElementById('pd_penjamin_nama')) {
+            document.getElementById('pd_penjamin_nama').value = u.penjamin_nama || '';
+        }
+        if (document.getElementById('pd_penjamin_hubungan')) {
+            document.getElementById('pd_penjamin_hubungan').value = u.penjamin_hubungan || '';
+        }
+        if (document.getElementById('pd_penjamin_alamat')) {
+            document.getElementById('pd_penjamin_alamat').value = u.penjamin_alamat || '';
+        }
+
+        // Field khusus Berobat
+        if (document.getElementById('pd_diagnosa_medis')) {
+            document.getElementById('pd_diagnosa_medis').value = u.diagnosa_medis || '';
+        }
+        if (document.getElementById('pd_dokter_penanggung_jawab')) {
+            document.getElementById('pd_dokter_penanggung_jawab').value = u.dokter_penanggung_jawab || '';
+        }
+        if (document.getElementById('pd_rs_rujukan_nama')) {
+            document.getElementById('pd_rs_rujukan_nama').value = u.rs_rujukan_nama || '';
+        }
+        if (document.getElementById('pd_rs_rujukan_kota')) {
+            document.getElementById('pd_rs_rujukan_kota').value = u.rs_rujukan_kota || '';
+        }
+        if (document.getElementById('pd_berobat_penjamin_nama')) {
+            document.getElementById('pd_berobat_penjamin_nama').value = u.penjamin_nama || '';
+        }
+        if (document.getElementById('pd_berobat_penjamin_hubungan')) {
+            document.getElementById('pd_berobat_penjamin_hubungan').value = u.penjamin_hubungan || '';
+        }
+
+        const bKhusus = u.berkas_khusus || {};
+        if (document.getElementById('pd_dokumen_tambahan_nama') && bKhusus.dokumen_tambahan) {
+            document.getElementById('pd_dokumen_tambahan_nama').value = bKhusus.dokumen_tambahan.nama || '';
+        }
+
+        toggleFormKhususPeserta(u.jenis_usulan);
         modalPesertaDetail.show();
     }
 </script>

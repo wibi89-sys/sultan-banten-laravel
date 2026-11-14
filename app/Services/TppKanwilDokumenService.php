@@ -245,6 +245,24 @@ class TppKanwilDokumenService
             ? nl2br(htmlspecialchars($customBa['uraian_sidang']))
             : nl2br(htmlspecialchars($sidang->agenda_deskripsi ?: '-'));
 
+        $agendaJudulText = htmlspecialchars($sidang->agenda_judul);
+        if ($sidang->materis && $sidang->materis->count() > 1) {
+            $agendaJudulText = '<ol style="margin:0;padding-left:15pt;">';
+            foreach ($sidang->materis as $m) {
+                $agendaJudulText .= '<li><b>'.htmlspecialchars($m->judul_materi).'</b> <span style="font-size:8.5pt;color:#555;">('.htmlspecialchars($m->kategori_badge).')</span></li>';
+            }
+            $agendaJudulText .= '</ol>';
+
+            if (empty($customBa['uraian_sidang'])) {
+                $uraianAgendaText = '<ol style="margin:0;padding-left:15pt;">';
+                foreach ($sidang->materis as $m) {
+                    $desc = $m->deskripsi_materi ?: $m->judul_materi;
+                    $uraianAgendaText .= '<li style="margin-bottom:3pt;"><b>'.htmlspecialchars($m->judul_materi).':</b> '.htmlspecialchars($desc).'</li>';
+                }
+                $uraianAgendaText .= '</ol>';
+            }
+        }
+
         return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -295,7 +313,7 @@ class TppKanwilDokumenService
         <tr>
             <td valign="top"><b>Judul Agenda Sidang</b></td>
             <td valign="top">:</td>
-            <td valign="top"><b>".htmlspecialchars($sidang->agenda_judul)."</b></td>
+            <td valign="top">{$agendaJudulText}</td>
         </tr>
         <tr>
             <td valign="top"><b>Uraian Agenda</b></td>
@@ -437,6 +455,15 @@ HTML;
         }
         $daftarAnggotaHtml .= '</ol>';
 
+        $agendaNotaHtml = '<b>'.htmlspecialchars($sidang->agenda_judul).'</b>';
+        if ($sidang->materis && $sidang->materis->count() > 1) {
+            $agendaNotaHtml = '<ol style="margin:0;padding-left:15pt;">';
+            foreach ($sidang->materis as $m) {
+                $agendaNotaHtml .= '<li><b>'.htmlspecialchars($m->judul_materi).'</b> <span style="font-size:9pt;color:#444;">('.htmlspecialchars($m->kategori_badge).')</span></li>';
+            }
+            $agendaNotaHtml .= '</ol>';
+        }
+
         return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -515,7 +542,7 @@ HTML;
         <tr>
             <td valign="top"><b>Agenda Pembahasan</b></td>
             <td valign="top">:</td>
-            <td valign="top"><b>".htmlspecialchars($sidang->agenda_judul)."</b></td>
+            <td valign="top">{$agendaNotaHtml}</td>
         </tr>
         <tr>
             <td valign="top"><b>Uraian Ringkas</b></td>
@@ -736,6 +763,75 @@ HTML;
             } else {
                 $materiHtml = '<div style="margin-left:15pt;margin-top:3pt;line-height:1.4;text-align:justify;">'.nl2br(htmlspecialchars($customRisalah['materi_sidang'])).'</div>';
             }
+        } elseif ($sidang->materis && $sidang->materis->count() > 0) {
+            $materiHtml = '<ol style="margin-top:3pt;padding-left:18pt;line-height:1.4;">';
+            foreach ($sidang->materis as $m) {
+                if ($m->isMutasiKeinginanSendiri()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptAsal = $nd['upt_asal_nama'] ?? 'Lapas/Rutan Asal';
+                    $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan');
+                    $pkNama = $nd['pk_bapas']['nama'] ?? 'PK Bapas';
+                    $baNo = $nd['tpp_upt']['nomor_ba'] ?? '-';
+                    $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi Permintaan Sendiri):</b> Permohonan pemindahan Narapidana an. <b>{$namaWbp}</b> dari {$uptAsal} ke <b>{$uptTujuan}</b> atas permohonan pribadi mendekati keluarga penjamin dengan kesanggupan pembiayaan mandiri. Dilengkapi Surat Pernyataan bermaterai, Litmas PK Bapas ({$pkNama}), Berita Acara Sidang TPP UPT ({$baNo}), dan jaminan keluarga penjamin.</li>";
+                } elseif ($m->isMutasiNarapidana()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptAsal = $nd['upt_asal_nama'] ?? 'Lapas/Rutan Asal';
+                    $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan');
+                    $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi):</b> Usulan pemindahan Narapidana an. <b>{$namaWbp}</b> dari {$uptAsal} ke <b>{$uptTujuan}</b> (Alasan: ".($nd['alasan_pemindahan'] ?? 'Mendekati keluarga').'). Dilengkapi Litmas Bapas, asesmen risiko, buku register F, dan jaminan penjamin.</li>';
+                } elseif ($m->isIzinBerobat()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptAsal = $nd['upt_asal_nama'] ?? 'Lapas/Rutan Asal';
+                    $rsNama = $nd['rs_rujukan_nama'] ?? 'RS Rujukan';
+                    $rsKota = $nd['rs_rujukan_kota'] ?? 'Luar Kota';
+                    $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Izin Berobat):</b> Permohonan izin berobat keluar kota bagi Narapidana an. <b>{$namaWbp}</b> ({$uptAsal}) ke <b>{$rsNama} ({$rsKota})</b> dengan diagnosa medis: ".($nd['diagnosa_medis'] ?? '-').'. Dilengkapi resume medis, surat rujukan spesialis, dan BA Sidang UPT.</li>';
+                } elseif ($m->isKlienBapas()) {
+                    $kd = $m->klien_data ?: [];
+                    $namaKlien = $kd['nama_klien'] ?? $m->judul_materi;
+                    $bin = ! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '';
+                    $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Klien Bapas):</b> Permohonan Izin Bepergian ke Luar Negeri untuk ".($kd['keperluan_ln'] ?? 'Ibadah Umroh').' ke '.($kd['negara_tujuan'] ?? 'Arab Saudi')." bagi Klien Pemasyarakatan an. <b>{$namaKlien}{$bin}</b>. Dilengkapi Litmas Bapas dan surat jaminan keluarga.</li>";
+                } else {
+                    $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan}:</b> <b>".htmlspecialchars($m->judul_materi).'</b>. '.htmlspecialchars($m->deskripsi_materi ?: '-').'</li>';
+                }
+            }
+            $materiHtml .= '</ol>';
+        } elseif ($sidang->isMutasiNarapidana() && ! empty($sidang->narapidana_data)) {
+            $nd = $sidang->narapidana_data;
+            $namaWbp = $nd['nama'] ?? $sidang->agenda_judul;
+            $uptTujuan = $nd['upt_tujuan_nama'] ?? ($sidang->uptTujuanRekomendasi?->nama_upt ?? 'UPT Tujuan Rekomendasi');
+
+            $hasilHtml = "
+            <ol style='margin-top:3pt;padding-left:18pt;line-height:1.4;'>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    <b>Menyetujui dan merekomendasikan</b> usulan pemindahan / mutasi narapidana an. <b>{$namaWbp}</b> dengan rekomendasi penetapan UPT Tujuan ke <b>{$uptTujuan}</b> guna kepentingan pembinaan lanjutan dan mendekatkan dengan keluarga.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Pelaksanaan pemindahan wajib memedomani Standar Operasional Prosedur (SOP) pengawalan narapidana, berkoordinasi dengan pihak terkait, dan memperhatikan protokol keamanan serta kelengkapan berkas fisik.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Meneruskan hasil rekomendasi Sidang TPP ini kepada Kepala Kantor Wilayah Kementerian Imigrasi dan Pemasyarakatan Banten guna penerbitan Surat Keputusan Persetujuan Mutasi dan sinkronisasi modul SDP.
+                </li>
+            </ol>";
+        } elseif ($sidang->isIzinBerobat() && ! empty($sidang->narapidana_data)) {
+            $nd = $sidang->narapidana_data;
+            $namaWbp = $nd['nama'] ?? $sidang->agenda_judul;
+            $rsNama = $nd['rs_rujukan_nama'] ?? 'RS Rujukan';
+            $rsKota = $nd['rs_rujukan_kota'] ?? 'Luar Kota';
+
+            $hasilHtml = "
+            <ol style='margin-top:3pt;padding-left:18pt;line-height:1.4;'>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    <b>Menyetujui dan merekomendasikan</b> permohonan izin berobat keluar kota bagi narapidana an. <b>{$namaWbp}</b> ke <b>{$rsNama} ({$rsKota})</b> berdasarkan pertimbangan kedaruratan medis dan hak kesehatan warga binaan.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Pelaksanaan izin berobat keluar kota wajib disertai pengawalan ketat oleh petugas yang berwenang, pendampingan tenaga kesehatan, serta dilaporkan perkembangannya secara berkala kepada Kepala Kantor Wilayah.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Meneruskan hasil rekomendasi Sidang TPP kepada Direktur Jenderal Pemasyarakatan / Kepala Kantor Wilayah guna penerbitan persetujuan definitif sesuai ketentuan peraturan perundang-undangan.
+                </li>
+            </ol>";
         } elseif ($sidang->is_klien_bapas && ! empty($kd)) {
             $namaKlien = $kd['nama_klien'] ?? $sidang->agenda_judul;
             $bin = ! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '';
@@ -784,6 +880,82 @@ HTML;
             } else {
                 $hasilHtml = '<div style="margin-left:15pt;margin-top:3pt;line-height:1.4;text-align:justify;">'.nl2br(htmlspecialchars($customRisalah['hasil_sidang'])).'</div>';
             }
+        } elseif ($sidang->materis && $sidang->materis->count() > 0) {
+            $hasilHtml = '<ol style="margin-top:3pt;padding-left:18pt;line-height:1.4;">';
+            foreach ($sidang->materis as $m) {
+                $rekLabel = match ($m->rekomendasi_sidang) {
+                    'setuju' => 'Menyetujui dan merekomendasikan',
+                    'setuju_catatan' => 'Menyetujui dengan catatan khusus',
+                    'tolak' => 'Menolak',
+                    'tunda' => 'Menunda pembahasan',
+                    default => 'Menyetujui dan merekomendasikan',
+                };
+                if ($m->isMutasiKeinginanSendiri()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan Rekomendasi');
+                    $catatan = $m->catatan_rekomendasi ? " (Catatan: {$m->catatan_rekomendasi})" : '';
+                    $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi Permintaan Sendiri):</b> Tim Sidang TPP <b>{$rekLabel}</b> permohonan pemindahan Narapidana an. <b>{$namaWbp}</b> atas keinginan sendiri mendekati keluarga penjamin dengan rekomendasi penetapan UPT Tujuan ke <b>{$uptTujuan}</b> dengan pembiayaan mandiri{$catatan}. Meneruskan berkas kepada Kepala Kantor Wilayah guna penerbitan SK Persetujuan Mutasi dan sinkronisasi modul SDP.</li>";
+                } elseif ($m->isMutasiNarapidana()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan Rekomendasi');
+                    $catatan = $m->catatan_rekomendasi ? " (Catatan: {$m->catatan_rekomendasi})" : '';
+                    $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi):</b> Tim Sidang TPP <b>{$rekLabel}</b> usulan pemindahan Narapidana an. <b>{$namaWbp}</b> dengan rekomendasi penetapan UPT Tujuan ke <b>{$uptTujuan}</b>{$catatan}. Meneruskan berkas kepada Kepala Kantor Wilayah guna penerbitan SK Persetujuan Mutasi dan sinkronisasi modul SDP.</li>";
+                } elseif ($m->isIzinBerobat()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $rsNama = $nd['rs_rujukan_nama'] ?? 'RS Rujukan';
+                    $rsKota = $nd['rs_rujukan_kota'] ?? 'Luar Kota';
+                    $catatan = $m->catatan_rekomendasi ? " (Catatan: {$m->catatan_rekomendasi})" : '';
+                    $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Izin Berobat):</b> Tim Sidang TPP <b>{$rekLabel}</b> permohonan izin berobat keluar kota bagi Narapidana an. <b>{$namaWbp}</b> ke <b>{$rsNama} ({$rsKota})</b> dengan pengawalan melekat petugas dan kepatuhan SOP kesehatan{$catatan}. Meneruskan rekomendasi kepada Ditjenpas / Kepala Kantor Wilayah.</li>";
+                } elseif ($m->isKlienBapas()) {
+                    $kd = $m->klien_data ?: [];
+                    $namaKlien = $kd['nama_klien'] ?? $m->judul_materi;
+                    $bin = ! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '';
+                    $catatan = $m->catatan_rekomendasi ? " (Catatan: {$m->catatan_rekomendasi})" : '';
+                    $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Klien Bapas):</b> Tim Sidang TPP <b>{$rekLabel}</b> permohonan izin bepergian ke luar negeri Klien Pemasyarakatan an. <b>{$namaKlien}{$bin}</b> dengan kewajiban melapor paling lambat 3 hari kerja setelah tiba di tanah air{$catatan}. Meneruskan rekomendasi kepada Kepala Kantor Wilayah.</li>";
+                } else {
+                    $catatan = $m->catatan_rekomendasi ? " (Catatan: {$m->catatan_rekomendasi})" : '';
+                    $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan}:</b> Tim Sidang TPP <b>{$rekLabel}</b> pokok agenda <b>".htmlspecialchars($m->judul_materi)."</b>{$catatan}.</li>";
+                }
+            }
+            $hasilHtml .= '</ol>';
+        } elseif ($sidang->isMutasiNarapidana() && ! empty($sidang->narapidana_data)) {
+            $nd = $sidang->narapidana_data;
+            $namaWbp = $nd['nama'] ?? $sidang->agenda_judul;
+            $uptTujuan = $nd['upt_tujuan_nama'] ?? ($sidang->uptTujuanRekomendasi?->nama_upt ?? 'UPT Tujuan Rekomendasi');
+
+            $hasilHtml = "
+            <ol style='margin-top:3pt;padding-left:18pt;line-height:1.4;'>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    <b>Menyetujui dan merekomendasikan</b> usulan pemindahan / mutasi narapidana an. <b>{$namaWbp}</b> dengan rekomendasi penetapan UPT Tujuan ke <b>{$uptTujuan}</b> guna kepentingan pembinaan lanjutan dan mendekatkan dengan keluarga.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Pelaksanaan pemindahan wajib memedomani Standar Operasional Prosedur (SOP) pengawalan narapidana, berkoordinasi dengan pihak terkait, dan memperhatikan protokol keamanan serta kelengkapan berkas fisik.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Meneruskan hasil rekomendasi Sidang TPP ini kepada Kepala Kantor Wilayah Kementerian Imigrasi dan Pemasyarakatan Banten guna penerbitan Surat Keputusan Persetujuan Mutasi dan sinkronisasi modul SDP.
+                </li>
+            </ol>";
+        } elseif ($sidang->isIzinBerobat() && ! empty($sidang->narapidana_data)) {
+            $nd = $sidang->narapidana_data;
+            $namaWbp = $nd['nama'] ?? $sidang->agenda_judul;
+            $rsNama = $nd['rs_rujukan_nama'] ?? 'RS Rujukan';
+            $rsKota = $nd['rs_rujukan_kota'] ?? 'Luar Kota';
+
+            $hasilHtml = "
+            <ol style='margin-top:3pt;padding-left:18pt;line-height:1.4;'>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    <b>Menyetujui dan merekomendasikan</b> permohonan izin berobat keluar kota bagi narapidana an. <b>{$namaWbp}</b> ke <b>{$rsNama} ({$rsKota})</b> berdasarkan pertimbangan kedaruratan medis dan hak kesehatan warga binaan.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Pelaksanaan izin berobat keluar kota wajib disertai pengawalan ketat oleh petugas yang berwenang, pendampingan tenaga kesehatan, serta dilaporkan perkembangannya secara berkala kepada Kepala Kantor Wilayah.
+                </li>
+                <li style='margin-bottom:4pt;text-align:justify;'>
+                    Meneruskan hasil rekomendasi Sidang TPP kepada Direktur Jenderal Pemasyarakatan / Kepala Kantor Wilayah guna penerbitan persetujuan definitif sesuai ketentuan peraturan perundang-undangan.
+                </li>
+            </ol>";
         } elseif ($sidang->is_klien_bapas && ! empty($kd)) {
             $namaKlien = $kd['nama_klien'] ?? $sidang->agenda_judul;
             $bin = ! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '';
@@ -1025,7 +1197,55 @@ HTML;
         $pokokMateriText = '';
         $hasilPoin3Text = '';
 
-        if ($sidang->is_klien_bapas && ! empty($kd)) {
+        if ($sidang->materis && $sidang->materis->count() > 0) {
+            $pokokMateriText = 'pembahasan '.$sidang->materis->count().' materi/agenda sidang, meliputi: <ol style="margin-top:3pt;padding-left:18pt;">';
+            $hasilPoin3Text = 'Tim Sidang TPP secara mufakat telah membahas dan memberikan rekomendasi terhadap seluruh materi sidang: <ol style="margin-top:3pt;padding-left:18pt;">';
+            foreach ($sidang->materis as $m) {
+                if ($m->isMutasiKeinginanSendiri()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan Rekomendasi');
+                    $pokokMateriText .= "<li>Permohonan pemindahan Narapidana an. <b>{$namaWbp}</b> ke <b>{$uptTujuan}</b> (Keinginan Sendiri &amp; Biaya Mandiri);</li>";
+                    $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui dan merekomendasikan pemindahan Narapidana an. <b>{$namaWbp}</b> atas permohonan pribadi ke {$uptTujuan} guna diproses persetujuan resmi Kepala Kantor Wilayah;</li>";
+                } elseif ($m->isMutasiNarapidana()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan Rekomendasi');
+                    $pokokMateriText .= "<li>Usulan pemindahan Narapidana an. <b>{$namaWbp}</b> ke <b>{$uptTujuan}</b>;</li>";
+                    $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui dan merekomendasikan pemindahan Narapidana an. <b>{$namaWbp}</b> ke {$uptTujuan} guna diproses persetujuan resmi Kepala Kantor Wilayah;</li>";
+                } elseif ($m->isIzinBerobat()) {
+                    $nd = $m->narapidana_data ?: [];
+                    $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $rsNama = $nd['rs_rujukan_nama'] ?? 'RS Rujukan';
+                    $pokokMateriText .= "<li>Permohonan izin berobat keluar kota bagi Narapidana an. <b>{$namaWbp}</b> ke <b>{$rsNama}</b>;</li>";
+                    $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui dan merekomendasikan permohonan izin berobat keluar kota bagi Narapidana an. <b>{$namaWbp}</b> ke {$rsNama};</li>";
+                } elseif ($m->isKlienBapas()) {
+                    $kd = $m->klien_data ?: [];
+                    $namaKlien = $kd['nama_klien'] ?? $m->judul_materi;
+                    $keperluan = $kd['keperluan_ln'] ?? 'Izin Bepergian ke Luar Negeri';
+                    $pokokMateriText .= "<li>Permohonan izin bepergian ke luar negeri ({$keperluan}) bagi Klien an. <b>{$namaKlien}</b>;</li>";
+                    $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui dan merekomendasikan izin bepergian ke luar negeri Klien an. <b>{$namaKlien}</b>;</li>";
+                } else {
+                    $pokokMateriText .= '<li>Pembahasan pokok agenda: <b>'.htmlspecialchars($m->judul_materi).'</b>;</li>';
+                    $hasilPoin3Text .= '<li>Materi #{$m->urutan}: Menyetujui pembahasan pokok agenda <b>'.htmlspecialchars($m->judul_materi).'</b>;</li>';
+                }
+            }
+            $pokokMateriText .= '</ol>';
+            $hasilPoin3Text .= '</ol>';
+        } elseif ($sidang->isMutasiNarapidana() && ! empty($sidang->narapidana_data)) {
+            $nd = $sidang->narapidana_data;
+            $namaWbp = $nd['nama'] ?? $sidang->agenda_judul;
+            $uptTujuan = $nd['upt_tujuan_nama'] ?? ($sidang->uptTujuanRekomendasi?->nama_upt ?? 'UPT Tujuan Rekomendasi');
+            $pokokMateriText = "Permohonan Mutasi / Pemindahan Narapidana an. <b>{$namaWbp}</b> ke <b>{$uptTujuan}</b> (Alasan: ".($nd['alasan_pemindahan'] ?? 'Mendekati Keluarga').').';
+            $hasilPoin3Text = "Tim Sidang TPP secara mufakat menyetujui dan merekomendasikan pemindahan narapidana an. <b>{$namaWbp}</b> ke {$uptTujuan} untuk diproses lebih lanjut guna diterbitkan persetujuan resmi Kepala Kantor Wilayah.";
+        } elseif ($sidang->isIzinBerobat() && ! empty($sidang->narapidana_data)) {
+            $nd = $sidang->narapidana_data;
+            $namaWbp = $nd['nama'] ?? $sidang->agenda_judul;
+            $rsNama = $nd['rs_rujukan_nama'] ?? 'RS Rujukan';
+            $rsKota = $nd['rs_rujukan_kota'] ?? 'Luar Kota';
+            $pokokMateriText = "Permohonan Izin Berobat Keluar Kota bagi Narapidana an. <b>{$namaWbp}</b> ke <b>{$rsNama} ({$rsKota})</b> (Diagnosa: ".($nd['diagnosa_medis'] ?? 'Rujukan Spesialis').').';
+            $hasilPoin3Text = "Tim Sidang TPP secara mufakat menyetujui dan merekomendasikan permohonan izin berobat keluar kota bagi narapidana an. <b>{$namaWbp}</b> ke {$rsNama} guna diteruskan ke Ditjenpas / Ka. Kanwil.";
+        } elseif ($sidang->is_klien_bapas && ! empty($kd)) {
             $namaKlien = $kd['nama_klien'] ?? $sidang->agenda_judul;
             $bin = ! empty($kd['bin']) ? ' BIN '.strtoupper($kd['bin']) : '';
             $keperluan = $kd['keperluan_ln'] ?? 'Izin Bepergian ke Luar Negeri';

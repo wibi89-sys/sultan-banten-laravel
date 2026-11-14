@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -348,7 +349,9 @@ class SidangTppController extends Controller
             ]);
         }
 
-        return view('sidang_tpp.detail', compact('sidang'));
+        $uptList = Upt::orderBy('nama_upt')->get();
+
+        return view('sidang_tpp.detail', compact('sidang', 'uptList'));
     }
 
     /**
@@ -1065,15 +1068,101 @@ class SidangTppController extends Controller
             'perlu_perhatian' => 'nullable',
             'catatan_perhatian' => 'nullable|string',
             'alasan_keterangan' => 'nullable|string',
+            'subjek_tipe' => 'nullable|string|in:umum,mutasi_narapidana,izin_berobat',
+            'upt_tujuan_id' => 'nullable|exists:upt,id',
+            'alasan_pemindahan' => 'nullable|string',
+            'penjamin_nama' => 'nullable|string|max:150',
+            'penjamin_hubungan' => 'nullable|string|max:100',
+            'penjamin_alamat' => 'nullable|string|max:255',
+            'diagnosa_medis' => 'nullable|string',
+            'dokter_penanggung_jawab' => 'nullable|string|max:150',
+            'rs_rujukan_nama' => 'nullable|string|max:150',
+            'rs_rujukan_kota' => 'nullable|string|max:100',
+            'file_litmas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_permohonan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_rekam_medis' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_rujukan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'dokumen_tambahan_nama' => 'nullable|string|max:150',
+            'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
         ]);
 
         $cleanJenis = strtoupper(trim((string) ($validated['jenis_usulan'] ?? '')));
         if (str_contains($cleanJenis, 'ASIMILASI')) {
             $validated['jenis_usulan'] = 'Asimilasi';
-        } elseif (str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN')) {
+        } elseif (str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN') || str_contains($cleanJenis, 'PINDAH')) {
             $validated['jenis_usulan'] = 'Penempatan/Mutasi';
+        } elseif (str_contains($cleanJenis, 'BEROBAT')) {
+            $validated['jenis_usulan'] = 'Izin Berobat';
         }
 
+        // Tentukan subjek_tipe
+        $subjekTipe = $request->input('subjek_tipe');
+        if (empty($subjekTipe)) {
+            if ($validated['jenis_usulan'] === 'Penempatan/Mutasi') {
+                $subjekTipe = 'mutasi_narapidana';
+            } elseif ($validated['jenis_usulan'] === 'Izin Berobat') {
+                $subjekTipe = 'izin_berobat';
+            } else {
+                $subjekTipe = 'umum';
+            }
+        }
+        $validated['subjek_tipe'] = $subjekTipe;
+
+        $dirPeserta = public_path('uploads/sidang_tpp/peserta');
+        if (! File::isDirectory($dirPeserta)) {
+            File::makeDirectory($dirPeserta, 0755, true, true);
+        }
+
+        $berkasKhusus = [];
+        if ($request->hasFile('file_litmas')) {
+            $f = $request->file('file_litmas');
+            $fn = 'litmas_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_litmas'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_permohonan')) {
+            $f = $request->file('file_permohonan');
+            $fn = 'permohonan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_permohonan'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_jaminan')) {
+            $f = $request->file('file_jaminan');
+            $fn = 'jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_jaminan'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_rekam_medis')) {
+            $f = $request->file('file_rekam_medis');
+            $fn = 'rekam_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_rekam_medis'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_rujukan')) {
+            $f = $request->file('file_rujukan');
+            $fn = 'rujukan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_rujukan'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_ba_upt')) {
+            $f = $request->file('file_ba_upt');
+            $fn = 'ba_upt_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_ba_upt'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('dokumen_tambahan_file')) {
+            $f = $request->file('dokumen_tambahan_file');
+            $fn = 'tambahan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['dokumen_tambahan'] = [
+                'nama' => $request->input('dokumen_tambahan_nama', 'Dokumen Tambahan'),
+                'file' => 'uploads/sidang_tpp/peserta/'.$fn,
+            ];
+        }
+
+        $validated['berkas_khusus'] = ! empty($berkasKhusus) ? $berkasKhusus : null;
         $validated['perkara_pasal'] = $validated['perkara_pasal'] ?? '-';
         $validated['lama_pidana'] = $validated['lama_pidana'] ?? '-';
         $validated['perlu_perhatian'] = $request->boolean('perlu_perhatian');
@@ -1122,15 +1211,102 @@ class SidangTppController extends Controller
             'perlu_perhatian' => 'nullable',
             'catatan_perhatian' => 'nullable|string',
             'alasan_keterangan' => 'nullable|string',
+            'subjek_tipe' => 'nullable|string|in:umum,mutasi_narapidana,izin_berobat',
+            'upt_tujuan_id' => 'nullable|exists:upt,id',
+            'alasan_pemindahan' => 'nullable|string',
+            'penjamin_nama' => 'nullable|string|max:150',
+            'penjamin_hubungan' => 'nullable|string|max:100',
+            'penjamin_alamat' => 'nullable|string|max:255',
+            'diagnosa_medis' => 'nullable|string',
+            'dokter_penanggung_jawab' => 'nullable|string|max:150',
+            'rs_rujukan_nama' => 'nullable|string|max:150',
+            'rs_rujukan_kota' => 'nullable|string|max:100',
+            'file_litmas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_permohonan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_rekam_medis' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_rujukan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'dokumen_tambahan_nama' => 'nullable|string|max:150',
+            'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
         ]);
 
         $cleanJenis = strtoupper(trim((string) ($validated['jenis_usulan'] ?? '')));
         if (str_contains($cleanJenis, 'ASIMILASI')) {
             $validated['jenis_usulan'] = 'Asimilasi';
-        } elseif (str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN')) {
+        } elseif (str_contains($cleanJenis, 'MUTASI') || str_contains($cleanJenis, 'PENEMPATAN') || str_contains($cleanJenis, 'PINDAH')) {
             $validated['jenis_usulan'] = 'Penempatan/Mutasi';
+        } elseif (str_contains($cleanJenis, 'BEROBAT')) {
+            $validated['jenis_usulan'] = 'Izin Berobat';
         }
 
+        $subjekTipe = $request->input('subjek_tipe');
+        if (empty($subjekTipe)) {
+            if ($validated['jenis_usulan'] === 'Penempatan/Mutasi') {
+                $subjekTipe = 'mutasi_narapidana';
+            } elseif ($validated['jenis_usulan'] === 'Izin Berobat') {
+                $subjekTipe = 'izin_berobat';
+            } else {
+                $subjekTipe = $usulan->subjek_tipe ?: 'umum';
+            }
+        }
+        $validated['subjek_tipe'] = $subjekTipe;
+
+        $dirPeserta = public_path('uploads/sidang_tpp/peserta');
+        if (! File::isDirectory($dirPeserta)) {
+            File::makeDirectory($dirPeserta, 0755, true, true);
+        }
+
+        $berkasKhusus = $usulan->berkas_khusus ?: [];
+        if ($request->hasFile('file_litmas')) {
+            $f = $request->file('file_litmas');
+            $fn = 'litmas_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_litmas'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_permohonan')) {
+            $f = $request->file('file_permohonan');
+            $fn = 'permohonan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_permohonan'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_jaminan')) {
+            $f = $request->file('file_jaminan');
+            $fn = 'jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_jaminan'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_rekam_medis')) {
+            $f = $request->file('file_rekam_medis');
+            $fn = 'rekam_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_rekam_medis'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_rujukan')) {
+            $f = $request->file('file_rujukan');
+            $fn = 'rujukan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_rujukan'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('file_ba_upt')) {
+            $f = $request->file('file_ba_upt');
+            $fn = 'ba_upt_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['file_ba_upt'] = 'uploads/sidang_tpp/peserta/'.$fn;
+        }
+        if ($request->hasFile('dokumen_tambahan_file')) {
+            $f = $request->file('dokumen_tambahan_file');
+            $fn = 'tambahan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirPeserta, $fn);
+            $berkasKhusus['dokumen_tambahan'] = [
+                'nama' => $request->input('dokumen_tambahan_nama', 'Dokumen Tambahan'),
+                'file' => 'uploads/sidang_tpp/peserta/'.$fn,
+            ];
+        } elseif ($request->filled('dokumen_tambahan_nama') && isset($berkasKhusus['dokumen_tambahan'])) {
+            $berkasKhusus['dokumen_tambahan']['nama'] = $request->input('dokumen_tambahan_nama');
+        }
+
+        $validated['berkas_khusus'] = ! empty($berkasKhusus) ? $berkasKhusus : null;
         $validated['perkara_pasal'] = $validated['perkara_pasal'] ?? '-';
         $validated['lama_pidana'] = $validated['lama_pidana'] ?? '-';
         $validated['perlu_perhatian'] = $request->boolean('perlu_perhatian');

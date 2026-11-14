@@ -51,6 +51,10 @@ class MutasiNarapidana extends Model
         'tanggal_pelaksanaan',
         'file_bast',
         'catatan_pelaksanaan',
+        'sidang_tpp_kanwil_id',
+        'sidang_tpp_upt_id',
+        'nomor_ba_tpp_upt',
+        'file_ba_tpp_upt',
         'created_by',
     ];
 
@@ -88,6 +92,16 @@ class MutasiNarapidana extends Model
     public function tujuans(): HasMany
     {
         return $this->hasMany(MutasiNarapidanaTujuan::class, 'mutasi_id');
+    }
+
+    public function sidangTppKanwil(): BelongsTo
+    {
+        return $this->belongsTo(SidangTppKanwil::class, 'sidang_tpp_kanwil_id');
+    }
+
+    public function sidangTppUpt(): BelongsTo
+    {
+        return $this->belongsTo(SidangTpp::class, 'sidang_tpp_upt_id');
     }
 
     public function isMultiTujuan(): bool

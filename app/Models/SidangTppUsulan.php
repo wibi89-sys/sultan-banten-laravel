@@ -22,6 +22,17 @@ class SidangTppUsulan extends Model
         'tanggal_setengah_pidana',
         'tanggal_dua_pertiga',
         'jenis_usulan',
+        'subjek_tipe',
+        'upt_tujuan_id',
+        'alasan_pemindahan',
+        'penjamin_nama',
+        'penjamin_hubungan',
+        'penjamin_alamat',
+        'diagnosa_medis',
+        'dokter_penanggung_jawab',
+        'rs_rujukan_nama',
+        'rs_rujukan_kota',
+        'berkas_khusus',
         'perlu_perhatian',
         'catatan_perhatian',
         'skor_sppn',
@@ -40,6 +51,7 @@ class SidangTppUsulan extends Model
             'perlu_perhatian' => 'boolean',
             'bebas_register_f' => 'boolean',
             'skor_sppn' => 'float',
+            'berkas_khusus' => 'array',
         ];
     }
 
@@ -59,6 +71,11 @@ class SidangTppUsulan extends Model
         return $this->belongsTo(SidangTpp::class, 'sidang_tpp_id');
     }
 
+    public function uptTujuan(): BelongsTo
+    {
+        return $this->belongsTo(Upt::class, 'upt_tujuan_id');
+    }
+
     public function getKeputusanBadgeAttribute(): string
     {
         return match ($this->keputusan) {
@@ -72,8 +89,11 @@ class SidangTppUsulan extends Model
     public function getJenisUsulanBadgeAttribute(): string
     {
         $jenis = (string) ($this->jenis_usulan ?: 'PB');
-        if (str_contains(strtoupper($jenis), 'MUTASI') || str_contains(strtoupper($jenis), 'PENEMPATAN')) {
-            return '<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>Penempatan / Mutasi</span>';
+        if (str_contains(strtoupper($jenis), 'BEROBAT')) {
+            return '<span class="badge bg-danger text-white"><i class="fas fa-notes-medical me-1"></i>Izin Berobat Luar Kota</span>';
+        }
+        if (str_contains(strtoupper($jenis), 'MUTASI') || str_contains(strtoupper($jenis), 'PENEMPATAN') || str_contains(strtoupper($jenis), 'PINDAH')) {
+            return '<span class="badge bg-info text-white"><i class="fas fa-exchange-alt me-1"></i>Mutasi (Pindah UPT)</span>';
         }
         if (strtoupper($jenis) === 'REGISTER F') {
             return '<span class="badge bg-dark text-white"><i class="fas fa-file-contract me-1"></i>Register F</span>';
@@ -96,5 +116,19 @@ class SidangTppUsulan extends Model
             'proses' => '<span class="badge bg-info-subtle text-info border border-info-subtle">Dalam Proses</span>',
             default => '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Tidak Perlu</span>',
         };
+    }
+
+    public function isMutasiNarapidana(): bool
+    {
+        return $this->subjek_tipe === 'mutasi_narapidana'
+            || str_contains(strtolower((string) $this->jenis_usulan), 'mutasi')
+            || str_contains(strtolower((string) $this->jenis_usulan), 'penempatan')
+            || str_contains(strtolower((string) $this->jenis_usulan), 'pindah');
+    }
+
+    public function isIzinBerobat(): bool
+    {
+        return $this->subjek_tipe === 'izin_berobat'
+            || str_contains(strtolower((string) $this->jenis_usulan), 'berobat');
     }
 }

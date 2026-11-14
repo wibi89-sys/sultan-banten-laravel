@@ -29,6 +29,10 @@ class SidangTppKanwil extends Model
         'agenda_kategori',
         'agenda_judul',
         'agenda_deskripsi',
+        'subjek_tipe',
+        'mutasi_id',
+        'narapidana_data',
+        'upt_tujuan_rekomendasi_id',
         'is_klien_bapas',
         'klien_data',
         'dokumen_custom',
@@ -74,6 +78,7 @@ class SidangTppKanwil extends Model
             'tanggal_sidang' => 'date',
             'is_klien_bapas' => 'boolean',
             'klien_data' => 'array',
+            'narapidana_data' => 'array',
             'dokumen_custom' => 'array',
             'tanggal_nota_dinas' => 'date',
             'tanggapan_kakanwil_tanggal' => 'date',
@@ -89,6 +94,16 @@ class SidangTppKanwil extends Model
     public function anggota(): HasMany
     {
         return $this->hasMany(SidangTppKanwilAnggota::class, 'sidang_tpp_kanwil_id')->orderBy('id');
+    }
+
+    public function materis(): HasMany
+    {
+        return $this->hasMany(SidangTppKanwilMateri::class, 'sidang_tpp_kanwil_id')->orderBy('urutan');
+    }
+
+    public function getTotalMateriAttribute(): int
+    {
+        return $this->materis->count();
     }
 
     public function ketuaPegawai(): BelongsTo
@@ -109,6 +124,44 @@ class SidangTppKanwil extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function mutasi(): BelongsTo
+    {
+        return $this->belongsTo(MutasiNarapidana::class, 'mutasi_id');
+    }
+
+    public function uptTujuanRekomendasi(): BelongsTo
+    {
+        return $this->belongsTo(Upt::class, 'upt_tujuan_rekomendasi_id');
+    }
+
+    public function isMutasiKeinginanSendiri(): bool
+    {
+        return $this->subjek_tipe === 'mutasi_keinginan_sendiri'
+            || $this->agenda_kategori === 'mutasi_keinginan_sendiri'
+            || $this->materis->contains(fn ($m) => $m->isMutasiKeinginanSendiri());
+    }
+
+    public function isMutasiNarapidana(): bool
+    {
+        return in_array($this->subjek_tipe, ['mutasi_narapidana', 'mutasi_keinginan_sendiri'])
+            || in_array($this->agenda_kategori, ['mutasi_narapidana', 'mutasi_keinginan_sendiri'])
+            || ! empty($this->mutasi_id)
+            || $this->materis->contains(fn ($m) => $m->isMutasiNarapidana());
+    }
+
+    public function isIzinBerobat(): bool
+    {
+        return $this->subjek_tipe === 'izin_berobat'
+            || $this->materis->contains(fn ($m) => $m->isIzinBerobat());
+    }
+
+    public function isKlienBapas(): bool
+    {
+        return $this->is_klien_bapas
+            || $this->subjek_tipe === 'klien_umroh'
+            || $this->materis->contains(fn ($m) => $m->isKlienBapas());
     }
 
     /**

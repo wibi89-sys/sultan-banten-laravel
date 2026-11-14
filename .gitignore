@@ -19,7 +19,14 @@
 /public/hot
 /public/storage
 /public/uploads/mutasi/*
+/public/uploads/mutasi/**/*
 !/public/uploads/mutasi/.gitkeep
+/public/uploads/sidang_tpp/*
+/public/uploads/sidang_tpp/**/*
+!/public/uploads/sidang_tpp/.gitkeep
+/public/uploads/sidang_tpp_kanwil/*
+/public/uploads/sidang_tpp_kanwil/**/*
+!/public/uploads/sidang_tpp_kanwil/.gitkeep
 /storage/*.key
 /storage/pail
 /vendor

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class SidangTppKanwilAnggota extends Model
@@ -65,6 +66,16 @@ class SidangTppKanwilAnggota extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function materiPendapats(): HasMany
+    {
+        return $this->hasMany(SidangTppKanwilMateriPendapat::class, 'sidang_tpp_kanwil_anggota_id');
+    }
+
+    public function getPendapatMateri(int $materiId): ?SidangTppKanwilMateriPendapat
+    {
+        return $this->materiPendapats->firstWhere('sidang_tpp_kanwil_materi_id', $materiId);
     }
 
     /**

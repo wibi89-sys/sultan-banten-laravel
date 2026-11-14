@@ -147,61 +147,441 @@
                     <p class="text-secondary small mb-3">{{ $sidang->agenda_deskripsi }}</p>
                     @endif
 
-                    @if($sidang->is_klien_bapas && !empty($sidang->klien_data))
-                    @php $kd = $sidang->klien_data; @endphp
-                    <div class="card border border-primary border-opacity-25 bg-primary-subtle bg-opacity-10 shadow-none mb-3" style="border-radius: 10px;">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-primary text-white"><i class="fas fa-passport me-1"></i>Klien Pemasyarakatan</span>
-                                    <span class="fw-bold text-primary">{{ $kd['nama_klien'] ?? '-' }} {{ !empty($kd['bin']) ? 'BIN ' . strtoupper($kd['bin']) : '' }}</span>
-                                </div>
-                                <span class="badge bg-light text-dark border">{{ $kd['program_integrasi'] ?? 'PB' }}</span>
+
+
+                    <!-- DAFTAR MATERI / AGENDA PERSIDANGAN -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white p-1.5" style="border-radius: 6px;"><i class="fas fa-layer-group"></i></span>
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 14.5px;">Daftar Materi / Agenda Sidang ({{ $sidang->materis->count() }})</h6>
                             </div>
-                            <div class="row g-2 small text-dark">
-                                <div class="col-12 col-md-4">
-                                    <span class="text-muted">Bapas Asal:</span> <b>{{ $kd['bapas_nama'] ?? '-' }}</b><br>
-                                    <span class="text-muted">No. Register:</span> <code>{{ $kd['no_register_bapas'] ?? '-' }}</code><br>
-                                    <span class="text-muted">PK Bapas:</span> <b>{{ $kd['nama_pk'] ?? '-' }}</b>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <span class="text-muted">Keperluan:</span> <b>{{ $kd['keperluan_ln'] ?? '-' }}</b><br>
-                                    <span class="text-muted">Negara Tujuan:</span> <b><i class="fas fa-plane text-primary me-1"></i>{{ $kd['negara_tujuan'] ?? '-' }}</b><br>
-                                    <span class="text-muted">Jadwal:</span> <b>{{ !empty($kd['tgl_berangkat']) ? \Carbon\Carbon::parse($kd['tgl_berangkat'])->format('d/m/Y') : '-' }} s/d {{ !empty($kd['tgl_kembali']) ? \Carbon\Carbon::parse($kd['tgl_kembali'])->format('d/m/Y') : '-' }} ({{ $kd['durasi_hari'] ?? '-' }} Hari)</b>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <span class="text-muted">Penjamin:</span> <b>{{ $kd['penjamin_nama'] ?? '-' }}</b> ({{ $kd['penjamin_hubungan'] ?? '-' }})<br>
-                                    <span class="text-muted">Kontak/WA:</span> <b>{{ $kd['penjamin_telepon'] ?? '-' }}</b><br>
-                                    <span class="text-muted">Surat Bapas:</span> {{ $kd['nomor_surat_bapas'] ?? '-' }} ({{ !empty($kd['tanggal_surat_bapas']) ? \Carbon\Carbon::parse($kd['tanggal_surat_bapas'])->format('d/m/Y') : '-' }})
-                                </div>
-                            </div>
-                            @if(!empty($kd['file_litmas_bapas']) || !empty($kd['file_surat_bapas']) || !empty($kd['file_bukti_travel']) || !empty($kd['file_surat_jaminan']))
-                            <div class="d-flex flex-wrap gap-2 mt-2 pt-2 border-top">
-                                @if(!empty($kd['file_litmas_bapas']))
-                                <a href="{{ asset($kd['file_litmas_bapas']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
-                                    <i class="fas fa-file-pdf me-1"></i>Litmas Bapas
-                                </a>
-                                @endif
-                                @if(!empty($kd['file_surat_bapas']))
-                                <a href="{{ asset($kd['file_surat_bapas']) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
-                                    <i class="fas fa-file-pdf me-1"></i>Surat Usulan Bapas
-                                </a>
-                                @endif
-                                @if(!empty($kd['file_bukti_travel']))
-                                <a href="{{ asset($kd['file_bukti_travel']) }}" target="_blank" class="btn btn-outline-info btn-xs py-0.5 px-2" style="font-size: 11px;">
-                                    <i class="fas fa-ticket-alt me-1"></i>Bukti Tiket / Travel / RS
-                                </a>
-                                @endif
-                                @if(!empty($kd['file_surat_jaminan']))
-                                <a href="{{ asset($kd['file_surat_jaminan']) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;">
-                                    <i class="fas fa-shield-alt me-1"></i>Surat Jaminan Penjamin
-                                </a>
-                                @endif
-                            </div>
+                            @if($sidang->canEdit(auth()->user()))
+                            <button type="button" class="btn btn-outline-primary btn-xs py-1 px-2.5 fw-bold shadow-sm" style="border-radius: 14px; font-size: 11.5px;" data-bs-toggle="modal" data-bs-target="#modalTambahMateri">
+                                <i class="fas fa-plus me-1"></i> Tambah Materi
+                            </button>
                             @endif
                         </div>
+
+                        @foreach($sidang->materis as $m)
+                        <div class="card border border-2 mb-3 shadow-none" style="border-radius: 10px; background: #ffffff;">
+                            <div class="card-header bg-light py-2 px-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-dark text-white font-mono-num" style="font-size: 11px;">Materi #{{ $m->urutan }}</span>
+                                    {!! $m->kategori_badge !!}
+                                    <span class="fw-bold text-dark" style="font-size: 13.5px;">{{ $m->judul_materi }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($m->rekomendasi_sidang == 'setuju')
+                                    <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Rekomendasi: Disetujui</span>
+                                    @elseif($m->rekomendasi_sidang == 'setuju_catatan')
+                                    <span class="badge bg-info text-white"><i class="fas fa-clipboard-check me-1"></i>Rekomendasi: Setuju dg Catatan</span>
+                                    @elseif($m->rekomendasi_sidang == 'tunda')
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-pause-circle me-1"></i>Rekomendasi: Ditunda</span>
+                                    @elseif($m->rekomendasi_sidang == 'tolak')
+                                    <span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i>Rekomendasi: Ditolak</span>
+                                    @else
+                                    <span class="badge bg-secondary-subtle text-secondary border"><i class="fas fa-hourglass-start me-1"></i>Rekomendasi: Belum Diputuskan</span>
+                                    @endif
+
+                                    @if($sidang->canEdit(auth()->user()))
+                                    <button type="button" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;" data-bs-toggle="modal" data-bs-target="#modalEditMateri_{{ $m->id }}">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    @if(!$sidang->isVerifiedKakanwil() && $sidang->materis->count() > 1)
+                                    <form action="{{ route('sidang-tpp-kanwil.materi.destroy', [$sidang->id, $m->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus Materi #{{ $m->urutan }} ({{ addslashes($m->judul_materi) }})?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;" title="Hapus materi">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                    @endif
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="card-body p-3">
+                                @if($m->deskripsi_materi)
+                                <p class="text-secondary small mb-2">{{ $m->deskripsi_materi }}</p>
+                                @endif
+
+                                @if($m->isMutasiKeinginanSendiri() && !empty($m->narapidana_data))
+                                @php 
+                                    $ndm = $m->narapidana_data; 
+                                    $bm = $ndm['berkas'] ?? [];
+                                @endphp
+                                <div class="p-2.5 rounded border mb-2 small" style="background-color: #fbf9ff; border-color: #6f42c1 !important;">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge text-white" style="background-color: #6f42c1 !important;"><i class="fas fa-user-friends me-1"></i>Mutasi Permintaan Sendiri</span>
+                                            <span class="fw-bold text-dark fs-6">{{ $ndm['nama'] ?? '-' }}</span>
+                                            @if(!empty($ndm['nomor_register']))
+                                            <code>{{ $ndm['nomor_register'] }}</code>
+                                            @endif
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if($m->mutasi_id)
+                                            <a href="{{ route('mutasi-narapidana.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
+                                                <i class="fas fa-external-link-alt me-1"></i>Terkoneksi ke Mutasi UPT #{{ $m->mutasi_id }}
+                                            </a>
+                                            @endif
+                                            <span class="badge bg-light text-primary border border-primary-subtle">
+                                                Rekomendasi Tujuan: <b>{{ $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? 'Ditentukan Sidang') }}</b>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 small text-dark">
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Perkara / Vonis:</span> <b>{{ $ndm['tindak_pidana'] ?? '-' }}</b> ({{ $ndm['lama_pidana'] ?? '-' }})<br>
+                                            <span class="text-muted">UPT Asal Pengusul:</span> <b>{{ $ndm['upt_asal_nama'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Rute:</span> <b>{{ $ndm['upt_asal_nama'] ?? 'Asal' }}</b> &rarr; <b class="text-primary">{{ $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '-') }}</b>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Petugas PK Bapas:</span> <b>{{ $ndm['nama_pk_bapas'] ?? '-' }}</b> {{ !empty($ndm['bapas_nama']) ? '('.$ndm['bapas_nama'].')' : '' }}<br>
+                                            <span class="text-muted">Litmas Bapas:</span> <span class="text-dark">{{ $ndm['rekomendasi_litmas'] ?? '-' }}</span><br>
+                                            <span class="text-muted">BA Sidang UPT:</span> <b>{{ $ndm['nomor_ba_tpp_upt'] ?? '-' }}</b> ({{ !empty($ndm['tanggal_ba_tpp_upt']) ? \Carbon\Carbon::parse($ndm['tanggal_ba_tpp_upt'])->format('d/m/Y') : '-' }})
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Penjamin:</span> <b>{{ $ndm['penjamin_nama'] ?? '-' }}</b> ({{ $ndm['penjamin_hubungan'] ?? '-' }})<br>
+                                            <span class="text-muted">NIK Penjamin:</span> <code>{{ $ndm['penjamin_nik'] ?? '-' }}</code><br>
+                                            <span class="text-muted">Kontak/WA:</span> <b>{{ $ndm['penjamin_kontak'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Alamat:</span> {{ $ndm['penjamin_alamat'] ?? '-' }}
+                                        </div>
+                                        <div class="col-12">
+                                            <span class="text-muted">Alasan:</span> <span class="fst-italic text-dark">{{ $ndm['alasan_pemindahan'] ?? '-' }}</span>
+                                        </div>
+                                    </div>
+                                    @if(!empty($bm['file_pernyataan_pribadi']) || !empty($bm['file_ba_upt']) || !empty($bm['file_litmas']) || !empty($bm['file_jaminan']) || !empty($bm['file_ktp_penjamin']) || !empty($bm['file_reg_f']) || !empty($bm['file_kesehatan']) || !empty($bm['file_asesmen']) || !empty($bm['dokumen_tambahan']['file']) || !empty($m->file_bahan_sidang))
+                                    <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top">
+                                        @if(!empty($m->file_bahan_sidang))
+                                        <a href="{{ asset($m->file_bahan_sidang) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-download me-1"></i>Bahan Sidang
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_pernyataan_pribadi']))
+                                        <a href="{{ asset($bm['file_pernyataan_pribadi']) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px; color: #6f42c1; border-color: #6f42c1;">
+                                            <i class="fas fa-file-signature me-1"></i>Pernyataan Mandiri (Biaya Sendiri)
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_ba_upt']))
+                                        <a href="{{ asset($bm['file_ba_upt']) }}" target="_blank" class="btn btn-outline-warning btn-xs py-0.5 px-2 text-dark" style="font-size: 11px;">
+                                            <i class="fas fa-file-contract me-1"></i>BA Sidang TPP UPT
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_litmas']))
+                                        <a href="{{ asset($bm['file_litmas']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-pdf me-1"></i>Litmas Bapas
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_jaminan']))
+                                        <a href="{{ asset($bm['file_jaminan']) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-shield-alt me-1"></i>Surat Jaminan
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_ktp_penjamin']))
+                                        <a href="{{ asset($bm['file_ktp_penjamin']) }}" target="_blank" class="btn btn-outline-info btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-id-card me-1"></i>KTP/KK Penjamin
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_reg_f']))
+                                        <a href="{{ asset($bm['file_reg_f']) }}" target="_blank" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-book me-1"></i>Register F
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_kesehatan']))
+                                        <a href="{{ asset($bm['file_kesehatan']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-heartbeat me-1"></i>Surat Kesehatan
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_asesmen']))
+                                        <a href="{{ asset($bm['file_asesmen']) }}" target="_blank" class="btn btn-outline-info btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-chart-line me-1"></i>Asesmen
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['dokumen_tambahan']['file']))
+                                        <a href="{{ asset($bm['dokumen_tambahan']['file']) }}" target="_blank" class="btn btn-outline-dark btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-paperclip me-1"></i>{{ $bm['dokumen_tambahan']['nama'] ?? 'Dokumen Tambahan' }}
+                                        </a>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                                @elseif($m->isMutasiNarapidana() && !empty($m->narapidana_data))
+                                @php 
+                                    $ndm = $m->narapidana_data; 
+                                    $bm = $ndm['berkas'] ?? [];
+                                @endphp
+                                <div class="p-2.5 bg-warning-subtle bg-opacity-25 rounded border border-warning border-opacity-50 mb-2 small">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-exchange-alt me-1"></i>Mutasi Narapidana</span>
+                                            <span class="fw-bold text-dark fs-6">{{ $ndm['nama'] ?? '-' }}</span>
+                                            @if(!empty($ndm['nomor_register']))
+                                            <code>{{ $ndm['nomor_register'] }}</code>
+                                            @endif
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if($m->mutasi_id)
+                                            <a href="{{ route('mutasi-narapidana.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
+                                                <i class="fas fa-external-link-alt me-1"></i>Terkoneksi ke Mutasi UPT #{{ $m->mutasi_id }}
+                                            </a>
+                                            @endif
+                                            <span class="badge bg-light text-warning-emphasis border border-warning-subtle">
+                                                Rekomendasi Tujuan: <b>{{ $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? 'Ditentukan Sidang') }}</b>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 small text-dark">
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Perkara / Vonis:</span> <b>{{ $ndm['tindak_pidana'] ?? '-' }}</b> ({{ $ndm['lama_pidana'] ?? '-' }})<br>
+                                            <span class="text-muted">UPT Asal Pengusul:</span> <b>{{ $ndm['upt_asal_nama'] ?? '-' }}</b>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Rute Pemindahan:</span> <b>{{ $ndm['upt_asal_nama'] ?? 'Asal' }}</b> &rarr; <b class="text-primary">{{ $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '-') }}</b><br>
+                                            <span class="text-muted">Alasan:</span> <span class="fst-italic text-dark">{{ $ndm['alasan_pemindahan'] ?? '-' }}</span>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Penjamin:</span> <b>{{ $ndm['penjamin_nama'] ?? '-' }}</b> ({{ $ndm['penjamin_hubungan'] ?? '-' }})<br>
+                                            <span class="text-muted">Kontak/WA:</span> <b>{{ $ndm['penjamin_kontak'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Alamat:</span> {{ $ndm['penjamin_alamat'] ?? '-' }}
+                                        </div>
+                                    </div>
+                                    @if(!empty($bm['file_litmas']) || !empty($bm['file_permohonan']) || !empty($bm['file_jaminan']) || !empty($bm['file_reg_f']) || !empty($bm['file_asesmen']) || !empty($bm['dokumen_tambahan']['file']) || !empty($m->file_bahan_sidang))
+                                    <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top">
+                                        @if(!empty($m->file_bahan_sidang))
+                                        <a href="{{ asset($m->file_bahan_sidang) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-download me-1"></i>Bahan Sidang
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_litmas']))
+                                        <a href="{{ asset($bm['file_litmas']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-pdf me-1"></i>Litmas Bapas
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_permohonan']))
+                                        <a href="{{ asset($bm['file_permohonan']) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-alt me-1"></i>Surat Permohonan
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_jaminan']))
+                                        <a href="{{ asset($bm['file_jaminan']) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-shield-alt me-1"></i>Jaminan Keluarga
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_reg_f']))
+                                        <a href="{{ asset($bm['file_reg_f']) }}" target="_blank" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-book me-1"></i>Register F
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['file_asesmen']))
+                                        <a href="{{ asset($bm['file_asesmen']) }}" target="_blank" class="btn btn-outline-info btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-chart-line me-1"></i>Hasil Asesmen
+                                        </a>
+                                        @endif
+                                        @if(!empty($bm['dokumen_tambahan']['file']))
+                                        <a href="{{ asset($bm['dokumen_tambahan']['file']) }}" target="_blank" class="btn btn-outline-dark btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-paperclip me-1"></i>{{ $bm['dokumen_tambahan']['nama'] ?? 'Dokumen Tambahan' }}
+                                        </a>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                                @elseif($m->isIzinBerobat() && !empty($m->narapidana_data))
+                                @php 
+                                    $ndm = $m->narapidana_data; 
+                                    $bmed = $ndm['berkas'] ?? [];
+                                @endphp
+                                <div class="p-2.5 bg-danger-subtle bg-opacity-25 rounded border border-danger border-opacity-50 mb-2 small">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-danger text-white"><i class="fas fa-heartbeat me-1"></i>Izin Berobat Keluar Kota</span>
+                                            <span class="fw-bold text-danger fs-6">{{ $ndm['nama'] ?? '-' }}</span>
+                                            @if(!empty($ndm['nomor_register']))
+                                            <code>{{ $ndm['nomor_register'] }}</code>
+                                            @endif
+                                        </div>
+                                        <span class="badge bg-light text-danger border border-danger-subtle">
+                                            <i class="fas fa-hospital me-1"></i>Rujukan: <b>{{ $ndm['rs_rujukan_nama'] ?? '-' }} ({{ $ndm['rs_rujukan_kota'] ?? '-' }})</b>
+                                        </span>
+                                    </div>
+                                    <div class="row g-2 small text-dark">
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">UPT Asal Narapidana:</span> <b>{{ $ndm['upt_asal_nama'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Perkara / Vonis:</span> <b>{{ $ndm['tindak_pidana'] ?? '-' }}</b>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Diagnosa Medis:</span> <b class="text-danger">{{ $ndm['diagnosa_medis'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Dokter Penanggung Jawab:</span> <b>{{ $ndm['dokter_penanggung_jawab'] ?? '-' }}</b>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Penjamin / Keluarga:</span> <b>{{ $ndm['penjamin_nama'] ?? '-' }}</b> ({{ $ndm['penjamin_hubungan'] ?? '-' }})<br>
+                                            <span class="text-muted">Kontak/WA:</span> <b>{{ $ndm['penjamin_kontak'] ?? '-' }}</b>
+                                        </div>
+                                    </div>
+                                    @if(!empty($bmed['file_rekam_medis']) || !empty($bmed['file_rujukan']) || !empty($bmed['file_jaminan']) || !empty($bmed['file_ba_upt']) || !empty($bmed['dokumen_tambahan']['file']) || !empty($m->file_bahan_sidang))
+                                    <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top">
+                                        @if(!empty($m->file_bahan_sidang))
+                                        <a href="{{ asset($m->file_bahan_sidang) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-download me-1"></i>Bahan Sidang
+                                        </a>
+                                        @endif
+                                        @if(!empty($bmed['file_rekam_medis']))
+                                        <a href="{{ asset($bmed['file_rekam_medis']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-medical me-1"></i>Resume Rekam Medis
+                                        </a>
+                                        @endif
+                                        @if(!empty($bmed['file_rujukan']))
+                                        <a href="{{ asset($bmed['file_rujukan']) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-hospital me-1"></i>Surat Rujukan Dokter/RSUD
+                                        </a>
+                                        @endif
+                                        @if(!empty($bmed['file_ba_upt']))
+                                        <a href="{{ asset($bmed['file_ba_upt']) }}" target="_blank" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-gavel me-1"></i>BA Sidang TPP UPT
+                                        </a>
+                                        @endif
+                                        @if(!empty($bmed['file_jaminan']))
+                                        <a href="{{ asset($bmed['file_jaminan']) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-shield-alt me-1"></i>Jaminan Pembiayaan Keluarga
+                                        </a>
+                                        @endif
+                                        @if(!empty($bmed['dokumen_tambahan']['file']))
+                                        <a href="{{ asset($bmed['dokumen_tambahan']['file']) }}" target="_blank" class="btn btn-outline-dark btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-paperclip me-1"></i>{{ $bmed['dokumen_tambahan']['nama'] ?? 'Dokumen Tambahan' }}
+                                        </a>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                                @elseif($m->isKlienBapas() && !empty($m->klien_data))
+                                @php 
+                                    $kdm = $m->klien_data; 
+                                @endphp
+                                <div class="p-2.5 bg-primary-subtle bg-opacity-25 rounded border border-primary border-opacity-50 mb-2 small">
+                                    <div class="d-flex align-items-center justify-content-between mb-1.5">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-primary text-white"><i class="fas fa-passport me-1"></i>Klien Pemasyarakatan</span>
+                                            <span class="fw-bold text-primary">{{ $kdm['nama_klien'] ?? '-' }} {{ !empty($kdm['bin']) ? 'BIN ' . strtoupper($kdm['bin']) : '' }}</span>
+                                        </div>
+                                        <span class="badge bg-light text-dark border">{{ $kdm['program_integrasi'] ?? 'PB' }}</span>
+                                    </div>
+                                    <div class="row g-2 small text-dark">
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Bapas Asal:</span> <b>{{ $kdm['bapas_nama'] ?? '-' }}</b><br>
+                                            <span class="text-muted">No. Register:</span> <code>{{ $kdm['no_register_bapas'] ?? '-' }}</code><br>
+                                            <span class="text-muted">PK Bapas:</span> <b>{{ $kdm['nama_pk'] ?? '-' }}</b>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Keperluan LN:</span> <b>{{ $kdm['keperluan_ln'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Negara Tujuan:</span> <b><i class="fas fa-plane text-primary me-1"></i>{{ $kdm['negara_tujuan'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Jadwal:</span> <b>{{ !empty($kdm['tgl_berangkat']) ? \Carbon\Carbon::parse($kdm['tgl_berangkat'])->format('d/m/Y') : '-' }} s/d {{ !empty($kdm['tgl_kembali']) ? \Carbon\Carbon::parse($kdm['tgl_kembali'])->format('d/m/Y') : '-' }} ({{ $kdm['durasi_hari'] ?? '-' }} Hari)</b>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <span class="text-muted">Penjamin:</span> <b>{{ $kdm['penjamin_nama'] ?? '-' }}</b> ({{ $kdm['penjamin_hubungan'] ?? '-' }})<br>
+                                            <span class="text-muted">Kontak/WA:</span> <b>{{ $kdm['penjamin_telepon'] ?? '-' }}</b><br>
+                                            <span class="text-muted">Surat Bapas:</span> {{ $kdm['nomor_surat_bapas'] ?? '-' }} ({{ !empty($kdm['tanggal_surat_bapas']) ? \Carbon\Carbon::parse($kdm['tanggal_surat_bapas'])->format('d/m/Y') : '-' }})
+                                        </div>
+                                    </div>
+                                    @if(!empty($kdm['file_litmas_bapas']) || !empty($kdm['file_surat_bapas']) || !empty($kdm['file_bukti_travel']) || !empty($kdm['file_surat_jaminan']) || !empty($kdm['dokumen_tambahan']['file']) || !empty($m->file_bahan_sidang))
+                                    <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top">
+                                        @if(!empty($m->file_bahan_sidang))
+                                        <a href="{{ asset($m->file_bahan_sidang) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-download me-1"></i>Bahan Sidang
+                                        </a>
+                                        @endif
+                                        @if(!empty($kdm['file_litmas_bapas']))
+                                        <a href="{{ asset($kdm['file_litmas_bapas']) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-pdf me-1"></i>Litmas Bapas
+                                        </a>
+                                        @endif
+                                        @if(!empty($kdm['file_surat_bapas']))
+                                        <a href="{{ asset($kdm['file_surat_bapas']) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-pdf me-1"></i>Surat Usulan Bapas
+                                        </a>
+                                        @endif
+                                        @if(!empty($kdm['file_bukti_travel']))
+                                        <a href="{{ asset($kdm['file_bukti_travel']) }}" target="_blank" class="btn btn-outline-info btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-ticket-alt me-1"></i>Bukti Tiket / Travel / RS
+                                        </a>
+                                        @endif
+                                        @if(!empty($kdm['file_surat_jaminan']))
+                                        <a href="{{ asset($kdm['file_surat_jaminan']) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-shield-alt me-1"></i>Surat Jaminan Penjamin
+                                        </a>
+                                        @endif
+                                        @if(!empty($kdm['dokumen_tambahan']['file']))
+                                        <a href="{{ asset($kdm['dokumen_tambahan']['file']) }}" target="_blank" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-paperclip me-1"></i>{{ $kdm['dokumen_tambahan']['nama'] ?? 'Dokumen Tambahan' }}
+                                        </a>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                                @else
+                                    @if(!empty($m->file_bahan_sidang) || !empty($m->dokumen_tambahan['file']))
+                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                        @if(!empty($m->file_bahan_sidang))
+                                        <a href="{{ asset($m->file_bahan_sidang) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-file-download me-1"></i>Unduh Bahan Sidang
+                                        </a>
+                                        @endif
+                                        @if(!empty($m->dokumen_tambahan['file']))
+                                        <a href="{{ asset($m->dokumen_tambahan['file']) }}" target="_blank" class="btn btn-outline-secondary btn-xs py-0.5 px-2" style="font-size: 11px;">
+                                            <i class="fas fa-paperclip me-1"></i>{{ $m->dokumen_tambahan['nama'] ?? 'Dokumen Tambahan' }}
+                                        </a>
+                                        @endif
+                                    </div>
+                                    @endif
+                                @endif
+
+                                @if($m->catatan_rekomendasi)
+                                <div class="p-2 bg-light rounded border small mb-2" style="font-size: 11.5px;">
+                                    <span class="text-muted fw-bold"><i class="fas fa-sticky-note text-warning me-1"></i>Catatan Rekomendasi Sidang:</span>
+                                    <span class="text-dark">{{ $m->catatan_rekomendasi }}</span>
+                                </div>
+                                @endif
+
+                                <!-- Rekap Pendapat Tim Anggota Sidang untuk Materi Ini -->
+                                @php
+                                    $pSetuju = $m->pendapats->where('status_pendapat', 'setuju')->count();
+                                    $pCatatan = $m->pendapats->where('status_pendapat', 'setuju_catatan')->count();
+                                    $pTunda = $m->pendapats->where('status_pendapat', 'tunda')->count();
+                                    $pTolak = $m->pendapats->where('status_pendapat', 'tolak')->count();
+                                    $notes = $m->pendapats->whereNotNull('catatan_pendapat')->where('catatan_pendapat', '!=', '');
+                                @endphp
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+                                    <div class="d-flex flex-wrap align-items-center gap-1.5" style="font-size: 10.5px;">
+                                        <span class="text-muted">Pendapat Tim:</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Setuju: {{ $pSetuju }}</span>
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle">Setuju Catatan: {{ $pCatatan }}</span>
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Tunda: {{ $pTunda }}</span>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Tolak: {{ $pTolak }}</span>
+                                    </div>
+                                    @if($notes->count() > 0)
+                                    <button class="btn btn-link btn-xs p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#notesMateri_{{ $m->id }}" style="font-size: 11px;">
+                                        <i class="fas fa-comments text-primary me-1"></i>Lihat {{ $notes->count() }} Catatan Khusus
+                                    </button>
+                                    @endif
+                                </div>
+
+                                @if($notes->count() > 0)
+                                <div class="collapse mt-2" id="notesMateri_{{ $m->id }}">
+                                    <div class="p-2.5 bg-light rounded border">
+                                        <div class="fw-bold small text-dark mb-1" style="font-size: 11px;"><i class="fas fa-user-edit text-primary me-1"></i>Catatan Khusus Anggota Sidang untuk Materi #{{ $m->urutan }}:</div>
+                                        @foreach($notes as $note)
+                                        <div class="border-bottom py-1 small" style="font-size: 11px;">
+                                            <b>{{ $note->anggota?->nama ?? 'Anggota' }}:</b>
+                                            <span class="text-secondary fst-italic">"{{ $note->catatan_pendapat }}"</span>
+                                            <span class="badge bg-light text-dark border ms-1" style="font-size: 9px;">{{ $note->status_pendapat_badge }}</span>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
-                    @endif
 
                     <div class="d-flex flex-wrap gap-4 small text-muted">
                         <div>
@@ -1046,6 +1426,94 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <label class="form-label fw-bold small text-dark">Kesimpulan / Rekomendasi Hasil Sidang</label>
                                 <textarea name="kesimpulan_sidang" class="form-control form-control-sm" rows="3">{{ old('kesimpulan_sidang', $sidang->kesimpulan_sidang) }}</textarea>
                             </div>
+
+                            @if($sidang->isMutasiNarapidana())
+                            @php 
+                                $nd = $sidang->narapidana_data ?? []; 
+                                $bMutasi = $nd['berkas'] ?? [];
+                            @endphp
+                            <div class="col-12 p-3 bg-light rounded border border-warning border-opacity-50">
+                                <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-exchange-alt text-warning-emphasis me-1"></i>Penyesuaian Usulan Mutasi Narapidana</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Rekomendasi UPT Tujuan Sidang</label>
+                                        <select name="upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-warning">
+                                            <option value="">-- Tetapkan / Ubah UPT Tujuan --</option>
+                                            @foreach($uptList as $u)
+                                            <option value="{{ $u->id }}" {{ old('upt_tujuan_rekomendasi_id', $sidang->upt_tujuan_rekomendasi_id) == $u->id ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Alasan Pemindahan</label>
+                                        <input type="text" name="mutasi_alasan" class="form-control form-control-sm" value="{{ old('mutasi_alasan', $nd['alasan_pemindahan'] ?? '') }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1">Penjamin Keluarga</label>
+                                        <input type="text" name="mutasi_penjamin_nama" class="form-control form-control-sm" value="{{ old('mutasi_penjamin_nama', $nd['penjamin_nama'] ?? '') }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1">Hubungan</label>
+                                        <input type="text" name="mutasi_penjamin_hubungan" class="form-control form-control-sm" value="{{ old('mutasi_penjamin_hubungan', $nd['penjamin_hubungan'] ?? '') }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted mb-1">Kontak/WA</label>
+                                        <input type="text" name="mutasi_penjamin_kontak" class="form-control form-control-sm" value="{{ old('mutasi_penjamin_kontak', $nd['penjamin_kontak'] ?? '') }}">
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <label class="form-label small fw-bold text-dark mb-1">Upload / Perbarui Dokumen Tambahan Lainnya</label>
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ old('dokumen_tambahan_nama', $bMutasi['dokumen_tambahan']['nama'] ?? '') }}" placeholder="Nama Dokumen Tambahan">
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
+                            @if($sidang->isIzinBerobat())
+                            @php 
+                                $nd = $sidang->narapidana_data ?? []; 
+                                $bMedis = $nd['berkas'] ?? [];
+                            @endphp
+                            <div class="col-12 p-3 bg-light rounded border border-danger border-opacity-50">
+                                <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-heartbeat text-danger me-1"></i>Penyesuaian Data Izin Berobat Keluar Kota</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Diagnosa Medis</label>
+                                        <input type="text" name="berobat_diagnosa" class="form-control form-control-sm" value="{{ old('berobat_diagnosa', $nd['diagnosa_medis'] ?? '') }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-dark mb-1">Dokter Penanggung Jawab</label>
+                                        <input type="text" name="berobat_dokter" class="form-control form-control-sm" value="{{ old('berobat_dokter', $nd['dokter_penanggung_jawab'] ?? '') }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1">RS Rujukan</label>
+                                        <input type="text" name="berobat_rs_nama" class="form-control form-control-sm" value="{{ old('berobat_rs_nama', $nd['rs_rujukan_nama'] ?? '') }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted mb-1">Kota RS</label>
+                                        <input type="text" name="berobat_rs_kota" class="form-control form-control-sm" value="{{ old('berobat_rs_kota', $nd['rs_rujukan_kota'] ?? '') }}">
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <label class="form-label small fw-bold text-dark mb-1">Upload / Perbarui Dokumen Tambahan Lainnya</label>
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ old('dokumen_tambahan_nama', $bMedis['dokumen_tambahan']['nama'] ?? '') }}" placeholder="Nama Dokumen Tambahan">
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-dark">Perbarui Berkas Bahan Rapat Sidang (Opsional, PDF/Word/Zip maks 15MB)</label>
                                 <input type="file" name="file_bahan_sidang" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
@@ -1067,9 +1535,855 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
     </div>
     @endif
 
-</div>
+    <!-- MODAL TAMBAH MATERI SIDANG -->
+    @if($sidang->canEdit(auth()->user()))
+    <div class="modal fade" id="modalTambahMateri" tabindex="-1" aria-labelledby="modalTambahMateriLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <form action="{{ route('sidang-tpp-kanwil.materi.store', $sidang->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header bg-primary text-white py-3 px-4">
+                        <h6 class="modal-title fw-bold" id="modalTambahMateriLabel">
+                            <i class="fas fa-plus-circle me-2"></i>Tambah Materi / Agenda Sidang Baru
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small fw-bold text-dark">Kategori Materi <span class="text-danger">*</span></label>
+                                <select name="kategori_materi" class="form-select form-select-sm" required onchange="switchModalMateriCategory('tambah', this.value)">
+                                    <option value="mutasi_narapidana">🏢 Mutasi Narapidana Antar-UPT</option>
+                                    <option value="mutasi_keinginan_sendiri">👤 Mutasi Permintaan Sendiri (Mendekati Keluarga)</option>
+                                    <option value="izin_berobat">🏥 Izin Berobat Keluar Kota</option>
+                                    <option value="klien_bapas">⚖️ Klien Pemasyarakatan (Bapas - Luar Negeri)</option>
+                                    <option value="lainnya">📋 Lainnya / Pembahasan Mandiri</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small fw-bold text-dark">Judul Materi / Pokok Agenda <span class="text-danger">*</span></label>
+                                <input type="text" name="judul_materi" id="tambah_judul_materi" class="form-control form-control-sm" required placeholder="Contoh: Permohonan Pemindahan WBP an. Budi Santoso">
+                            </div>
 
-@push('scripts')
+                            <!-- SUB-FORM: MUTASI NARAPIDANA -->
+                            <div id="boxTambahMutasi" class="col-12">
+                                <div class="p-3 bg-light rounded border border-warning border-opacity-50">
+                                    <div class="fw-bold text-warning-emphasis small mb-2"><i class="fas fa-exchange-alt me-1"></i>Data Usulan Mutasi Narapidana</div>
+                                    
+                                    <!-- Dropdown Usulan Mutasi UPT -->
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted mb-1">Tarik Usulan dari Modul Mutasi UPT (Opsional):</label>
+                                        <select name="mutasi_id" class="form-select form-select-sm" onchange="autoFillMutasiModal(this, 'tambah')">
+                                            <option value="">-- Pilih Usulan Mutasi UPT --</option>
+                                            @foreach($mutasiList as $mu)
+                                            <option value="{{ $mu->id }}"
+                                                data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
+                                                data-uptasal="{{ $mu->upt_asal_id }}"
+                                                data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                                data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
+                                                {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Narapidana / WBP <span class="text-danger">*</span></label>
+                                            <input type="text" name="mutasi_wbp_nama" id="tambah_mutasi_wbp_nama" class="form-control form-control-sm" placeholder="Nama narapidana">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nomor Register</label>
+                                            <input type="text" name="mutasi_nomor_register" class="form-control form-control-sm" placeholder="BI.124/2025">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Perkara / Pasal</label>
+                                            <input type="text" name="mutasi_perkara" class="form-control form-control-sm" placeholder="Narkotika Ps 114">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Lama Pidana</label>
+                                            <input type="text" name="mutasi_lama_pidana" class="form-control form-control-sm" placeholder="5 Tahun">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Asal</label>
+                                            <select name="mutasi_upt_asal_id" id="tambah_mutasi_upt_asal_id" class="form-select form-select-sm">
+                                                <option value="">-- Pilih UPT Asal --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
+                                            <select name="upt_tujuan_rekomendasi_id" id="tambah_upt_tujuan_rekomendasi_id" class="form-select form-select-sm">
+                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
+                                            <input type="text" name="mutasi_alasan" id="tambah_mutasi_alasan" class="form-control form-control-sm" placeholder="Keinginan sendiri mendekati keluarga">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Nama Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_nama" class="form-control form-control-sm" placeholder="Nama penjamin">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Hubungan Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_hubungan" class="form-control form-control-sm" placeholder="Istri / Orang Tua">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Kontak Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_kontak" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+                                        </div>
+
+                                        <!-- Unggah Berkas Mutasi -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-file-upload text-warning-emphasis me-1"></i>Unggah Berkas Mutasi (Opsional):</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Litmas Bapas</label>
+                                            <input type="file" name="file_mutasi_litmas" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Permohonan Sendiri/Keluarga</label>
+                                            <input type="file" name="file_mutasi_permohonan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Jaminan Keluarga</label>
+                                            <input type="file" name="file_mutasi_jaminan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Register F</label>
+                                            <input type="file" name="file_mutasi_reg_f" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Asesmen Risiko</label>
+                                            <input type="file" name="file_mutasi_asesmen" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUB-FORM: MUTASI PERMINTAAN SENDIRI -->
+                            <div id="boxTambahMutasiPribadi" class="col-12 d-none">
+                                <div class="p-3 bg-light rounded border" style="border-color: #6f42c1 !important;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-bold small" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Data Mutasi Permintaan Sendiri (Mendekati Keluarga & Biaya Mandiri)</div>
+                                        <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 10px;">Khusus Keinginan Sendiri</span>
+                                    </div>
+                                    <div class="alert alert-info py-1.5 px-2.5 mb-2.5 small" style="font-size: 11px;">
+                                        <i class="fas fa-info-circle me-1"></i>Dilengkapi surat pernyataan bermaterai kesanggupan biaya mandiri, Litmas PK Bapas, Berita Acara (BA) Sidang TPP UPT asal, dan jaminan keluarga.
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted mb-1">Tarik Usulan dari Modul Mutasi UPT (Opsional):</label>
+                                        <select name="mutasi_id" class="form-select form-select-sm" onchange="autoFillMutasiModal(this, 'tambah_pribadi')">
+                                            <option value="">-- Pilih Usulan Mutasi UPT --</option>
+                                            @foreach($mutasiList as $mu)
+                                            <option value="{{ $mu->id }}"
+                                                data-nama="{{ $mu->keterangan ? Str::limit($mu->keterangan, 50) : 'WBP Usulan Mutasi ' . ($mu->uptAsal?->nama_upt ?? '') }}"
+                                                data-uptasal="{{ $mu->upt_asal_id }}"
+                                                data-upttujuan="{{ $mu->upt_tujuan_id }}"
+                                                data-alasan="{{ $mu->kategori_mutasi ?? $mu->keterangan }}">
+                                                {{ $mu->nomor_surat }} &bull; {{ $mu->uptAsal?->nama_upt }} &rarr; {{ $mu->uptTujuan?->nama_upt ?? 'Belum Ditentukan' }} ({{ $mu->total_usulan }} Orang)
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Narapidana / WBP <span class="text-danger">*</span></label>
+                                            <input type="text" name="mutasi_wbp_nama" id="tambah_pribadi_mutasi_wbp_nama" class="form-control form-control-sm" placeholder="Nama narapidana">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nomor Register</label>
+                                            <input type="text" name="mutasi_nomor_register" class="form-control form-control-sm" placeholder="BI.124/2025">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Perkara / Pasal</label>
+                                            <input type="text" name="mutasi_perkara" class="form-control form-control-sm" placeholder="Narkotika Ps 114">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Lama Pidana</label>
+                                            <input type="text" name="mutasi_lama_pidana" class="form-control form-control-sm" placeholder="5 Tahun">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Asal</label>
+                                            <select name="mutasi_upt_asal_id" id="tambah_pribadi_mutasi_upt_asal_id" class="form-select form-select-sm">
+                                                <option value="">-- Pilih UPT Asal --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
+                                            <select name="upt_tujuan_rekomendasi_id" id="tambah_pribadi_upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-primary">
+                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
+                                            <input type="text" name="mutasi_alasan" id="tambah_pribadi_mutasi_alasan" class="form-control form-control-sm" value="Permintaan sendiri mendekati keluarga penjamin dengan kesanggupan pembiayaan mandiri">
+                                        </div>
+
+                                        <!-- PK Bapas & Litmas -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-balance-scale text-primary me-1"></i>Penelitian Kemasyarakatan (Litmas) & PK Bapas:</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Nama Petugas PK Bapas</label>
+                                            <input type="text" name="nama_pk_bapas" class="form-control form-control-sm" placeholder="Nama PK Bapas">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">NIP / Kontak PK</label>
+                                            <input type="text" name="nip_pk_bapas" class="form-control form-control-sm" placeholder="19850101...">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Bapas Asal</label>
+                                            <input type="text" name="bapas_nama" class="form-control form-control-sm" placeholder="Bapas Kelas I Serang">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Kesimpulan & Rekomendasi Litmas</label>
+                                            <input type="text" name="rekomendasi_litmas" class="form-control form-control-sm" placeholder="Dapat direkomendasikan pemindahan mendekati keluarga penjamin...">
+                                        </div>
+
+                                        <!-- BA Sidang TPP UPT -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-gavel text-warning-emphasis me-1"></i>Hasil Sidang TPP UPT Asal (Lapas/Rutan):</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Nomor Berita Acara (BA) UPT</label>
+                                            <input type="text" name="nomor_ba_tpp_upt" class="form-control form-control-sm" placeholder="W12.PAS.1.PK.01...">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Tanggal BA Sidang UPT</label>
+                                            <input type="date" name="tanggal_ba_tpp_upt" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Rekomendasi Sidang UPT</label>
+                                            <input type="text" name="rekomendasi_tpp_upt" class="form-control form-control-sm" placeholder="Disetujui untuk diusulkan ke Kanwil">
+                                        </div>
+
+                                        <!-- Penjamin -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-home text-success me-1"></i>Data Penjamin Keluarga:</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Nama Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_nama" class="form-control form-control-sm" placeholder="Nama penjamin">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">NIK KTP Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_nik" class="form-control form-control-sm" placeholder="367101...">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Hubungan</label>
+                                            <input type="text" name="mutasi_penjamin_hubungan" class="form-control form-control-sm" placeholder="Istri / Orang Tua">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Kontak Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_kontak" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Alamat Domisili Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_alamat" class="form-control form-control-sm" placeholder="Alamat lengkap domisili penjamin">
+                                        </div>
+
+                                        <!-- Berkas Khusus -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-file-upload text-primary me-1"></i>Unggah Berkas Persyaratan Khusus:</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-file-signature text-primary me-1"></i>Surat Pernyataan Mandiri Bermaterai (Biaya Sendiri)</label>
+                                            <input type="file" name="file_mutasi_pernyataan_pribadi" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-file-contract text-warning me-1"></i>Berita Acara (BA) Sidang TPP UPT Bertandatangan</label>
+                                            <input type="file" name="file_mutasi_ba_upt" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-file-pdf text-danger me-1"></i>Laporan Hasil Litmas Bapas</label>
+                                            <input type="file" name="file_mutasi_litmas" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-shield-alt text-success me-1"></i>Surat Jaminan Penjamin Keluarga (Bermaterai)</label>
+                                            <input type="file" name="file_mutasi_jaminan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-id-card text-info me-1"></i>KTP & Kartu Keluarga Penjamin</label>
+                                            <input type="file" name="file_mutasi_ktp_penjamin" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-book text-secondary me-1"></i>Buku Register F (Bebas Disiplin)</label>
+                                            <input type="file" name="file_mutasi_reg_f" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-heartbeat text-danger me-1"></i>Surat Kesehatan Dokter (Fit to Travel)</label>
+                                            <input type="file" name="file_mutasi_kesehatan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUB-FORM: IZIN BEROBAT KELUAR KOTA -->
+                            <div id="boxTambahBerobat" class="col-12 d-none">
+                                <div class="p-3 bg-light rounded border border-danger border-opacity-50">
+                                    <div class="fw-bold text-danger small mb-2"><i class="fas fa-heartbeat me-1"></i>Data Usulan Izin Berobat Keluar Kota</div>
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Lengkap Narapidana / Pasien <span class="text-danger">*</span></label>
+                                            <input type="text" name="berobat_wbp_nama" class="form-control form-control-sm" placeholder="Nama pasien">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nomor Register</label>
+                                            <input type="text" name="berobat_nomor_register" class="form-control form-control-sm" placeholder="Nomor register">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Asal Lapas/Rutan</label>
+                                            <select name="berobat_upt_asal_id" class="form-select form-select-sm">
+                                                <option value="">-- Pilih UPT Asal --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}">{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Perkara / Vonis</label>
+                                            <input type="text" name="berobat_perkara" class="form-control form-control-sm" placeholder="Perkara pidana">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Diagnosa Medis <span class="text-danger">*</span></label>
+                                            <input type="text" name="berobat_diagnosa" class="form-control form-control-sm" placeholder="Diagnosa dokter spesialis">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Dokter Spesialis</label>
+                                            <input type="text" name="berobat_dokter" class="form-control form-control-sm" placeholder="dr. Sp.B">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">RS Rujukan Luar Kota <span class="text-danger">*</span></label>
+                                            <input type="text" name="berobat_rs_nama" class="form-control form-control-sm" placeholder="RSUP RSCM Jakarta / RS Kanker Dharmais">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Kota RS</label>
+                                            <input type="text" name="berobat_rs_kota" class="form-control form-control-sm" placeholder="Jakarta Pusat">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nama Penjamin Keluarga</label>
+                                            <input type="text" name="berobat_penjamin_nama" class="form-control form-control-sm" placeholder="Nama penjamin">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Hubungan</label>
+                                            <input type="text" name="berobat_penjamin_hubungan" class="form-control form-control-sm" placeholder="Istri / Orang Tua">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">No Kontak / WA</label>
+                                            <input type="text" name="berobat_penjamin_kontak" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+                                        </div>
+
+                                        <!-- Unggah Berkas Medis -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-file-medical text-danger me-1"></i>Unggah Berkas Medis (Opsional):</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Resume Rekam Medis</label>
+                                            <input type="file" name="file_medis_rekam" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Surat Rujukan Dokter/RSUD</label>
+                                            <input type="file" name="file_medis_rujukan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">BA Sidang TPP UPT</label>
+                                            <input type="file" name="file_medis_ba_upt" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Jaminan Pembiayaan Keluarga</label>
+                                            <input type="file" name="file_medis_jaminan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUB-FORM: KLIEN BAPAS -->
+                            <div id="boxTambahKlien" class="col-12 d-none">
+                                <div class="p-3 bg-light rounded border border-primary border-opacity-50">
+                                    <div class="fw-bold text-primary small mb-2"><i class="fas fa-passport me-1"></i>Data Klien Bapas (Izin Bepergian ke Luar Negeri)</div>
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Lengkap Klien <span class="text-danger">*</span></label>
+                                            <input type="text" name="klien_nama" class="form-control form-control-sm" placeholder="Nama klien">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">BIN (Nama Ayah)</label>
+                                            <input type="text" name="klien_bin" class="form-control form-control-sm" placeholder="Nama ayah">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Nomor Register Bapas</label>
+                                            <input type="text" name="klien_no_register" class="form-control form-control-sm" placeholder="BPS-SRG/PB/2026/042">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Bapas Pembimbing</label>
+                                            <select name="klien_bapas_nama" class="form-select form-select-sm">
+                                                <option value="Balai Pemasyarakatan Kelas I Serang">Balai Pemasyarakatan Kelas I Serang</option>
+                                                <option value="Balai Pemasyarakatan Kelas II Ciangir">Balai Pemasyarakatan Kelas II Ciangir</option>
+                                                <option value="Balai Pemasyarakatan Lainnya">Balai Pemasyarakatan Lainnya</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Keperluan</label>
+                                            <input type="text" name="klien_keperluan_ln" class="form-control form-control-sm" value="Menjalankan Ibadah Umroh">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Negara Tujuan</label>
+                                            <input type="text" name="klien_negara_tujuan" class="form-control form-control-sm" value="Kerajaan Arab Saudi">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Program Integrasi</label>
+                                            <input type="text" name="klien_program" class="form-control form-control-sm" value="Pembebasan Bersyarat (PB)">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Tgl Berangkat</label>
+                                            <input type="date" name="klien_tgl_berangkat" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Tgl Kembali</label>
+                                            <input type="date" name="klien_tgl_kembali" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Durasi (Hari)</label>
+                                            <input type="number" name="klien_durasi_hari" class="form-control form-control-sm" value="14">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Nama Penjamin</label>
+                                            <input type="text" name="klien_penjamin_nama" class="form-control form-control-sm" placeholder="Nama penjamin">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Hubungan</label>
+                                            <input type="text" name="klien_penjamin_hubungan" class="form-control form-control-sm" placeholder="Istri / Orang Tua">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Kontak/WA</label>
+                                            <input type="text" name="klien_penjamin_telepon" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+                                        </div>
+
+                                        <!-- Unggah Berkas Klien -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-file-pdf text-primary me-1"></i>Unggah Berkas Klien (Opsional):</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Litmas Bapas</label>
+                                            <input type="file" name="file_litmas_bapas" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Surat Usulan Bapas</label>
+                                            <input type="file" name="file_surat_bapas" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Tiket / Jadwal Travel</label>
+                                            <input type="file" name="file_bukti_travel" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Surat Jaminan Penjamin</label>
+                                            <input type="file" name="file_surat_jaminan" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Deskripsi Pokok Bahasan -->
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-dark mb-1">Deskripsi / Uraian Pokok Pembahasan (Opsional)</label>
+                                <textarea name="deskripsi_materi" class="form-control form-control-sm" rows="2" placeholder="Uraikan dasar pertimbangan, latar belakang perkara, atau hal spesifik yang dibahas..."></textarea>
+                            </div>
+
+                            <!-- Dokumen Tambahan Lainnya -->
+                            <div class="col-12">
+                                <div class="p-2.5 bg-white rounded border">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        <i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya (Opsional)
+                                    </label>
+                                    <div class="row g-2">
+                                        <div class="col-md-5">
+                                            <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: KTP / Hasil Lab)">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Berkas Bahan Sidang -->
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-dark mb-1">Unggah File Bahan Sidang Materi Ini (PDF/Word/Excel/Zip)</label>
+                                <input type="file" name="file_bahan_sidang" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                            </div>
+
+                            <!-- Rekomendasi Sidang Langsung -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark mb-1">Status Rekomendasi Sidang (Opsional)</label>
+                                <select name="rekomendasi_sidang" class="form-select form-select-sm">
+                                    <option value="">-- Belum Diputuskan / Ditentukan Saat Sidang --</option>
+                                    <option value="setuju">Disetujui</option>
+                                    <option value="setuju_catatan">Disetujui Bersyarat (dg Catatan)</option>
+                                    <option value="tunda">Ditunda</option>
+                                    <option value="tolak">Ditolak</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark mb-1">Catatan Rekomendasi Sidang</label>
+                                <input type="text" name="catatan_rekomendasi" class="form-control form-control-sm" placeholder="Contoh: Disetujui dengan catatan wajib pengawalan ketat">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-2 px-4">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">
+                            <i class="fas fa-plus me-1"></i> Tambahkan Materi ke Sidang
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT MATERI (PER MATERI) -->
+    @foreach($sidang->materis as $m)
+    <div class="modal fade" id="modalEditMateri_{{ $m->id }}" tabindex="-1" aria-labelledby="modalEditMateriLabel_{{ $m->id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <form action="{{ route('sidang-tpp-kanwil.materi.update', [$sidang->id, $m->id]) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header bg-dark text-white py-3 px-4">
+                        <h6 class="modal-title fw-bold" id="modalEditMateriLabel_{{ $m->id }}">
+                            <i class="fas fa-edit me-2"></i>Edit Materi #{{ $m->urutan }} - {{ $m->judul_materi }}
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-5">
+                                <label class="form-label small fw-bold text-dark">Kategori Materi <span class="text-danger">*</span></label>
+                                <select name="kategori_materi" class="form-select form-select-sm" required onchange="switchModalMateriCategory('edit_{{ $m->id }}', this.value)">
+                                    <option value="mutasi_narapidana" {{ $m->kategori_materi == 'mutasi_narapidana' ? 'selected' : '' }}>🏢 Mutasi Narapidana Antar-UPT</option>
+                                    <option value="mutasi_keinginan_sendiri" {{ $m->kategori_materi == 'mutasi_keinginan_sendiri' ? 'selected' : '' }}>👤 Mutasi Permintaan Sendiri (Mendekati Keluarga)</option>
+                                    <option value="izin_berobat" {{ $m->kategori_materi == 'izin_berobat' ? 'selected' : '' }}>🏥 Izin Berobat Keluar Kota</option>
+                                    <option value="klien_bapas" {{ $m->kategori_materi == 'klien_bapas' ? 'selected' : '' }}>⚖️ Klien Pemasyarakatan (Bapas)</option>
+                                    <option value="lainnya" {{ $m->kategori_materi == 'lainnya' ? 'selected' : '' }}>📋 Lainnya / Pembahasan Mandiri</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-7">
+                                <label class="form-label small fw-bold text-dark">Judul Materi / Pokok Agenda <span class="text-danger">*</span></label>
+                                <input type="text" name="judul_materi" class="form-control form-control-sm" value="{{ old('judul_materi', $m->judul_materi) }}" required>
+                            </div>
+
+                            <!-- SUB-FORM EDIT: MUTASI -->
+                            @php
+                                $ndm = $m->narapidana_data ?? [];
+                                $bm = $ndm['berkas'] ?? [];
+                            @endphp
+                            <div id="boxEditMutasi_{{ $m->id }}" class="col-12 {{ $m->kategori_materi == 'mutasi_narapidana' ? '' : 'd-none' }}">
+                                <div class="p-3 bg-light rounded border border-warning border-opacity-50">
+                                    <div class="fw-bold text-warning-emphasis small mb-2"><i class="fas fa-exchange-alt me-1"></i>Data Mutasi Narapidana</div>
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Narapidana / WBP</label>
+                                            <input type="text" name="mutasi_wbp_nama" class="form-control form-control-sm" value="{{ $ndm['nama'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nomor Register</label>
+                                            <input type="text" name="mutasi_nomor_register" class="form-control form-control-sm" value="{{ $ndm['nomor_register'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Perkara / Pasal</label>
+                                            <input type="text" name="mutasi_perkara" class="form-control form-control-sm" value="{{ $ndm['tindak_pidana'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
+                                            <select name="upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-warning">
+                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}" {{ ($m->upt_tujuan_rekomendasi_id == $u->id || ($ndm['upt_tujuan_id'] ?? null) == $u->id) ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
+                                            <input type="text" name="mutasi_alasan" class="form-control form-control-sm" value="{{ $ndm['alasan_pemindahan'] ?? '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUB-FORM EDIT: MUTASI PERMINTAAN SENDIRI -->
+                            <div id="boxEditMutasiPribadi_{{ $m->id }}" class="col-12 {{ $m->kategori_materi == 'mutasi_keinginan_sendiri' ? '' : 'd-none' }}">
+                                <div class="p-3 bg-light rounded border" style="border-color: #6f42c1 !important;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-bold small" style="color: #6f42c1;"><i class="fas fa-user-friends me-1"></i>Data Mutasi Permintaan Sendiri (Mendekati Keluarga & Biaya Mandiri)</div>
+                                        <span class="badge text-white" style="background-color: #6f42c1 !important; font-size: 10px;">Khusus Keinginan Sendiri</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Narapidana / WBP</label>
+                                            <input type="text" name="mutasi_wbp_nama" class="form-control form-control-sm" value="{{ $ndm['nama'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Nomor Register</label>
+                                            <input type="text" name="mutasi_nomor_register" class="form-control form-control-sm" value="{{ $ndm['nomor_register'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Perkara / Pasal</label>
+                                            <input type="text" name="mutasi_perkara" class="form-control form-control-sm" value="{{ $ndm['tindak_pidana'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Lama Pidana</label>
+                                            <input type="text" name="mutasi_lama_pidana" class="form-control form-control-sm" value="{{ $ndm['lama_pidana'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Asal</label>
+                                            <select name="mutasi_upt_asal_id" class="form-select form-select-sm">
+                                                <option value="">-- Pilih UPT Asal --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}" {{ ($ndm['upt_asal_id'] ?? null) == $u->id ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang</label>
+                                            <select name="upt_tujuan_rekomendasi_id" class="form-select form-select-sm border-primary">
+                                                <option value="">-- Pilih Rekomendasi Tujuan --</option>
+                                                @foreach($uptList as $u)
+                                                <option value="{{ $u->id }}" {{ ($m->upt_tujuan_rekomendasi_id == $u->id || ($ndm['upt_tujuan_id'] ?? null) == $u->id) ? 'selected' : '' }}>{{ $u->nama_upt }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Alasan Pemindahan</label>
+                                            <input type="text" name="mutasi_alasan" class="form-control form-control-sm" value="{{ $ndm['alasan_pemindahan'] ?? '' }}">
+                                        </div>
+
+                                        <!-- PK Bapas & Litmas -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-balance-scale text-primary me-1"></i>Penelitian Kemasyarakatan (Litmas) & PK Bapas:</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Nama Petugas PK Bapas</label>
+                                            <input type="text" name="nama_pk_bapas" class="form-control form-control-sm" value="{{ $ndm['pk_bapas']['nama'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">NIP / Kontak PK</label>
+                                            <input type="text" name="nip_pk_bapas" class="form-control form-control-sm" value="{{ $ndm['pk_bapas']['nip'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Bapas Asal</label>
+                                            <input type="text" name="bapas_nama" class="form-control form-control-sm" value="{{ $ndm['pk_bapas']['bapas'] ?? '' }}">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Kesimpulan & Rekomendasi Litmas</label>
+                                            <input type="text" name="rekomendasi_litmas" class="form-control form-control-sm" value="{{ $ndm['pk_bapas']['rekomendasi'] ?? '' }}">
+                                        </div>
+
+                                        <!-- BA Sidang TPP UPT -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-gavel text-warning-emphasis me-1"></i>Hasil Sidang TPP UPT Asal (Lapas/Rutan):</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Nomor Berita Acara (BA) UPT</label>
+                                            <input type="text" name="nomor_ba_tpp_upt" class="form-control form-control-sm" value="{{ $ndm['tpp_upt']['nomor_ba'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Tanggal BA Sidang UPT</label>
+                                            <input type="date" name="tanggal_ba_tpp_upt" class="form-control form-control-sm" value="{{ $ndm['tpp_upt']['tanggal_ba'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1">Rekomendasi Sidang UPT</label>
+                                            <input type="text" name="rekomendasi_tpp_upt" class="form-control form-control-sm" value="{{ $ndm['tpp_upt']['rekomendasi'] ?? '' }}">
+                                        </div>
+
+                                        <!-- Penjamin -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-home text-success me-1"></i>Data Penjamin Keluarga:</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Nama Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_nama" class="form-control form-control-sm" value="{{ $ndm['penjamin']['nama'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">NIK KTP Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_nik" class="form-control form-control-sm" value="{{ $ndm['penjamin']['nik'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Hubungan</label>
+                                            <input type="text" name="mutasi_penjamin_hubungan" class="form-control form-control-sm" value="{{ $ndm['penjamin']['hubungan'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Kontak Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_kontak" class="form-control form-control-sm" value="{{ $ndm['penjamin']['telepon'] ?? '' }}">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Alamat Domisili Penjamin</label>
+                                            <input type="text" name="mutasi_penjamin_alamat" class="form-control form-control-sm" value="{{ $ndm['penjamin']['alamat'] ?? '' }}">
+                                        </div>
+
+                                        <!-- Berkas Khusus -->
+                                        <div class="col-12 mt-2 pt-2 border-top">
+                                            <span class="fw-bold small text-dark"><i class="fas fa-file-upload text-primary me-1"></i>Perbarui Berkas Persyaratan Khusus:</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-file-signature text-primary me-1"></i>Surat Pernyataan Mandiri Bermaterai</label>
+                                            <input type="file" name="file_mutasi_pernyataan_pribadi" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                            @if(!empty($bm['pernyataan_pribadi']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['pernyataan_pribadi']) }}" target="_blank">Lihat Dokumen</a></div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-file-contract text-warning me-1"></i>BA Sidang TPP UPT Bertandatangan</label>
+                                            <input type="file" name="file_mutasi_ba_upt" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                            @if(!empty($bm['ba_upt']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['ba_upt']) }}" target="_blank">Lihat BA TPP</a></div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-file-pdf text-danger me-1"></i>Laporan Hasil Litmas Bapas</label>
+                                            <input type="file" name="file_mutasi_litmas" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                            @if(!empty($bm['litmas']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['litmas']) }}" target="_blank">Lihat Litmas</a></div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-shield-alt text-success me-1"></i>Surat Jaminan Penjamin Keluarga</label>
+                                            <input type="file" name="file_mutasi_jaminan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                            @if(!empty($bm['surat_jaminan']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['surat_jaminan']) }}" target="_blank">Lihat Jaminan</a></div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-id-card text-info me-1"></i>KTP & Kartu Keluarga Penjamin</label>
+                                            <input type="file" name="file_mutasi_ktp_penjamin" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                            @if(!empty($bm['ktp_penjamin']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['ktp_penjamin']) }}" target="_blank">Lihat KTP/KK</a></div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-book text-secondary me-1"></i>Buku Register F (Bebas Disiplin)</label>
+                                            <input type="file" name="file_mutasi_reg_f" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.zip">
+                                            @if(!empty($bm['register_f']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['register_f']) }}" target="_blank">Lihat Register F</a></div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted mb-1"><i class="fas fa-heartbeat text-danger me-1"></i>Surat Kesehatan Dokter (Fit to Travel)</label>
+                                            <input type="file" name="file_mutasi_kesehatan" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                            @if(!empty($bm['kesehatan']))
+                                            <div class="small text-muted mt-0.5">Ada file: <a href="{{ asset($bm['kesehatan']) }}" target="_blank">Lihat Surat Dokter</a></div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUB-FORM EDIT: IZIN BEROBAT -->
+                            <div id="boxEditBerobat_{{ $m->id }}" class="col-12 {{ $m->kategori_materi == 'izin_berobat' ? '' : 'd-none' }}">
+                                <div class="p-3 bg-light rounded border border-danger border-opacity-50">
+                                    <div class="fw-bold text-danger small mb-2"><i class="fas fa-heartbeat me-1"></i>Data Izin Berobat Keluar Kota</div>
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1">Nama Narapidana / Pasien</label>
+                                            <input type="text" name="berobat_wbp_nama" class="form-control form-control-sm" value="{{ $ndm['nama'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small text-muted mb-1">Diagnosa Medis</label>
+                                            <input type="text" name="berobat_diagnosa" class="form-control form-control-sm" value="{{ $ndm['diagnosa_medis'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">Dokter Spesialis</label>
+                                            <input type="text" name="berobat_dokter" class="form-control form-control-sm" value="{{ $ndm['dokter_penanggung_jawab'] ?? '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small text-muted mb-1">RS Rujukan &amp; Kota</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" name="berobat_rs_nama" class="form-control" value="{{ $ndm['rs_rujukan_nama'] ?? '' }}" placeholder="RSUP RSCM">
+                                                <input type="text" name="berobat_rs_kota" class="form-control" value="{{ $ndm['rs_rujukan_kota'] ?? '' }}" placeholder="Jakarta">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-dark mb-1">Deskripsi / Uraian Pokok Materi</label>
+                                <textarea name="deskripsi_materi" class="form-control form-control-sm" rows="2">{{ old('deskripsi_materi', $m->deskripsi_materi) }}</textarea>
+                            </div>
+
+                            <!-- Dokumen Tambahan Lainnya -->
+                            <div class="col-12">
+                                <div class="p-2.5 bg-white rounded border">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        <i class="fas fa-plus-circle text-primary me-1"></i>Dokumen Tambahan Lainnya
+                                    </label>
+                                    @if(!empty($m->dokumen_tambahan['file']))
+                                    <div class="small mb-1 text-muted">
+                                        Berkas saat ini: <a href="{{ asset($m->dokumen_tambahan['file']) }}" target="_blank"><i class="fas fa-paperclip me-1"></i>{{ $m->dokumen_tambahan['nama'] ?? 'Dokumen Tambahan' }}</a>
+                                    </div>
+                                    @endif
+                                    <div class="row g-2">
+                                        <div class="col-md-5">
+                                            <input type="text" name="dokumen_tambahan_nama" class="form-control form-control-sm" value="{{ $m->dokumen_tambahan['nama'] ?? '' }}" placeholder="Nama Dokumen Tambahan">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <input type="file" name="dokumen_tambahan_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Berkas Bahan Sidang -->
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-dark mb-1">Perbarui File Bahan Sidang (PDF/Word/Excel/Zip)</label>
+                                <input type="file" name="file_bahan_sidang" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                                @if($m->file_bahan_sidang)
+                                <div class="small text-muted mt-1">Berkas saat ini: <a href="{{ asset($m->file_bahan_sidang) }}" target="_blank"><i class="fas fa-paperclip me-1"></i>Unduh Bahan Sidang</a></div>
+                                @endif
+                            </div>
+
+                            <!-- Rekomendasi Sidang -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark mb-1">Status Rekomendasi Sidang</label>
+                                <select name="rekomendasi_sidang" class="form-select form-select-sm">
+                                    <option value="" {{ empty($m->rekomendasi_sidang) ? 'selected' : '' }}>-- Belum Diputuskan --</option>
+                                    <option value="setuju" {{ $m->rekomendasi_sidang == 'setuju' ? 'selected' : '' }}>Disetujui</option>
+                                    <option value="setuju_catatan" {{ $m->rekomendasi_sidang == 'setuju_catatan' ? 'selected' : '' }}>Disetujui Bersyarat (dg Catatan)</option>
+                                    <option value="tunda" {{ $m->rekomendasi_sidang == 'tunda' ? 'selected' : '' }}>Ditunda</option>
+                                    <option value="tolak" {{ $m->rekomendasi_sidang == 'tolak' ? 'selected' : '' }}>Ditolak</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark mb-1">Catatan Rekomendasi Sidang</label>
+                                <input type="text" name="catatan_rekomendasi" class="form-control form-control-sm" value="{{ old('catatan_rekomendasi', $m->catatan_rekomendasi) }}" placeholder="Catatan hasil rekomendasi">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-2 px-4">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan Materi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endforeach
+    @endif
 <script>
     const CSRF_TOKEN = '{{ csrf_token() }}';
     const SIDANG_ID = {{ $sidang->id }};
@@ -1298,6 +2612,55 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
     document.addEventListener('DOMContentLoaded', () => {
         loadSavedValuesIntoForm('laporan');
     });
+
+    function switchModalMateriCategory(prefix, val) {
+        let boxMutasi, boxMutasiPribadi, boxBerobat, boxKlien;
+        if (prefix === 'tambah') {
+            boxMutasi = document.getElementById('boxTambahMutasi');
+            boxMutasiPribadi = document.getElementById('boxTambahMutasiPribadi');
+            boxBerobat = document.getElementById('boxTambahBerobat');
+            boxKlien = document.getElementById('boxTambahKlien');
+        } else {
+            const id = prefix.replace('edit_', '');
+            boxMutasi = document.getElementById('boxEditMutasi_' + id);
+            boxMutasiPribadi = document.getElementById('boxEditMutasiPribadi_' + id);
+            boxBerobat = document.getElementById('boxEditBerobat_' + id);
+            boxKlien = document.getElementById('boxEditKlien_' + id);
+        }
+        if (boxMutasi) boxMutasi.classList.add('d-none');
+        if (boxMutasiPribadi) boxMutasiPribadi.classList.add('d-none');
+        if (boxBerobat) boxBerobat.classList.add('d-none');
+        if (boxKlien) boxKlien.classList.add('d-none');
+
+        if (val === 'mutasi_narapidana' && boxMutasi) boxMutasi.classList.remove('d-none');
+        else if (val === 'mutasi_keinginan_sendiri' && boxMutasiPribadi) boxMutasiPribadi.classList.remove('d-none');
+        else if (val === 'izin_berobat' && boxBerobat) boxBerobat.classList.remove('d-none');
+        else if (val === 'klien_bapas' && boxKlien) boxKlien.classList.remove('d-none');
+    }
+
+    function autoFillMutasiModal(selectEl, prefix) {
+        const opt = selectEl.options[selectEl.selectedIndex];
+        if (!opt || !opt.value) return;
+        const nama = opt.getAttribute('data-nama') || '';
+        const uptAsal = opt.getAttribute('data-uptasal') || '';
+        const uptTujuan = opt.getAttribute('data-upttujuan') || '';
+        const alasan = opt.getAttribute('data-alasan') || '';
+        
+        const namaEl = document.getElementById(prefix + '_mutasi_wbp_nama');
+        const uptAsalEl = document.getElementById(prefix + '_mutasi_upt_asal_id');
+        const uptTujuanEl = document.getElementById(prefix + '_upt_tujuan_rekomendasi_id');
+        const alasanEl = document.getElementById(prefix + '_mutasi_alasan');
+        const modalEl = selectEl.closest('.modal');
+        const judulEl = modalEl ? modalEl.querySelector('input[name="judul_materi"]') : document.getElementById(prefix + '_judul_materi');
+
+        if (namaEl && nama) namaEl.value = nama;
+        if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
+        if (uptTujuanEl && uptTujuan) uptTujuanEl.value = uptTujuan;
+        if (alasanEl && alasan) alasanEl.value = alasan;
+        if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
+            judulEl.value = 'Usulan Pemindahan Narapidana an. ' + nama;
+        }
+    }
 
     function copyFormatGrupWa() {
         const text = document.getElementById('rawTeksGrupWa').value.trim();

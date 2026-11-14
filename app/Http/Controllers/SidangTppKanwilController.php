@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\KanwilPegawai;
+use App\Models\MutasiNarapidana;
 use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
+use App\Models\SidangTppKanwilMateri;
+use App\Models\SidangTppKanwilMateriPendapat;
 use App\Models\TppKanwilSetting;
+use App\Models\Upt;
 use App\Models\User;
 use App\Services\GeminiAiService;
 use App\Services\TppKanwilDokumenService;
@@ -128,6 +132,13 @@ class SidangTppKanwilController extends Controller
         $defaultSekretaris = $pegawaiList->firstWhere('peran_tpp', 'Sekretaris');
         $defaultAnggotaIds = $pegawaiList->where('peran_tpp', 'Anggota')->pluck('id')->toArray();
 
+        // Data integrasi usulan Mutasi Narapidana UPT & Daftar UPT se-Banten
+        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan'])
+            ->whereIn('status', ['diajukan', 'perlu_perbaikan'])
+            ->latest('tanggal_surat')
+            ->get();
+        $uptList = Upt::orderBy('nama_upt')->get();
+
         return view('sidang_tpp_kanwil.create', compact(
             'pegawaiList',
             'suggestedNomorSidang',
@@ -137,7 +148,9 @@ class SidangTppKanwilController extends Controller
             'setting',
             'defaultKetua',
             'defaultSekretaris',
-            'defaultAnggotaIds'
+            'defaultAnggotaIds',
+            'mutasiList',
+            'uptList'
         ));
     }
 
@@ -163,9 +176,13 @@ class SidangTppKanwilController extends Controller
             'tanggal_nota_dinas' => 'nullable|date',
             'nomor_risalah' => 'nullable|string|max:150',
             'nomor_laporan' => 'nullable|string|max:150',
-            'agenda_kategori' => 'required|string|max:100',
-            'agenda_judul' => 'required|string|max:255',
+            'agenda_kategori' => 'nullable|string|max:100',
+            'agenda_judul' => 'nullable|string|max:255',
             'agenda_deskripsi' => 'nullable|string',
+            'materis' => 'nullable|array',
+            'subjek_tipe' => 'nullable|string|in:umum,klien_umroh,mutasi_narapidana,izin_berobat',
+            'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             'ketua_id' => 'required|exists:kanwil_pegawai,id',
             'sekretaris_id' => 'required|exists:kanwil_pegawai,id',
@@ -192,7 +209,70 @@ class SidangTppKanwilController extends Controller
             'file_surat_bapas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
             'file_bukti_travel' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip|max:15360',
             'file_surat_jaminan' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip|max:15360',
+            // Field Khusus Mutasi Narapidana & Permintaan Sendiri
+            'mutasi_wbp_nama' => 'nullable|string|max:150',
+            'mutasi_nomor_register' => 'nullable|string|max:100',
+            'mutasi_perkara' => 'nullable|string|max:255',
+            'mutasi_lama_pidana' => 'nullable|string|max:100',
+            'mutasi_upt_asal_id' => 'nullable|exists:upt,id',
+            'mutasi_alasan' => 'nullable|string',
+            'nama_pk_bapas' => 'nullable|string|max:150',
+            'nip_pk_bapas' => 'nullable|string|max:50',
+            'bapas_nama' => 'nullable|string|max:150',
+            'rekomendasi_litmas' => 'nullable|string',
+            'nomor_ba_tpp_upt' => 'nullable|string|max:150',
+            'tanggal_ba_tpp_upt' => 'nullable|date',
+            'rekomendasi_tpp_upt' => 'nullable|string',
+            'mutasi_penjamin_nama' => 'nullable|string|max:150',
+            'mutasi_penjamin_nik' => 'nullable|string|max:30',
+            'mutasi_penjamin_hubungan' => 'nullable|string|max:100',
+            'mutasi_penjamin_alamat' => 'nullable|string|max:255',
+            'mutasi_penjamin_kontak' => 'nullable|string|max:50',
+            'file_mutasi_permohonan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_pernyataan_pribadi' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_ktp_penjamin' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_litmas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_reg_f' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_kesehatan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_asesmen' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            // Field Khusus Izin Berobat Keluar Kota
+            'berobat_wbp_nama' => 'nullable|string|max:150',
+            'berobat_nomor_register' => 'nullable|string|max:100',
+            'berobat_perkara' => 'nullable|string|max:255',
+            'berobat_upt_asal_id' => 'nullable|exists:upt,id',
+            'berobat_diagnosa' => 'nullable|string',
+            'berobat_dokter' => 'nullable|string|max:150',
+            'berobat_rs_nama' => 'nullable|string|max:150',
+            'berobat_rs_kota' => 'nullable|string|max:100',
+            'berobat_penjamin_nama' => 'nullable|string|max:150',
+            'berobat_penjamin_hubungan' => 'nullable|string|max:100',
+            'berobat_penjamin_kontak' => 'nullable|string|max:50',
+            'file_medis_rekam' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_medis_rujukan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_medis_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_medis_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            // Dokumen Tambahan Lainnya (Kustom)
+            'dokumen_tambahan_nama' => 'nullable|string|max:150',
+            'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
         ]);
+
+        $hasMateris = $request->filled('materis') && is_array($request->input('materis')) && count($request->input('materis')) > 0;
+        if (empty($validated['agenda_judul'])) {
+            if ($hasMateris) {
+                $firstMateriJudul = $request->input('materis.0.judul_materi');
+                $countMateris = count($request->input('materis'));
+                $validated['agenda_judul'] = $firstMateriJudul ?: ("Sidang Pembahasan {$countMateris} Agenda");
+            } else {
+                return back()->withInput()->withErrors(['agenda_judul' => 'Judul agenda atau minimal satu materi sidang wajib diisi.']);
+            }
+        }
+        if (empty($validated['agenda_kategori'])) {
+            $validated['agenda_kategori'] = $hasMateris
+                ? (str_replace('_', ' ', ucwords($request->input('materis.0.kategori_materi', 'Multi-Agenda'))))
+                : 'Umum';
+        }
 
         $ketua = KanwilPegawai::findOrFail($request->ketua_id);
         $sekretaris = KanwilPegawai::findOrFail($request->sekretaris_id);
@@ -209,12 +289,44 @@ class SidangTppKanwilController extends Controller
             $fileBahanPath = 'uploads/sidang_tpp_kanwil/bahan/'.$filename;
         }
 
-        $isKlienBapas = $request->boolean('is_klien_bapas')
+        $subjekTipe = $request->input('subjek_tipe');
+        if (empty($subjekTipe)) {
+            $katLower = strtolower($request->agenda_kategori ?? '');
+            if (str_contains($katLower, 'sendiri') || str_contains($katLower, 'pribadi')) {
+                $subjekTipe = 'mutasi_keinginan_sendiri';
+            } elseif ($request->filled('mutasi_id') || str_contains($katLower, 'mutasi')) {
+                $subjekTipe = 'mutasi_narapidana';
+            } elseif (str_contains($katLower, 'berobat') && ! str_contains($katLower, 'klien')) {
+                $subjekTipe = 'izin_berobat';
+            } elseif ($request->boolean('is_klien_bapas') || str_contains($katLower, 'klien') || str_contains($katLower, 'luar negeri') || str_contains($katLower, 'umroh')) {
+                $subjekTipe = 'klien_umroh';
+            } else {
+                $subjekTipe = 'umum';
+            }
+        }
+
+        $isKlienBapas = $subjekTipe === 'klien_umroh'
+            || $request->boolean('is_klien_bapas')
             || str_contains(strtolower($request->agenda_kategori), 'klien')
             || str_contains(strtolower($request->agenda_kategori), 'luar negeri')
             || str_contains(strtolower($request->agenda_kategori), 'bapas')
-            || str_contains(strtolower($request->agenda_kategori), 'umroh')
-            || str_contains(strtolower($request->agenda_kategori), 'berobat');
+            || str_contains(strtolower($request->agenda_kategori), 'umroh');
+
+        $dirBerkas = public_path('uploads/sidang_tpp_kanwil/berkas');
+        if (! File::isDirectory($dirBerkas)) {
+            File::makeDirectory($dirBerkas, 0755, true, true);
+        }
+
+        $dokumenTambahan = null;
+        if ($request->hasFile('dokumen_tambahan_file')) {
+            $f = $request->file('dokumen_tambahan_file');
+            $fn = 'tambahan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirBerkas, $fn);
+            $dokumenTambahan = [
+                'nama' => $request->input('dokumen_tambahan_nama', 'Dokumen Tambahan'),
+                'file' => 'uploads/sidang_tpp_kanwil/berkas/'.$fn,
+            ];
+        }
 
         $klienData = null;
         if ($isKlienBapas) {
@@ -276,6 +388,201 @@ class SidangTppKanwilController extends Controller
                 'file_surat_bapas' => $suratBapasPath,
                 'file_bukti_travel' => $buktiTravelPath,
                 'file_surat_jaminan' => $suratJaminanPath,
+                'dokumen_tambahan' => $dokumenTambahan,
+            ];
+        }
+
+        $narapidanaData = null;
+        if ($subjekTipe === 'mutasi_narapidana' || $subjekTipe === 'mutasi_keinginan_sendiri') {
+            $filePermohonan = null;
+            if ($request->hasFile('file_mutasi_permohonan')) {
+                $f = $request->file('file_mutasi_permohonan');
+                $fn = 'mutasi_permohonan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $filePermohonan = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $filePernyataanPribadi = null;
+            if ($request->hasFile('file_mutasi_pernyataan_pribadi')) {
+                $f = $request->file('file_mutasi_pernyataan_pribadi');
+                $fn = 'mutasi_pernyataan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $filePernyataanPribadi = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileBaUpt = null;
+            if ($request->hasFile('file_mutasi_ba_upt')) {
+                $f = $request->file('file_mutasi_ba_upt');
+                $fn = 'mutasi_ba_upt_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileBaUpt = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileJaminan = null;
+            if ($request->hasFile('file_mutasi_jaminan')) {
+                $f = $request->file('file_mutasi_jaminan');
+                $fn = 'mutasi_jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileJaminan = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileKtpPenjamin = null;
+            if ($request->hasFile('file_mutasi_ktp_penjamin')) {
+                $f = $request->file('file_mutasi_ktp_penjamin');
+                $fn = 'mutasi_ktp_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileKtpPenjamin = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileLitmas = null;
+            if ($request->hasFile('file_mutasi_litmas')) {
+                $f = $request->file('file_mutasi_litmas');
+                $fn = 'mutasi_litmas_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileLitmas = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileRegF = null;
+            if ($request->hasFile('file_mutasi_reg_f')) {
+                $f = $request->file('file_mutasi_reg_f');
+                $fn = 'mutasi_regf_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileRegF = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileKesehatan = null;
+            if ($request->hasFile('file_mutasi_kesehatan')) {
+                $f = $request->file('file_mutasi_kesehatan');
+                $fn = 'mutasi_kesehatan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileKesehatan = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileAsesmen = null;
+            if ($request->hasFile('file_mutasi_asesmen')) {
+                $f = $request->file('file_mutasi_asesmen');
+                $fn = 'mutasi_asesmen_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileAsesmen = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+
+            $uptAsalNama = null;
+            if ($request->filled('mutasi_upt_asal_id')) {
+                $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
+            }
+            $uptTujuanNama = null;
+            if ($request->filled('upt_tujuan_rekomendasi_id')) {
+                $uptTujuanNama = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
+            }
+
+            $narapidanaData = [
+                'nama' => $request->input('mutasi_wbp_nama', $request->agenda_judul),
+                'nomor_register' => $request->input('mutasi_nomor_register'),
+                'tindak_pidana' => $request->input('mutasi_perkara'),
+                'lama_pidana' => $request->input('mutasi_lama_pidana'),
+                'upt_asal_id' => $request->input('mutasi_upt_asal_id'),
+                'upt_asal_nama' => $uptAsalNama,
+                'upt_tujuan_id' => $request->input('upt_tujuan_rekomendasi_id'),
+                'upt_tujuan_nama' => $uptTujuanNama,
+                'alasan_pemindahan' => $request->input('mutasi_alasan', 'Keinginan sendiri mendekati keluarga'),
+                'nama_pk_bapas' => $request->input('nama_pk_bapas'),
+                'nip_pk_bapas' => $request->input('nip_pk_bapas'),
+                'bapas_nama' => $request->input('bapas_nama'),
+                'rekomendasi_litmas' => $request->input('rekomendasi_litmas'),
+                'pk_bapas' => [
+                    'nama' => $request->input('nama_pk_bapas'),
+                    'nip' => $request->input('nip_pk_bapas'),
+                    'bapas' => $request->input('bapas_nama'),
+                    'rekomendasi' => $request->input('rekomendasi_litmas'),
+                ],
+                'nomor_ba_tpp_upt' => $request->input('nomor_ba_tpp_upt'),
+                'tanggal_ba_tpp_upt' => $request->input('tanggal_ba_tpp_upt'),
+                'rekomendasi_tpp_upt' => $request->input('rekomendasi_tpp_upt'),
+                'tpp_upt' => [
+                    'nomor_ba' => $request->input('nomor_ba_tpp_upt'),
+                    'tanggal_ba' => $request->input('tanggal_ba_tpp_upt'),
+                    'rekomendasi' => $request->input('rekomendasi_tpp_upt'),
+                ],
+                'penjamin_nama' => $request->input('mutasi_penjamin_nama'),
+                'penjamin_nik' => $request->input('mutasi_penjamin_nik'),
+                'penjamin_hubungan' => $request->input('mutasi_penjamin_hubungan'),
+                'penjamin_alamat' => $request->input('mutasi_penjamin_alamat'),
+                'penjamin_kontak' => $request->input('mutasi_penjamin_kontak'),
+                'penjamin' => [
+                    'nama' => $request->input('mutasi_penjamin_nama'),
+                    'nik' => $request->input('mutasi_penjamin_nik'),
+                    'hubungan' => $request->input('mutasi_penjamin_hubungan'),
+                    'alamat' => $request->input('mutasi_penjamin_alamat'),
+                    'telepon' => $request->input('mutasi_penjamin_kontak'),
+                ],
+                'berkas' => [
+                    'file_permohonan' => $filePermohonan,
+                    'file_pernyataan_pribadi' => $filePernyataanPribadi,
+                    'pernyataan_pribadi' => $filePernyataanPribadi,
+                    'file_ba_upt' => $fileBaUpt,
+                    'ba_upt' => $fileBaUpt,
+                    'file_jaminan' => $fileJaminan,
+                    'surat_jaminan' => $fileJaminan,
+                    'file_ktp_penjamin' => $fileKtpPenjamin,
+                    'ktp_penjamin' => $fileKtpPenjamin,
+                    'file_litmas' => $fileLitmas,
+                    'litmas' => $fileLitmas,
+                    'file_reg_f' => $fileRegF,
+                    'register_f' => $fileRegF,
+                    'file_kesehatan' => $fileKesehatan,
+                    'kesehatan' => $fileKesehatan,
+                    'file_asesmen' => $fileAsesmen,
+                    'asesmen' => $fileAsesmen,
+                    'dokumen_tambahan' => $dokumenTambahan,
+                ],
+            ];
+        } elseif ($subjekTipe === 'izin_berobat') {
+            $fileRekam = null;
+            if ($request->hasFile('file_medis_rekam')) {
+                $f = $request->file('file_medis_rekam');
+                $fn = 'medis_rekam_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileRekam = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileRujukan = null;
+            if ($request->hasFile('file_medis_rujukan')) {
+                $f = $request->file('file_medis_rujukan');
+                $fn = 'medis_rujukan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileRujukan = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileMedisJaminan = null;
+            if ($request->hasFile('file_medis_jaminan')) {
+                $f = $request->file('file_medis_jaminan');
+                $fn = 'medis_jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileMedisJaminan = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            $fileBaUpt = null;
+            if ($request->hasFile('file_medis_ba_upt')) {
+                $f = $request->file('file_medis_ba_upt');
+                $fn = 'medis_ba_upt_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $fileBaUpt = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+
+            $uptAsalNama = null;
+            if ($request->filled('berobat_upt_asal_id')) {
+                $uptAsalNama = Upt::find($request->berobat_upt_asal_id)?->nama_upt;
+            }
+
+            $narapidanaData = [
+                'nama' => $request->input('berobat_wbp_nama', $request->agenda_judul),
+                'nomor_register' => $request->input('berobat_nomor_register'),
+                'tindak_pidana' => $request->input('berobat_perkara'),
+                'upt_asal_id' => $request->input('berobat_upt_asal_id'),
+                'upt_asal_nama' => $uptAsalNama,
+                'diagnosa_medis' => $request->input('berobat_diagnosa'),
+                'dokter_penanggung_jawab' => $request->input('berobat_dokter'),
+                'rs_rujukan_nama' => $request->input('berobat_rs_nama'),
+                'rs_rujukan_kota' => $request->input('berobat_rs_kota'),
+                'penjamin_nama' => $request->input('berobat_penjamin_nama'),
+                'penjamin_hubungan' => $request->input('berobat_penjamin_hubungan'),
+                'penjamin_kontak' => $request->input('berobat_penjamin_kontak'),
+                'berkas' => [
+                    'file_rekam_medis' => $fileRekam,
+                    'file_rujukan' => $fileRujukan,
+                    'file_jaminan' => $fileMedisJaminan,
+                    'file_ba_upt' => $fileBaUpt,
+                    'dokumen_tambahan' => $dokumenTambahan,
+                ],
             ];
         }
 
@@ -287,21 +594,25 @@ class SidangTppKanwilController extends Controller
             'nomor_sidang' => $validated['nomor_sidang'],
             'tanggal_sidang' => $validated['tanggal_sidang'],
             'jam_mulai' => $validated['jam_mulai'],
-            'jam_selesai' => $validated['jam_selesai'],
+            'jam_selesai' => $validated['jam_selesai'] ?? null,
             'tempat' => $validated['tempat'],
             'metode' => $validated['metode'],
-            'link_daring' => $validated['link_daring'],
-            'meeting_id' => $validated['meeting_id'],
-            'passcode' => $validated['passcode'],
-            'nomor_nota_dinas' => $validated['nomor_nota_dinas'],
-            'tanggal_nota_dinas' => $validated['tanggal_nota_dinas'],
+            'link_daring' => $validated['link_daring'] ?? null,
+            'meeting_id' => $validated['meeting_id'] ?? null,
+            'passcode' => $validated['passcode'] ?? null,
+            'nomor_nota_dinas' => $validated['nomor_nota_dinas'] ?? null,
+            'tanggal_nota_dinas' => $validated['tanggal_nota_dinas'] ?? null,
             'nomor_risalah' => $nomorRisalah,
             'nomor_laporan' => $nomorLaporan,
             'agenda_kategori' => $validated['agenda_kategori'],
             'agenda_judul' => $validated['agenda_judul'],
-            'agenda_deskripsi' => $validated['agenda_deskripsi'],
+            'agenda_deskripsi' => $validated['agenda_deskripsi'] ?? null,
+            'subjek_tipe' => $subjekTipe,
+            'mutasi_id' => $request->mutasi_id,
+            'upt_tujuan_rekomendasi_id' => $request->upt_tujuan_rekomendasi_id,
             'is_klien_bapas' => $isKlienBapas,
             'klien_data' => $klienData,
+            'narapidana_data' => $narapidanaData,
             'file_bahan_sidang' => $fileBahanPath,
             'ketua_id' => $ketua->id,
             'ketua_nama' => $ketua->nama,
@@ -362,6 +673,211 @@ class SidangTppKanwilController extends Controller
 
         $sidang->recalculateStats();
 
+        // Simpan daftar materi sidang jika dikirimkan sebagai array materi
+        if ($request->filled('materis') && is_array($request->input('materis'))) {
+            foreach ($request->input('materis') as $idx => $mVal) {
+                if (empty($mVal['judul_materi'])) {
+                    continue;
+                }
+
+                $mKategori = $mVal['kategori_materi'] ?? 'lainnya';
+                $mBahanPath = null;
+                if ($request->hasFile("materis.{$idx}.file_bahan_sidang")) {
+                    $dirBahan = public_path('uploads/sidang_tpp_kanwil/bahan');
+                    if (! File::isDirectory($dirBahan)) {
+                        File::makeDirectory($dirBahan, 0755, true, true);
+                    }
+                    $f = $request->file("materis.{$idx}.file_bahan_sidang");
+                    $fn = 'bahan_materi_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                    $f->move($dirBahan, $fn);
+                    $mBahanPath = 'uploads/sidang_tpp_kanwil/bahan/'.$fn;
+                }
+
+                $mDokumenTambahan = null;
+                if ($request->hasFile("materis.{$idx}.dokumen_tambahan_file")) {
+                    $f = $request->file("materis.{$idx}.dokumen_tambahan_file");
+                    $fn = 'tambahan_materi_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                    $f->move($dirBerkas, $fn);
+                    $mDokumenTambahan = [
+                        'nama' => $mVal['dokumen_tambahan_nama'] ?? 'Dokumen Tambahan',
+                        'file' => 'uploads/sidang_tpp_kanwil/berkas/'.$fn,
+                    ];
+                }
+
+                $mNarapidanaData = null;
+                $mKlienData = null;
+
+                if ($mKategori === 'mutasi_narapidana' || $mKategori === 'mutasi_keinginan_sendiri') {
+                    $berkasMutasi = [];
+                    foreach (['file_mutasi_permohonan', 'file_mutasi_pernyataan_pribadi', 'file_mutasi_ba_upt', 'file_mutasi_jaminan', 'file_mutasi_ktp_penjamin', 'file_mutasi_litmas', 'file_mutasi_reg_f', 'file_mutasi_kesehatan', 'file_mutasi_asesmen'] as $fField) {
+                        if ($request->hasFile("materis.{$idx}.{$fField}")) {
+                            $f = $request->file("materis.{$idx}.{$fField}");
+                            $fn = str_replace('file_mutasi_', '', $fField).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                            $f->move($dirBerkas, $fn);
+                            $berkasMutasi[str_replace('file_mutasi_', 'file_', $fField)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                            $berkasMutasi[str_replace('file_mutasi_', '', $fField)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                        }
+                    }
+                    if ($mDokumenTambahan) {
+                        $berkasMutasi['dokumen_tambahan'] = $mDokumenTambahan;
+                    }
+
+                    $uptAsalNama = ! empty($mVal['mutasi_upt_asal_id']) ? Upt::find($mVal['mutasi_upt_asal_id'])?->nama_upt : null;
+                    $uptTujuanNama = ! empty($mVal['upt_tujuan_rekomendasi_id']) ? Upt::find($mVal['upt_tujuan_rekomendasi_id'])?->nama_upt : null;
+
+                    $mNarapidanaData = [
+                        'nama' => $mVal['mutasi_wbp_nama'] ?? $mVal['judul_materi'],
+                        'nomor_register' => $mVal['mutasi_nomor_register'] ?? null,
+                        'tindak_pidana' => $mVal['mutasi_perkara'] ?? null,
+                        'lama_pidana' => $mVal['mutasi_lama_pidana'] ?? null,
+                        'upt_asal_id' => $mVal['mutasi_upt_asal_id'] ?? null,
+                        'upt_asal_nama' => $uptAsalNama,
+                        'upt_tujuan_id' => $mVal['upt_tujuan_rekomendasi_id'] ?? null,
+                        'upt_tujuan_nama' => $uptTujuanNama,
+                        'alasan_pemindahan' => $mVal['mutasi_alasan'] ?? null,
+                        'nama_pk_bapas' => $mVal['nama_pk_bapas'] ?? null,
+                        'nip_pk_bapas' => $mVal['nip_pk_bapas'] ?? null,
+                        'bapas_nama' => $mVal['bapas_nama'] ?? null,
+                        'rekomendasi_litmas' => $mVal['rekomendasi_litmas'] ?? null,
+                        'pk_bapas' => [
+                            'nama' => $mVal['nama_pk_bapas'] ?? null,
+                            'nip' => $mVal['nip_pk_bapas'] ?? null,
+                            'bapas' => $mVal['bapas_nama'] ?? null,
+                            'rekomendasi' => $mVal['rekomendasi_litmas'] ?? null,
+                        ],
+                        'nomor_ba_tpp_upt' => $mVal['nomor_ba_tpp_upt'] ?? null,
+                        'tanggal_ba_tpp_upt' => $mVal['tanggal_ba_tpp_upt'] ?? null,
+                        'rekomendasi_tpp_upt' => $mVal['rekomendasi_tpp_upt'] ?? null,
+                        'tpp_upt' => [
+                            'nomor_ba' => $mVal['nomor_ba_tpp_upt'] ?? null,
+                            'tanggal_ba' => $mVal['tanggal_ba_tpp_upt'] ?? null,
+                            'rekomendasi' => $mVal['rekomendasi_tpp_upt'] ?? null,
+                        ],
+                        'penjamin_nama' => $mVal['mutasi_penjamin_nama'] ?? null,
+                        'penjamin_nik' => $mVal['mutasi_penjamin_nik'] ?? null,
+                        'penjamin_hubungan' => $mVal['mutasi_penjamin_hubungan'] ?? null,
+                        'penjamin_alamat' => $mVal['mutasi_penjamin_alamat'] ?? null,
+                        'penjamin_kontak' => $mVal['mutasi_penjamin_kontak'] ?? null,
+                        'penjamin' => [
+                            'nama' => $mVal['mutasi_penjamin_nama'] ?? null,
+                            'nik' => $mVal['mutasi_penjamin_nik'] ?? null,
+                            'hubungan' => $mVal['mutasi_penjamin_hubungan'] ?? null,
+                            'alamat' => $mVal['mutasi_penjamin_alamat'] ?? null,
+                            'telepon' => $mVal['mutasi_penjamin_kontak'] ?? null,
+                        ],
+                        'berkas' => $berkasMutasi,
+                    ];
+                } elseif ($mKategori === 'izin_berobat') {
+                    $berkasMedis = [];
+                    foreach (['file_medis_rekam', 'file_medis_rujukan', 'file_medis_jaminan', 'file_medis_ba_upt'] as $fField) {
+                        if ($request->hasFile("materis.{$idx}.{$fField}")) {
+                            $f = $request->file("materis.{$idx}.{$fField}");
+                            $fn = str_replace('file_medis_', 'medis_', $fField).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                            $f->move($dirBerkas, $fn);
+                            $berkasMedis[str_replace('file_medis_', 'file_', $fField)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                        }
+                    }
+                    if ($mDokumenTambahan) {
+                        $berkasMedis['dokumen_tambahan'] = $mDokumenTambahan;
+                    }
+
+                    $uptAsalNama = ! empty($mVal['berobat_upt_asal_id']) ? Upt::find($mVal['berobat_upt_asal_id'])?->nama_upt : null;
+
+                    $mNarapidanaData = [
+                        'nama' => $mVal['berobat_wbp_nama'] ?? $mVal['judul_materi'],
+                        'nomor_register' => $mVal['berobat_nomor_register'] ?? null,
+                        'tindak_pidana' => $mVal['berobat_perkara'] ?? null,
+                        'upt_asal_id' => $mVal['berobat_upt_asal_id'] ?? null,
+                        'upt_asal_nama' => $uptAsalNama,
+                        'diagnosa_medis' => $mVal['berobat_diagnosa'] ?? null,
+                        'dokter_penanggung_jawab' => $mVal['berobat_dokter'] ?? null,
+                        'rs_rujukan_nama' => $mVal['berobat_rs_nama'] ?? null,
+                        'rs_rujukan_kota' => $mVal['berobat_rs_kota'] ?? null,
+                        'penjamin_nama' => $mVal['berobat_penjamin_nama'] ?? null,
+                        'penjamin_hubungan' => $mVal['berobat_penjamin_hubungan'] ?? null,
+                        'penjamin_kontak' => $mVal['berobat_penjamin_kontak'] ?? null,
+                        'berkas' => $berkasMedis,
+                    ];
+                } elseif ($mKategori === 'klien_bapas') {
+                    $berkasKlien = [];
+                    foreach (['file_litmas_bapas', 'file_surat_bapas', 'file_bukti_travel', 'file_surat_jaminan'] as $fField) {
+                        if ($request->hasFile("materis.{$idx}.{$fField}")) {
+                            $f = $request->file("materis.{$idx}.{$fField}");
+                            $fn = str_replace('file_', 'klien_', $fField).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                            $f->move($dirBerkas, $fn);
+                            $berkasKlien[$fField] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                        }
+                    }
+                    if ($mDokumenTambahan) {
+                        $berkasKlien['dokumen_tambahan'] = $mDokumenTambahan;
+                    }
+
+                    $mKlienData = [
+                        'nama_klien' => $mVal['klien_nama'] ?? $mVal['judul_materi'],
+                        'bin' => $mVal['klien_bin'] ?? null,
+                        'no_register_bapas' => $mVal['klien_no_register'] ?? null,
+                        'bapas_nama' => $mVal['klien_bapas_nama'] ?? null,
+                        'nomor_surat_bapas' => $mVal['klien_nomor_surat_bapas'] ?? null,
+                        'tanggal_surat_bapas' => $mVal['klien_tanggal_surat_bapas'] ?? null,
+                        'nama_pk' => $mVal['klien_nama_pk'] ?? null,
+                        'program_integrasi' => $mVal['klien_program'] ?? null,
+                        'keperluan_ln' => $mVal['klien_keperluan_ln'] ?? null,
+                        'negara_tujuan' => $mVal['klien_negara_tujuan'] ?? null,
+                        'tgl_berangkat' => $mVal['klien_tgl_berangkat'] ?? null,
+                        'tgl_kembali' => $mVal['klien_tgl_kembali'] ?? null,
+                        'durasi_hari' => $mVal['klien_durasi_hari'] ?? null,
+                        'penjamin_nama' => $mVal['klien_penjamin_nama'] ?? null,
+                        'penjamin_hubungan' => $mVal['klien_penjamin_hubungan'] ?? null,
+                        'penjamin_telepon' => $mVal['klien_penjamin_telepon'] ?? null,
+                        'berkas' => $berkasKlien,
+                    ];
+                }
+
+                SidangTppKanwilMateri::create([
+                    'sidang_tpp_kanwil_id' => $sidang->id,
+                    'urutan' => $idx + 1,
+                    'kategori_materi' => $mKategori,
+                    'judul_materi' => $mVal['judul_materi'],
+                    'deskripsi_materi' => $mVal['deskripsi_materi'] ?? null,
+                    'mutasi_id' => ! empty($mVal['mutasi_id']) ? $mVal['mutasi_id'] : null,
+                    'upt_tujuan_rekomendasi_id' => ! empty($mVal['upt_tujuan_rekomendasi_id']) ? $mVal['upt_tujuan_rekomendasi_id'] : null,
+                    'narapidana_data' => $mNarapidanaData,
+                    'klien_data' => $mKlienData,
+                    'file_bahan_sidang' => $mBahanPath,
+                    'dokumen_tambahan' => $mDokumenTambahan,
+                ]);
+
+                if (! empty($mVal['mutasi_id'])) {
+                    MutasiNarapidana::find($mVal['mutasi_id'])?->update(['sidang_tpp_kanwil_id' => $sidang->id]);
+                }
+            }
+        } else {
+            // Fallback / single materi dari input form utama
+            SidangTppKanwilMateri::create([
+                'sidang_tpp_kanwil_id' => $sidang->id,
+                'urutan' => 1,
+                'kategori_materi' => $subjekTipe,
+                'judul_materi' => $validated['agenda_judul'],
+                'deskripsi_materi' => $validated['agenda_deskripsi'] ?? null,
+                'mutasi_id' => $request->mutasi_id,
+                'upt_tujuan_rekomendasi_id' => $request->upt_tujuan_rekomendasi_id,
+                'narapidana_data' => $narapidanaData,
+                'klien_data' => $klienData,
+                'file_bahan_sidang' => $fileBahanPath,
+                'dokumen_tambahan' => $dokumenTambahan,
+            ]);
+        }
+
+        // Hubungkan usulan mutasi UPT jika ada
+        if (! empty($sidang->mutasi_id)) {
+            $mutasiToLink = MutasiNarapidana::find($sidang->mutasi_id);
+            if ($mutasiToLink) {
+                $mutasiToLink->update([
+                    'sidang_tpp_kanwil_id' => $sidang->id,
+                ]);
+            }
+        }
+
         ActivityLog::record(
             'create',
             'Sidang TPP Kanwil',
@@ -382,12 +898,8 @@ class SidangTppKanwilController extends Controller
             return $pegawai->no_wa;
         }
 
-        // Cari user yang NIP-nya sama atau namanya sama
-        $user = User::where(function ($q) use ($pegawai) {
-            if (! empty($pegawai->nip)) {
-                $q->where('nip', $pegawai->nip);
-            }
-        })->orWhere('nama_lengkap', $pegawai->nama)->first();
+        // Cari user yang namanya sama
+        $user = User::where('nama_lengkap', $pegawai->nama)->first();
 
         return $user?->no_wa ?? null;
     }
@@ -399,7 +911,13 @@ class SidangTppKanwilController extends Controller
     {
         $this->checkKanwilAccess();
 
-        $sidang = SidangTppKanwil::with(['anggota.pegawai', 'creator'])->findOrFail($id);
+        $sidang = SidangTppKanwil::with([
+            'anggota.pegawai',
+            'materis.mutasi.uptAsal',
+            'materis.uptTujuanRekomendasi',
+            'materis.pendapats.anggota',
+            'creator',
+        ])->findOrFail($id);
         $sidang->recalculateStats();
 
         $anggotaList = $sidang->anggota;
@@ -408,13 +926,21 @@ class SidangTppKanwilController extends Controller
         $totalSudahPendapat = $anggotaList->where('status_pendapat', '!=', 'belum_mengisi')->count();
         $totalWaTerkirim = $anggotaList->where('wa_sent_status', 'terkirim')->count();
 
+        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan'])
+            ->whereIn('status', ['diajukan', 'perlu_perbaikan'])
+            ->latest('tanggal_surat')
+            ->get();
+        $uptList = Upt::orderBy('nama_upt')->get();
+
         return view('sidang_tpp_kanwil.show', compact(
             'sidang',
             'anggotaList',
             'totalAnggota',
             'totalHadir',
             'totalSudahPendapat',
-            'totalWaTerkirim'
+            'totalWaTerkirim',
+            'mutasiList',
+            'uptList'
         ));
     }
 
@@ -501,32 +1027,91 @@ class SidangTppKanwilController extends Controller
      */
     public function portalAnggota(string $token): View
     {
-        $anggota = SidangTppKanwilAnggota::with('sidangKanwil')->where('token_akses', $token)->firstOrFail();
+        $anggota = SidangTppKanwilAnggota::with([
+            'sidangKanwil.materis.mutasi.uptAsal',
+            'sidangKanwil.materis.uptTujuanRekomendasi',
+            'materiPendapats',
+        ])->where('token_akses', $token)->firstOrFail();
         $sidang = $anggota->sidangKanwil;
 
         return view('sidang_tpp_kanwil.portal_anggota', compact('anggota', 'sidang'));
     }
 
     /**
-     * Simpan Konfirmasi Presensi & Pendapat dari Portal Anggota.
+     * Simpan Konfirmasi Presensi & Pendapat dari Portal Anggota (termasuk catatan khusus per materi).
      */
     public function submitPortalAnggota(Request $request, string $token): RedirectResponse
     {
-        $anggota = SidangTppKanwilAnggota::with('sidangKanwil')->where('token_akses', $token)->firstOrFail();
+        $anggota = SidangTppKanwilAnggota::with('sidangKanwil.materis')->where('token_akses', $token)->firstOrFail();
 
         $validated = $request->validate([
             'status_kehadiran' => 'required|in:hadir_luring,hadir_daring,izin,sakit,tidak_hadir',
             'keterangan_kehadiran' => 'nullable|string|max:255',
-            'status_pendapat' => 'required|in:setuju,setuju_catatan,tolak,tunda',
+            'status_pendapat' => 'nullable|in:setuju,setuju_catatan,tolak,tunda',
             'catatan_pendapat' => 'nullable|string',
+            'materi_pendapat' => 'nullable|array',
+            'materi_pendapat.*.status' => 'nullable|in:setuju,setuju_catatan,tolak,tunda',
+            'materi_pendapat.*.catatan' => 'nullable|string',
         ]);
+
+        $hasTolak = false;
+        $hasCatatan = false;
+        $hasTunda = false;
+        $hasSetuju = false;
+
+        // Simpan pendapat dan catatan khusus per materi sidang
+        if ($request->has('materi_pendapat') && is_array($request->input('materi_pendapat'))) {
+            foreach ($request->input('materi_pendapat') as $materiId => $mVal) {
+                $statusP = $mVal['status'] ?? null;
+                $catatanP = $mVal['catatan'] ?? null;
+
+                if (! empty($statusP)) {
+                    SidangTppKanwilMateriPendapat::updateOrCreate(
+                        [
+                            'sidang_tpp_kanwil_materi_id' => (int) $materiId,
+                            'sidang_tpp_kanwil_anggota_id' => $anggota->id,
+                        ],
+                        [
+                            'status_pendapat' => $statusP,
+                            'catatan_pendapat' => $catatanP,
+                        ]
+                    );
+
+                    if ($statusP === 'tolak') {
+                        $hasTolak = true;
+                    } elseif ($statusP === 'setuju_catatan') {
+                        $hasCatatan = true;
+                    } elseif ($statusP === 'tunda') {
+                        $hasTunda = true;
+                    } elseif ($statusP === 'setuju') {
+                        $hasSetuju = true;
+                    }
+                }
+            }
+        }
+
+        // Tentukan status pendapat umum sidang
+        $statusPendapat = $validated['status_pendapat'] ?? null;
+        if (empty($statusPendapat)) {
+            if ($hasTolak) {
+                $statusPendapat = 'tolak';
+            } elseif ($hasCatatan) {
+                $statusPendapat = 'setuju_catatan';
+            } elseif ($hasTunda) {
+                $statusPendapat = 'tunda';
+            } elseif ($hasSetuju) {
+                $statusPendapat = 'setuju';
+            } else {
+                $statusPendapat = 'setuju';
+            }
+        }
 
         $anggota->update([
             'status_kehadiran' => $validated['status_kehadiran'],
-            'keterangan_kehadiran' => $validated['keterangan_kehadiran'],
+            'keterangan_kehadiran' => $validated['keterangan_kehadiran'] ?? null,
             'waktu_kehadiran' => now(),
-            'status_pendapat' => $validated['status_pendapat'],
-            'catatan_pendapat' => $validated['catatan_pendapat'],
+            'status_pendapat' => $statusPendapat,
+            'catatan_pendapat' => $validated['catatan_pendapat'] ?? null,
             'waktu_pendapat' => now(),
         ]);
 
@@ -538,7 +1123,7 @@ class SidangTppKanwilController extends Controller
         }
 
         return back()->with('submitted', true)
-            ->with('success', 'Terima kasih, konfirmasi presensi dan pendapat sidang Anda berhasil tersimpan dalam sistem.');
+            ->with('success', 'Terima kasih, konfirmasi presensi dan catatan pendapat sidang per materi Anda berhasil tersimpan dalam sistem.');
     }
 
     /**
@@ -800,6 +1385,63 @@ class SidangTppKanwilController extends Controller
             'status_sidang' => 'selesai',
         ]);
 
+        // Sinkronisasi Dua Arah ke Seluruh Modul Mutasi Narapidana yang Terkait di Sidang Ini
+        $mutasiIds = $sidang->materis()->whereNotNull('mutasi_id')->pluck('mutasi_id')->toArray();
+        if (! empty($sidang->mutasi_id) && ! in_array($sidang->mutasi_id, $mutasiIds)) {
+            $mutasiIds[] = $sidang->mutasi_id;
+        }
+
+        $linkedMutasiIds = MutasiNarapidana::where('sidang_tpp_kanwil_id', $sidang->id)->pluck('id')->toArray();
+        $allMutasiIds = array_unique(array_filter(array_merge($mutasiIds, $linkedMutasiIds)));
+
+        foreach ($allMutasiIds as $mId) {
+            $mutasi = MutasiNarapidana::find($mId);
+            if (! $mutasi) {
+                continue;
+            }
+
+            $materiTerkait = $sidang->materis()->where('mutasi_id', $mId)->first();
+            $uptTujuanId = $materiTerkait?->upt_tujuan_rekomendasi_id ?: $sidang->upt_tujuan_rekomendasi_id;
+
+            $statusMutasi = match ($request->tanggapan_kakanwil_status) {
+                'disetujui' => 'disetujui',
+                'ditolak' => 'ditolak',
+                'disetujui_bersyarat', 'perlu_pendalaman' => 'perlu_perbaikan',
+                default => $mutasi->status,
+            };
+
+            $catatanTambahan = "[Disposisi Ka. Kanwil Sidang TPP #{$sidang->nomor_sidang} ({$request->tanggapan_kakanwil_tanggal}) - Status: ".strtoupper($request->tanggapan_kakanwil_status).']';
+            if (! empty($request->tanggapan_kakanwil_catatan)) {
+                $catatanTambahan .= "\nCatatan: ".$request->tanggapan_kakanwil_catatan;
+            }
+
+            $updateMutasiData = [
+                'status' => $statusMutasi,
+                'sidang_tpp_kanwil_id' => $sidang->id,
+                'tanggal_verifikasi' => $request->tanggapan_kakanwil_tanggal,
+                'catatan_kanwil' => ! empty($mutasi->catatan_kanwil)
+                    ? $mutasi->catatan_kanwil."\n\n".$catatanTambahan
+                    : $catatanTambahan,
+            ];
+
+            if ($filePath) {
+                $updateMutasiData['file_persetujuan_kanwil'] = $filePath;
+            }
+
+            if (! empty($uptTujuanId)) {
+                $updateMutasiData['upt_tujuan_id'] = $uptTujuanId;
+            }
+
+            $mutasi->update($updateMutasiData);
+
+            ActivityLog::record(
+                'sync',
+                'Mutasi Narapidana',
+                "Sinkronisasi otomatis hasil Sidang TPP Kanwil #{$sidang->nomor_sidang} ke Usulan Mutasi Narapidana #{$mutasi->id} (Status: {$statusMutasi})",
+                $mutasi
+            );
+        }
+
         ActivityLog::record(
             'verify',
             'Sidang TPP Kanwil',
@@ -847,7 +1489,45 @@ class SidangTppKanwilController extends Controller
             'agenda_judul' => 'required|string|max:255',
             'agenda_deskripsi' => 'nullable|string',
             'kesimpulan_sidang' => 'nullable|string',
+            'subjek_tipe' => 'nullable|string|in:umum,klien_umroh,mutasi_narapidana,izin_berobat',
+            'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
+            // Field Mutasi
+            'mutasi_wbp_nama' => 'nullable|string|max:150',
+            'mutasi_nomor_register' => 'nullable|string|max:100',
+            'mutasi_perkara' => 'nullable|string|max:255',
+            'mutasi_lama_pidana' => 'nullable|string|max:100',
+            'mutasi_upt_asal_id' => 'nullable|exists:upt,id',
+            'mutasi_alasan' => 'nullable|string',
+            'mutasi_penjamin_nama' => 'nullable|string|max:150',
+            'mutasi_penjamin_hubungan' => 'nullable|string|max:100',
+            'mutasi_penjamin_alamat' => 'nullable|string|max:255',
+            'mutasi_penjamin_kontak' => 'nullable|string|max:50',
+            'file_mutasi_permohonan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_litmas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_reg_f' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_asesmen' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            // Field Medis
+            'berobat_wbp_nama' => 'nullable|string|max:150',
+            'berobat_nomor_register' => 'nullable|string|max:100',
+            'berobat_perkara' => 'nullable|string|max:255',
+            'berobat_upt_asal_id' => 'nullable|exists:upt,id',
+            'berobat_diagnosa' => 'nullable|string',
+            'berobat_dokter' => 'nullable|string|max:150',
+            'berobat_rs_nama' => 'nullable|string|max:150',
+            'berobat_rs_kota' => 'nullable|string|max:100',
+            'berobat_penjamin_nama' => 'nullable|string|max:150',
+            'berobat_penjamin_hubungan' => 'nullable|string|max:100',
+            'berobat_penjamin_kontak' => 'nullable|string|max:50',
+            'file_medis_rekam' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_medis_rujukan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_medis_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_medis_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            // Dokumen Tambahan
+            'dokumen_tambahan_nama' => 'nullable|string|max:150',
+            'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
         ]);
 
         if ($request->hasFile('file_bahan_sidang')) {
@@ -861,8 +1541,152 @@ class SidangTppKanwilController extends Controller
             $validated['file_bahan_sidang'] = 'uploads/sidang_tpp_kanwil/bahan/'.$filenameBahan;
         }
 
+        $dirBerkas = public_path('uploads/sidang_tpp_kanwil/berkas');
+        if (! File::isDirectory($dirBerkas)) {
+            File::makeDirectory($dirBerkas, 0755, true, true);
+        }
+
+        $subjekTipe = $request->input('subjek_tipe', $sidang->subjek_tipe ?? 'umum');
+        $validated['subjek_tipe'] = $subjekTipe;
+        $validated['mutasi_id'] = $request->input('mutasi_id', $sidang->mutasi_id);
+        $validated['upt_tujuan_rekomendasi_id'] = $request->input('upt_tujuan_rekomendasi_id', $sidang->upt_tujuan_rekomendasi_id);
+
+        $narapidanaData = $sidang->narapidana_data ?? [];
+        $dokumenTambahan = $narapidanaData['berkas']['dokumen_tambahan'] ?? null;
+        if ($request->hasFile('dokumen_tambahan_file')) {
+            $f = $request->file('dokumen_tambahan_file');
+            $fn = 'tambahan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirBerkas, $fn);
+            $dokumenTambahan = [
+                'nama' => $request->input('dokumen_tambahan_nama', 'Dokumen Tambahan'),
+                'file' => 'uploads/sidang_tpp_kanwil/berkas/'.$fn,
+            ];
+        } elseif ($request->filled('dokumen_tambahan_nama') && ! empty($dokumenTambahan)) {
+            $dokumenTambahan['nama'] = $request->input('dokumen_tambahan_nama');
+        }
+
+        if ($subjekTipe === 'mutasi_narapidana') {
+            $existingBerkas = $narapidanaData['berkas'] ?? [];
+            if ($request->hasFile('file_mutasi_permohonan')) {
+                $f = $request->file('file_mutasi_permohonan');
+                $fn = 'mutasi_permohonan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_permohonan'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_mutasi_jaminan')) {
+                $f = $request->file('file_mutasi_jaminan');
+                $fn = 'mutasi_jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_jaminan'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_mutasi_litmas')) {
+                $f = $request->file('file_mutasi_litmas');
+                $fn = 'mutasi_litmas_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_litmas'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_mutasi_reg_f')) {
+                $f = $request->file('file_mutasi_reg_f');
+                $fn = 'mutasi_regf_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_reg_f'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_mutasi_asesmen')) {
+                $f = $request->file('file_mutasi_asesmen');
+                $fn = 'mutasi_asesmen_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_asesmen'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($dokumenTambahan) {
+                $existingBerkas['dokumen_tambahan'] = $dokumenTambahan;
+            }
+
+            $uptAsalNama = $narapidanaData['upt_asal_nama'] ?? null;
+            if ($request->filled('mutasi_upt_asal_id')) {
+                $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
+            }
+            $uptTujuanNama = $narapidanaData['upt_tujuan_nama'] ?? null;
+            if ($request->filled('upt_tujuan_rekomendasi_id')) {
+                $uptTujuanNama = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
+            }
+
+            $validated['narapidana_data'] = [
+                'nama' => $request->input('mutasi_wbp_nama', $narapidanaData['nama'] ?? $request->agenda_judul),
+                'nomor_register' => $request->input('mutasi_nomor_register', $narapidanaData['nomor_register'] ?? null),
+                'tindak_pidana' => $request->input('mutasi_perkara', $narapidanaData['tindak_pidana'] ?? null),
+                'lama_pidana' => $request->input('mutasi_lama_pidana', $narapidanaData['lama_pidana'] ?? null),
+                'upt_asal_id' => $request->input('mutasi_upt_asal_id', $narapidanaData['upt_asal_id'] ?? null),
+                'upt_asal_nama' => $uptAsalNama,
+                'upt_tujuan_id' => $request->input('upt_tujuan_rekomendasi_id', $narapidanaData['upt_tujuan_id'] ?? null),
+                'upt_tujuan_nama' => $uptTujuanNama,
+                'alasan_pemindahan' => $request->input('mutasi_alasan', $narapidanaData['alasan_pemindahan'] ?? null),
+                'penjamin_nama' => $request->input('mutasi_penjamin_nama', $narapidanaData['penjamin_nama'] ?? null),
+                'penjamin_hubungan' => $request->input('mutasi_penjamin_hubungan', $narapidanaData['penjamin_hubungan'] ?? null),
+                'penjamin_alamat' => $request->input('mutasi_penjamin_alamat', $narapidanaData['penjamin_alamat'] ?? null),
+                'penjamin_kontak' => $request->input('mutasi_penjamin_kontak', $narapidanaData['penjamin_kontak'] ?? null),
+                'berkas' => $existingBerkas,
+            ];
+        } elseif ($subjekTipe === 'izin_berobat') {
+            $existingBerkas = $narapidanaData['berkas'] ?? [];
+            if ($request->hasFile('file_medis_rekam')) {
+                $f = $request->file('file_medis_rekam');
+                $fn = 'medis_rekam_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_rekam_medis'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_medis_rujukan')) {
+                $f = $request->file('file_medis_rujukan');
+                $fn = 'medis_rujukan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_rujukan'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_medis_jaminan')) {
+                $f = $request->file('file_medis_jaminan');
+                $fn = 'medis_jaminan_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_jaminan'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($request->hasFile('file_medis_ba_upt')) {
+                $f = $request->file('file_medis_ba_upt');
+                $fn = 'medis_ba_upt_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                $f->move($dirBerkas, $fn);
+                $existingBerkas['file_ba_upt'] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+            }
+            if ($dokumenTambahan) {
+                $existingBerkas['dokumen_tambahan'] = $dokumenTambahan;
+            }
+
+            $uptAsalNama = $narapidanaData['upt_asal_nama'] ?? null;
+            if ($request->filled('berobat_upt_asal_id')) {
+                $uptAsalNama = Upt::find($request->berobat_upt_asal_id)?->nama_upt;
+            }
+
+            $validated['narapidana_data'] = [
+                'nama' => $request->input('berobat_wbp_nama', $narapidanaData['nama'] ?? $request->agenda_judul),
+                'nomor_register' => $request->input('berobat_nomor_register', $narapidanaData['nomor_register'] ?? null),
+                'tindak_pidana' => $request->input('berobat_perkara', $narapidanaData['tindak_pidana'] ?? null),
+                'upt_asal_id' => $request->input('berobat_upt_asal_id', $narapidanaData['upt_asal_id'] ?? null),
+                'upt_asal_nama' => $uptAsalNama,
+                'diagnosa_medis' => $request->input('berobat_diagnosa', $narapidanaData['diagnosa_medis'] ?? null),
+                'dokter_penanggung_jawab' => $request->input('berobat_dokter', $narapidanaData['dokter_penanggung_jawab'] ?? null),
+                'rs_rujukan_nama' => $request->input('berobat_rs_nama', $narapidanaData['rs_rujukan_nama'] ?? null),
+                'rs_rujukan_kota' => $request->input('berobat_rs_kota', $narapidanaData['rs_rujukan_kota'] ?? null),
+                'penjamin_nama' => $request->input('berobat_penjamin_nama', $narapidanaData['penjamin_nama'] ?? null),
+                'penjamin_hubungan' => $request->input('berobat_penjamin_hubungan', $narapidanaData['penjamin_hubungan'] ?? null),
+                'penjamin_kontak' => $request->input('berobat_penjamin_kontak', $narapidanaData['penjamin_kontak'] ?? null),
+                'berkas' => $existingBerkas,
+            ];
+        }
+
         $validated['updated_by'] = $user->id;
         $sidang->update($validated);
+
+        if (! empty($validated['mutasi_id'])) {
+            $mutasi = MutasiNarapidana::find($validated['mutasi_id']);
+            if ($mutasi && $mutasi->sidang_tpp_kanwil_id !== $sidang->id) {
+                $mutasi->update(['sidang_tpp_kanwil_id' => $sidang->id]);
+            }
+        }
 
         ActivityLog::record(
             'update',
@@ -899,6 +1723,524 @@ class SidangTppKanwilController extends Controller
         ActivityLog::record('delete', 'Sidang TPP Kanwil', "Menghapus data Sidang TPP Kanwil {$nomor}");
 
         return redirect()->route('sidang-tpp-kanwil.index')->with('success', "Sidang TPP Kanwil {$nomor} berhasil dihapus.");
+    }
+
+    /**
+     * Tambah Materi Sidang Baru ke Sidang Kanwil yang sudah terdaftar.
+     */
+    public function materiStore(Request $request, int $id): RedirectResponse
+    {
+        $this->checkKanwilAccess('full');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        if ($sidang->isVerifiedKakanwil()) {
+            return back()->with('error', 'Tidak dapat menambah materi. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+        }
+
+        $validated = $request->validate([
+            'kategori_materi' => 'required|string|in:mutasi_narapidana,mutasi_keinginan_sendiri,izin_berobat,klien_bapas,lainnya',
+            'judul_materi' => 'required|string|max:255',
+            'deskripsi_materi' => 'nullable|string',
+            'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
+            'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
+            'dokumen_tambahan_nama' => 'nullable|string|max:150',
+            'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
+            // Mutasi fields
+            'mutasi_wbp_nama' => 'nullable|string|max:150',
+            'mutasi_nomor_register' => 'nullable|string|max:100',
+            'mutasi_perkara' => 'nullable|string|max:255',
+            'mutasi_lama_pidana' => 'nullable|string|max:100',
+            'mutasi_upt_asal_id' => 'nullable|exists:upt,id',
+            'mutasi_alasan' => 'nullable|string',
+            'nama_pk_bapas' => 'nullable|string|max:150',
+            'nip_pk_bapas' => 'nullable|string|max:50',
+            'bapas_nama' => 'nullable|string|max:150',
+            'rekomendasi_litmas' => 'nullable|string',
+            'nomor_ba_tpp_upt' => 'nullable|string|max:150',
+            'tanggal_ba_tpp_upt' => 'nullable|date',
+            'rekomendasi_tpp_upt' => 'nullable|string',
+            'mutasi_penjamin_nama' => 'nullable|string|max:150',
+            'mutasi_penjamin_nik' => 'nullable|string|max:30',
+            'mutasi_penjamin_hubungan' => 'nullable|string|max:100',
+            'mutasi_penjamin_alamat' => 'nullable|string|max:255',
+            'mutasi_penjamin_kontak' => 'nullable|string|max:50',
+            'file_mutasi_permohonan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_pernyataan_pribadi' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_ktp_penjamin' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_litmas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_reg_f' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_mutasi_kesehatan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_mutasi_asesmen' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            // Medis fields
+            'berobat_wbp_nama' => 'nullable|string|max:150',
+            'berobat_nomor_register' => 'nullable|string|max:100',
+            'berobat_perkara' => 'nullable|string|max:255',
+            'berobat_upt_asal_id' => 'nullable|exists:upt,id',
+            'berobat_diagnosa' => 'nullable|string',
+            'berobat_dokter' => 'nullable|string|max:150',
+            'berobat_rs_nama' => 'nullable|string|max:150',
+            'berobat_rs_kota' => 'nullable|string|max:100',
+            'berobat_penjamin_nama' => 'nullable|string|max:150',
+            'berobat_penjamin_hubungan' => 'nullable|string|max:100',
+            'berobat_penjamin_kontak' => 'nullable|string|max:50',
+            'file_medis_rekam' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_medis_rujukan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_medis_jaminan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:15360',
+            'file_medis_ba_upt' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            // Klien fields
+            'klien_nama' => 'nullable|string|max:150',
+            'klien_bin' => 'nullable|string|max:100',
+            'klien_no_register' => 'nullable|string|max:100',
+            'klien_bapas_nama' => 'nullable|string|max:150',
+            'klien_nomor_surat_bapas' => 'nullable|string|max:150',
+            'klien_tanggal_surat_bapas' => 'nullable|date',
+            'klien_nama_pk' => 'nullable|string|max:150',
+            'klien_program' => 'nullable|string|max:50',
+            'klien_keperluan_ln' => 'nullable|string|max:150',
+            'klien_negara_tujuan' => 'nullable|string|max:100',
+            'klien_tgl_berangkat' => 'nullable|date',
+            'klien_tgl_kembali' => 'nullable|date',
+            'klien_durasi_hari' => 'nullable|numeric',
+            'klien_penjamin_nama' => 'nullable|string|max:150',
+            'klien_penjamin_hubungan' => 'nullable|string|max:100',
+            'klien_penjamin_telepon' => 'nullable|string|max:50',
+            'file_litmas_bapas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_surat_bapas' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'file_bukti_travel' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip|max:15360',
+            'file_surat_jaminan' => 'nullable|file|mimes:pdf,jpg,jpeg,png,zip|max:15360',
+        ]);
+
+        $dirBerkas = public_path('uploads/sidang_tpp_kanwil/berkas');
+        if (! File::isDirectory($dirBerkas)) {
+            File::makeDirectory($dirBerkas, 0755, true, true);
+        }
+
+        $fileBahanPath = null;
+        if ($request->hasFile('file_bahan_sidang')) {
+            $dirBahan = public_path('uploads/sidang_tpp_kanwil/bahan');
+            if (! File::isDirectory($dirBahan)) {
+                File::makeDirectory($dirBahan, 0755, true, true);
+            }
+            $f = $request->file('file_bahan_sidang');
+            $fn = 'bahan_materi_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirBahan, $fn);
+            $fileBahanPath = 'uploads/sidang_tpp_kanwil/bahan/'.$fn;
+        }
+
+        $dokumenTambahan = null;
+        if ($request->hasFile('dokumen_tambahan_file')) {
+            $f = $request->file('dokumen_tambahan_file');
+            $fn = 'tambahan_materi_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirBerkas, $fn);
+            $dokumenTambahan = [
+                'nama' => $request->input('dokumen_tambahan_nama', 'Dokumen Tambahan'),
+                'file' => 'uploads/sidang_tpp_kanwil/berkas/'.$fn,
+            ];
+        }
+
+        $narapidanaData = null;
+        $klienData = null;
+        $kategori = $validated['kategori_materi'];
+
+        if ($kategori === 'mutasi_narapidana' || $kategori === 'mutasi_keinginan_sendiri') {
+            $berkasMutasi = [];
+            foreach (['file_mutasi_permohonan', 'file_mutasi_pernyataan_pribadi', 'file_mutasi_ba_upt', 'file_mutasi_jaminan', 'file_mutasi_ktp_penjamin', 'file_mutasi_litmas', 'file_mutasi_reg_f', 'file_mutasi_kesehatan', 'file_mutasi_asesmen'] as $field) {
+                if ($request->hasFile($field)) {
+                    $f = $request->file($field);
+                    $fn = str_replace('file_mutasi_', '', $field).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                    $f->move($dirBerkas, $fn);
+                    $berkasMutasi[str_replace('file_mutasi_', 'file_', $field)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                    $berkasMutasi[str_replace('file_mutasi_', '', $field)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                }
+            }
+            if ($dokumenTambahan) {
+                $berkasMutasi['dokumen_tambahan'] = $dokumenTambahan;
+            }
+
+            $uptAsalNama = null;
+            if ($request->filled('mutasi_upt_asal_id')) {
+                $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
+            }
+            $uptTujuanNama = null;
+            if ($request->filled('upt_tujuan_rekomendasi_id')) {
+                $uptTujuanNama = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
+            }
+
+            $narapidanaData = [
+                'nama' => $request->input('mutasi_wbp_nama', $validated['judul_materi']),
+                'nomor_register' => $request->input('mutasi_nomor_register'),
+                'tindak_pidana' => $request->input('mutasi_perkara'),
+                'lama_pidana' => $request->input('mutasi_lama_pidana'),
+                'upt_asal_id' => $request->input('mutasi_upt_asal_id'),
+                'upt_asal_nama' => $uptAsalNama,
+                'upt_tujuan_id' => $request->input('upt_tujuan_rekomendasi_id'),
+                'upt_tujuan_nama' => $uptTujuanNama,
+                'alasan_pemindahan' => $request->input('mutasi_alasan'),
+                'nama_pk_bapas' => $request->input('nama_pk_bapas'),
+                'nip_pk_bapas' => $request->input('nip_pk_bapas'),
+                'bapas_nama' => $request->input('bapas_nama'),
+                'rekomendasi_litmas' => $request->input('rekomendasi_litmas'),
+                'pk_bapas' => [
+                    'nama' => $request->input('nama_pk_bapas'),
+                    'nip' => $request->input('nip_pk_bapas'),
+                    'bapas' => $request->input('bapas_nama'),
+                    'rekomendasi' => $request->input('rekomendasi_litmas'),
+                ],
+                'nomor_ba_tpp_upt' => $request->input('nomor_ba_tpp_upt'),
+                'tanggal_ba_tpp_upt' => $request->input('tanggal_ba_tpp_upt'),
+                'rekomendasi_tpp_upt' => $request->input('rekomendasi_tpp_upt'),
+                'tpp_upt' => [
+                    'nomor_ba' => $request->input('nomor_ba_tpp_upt'),
+                    'tanggal_ba' => $request->input('tanggal_ba_tpp_upt'),
+                    'rekomendasi' => $request->input('rekomendasi_tpp_upt'),
+                ],
+                'penjamin_nama' => $request->input('mutasi_penjamin_nama'),
+                'penjamin_nik' => $request->input('mutasi_penjamin_nik'),
+                'penjamin_hubungan' => $request->input('mutasi_penjamin_hubungan'),
+                'penjamin_alamat' => $request->input('mutasi_penjamin_alamat'),
+                'penjamin_kontak' => $request->input('mutasi_penjamin_kontak'),
+                'penjamin' => [
+                    'nama' => $request->input('mutasi_penjamin_nama'),
+                    'nik' => $request->input('mutasi_penjamin_nik'),
+                    'hubungan' => $request->input('mutasi_penjamin_hubungan'),
+                    'alamat' => $request->input('mutasi_penjamin_alamat'),
+                    'telepon' => $request->input('mutasi_penjamin_kontak'),
+                ],
+                'berkas' => $berkasMutasi,
+            ];
+        } elseif ($kategori === 'izin_berobat') {
+            $berkasMedis = [];
+            foreach (['file_medis_rekam', 'file_medis_rujukan', 'file_medis_jaminan', 'file_medis_ba_upt'] as $field) {
+                if ($request->hasFile($field)) {
+                    $f = $request->file($field);
+                    $fn = str_replace('file_medis_', 'medis_', $field).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                    $f->move($dirBerkas, $fn);
+                    $berkasMedis[str_replace('file_medis_', 'file_', $field)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                }
+            }
+            if ($dokumenTambahan) {
+                $berkasMedis['dokumen_tambahan'] = $dokumenTambahan;
+            }
+
+            $uptAsalNama = null;
+            if ($request->filled('berobat_upt_asal_id')) {
+                $uptAsalNama = Upt::find($request->berobat_upt_asal_id)?->nama_upt;
+            }
+
+            $narapidanaData = [
+                'nama' => $request->input('berobat_wbp_nama', $validated['judul_materi']),
+                'nomor_register' => $request->input('berobat_nomor_register'),
+                'tindak_pidana' => $request->input('berobat_perkara'),
+                'upt_asal_id' => $request->input('berobat_upt_asal_id'),
+                'upt_asal_nama' => $uptAsalNama,
+                'diagnosa_medis' => $request->input('berobat_diagnosa'),
+                'dokter_penanggung_jawab' => $request->input('berobat_dokter'),
+                'rs_rujukan_nama' => $request->input('berobat_rs_nama'),
+                'rs_rujukan_kota' => $request->input('berobat_rs_kota'),
+                'penjamin_nama' => $request->input('berobat_penjamin_nama'),
+                'penjamin_hubungan' => $request->input('berobat_penjamin_hubungan'),
+                'penjamin_kontak' => $request->input('berobat_penjamin_kontak'),
+                'berkas' => $berkasMedis,
+            ];
+        } elseif ($kategori === 'klien_bapas') {
+            $berkasKlien = [];
+            foreach (['file_litmas_bapas', 'file_surat_bapas', 'file_bukti_travel', 'file_surat_jaminan'] as $field) {
+                if ($request->hasFile($field)) {
+                    $f = $request->file($field);
+                    $fn = str_replace('file_', 'klien_', $field).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                    $f->move($dirBerkas, $fn);
+                    $berkasKlien[$field] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                }
+            }
+            if ($dokumenTambahan) {
+                $berkasKlien['dokumen_tambahan'] = $dokumenTambahan;
+            }
+
+            $klienData = [
+                'nama_klien' => $request->input('klien_nama', $validated['judul_materi']),
+                'bin' => $request->input('klien_bin'),
+                'no_register_bapas' => $request->input('klien_no_register'),
+                'bapas_nama' => $request->input('klien_bapas_nama'),
+                'nomor_surat_bapas' => $request->input('klien_nomor_surat_bapas'),
+                'tanggal_surat_bapas' => $request->input('klien_tanggal_surat_bapas'),
+                'nama_pk' => $request->input('klien_nama_pk'),
+                'program_integrasi' => $request->input('klien_program'),
+                'keperluan_ln' => $request->input('klien_keperluan_ln'),
+                'negara_tujuan' => $request->input('klien_negara_tujuan'),
+                'tgl_berangkat' => $request->input('klien_tgl_berangkat'),
+                'tgl_kembali' => $request->input('klien_tgl_kembali'),
+                'durasi_hari' => $request->input('klien_durasi_hari'),
+                'penjamin_nama' => $request->input('klien_penjamin_nama'),
+                'penjamin_hubungan' => $request->input('klien_penjamin_hubungan'),
+                'penjamin_telepon' => $request->input('klien_penjamin_telepon'),
+                'berkas' => $berkasKlien,
+            ];
+        }
+
+        $nextUrutan = (int) $sidang->materis()->max('urutan') + 1;
+
+        $materi = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $sidang->id,
+            'urutan' => $nextUrutan,
+            'kategori_materi' => $kategori,
+            'judul_materi' => $validated['judul_materi'],
+            'deskripsi_materi' => $validated['deskripsi_materi'] ?? null,
+            'mutasi_id' => $request->mutasi_id,
+            'upt_tujuan_rekomendasi_id' => $request->upt_tujuan_rekomendasi_id,
+            'narapidana_data' => $narapidanaData,
+            'klien_data' => $klienData,
+            'file_bahan_sidang' => $fileBahanPath,
+            'dokumen_tambahan' => $dokumenTambahan,
+        ]);
+
+        if (! empty($request->mutasi_id)) {
+            $mutasi = MutasiNarapidana::find($request->mutasi_id);
+            if ($mutasi) {
+                $mutasi->update(['sidang_tpp_kanwil_id' => $sidang->id]);
+            }
+        }
+
+        ActivityLog::record(
+            'tambah',
+            'Sidang TPP Kanwil',
+            "Menambahkan Materi #{$materi->urutan} ({$materi->judul_materi}) pada Sidang TPP Kanwil #{$sidang->nomor_sidang}",
+            $sidang
+        );
+
+        return back()->with('success', "Materi #{$materi->urutan} '{$materi->judul_materi}' berhasil ditambahkan ke dalam agenda sidang.");
+    }
+
+    /**
+     * Perbarui Materi Sidang Tertentu.
+     */
+    public function materiUpdate(Request $request, int $id, int $materiId): RedirectResponse
+    {
+        $this->checkKanwilAccess('full');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        if ($sidang->isVerifiedKakanwil()) {
+            return back()->with('error', 'Tidak dapat mengubah materi. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+        }
+
+        $materi = SidangTppKanwilMateri::where('sidang_tpp_kanwil_id', $sidang->id)->findOrFail($materiId);
+
+        $validated = $request->validate([
+            'kategori_materi' => 'required|string|in:mutasi_narapidana,mutasi_keinginan_sendiri,izin_berobat,klien_bapas,lainnya',
+            'judul_materi' => 'required|string|max:255',
+            'deskripsi_materi' => 'nullable|string',
+            'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
+            'upt_tujuan_rekomendasi_id' => 'nullable|exists:upt,id',
+            'rekomendasi_sidang' => 'nullable|string|max:50',
+            'catatan_rekomendasi' => 'nullable|string',
+            'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
+            'dokumen_tambahan_nama' => 'nullable|string|max:150',
+            'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
+        ]);
+
+        $dirBerkas = public_path('uploads/sidang_tpp_kanwil/berkas');
+        if (! File::isDirectory($dirBerkas)) {
+            File::makeDirectory($dirBerkas, 0755, true, true);
+        }
+
+        $fileBahanPath = $materi->file_bahan_sidang;
+        if ($request->hasFile('file_bahan_sidang')) {
+            $dirBahan = public_path('uploads/sidang_tpp_kanwil/bahan');
+            if (! File::isDirectory($dirBahan)) {
+                File::makeDirectory($dirBahan, 0755, true, true);
+            }
+            $f = $request->file('file_bahan_sidang');
+            $fn = 'bahan_materi_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirBahan, $fn);
+            $fileBahanPath = 'uploads/sidang_tpp_kanwil/bahan/'.$fn;
+        }
+
+        $dokumenTambahan = $materi->dokumen_tambahan;
+        if ($request->hasFile('dokumen_tambahan_file')) {
+            $f = $request->file('dokumen_tambahan_file');
+            $fn = 'tambahan_materi_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+            $f->move($dirBerkas, $fn);
+            $dokumenTambahan = [
+                'nama' => $request->input('dokumen_tambahan_nama', $dokumenTambahan['nama'] ?? 'Dokumen Tambahan'),
+                'file' => 'uploads/sidang_tpp_kanwil/berkas/'.$fn,
+            ];
+        } elseif ($request->filled('dokumen_tambahan_nama') && ! empty($dokumenTambahan['file'])) {
+            $dokumenTambahan['nama'] = $request->input('dokumen_tambahan_nama');
+        }
+
+        $updateData = [
+            'kategori_materi' => $validated['kategori_materi'],
+            'judul_materi' => $validated['judul_materi'],
+            'deskripsi_materi' => $validated['deskripsi_materi'] ?? null,
+            'mutasi_id' => $request->input('mutasi_id', $materi->mutasi_id),
+            'upt_tujuan_rekomendasi_id' => $request->input('upt_tujuan_rekomendasi_id', $materi->upt_tujuan_rekomendasi_id),
+            'rekomendasi_sidang' => $validated['rekomendasi_sidang'] ?? $materi->rekomendasi_sidang,
+            'catatan_rekomendasi' => $validated['catatan_rekomendasi'] ?? $materi->catatan_rekomendasi,
+            'file_bahan_sidang' => $fileBahanPath,
+            'dokumen_tambahan' => $dokumenTambahan,
+        ];
+
+        $narapidanaData = $materi->narapidana_data ?? [];
+        if ($validated['kategori_materi'] === 'mutasi_narapidana' || $validated['kategori_materi'] === 'mutasi_keinginan_sendiri') {
+            if ($request->filled('mutasi_wbp_nama')) {
+                $narapidanaData['nama'] = $request->input('mutasi_wbp_nama');
+            }
+            if ($request->filled('mutasi_nomor_register')) {
+                $narapidanaData['nomor_register'] = $request->input('mutasi_nomor_register');
+            }
+            if ($request->filled('mutasi_perkara')) {
+                $narapidanaData['tindak_pidana'] = $request->input('mutasi_perkara');
+            }
+            if ($request->filled('mutasi_lama_pidana')) {
+                $narapidanaData['lama_pidana'] = $request->input('mutasi_lama_pidana');
+            }
+            if ($request->filled('mutasi_alasan')) {
+                $narapidanaData['alasan_pemindahan'] = $request->input('mutasi_alasan');
+            }
+            if ($request->filled('mutasi_upt_asal_id')) {
+                $narapidanaData['upt_asal_id'] = $request->input('mutasi_upt_asal_id');
+                $narapidanaData['upt_asal_nama'] = Upt::find($request->input('mutasi_upt_asal_id'))?->nama_upt;
+            }
+            if ($request->filled('upt_tujuan_rekomendasi_id')) {
+                $narapidanaData['upt_tujuan_id'] = $request->upt_tujuan_rekomendasi_id;
+                $narapidanaData['upt_tujuan_nama'] = Upt::find($request->upt_tujuan_rekomendasi_id)?->nama_upt;
+            }
+            if ($request->filled('nama_pk_bapas')) {
+                $narapidanaData['nama_pk_bapas'] = $request->input('nama_pk_bapas');
+                $narapidanaData['pk_bapas']['nama'] = $request->input('nama_pk_bapas');
+            }
+            if ($request->filled('nip_pk_bapas')) {
+                $narapidanaData['nip_pk_bapas'] = $request->input('nip_pk_bapas');
+                $narapidanaData['pk_bapas']['nip'] = $request->input('nip_pk_bapas');
+            }
+            if ($request->filled('bapas_nama')) {
+                $narapidanaData['bapas_nama'] = $request->input('bapas_nama');
+                $narapidanaData['pk_bapas']['bapas'] = $request->input('bapas_nama');
+            }
+            if ($request->filled('rekomendasi_litmas')) {
+                $narapidanaData['rekomendasi_litmas'] = $request->input('rekomendasi_litmas');
+                $narapidanaData['pk_bapas']['rekomendasi'] = $request->input('rekomendasi_litmas');
+            }
+            if ($request->filled('nomor_ba_tpp_upt')) {
+                $narapidanaData['nomor_ba_tpp_upt'] = $request->input('nomor_ba_tpp_upt');
+                $narapidanaData['tpp_upt']['nomor_ba'] = $request->input('nomor_ba_tpp_upt');
+            }
+            if ($request->filled('tanggal_ba_tpp_upt')) {
+                $narapidanaData['tanggal_ba_tpp_upt'] = $request->input('tanggal_ba_tpp_upt');
+                $narapidanaData['tpp_upt']['tanggal_ba'] = $request->input('tanggal_ba_tpp_upt');
+            }
+            if ($request->filled('rekomendasi_tpp_upt')) {
+                $narapidanaData['rekomendasi_tpp_upt'] = $request->input('rekomendasi_tpp_upt');
+                $narapidanaData['tpp_upt']['rekomendasi'] = $request->input('rekomendasi_tpp_upt');
+            }
+            if ($request->filled('mutasi_penjamin_nama')) {
+                $narapidanaData['penjamin_nama'] = $request->input('mutasi_penjamin_nama');
+                $narapidanaData['penjamin']['nama'] = $request->input('mutasi_penjamin_nama');
+            }
+            if ($request->filled('mutasi_penjamin_nik')) {
+                $narapidanaData['penjamin_nik'] = $request->input('mutasi_penjamin_nik');
+                $narapidanaData['penjamin']['nik'] = $request->input('mutasi_penjamin_nik');
+            }
+            if ($request->filled('mutasi_penjamin_hubungan')) {
+                $narapidanaData['penjamin_hubungan'] = $request->input('mutasi_penjamin_hubungan');
+                $narapidanaData['penjamin']['hubungan'] = $request->input('mutasi_penjamin_hubungan');
+            }
+            if ($request->filled('mutasi_penjamin_alamat')) {
+                $narapidanaData['penjamin_alamat'] = $request->input('mutasi_penjamin_alamat');
+                $narapidanaData['penjamin']['alamat'] = $request->input('mutasi_penjamin_alamat');
+            }
+            if ($request->filled('mutasi_penjamin_kontak')) {
+                $narapidanaData['penjamin_kontak'] = $request->input('mutasi_penjamin_kontak');
+                $narapidanaData['penjamin']['telepon'] = $request->input('mutasi_penjamin_kontak');
+            }
+
+            $berkas = $narapidanaData['berkas'] ?? [];
+            foreach (['file_mutasi_permohonan', 'file_mutasi_pernyataan_pribadi', 'file_mutasi_ba_upt', 'file_mutasi_jaminan', 'file_mutasi_ktp_penjamin', 'file_mutasi_litmas', 'file_mutasi_reg_f', 'file_mutasi_kesehatan', 'file_mutasi_asesmen'] as $field) {
+                if ($request->hasFile($field)) {
+                    $f = $request->file($field);
+                    $fn = str_replace('file_mutasi_', '', $field).'_'.date('Ymd_His').'_'.Str::random(6).'.'.$f->getClientOriginalExtension();
+                    $f->move($dirBerkas, $fn);
+                    $berkas[str_replace('file_mutasi_', 'file_', $field)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                    $berkas[str_replace('file_mutasi_', '', $field)] = 'uploads/sidang_tpp_kanwil/berkas/'.$fn;
+                }
+            }
+            $narapidanaData['berkas'] = $berkas;
+            $updateData['narapidana_data'] = $narapidanaData;
+        } elseif ($validated['kategori_materi'] === 'izin_berobat') {
+            if ($request->filled('berobat_wbp_nama')) {
+                $narapidanaData['nama'] = $request->input('berobat_wbp_nama');
+            }
+            if ($request->filled('berobat_diagnosa')) {
+                $narapidanaData['diagnosa_medis'] = $request->input('berobat_diagnosa');
+            }
+            if ($request->filled('berobat_dokter')) {
+                $narapidanaData['dokter_penanggung_jawab'] = $request->input('berobat_dokter');
+            }
+            if ($request->filled('berobat_rs_nama')) {
+                $narapidanaData['rs_rujukan_nama'] = $request->input('berobat_rs_nama');
+            }
+            if ($request->filled('berobat_rs_kota')) {
+                $narapidanaData['rs_rujukan_kota'] = $request->input('berobat_rs_kota');
+            }
+            $updateData['narapidana_data'] = $narapidanaData;
+        }
+
+        $materi->update($updateData);
+
+        if (! empty($updateData['mutasi_id'])) {
+            MutasiNarapidana::find($updateData['mutasi_id'])?->update(['sidang_tpp_kanwil_id' => $sidang->id]);
+        }
+
+        ActivityLog::record(
+            'edit',
+            'Sidang TPP Kanwil',
+            "Memperbarui Materi #{$materi->urutan} ({$materi->judul_materi}) pada Sidang TPP Kanwil #{$sidang->nomor_sidang}",
+            $sidang
+        );
+
+        return back()->with('success', "Materi #{$materi->urutan} berhasil diperbarui.");
+    }
+
+    /**
+     * Hapus Materi Sidang Tertentu.
+     */
+    public function materiDestroy(int $id, int $materiId): RedirectResponse
+    {
+        $this->checkKanwilAccess('full');
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        if ($sidang->isVerifiedKakanwil()) {
+            return back()->with('error', 'Tidak dapat menghapus materi. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+        }
+
+        $materi = SidangTppKanwilMateri::where('sidang_tpp_kanwil_id', $sidang->id)->findOrFail($materiId);
+        $judul = $materi->judul_materi;
+        $mutasiId = $materi->mutasi_id;
+
+        $materi->delete();
+
+        // Urutkan kembali materi yang tersisa
+        $remaining = $sidang->materis()->orderBy('urutan')->get();
+        foreach ($remaining as $i => $m) {
+            $m->update(['urutan' => $i + 1]);
+        }
+
+        // Putuskan relasi ke mutasi jika tidak ada materi lain yang menghubungkannya
+        if ($mutasiId && ! $sidang->materis()->where('mutasi_id', $mutasiId)->exists()) {
+            MutasiNarapidana::where('id', $mutasiId)->where('sidang_tpp_kanwil_id', $sidang->id)
+                ->update(['sidang_tpp_kanwil_id' => null]);
+        }
+
+        ActivityLog::record(
+            'hapus',
+            'Sidang TPP Kanwil',
+            "Menghapus Materi '{$judul}' dari Sidang TPP Kanwil #{$sidang->nomor_sidang}",
+            $sidang
+        );
+
+        return back()->with('success', "Materi '{$judul}' berhasil dihapus dari agenda sidang.");
     }
 
     /**

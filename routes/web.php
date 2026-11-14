@@ -200,6 +200,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/upload-laporan-signed', [SidangTppKanwilController::class, 'uploadLaporanSigned'])->whereNumber('id')->name('upload-laporan-signed');
         Route::post('/{id}/upload-disposisi-kakanwil', [SidangTppKanwilController::class, 'uploadDisposisiKakanwil'])->whereNumber('id')->name('upload-disposisi-kakanwil');
 
+        // Manajemen Materi / Agenda Sidang Kanwil (Multi-Materi)
+        Route::post('/{id}/materi', [SidangTppKanwilController::class, 'materiStore'])->whereNumber('id')->name('materi.store');
+        Route::put('/{id}/materi/{materiId}', [SidangTppKanwilController::class, 'materiUpdate'])->whereNumber('id')->whereNumber('materiId')->name('materi.update');
+        Route::delete('/{id}/materi/{materiId}', [SidangTppKanwilController::class, 'materiDestroy'])->whereNumber('id')->whereNumber('materiId')->name('materi.destroy');
+
         // AI Asisten Naskah Sidang TPP Kanwil (Generate, Simpan Kustom, Reset)
         Route::post('/{id}/ai-generate-naskah', [SidangTppKanwilController::class, 'aiGenerateNaskah'])->whereNumber('id')->name('ai-generate-naskah');
         Route::post('/{id}/ai-save-naskah', [SidangTppKanwilController::class, 'aiSaveNaskah'])->whereNumber('id')->name('ai-save-naskah');

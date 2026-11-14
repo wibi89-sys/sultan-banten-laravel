@@ -2,14 +2,23 @@
 
 namespace Tests\Feature;
 
+use App\Models\KanwilPegawai;
+use App\Models\MutasiNarapidana;
+use App\Models\SidangTpp;
 use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
+use App\Models\SidangTppKanwilMateri;
+use App\Models\SidangTppKanwilMateriPendapat;
+use App\Models\SidangTppUsulan;
 use App\Models\TppKanwilSetting;
+use App\Models\Upt;
 use App\Models\User;
 use App\Services\GeminiAiService;
 use App\Services\TppKanwilDokumenService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SidangTppKanwilDokumenAiTest extends TestCase
@@ -411,5 +420,649 @@ class SidangTppKanwilDokumenAiTest extends TestCase
 
         $responseDelete->assertRedirect(route('sidang-tpp-kanwil.index'));
         $this->assertDatabaseMissing('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
+    }
+
+    /**
+     * Menguji pendaftaran Sidang TPP Kanwil kategori Mutasi Narapidana
+     * beserta sinkronisasi otomatis dua arah ke modul Mutasi UPT saat Ka Kanwil mendisposisi.
+     */
+    public function test_sidang_kanwil_mutasi_narapidana_two_way_sync(): void
+    {
+        Storage::fake('public');
+
+        $uptAsal = Upt::first() ?? Upt::factory()->create();
+        $uptTujuan = Upt::where('id', '!=', $uptAsal->id)->first() ?? Upt::factory()->create();
+
+        $mutasi = MutasiNarapidana::create([
+            'nomor_surat' => 'W12.PAS.TEST-MUTASI-'.date('His'),
+            'tanggal_surat' => Carbon::now(),
+            'upt_asal_id' => $uptAsal->id,
+            'kategori_mutasi' => 'Keinginan Sendiri Mendekati Keluarga',
+            'keterangan' => 'Usulan pemindahan WBP an. Budi Santoso bin Suwandi',
+            'total_usulan' => 1,
+            'status' => 'diajukan',
+            'created_by' => $this->userKanwil->id,
+        ]);
+
+        $pegawaiKetua = KanwilPegawai::first() ?? KanwilPegawai::create([
+            'nama' => 'Junaedi, S.H.',
+            'nip' => '197501011999031001',
+            'jabatan' => 'Ketua Sidang TPP',
+            'is_active' => true,
+        ]);
+        $pegawaiSekretaris = KanwilPegawai::where('id', '!=', $pegawaiKetua->id)->first() ?? KanwilPegawai::create([
+            'nama' => 'Budi Santoso, S.Sos.',
+            'nip' => '198002022005011002',
+            'jabatan' => 'Sekretaris Sidang TPP',
+            'is_active' => true,
+        ]);
+
+        $nomorSidang = 'STPP-KW/MUTASI/'.date('Ymd_His');
+        $dokumenTambahanFile = UploadedFile::fake()->create('surat_keterangan_desa.pdf', 100, 'application/pdf');
+
+        $responseStore = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.store'), [
+                'nomor_sidang' => $nomorSidang,
+                'tanggal_sidang' => date('Y-m-d'),
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Sidang TPP Kanwil',
+                'metode' => 'luring',
+                'agenda_kategori' => 'Usulan Mutasi Narapidana Antar-UPT',
+                'agenda_judul' => 'Pemindahan WBP an. Budi Santoso',
+                'subjek_tipe' => 'mutasi_narapidana',
+                'mutasi_id' => $mutasi->id,
+                'upt_tujuan_rekomendasi_id' => $uptTujuan->id,
+                'mutasi_wbp_nama' => 'Budi Santoso bin Suwandi',
+                'mutasi_nomor_register' => 'BI.124/2025',
+                'mutasi_perkara' => 'Pencurian Ps 363 KUHP',
+                'mutasi_lama_pidana' => '2 Tahun Penjara',
+                'mutasi_upt_asal_id' => $uptAsal->id,
+                'mutasi_alasan' => 'Keinginan sendiri mendekati keluarga',
+                'mutasi_penjamin_nama' => 'Siti Aminah',
+                'mutasi_penjamin_hubungan' => 'Istri Kandung',
+                'mutasi_penjamin_alamat' => 'Jl. Pandeglang No. 12',
+                'mutasi_penjamin_kontak' => '081234567890',
+                'dokumen_tambahan_nama' => 'Surat Keterangan Domisili Desa',
+                'dokumen_tambahan_file' => $dokumenTambahanFile,
+                'ketua_id' => $pegawaiKetua->id,
+                'sekretaris_id' => $pegawaiSekretaris->id,
+                'anggota_ids' => [$pegawaiKetua->id, $pegawaiSekretaris->id],
+            ]);
+
+        $responseStore->assertSessionHasNoErrors();
+        $responseStore->assertRedirect();
+        $sidangCreated = SidangTppKanwil::where('nomor_sidang', $nomorSidang)->first();
+        $this->assertNotNull($sidangCreated);
+        $this->assertEquals('mutasi_narapidana', $sidangCreated->subjek_tipe);
+        $this->assertEquals($mutasi->id, $sidangCreated->mutasi_id);
+        $this->assertEquals($uptTujuan->id, $sidangCreated->upt_tujuan_rekomendasi_id);
+        $this->assertEquals('Surat Keterangan Domisili Desa', $sidangCreated->narapidana_data['berkas']['dokumen_tambahan']['nama'] ?? null);
+
+        // Pastikan relasi awal pada mutasi telah terhubung ke sidang
+        $this->assertEquals($sidangCreated->id, $mutasi->fresh()->sidang_tpp_kanwil_id);
+
+        // Simulasi Disposisi Kepala Kantor Wilayah: Setujui Rekomendasi Sidang
+        $disposisiFile = UploadedFile::fake()->create('disposisi_kakanwil.pdf', 100, 'application/pdf');
+        $responseDisposisi = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.upload-disposisi-kakanwil', $sidangCreated->id), [
+                'tanggapan_kakanwil_status' => 'disetujui',
+                'tanggapan_kakanwil_catatan' => 'Disetujui untuk dipindahkan sesuai rekomendasi TPP ke '.$uptTujuan->nama_upt,
+                'tanggapan_kakanwil_tanggal' => date('Y-m-d'),
+                'kakanwil_nama' => 'Dody Fahrudin, Bc.IP., S.H., M.H.',
+                'file_disposisi_kakanwil' => $disposisiFile,
+            ]);
+
+        $responseDisposisi->assertSessionHasNoErrors();
+
+        // Verifikasi Two-Way Sync ke Mutasi Narapidana
+        $mutasiUpdated = $mutasi->fresh();
+        $this->assertEquals('disetujui', $mutasiUpdated->status);
+        $this->assertEquals($uptTujuan->id, $mutasiUpdated->upt_tujuan_id);
+        $this->assertStringContainsString('DISETUJUI', $mutasiUpdated->catatan_kanwil);
+        $this->assertNotNull($mutasiUpdated->file_persetujuan_kanwil);
+    }
+
+    /**
+     * Menguji pendaftaran Sidang TPP Kanwil agenda Izin Berobat Keluar Kota bagi Narapidana
+     * dengan upload dokumen rekam medis dan berkas tambahan lainnya.
+     */
+    public function test_sidang_kanwil_izin_berobat_narapidana(): void
+    {
+        Storage::fake('public');
+
+        $uptAsal = Upt::first() ?? Upt::factory()->create();
+        $pegawaiKetua = KanwilPegawai::first() ?? KanwilPegawai::create([
+            'nama' => 'Junaedi, S.H.',
+            'nip' => '197501011999031001',
+            'jabatan' => 'Ketua Sidang TPP',
+            'is_active' => true,
+        ]);
+        $pegawaiSekretaris = KanwilPegawai::where('id', '!=', $pegawaiKetua->id)->first() ?? KanwilPegawai::create([
+            'nama' => 'Budi Santoso, S.Sos.',
+            'nip' => '198002022005011002',
+            'jabatan' => 'Sekretaris Sidang TPP',
+            'is_active' => true,
+        ]);
+
+        $nomorSidang = 'STPP-KW/MEDIS/'.date('Ymd_His');
+        $fileRekam = UploadedFile::fake()->create('rekam_medis.pdf', 100, 'application/pdf');
+        $fileTambahan = UploadedFile::fake()->create('hasil_rontgen.pdf', 100, 'application/pdf');
+
+        $responseStore = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.store'), [
+                'nomor_sidang' => $nomorSidang,
+                'tanggal_sidang' => date('Y-m-d'),
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Sidang TPP Kanwil',
+                'metode' => 'hybrid',
+                'agenda_kategori' => 'Permintaan Izin Berobat Keluar Kota',
+                'agenda_judul' => 'Rujukan Medis Narapidana an. Kusnadi ke RSCM Jakarta',
+                'subjek_tipe' => 'izin_berobat',
+                'berobat_wbp_nama' => 'Kusnadi bin Darman',
+                'berobat_nomor_register' => 'BI.88/2024',
+                'berobat_perkara' => 'Narkotika Ps 112 UU 35/2009',
+                'berobat_upt_asal_id' => $uptAsal->id,
+                'berobat_diagnosa' => 'Kanker Hati Stadium III B Perlu Bedah Onkologi',
+                'berobat_dokter' => 'dr. Anton, Sp.B(K)Onk',
+                'berobat_rs_nama' => 'RSUP Dr. Cipto Mangunkusumo (RSCM)',
+                'berobat_rs_kota' => 'Jakarta Pusat',
+                'berobat_penjamin_nama' => 'Hj. Rohanah',
+                'berobat_penjamin_hubungan' => 'Ibu Kandung',
+                'berobat_penjamin_kontak' => '087812345678',
+                'file_medis_rekam' => $fileRekam,
+                'dokumen_tambahan_nama' => 'Hasil Scan MRI dan Rontgen Toraks',
+                'dokumen_tambahan_file' => $fileTambahan,
+                'ketua_id' => $pegawaiKetua->id,
+                'sekretaris_id' => $pegawaiSekretaris->id,
+                'anggota_ids' => [$pegawaiKetua->id, $pegawaiSekretaris->id],
+            ]);
+
+        $responseStore->assertSessionHasNoErrors();
+        $responseStore->assertRedirect();
+        $sidangCreated = SidangTppKanwil::where('nomor_sidang', $nomorSidang)->first();
+        $this->assertNotNull($sidangCreated);
+        $this->assertEquals('izin_berobat', $sidangCreated->subjek_tipe);
+        $this->assertEquals('Kanker Hati Stadium III B Perlu Bedah Onkologi', $sidangCreated->narapidana_data['diagnosa_medis'] ?? null);
+        $this->assertEquals('Hasil Scan MRI dan Rontgen Toraks', $sidangCreated->narapidana_data['berkas']['dokumen_tambahan']['nama'] ?? null);
+
+        // Verifikasi output dokumen BA dan Risalah memuat diagnosa dan RS rujukan
+        $risalahHtml = TppKanwilDokumenService::renderRisalahHtml($sidangCreated);
+        $this->assertStringContainsString('RSUP Dr. Cipto Mangunkusumo (RSCM)', $risalahHtml);
+        $this->assertStringContainsString('Kusnadi bin Darman', $risalahHtml);
+    }
+
+    /**
+     * Menguji penambahan peserta Sidang TPP Satker UPT untuk kategori Mutasi dan Izin Berobat
+     * beserta upload dokumen kustom tambahan.
+     */
+    public function test_peserta_sidang_tpp_upt_mutasi_dan_izin_berobat(): void
+    {
+        Storage::fake('public');
+
+        $upt = Upt::first() ?? Upt::factory()->create();
+        $uptTujuan = Upt::where('id', '!=', $upt->id)->first() ?? Upt::factory()->create();
+
+        $userUpt = User::factory()->create([
+            'upt_id' => $upt->id,
+            'role' => 'operator',
+            'akses_sidang_tpp' => 'full',
+        ]);
+
+        $sidangUpt = SidangTpp::create([
+            'upt_id' => $upt->id,
+            'nomor_undangan' => 'UND-TPP/UPT/TEST/'.date('His'),
+            'tanggal_surat' => Carbon::now()->toDateString(),
+            'tanggal_sidang' => Carbon::now()->toDateString(),
+            'jam_mulai' => '09:00:00',
+            'agenda_sidang' => 'Sidang Usulan TPP UPT',
+            'ketua_tpp' => 'Ketua TPP Lapas',
+            'sekretaris_tpp' => 'Sekretaris TPP Lapas',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+            'total_usulan' => 0,
+            'status_sidang' => 'dijadwalkan',
+            'created_by' => $userUpt->id,
+        ]);
+
+        $fileTambahan = UploadedFile::fake()->create('surat_kades.pdf', 100, 'application/pdf');
+
+        // Tambah peserta kategori Mutasi (Pindah UPT)
+        $responsePesertaMutasi = $this->actingAs($userUpt)
+            ->post(route('sidang-tpp.peserta.store', $sidangUpt->id), [
+                'nama_wbp' => 'Suhendra bin Mamat',
+                'nomor_register' => 'BI.201/2024',
+                'perkara_pasal' => 'Penipuan Ps 378 KUHP',
+                'lama_pidana' => '2 Tahun Penjara',
+                'jenis_usulan' => 'Penempatan/Mutasi',
+                'subjek_tipe' => 'mutasi_narapidana',
+                'upt_tujuan_id' => $uptTujuan->id,
+                'alasan_pemindahan' => 'Mendekatkan dengan keluarga penjamin lansia',
+                'penjamin_nama' => 'Mamat Suhendar',
+                'penjamin_hubungan' => 'Ayah Kandung',
+                'penjamin_alamat' => 'Kampung Cibadak Lebak',
+                'dokumen_tambahan_nama' => 'Surat Keterangan Miskin dan Lansia Kelurahan',
+                'dokumen_tambahan_file' => $fileTambahan,
+            ]);
+
+        $responsePesertaMutasi->assertSessionHasNoErrors();
+        $responsePesertaMutasi->assertRedirect();
+        $usulanMutasi = SidangTppUsulan::where('sidang_tpp_id', $sidangUpt->id)
+            ->where('nomor_register', 'BI.201/2024')
+            ->first();
+
+        $this->assertNotNull($usulanMutasi);
+        $this->assertEquals('Penempatan/Mutasi', $usulanMutasi->jenis_usulan);
+        $this->assertEquals('mutasi_narapidana', $usulanMutasi->subjek_tipe);
+        $this->assertEquals($uptTujuan->id, $usulanMutasi->upt_tujuan_id);
+        $this->assertEquals('Surat Keterangan Miskin dan Lansia Kelurahan', $usulanMutasi->berkas_khusus['dokumen_tambahan']['nama'] ?? null);
+
+        // Tambah peserta kategori Izin Berobat Keluar Kota
+        $fileTambahanMedis = UploadedFile::fake()->create('surat_tindakan.pdf', 100, 'application/pdf');
+        $responsePesertaBerobat = $this->actingAs($userUpt)
+            ->post(route('sidang-tpp.peserta.store', $sidangUpt->id), [
+                'nama_wbp' => 'Rahmat Hidayat',
+                'nomor_register' => 'BI.305/2024',
+                'perkara_pasal' => 'Penggelapan Ps 372 KUHP',
+                'lama_pidana' => '1 Tahun 6 Bulan',
+                'jenis_usulan' => 'Izin Berobat',
+                'subjek_tipe' => 'izin_berobat',
+                'diagnosa_medis' => 'Gagal Ginjal Kronis Perlu Hemodialisa Khusus',
+                'dokter_penanggung_jawab' => 'dr. Hendra Sp.PD',
+                'rs_rujukan_nama' => 'RSUD Banten Serang',
+                'rs_rujukan_kota' => 'Serang',
+                'penjamin_nama' => 'Dewi Sartika',
+                'penjamin_hubungan' => 'Istri',
+                'dokumen_tambahan_nama' => 'Surat Persetujuan Tindakan Medis',
+                'dokumen_tambahan_file' => $fileTambahanMedis,
+            ]);
+
+        $responsePesertaBerobat->assertSessionHasNoErrors();
+        $usulanBerobat = SidangTppUsulan::where('sidang_tpp_id', $sidangUpt->id)
+            ->where('nomor_register', 'BI.305/2024')
+            ->first();
+
+        $this->assertNotNull($usulanBerobat);
+        $this->assertEquals('Izin Berobat', $usulanBerobat->jenis_usulan);
+        $this->assertEquals('izin_berobat', $usulanBerobat->subjek_tipe);
+        $this->assertEquals('Gagal Ginjal Kronis Perlu Hemodialisa Khusus', $usulanBerobat->diagnosa_medis);
+    }
+
+    /**
+     * Memastikan pembuatan Sidang TPP Kanwil mendukung multi-materi (array materis).
+     */
+    public function test_create_sidang_kanwil_with_multiple_materis(): void
+    {
+        $pegawaiKetua = KanwilPegawai::first() ?? KanwilPegawai::create([
+            'nama' => 'Ketua Test',
+            'nip' => '198001012000011001',
+            'jabatan' => 'Kadivpas',
+            'peran_tpp' => 'Ketua',
+        ]);
+        $pegawaiSekretaris = KanwilPegawai::where('id', '!=', $pegawaiKetua->id)->first() ?? KanwilPegawai::create([
+            'nama' => 'Sekretaris Test',
+            'nip' => '198201012000011002',
+            'jabatan' => 'Kasubbid',
+            'peran_tpp' => 'Sekretaris',
+        ]);
+        $pegawaiAnggota = KanwilPegawai::create([
+            'nama' => 'Anggota Test 1',
+            'nip' => '198501012000011003',
+            'jabatan' => 'Pelaksana',
+            'peran_tpp' => 'Anggota',
+        ]);
+
+        $upt1 = Upt::first() ?? Upt::create(['nama_upt' => 'Lapas Kelas IIA Serang']);
+        $upt2 = Upt::where('id', '!=', $upt1->id)->first() ?? Upt::create(['nama_upt' => 'Lapas Kelas IIA Cilegon']);
+
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.store'), [
+                'nomor_sidang' => 'STPP-KW/MULTI/'.uniqid(),
+                'tanggal_sidang' => '2026-11-20',
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Sidang Utama',
+                'metode' => 'luring',
+                'ketua_id' => $pegawaiKetua->id,
+                'sekretaris_id' => $pegawaiSekretaris->id,
+                'anggota_ids' => [$pegawaiAnggota->id],
+                'materis' => [
+                    [
+                        'kategori_materi' => 'mutasi_narapidana',
+                        'judul_materi' => 'Usulan Pemindahan Narapidana an. Anton Sujarwo',
+                        'mutasi_wbp_nama' => 'Anton Sujarwo',
+                        'mutasi_nomor_register' => 'BI.111/2026',
+                        'mutasi_perkara' => 'Narkotika Ps 114',
+                        'mutasi_lama_pidana' => '5 Tahun',
+                        'mutasi_upt_asal_id' => $upt1->id,
+                        'upt_tujuan_rekomendasi_id' => $upt2->id,
+                        'mutasi_alasan' => 'Mendekati keluarga',
+                        'mutasi_penjamin_nama' => 'Siti Aminah',
+                        'dokumen_tambahan_nama' => 'Surat Kades',
+                    ],
+                    [
+                        'kategori_materi' => 'izin_berobat',
+                        'judul_materi' => 'Izin Berobat Rujukan RS Luar Kota an. Bambang Tri',
+                        'berobat_wbp_nama' => 'Bambang Tri',
+                        'berobat_nomor_register' => 'BI.222/2026',
+                        'berobat_perkara' => 'Pencurian',
+                        'berobat_upt_asal_id' => $upt1->id,
+                        'berobat_diagnosa' => 'Tumor Otak',
+                        'berobat_rs_nama' => 'RSUP RSCM Jakarta',
+                        'berobat_rs_kota' => 'Jakarta Pusat',
+                    ],
+                    [
+                        'kategori_materi' => 'lainnya',
+                        'judul_materi' => 'Evaluasi Keamanan Akhir Tahun Lapas',
+                        'deskripsi_materi' => 'Pembahasan antisipasi Nataru Lapas se-Banten',
+                    ],
+                ],
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $newSidang = SidangTppKanwil::where('nomor_sidang', 'like', 'STPP-KW/MULTI/%')->latest()->first();
+        $this->assertNotNull($newSidang);
+        $this->assertEquals(3, $newSidang->materis()->count());
+
+        $m1 = $newSidang->materis()->where('urutan', 1)->first();
+        $this->assertEquals('mutasi_narapidana', $m1->kategori_materi);
+        $this->assertEquals('Anton Sujarwo', $m1->narapidana_data['nama']);
+        $this->assertEquals($upt2->id, $m1->upt_tujuan_rekomendasi_id);
+
+        $m2 = $newSidang->materis()->where('urutan', 2)->first();
+        $this->assertEquals('izin_berobat', $m2->kategori_materi);
+        $this->assertEquals('RSUP RSCM Jakarta', $m2->narapidana_data['rs_rujukan_nama']);
+
+        $m3 = $newSidang->materis()->where('urutan', 3)->first();
+        $this->assertEquals('lainnya', $m3->kategori_materi);
+    }
+
+    /**
+     * Memastikan tambah, update, dan hapus materi individual via modal endpoint berfungsi.
+     */
+    public function test_tambah_edit_dan_hapus_materi_via_controller(): void
+    {
+        $upt = Upt::first() ?? Upt::create(['nama_upt' => 'Lapas Serang']);
+
+        // 1. Tambah materi baru via AJAX/Form POST
+        $responseStore = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.materi.store', $this->sidang->id), [
+                'kategori_materi' => 'izin_berobat',
+                'judul_materi' => 'Materi Baru Berobat Darurat',
+                'berobat_wbp_nama' => 'Darurat Pasien',
+                'berobat_diagnosa' => 'Apendisitis Akut',
+                'berobat_rs_nama' => 'RSUD Banten',
+                'berobat_rs_kota' => 'Serang',
+            ]);
+
+        $responseStore->assertSessionHasNoErrors();
+        $newMateri = SidangTppKanwilMateri::where('sidang_tpp_kanwil_id', $this->sidang->id)
+            ->where('judul_materi', 'Materi Baru Berobat Darurat')
+            ->first();
+
+        $this->assertNotNull($newMateri);
+        $this->assertEquals('izin_berobat', $newMateri->kategori_materi);
+        $this->assertEquals('Darurat Pasien', $newMateri->narapidana_data['nama']);
+
+        // 2. Update materi via PUT
+        $responseUpdate = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.materi.update', [$this->sidang->id, $newMateri->id]), [
+                'kategori_materi' => 'izin_berobat',
+                'judul_materi' => 'Materi Baru Berobat Diperbarui',
+                'berobat_wbp_nama' => 'Darurat Pasien Revisi',
+                'berobat_diagnosa' => 'Apendisitis Akut Terkonfirmasi',
+                'rekomendasi_sidang' => 'setuju',
+                'catatan_rekomendasi' => 'Disetujui untuk operasi segera',
+            ]);
+
+        $responseUpdate->assertSessionHasNoErrors();
+        $newMateri->refresh();
+        $this->assertEquals('Materi Baru Berobat Diperbarui', $newMateri->judul_materi);
+        $this->assertEquals('setuju', $newMateri->rekomendasi_sidang);
+        $this->assertEquals('Disetujui untuk operasi segera', $newMateri->catatan_rekomendasi);
+
+        // 3. Hapus materi via DELETE
+        $responseDestroy = $this->actingAs($this->userKanwil)
+            ->delete(route('sidang-tpp-kanwil.materi.destroy', [$this->sidang->id, $newMateri->id]));
+
+        $responseDestroy->assertSessionHasNoErrors();
+        $this->assertDatabaseMissing('sidang_tpp_kanwil_materi', ['id' => $newMateri->id]);
+    }
+
+    /**
+     * Memastikan pada portal WA anggota sidang, anggota memberikan pendapat dan catatan khusus per materi sidang.
+     */
+    public function test_anggota_portal_submit_pendapat_dan_catatan_khusus_per_materi(): void
+    {
+        // Siapkan materi 1 dan materi 2
+        $materi1 = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $this->sidang->id,
+            'urutan' => 1,
+            'kategori_materi' => 'mutasi_narapidana',
+            'judul_materi' => 'Pemindahan Narapidana Ahmad',
+        ]);
+        $materi2 = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $this->sidang->id,
+            'urutan' => 2,
+            'kategori_materi' => 'izin_berobat',
+            'judul_materi' => 'Izin Berobat Bambang',
+        ]);
+
+        $anggota = SidangTppKanwilAnggota::where('sidang_tpp_kanwil_id', $this->sidang->id)->first();
+        $this->assertNotNull($anggota);
+
+        // Submit via portal anggota
+        $responseSubmit = $this->post(route('sidang-tpp-kanwil.portal-anggota.submit', $anggota->token_akses), [
+            'status_kehadiran' => 'hadir_luring',
+            'status_pendapat' => 'setuju',
+            'catatan_pendapat' => 'Rangkuman umum saya setuju.',
+            'materi_pendapat' => [
+                $materi1->id => [
+                    'status' => 'setuju',
+                    'catatan' => 'Catatan khusus materi 1: Litmas memenuhi syarat dan penjamin jelas.',
+                ],
+                $materi2->id => [
+                    'status' => 'setuju_catatan',
+                    'catatan' => 'Catatan khusus materi 2: Wajib pengawalan ketat petugas dan RS rujukan terkonfirmasi.',
+                ],
+            ],
+        ]);
+
+        $responseSubmit->assertSessionHasNoErrors();
+        $responseSubmit->assertRedirect();
+
+        // Verifikasi tanggapan per materi tersimpan di tabel sidang_tpp_kanwil_materi_pendapat
+        $p1 = SidangTppKanwilMateriPendapat::where('sidang_tpp_kanwil_materi_id', $materi1->id)
+            ->where('sidang_tpp_kanwil_anggota_id', $anggota->id)
+            ->first();
+        $this->assertNotNull($p1);
+        $this->assertEquals('setuju', $p1->status_pendapat);
+        $this->assertEquals('Catatan khusus materi 1: Litmas memenuhi syarat dan penjamin jelas.', $p1->catatan_pendapat);
+
+        $p2 = SidangTppKanwilMateriPendapat::where('sidang_tpp_kanwil_materi_id', $materi2->id)
+            ->where('sidang_tpp_kanwil_anggota_id', $anggota->id)
+            ->first();
+        $this->assertNotNull($p2);
+        $this->assertEquals('setuju_catatan', $p2->status_pendapat);
+        $this->assertEquals('Catatan khusus materi 2: Wajib pengawalan ketat petugas dan RS rujukan terkonfirmasi.', $p2->catatan_pendapat);
+    }
+
+    /**
+     * Memastikan two-way sync multi usulan mutasi narapidana saat Kakanwil upload disposisi.
+     */
+    public function test_two_way_sync_multi_mutasi_narapidana(): void
+    {
+        $uptAsal = Upt::first() ?? Upt::create(['nama_upt' => 'Lapas Cilegon']);
+        $uptTujuan1 = Upt::where('id', '!=', $uptAsal->id)->first() ?? Upt::create(['nama_upt' => 'Lapas Tangerang']);
+
+        $mutasi1 = MutasiNarapidana::create([
+            'nomor_surat' => 'W12.PAS-MUT.001',
+            'tanggal_surat' => now(),
+            'upt_asal_id' => $uptAsal->id,
+            'upt_tujuan_id' => null,
+            'total_usulan' => 1,
+            'keterangan' => 'Narapidana Kasus A',
+            'status' => 'diajukan',
+        ]);
+
+        $mutasi2 = MutasiNarapidana::create([
+            'nomor_surat' => 'W12.PAS-MUT.002',
+            'tanggal_surat' => now(),
+            'upt_asal_id' => $uptAsal->id,
+            'upt_tujuan_id' => null,
+            'total_usulan' => 1,
+            'keterangan' => 'Narapidana Kasus B',
+            'status' => 'diajukan',
+        ]);
+
+        $materi1 = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $this->sidang->id,
+            'urutan' => 1,
+            'kategori_materi' => 'mutasi_narapidana',
+            'judul_materi' => 'Pemindahan Mutasi 1',
+            'mutasi_id' => $mutasi1->id,
+            'rekomendasi_sidang' => 'setuju',
+            'upt_tujuan_rekomendasi_id' => $uptTujuan1->id,
+            'catatan_rekomendasi' => 'Setuju dipindahkan ke Lapas Tangerang',
+        ]);
+
+        $materi2 = SidangTppKanwilMateri::create([
+            'sidang_tpp_kanwil_id' => $this->sidang->id,
+            'urutan' => 2,
+            'kategori_materi' => 'mutasi_narapidana',
+            'judul_materi' => 'Pemindahan Mutasi 2',
+            'mutasi_id' => $mutasi2->id,
+            'rekomendasi_sidang' => 'tolak',
+            'catatan_rekomendasi' => 'Ditolak karena belum memenuhi syarat subtantif',
+        ]);
+
+        // Upload disposisi Ka Kanwil
+        $fileDisposisi = UploadedFile::fake()->create('disposisi_multi.pdf', 100, 'application/pdf');
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.upload-disposisi-kakanwil', $this->sidang->id), [
+                'kakanwil_nama' => 'Dody Fahrudin, Bc.IP., S.H., M.H.',
+                'kakanwil_jabatan' => 'Kepala Kantor Wilayah',
+                'tanggapan_kakanwil_status' => 'disetujui',
+                'tanggapan_kakanwil_tanggal' => '2026-11-20',
+                'tanggapan_kakanwil_catatan' => 'Lanjutkan proses dan terbitkan surat keputusan.',
+                'file_disposisi_kakanwil' => $fileDisposisi,
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        // Mutasi 1 disetujui -> status disetujui dan upt_tujuan_id diset ke Lapas Tangerang
+        $mutasi1->refresh();
+        $this->assertEquals('disetujui', $mutasi1->status);
+        $this->assertEquals($uptTujuan1->id, $mutasi1->upt_tujuan_id);
+        $this->assertStringContainsString('Status: DISETUJUI', $mutasi1->catatan_kanwil);
+
+        // Mutasi 2 juga tersinkronisasi dengan status disetujui sesuai disposisi Kakanwil
+        $mutasi2->refresh();
+        $this->assertEquals('disetujui', $mutasi2->status);
+        $this->assertStringContainsString('Status: DISETUJUI', $mutasi2->catatan_kanwil);
+    }
+
+    public function test_create_and_manage_materi_mutasi_keinginan_sendiri_with_pk_bapas_and_ba_upt(): void
+    {
+        $uptAsal = Upt::first() ?? Upt::create(['nama_upt' => 'Lapas Kelas IIA Serang']);
+        $uptTujuan = Upt::where('id', '!=', $uptAsal->id)->first() ?? Upt::create(['nama_upt' => 'Lapas Kelas I Tangerang']);
+
+        // 1. Create materi mutasi_keinginan_sendiri via materiStore
+        $filePernyataan = UploadedFile::fake()->create('pernyataan_pribadi_mandiri.pdf', 150, 'application/pdf');
+        $fileBaUpt = UploadedFile::fake()->create('ba_sidang_tpp_upt.pdf', 200, 'application/pdf');
+        $fileLitmas = UploadedFile::fake()->create('litmas_bapas_serang.pdf', 250, 'application/pdf');
+        $fileJaminan = UploadedFile::fake()->create('jaminan_keluarga.pdf', 100, 'application/pdf');
+        $fileKtpPenjamin = UploadedFile::fake()->create('ktp_kk_penjamin.pdf', 80, 'application/pdf');
+        $fileRegF = UploadedFile::fake()->create('register_f.pdf', 50, 'application/pdf');
+        $fileKesehatan = UploadedFile::fake()->create('surat_dokter_sehat.pdf', 90, 'application/pdf');
+
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.materi.store', $this->sidang->id), [
+                'kategori_materi' => 'mutasi_keinginan_sendiri',
+                'judul_materi' => 'Permohonan Pemindahan Sendiri an. Ahmad Sobari',
+                'deskripsi_materi' => 'Permohonan mendekati keluarga penjamin di Tangerang dengan biaya mandiri.',
+                'mutasi_wbp_nama' => 'Ahmad Sobari bin Hasan',
+                'mutasi_nomor_register' => 'BI.445/2024',
+                'mutasi_perkara' => 'Pencurian Ps 363 KUHP',
+                'mutasi_lama_pidana' => '3 Tahun 6 Bulan',
+                'mutasi_upt_asal_id' => $uptAsal->id,
+                'upt_tujuan_rekomendasi_id' => $uptTujuan->id,
+                'mutasi_alasan' => 'Mendekati keluarga orang tua yang sedang sakit keras.',
+                // PK Bapas & Litmas
+                'nama_pk_bapas' => 'Bambang Pamungkas, S.Sos.',
+                'nip_pk_bapas' => '198205122006041002',
+                'bapas_nama' => 'Balai Pemasyarakatan Kelas I Serang',
+                'rekomendasi_litmas' => 'Memenuhi syarat substantif dan administratif, layak dipindahkan mendekati penjamin.',
+                // Hasil Sidang TPP UPT
+                'nomor_ba_tpp_upt' => 'W12.PAS.1.PK.01-098/2026',
+                'tanggal_ba_tpp_upt' => '2026-11-10',
+                'rekomendasi_tpp_upt' => 'Disetujui TPP Lapas Serang untuk diteruskan ke Kantor Wilayah.',
+                // Penjamin
+                'mutasi_penjamin_nama' => 'Siti Aminah',
+                'mutasi_penjamin_nik' => '3671025501850001',
+                'mutasi_penjamin_hubungan' => 'Istri Kandung',
+                'mutasi_penjamin_kontak' => '081298765432',
+                'mutasi_penjamin_alamat' => 'Jl. Veteran No. 12 Kota Tangerang',
+                // Berkas
+                'file_mutasi_pernyataan_pribadi' => $filePernyataan,
+                'file_mutasi_ba_upt' => $fileBaUpt,
+                'file_mutasi_litmas' => $fileLitmas,
+                'file_mutasi_jaminan' => $fileJaminan,
+                'file_mutasi_ktp_penjamin' => $fileKtpPenjamin,
+                'file_mutasi_reg_f' => $fileRegF,
+                'file_mutasi_kesehatan' => $fileKesehatan,
+                'rekomendasi_sidang' => 'setuju',
+                'catatan_rekomendasi' => 'Disetujui dengan pengawalan dan biaya mandiri',
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $materi = SidangTppKanwilMateri::where('sidang_tpp_kanwil_id', $this->sidang->id)
+            ->where('kategori_materi', 'mutasi_keinginan_sendiri')
+            ->first();
+
+        $this->assertNotNull($materi);
+        $this->assertTrue($materi->isMutasiKeinginanSendiri());
+        $this->assertTrue($materi->isMutasiNarapidana());
+        $this->assertStringContainsString('Permintaan Sendiri', $materi->kategori_badge);
+
+        $ndm = $materi->narapidana_data;
+        $this->assertEquals('Ahmad Sobari bin Hasan', $ndm['nama']);
+        $this->assertEquals('Bambang Pamungkas, S.Sos.', $ndm['pk_bapas']['nama']);
+        $this->assertEquals('Balai Pemasyarakatan Kelas I Serang', $ndm['pk_bapas']['bapas']);
+        $this->assertEquals('W12.PAS.1.PK.01-098/2026', $ndm['tpp_upt']['nomor_ba']);
+        $this->assertEquals('3671025501850001', $ndm['penjamin']['nik']);
+        $this->assertNotEmpty($ndm['berkas']['pernyataan_pribadi']);
+        $this->assertNotEmpty($ndm['berkas']['ba_upt']);
+
+        // 2. Verifikasi update materi
+        $responseUpdate = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.materi.update', [$this->sidang->id, $materi->id]), [
+                'kategori_materi' => 'mutasi_keinginan_sendiri',
+                'judul_materi' => 'Permohonan Pemindahan Sendiri an. Ahmad Sobari (Revisi)',
+                'mutasi_wbp_nama' => 'Ahmad Sobari bin Hasan',
+                'nama_pk_bapas' => 'Bambang Pamungkas, S.Sos., M.Si.',
+                'nomor_ba_tpp_upt' => 'W12.PAS.1.PK.01-098.REV/2026',
+                'mutasi_penjamin_nama' => 'Siti Aminah',
+                'mutasi_penjamin_nik' => '3671025501850001',
+                'rekomendasi_sidang' => 'setuju',
+                'catatan_rekomendasi' => 'Disetujui penuh',
+            ]);
+
+        $responseUpdate->assertSessionHasNoErrors();
+        $materi->refresh();
+        $this->assertEquals('Bambang Pamungkas, S.Sos., M.Si.', $materi->narapidana_data['pk_bapas']['nama']);
+        $this->assertEquals('W12.PAS.1.PK.01-098.REV/2026', $materi->narapidana_data['tpp_upt']['nomor_ba']);
+
+        // 3. Verifikasi naskah dinas merender informasi mutasi keinginan sendiri
+        $this->sidang->refresh();
+        $risalahHtml = TppKanwilDokumenService::renderRisalahHtml($this->sidang);
+        $this->assertStringContainsString('Mutasi Permintaan Sendiri', $risalahHtml);
+        $this->assertStringContainsString('Ahmad Sobari bin Hasan', $risalahHtml);
+        $this->assertStringContainsString('kesanggupan pembiayaan mandiri', $risalahHtml);
+
+        $laporanHtml = TppKanwilDokumenService::renderLaporanHtml($this->sidang);
+        $this->assertStringContainsString('Ahmad Sobari bin Hasan', $laporanHtml);
     }
 }
