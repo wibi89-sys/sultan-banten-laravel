@@ -1436,7 +1436,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                 <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-exchange-alt text-warning-emphasis me-1"></i>Penyesuaian Usulan Mutasi Narapidana</h6>
                                 <div class="row g-2">
                                     <div class="col-md-6">
-                                        <label class="form-label small fw-semibold text-dark mb-1">Rekomendasi UPT Tujuan Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                        <label class="form-label small fw-semibold text-dark mb-1">UPT Tujuan</label>
                                         <input type="text" name="mutasi_upt_tujuan" class="form-control form-control-sm border-warning" value="{{ old('mutasi_upt_tujuan', $sidang->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? '')) }}" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                     </div>
                                     <div class="col-md-6">
@@ -1610,7 +1610,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                             <input type="text" name="mutasi_upt_tujuan" id="tambah_upt_tujuan_rekomendasi_id" class="form-control form-control-sm border-warning" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
@@ -1713,7 +1713,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                             <input type="text" name="mutasi_upt_tujuan" id="tambah_pribadi_upt_tujuan_rekomendasi_id" class="form-control form-control-sm border-primary" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
@@ -2095,7 +2095,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             <input type="text" name="mutasi_perkara" class="form-control form-control-sm" value="{{ $ndm['tindak_pidana'] ?? '' }}">
                                         </div>
                                         <div class="col-md-5">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                             <input type="text" name="mutasi_upt_tujuan" class="form-control form-control-sm border-warning" value="{{ old('mutasi_upt_tujuan', $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')) }}" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">
@@ -2140,7 +2140,7 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                            <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                             <input type="text" name="mutasi_upt_tujuan" class="form-control form-control-sm border-primary" value="{{ old('mutasi_upt_tujuan', $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? '')) }}" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                                         </div>
                                         <div class="col-12">

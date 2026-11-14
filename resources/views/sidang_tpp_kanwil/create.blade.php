@@ -236,7 +236,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                                        <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                                         <input type="text" name="materis[0][mutasi_upt_tujuan]" id="upt_tujuan_rekomendasi_id_0" class="form-control form-control-sm border-warning" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                                                     </div>
                                                     <div class="col-12">
@@ -339,7 +339,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                                        <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                                         <input type="text" name="materis[0][mutasi_upt_tujuan]" id="mutasi_pribadi_upt_tujuan_id_0" class="form-control form-control-sm border-primary" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                                                     </div>
                                                     <div class="col-12">
@@ -806,7 +806,7 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang (Ketik Bebas / Luar Wilayah)</label>
+                                <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                 <input type="text" name="materis[__INDEX__][mutasi_upt_tujuan]" id="upt_tujuan_rekomendasi_id___INDEX__" class="form-control form-control-sm border-warning" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Semarang" list="listUptTujuan">
                             </div>
                             <div class="col-12">
@@ -909,7 +909,7 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted mb-1">UPT Tujuan Rekomendasi Sidang Kanwil (Ketik Bebas / Luar Wilayah)</label>
+                                <label class="form-label small text-muted mb-1">UPT Tujuan</label>
                                 <input type="text" name="materis[__INDEX__][mutasi_upt_tujuan]" id="mutasi_pribadi_upt_tujuan_id___INDEX__" class="form-control form-control-sm border-primary" placeholder="Contoh: Lapas Kelas I Cipinang / Lapas Besi Nusakambangan" list="listUptTujuan">
                             </div>
                             <div class="col-12">
