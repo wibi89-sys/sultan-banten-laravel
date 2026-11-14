@@ -432,9 +432,12 @@ class SidangTppController extends Controller
 
         $sidang = SidangTpp::with('usulan')->findOrFail($id);
 
-        // Hanya UPT pemilik sidang atau Administrator yang berwenang mengisi hasil sidang
-        if (! $user->isAdmin() && (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id)) {
-            abort(403, 'Akses ditolak. Pengisian hasil sidang, penetapan putusan Warga Binaan, dan pengunggahan Berita Acara hanya dapat dilakukan oleh operator UPT pelaksana atau Administrator.');
+        if (! $sidang->canEdit($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                abort(403, 'Akses ditolak. Sidang TPP telah diverifikasi oleh Kepala Kantor Wilayah sehingga data hasil sidang terkunci dan hanya dapat diubah oleh Administrator.');
+            }
+
+            abort(403, 'Akses ditolak. Pengisian hasil sidang, penetapan putusan Warga Binaan, dan pengunggahan Berita Acara hanya dapat dilakukan oleh user yang menginput sidang atau Administrator.');
         }
 
         $request->validate([
@@ -536,8 +539,12 @@ class SidangTppController extends Controller
         $user = auth()->user();
         $sidang = SidangTpp::findOrFail($id);
 
-        if (! $user->isAdmin() && (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id)) {
-            abort(403, 'Akses ditolak. Menghapus foto dokumentasi hanya dapat dilakukan oleh operator UPT pelaksana atau Administrator.');
+        if (! $sidang->canEdit($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                abort(403, 'Akses ditolak. Sidang TPP telah diverifikasi oleh Kepala Kantor Wilayah sehingga foto dokumentasi terkunci.');
+            }
+
+            abort(403, 'Akses ditolak. Menghapus foto dokumentasi hanya dapat dilakukan oleh user yang menginput sidang atau Administrator.');
         }
 
         $fotoIndex = (int) $request->input('photo_index', -1);
@@ -917,22 +924,22 @@ class SidangTppController extends Controller
     }
 
     /**
-     * Hapus Sidang TPP
-     * Hanya dapat dilakukan oleh Administrator Kantor Wilayah sebelum disahkan.
+     * Hapus Sidang TPP.
+     * Sebelum verifikasi Ka Kanwil: Admin dan User yang menginput dapat menghapus.
+     * Setelah verifikasi Ka Kanwil: Tidak bisa dihapus, KECUALI Administrator.
      */
     public function destroy(int $id): RedirectResponse
     {
         $this->checkAccess('full');
         $user = auth()->user();
-
-        if (! $user || ! $user->isAdmin()) {
-            abort(403, 'Akses ditolak. Hanya Administrator Kantor Wilayah yang memiliki wewenang untuk menghapus agenda Sidang TPP.');
-        }
-
         $sidang = SidangTpp::findOrFail($id);
 
-        if ($sidang->status_verifikasi_kanwil === 'sesuai' || ! empty($sidang->file_laporan_kakanwil)) {
-            abort(403, 'Jadwal sidang yang telah diverifikasi sesuai atau diterbitkan Laporan Ka. Kanwil tidak dapat dihapus.');
+        if (! $sidang->canDelete($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                abort(403, 'Akses ditolak. Jadwal sidang yang telah diverifikasi oleh Kepala Kantor Wilayah tidak dapat dihapus, kecuali oleh Administrator.');
+            }
+
+            abort(403, 'Akses ditolak. Hanya user yang menginput sidang atau Administrator yang memiliki wewenang untuk menghapus agenda Sidang TPP ini.');
         }
 
         // Hapus file fisik jika ada
@@ -1038,12 +1045,12 @@ class SidangTppController extends Controller
         $user = auth()->user();
         $sidang = SidangTpp::findOrFail($id);
 
-        if (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id) {
-            abort(403, 'Akses ditolak. Kewenangan mengelola peserta sidang hanya dimiliki oleh user UPT terkait.');
-        }
+        if (! $sidang->canEdit($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                return back()->with('error', 'Tidak dapat menambah peserta. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+            }
 
-        if ($sidang->status_sidang === 'selesai_ttd_kakanwil') {
-            return back()->with('error', 'Tidak dapat menambah peserta. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+            abort(403, 'Akses ditolak. Kewenangan mengelola peserta sidang hanya dimiliki oleh user yang menginput sidang atau Administrator.');
         }
 
         $validated = $request->validate([
@@ -1095,12 +1102,12 @@ class SidangTppController extends Controller
         $sidang = SidangTpp::findOrFail($id);
         $usulan = $sidang->usulan()->findOrFail($pesertaId);
 
-        if (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id) {
-            abort(403, 'Akses ditolak. Kewenangan mengelola peserta sidang hanya dimiliki oleh user UPT terkait.');
-        }
+        if (! $sidang->canEdit($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                return back()->with('error', 'Tidak dapat mengubah peserta. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+            }
 
-        if ($sidang->status_sidang === 'selesai_ttd_kakanwil') {
-            return back()->with('error', 'Tidak dapat mengubah peserta. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+            abort(403, 'Akses ditolak. Kewenangan mengelola peserta sidang hanya dimiliki oleh user yang menginput sidang atau Administrator.');
         }
 
         $validated = $request->validate([
@@ -1151,12 +1158,12 @@ class SidangTppController extends Controller
         $sidang = SidangTpp::findOrFail($id);
         $usulan = $sidang->usulan()->findOrFail($pesertaId);
 
-        if (empty($user->upt_id) || (int) $user->upt_id !== (int) $sidang->upt_id) {
-            abort(403, 'Akses ditolak. Kewenangan mengelola peserta sidang hanya dimiliki oleh user UPT terkait.');
-        }
+        if (! $sidang->canEdit($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                return back()->with('error', 'Tidak dapat menghapus peserta. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+            }
 
-        if ($sidang->status_sidang === 'selesai_ttd_kakanwil') {
-            return back()->with('error', 'Tidak dapat menghapus peserta. Sidang ini telah selesai dan disahkan oleh Kepala Kantor Wilayah.');
+            abort(403, 'Akses ditolak. Kewenangan mengelola peserta sidang hanya dimiliki oleh user yang menginput sidang atau Administrator.');
         }
 
         $namaWbp = $usulan->nama_wbp;

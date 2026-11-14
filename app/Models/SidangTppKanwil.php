@@ -153,4 +153,77 @@ class SidangTppKanwil extends Model
             default => '<span class="badge bg-light text-muted border"><i class="fas fa-clock me-1"></i>Menunggu Disposisi</span>',
         };
     }
+
+    /**
+     * Cek apakah Sidang TPP Kanwil sudah diverifikasi terakhir / mendapat tanggapan final dari Ka Kanwil.
+     */
+    public function isVerifiedKakanwil(): bool
+    {
+        return $this->status_sidang === 'selesai'
+            || in_array($this->tanggapan_kakanwil_status, ['disetujui', 'disetujui_bersyarat', 'ditolak', 'perlu_pendalaman'], true)
+            || ! empty($this->file_disposisi_kakanwil);
+    }
+
+    /**
+     * Cek apakah user berwenang merubah data sidang ini.
+     * User yang menginput masih bisa merubah selama belum diverifikasi terakhir Ka Kanwil.
+     * Jika sudah diverifikasi terakhir Ka Kanwil, data terkunci kecuali untuk Administrator.
+     */
+    public function canEdit(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        $hasKanwilAccess = $user->hasAccess('sidang_tpp_kanwil', 'full')
+            || ($user->hasAccess('sidang_tpp', 'full') && $user->isKanwil());
+
+        if (! $user->isKanwil() || ! $hasKanwilAccess) {
+            return false;
+        }
+
+        // Terkunci pasca-verifikasi Ka Kanwil untuk non-admin
+        if ($this->isVerifiedKakanwil()) {
+            return false;
+        }
+
+        // User pembuat data dapat merubah
+        return empty($this->created_by) || (int) $this->created_by === (int) $user->id;
+    }
+
+    /**
+     * Cek apakah user berwenang menghapus sidang ini.
+     * Sebelum verifikasi Ka Kanwil: Admin dan User yang menginput dapat menghapus.
+     * Setelah verifikasi Ka Kanwil: Tidak bisa dihapus, KECUALI Administrator.
+     */
+    public function canDelete(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        // Administrator selalu berwenang menghapus (termasuk override pasca-verifikasi Ka Kanwil)
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        $hasKanwilAccess = $user->hasAccess('sidang_tpp_kanwil', 'full')
+            || ($user->hasAccess('sidang_tpp', 'full') && $user->isKanwil());
+
+        if (! $user->isKanwil() || ! $hasKanwilAccess) {
+            return false;
+        }
+
+        // Jika sudah diverifikasi terakhir Ka Kanwil, tidak bisa dihapus kecuali Admin
+        if ($this->isVerifiedKakanwil()) {
+            return false;
+        }
+
+        // Sebelum verifikasi Ka Kanwil, user yang menginput dapat menghapus
+        return ! empty($this->created_by) && (int) $this->created_by === (int) $user->id;
+    }
 }

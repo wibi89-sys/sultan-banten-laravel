@@ -88,8 +88,14 @@
                 <i class="fas fa-arrow-left me-1"></i> Kembali
             </a>
 
-            <!-- Tombol Hapus Sidang (Khusus Administrator Kanwil) -->
-            @if(auth()->user()->isAdmin() && $sidang->status_sidang !== 'selesai')
+            @if($sidang->canEdit(auth()->user()))
+            <button type="button" class="btn btn-outline-primary btn-sm px-3 shadow-sm fw-bold" style="border-radius: 20px;" data-bs-toggle="modal" data-bs-target="#modalEditSidangKanwil">
+                <i class="fas fa-edit me-1"></i> Edit Data Sidang
+            </button>
+            @endif
+
+            <!-- Tombol Hapus Sidang -->
+            @if($sidang->canDelete(auth()->user()))
             <form action="{{ route('sidang-tpp-kanwil.destroy', $sidang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Sidang TPP Kanwil {{ $sidang->nomor_sidang }}? Tindakan ini tidak dapat dibatalkan.');">
                 @csrf
                 @method('DELETE')
@@ -132,6 +138,9 @@
                         </span>
                         {!! $sidang->status_badge !!}
                         {!! $sidang->tanggapan_badge !!}
+                        @if($sidang->isVerifiedKakanwil())
+                        <span class="badge bg-secondary text-white" title="Sidang telah diverifikasi/disposisi final oleh Ka. Kanwil. Data terkunci bagi user biasa."><i class="fas fa-lock me-1"></i>Terkunci (Final Ka. Kanwil)</span>
+                        @endif
                     </div>
                     <h5 class="fw-bold mb-2 text-dark" style="font-size: 18px;">{{ $sidang->agenda_judul }}</h5>
                     @if($sidang->agenda_deskripsi)
@@ -944,6 +953,119 @@ Demikian disampaikan, atas kerja sama dan perkenannya diucapkan terima kasih.
             </div>
         </div>
     </div>
+
+    @if($sidang->canEdit(auth()->user()))
+    <!-- Modal Edit Data Sidang Kanwil -->
+    <div class="modal fade" id="modalEditSidangKanwil" tabindex="-1" aria-labelledby="modalEditSidangKanwilLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <form action="{{ route('sidang-tpp-kanwil.update', $sidang->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header bg-primary text-white py-3">
+                        <h6 class="modal-title fw-bold" id="modalEditSidangKanwilLabel">
+                            <i class="fas fa-edit me-2"></i>Edit Data &amp; Jadwal Sidang TPP Kanwil
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Nomor Sidang <span class="text-danger">*</span></label>
+                                <input type="text" name="nomor_sidang" class="form-control form-control-sm" value="{{ old('nomor_sidang', $sidang->nomor_sidang) }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Kategori Agenda <span class="text-danger">*</span></label>
+                                <input type="text" name="agenda_kategori" class="form-control form-control-sm" value="{{ old('agenda_kategori', $sidang->agenda_kategori) }}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Judul Agenda Sidang <span class="text-danger">*</span></label>
+                                <input type="text" name="agenda_judul" class="form-control form-control-sm" value="{{ old('agenda_judul', $sidang->agenda_judul) }}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Deskripsi / Latar Belakang Agenda</label>
+                                <textarea name="agenda_deskripsi" class="form-control form-control-sm" rows="3">{{ old('agenda_deskripsi', $sidang->agenda_deskripsi) }}</textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Tanggal Sidang <span class="text-danger">*</span></label>
+                                <input type="date" name="tanggal_sidang" class="form-control form-control-sm" value="{{ old('tanggal_sidang', $sidang->tanggal_sidang ? $sidang->tanggal_sidang->format('Y-m-d') : '') }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Jam Mulai <span class="text-danger">*</span></label>
+                                <input type="time" name="jam_mulai" class="form-control form-control-sm" value="{{ old('jam_mulai', substr($sidang->jam_mulai, 0, 5)) }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Jam Selesai</label>
+                                <input type="time" name="jam_selesai" class="form-control form-control-sm" value="{{ old('jam_selesai', $sidang->jam_selesai ? substr($sidang->jam_selesai, 0, 5) : '') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Tempat Pelaksanaan <span class="text-danger">*</span></label>
+                                <input type="text" name="tempat" class="form-control form-control-sm" value="{{ old('tempat', $sidang->tempat) }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Metode Sidang <span class="text-danger">*</span></label>
+                                <select name="metode" class="form-select form-select-sm" required>
+                                    <option value="luring" {{ old('metode', $sidang->metode) === 'luring' ? 'selected' : '' }}>Tatap Muka Langsung (Luring)</option>
+                                    <option value="daring" {{ old('metode', $sidang->metode) === 'daring' ? 'selected' : '' }}>Daring Penuh (Virtual)</option>
+                                    <option value="hybrid" {{ old('metode', $sidang->metode) === 'hybrid' ? 'selected' : '' }}>Hybrid (Luring &amp; Daring)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Tautan Zoom / Link Daring</label>
+                                <input type="url" name="link_daring" class="form-control form-control-sm" value="{{ old('link_daring', $sidang->link_daring) }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-dark">Meeting ID</label>
+                                <input type="text" name="meeting_id" class="form-control form-control-sm" value="{{ old('meeting_id', $sidang->meeting_id) }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-dark">Passcode</label>
+                                <input type="text" name="passcode" class="form-control form-control-sm" value="{{ old('passcode', $sidang->passcode) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Nomor Nota Dinas Undangan</label>
+                                <input type="text" name="nomor_nota_dinas" class="form-control form-control-sm" value="{{ old('nomor_nota_dinas', $sidang->nomor_nota_dinas) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Tanggal Nota Dinas Undangan</label>
+                                <input type="date" name="tanggal_nota_dinas" class="form-control form-control-sm" value="{{ old('tanggal_nota_dinas', $sidang->tanggal_nota_dinas ? $sidang->tanggal_nota_dinas->format('Y-m-d') : '') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Nomor Berita Acara</label>
+                                <input type="text" name="nomor_berita_acara" class="form-control form-control-sm" value="{{ old('nomor_berita_acara', $sidang->nomor_berita_acara) }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Nomor Risalah Sidang</label>
+                                <input type="text" name="nomor_risalah" class="form-control form-control-sm" value="{{ old('nomor_risalah', $sidang->nomor_risalah) }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Nomor Laporan Pelaksanaan</label>
+                                <input type="text" name="nomor_laporan" class="form-control form-control-sm" value="{{ old('nomor_laporan', $sidang->nomor_laporan) }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Kesimpulan / Rekomendasi Hasil Sidang</label>
+                                <textarea name="kesimpulan_sidang" class="form-control form-control-sm" rows="3">{{ old('kesimpulan_sidang', $sidang->kesimpulan_sidang) }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-dark">Perbarui Berkas Bahan Rapat Sidang (Opsional, PDF/Word/Zip maks 15MB)</label>
+                                <input type="file" name="file_bahan_sidang" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                                @if($sidang->file_bahan_sidang)
+                                <div class="form-text small text-muted">Berkas saat ini: <a href="{{ asset($sidang->file_bahan_sidang) }}" target="_blank"><i class="fas fa-paperclip me-1"></i>Lihat Berkas Bahan</a></div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-2 px-4">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">
+                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>
 

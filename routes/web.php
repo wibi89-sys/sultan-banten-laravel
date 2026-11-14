@@ -174,6 +174,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [SidangTppKanwilController::class, 'create'])->name('create');
         Route::post('/', [SidangTppKanwilController::class, 'store'])->name('store');
         Route::get('/{id}', [SidangTppKanwilController::class, 'show'])->whereNumber('id')->name('show');
+        Route::put('/{id}', [SidangTppKanwilController::class, 'update'])->whereNumber('id')->name('update');
         Route::delete('/{id}', [SidangTppKanwilController::class, 'destroy'])->whereNumber('id')->name('destroy');
 
         // Pengaturan TPP Kanwil (Tim Sidang, No WA, TTD Kakanwil & Stempel)

@@ -579,4 +579,123 @@ class SidangTppFeatureTest extends TestCase
         // Pastikan tidak terjadi pengulangan kalimat ganda
         $this->assertEquals(1, substr_count($htmlCustom, 'sebagai berikut:'));
     }
+
+    /**
+     * Memastikan user UPT pembuat data (creator) dapat mengisi hasil dan menghapus Sidang TPP UPT sebelum diverifikasi Ka Kanwil.
+     */
+    public function test_upt_creator_can_update_hasil_and_delete_sidang_before_kakanwil_verification(): void
+    {
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-CREATOR-'.time(),
+            'tanggal_surat' => '2026-10-23',
+            'tanggal_sidang' => '2026-10-25',
+            'jam_mulai' => '09:00',
+            'agenda_sidang' => 'Agenda Sidang Creator Test',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'created_by' => $this->userUpt->id,
+            'status_sidang' => 'dijadwalkan',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+        ]);
+
+        $this->assertTrue($sidang->canEdit($this->userUpt));
+        $this->assertTrue($sidang->canDelete($this->userUpt));
+
+        // Creator mengisi hasil sidang
+        $resHasil = $this->actingAs($this->userUpt)->post(route('sidang-tpp.hasil.update', $sidang->id), [
+            'nomor_berita_acara' => 'BA/UPT/TEST/999',
+        ]);
+        $resHasil->assertSessionHasNoErrors();
+        $this->assertEquals('BA/UPT/TEST/999', $sidang->fresh()->nomor_berita_acara);
+
+        // Creator menghapus sidang sebelum verifikasi Ka Kanwil
+        $resDel = $this->actingAs($this->userUpt)->delete(route('sidang-tpp.destroy', $sidang->id));
+        $resDel->assertSessionHas('success');
+        $this->assertDatabaseMissing('sidang_tpp', ['id' => $sidang->id]);
+    }
+
+    /**
+     * Memastikan user lain dari UPT lain atau bukan creator ditolak saat mencoba update/delete Sidang TPP.
+     */
+    public function test_other_user_cannot_update_or_delete_sidang_upt(): void
+    {
+        $otherUpt = Upt::firstOrCreate(['nama_upt' => 'LAPAS CILEGON TEST'], ['alamat' => 'Cilegon', 'kapasitas' => 500]);
+        $otherUser = User::factory()->create([
+            'upt_id' => $otherUpt->id,
+            'role' => 'operator',
+            'akses_sidang_tpp' => 'full',
+        ]);
+
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-ISOLASI-'.time(),
+            'tanggal_surat' => '2026-10-23',
+            'tanggal_sidang' => '2026-10-25',
+            'jam_mulai' => '09:00',
+            'agenda_sidang' => 'Agenda Sidang Isolasi',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'created_by' => $this->userUpt->id,
+            'status_sidang' => 'dijadwalkan',
+            'status_verifikasi_kanwil' => 'menunggu_sidang',
+        ]);
+
+        $this->assertFalse($sidang->canEdit($otherUser));
+        $this->assertFalse($sidang->canDelete($otherUser));
+
+        $resHasil = $this->actingAs($otherUser)->post(route('sidang-tpp.hasil.update', $sidang->id), [
+            'nomor_berita_acara' => 'BA/ILLEGAL/001',
+        ]);
+        $resHasil->assertStatus(403);
+
+        $resDel = $this->actingAs($otherUser)->delete(route('sidang-tpp.destroy', $sidang->id));
+        $resDel->assertStatus(403);
+    }
+
+    /**
+     * Memastikan setelah verifikasi Ka Kanwil, data terkunci sehingga creator tidak bisa merubah/menghapus, tapi Admin tetap bisa.
+     */
+    public function test_after_kakanwil_verification_upt_sidang_is_locked_except_for_admin(): void
+    {
+        $admin = User::where('role', 'admin')->first()
+            ?? User::factory()->create(['role' => 'admin', 'upt_id' => null]);
+
+        $sidang = SidangTpp::create([
+            'upt_id' => $this->upt->id,
+            'nomor_undangan' => 'UND-LOCKED-'.time(),
+            'tanggal_surat' => '2026-10-23',
+            'tanggal_sidang' => '2026-10-25',
+            'jam_mulai' => '09:00',
+            'agenda_sidang' => 'Agenda Sidang Final',
+            'ketua_tpp' => 'Ketua Test',
+            'sekretaris_tpp' => 'Sekretaris Test',
+            'created_by' => $this->userUpt->id,
+            'status_sidang' => 'selesai_ttd_kakanwil',
+            'status_verifikasi_kanwil' => 'sesuai',
+            'tanggal_ttd_kakanwil' => '2026-10-26',
+            'file_laporan_kakanwil' => 'uploads/test_laporan.pdf',
+        ]);
+
+        $this->assertTrue($sidang->isVerifiedKakanwil());
+        $this->assertFalse($sidang->canEdit($this->userUpt));
+        $this->assertFalse($sidang->canDelete($this->userUpt));
+        $this->assertTrue($sidang->canEdit($admin));
+        $this->assertTrue($sidang->canDelete($admin));
+
+        // Creator coba edit hasil -> 403
+        $resHasil = $this->actingAs($this->userUpt)->post(route('sidang-tpp.hasil.update', $sidang->id), [
+            'nomor_berita_acara' => 'BA/COBA/999',
+        ]);
+        $resHasil->assertStatus(403);
+
+        // Creator coba hapus -> 403
+        $resDel = $this->actingAs($this->userUpt)->delete(route('sidang-tpp.destroy', $sidang->id));
+        $resDel->assertStatus(403);
+
+        // Admin menghapus sidang pasca-verifikasi -> sukses
+        $resAdminDel = $this->actingAs($admin)->delete(route('sidang-tpp.destroy', $sidang->id));
+        $resAdminDel->assertSessionHas('success');
+        $this->assertDatabaseMissing('sidang_tpp', ['id' => $sidang->id]);
+    }
 }

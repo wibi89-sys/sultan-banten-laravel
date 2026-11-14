@@ -29,6 +29,7 @@ class SidangTppKanwilDokumenAiTest extends TestCase
             ?? User::factory()->create(['upt_id' => null, 'role' => 'operator_wilayah']);
         $this->userKanwil->role = 'operator_wilayah';
         $this->userKanwil->akses_sidang_tpp = true;
+        $this->userKanwil->akses_sidang_tpp_kanwil = true;
         $this->userKanwil->save();
 
         // Siapkan data sidang TPP Kanwil
@@ -272,31 +273,143 @@ class SidangTppKanwilDokumenAiTest extends TestCase
     }
 
     /**
-     * Memastikan user non-admin (operator wilayah biasa) DITOLAK (403) saat mencoba menghapus Sidang TPP Kanwil.
+     * Memastikan user yang menginput data (creator) dapat mengubah dan menghapus sidang sebelum verifikasi Ka Kanwil.
      */
-    public function test_non_admin_cannot_delete_sidang_tpp_kanwil(): void
+    public function test_creator_can_update_and_delete_sidang_before_kakanwil_verification(): void
     {
-        // $this->userKanwil memiliki role 'operator_wilayah' (bukan 'admin')
-        $response = $this->actingAs($this->userKanwil)
+        // 1. Creator dapat mengubah data sidang sebelum verifikasi
+        $responseUpdate = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.update', $this->sidang->id), [
+                'nomor_sidang' => $this->sidang->nomor_sidang,
+                'agenda_kategori' => 'Izin Luar Negeri Klien Bapas (Revisi)',
+                'agenda_judul' => 'Judul Sidang Diperbarui Creator',
+                'tanggal_sidang' => '2026-11-20',
+                'jam_mulai' => '09:30',
+                'jam_selesai' => '12:00',
+                'tempat' => 'Ruang Sidang TPP Kanwil Lantai 2',
+                'metode' => 'luring',
+            ]);
+
+        $responseUpdate->assertSessionHasNoErrors();
+        $this->assertEquals('Judul Sidang Diperbarui Creator', $this->sidang->fresh()->agenda_judul);
+
+        // 2. Creator dapat menghapus sidang sebelum verifikasi
+        $responseDelete = $this->actingAs($this->userKanwil)
             ->delete(route('sidang-tpp-kanwil.destroy', $this->sidang->id));
 
-        $response->assertStatus(403);
+        $responseDelete->assertRedirect(route('sidang-tpp-kanwil.index'));
+        $this->assertDatabaseMissing('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
+    }
+
+    /**
+     * Memastikan user lain (bukan creator dan bukan admin) ditolak (403) saat mencoba merubah atau menghapus sidang.
+     */
+    public function test_other_user_cannot_update_or_delete_sidang(): void
+    {
+        $otherUser = User::factory()->create([
+            'role' => 'operator_wilayah',
+            'upt_id' => null,
+            'akses_sidang_tpp_kanwil' => true,
+        ]);
+
+        // Coba update -> 403
+        $responseUpdate = $this->actingAs($otherUser)
+            ->put(route('sidang-tpp-kanwil.update', $this->sidang->id), [
+                'nomor_sidang' => $this->sidang->nomor_sidang,
+                'agenda_kategori' => $this->sidang->agenda_kategori,
+                'agenda_judul' => 'Coba bajak sidang',
+                'tanggal_sidang' => '2026-11-20',
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Sidang',
+                'metode' => 'luring',
+            ]);
+        $responseUpdate->assertStatus(403);
+
+        // Coba delete -> 403
+        $responseDelete = $this->actingAs($otherUser)
+            ->delete(route('sidang-tpp-kanwil.destroy', $this->sidang->id));
+        $responseDelete->assertStatus(403);
+
         $this->assertDatabaseHas('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
     }
 
     /**
-     * Memastikan hanya Admin Kanwil (role: admin) yang diizinkan menghapus Sidang TPP Kanwil.
+     * Memastikan setelah verifikasi terakhir Ka Kanwil, user penginput TIDAK BISA merubah maupun menghapus.
      */
-    public function test_admin_can_delete_sidang_tpp_kanwil(): void
+    public function test_after_kakanwil_verification_creator_cannot_update_or_delete(): void
+    {
+        // Simulasikan sidang telah selesai dan diverifikasi Ka Kanwil
+        $this->sidang->update([
+            'status_sidang' => 'selesai',
+            'tanggapan_kakanwil_status' => 'disetujui',
+            'tanggapan_kakanwil_tanggal' => '2026-11-15',
+            'kakanwil_nama' => 'Dody Fahrudin, Bc.IP., S.H., M.H.',
+            'file_disposisi_kakanwil' => 'uploads/test_disposisi.pdf',
+        ]);
+
+        $this->assertTrue($this->sidang->isVerifiedKakanwil());
+        $this->assertFalse($this->sidang->canEdit($this->userKanwil));
+        $this->assertFalse($this->sidang->canDelete($this->userKanwil));
+
+        // Coba update oleh creator -> ditolak 403
+        $responseUpdate = $this->actingAs($this->userKanwil)
+            ->put(route('sidang-tpp-kanwil.update', $this->sidang->id), [
+                'nomor_sidang' => $this->sidang->nomor_sidang,
+                'agenda_kategori' => $this->sidang->agenda_kategori,
+                'agenda_judul' => 'Coba ubah pasca verifikasi',
+                'tanggal_sidang' => '2026-11-20',
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Sidang',
+                'metode' => 'luring',
+            ]);
+        $responseUpdate->assertStatus(403);
+
+        // Coba delete oleh creator -> ditolak 403
+        $responseDelete = $this->actingAs($this->userKanwil)
+            ->delete(route('sidang-tpp-kanwil.destroy', $this->sidang->id));
+        $responseDelete->assertStatus(403);
+
+        $this->assertDatabaseHas('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
+    }
+
+    /**
+     * Memastikan Admin TETAP BISA merubah dan menghapus sidang sekalipun telah diverifikasi terakhir Ka Kanwil.
+     */
+    public function test_admin_can_update_and_delete_even_after_kakanwil_verification(): void
     {
         $admin = User::where('role', 'admin')->first()
             ?? User::factory()->create(['role' => 'admin', 'upt_id' => null]);
 
-        $response = $this->actingAs($admin)
+        $this->sidang->update([
+            'status_sidang' => 'selesai',
+            'tanggapan_kakanwil_status' => 'disetujui',
+            'tanggapan_kakanwil_tanggal' => '2026-11-15',
+            'kakanwil_nama' => 'Dody Fahrudin, Bc.IP., S.H., M.H.',
+            'file_disposisi_kakanwil' => 'uploads/test_disposisi.pdf',
+        ]);
+
+        $this->assertTrue($this->sidang->canEdit($admin));
+        $this->assertTrue($this->sidang->canDelete($admin));
+
+        // Admin melakukan update pasca-verifikasi
+        $responseUpdate = $this->actingAs($admin)
+            ->put(route('sidang-tpp-kanwil.update', $this->sidang->id), [
+                'nomor_sidang' => $this->sidang->nomor_sidang,
+                'agenda_kategori' => 'Koreksi Kebijakan Pimpinan',
+                'agenda_judul' => 'Judul Sidang Dikoreksi Admin',
+                'tanggal_sidang' => '2026-11-20',
+                'jam_mulai' => '10:00',
+                'tempat' => 'Ruang Rapat Utama Kanwil',
+                'metode' => 'hybrid',
+            ]);
+        $responseUpdate->assertSessionHasNoErrors();
+        $this->assertEquals('Judul Sidang Dikoreksi Admin', $this->sidang->fresh()->agenda_judul);
+
+        // Admin melakukan hapus pasca-verifikasi (force delete resmi pimpinan)
+        $responseDelete = $this->actingAs($admin)
             ->delete(route('sidang-tpp-kanwil.destroy', $this->sidang->id));
 
-        $response->assertRedirect(route('sidang-tpp-kanwil.index'));
-        $response->assertSessionHas('success');
+        $responseDelete->assertRedirect(route('sidang-tpp-kanwil.index'));
         $this->assertDatabaseMissing('sidang_tpp_kanwil', ['id' => $this->sidang->id]);
     }
 }

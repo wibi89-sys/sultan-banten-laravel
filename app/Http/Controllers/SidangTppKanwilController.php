@@ -31,7 +31,10 @@ class SidangTppKanwilController extends Controller
             abort(403, 'Akses ditolak. Fitur Pelaksanaan Sidang TPP Kantor Wilayah hanya diperuntukkan bagi personil Kantor Wilayah.');
         }
 
-        if (! $user->hasAccess('sidang_tpp_kanwil', $requiredLevel)) {
+        $hasKanwilAccess = $user->hasAccess('sidang_tpp_kanwil', $requiredLevel)
+            || ($user->hasAccess('sidang_tpp', $requiredLevel) && $user->isKanwil());
+
+        if (! $hasKanwilAccess) {
             $msg = $requiredLevel === 'full'
                 ? 'Akses ditolak. Anda hanya memiliki hak lihat (read-only) pada modul Sidang TPP Kanwil.'
                 : 'Akses ditolak. Anda tidak memiliki izin untuk mengakses fitur Sidang TPP Kanwil.';
@@ -604,7 +607,12 @@ class SidangTppKanwilController extends Controller
     public function uploadRisalahSigned(Request $request, int $id): RedirectResponse
     {
         $this->checkKanwilAccess('full');
+        $user = auth()->user();
         $sidang = SidangTppKanwil::findOrFail($id);
+
+        if (! $sidang->canEdit($user)) {
+            abort(403, 'Akses ditolak. Sidang TPP Kanwil telah diverifikasi terakhir oleh Kepala Kantor Wilayah sehingga berkas terkunci dan hanya dapat diubah oleh Administrator.');
+        }
 
         $request->validate([
             'nomor_risalah' => 'required|string|max:150',
@@ -642,7 +650,12 @@ class SidangTppKanwilController extends Controller
     public function uploadLaporanSigned(Request $request, int $id): RedirectResponse
     {
         $this->checkKanwilAccess('full');
+        $user = auth()->user();
         $sidang = SidangTppKanwil::findOrFail($id);
+
+        if (! $sidang->canEdit($user)) {
+            abort(403, 'Akses ditolak. Sidang TPP Kanwil telah diverifikasi terakhir oleh Kepala Kantor Wilayah sehingga berkas terkunci dan hanya dapat diubah oleh Administrator.');
+        }
 
         $request->validate([
             'nomor_laporan' => 'required|string|max:150',
@@ -703,7 +716,12 @@ class SidangTppKanwilController extends Controller
     public function uploadBaSigned(Request $request, int $id): RedirectResponse
     {
         $this->checkKanwilAccess('full');
+        $user = auth()->user();
         $sidang = SidangTppKanwil::findOrFail($id);
+
+        if (! $sidang->canEdit($user)) {
+            abort(403, 'Akses ditolak. Sidang TPP Kanwil telah diverifikasi terakhir oleh Kepala Kantor Wilayah sehingga berkas terkunci dan hanya dapat diubah oleh Administrator.');
+        }
 
         $request->validate([
             'nomor_berita_acara' => 'required|string|max:150',
@@ -744,7 +762,12 @@ class SidangTppKanwilController extends Controller
     public function uploadDisposisiKakanwil(Request $request, int $id): RedirectResponse
     {
         $this->checkKanwilAccess('full');
+        $user = auth()->user();
         $sidang = SidangTppKanwil::findOrFail($id);
+
+        if ($sidang->isVerifiedKakanwil() && ! $user->isAdmin()) {
+            abort(403, 'Akses ditolak. Sidang TPP Kanwil telah memiliki disposisi final dari Kepala Kantor Wilayah. Perubahan hanya dapat dilakukan oleh Administrator.');
+        }
 
         $request->validate([
             'tanggapan_kakanwil_status' => 'required|in:disetujui,disetujui_bersyarat,ditolak,perlu_pendalaman',
@@ -788,22 +811,86 @@ class SidangTppKanwilController extends Controller
     }
 
     /**
+     * Perbarui Data dan Jadwal Sidang TPP Kanwil.
+     * Dapat dilakukan oleh user yang menginput atau Administrator sebelum diverifikasi terakhir Ka Kanwil.
+     */
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $this->checkKanwilAccess('full');
+        $user = auth()->user();
+        $sidang = SidangTppKanwil::findOrFail($id);
+
+        if (! $sidang->canEdit($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                abort(403, 'Akses ditolak. Sidang TPP Kanwil yang telah diverifikasi terakhir oleh Kepala Kantor Wilayah terkunci dan hanya dapat diubah oleh Administrator.');
+            }
+
+            abort(403, 'Akses ditolak. Hanya user yang menginput sidang atau Administrator yang memiliki wewenang untuk mengubah data Sidang TPP Kanwil ini.');
+        }
+
+        $validated = $request->validate([
+            'nomor_sidang' => 'required|string|max:100',
+            'tanggal_sidang' => 'required|date',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'nullable',
+            'tempat' => 'required|string|max:255',
+            'metode' => 'required|in:luring,daring,hybrid',
+            'link_daring' => 'nullable|string|max:255',
+            'meeting_id' => 'nullable|string|max:100',
+            'passcode' => 'nullable|string|max:100',
+            'nomor_nota_dinas' => 'nullable|string|max:150',
+            'tanggal_nota_dinas' => 'nullable|date',
+            'nomor_risalah' => 'nullable|string|max:150',
+            'nomor_laporan' => 'nullable|string|max:150',
+            'nomor_berita_acara' => 'nullable|string|max:150',
+            'agenda_kategori' => 'required|string|max:100',
+            'agenda_judul' => 'required|string|max:255',
+            'agenda_deskripsi' => 'nullable|string',
+            'kesimpulan_sidang' => 'nullable|string',
+            'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
+        ]);
+
+        if ($request->hasFile('file_bahan_sidang')) {
+            $dirBahan = public_path('uploads/sidang_tpp_kanwil/bahan');
+            if (! File::isDirectory($dirBahan)) {
+                File::makeDirectory($dirBahan, 0755, true, true);
+            }
+            $fileBahan = $request->file('file_bahan_sidang');
+            $filenameBahan = 'bahan_'.date('Ymd_His').'_'.Str::random(6).'.'.$fileBahan->getClientOriginalExtension();
+            $fileBahan->move($dirBahan, $filenameBahan);
+            $validated['file_bahan_sidang'] = 'uploads/sidang_tpp_kanwil/bahan/'.$filenameBahan;
+        }
+
+        $validated['updated_by'] = $user->id;
+        $sidang->update($validated);
+
+        ActivityLog::record(
+            'update',
+            'Sidang TPP Kanwil',
+            "Memperbarui data dan jadwal Sidang TPP Kanwil {$sidang->nomor_sidang}",
+            $sidang
+        );
+
+        return back()->with('success', 'Data Sidang TPP Kanwil berhasil diperbarui.');
+    }
+
+    /**
      * Hapus Sidang TPP Kanwil.
-     * Hanya dapat dilakukan oleh Administrator Kantor Wilayah.
+     * Sebelum verifikasi Ka Kanwil: Admin dan User yang menginput dapat menghapus.
+     * Setelah verifikasi Ka Kanwil: Tidak bisa dihapus, KECUALI Administrator.
      */
     public function destroy(int $id): RedirectResponse
     {
         $this->checkKanwilAccess('full');
         $user = auth()->user();
-
-        if (! $user || ! $user->isAdmin()) {
-            abort(403, 'Akses ditolak. Hanya Administrator Kantor Wilayah yang memiliki wewenang untuk menghapus Sidang TPP Kanwil.');
-        }
-
         $sidang = SidangTppKanwil::findOrFail($id);
 
-        if ($sidang->status_sidang === 'selesai') {
-            return back()->with('error', 'Sidang TPP Kanwil yang telah selesai dan memiliki arsip sah tidak dapat dihapus.');
+        if (! $sidang->canDelete($user)) {
+            if ($sidang->isVerifiedKakanwil()) {
+                abort(403, 'Akses ditolak. Sidang TPP Kanwil yang telah diverifikasi/disposisi oleh Kepala Kantor Wilayah tidak dapat dihapus, kecuali oleh Administrator.');
+            }
+
+            abort(403, 'Akses ditolak. Hanya user yang menginput sidang atau Administrator yang memiliki wewenang untuk menghapus Sidang TPP Kanwil ini.');
         }
 
         $nomor = $sidang->nomor_sidang;
@@ -842,7 +929,15 @@ class SidangTppKanwilController extends Controller
     public function aiSaveNaskah(Request $request, int $id): JsonResponse
     {
         $this->checkKanwilAccess('edit');
+        $user = auth()->user();
         $sidang = SidangTppKanwil::findOrFail($id);
+
+        if (! $sidang->canEdit($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Sidang TPP Kanwil telah diverifikasi terakhir oleh Kepala Kantor Wilayah sehingga naskah dinas terkunci dan hanya dapat diubah oleh Administrator.',
+            ], 403);
+        }
 
         $request->validate([
             'jenis_dokumen' => 'required|in:laporan,risalah,berita_acara',
@@ -880,7 +975,15 @@ class SidangTppKanwilController extends Controller
     public function aiResetNaskah(Request $request, int $id): JsonResponse
     {
         $this->checkKanwilAccess('edit');
+        $user = auth()->user();
         $sidang = SidangTppKanwil::findOrFail($id);
+
+        if (! $sidang->canEdit($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Sidang TPP Kanwil telah diverifikasi terakhir oleh Kepala Kantor Wilayah sehingga naskah dinas terkunci dan hanya dapat diubah oleh Administrator.',
+            ], 403);
+        }
 
         $jenis = $request->input('jenis_dokumen');
         $custom = $sidang->dokumen_custom ?: [];

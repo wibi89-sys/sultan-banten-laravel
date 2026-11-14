@@ -180,4 +180,82 @@ class SidangTpp extends Model
     {
         return ! empty($this->file_laporan_kakanwil) && file_exists(public_path($this->file_laporan_kakanwil));
     }
+
+    /**
+     * Cek apakah Sidang TPP UPT sudah diverifikasi terakhir / disahkan oleh Kepala Kantor Wilayah.
+     */
+    public function isVerifiedKakanwil(): bool
+    {
+        return in_array($this->status_verifikasi_kanwil, ['sesuai', 'terverifikasi'], true)
+            || $this->status_sidang === 'selesai_ttd_kakanwil'
+            || ! empty($this->file_laporan_kakanwil)
+            || ! empty($this->tanggal_ttd_kakanwil);
+    }
+
+    /**
+     * Cek apakah user berwenang merubah data sidang ini.
+     * User yang menginput masih bisa merubah selama belum diverifikasi terakhir Ka Kanwil.
+     * Jika sudah diverifikasi terakhir Ka Kanwil, data terkunci kecuali untuk Administrator.
+     */
+    public function canEdit(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $user->hasAccess('sidang_tpp', 'full')) {
+            return false;
+        }
+
+        // Terkunci pasca-verifikasi Ka Kanwil untuk non-admin
+        if ($this->isVerifiedKakanwil()) {
+            return false;
+        }
+
+        // Untuk sidang UPT, user non-admin harus personil UPT yang bersangkutan
+        if (! empty($this->upt_id) && (empty($user->upt_id) || (int) $this->upt_id !== (int) $user->upt_id)) {
+            return false;
+        }
+
+        // Penginput dapat merubah
+        return empty($this->created_by) || (int) $this->created_by === (int) $user->id;
+    }
+
+    /**
+     * Cek apakah user berwenang menghapus sidang ini.
+     * Sebelum verifikasi Ka Kanwil: Admin dan User yang menginput dapat menghapus.
+     * Setelah verifikasi Ka Kanwil: Tidak bisa dihapus, KECUALI Administrator.
+     */
+    public function canDelete(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        // Administrator selalu berwenang menghapus (termasuk pasca-verifikasi Ka Kanwil)
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $user->hasAccess('sidang_tpp', 'full')) {
+            return false;
+        }
+
+        // Jika sudah diverifikasi terakhir Ka Kanwil, tidak bisa dihapus kecuali Admin
+        if ($this->isVerifiedKakanwil()) {
+            return false;
+        }
+
+        // Untuk sidang UPT, user non-admin harus personil UPT yang bersangkutan
+        if (! empty($this->upt_id) && (empty($user->upt_id) || (int) $this->upt_id !== (int) $user->upt_id)) {
+            return false;
+        }
+
+        // Sebelum verifikasi Ka Kanwil, user yang menginput dapat menghapus
+        return ! empty($this->created_by) && (int) $this->created_by === (int) $user->id;
+    }
 }

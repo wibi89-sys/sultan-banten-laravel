@@ -246,11 +246,11 @@
                                 <a href="{{ route('sidang-tpp-kanwil.show', $s->id) }}" class="btn btn-outline-primary btn-sm py-0.5 px-2" title="Buka Detail & Kelola Sidang">
                                     <i class="fas fa-folder-open me-1"></i>Buka
                                 </a>
-                                @if(auth()->user()->isAdmin() && $s->status_sidang !== 'selesai')
+                                @if($s->canDelete(auth()->user()))
                                 <form action="{{ route('sidang-tpp-kanwil.destroy', $s->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Sidang TPP Kanwil {{ $s->nomor_sidang }}?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm py-0.5 px-1.5" title="Hapus Sidang (Khusus Admin Kanwil)">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm py-0.5 px-1.5" title="Hapus Sidang">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </form>
