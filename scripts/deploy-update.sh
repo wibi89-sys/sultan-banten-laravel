@@ -48,7 +48,7 @@ echo "2. Memberikan izin eksekusi pada script shell..."
 chmod +x update.sh cron-wa.sh scripts/*.sh 2>/dev/null || true
 
 echo "3. Menyiapkan direktori penyimpanan berkas..."
-mkdir -p public/uploads/sidang_tpp public/uploads/sidang_tpp_signed storage/app/public
+mkdir -p public/uploads/sidang_tpp public/uploads/sidang_tpp_signed public/uploads/sidang_tpp_kanwil/bahan public/uploads/sidang_tpp_kanwil/ba_signed public/uploads/sidang_tpp_kanwil/risalah_signed public/uploads/sidang_tpp_kanwil/laporan_signed public/uploads/sidang_tpp_kanwil/disposisi public/uploads/sidang_tpp_kanwil/klien public/uploads/sidang_tpp_kanwil/dokumentasi storage/app/public
 
 echo "4. Menjalankan migrasi database (jika ada)..."
 "$PHP_BIN" artisan migrate --force
