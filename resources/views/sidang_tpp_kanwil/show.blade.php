@@ -251,7 +251,7 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             @if($m->mutasi_id)
-                                            <a href="{{ route('mutasi-narapidana.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
+                                            <a href="{{ route('mutasi.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
                                                 <i class="fas fa-external-link-alt me-1"></i>Terkoneksi ke Mutasi UPT #{{ $m->mutasi_id }}
                                             </a>
                                             @endif
@@ -354,7 +354,7 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             @if($m->mutasi_id)
-                                            <a href="{{ route('mutasi-narapidana.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
+                                            <a href="{{ route('mutasi.show', $m->mutasi_id) }}" class="badge bg-primary text-white text-decoration-none py-1.5 px-2" target="_blank" title="Buka berkas di Modul Mutasi UPT">
                                                 <i class="fas fa-external-link-alt me-1"></i>Terkoneksi ke Mutasi UPT #{{ $m->mutasi_id }}
                                             </a>
                                             @endif
