@@ -416,9 +416,119 @@
                     @php 
                         $ndm = $m->narapidana_data; 
                         $bm = $ndm['berkas'] ?? [];
+                        $alokasiList = $ndm['alokasi'] ?? [];
+                        $isKolektif = !empty($alokasiList) || !empty($ndm['total_usulan']) || !empty($ndm['nomor_surat_usulan']);
                     @endphp
                     <div class="p-2.5 bg-warning-subtle bg-opacity-25 rounded border border-warning border-opacity-50 mb-3 small">
-                        <div class="fw-bold text-dark mb-1"><i class="fas fa-exchange-alt text-warning-emphasis me-1"></i>Rincian Usulan Mutasi Narapidana:</div>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1.5">
+                            <span class="fw-bold text-dark"><i class="fas fa-exchange-alt text-warning-emphasis me-1"></i>{{ $isKolektif ? 'Usulan Pemindahan Narapidana Kolektif' : 'Rincian Usulan Mutasi Narapidana' }}:</span>
+                            @if(empty($alokasiList))
+                            <span class="badge bg-light text-warning-emphasis border border-warning-subtle">
+                                Rekomendasi: <b>{{ $m->uptTujuanRekomendasi?->nama_upt ?? ($ndm['upt_tujuan_nama'] ?? 'Ditentukan Sidang') }}</b>
+                            </span>
+                            @endif
+                        </div>
+
+                        @if($isKolektif)
+                        <!-- INFO USULAN UPT -->
+                        <div class="p-2 bg-white rounded border border-warning-subtle mb-2">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-1 mb-1.5" style="font-size: 11px;">
+                                <div>
+                                    <span class="text-muted">Surat Usulan:</span> <b>{{ $ndm['nomor_surat_usulan'] ?? ($m->mutasi?->nomor_surat ?? '-') }}</b>
+                                    @if(!empty($ndm['tanggal_surat_usulan']) || !empty($m->mutasi?->tanggal_surat))
+                                    <span class="text-muted ms-1">({{ !empty($ndm['tanggal_surat_usulan']) ? \Carbon\Carbon::parse($ndm['tanggal_surat_usulan'])->format('d/m/Y') : $m->mutasi?->tanggal_surat?->format('d/m/Y') }})</span>
+                                    @endif
+                                    &bull; <span class="badge bg-secondary text-white">{{ $ndm['kategori_mutasi'] ?? ($m->mutasi?->kategori_mutasi ?? 'Pemindahan Antar UPT') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted">UPT Pengusul:</span> <b>{{ $ndm['upt_asal_nama'] ?? ($m->mutasi?->uptAsal?->nama_upt ?? '-') }}</b>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <div class="d-flex flex-wrap align-items-center gap-1" style="font-size: 10.5px;">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Narkotika: <b>{{ $ndm['jumlah_usulan_narkotika'] ?? ($m->mutasi?->jumlah_narkotika ?? 0) }}</b></span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Pidum: <b>{{ $ndm['jumlah_usulan_pidum'] ?? ($m->mutasi?->jumlah_pidum ?? 0) }}</b></span>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Korupsi: <b>{{ $ndm['jumlah_usulan_korupsi'] ?? ($m->mutasi?->jumlah_korupsi ?? 0) }}</b></span>
+                                    <span class="badge bg-dark text-white fw-bold">Total Usulan: <b>{{ $ndm['total_usulan'] ?? ($m->mutasi?->total_usulan ?? 0) }}</b> Orang</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @php
+                                        $fSurat = $ndm['file_surat_usulan'] ?? ($m->mutasi?->file_surat_usulan ?? null);
+                                        $fLamp = $ndm['file_lampiran_wbp'] ?? ($m->mutasi?->file_lampiran_wbp ?? null);
+                                        $fBa = $ndm['file_ba_tpp'] ?? ($m->mutasi?->file_bap ?: $m->mutasi?->file_asesmen);
+                                    @endphp
+                                    @if($fSurat)
+                                    <a href="{{ asset($fSurat) }}" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2" style="font-size: 10px;">
+                                        <i class="fas fa-file-pdf me-1"></i>Surat Usulan
+                                    </a>
+                                    @endif
+                                    @if($fLamp)
+                                    <a href="{{ asset($fLamp) }}" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2" style="font-size: 10px;">
+                                        <i class="fas fa-file-excel me-1"></i>Daftar Nominatif
+                                    </a>
+                                    @endif
+                                    @if($fBa)
+                                    <a href="{{ asset($fBa) }}" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2" style="font-size: 10px;">
+                                        <i class="fas fa-file-alt me-1"></i>BA TPP UPT
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        @if(!empty($alokasiList))
+                        <!-- TABEL DISTRIBUSI ALOKASI -->
+                        <div class="p-2 bg-white rounded border border-warning-subtle mb-2">
+                            <div class="fw-bold text-dark small mb-1" style="font-size: 11px;">
+                                <i class="fas fa-tasks text-warning-emphasis me-1"></i>Rekomendasi Distribusi UPT Penerima &amp; Alokasi Kuota Sidang:
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle mb-0 bg-white text-center" style="font-size: 10.5px;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-start">UPT Tujuan Penerima</th>
+                                            <th style="width: 70px;">Narkotika</th>
+                                            <th style="width: 70px;">Pidum</th>
+                                            <th style="width: 70px;">Korupsi</th>
+                                            <th style="width: 80px;">Total Kuota</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php
+                                            $totN = 0; $totP = 0; $totK = 0; $grandTot = 0;
+                                        @endphp
+                                        @foreach($alokasiList as $alok)
+                                        @php
+                                            $n = $alok['jumlah_narkotika'] ?? 0;
+                                            $p = $alok['jumlah_pidum'] ?? 0;
+                                            $k = $alok['jumlah_korupsi'] ?? 0;
+                                            $sub = $alok['total'] ?? ($n + $p + $k);
+                                            $totN += $n; $totP += $p; $totK += $k; $grandTot += $sub;
+                                        @endphp
+                                        <tr>
+                                            <td class="text-start fw-bold text-dark">{{ $alok['upt_tujuan_nama'] ?? '-' }}</td>
+                                            <td>{{ $n }}</td>
+                                            <td>{{ $p }}</td>
+                                            <td>{{ $k }}</td>
+                                            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $sub }} Orang</span></td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td class="text-start">Total Direkomendasikan:</td>
+                                            <td>{{ $totN }}</td>
+                                            <td>{{ $totP }}</td>
+                                            <td>{{ $totK }}</td>
+                                            <td><span class="badge bg-success">{{ $grandTot }} Orang</span></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
+
+                        @else
                         <div class="row g-1 text-dark" style="font-size: 11.5px;">
                             <div class="col-12 col-sm-6">
                                 <span class="text-muted">Nama Narapidana:</span> <b>{{ $ndm['nama'] ?? '-' }}</b><br>
@@ -431,6 +541,8 @@
                                 <span class="text-muted">Alasan:</span> <span class="fst-italic">{{ $ndm['alasan_pemindahan'] ?? '-' }}</span>
                             </div>
                         </div>
+                        @endif
+
                         @if(!empty($bm['file_litmas']) || !empty($bm['file_permohonan']) || !empty($bm['file_jaminan']) || !empty($bm['file_reg_f']) || !empty($bm['file_asesmen']) || !empty($bm['dokumen_tambahan']['file']) || !empty($m->file_bahan_sidang))
                         <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top">
                             @if(!empty($m->file_bahan_sidang))

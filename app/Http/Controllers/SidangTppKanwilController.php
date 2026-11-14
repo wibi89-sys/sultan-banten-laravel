@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\KanwilPegawai;
 use App\Models\MutasiNarapidana;
+use App\Models\MutasiNarapidanaTujuan;
 use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
 use App\Models\SidangTppKanwilMateri;
@@ -20,6 +21,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -133,7 +135,7 @@ class SidangTppKanwilController extends Controller
         $defaultAnggotaIds = $pegawaiList->where('peran_tpp', 'Anggota')->pluck('id')->toArray();
 
         // Data integrasi usulan Mutasi Narapidana UPT & Daftar UPT se-Banten
-        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan'])
+        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
             ->whereIn('status', ['diajukan', 'perlu_perbaikan'])
             ->latest('tanggal_surat')
             ->get();
@@ -184,6 +186,7 @@ class SidangTppKanwilController extends Controller
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
             'upt_tujuan_rekomendasi_id' => 'nullable',
             'mutasi_upt_tujuan' => 'nullable|string|max:150',
+            'alokasi' => 'nullable|array',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             'ketua_id' => 'required|exists:kanwil_pegawai,id',
             'sekretaris_id' => 'required|exists:kanwil_pegawai,id',
@@ -723,19 +726,71 @@ class SidangTppKanwilController extends Controller
                         $berkasMutasi['dokumen_tambahan'] = $mDokumenTambahan;
                     }
 
-                    $uptAsalNama = ! empty($mVal['mutasi_upt_asal_id']) ? Upt::find($mVal['mutasi_upt_asal_id'])?->nama_upt : null;
+                    $mutasiObj = ! empty($mVal['mutasi_id'])
+                        ? MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])->find($mVal['mutasi_id'])
+                        : null;
+
+                    $uptAsalNama = ! empty($mVal['mutasi_upt_asal_id'])
+                        ? Upt::find($mVal['mutasi_upt_asal_id'])?->nama_upt
+                        : ($mutasiObj?->uptAsal?->nama_upt ?? null);
+
+                    $alokasiInput = $mVal['alokasi'] ?? [];
+                    $cleanAlokasi = [];
+                    $totalAlokasiNarkotika = 0;
+                    $totalAlokasiPidum = 0;
+                    $totalAlokasiKorupsi = 0;
+                    $grandTotalAlokasi = 0;
+
+                    if (is_array($alokasiInput)) {
+                        foreach ($alokasiInput as $alok) {
+                            $uptInputRaw = $alok['upt_tujuan_id'] ?? ($alok['upt_tujuan_nama'] ?? null);
+                            if (empty($uptInputRaw)) {
+                                continue;
+                            }
+                            [$uId, $uNama] = $this->resolveUptTujuan($uptInputRaw);
+                            $narkotika = max(0, (int) ($alok['jumlah_narkotika'] ?? 0));
+                            $pidum = max(0, (int) ($alok['jumlah_pidum'] ?? 0));
+                            $korupsi = max(0, (int) ($alok['jumlah_korupsi'] ?? 0));
+                            $subtotal = $narkotika + $pidum + $korupsi;
+
+                            $cleanAlokasi[] = [
+                                'upt_tujuan_id' => $uId,
+                                'upt_tujuan_nama' => $uNama,
+                                'jumlah_narkotika' => $narkotika,
+                                'jumlah_pidum' => $pidum,
+                                'jumlah_korupsi' => $korupsi,
+                                'total' => $subtotal,
+                            ];
+
+                            $totalAlokasiNarkotika += $narkotika;
+                            $totalAlokasiPidum += $pidum;
+                            $totalAlokasiKorupsi += $korupsi;
+                            $grandTotalAlokasi += $subtotal;
+                        }
+                    }
+
                     $mUptInput = $mVal['mutasi_upt_tujuan'] ?? ($mVal['upt_tujuan_rekomendasi_id'] ?? null);
                     [$mUptTujuanId, $mUptTujuanNama] = $this->resolveUptTujuan($mUptInput);
+
+                    if (! empty($cleanAlokasi)) {
+                        $mUptTujuanId = $cleanAlokasi[0]['upt_tujuan_id'] ?: $mUptTujuanId;
+                        $mUptTujuanNama = $cleanAlokasi[0]['upt_tujuan_nama'] ?: $mUptTujuanNama;
+                    }
 
                     $mNarapidanaData = [
                         'nama' => $mVal['mutasi_wbp_nama'] ?? $mVal['judul_materi'],
                         'nomor_register' => $mVal['mutasi_nomor_register'] ?? null,
                         'tindak_pidana' => $mVal['mutasi_perkara'] ?? null,
                         'lama_pidana' => $mVal['mutasi_lama_pidana'] ?? null,
-                        'upt_asal_id' => $mVal['mutasi_upt_asal_id'] ?? null,
+                        'upt_asal_id' => $mVal['mutasi_upt_asal_id'] ?? ($mutasiObj?->upt_asal_id ?? null),
                         'upt_asal_nama' => $uptAsalNama,
                         'upt_tujuan_id' => $mUptTujuanId,
                         'upt_tujuan_nama' => $mUptTujuanNama,
+                        'alokasi' => $cleanAlokasi,
+                        'total_disetujui' => $grandTotalAlokasi,
+                        'total_disetujui_narkotika' => $totalAlokasiNarkotika,
+                        'total_disetujui_pidum' => $totalAlokasiPidum,
+                        'total_disetujui_korupsi' => $totalAlokasiKorupsi,
                         'alasan_pemindahan' => $mVal['mutasi_alasan'] ?? null,
                         'nama_pk_bapas' => $mVal['nama_pk_bapas'] ?? null,
                         'nip_pk_bapas' => $mVal['nip_pk_bapas'] ?? null,
@@ -769,6 +824,21 @@ class SidangTppKanwilController extends Controller
                         ],
                         'berkas' => $berkasMutasi,
                     ];
+
+                    if ($mutasiObj) {
+                        $mNarapidanaData['mutasi_id'] = $mutasiObj->id;
+                        $mNarapidanaData['nomor_surat_usulan'] = $mutasiObj->nomor_surat;
+                        $mNarapidanaData['tanggal_surat_usulan'] = $mutasiObj->tanggal_surat?->format('Y-m-d');
+                        $mNarapidanaData['kategori_mutasi'] = $mutasiObj->kategori_mutasi;
+                        $mNarapidanaData['total_usulan'] = (int) $mutasiObj->total_usulan;
+                        $mNarapidanaData['jumlah_usulan_narkotika'] = (int) $mutasiObj->jumlah_narkotika;
+                        $mNarapidanaData['jumlah_usulan_pidum'] = (int) $mutasiObj->jumlah_pidum;
+                        $mNarapidanaData['jumlah_usulan_korupsi'] = (int) $mutasiObj->jumlah_korupsi;
+                        $mNarapidanaData['keterangan_usulan'] = $mutasiObj->keterangan;
+                        $mNarapidanaData['file_surat_usulan'] = $mutasiObj->file_surat_usulan;
+                        $mNarapidanaData['file_lampiran_wbp'] = $mutasiObj->file_lampiran_wbp;
+                        $mNarapidanaData['file_ba_tpp'] = $mutasiObj->file_bap ?: $mutasiObj->file_asesmen;
+                    }
                 } elseif ($mKategori === 'izin_berobat') {
                     $berkasMedis = [];
                     foreach (['file_medis_rekam', 'file_medis_rujukan', 'file_medis_jaminan', 'file_medis_ba_upt'] as $fField) {
@@ -916,6 +986,7 @@ class SidangTppKanwilController extends Controller
         $sidang = SidangTppKanwil::with([
             'anggota.pegawai',
             'materis.mutasi.uptAsal',
+            'materis.mutasi.tujuans.uptTujuan',
             'materis.uptTujuanRekomendasi',
             'materis.pendapats.anggota',
             'creator',
@@ -928,7 +999,7 @@ class SidangTppKanwilController extends Controller
         $totalSudahPendapat = $anggotaList->where('status_pendapat', '!=', 'belum_mengisi')->count();
         $totalWaTerkirim = $anggotaList->where('wa_sent_status', 'terkirim')->count();
 
-        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan'])
+        $mutasiList = MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])
             ->whereIn('status', ['diajukan', 'perlu_perbaikan'])
             ->latest('tanggal_surat')
             ->get();
@@ -1420,6 +1491,7 @@ class SidangTppKanwilController extends Controller
             $updateMutasiData = [
                 'status' => $statusMutasi,
                 'sidang_tpp_kanwil_id' => $sidang->id,
+                'diverifikasi_oleh' => auth()->id(),
                 'tanggal_verifikasi' => $request->tanggapan_kakanwil_tanggal,
                 'catatan_kanwil' => ! empty($mutasi->catatan_kanwil)
                     ? $mutasi->catatan_kanwil."\n\n".$catatanTambahan
@@ -1430,11 +1502,111 @@ class SidangTppKanwilController extends Controller
                 $updateMutasiData['file_persetujuan_kanwil'] = $filePath;
             }
 
-            if (! empty($uptTujuanId)) {
-                $updateMutasiData['upt_tujuan_id'] = $uptTujuanId;
-            }
+            if ($statusMutasi === 'disetujui') {
+                $mNarapidanaData = $materiTerkait?->narapidana_data ?? ($sidang->narapidana_data ?? []);
+                $alokasiList = $mNarapidanaData['alokasi'] ?? [];
 
-            $mutasi->update($updateMutasiData);
+                $totalDisetujuiNarkotika = 0;
+                $totalDisetujuiPidum = 0;
+                $totalDisetujuiKorupsi = 0;
+                $grandTotalDisetujui = 0;
+                $firstUptTujuanId = null;
+
+                if (! empty($alokasiList) && is_array($alokasiList)) {
+                    foreach ($alokasiList as $alok) {
+                        $narkotika = (int) ($alok['jumlah_narkotika'] ?? 0);
+                        $pidum = (int) ($alok['jumlah_pidum'] ?? 0);
+                        $korupsi = (int) ($alok['jumlah_korupsi'] ?? 0);
+                        $subtotal = (int) ($alok['total'] ?? ($narkotika + $pidum + $korupsi));
+
+                        $totalDisetujuiNarkotika += $narkotika;
+                        $totalDisetujuiPidum += $pidum;
+                        $totalDisetujuiKorupsi += $korupsi;
+                        $grandTotalDisetujui += $subtotal;
+
+                        if (! $firstUptTujuanId && ! empty($alok['upt_tujuan_id'])) {
+                            $firstUptTujuanId = (int) $alok['upt_tujuan_id'];
+                        }
+                    }
+                } else {
+                    $firstUptTujuanId = $uptTujuanId;
+                    $grandTotalDisetujui = $mutasi->total_usulan ?: 1;
+                    $totalDisetujuiNarkotika = $mutasi->jumlah_narkotika ?: 0;
+                    $totalDisetujuiPidum = $mutasi->jumlah_pidum ?: 0;
+                    $totalDisetujuiKorupsi = $mutasi->jumlah_korupsi ?: 0;
+                    if ($firstUptTujuanId) {
+                        $alokasiList = [
+                            [
+                                'upt_tujuan_id' => $firstUptTujuanId,
+                                'jumlah_narkotika' => $totalDisetujuiNarkotika,
+                                'jumlah_pidum' => $totalDisetujuiPidum,
+                                'jumlah_korupsi' => $totalDisetujuiKorupsi,
+                                'total' => $grandTotalDisetujui,
+                            ],
+                        ];
+                    }
+                }
+
+                $updateMutasiData['nomor_surat_kanwil'] = $request->input('nomor_surat_kanwil') ?: $sidang->nomor_sidang;
+                $updateMutasiData['tanggal_surat_kanwil'] = $request->tanggapan_kakanwil_tanggal;
+                $updateMutasiData['jumlah_disetujui_narkotika'] = $totalDisetujuiNarkotika;
+                $updateMutasiData['jumlah_disetujui_pidum'] = $totalDisetujuiPidum;
+                $updateMutasiData['jumlah_disetujui_korupsi'] = $totalDisetujuiKorupsi;
+                $updateMutasiData['total_disetujui'] = $grandTotalDisetujui;
+                if ($firstUptTujuanId) {
+                    $updateMutasiData['upt_tujuan_id'] = $firstUptTujuanId;
+                }
+
+                $mutasi->update($updateMutasiData);
+
+                // Sinkronisasi baris alokasi ke tabel mutasi_narapidana_tujuan
+                if (! empty($alokasiList)) {
+                    $existingTujuans = MutasiNarapidanaTujuan::where('mutasi_id', $mutasi->id)->get()->keyBy('upt_tujuan_id');
+                    MutasiNarapidanaTujuan::where('mutasi_id', $mutasi->id)->delete();
+
+                    foreach ($alokasiList as $alok) {
+                        $targetUptId = ! empty($alok['upt_tujuan_id']) ? (int) $alok['upt_tujuan_id'] : null;
+                        if (! $targetUptId) {
+                            continue;
+                        }
+                        $old = $existingTujuans->get($targetUptId);
+                        $narkotika = (int) ($alok['jumlah_narkotika'] ?? 0);
+                        $pidum = (int) ($alok['jumlah_pidum'] ?? 0);
+                        $korupsi = (int) ($alok['jumlah_korupsi'] ?? 0);
+                        $subtotal = (int) ($alok['total'] ?? ($narkotika + $pidum + $korupsi));
+
+                        MutasiNarapidanaTujuan::create([
+                            'mutasi_id' => $mutasi->id,
+                            'upt_tujuan_id' => $targetUptId,
+                            'jumlah_disetujui_narkotika' => $narkotika,
+                            'jumlah_disetujui_pidum' => $pidum,
+                            'jumlah_disetujui_korupsi' => $korupsi,
+                            'total_disetujui' => $subtotal,
+                            'file_laporan_pemindahan' => $old?->file_laporan_pemindahan,
+                            'tanggal_pemindahan' => $old?->tanggal_pemindahan,
+                            'file_laporan_penerimaan' => $old?->file_laporan_penerimaan,
+                            'tanggal_penerimaan' => $old?->tanggal_penerimaan,
+                            'file_bast' => $old?->file_bast,
+                            'nomor_bast' => $old?->nomor_bast,
+                            'tanggal_bast' => $old?->tanggal_bast,
+                            'tanggal_pelaksanaan' => $old?->tanggal_pelaksanaan,
+                            'catatan_pelaksanaan' => $old?->catatan_pelaksanaan,
+                            'status' => $old?->status ?? 'disetujui',
+                        ]);
+                    }
+                }
+
+                try {
+                    WhatsAppService::notifyMutasiDisetujui($mutasi, isManual: false);
+                } catch (\Throwable $e) {
+                    Log::warning('Gagal notifikasi WhatsApp persetujuan mutasi: '.$e->getMessage());
+                }
+            } else {
+                if (! empty($uptTujuanId)) {
+                    $updateMutasiData['upt_tujuan_id'] = $uptTujuanId;
+                }
+                $mutasi->update($updateMutasiData);
+            }
 
             ActivityLog::record(
                 'sync',
@@ -1495,6 +1667,7 @@ class SidangTppKanwilController extends Controller
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
             'upt_tujuan_rekomendasi_id' => 'nullable',
             'mutasi_upt_tujuan' => 'nullable|string|max:150',
+            'alokasi' => 'nullable|array',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             // Field Mutasi
             'mutasi_wbp_nama' => 'nullable|string|max:150',
@@ -1752,6 +1925,7 @@ class SidangTppKanwilController extends Controller
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
             'upt_tujuan_rekomendasi_id' => 'nullable',
             'mutasi_upt_tujuan' => 'nullable|string|max:150',
+            'alokasi' => 'nullable|array',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',
             'dokumen_tambahan_nama' => 'nullable|string|max:150',
             'dokumen_tambahan_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:15360',
@@ -1870,22 +2044,74 @@ class SidangTppKanwilController extends Controller
                 $berkasMutasi['dokumen_tambahan'] = $dokumenTambahan;
             }
 
+            $mutasiObj = ! empty($validated['mutasi_id'])
+                ? MutasiNarapidana::with(['uptAsal', 'uptTujuan', 'tujuans.uptTujuan'])->find($validated['mutasi_id'])
+                : null;
+
             $uptAsalNama = null;
             if ($request->filled('mutasi_upt_asal_id')) {
                 $uptAsalNama = Upt::find($request->mutasi_upt_asal_id)?->nama_upt;
+            } elseif ($mutasiObj) {
+                $uptAsalNama = $mutasiObj->uptAsal?->nama_upt;
             }
+
+            $alokasiInput = $request->input('alokasi', []);
+            $cleanAlokasi = [];
+            $totalAlokasiNarkotika = 0;
+            $totalAlokasiPidum = 0;
+            $totalAlokasiKorupsi = 0;
+            $grandTotalAlokasi = 0;
+
+            if (is_array($alokasiInput)) {
+                foreach ($alokasiInput as $alok) {
+                    $uptInputRaw = $alok['upt_tujuan_id'] ?? ($alok['upt_tujuan_nama'] ?? null);
+                    if (empty($uptInputRaw)) {
+                        continue;
+                    }
+                    [$uId, $uNama] = $this->resolveUptTujuan($uptInputRaw);
+                    $narkotika = max(0, (int) ($alok['jumlah_narkotika'] ?? 0));
+                    $pidum = max(0, (int) ($alok['jumlah_pidum'] ?? 0));
+                    $korupsi = max(0, (int) ($alok['jumlah_korupsi'] ?? 0));
+                    $subtotal = $narkotika + $pidum + $korupsi;
+
+                    $cleanAlokasi[] = [
+                        'upt_tujuan_id' => $uId,
+                        'upt_tujuan_nama' => $uNama,
+                        'jumlah_narkotika' => $narkotika,
+                        'jumlah_pidum' => $pidum,
+                        'jumlah_korupsi' => $korupsi,
+                        'total' => $subtotal,
+                    ];
+
+                    $totalAlokasiNarkotika += $narkotika;
+                    $totalAlokasiPidum += $pidum;
+                    $totalAlokasiKorupsi += $korupsi;
+                    $grandTotalAlokasi += $subtotal;
+                }
+            }
+
             $mUptInput = $request->input('mutasi_upt_tujuan') ?: $request->input('upt_tujuan_rekomendasi_id');
             [$uptTujuanId, $uptTujuanNama] = $this->resolveUptTujuan($mUptInput);
+
+            if (! empty($cleanAlokasi)) {
+                $uptTujuanId = $cleanAlokasi[0]['upt_tujuan_id'] ?: $uptTujuanId;
+                $uptTujuanNama = $cleanAlokasi[0]['upt_tujuan_nama'] ?: $uptTujuanNama;
+            }
 
             $narapidanaData = [
                 'nama' => $request->input('mutasi_wbp_nama', $validated['judul_materi']),
                 'nomor_register' => $request->input('mutasi_nomor_register'),
                 'tindak_pidana' => $request->input('mutasi_perkara'),
                 'lama_pidana' => $request->input('mutasi_lama_pidana'),
-                'upt_asal_id' => $request->input('mutasi_upt_asal_id'),
+                'upt_asal_id' => $request->input('mutasi_upt_asal_id', $mutasiObj?->upt_asal_id ?? null),
                 'upt_asal_nama' => $uptAsalNama,
                 'upt_tujuan_id' => $uptTujuanId,
                 'upt_tujuan_nama' => $uptTujuanNama,
+                'alokasi' => $cleanAlokasi,
+                'total_disetujui' => $grandTotalAlokasi,
+                'total_disetujui_narkotika' => $totalAlokasiNarkotika,
+                'total_disetujui_pidum' => $totalAlokasiPidum,
+                'total_disetujui_korupsi' => $totalAlokasiKorupsi,
                 'alasan_pemindahan' => $request->input('mutasi_alasan'),
                 'nama_pk_bapas' => $request->input('nama_pk_bapas'),
                 'nip_pk_bapas' => $request->input('nip_pk_bapas'),
@@ -1919,6 +2145,21 @@ class SidangTppKanwilController extends Controller
                 ],
                 'berkas' => $berkasMutasi,
             ];
+
+            if ($mutasiObj) {
+                $narapidanaData['mutasi_id'] = $mutasiObj->id;
+                $narapidanaData['nomor_surat_usulan'] = $mutasiObj->nomor_surat;
+                $narapidanaData['tanggal_surat_usulan'] = $mutasiObj->tanggal_surat?->format('Y-m-d');
+                $narapidanaData['kategori_mutasi'] = $mutasiObj->kategori_mutasi;
+                $narapidanaData['total_usulan'] = (int) $mutasiObj->total_usulan;
+                $narapidanaData['jumlah_usulan_narkotika'] = (int) $mutasiObj->jumlah_narkotika;
+                $narapidanaData['jumlah_usulan_pidum'] = (int) $mutasiObj->jumlah_pidum;
+                $narapidanaData['jumlah_usulan_korupsi'] = (int) $mutasiObj->jumlah_korupsi;
+                $narapidanaData['keterangan_usulan'] = $mutasiObj->keterangan;
+                $narapidanaData['file_surat_usulan'] = $mutasiObj->file_surat_usulan;
+                $narapidanaData['file_lampiran_wbp'] = $mutasiObj->file_lampiran_wbp;
+                $narapidanaData['file_ba_tpp'] = $mutasiObj->file_bap ?: $mutasiObj->file_asesmen;
+            }
         } elseif ($kategori === 'izin_berobat') {
             $berkasMedis = [];
             foreach (['file_medis_rekam', 'file_medis_rujukan', 'file_medis_jaminan', 'file_medis_ba_upt'] as $field) {
@@ -2042,6 +2283,7 @@ class SidangTppKanwilController extends Controller
             'mutasi_id' => 'nullable|exists:mutasi_narapidana,id',
             'upt_tujuan_rekomendasi_id' => 'nullable',
             'mutasi_upt_tujuan' => 'nullable|string|max:150',
+            'alokasi' => 'nullable|array',
             'rekomendasi_sidang' => 'nullable|string|max:50',
             'catatan_rekomendasi' => 'nullable|string',
             'file_bahan_sidang' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:15360',

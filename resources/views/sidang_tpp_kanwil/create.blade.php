@@ -1,5 +1,28 @@
 @extends('layouts.app')
 
+@php
+    $mutasiJsonMap = $mutasiList->keyBy('id')->map(function($mu) {
+        return [
+            'id' => $mu->id,
+            'nomor_surat' => $mu->nomor_surat,
+            'tanggal_surat' => $mu->tanggal_surat ? $mu->tanggal_surat->format('d/m/Y') : '-',
+            'kategori_mutasi' => $mu->kategori_mutasi ?? 'Pemindahan Antar-UPT',
+            'keterangan' => $mu->keterangan ?? '',
+            'upt_asal_id' => $mu->upt_asal_id,
+            'upt_asal_nama' => $mu->uptAsal?->nama_upt ?? '-',
+            'upt_tujuan_id' => $mu->upt_tujuan_id,
+            'upt_tujuan_nama' => $mu->uptTujuan?->nama_upt ?? '',
+            'jumlah_narkotika' => (int) $mu->jumlah_narkotika,
+            'jumlah_pidum' => (int) $mu->jumlah_pidum,
+            'jumlah_korupsi' => (int) $mu->jumlah_korupsi,
+            'total_usulan' => (int) $mu->total_usulan,
+            'file_surat_usulan' => $mu->file_surat_usulan ? asset($mu->file_surat_usulan) : null,
+            'file_lampiran_wbp' => $mu->file_lampiran_wbp ? asset($mu->file_lampiran_wbp) : null,
+            'file_ba_tpp' => ($mu->file_bap ?: $mu->file_asesmen) ? asset($mu->file_bap ?: $mu->file_asesmen) : null,
+        ];
+    });
+@endphp
+
 @section('title', 'Registrasi Sidang TPP Kanwil - Sultan Banten')
 @section('page_title', 'Registrasi Sidang TPP Kanwil')
 
@@ -209,7 +232,90 @@
                                                     </select>
                                                 </div>
 
-                                                <div class="row g-2">
+                                                <!-- KARTU INFORMASI USULAN MUTASI UPT (AUTO-FILL FULL DARI MUTASI NARAPIDANA) -->
+                                                <div id="infoCardMutasi_0" class="card border border-warning bg-white shadow-sm mb-3 d-none">
+                                                    <div class="card-body p-2.5">
+                                                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-2 mb-2">
+                                                            <div>
+                                                                <span class="badge bg-warning text-dark me-1" id="info_kategori_0">Kolektif</span>
+                                                                <span class="fw-bold text-dark small" id="info_surat_0">-</span>
+                                                                <span class="text-muted small ms-1" id="info_tanggal_0">(-)</span>
+                                                            </div>
+                                                            <div>
+                                                                <span class="badge bg-light text-dark border">
+                                                                    UPT Asal: <b id="info_upt_asal_0">-</b>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row g-2 align-items-center mb-2">
+                                                            <div class="col-12 col-md-7">
+                                                                <div class="d-flex flex-wrap align-items-center gap-1">
+                                                                    <span class="small text-muted me-1">Statistik:</span>
+                                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Narkotika">Narkotika: <b id="info_stat_narkotika_0">0</b></span>
+                                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Pidana Umum">Pidum: <b id="info_stat_pidum_0">0</b></span>
+                                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Korupsi">Korupsi: <b id="info_stat_korupsi_0">0</b></span>
+                                                                    <span class="badge bg-dark text-white fw-bold" title="Total Usulan">Total: <b id="info_stat_total_0">0</b> Orang</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12 col-md-5 text-md-end">
+                                                                <div class="d-flex flex-wrap justify-content-md-end gap-1" id="info_berkas_links_0">
+                                                                    <a id="info_file_surat_0" href="#" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                                        <i class="fas fa-file-pdf me-1"></i>Surat Usulan
+                                                                    </a>
+                                                                    <a id="info_file_lampiran_0" href="#" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                                        <i class="fas fa-file-excel me-1"></i>Daftar Nominatif WBP
+                                                                    </a>
+                                                                    <a id="info_file_ba_0" href="#" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                                        <i class="fas fa-file-alt me-1"></i>BA TPP UPT
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- TABEL DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA SIDANG TPP -->
+                                                        <div class="p-2 bg-light rounded border border-warning-subtle">
+                                                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                                                <span class="fw-bold text-dark small" style="font-size: 11.5px;">
+                                                                    <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan & Alokasi Kuota Sidang TPP Kanwil
+                                                                </span>
+                                                                <button type="button" class="btn btn-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisAlokasi(0)">
+                                                                    <i class="fas fa-plus me-1"></i>Tambah UPT Tujuan
+                                                                </button>
+                                                            </div>
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11px;" id="tableAlokasi_0">
+                                                                    <thead class="table-light">
+                                                                        <tr>
+                                                                            <th class="text-start" style="min-width: 170px;">UPT Tujuan Penerima</th>
+                                                                            <th style="width: 80px;">Narkotika</th>
+                                                                            <th style="width: 80px;">Pidum</th>
+                                                                            <th style="width: 80px;">Korupsi</th>
+                                                                            <th style="width: 85px;">Subtotal</th>
+                                                                            <th style="width: 40px;">#</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody id="tbodyAlokasi_0">
+                                                                        <!-- Diisi otomatis oleh JavaScript -->
+                                                                    </tbody>
+                                                                    <tfoot class="table-light fw-bold">
+                                                                        <tr>
+                                                                            <td class="text-start">Total Alokasi Direkomendasikan:</td>
+                                                                            <td id="foot_narkotika_0">0</td>
+                                                                            <td id="foot_pidum_0">0</td>
+                                                                            <td id="foot_korupsi_0">0</td>
+                                                                            <td id="foot_subtotal_0" class="text-primary fs-6">0</td>
+                                                                            <td></td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                            <div id="info_alokasi_status_0" class="small mt-1 text-muted" style="font-size: 11px;"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div id="manualWbpBox_0" class="row g-2">
                                                     <div class="col-md-7">
                                                         <label class="form-label small text-muted mb-1">Nama Narapidana / WBP <span class="text-danger">*</span></label>
                                                         <input type="text" name="materis[0][mutasi_wbp_nama]" id="mutasi_wbp_nama_0" class="form-control form-control-sm" placeholder="Nama narapidana">
@@ -612,23 +718,25 @@
                                         </div>
 
                                         <!-- Upload File Pokok Bahan Sidang & Dokumen Tambahan Lainnya -->
-                                        <!-- Upload File Pokok Bahan Sidang & Dokumen Tambahan Lainnya -->
                                         <div class="col-12 col-md-6 mt-2">
-                                            <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-file-download text-primary me-1"></i>Bahan Materi Sidang Utama (Opsional)</label>
-                                            <input type="file" name="materis[0][file_bahan_sidang]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
-                                            <div class="form-text text-muted" style="font-size: 11px;">Format: PDF, Word, Excel, ZIP (Maks. 15MB)</div>
+                                            <div class="p-2.5 bg-white rounded border h-100">
+                                                <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-file-download text-primary me-1"></i>Bahan Materi Sidang Utama (Opsional)</label>
+                                                <input type="file" name="materis[0][file_bahan_sidang]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                                                <div class="form-text text-muted mt-1" style="font-size: 11px;">Format: PDF, Word, Excel, ZIP (Maks. 15MB)</div>
+                                            </div>
                                         </div>
                                         <div class="col-12 col-md-6 mt-2">
-                                            <div class="p-2 bg-white rounded border">
+                                            <div class="p-2.5 bg-white rounded border h-100">
                                                 <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
-                                                <div class="row g-1">
-                                                    <div class="col-12 col-sm-5">
-                                                        <input type="text" name="materis[0][dokumen_tambahan_nama]" class="form-control form-control-sm" placeholder="Nama Dokumen (Kustom)">
+                                                <div class="row g-2">
+                                                    <div class="col-12">
+                                                        <input type="text" name="materis[0][dokumen_tambahan_nama]" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: Surat Pernyataan / Rekomendasi)">
                                                     </div>
-                                                    <div class="col-12 col-sm-7">
+                                                    <div class="col-12">
                                                         <input type="file" name="materis[0][dokumen_tambahan_file]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
                                                     </div>
                                                 </div>
+                                                <div class="form-text text-muted mt-1" style="font-size: 11px;">Format: PDF, Word, Gambar, ZIP (Maks. 15MB)</div>
                                             </div>
                                         </div>
                                     </div>
@@ -779,7 +887,90 @@
                             </select>
                         </div>
 
-                        <div class="row g-2">
+                        <!-- KARTU INFORMASI USULAN MUTASI UPT (AUTO-FILL FULL DARI MUTASI NARAPIDANA) -->
+                        <div id="infoCardMutasi___INDEX__" class="card border border-warning bg-white shadow-sm mb-3 d-none">
+                            <div class="card-body p-2.5">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-2 mb-2">
+                                    <div>
+                                        <span class="badge bg-warning text-dark me-1" id="info_kategori___INDEX__">Kolektif</span>
+                                        <span class="fw-bold text-dark small" id="info_surat___INDEX__">-</span>
+                                        <span class="text-muted small ms-1" id="info_tanggal___INDEX__">(-)</span>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-light text-dark border">
+                                            UPT Asal: <b id="info_upt_asal___INDEX__">-</b>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 align-items-center mb-2">
+                                    <div class="col-12 col-md-7">
+                                        <div class="d-flex flex-wrap align-items-center gap-1">
+                                            <span class="small text-muted me-1">Statistik:</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Narkotika">Narkotika: <b id="info_stat_narkotika___INDEX__">0</b></span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Pidana Umum">Pidum: <b id="info_stat_pidum___INDEX__">0</b></span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Korupsi">Korupsi: <b id="info_stat_korupsi___INDEX__">0</b></span>
+                                            <span class="badge bg-dark text-white fw-bold" title="Total Usulan">Total: <b id="info_stat_total___INDEX__">0</b> Orang</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-5 text-md-end">
+                                        <div class="d-flex flex-wrap justify-content-md-end gap-1" id="info_berkas_links___INDEX__">
+                                            <a id="info_file_surat___INDEX__" href="#" target="_blank" class="btn btn-outline-danger btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                <i class="fas fa-file-pdf me-1"></i>Surat Usulan
+                                            </a>
+                                            <a id="info_file_lampiran___INDEX__" href="#" target="_blank" class="btn btn-outline-success btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                <i class="fas fa-file-excel me-1"></i>Daftar Nominatif WBP
+                                            </a>
+                                            <a id="info_file_ba___INDEX__" href="#" target="_blank" class="btn btn-outline-primary btn-xs py-0.5 px-2 d-none" style="font-size: 11px;">
+                                                <i class="fas fa-file-alt me-1"></i>BA TPP UPT
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TABEL DISTRIBUSI UPT TUJUAN & ALOKASI KUOTA SIDANG TPP -->
+                                <div class="p-2 bg-light rounded border border-warning-subtle">
+                                    <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                        <span class="fw-bold text-dark small" style="font-size: 11.5px;">
+                                            <i class="fas fa-tasks text-warning-emphasis me-1"></i>Distribusi UPT Tujuan & Alokasi Kuota Sidang TPP Kanwil
+                                        </span>
+                                        <button type="button" class="btn btn-primary btn-xs py-0.5 px-2" style="font-size: 11px;" onclick="tambahBarisAlokasi(__INDEX__)">
+                                            <i class="fas fa-plus me-1"></i>Tambah UPT Tujuan
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered align-middle mb-1 bg-white text-center" style="font-size: 11px;" id="tableAlokasi___INDEX__">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="text-start" style="min-width: 170px;">UPT Tujuan Penerima</th>
+                                                    <th style="width: 80px;">Narkotika</th>
+                                                    <th style="width: 80px;">Pidum</th>
+                                                    <th style="width: 80px;">Korupsi</th>
+                                                    <th style="width: 85px;">Subtotal</th>
+                                                    <th style="width: 40px;">#</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbodyAlokasi___INDEX__">
+                                                <!-- Diisi otomatis oleh JavaScript -->
+                                            </tbody>
+                                            <tfoot class="table-light fw-bold">
+                                                <tr>
+                                                    <td class="text-start">Total Alokasi Direkomendasikan:</td>
+                                                    <td id="foot_narkotika___INDEX__">0</td>
+                                                    <td id="foot_pidum___INDEX__">0</td>
+                                                    <td id="foot_korupsi___INDEX__">0</td>
+                                                    <td id="foot_subtotal___INDEX__" class="text-primary fs-6">0</td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div id="info_alokasi_status___INDEX__" class="small mt-1 text-muted" style="font-size: 11px;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="manualWbpBox___INDEX__" class="row g-2">
                             <div class="col-md-7">
                                 <label class="form-label small text-muted mb-1">Nama Narapidana / WBP <span class="text-danger">*</span></label>
                                 <input type="text" name="materis[__INDEX__][mutasi_wbp_nama]" id="mutasi_wbp_nama___INDEX__" class="form-control form-control-sm" placeholder="Nama narapidana">
@@ -1183,21 +1374,24 @@
 
                 <!-- Upload File Pokok Bahan Sidang & Dokumen Tambahan Lainnya -->
                 <div class="col-12 col-md-6 mt-2">
-                    <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-file-download text-primary me-1"></i>Bahan Materi Sidang Utama (Opsional)</label>
-                    <input type="file" name="materis[__INDEX__][file_bahan_sidang]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
-                    <div class="form-text text-muted" style="font-size: 11px;">Format: PDF, Word, Excel, ZIP (Maks. 15MB)</div>
+                    <div class="p-2.5 bg-white rounded border h-100">
+                        <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-file-download text-primary me-1"></i>Bahan Materi Sidang Utama (Opsional)</label>
+                        <input type="file" name="materis[__INDEX__][file_bahan_sidang]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                        <div class="form-text text-muted mt-1" style="font-size: 11px;">Format: PDF, Word, Excel, ZIP (Maks. 15MB)</div>
+                    </div>
                 </div>
                 <div class="col-12 col-md-6 mt-2">
-                    <div class="p-2 bg-white rounded border">
+                    <div class="p-2.5 bg-white rounded border h-100">
                         <label class="form-label small fw-bold text-dark mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Tambahan Lainnya (Opsional)</label>
-                        <div class="row g-1">
-                            <div class="col-12 col-sm-5">
-                                <input type="text" name="materis[__INDEX__][dokumen_tambahan_nama]" class="form-control form-control-sm" placeholder="Nama Dokumen (Kustom)">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <input type="text" name="materis[__INDEX__][dokumen_tambahan_nama]" class="form-control form-control-sm" placeholder="Nama Dokumen (misal: Surat Pernyataan / Rekomendasi)">
                             </div>
-                            <div class="col-12 col-sm-7">
+                            <div class="col-12">
                                 <input type="file" name="materis[__INDEX__][dokumen_tambahan_file]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
                             </div>
                         </div>
+                        <div class="form-text text-muted mt-1" style="font-size: 11px;">Format: PDF, Word, Gambar, ZIP (Maks. 15MB)</div>
                     </div>
                 </div>
             </div>
@@ -1214,6 +1408,133 @@
 @push('scripts')
 <script>
     let materiCount = 1;
+    window.mutasiLookup = @json($mutasiJsonMap);
+    let alokasiCounters = {};
+
+    function tambahBarisAlokasi(materiIdx, defaultData = null) {
+        if (!alokasiCounters[materiIdx]) {
+            alokasiCounters[materiIdx] = 0;
+        }
+        const alokIdx = alokasiCounters[materiIdx]++;
+        const tbody = document.getElementById('tbodyAlokasi_' + materiIdx);
+        if (!tbody) return;
+
+        const uptVal = defaultData ? (defaultData.upt_tujuan_nama || defaultData.upt_tujuan_id || '') : '';
+        const narkotika = defaultData ? (defaultData.jumlah_narkotika || 0) : 0;
+        const pidum = defaultData ? (defaultData.jumlah_pidum || 0) : 0;
+        const korupsi = defaultData ? (defaultData.jumlah_korupsi || 0) : 0;
+        const subtotal = narkotika + pidum + korupsi;
+
+        const tr = document.createElement('tr');
+        tr.id = `row_alokasi_${materiIdx}_${alokIdx}`;
+        tr.className = 'alokasi-row';
+        tr.innerHTML = `
+            <td class="text-start">
+                <input type="text" name="materis[${materiIdx}][alokasi][${alokIdx}][upt_tujuan_id]" 
+                    class="form-control form-control-sm alokasi-upt-input" 
+                    list="listUptTujuan" 
+                    value="${uptVal}" 
+                    placeholder="Pilih/Ketik UPT Tujuan..." 
+                    onchange="hitungAlokasi(${materiIdx})" required>
+            </td>
+            <td>
+                <input type="number" min="0" name="materis[${materiIdx}][alokasi][${alokIdx}][jumlah_narkotika]" 
+                    class="form-control form-control-sm text-center input-narkotika" 
+                    value="${narkotika}" 
+                    oninput="hitungAlokasi(${materiIdx})">
+            </td>
+            <td>
+                <input type="number" min="0" name="materis[${materiIdx}][alokasi][${alokIdx}][jumlah_pidum]" 
+                    class="form-control form-control-sm text-center input-pidum" 
+                    value="${pidum}" 
+                    oninput="hitungAlokasi(${materiIdx})">
+            </td>
+            <td>
+                <input type="number" min="0" name="materis[${materiIdx}][alokasi][${alokIdx}][jumlah_korupsi]" 
+                    class="form-control form-control-sm text-center input-korupsi" 
+                    value="${korupsi}" 
+                    oninput="hitungAlokasi(${materiIdx})">
+            </td>
+            <td>
+                <span class="fw-bold text-dark subtotal-cell" id="subtotal_${materiIdx}_${alokIdx}">${subtotal}</span>
+            </td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-xs py-0 px-1" onclick="hapusBarisAlokasi(${materiIdx}, ${alokIdx})" title="Hapus baris alokasi">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        hitungAlokasi(materiIdx);
+    }
+
+    function hapusBarisAlokasi(materiIdx, alokIdx) {
+        const row = document.getElementById(`row_alokasi_${materiIdx}_${alokIdx}`);
+        if (row) {
+            row.remove();
+            hitungAlokasi(materiIdx);
+        }
+    }
+
+    function hitungAlokasi(materiIdx) {
+        const tbody = document.getElementById('tbodyAlokasi_' + materiIdx);
+        if (!tbody) return;
+
+        let totNarkotika = 0;
+        let totPidum = 0;
+        let totKorupsi = 0;
+        let grandTot = 0;
+
+        const rows = tbody.querySelectorAll('.alokasi-row');
+        rows.forEach(r => {
+            const nInput = r.querySelector('.input-narkotika');
+            const pInput = r.querySelector('.input-pidum');
+            const kInput = r.querySelector('.input-korupsi');
+            const subCell = r.querySelector('.subtotal-cell');
+
+            const n = parseInt(nInput ? nInput.value : 0) || 0;
+            const p = parseInt(pInput ? pInput.value : 0) || 0;
+            const k = parseInt(kInput ? kInput.value : 0) || 0;
+            const sub = n + p + k;
+
+            if (subCell) subCell.textContent = sub;
+
+            totNarkotika += n;
+            totPidum += p;
+            totKorupsi += k;
+            grandTot += sub;
+        });
+
+        const footN = document.getElementById('foot_narkotika_' + materiIdx);
+        const footP = document.getElementById('foot_pidum_' + materiIdx);
+        const footK = document.getElementById('foot_korupsi_' + materiIdx);
+        const footSub = document.getElementById('foot_subtotal_' + materiIdx);
+        const statusEl = document.getElementById('info_alokasi_status_' + materiIdx);
+
+        if (footN) footN.textContent = totNarkotika;
+        if (footP) footP.textContent = totPidum;
+        if (footK) footK.textContent = totKorupsi;
+        if (footSub) footSub.textContent = grandTot;
+
+        const statTotalEl = document.getElementById('info_stat_total_' + materiIdx);
+        const totalUsulan = parseInt(statTotalEl ? statTotalEl.textContent : 0) || 0;
+
+        if (statusEl) {
+            if (totalUsulan > 0) {
+                if (grandTot === totalUsulan) {
+                    statusEl.innerHTML = `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i>Alokasi kuota sesuai dengan total usulan (${grandTot} / ${totalUsulan} Orang)</span>`;
+                } else if (grandTot < totalUsulan) {
+                    const sisa = totalUsulan - grandTot;
+                    statusEl.innerHTML = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="fas fa-exclamation-triangle me-1"></i>Alokasi (${grandTot} Orang) masih kurang ${sisa} orang dari total usulan (${totalUsulan} Orang)</span>`;
+                } else {
+                    const lebih = grandTot - totalUsulan;
+                    statusEl.innerHTML = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-exclamation-circle me-1"></i>Alokasi (${grandTot} Orang) melebihi ${lebih} orang dari total usulan (${totalUsulan} Orang)</span>`;
+                }
+            } else {
+                statusEl.innerHTML = `<span class="text-muted"><i class="fas fa-info-circle me-1"></i>Total alokasi narapidana: <b>${grandTot} Orang</b></span>`;
+            }
+        }
+    }
 
     function switchMateriRepeaterCategory(index, val) {
         const boxMutasi = document.getElementById('boxMateriMutasi_' + index);
@@ -1239,25 +1560,93 @@
 
     function autoFillMutasiRepeater(selectEl, index) {
         const opt = selectEl.options[selectEl.selectedIndex];
-        if (!opt || !opt.value) return;
-        const nama = opt.getAttribute('data-nama') || '';
-        const uptAsal = opt.getAttribute('data-uptasal') || '';
-        const uptTujuan = opt.getAttribute('data-upttujuan') || '';
-        const uptTujuanNama = opt.getAttribute('data-upttujuannama') || '';
-        const alasan = opt.getAttribute('data-alasan') || '';
+        const mId = selectEl.value;
+        const cardEl = document.getElementById('infoCardMutasi_' + index);
+        const manualBox = document.getElementById('manualWbpBox_' + index);
 
-        const namaEl = document.getElementById('mutasi_wbp_nama_' + index);
-        const uptAsalEl = document.getElementById('mutasi_upt_asal_id_' + index);
-        const uptTujuanEl = document.getElementById('upt_tujuan_rekomendasi_id_' + index);
-        const alasanEl = document.getElementById('mutasi_alasan_' + index);
+        if (!opt || !mId || !window.mutasiLookup[mId]) {
+            if (cardEl) cardEl.classList.add('d-none');
+            if (manualBox) manualBox.classList.remove('d-none');
+            return;
+        }
+
+        const data = window.mutasiLookup[mId];
+        if (cardEl) cardEl.classList.remove('d-none');
+        if (manualBox) manualBox.classList.add('d-none');
+
+        // Fill info card
+        const suratEl = document.getElementById('info_surat_' + index);
+        const tglEl = document.getElementById('info_tanggal_' + index);
+        const uptAsalEl = document.getElementById('info_upt_asal_' + index);
+        const katEl = document.getElementById('info_kategori_' + index);
+        const nEl = document.getElementById('info_stat_narkotika_' + index);
+        const pEl = document.getElementById('info_stat_pidum_' + index);
+        const kEl = document.getElementById('info_stat_korupsi_' + index);
+        const tEl = document.getElementById('info_stat_total_' + index);
+
+        if (suratEl) suratEl.textContent = 'Surat Usulan No: ' + (data.nomor_surat || '-');
+        if (tglEl) tglEl.textContent = '(' + (data.tanggal_surat || '-') + ')';
+        if (uptAsalEl) uptAsalEl.textContent = data.upt_asal_nama || '-';
+        if (katEl) katEl.textContent = data.kategori_mutasi || 'Kolektif';
+        if (nEl) nEl.textContent = data.jumlah_narkotika;
+        if (pEl) pEl.textContent = data.jumlah_pidum;
+        if (kEl) kEl.textContent = data.jumlah_korupsi;
+        if (tEl) tEl.textContent = data.total_usulan;
+
+        // Berkas buttons
+        const fSurat = document.getElementById('info_file_surat_' + index);
+        const fLamp = document.getElementById('info_file_lampiran_' + index);
+        const fBa = document.getElementById('info_file_ba_' + index);
+
+        if (fSurat) {
+            if (data.file_surat_usulan) {
+                fSurat.href = data.file_surat_usulan;
+                fSurat.classList.remove('d-none');
+            } else {
+                fSurat.classList.add('d-none');
+            }
+        }
+        if (fLamp) {
+            if (data.file_lampiran_wbp) {
+                fLamp.href = data.file_lampiran_wbp;
+                fLamp.classList.remove('d-none');
+            } else {
+                fLamp.classList.add('d-none');
+            }
+        }
+        if (fBa) {
+            if (data.file_ba_tpp) {
+                fBa.href = data.file_ba_tpp;
+                fBa.classList.remove('d-none');
+            } else {
+                fBa.classList.add('d-none');
+            }
+        }
+
+        // Set auto title & fields
         const judulEl = document.getElementById('materi_judul_' + index);
+        const wbpNamaEl = document.getElementById('mutasi_wbp_nama_' + index);
+        const formUptAsalEl = document.getElementById('mutasi_upt_asal_id_' + index);
+        const formUptTujuanEl = document.getElementById('upt_tujuan_rekomendasi_id_' + index);
+        const alasanEl = document.getElementById('mutasi_alasan_' + index);
 
-        if (namaEl && nama && !namaEl.value) namaEl.value = nama;
-        if (uptAsalEl && uptAsal) uptAsalEl.value = uptAsal;
-        if (uptTujuanEl) uptTujuanEl.value = uptTujuanNama || uptTujuan;
-        if (alasanEl && alasan && !alasanEl.value) alasanEl.value = alasan;
         if (judulEl && (!judulEl.value || judulEl.value.trim() === '')) {
-            judulEl.value = 'Usulan Pemindahan Narapidana an. ' + nama;
+            judulEl.value = 'Pemindahan Narapidana Kolektif ' + data.upt_asal_nama + ' (' + data.total_usulan + ' Orang)';
+        }
+        if (wbpNamaEl) wbpNamaEl.value = 'Kolektif ' + data.upt_asal_nama + ' (' + data.total_usulan + ' Orang)';
+        if (formUptAsalEl && data.upt_asal_id) formUptAsalEl.value = data.upt_asal_id;
+        if (formUptTujuanEl) formUptTujuanEl.value = data.upt_tujuan_nama || '';
+        if (alasanEl) alasanEl.value = data.kategori_mutasi || 'Overkapasitas / Redistribusi Narapidana';
+
+        // Auto initialize allocation table if empty
+        const tbody = document.getElementById('tbodyAlokasi_' + index);
+        if (tbody && tbody.children.length === 0) {
+            tambahBarisAlokasi(index, {
+                upt_tujuan_nama: data.upt_tujuan_nama || '',
+                jumlah_narkotika: data.jumlah_narkotika,
+                jumlah_pidum: data.jumlah_pidum,
+                jumlah_korupsi: data.jumlah_korupsi,
+            });
         }
     }
 

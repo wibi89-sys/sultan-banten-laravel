@@ -779,7 +779,25 @@ HTML;
                     $namaWbp = $nd['nama'] ?? $m->judul_materi;
                     $uptAsal = $nd['upt_asal_nama'] ?? 'Lapas/Rutan Asal';
                     $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan');
-                    $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi):</b> Usulan pemindahan Narapidana an. <b>{$namaWbp}</b> dari {$uptAsal} ke <b>{$uptTujuan}</b> (Alasan: ".($nd['alasan_pemindahan'] ?? 'Mendekati keluarga').'). Dilengkapi Litmas Bapas, asesmen risiko, buku register F, dan jaminan penjamin.</li>';
+                    $alokasiList = $nd['alokasi'] ?? [];
+
+                    if (! empty($alokasiList) && is_array($alokasiList)) {
+                        $rincianAlokasi = [];
+                        foreach ($alokasiList as $alok) {
+                            $uName = $alok['upt_tujuan_nama'] ?? 'UPT Tujuan';
+                            $tot = $alok['total'] ?? 0;
+                            $n = $alok['jumlah_narkotika'] ?? 0;
+                            $p = $alok['jumlah_pidum'] ?? 0;
+                            $k = $alok['jumlah_korupsi'] ?? 0;
+                            $rincianAlokasi[] = "<b>{$uName}</b> ({$tot} orang: {$n} Narkotika, {$p} Pidum, {$k} Korupsi)";
+                        }
+                        $rincianStr = implode('; ', $rincianAlokasi);
+                        $totalUsulanStr = ! empty($nd['total_usulan']) ? "sejumlah <b>{$nd['total_usulan']} Orang</b>" : '';
+                        $suratNoStr = ! empty($nd['nomor_surat_usulan']) ? " (Surat Usulan No: {$nd['nomor_surat_usulan']})" : '';
+                        $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Pemindahan Antar-UPT):</b> Usulan pemindahan Narapidana kolektif dari <b>{$uptAsal}</b>{$suratNoStr} {$totalUsulanStr}. Tim Sidang TPP Kanwil menyepakati rekomendasi distribusi alokasi ke UPT Tujuan Penerima, meliputi: {$rincianStr}. Dilengkapi Surat Usulan, Berkas Lampiran Nominatif WBP, dan Berita Acara (BA) Sidang TPP UPT asal.</li>";
+                    } else {
+                        $materiHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi):</b> Usulan pemindahan Narapidana an. <b>{$namaWbp}</b> dari {$uptAsal} ke <b>{$uptTujuan}</b> (Alasan: ".($nd['alasan_pemindahan'] ?? 'Mendekati keluarga').'). Dilengkapi Litmas Bapas, asesmen risiko, buku register F, dan jaminan penjamin.</li>';
+                    }
                 } elseif ($m->isIzinBerobat()) {
                     $nd = $m->narapidana_data ?: [];
                     $namaWbp = $nd['nama'] ?? $m->judul_materi;
@@ -901,7 +919,21 @@ HTML;
                     $namaWbp = $nd['nama'] ?? $m->judul_materi;
                     $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan Rekomendasi');
                     $catatan = $m->catatan_rekomendasi ? " (Catatan: {$m->catatan_rekomendasi})" : '';
-                    $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi):</b> Tim Sidang TPP <b>{$rekLabel}</b> usulan pemindahan Narapidana an. <b>{$namaWbp}</b> dengan rekomendasi penetapan UPT Tujuan ke <b>{$uptTujuan}</b>{$catatan}. Meneruskan berkas kepada Kepala Kantor Wilayah guna penerbitan SK Persetujuan Mutasi dan sinkronisasi modul SDP.</li>";
+                    $alokasiList = $nd['alokasi'] ?? [];
+
+                    if (! empty($alokasiList) && is_array($alokasiList)) {
+                        $rincianAlokasi = [];
+                        foreach ($alokasiList as $alok) {
+                            $uName = $alok['upt_tujuan_nama'] ?? 'UPT Tujuan';
+                            $tot = $alok['total'] ?? 0;
+                            $rincianAlokasi[] = "{$uName} ({$tot} Orang)";
+                        }
+                        $rincianStr = implode(', ', $rincianAlokasi);
+                        $grandTot = $nd['total_disetujui'] ?? array_sum(array_column($alokasiList, 'total'));
+                        $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Pemindahan Antar-UPT):</b> Tim Sidang TPP <b>{$rekLabel}</b> usulan pemindahan Narapidana kolektif dari <b>".($nd['upt_asal_nama'] ?? 'UPT Asal')."</b> dengan alokasi total disetujui <b>{$grandTot} Orang</b> yang didistribusikan ke: <b>{$rincianStr}</b>{$catatan}. Meneruskan berkas kepada Kepala Kantor Wilayah guna penerbitan SK Persetujuan Pemindahan dan pembukaan tugas pelaksanaan bagi UPT Pengusul serta UPT Penerima.</li>";
+                    } else {
+                        $hasilHtml .= "<li style='margin-bottom:4pt;text-align:justify;'><b>Materi #{$m->urutan} (Mutasi):</b> Tim Sidang TPP <b>{$rekLabel}</b> usulan pemindahan Narapidana an. <b>{$namaWbp}</b> dengan rekomendasi penetapan UPT Tujuan ke <b>{$uptTujuan}</b>{$catatan}. Meneruskan berkas kepada Kepala Kantor Wilayah guna penerbitan SK Persetujuan Mutasi dan sinkronisasi modul SDP.</li>";
+                    }
                 } elseif ($m->isIzinBerobat()) {
                     $nd = $m->narapidana_data ?: [];
                     $namaWbp = $nd['nama'] ?? $m->judul_materi;
@@ -1210,9 +1242,18 @@ HTML;
                 } elseif ($m->isMutasiNarapidana()) {
                     $nd = $m->narapidana_data ?: [];
                     $namaWbp = $nd['nama'] ?? $m->judul_materi;
+                    $uptAsal = $nd['upt_asal_nama'] ?? 'Lapas/Rutan Asal';
                     $uptTujuan = $m->uptTujuanRekomendasi?->nama_upt ?? ($nd['upt_tujuan_nama'] ?? 'UPT Tujuan Rekomendasi');
-                    $pokokMateriText .= "<li>Usulan pemindahan Narapidana an. <b>{$namaWbp}</b> ke <b>{$uptTujuan}</b>;</li>";
-                    $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui dan merekomendasikan pemindahan Narapidana an. <b>{$namaWbp}</b> ke {$uptTujuan} guna diproses persetujuan resmi Kepala Kantor Wilayah;</li>";
+                    $alokasiList = $nd['alokasi'] ?? [];
+
+                    if (! empty($alokasiList) && is_array($alokasiList)) {
+                        $grandTot = $nd['total_disetujui'] ?? array_sum(array_column($alokasiList, 'total'));
+                        $pokokMateriText .= "<li>Pembahasan usulan pemindahan narapidana kolektif dari <b>{$uptAsal}</b> sejumlah <b>{$grandTot} Orang</b>;</li>";
+                        $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui usulan pemindahan narapidana kolektif dari <b>{$uptAsal}</b> sejumlah <b>{$grandTot} Orang</b> dengan rekomendasi distribusi alokasi multi-UPT tujuan;</li>";
+                    } else {
+                        $pokokMateriText .= "<li>Usulan pemindahan Narapidana an. <b>{$namaWbp}</b> ke <b>{$uptTujuan}</b>;</li>";
+                        $hasilPoin3Text .= "<li>Materi #{$m->urutan}: Menyetujui dan merekomendasikan pemindahan Narapidana an. <b>{$namaWbp}</b> ke {$uptTujuan} guna diproses persetujuan resmi Kepala Kantor Wilayah;</li>";
+                    }
                 } elseif ($m->isIzinBerobat()) {
                     $nd = $m->narapidana_data ?: [];
                     $namaWbp = $nd['nama'] ?? $m->judul_materi;

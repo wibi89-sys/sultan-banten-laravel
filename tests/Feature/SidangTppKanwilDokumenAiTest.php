@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\KanwilPegawai;
 use App\Models\MutasiNarapidana;
+use App\Models\MutasiNarapidanaTujuan;
 use App\Models\SidangTpp;
 use App\Models\SidangTppKanwil;
 use App\Models\SidangTppKanwilAnggota;
@@ -1165,5 +1166,134 @@ class SidangTppKanwilDokumenAiTest extends TestCase
         $laporanHtml = TppKanwilDokumenService::renderLaporanHtml($sidang);
         $this->assertStringContainsString('Lapas Kelas I Semarang', $laporanHtml);
         $this->assertStringContainsString('Lapas Kelas I Malang', $laporanHtml);
+    }
+
+    public function test_integrasi_penuh_mutasi_narapidana_alokasi_multi_tujuan_dan_auto_sync_kakanwil(): void
+    {
+        Storage::fake('public');
+
+        $uptAsal = Upt::where('nama_upt', 'like', '%Cilegon%')->first() ?? Upt::first();
+        $uptTujuan1 = Upt::where('nama_upt', 'like', '%Serang%')->first() ?? Upt::skip(1)->first();
+        $uptTujuan2 = Upt::where('nama_upt', 'like', '%Rangkasbitung%')->first() ?? Upt::skip(2)->first();
+
+        // 1. Buat usulan mutasi kolektif dari UPT
+        $mutasi = MutasiNarapidana::create([
+            'upt_asal_id' => $uptAsal->id,
+            'nomor_surat' => 'W12.PAS.1-PK.01.04-TEST-'.rand(100, 999),
+            'tanggal_surat' => '2026-11-10',
+            'kategori_mutasi' => 'Overkapasitas / Redistribusi',
+            'jumlah_narkotika' => 15,
+            'jumlah_pidum' => 7,
+            'jumlah_korupsi' => 3,
+            'total_usulan' => 25,
+            'keterangan' => 'Usulan pemindahan narapidana overkapasitas ke Lapas se-Banten',
+            'status' => 'diajukan',
+        ]);
+
+        $ketua = KanwilPegawai::where('peran_tpp', 'Ketua')->first() ?? KanwilPegawai::first();
+        $sekretaris = KanwilPegawai::where('peran_tpp', 'Sekretaris')->first() ?? KanwilPegawai::skip(1)->first();
+        $nomorSidang = 'TPP-KANWIL-FULL-'.rand(1000, 9999);
+
+        // 2. Register Sidang TPP Kanwil menarik mutasi_id dengan tabel alokasi multi-tujuan
+        $response = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.store'), [
+                'nomor_sidang' => $nomorSidang,
+                'tanggal_sidang' => '2026-11-15',
+                'jam_mulai' => '09:00',
+                'tempat' => 'Ruang Rapat Utama Kanwil Kemenkumham Banten',
+                'metode' => 'luring',
+                'ketua_id' => $ketua->id,
+                'sekretaris_id' => $sekretaris->id,
+                'anggota_ids' => [$ketua->id, $sekretaris->id],
+                'materis' => [
+                    [
+                        'kategori_materi' => 'mutasi_narapidana',
+                        'judul_materi' => 'Usulan Pemindahan Narapidana Overkapasitas '.$uptAsal->nama_upt,
+                        'mutasi_id' => $mutasi->id,
+                        'mutasi_upt_asal_id' => $uptAsal->id,
+                        'alokasi' => [
+                            [
+                                'upt_tujuan_id' => $uptTujuan1->id,
+                                'jumlah_narkotika' => 10,
+                                'jumlah_pidum' => 5,
+                                'jumlah_korupsi' => 0,
+                            ],
+                            [
+                                'upt_tujuan_id' => $uptTujuan2->id,
+                                'jumlah_narkotika' => 5,
+                                'jumlah_pidum' => 2,
+                                'jumlah_korupsi' => 3,
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $sidang = SidangTppKanwil::where('nomor_sidang', $nomorSidang)->first();
+        $this->assertNotNull($sidang);
+
+        $materi = $sidang->materis()->first();
+        $this->assertNotNull($materi);
+        $this->assertEquals($mutasi->id, $materi->mutasi_id);
+        $this->assertEquals(25, $materi->narapidana_data['total_usulan']);
+        $this->assertCount(2, $materi->narapidana_data['alokasi']);
+        $this->assertEquals(25, $materi->narapidana_data['total_disetujui']);
+
+        // 3. Verifikasi naskah dinas Risalah & Laporan mencantumkan distribusi alokasi multi-tujuan
+        $risalah = TppKanwilDokumenService::renderRisalahHtml($sidang);
+        $this->assertStringContainsString($uptTujuan1->nama_upt, $risalah);
+        $this->assertStringContainsString($uptTujuan2->nama_upt, $risalah);
+        $this->assertStringContainsString('25', $risalah);
+
+        $laporan = TppKanwilDokumenService::renderLaporanHtml($sidang);
+        $this->assertStringContainsString('25 Orang', $laporan);
+
+        // 4. Kakanwil memverifikasi sidang dengan status 'disetujui' dan unggah berkas fisik SK Kanwil
+        $fakePdf = UploadedFile::fake()->create('sk_persetujuan_kanwil.pdf', 500, 'application/pdf');
+        $responseKakanwil = $this->actingAs($this->userKanwil)
+            ->post(route('sidang-tpp-kanwil.upload-disposisi-kakanwil', $sidang->id), [
+                'tanggapan_kakanwil_status' => 'disetujui',
+                'tanggapan_kakanwil_tanggal' => '2026-11-15',
+                'tanggapan_kakanwil_catatan' => 'Disetujui penuh sesuai rekomendasi sidang TPP Kanwil',
+                'kakanwil_nama' => 'Dr. H. Bambang Irawan, Bc.I.P., S.H., M.H.',
+                'kakanwil_nip' => '196805121990031001',
+                'nomor_surat_kanwil' => 'W12.PK.01.04-SK-999',
+                'file_disposisi_kakanwil' => $fakePdf,
+            ]);
+
+        $responseKakanwil->assertSessionHasNoErrors();
+        $sidang->refresh();
+        $this->assertEquals('disetujui', $sidang->tanggapan_kakanwil_status);
+        $this->assertEquals('selesai', $sidang->status_sidang);
+
+        // 5. Cek MutasiNarapidana ter-update secara otomatis
+        $mutasi->refresh();
+        $this->assertEquals('disetujui', $mutasi->status);
+        $this->assertEquals('W12.PK.01.04-SK-999', $mutasi->nomor_surat_kanwil);
+        $this->assertEquals('2026-11-15', $mutasi->tanggal_surat_kanwil?->format('Y-m-d'));
+        $this->assertNotNull($mutasi->file_persetujuan_kanwil);
+        $this->assertEquals(25, $mutasi->total_disetujui);
+        $this->assertEquals(15, $mutasi->jumlah_disetujui_narkotika);
+        $this->assertEquals(7, $mutasi->jumlah_disetujui_pidum);
+        $this->assertEquals(3, $mutasi->jumlah_disetujui_korupsi);
+
+        // 6. Cek MutasiNarapidanaTujuan otomatis ter-generate sesuai alokasi sidang
+        $tujuans = MutasiNarapidanaTujuan::where('mutasi_id', $mutasi->id)->get();
+        $this->assertCount(2, $tujuans);
+
+        $tujuan1 = $tujuans->where('upt_tujuan_id', $uptTujuan1->id)->first();
+        $this->assertNotNull($tujuan1);
+        $this->assertEquals(10, $tujuan1->jumlah_disetujui_narkotika);
+        $this->assertEquals(5, $tujuan1->jumlah_disetujui_pidum);
+        $this->assertEquals(0, $tujuan1->jumlah_disetujui_korupsi);
+        $this->assertEquals(15, $tujuan1->total_disetujui);
+
+        $tujuan2 = $tujuans->where('upt_tujuan_id', $uptTujuan2->id)->first();
+        $this->assertNotNull($tujuan2);
+        $this->assertEquals(5, $tujuan2->jumlah_disetujui_narkotika);
+        $this->assertEquals(2, $tujuan2->jumlah_disetujui_pidum);
+        $this->assertEquals(3, $tujuan2->jumlah_disetujui_korupsi);
+        $this->assertEquals(10, $tujuan2->total_disetujui);
     }
 }
